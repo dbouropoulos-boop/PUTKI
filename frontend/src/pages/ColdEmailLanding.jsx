@@ -92,7 +92,7 @@ const ColdEmailLanding = () => {
           <h2 className="display text-3xl sm:text-4xl mb-8">Tiedät jo kaiken — mutta tässä lisätietoa</h2>
           <div className="space-y-6">
             {FAQS.map((f, i) => (
-              <div key={i} className="border-t border-subtle-border pt-5">
+              <div key={i} className="border-t border-subtle-border pt-5" data-testid={`faq-item-${i}`}>
                 <h3 className="font-display text-lg font-semibold mb-2 text-ink">{f.q}</h3>
                 <p className="font-serif text-[15px] text-ink leading-relaxed">{f.a}</p>
               </div>

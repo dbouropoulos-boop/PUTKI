@@ -43,7 +43,7 @@ const Methodology = () => {
 
           {/* CONTENT */}
           <article className="lg:col-span-9 prose-mittari max-w-3xl">
-            <section id="mista" className="mb-16">
+            <section id="mista" className="mb-16" data-testid="section-0">
               <h2 className="display text-3xl sm:text-4xl mb-5">Mistä Mittari-pisteet kertovat</h2>
               <p>
                 Mittari-pisteet kertovat yhdessä numerossa, kuinka hyvä operaattori on suomalaiselle pelaajalle <em>juuri tänään</em>. Pisteet eivät ole pysyvät — ne päivittyvät viikoittain ja reagoivat siihen, mitä todella tapahtuu (maksunopeudet hidastuvat, valitusten määrä kasvaa, lisenssi muuttuu).
@@ -53,7 +53,7 @@ const Methodology = () => {
               </p>
             </section>
 
-            <section id="objektiivi" className="mb-16">
+            <section id="objektiivi" className="mb-16" data-testid="section-1">
               <h2 className="display text-3xl sm:text-4xl mb-5">Objektiiviset tekijät</h2>
               <p>
                 70 prosenttia pisteistä tulee mitattavasta datasta:
@@ -68,7 +68,7 @@ const Methodology = () => {
               </ul>
             </section>
 
-            <section id="kaupallinen" className="mb-16">
+            <section id="kaupallinen" className="mb-16" data-testid="section-2">
               <h2 className="display text-3xl sm:text-4xl mb-5">Kaupallinen painotus</h2>
               <p>
                 30 prosenttia pisteistä on toimituksellinen arvio. Tähän kuuluu yhteisön signaalit (Ylilauta, Suomi24, Discord), pitkän aikavälin maine, valitusten käsittely AskGamblersilla ja Casino.Gurussa, sekä toimituksen oma näkemys siitä, kuinka operaattori käyttäytyy poikkeustilanteissa.
@@ -78,7 +78,7 @@ const Methodology = () => {
               </p>
             </section>
 
-            <section id="ei-vaikuta" className="mb-16">
+            <section id="ei-vaikuta" className="mb-16" data-testid="section-3">
               <h2 className="display text-3xl sm:text-4xl mb-5">Mikä ei vaikuta pisteisiin</h2>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li>Affiliaatti-CPA — paljonko meille maksetaan asiakkaasta.</li>
@@ -88,7 +88,7 @@ const Methodology = () => {
               </ul>
             </section>
 
-            <section id="floor" className="mb-16">
+            <section id="floor" className="mb-16" data-testid="section-4">
               <h2 className="display text-3xl sm:text-4xl mb-5">Floor: minimivaatimukset</h2>
               <p>
                 Mittarin listauksessa olevien operaattoreiden täytyy täyttää nämä ehdot:
@@ -102,14 +102,14 @@ const Methodology = () => {
               </ul>
             </section>
 
-            <section id="paivitykset" className="mb-16">
+            <section id="paivitykset" className="mb-16" data-testid="section-5">
               <h2 className="display text-3xl sm:text-4xl mb-5">Päivitysten taajuus</h2>
               <p>
                 Datapohjaiset tekijät päivitetään viikoittain. Toimitukselliset arviot kuukausittain. Jos operaattorilla tapahtuu merkittävä muutos (lisenssi katoaa, maksuvalitukset kasvavat) — päivitämme heti.
               </p>
             </section>
 
-            <section id="affiliaatti" className="mb-4">
+            <section id="affiliaatti" className="mb-4" data-testid="section-6">
               <h2 className="display text-3xl sm:text-4xl mb-5">Affiliaatiosuhteet</h2>
               <p>
                 Mittari saa affiliaattipalkkion osasta operaattoreita, kun pelaaja avaa tilin sivumme kautta. Tämä on ainoa ansaintamallimme. Se on listattu jokaisen operaattorin arvio-sivulla erikseen.

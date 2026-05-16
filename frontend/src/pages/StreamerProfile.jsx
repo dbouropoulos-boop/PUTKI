@@ -25,7 +25,9 @@ const SOCIAL_POSTS = [
 const StreamerProfile = () => {
   const { slug } = useParams();
   const streamer = STREAMERS.find((s) => s.slug === slug) || STREAMERS[0];
-  const moments = MOMENTS.filter((m) => m.streamer === streamer.name).concat(MOMENTS).slice(0, 4);
+  const matched = MOMENTS.filter((m) => m.streamer === streamer.name);
+  const others = MOMENTS.filter((m) => m.streamer !== streamer.name);
+  const moments = [...matched, ...others].slice(0, 4);
   const operators = OPERATORS.slice(0, 4);
   const related = STREAMERS.filter((s) => s.slug !== streamer.slug).slice(0, 5);
 
