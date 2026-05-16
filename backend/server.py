@@ -152,6 +152,8 @@ async def submit_prediction(data: PredictionRequest):
 class SettingsPayload(BaseModel):
     telegram_channel: Optional[str] = None
     smartico_template_id: Optional[str] = None
+    smartico_loader_url: Optional[str] = None
+    smartico_brand_key: Optional[str] = None
 
 
 SETTINGS_KEY = "site"
@@ -162,6 +164,8 @@ async def _get_settings_doc():
     return {
         "telegram_channel": doc.get("telegram_channel"),
         "smartico_template_id": doc.get("smartico_template_id"),
+        "smartico_loader_url": doc.get("smartico_loader_url"),
+        "smartico_brand_key": doc.get("smartico_brand_key"),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -173,6 +177,8 @@ async def get_public_settings():
     return {
         "telegram_channel": s.get("telegram_channel"),
         "smartico_template_id": s.get("smartico_template_id"),
+        "smartico_loader_url": s.get("smartico_loader_url"),
+        "smartico_brand_key": s.get("smartico_brand_key"),
     }
 
 
@@ -186,6 +192,8 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     update = {
         "telegram_channel": data.telegram_channel,
         "smartico_template_id": data.smartico_template_id,
+        "smartico_loader_url": data.smartico_loader_url,
+        "smartico_brand_key": data.smartico_brand_key,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.settings.update_one(

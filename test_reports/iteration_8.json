@@ -1,0 +1,44 @@
+{
+  "summary": "Phase 3 Batch 3D — Smartico Voyager loader + Signal Pipeline Status widget. Backend: 51/51 pytest PASS (46 prior regression + 5 new TestSmarticoVoyagerSettings covering 4-field round-trip, public/admin shape, null-clear, 401 gating). Frontend: all 3 smartico inputs in /back-office present with correct data-testids (back-office-smartico-input/loader-input/brand-input); save persists all 3, reload pre-fills correctly. /back-office/queue mounts signal-pipeline-status panel between GenerateForm and queue list — 6 source tiles (twitch/kick/youtube/forum/sports/internal) all render with REAL/MOCK/TOTAL counts; force-poll button triggers POST /api/admin/signals/poll and updates counts (Twitch went to 92 recent / 278 total · all MOCKED as expected). /voita-palkinto: with both template_id+loader_url set, smartico-embed div renders AND <script src='…ui-test.js' data-mittari-smartico='1' data-smartico-brand-key='ui-test-brand'> is appended to document.body — verified via DOM query. 0 page errors / 0 critical console errors on home, back-office, queue, voita-palkinto (1 expected ERR_NAME_NOT_RESOLVED for the fake test loader CDN — by design per mocked_apis brief). Settings reset to null after test.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verified_features": {
+    "backend_settings_put_round_trip_4_fields": "PASS — PUT /api/admin/settings persists telegram_channel + smartico_template_id + smartico_loader_url + smartico_brand_key + updated_at",
+    "backend_public_settings_exposes_all_4": "PASS — GET /api/settings/public returns all 4 keys, no updated_at, no _id",
+    "backend_admin_settings_exposes_5": "PASS — GET /api/admin/settings returns all 4 + updated_at (auth required)",
+    "backend_null_clear_all_smartico": "PASS — PUT with null values clears all fields; public reflects null",
+    "backend_401_gating_put": "PASS — PUT without X-Admin-Token returns 401",
+    "backend_46_regression_tests": "PASS — all prior tests still green (game_scores, mittari_api, phase3_pipeline, phase3_review)",
+    "frontend_back_office_3_smartico_inputs": "PASS — back-office-smartico-input + loader-input + brand-input all present; save→reload pre-fills all 3",
+    "frontend_voita_palkinto_smartico_embed": "PASS — smartico-embed div renders when template_id set",
+    "frontend_voita_palkinto_loader_script_injection": "PASS — script tag with data-mittari-smartico='1' + correct src + data-smartico-brand-key appended to document.body when both template_id+loader_url set",
+    "frontend_signal_pipeline_status_panel": "PASS — signal-pipeline-status panel on /back-office/queue with all 6 source tiles (twitch/kick/youtube/forum/sports/internal)",
+    "frontend_force_poll_button": "PASS — signal-pipeline-poll click triggers /api/admin/signals/poll and tile counts update",
+    "frontend_console_health": "PASS — 0 page errors and 0 critical console errors across /, /back-office, /back-office/queue, /voita-palkinto (1 expected ERR_NAME_NOT_RESOLVED for fake smartico CDN test URL — by design)"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase3_smartico.py",
+    "/app/backend/tests/test_phase3_pipeline.py",
+    "/app/backend/tests/test_phase3_review.py",
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/backend/tests/test_game_scores.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "SettingsPayload + _get_settings_doc + PUT/GET endpoints extended cleanly — additive (no breaking shape change), 4 fields always returned including null defaults.",
+    "VoitaPalkinto.jsx loader-script injection effect has proper guard against double-injection (querySelector check) and proper cleanup on unmount — good. Brand key correctly conditional via `if (brandKey)`.",
+    "SignalPipelineStatus widget polls every 30s (clearInterval cleanup present) and exposes a force-poll affordance for ops — solid observability addition. liveByCat reduction correctly distinguishes real vs mocked counts per source.",
+    "Public /settings/public still strips updated_at + _id — no admin metadata leak.",
+    "Minor: BackOffice.jsx state initialization for 3 smartico fields is correct but the form has grown — consider extracting Smartico section into its own subcomponent if a 4th smartico field arrives later (not blocking)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase3_smartico.py (new — 5 tests covering Batch 3D Smartico Voyager settings)"
+  ],
+  "success_rate": {"backend": "100% (51/51 pytest)", "frontend": "100% (back-office + queue + voita-palkinto + home all green)"},
+  "test_credentials": "X-Admin-Token: mittari-admin",
+  "seed_data_creation": "Brief test data written to settings during round-trip tests; reset to all-null at end of run (cleanup confirmed via curl). One extra signal poll cycle triggered via force-poll button (signals collection appended ~278 total twitch entries — append-only, by design).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 Batch 3D complete and green. Settings now has 4 smartico fields (template_id, loader_url, brand_key + telegram_channel). /back-office shows 3 smartico inputs; /back-office/queue has SignalPipelineStatus widget with 6 source tiles + force-poll. /voita-palkinto auto-injects <script data-mittari-smartico='1'> when template_id+loader_url both set. Settings reset to null at end. Mocked APIs (twitch/yt/forum/sports/telegram/email + smartico SDK) remain per design. No outstanding issues from this iteration. Previously-flagged carryovers from iter_7 (index.html title 'Emergent | Fullstack App', missing data-testid='leaderboard-table' on /peli, 'LAST SPIKE' vs 'LATEST SPIKE' copy) still untouched — confirm with PM if these matter."
+}

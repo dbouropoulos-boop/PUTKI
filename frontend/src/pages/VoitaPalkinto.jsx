@@ -157,6 +157,8 @@ const PlaceholderGame = ({ onWin }) => {
 const VoitaPalkinto = () => {
   const { lang } = useLang();
   const [templateId, setTemplateId] = useState(null);
+  const [loaderUrl, setLoaderUrl] = useState(null);
+  const [brandKey, setBrandKey] = useState(null);
   const [winRecord, setWinRecord] = useState(() => {
     const v = getCookie(VISITOR_COOKIE);
     if (!v) return null;
@@ -173,9 +175,27 @@ const VoitaPalkinto = () => {
       .then((r) => r.ok ? r.json() : {})
       .then((d) => {
         if (d.smartico_template_id) setTemplateId(d.smartico_template_id);
+        if (d.smartico_loader_url) setLoaderUrl(d.smartico_loader_url);
+        if (d.smartico_brand_key) setBrandKey(d.smartico_brand_key);
       })
       .catch(() => {});
   }, []);
+
+  // Inject Smartico SDK loader once both template_id and loader_url are set.
+  // The Smartico SDK auto-discovers the #smartico-visitor-mode div via data-template-id.
+  useEffect(() => {
+    if (!templateId || !loaderUrl) return;
+    if (document.querySelector(`script[data-mittari-smartico="1"]`)) return;
+    const s = document.createElement('script');
+    s.src = loaderUrl;
+    s.async = true;
+    s.dataset.mittariSmartico = '1';
+    if (brandKey) s.dataset.smarticoBrandKey = brandKey;
+    document.body.appendChild(s);
+    return () => {
+      try { document.body.removeChild(s); } catch {}
+    };
+  }, [templateId, loaderUrl, brandKey]);
 
   const persistWin = (payload) => {
     setCookie(VISITOR_COOKIE, payload.visitor_win_uuid, COOKIE_DAYS);

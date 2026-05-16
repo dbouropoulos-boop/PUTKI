@@ -16,6 +16,8 @@ const BackOffice = () => {
   const [authError, setAuthError] = useState('');
   const [telegram, setTelegram] = useState('');
   const [smarticoTemplate, setSmarticoTemplate] = useState('');
+  const [smarticoLoaderUrl, setSmarticoLoaderUrl] = useState('');
+  const [smarticoBrandKey, setSmarticoBrandKey] = useState('');
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -43,6 +45,8 @@ const BackOffice = () => {
       const d = await r.json();
       setTelegram(d.telegram_channel || '');
       setSmarticoTemplate(d.smartico_template_id || '');
+      setSmarticoLoaderUrl(d.smartico_loader_url || '');
+      setSmarticoBrandKey(d.smartico_brand_key || '');
       setAuthed(true);
       try { localStorage.setItem('mittari-admin-token', tk); } catch {}
     } catch (e) {
@@ -69,6 +73,8 @@ const BackOffice = () => {
         body: JSON.stringify({
           telegram_channel: telegram.trim() || null,
           smartico_template_id: smarticoTemplate.trim() || null,
+          smartico_loader_url: smarticoLoaderUrl.trim() || null,
+          smartico_brand_key: smarticoBrandKey.trim() || null,
         }),
       });
       if (!r.ok) throw new Error('Save failed');
@@ -179,6 +185,45 @@ const BackOffice = () => {
             <p className="font-serif mt-2" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
               The template_id Smartico provides after Visitor Mode setup. When set, <code>/voita-palkinto</code>
               swaps the placeholder spin-wheel for the real Smartico embed. Leave empty to keep the placeholder.
+            </p>
+          </div>
+
+          <div>
+            <label className="mono" style={{ fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', fontWeight: 600 }}>
+              SMARTICO LOADER SCRIPT URL
+            </label>
+            <input
+              type="text"
+              value={smarticoLoaderUrl}
+              onChange={(e) => setSmarticoLoaderUrl(e.target.value)}
+              data-testid="back-office-smartico-loader-input"
+              placeholder="https://cdn.smartico.ai/loader/your-brand.js"
+              className="mono w-full mt-2"
+              style={{ padding: '14px 16px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 13, letterSpacing: '0.04em' }}
+            />
+            <p className="font-serif mt-2" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+              Once both <em>template_id</em> and <em>loader URL</em> are set, the Smartico SDK is injected on
+              <code> /voita-palkinto</code> and the embed div is auto-discovered. Leave empty to keep the static
+              embed div without SDK initialization.
+            </p>
+          </div>
+
+          <div>
+            <label className="mono" style={{ fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', fontWeight: 600 }}>
+              SMARTICO BRAND KEY (OPTIONAL)
+            </label>
+            <input
+              type="text"
+              value={smarticoBrandKey}
+              onChange={(e) => setSmarticoBrandKey(e.target.value)}
+              data-testid="back-office-smartico-brand-input"
+              placeholder="weezybet-fi"
+              className="mono w-full mt-2"
+              style={{ padding: '14px 16px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 13, letterSpacing: '0.04em' }}
+            />
+            <p className="font-serif mt-2" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+              Optional Smartico brand key — passed as a <code>data-smartico-brand-key</code> attribute on the
+              loader script tag.
             </p>
           </div>
 

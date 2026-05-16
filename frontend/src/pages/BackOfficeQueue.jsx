@@ -308,6 +308,79 @@ const GuidelinesPanel = ({ token, onClose }) => {
   );
 };
 
+const SignalPipelineStatus = ({ token }) => {
+  const [data, setData] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const refresh = useCallback(async () => {
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/signals?limit=200`, { headers: { 'X-Admin-Token': token } });
+      if (!r.ok) return;
+      setData(await r.json());
+    } catch {}
+  }, [token]);
+
+  useEffect(() => {
+    refresh();
+    const id = setInterval(refresh, 30000);
+    return () => clearInterval(id);
+  }, [refresh]);
+
+  const triggerPoll = async () => {
+    setBusy(true);
+    try {
+      await fetch(`${BACKEND}/api/admin/signals/poll`, { method: 'POST', headers: { 'X-Admin-Token': token } });
+      await refresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!data) return null;
+  const { signals = [], counts = {} } = data;
+  const sources = ['twitch', 'kick', 'youtube', 'forum', 'sports', 'internal'];
+  const liveByCat = sources.reduce((acc, src) => {
+    const recent = signals.filter((s) => s.source === src);
+    const real = recent.filter((s) => !s.mocked).length;
+    acc[src] = { total: counts[src] || 0, recent: recent.length, real, mocked: recent.length - real };
+    return acc;
+  }, {});
+
+  return (
+    <div className="panel p-5 mb-5" data-testid="signal-pipeline-status">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div className="eyebrow inline-flex items-center gap-2">
+          <span className="led" style={{ background: '#5A7BB8' }} /> SIGNAL PIPELINE · LIVE
+        </div>
+        <button onClick={triggerPoll} disabled={busy} className="btn-ghost" data-testid="signal-pipeline-poll">
+          {busy ? 'POLLING…' : 'FORCE POLL →'}
+        </button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {sources.map((src) => {
+          const c = liveByCat[src];
+          const isLive = c.real > 0;
+          const isMockedOnly = c.recent > 0 && c.real === 0;
+          const color = isLive ? '#3B7A57' : isMockedOnly ? '#7A7E83' : '#3B3F44';
+          return (
+            <div key={src} className="panel" style={{ padding: '12px 14px', borderColor: color }} data-testid={`signal-source-${src}`}>
+              <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.18em', color, fontWeight: 700 }}>
+                {src.toUpperCase()}{isMockedOnly && ' · MOCKED'}{isLive && ' · LIVE'}
+              </div>
+              <div className="mono mt-1" style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--ink)' }}>
+                {c.recent}
+              </div>
+              <div className="mono mt-1" style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }}>
+                {c.real} REAL · {c.mocked} MOCK · {c.total} TOTAL
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const BackOfficeQueue = () => {
   const [token, setToken] = useToken();
   const [authed, setAuthed] = useState(false);
@@ -438,6 +511,8 @@ const BackOfficeQueue = () => {
         </div>
 
         <GenerateForm token={token} onGenerated={onGenerated} contentTypes={contentTypes} />
+
+        <SignalPipelineStatus token={token} />
 
         <div className="flex items-baseline justify-between mb-3 mt-7">
           <div className="eyebrow">{statusFilter.toUpperCase()} · {items.length}</div>
