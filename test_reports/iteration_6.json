@@ -1,0 +1,53 @@
+{
+  "summary": "Phase 2.6 Batch A end-to-end testing. Backend pytest 32/32 PASS (3 new TestSmarticoTemplateId tests added to test_mittari_api.py + 17 prior + 12 game-score regression). Frontend: Topi removal verified on /viikon-kortti (no 'Topin'/'Topi byline'; 'Mittarin toimitus' bylines; Sanna_R card present) and on home (no 'Topin' in any case; 'MITTARIN VIIKON KORTTI' eyebrow renders FI). International streamer page /striimaajat/kansainvaliset renders intl-streamers-page + 4 country tabs with correct counts (global 4 / swedish 2 / dutch 2 / norwegian 1). Tab switching works: swedish→SweetFlips/MattiSlots, dutch→NederGaming/Halper-nl, norwegian→'Lisätään myöhemmin'/'Coming soon' placeholder. Cards have intl-streamer-{slug} testids + intl-iso-{slug} badges. Scene blurbs render per active tab. Back link navigates to /striimaajat where new streamer-index-intl-link button exists ('BROWSE THE INTERNATIONAL SCENE →'). ActivityFeed scene toggle visible on home with intl tab swap (Roshtein/Trainwreck/NederGaming/Halper-nl + GLOBAL labels + 'KANSAINVÄLINEN SKENE · EI SYÖTÄ SUOMEN P*RKELE-MITTARIA' footer). MISSASIT EILEN 3-state toggle works (suomi/intl/all all render correct grids; intl shows Roshtein €124,800 etc; all combines both). Voita Palkinto win flow PASS: visitor-placeholder-game→visitor-spin-btn→~5s wait→visitor-win-modal with claim+close→cookie mittari_weezy_visitor_uuid set in document.cookie AND localStorage→reload shows visitor-claim-prompt+visitor-uuid+visitor-claim-cta. Back-office Smartico flow PASS: back-office-smartico-input present; saving tpl id 'tpl-test-from-ui-001' propagates to /api/settings/public; /voita-palkinto swaps to smartico-embed wrapper containing inner div#smartico-visitor-mode[data-template-id=tpl-test-from-ui-001]; clearing tpl restores placeholder. Toimitus page /toimitus renders toimitus-page + INDEPENDENCE/CORRECTIONS/CONTACT + 'to be announced' + toimitus-method-link. games-section + games-section-state-hot banner ('MITTARI · KUUMA — ACTION MODE, RALLY UP TOP') with both minigame-teaser & visitor-teaser rendering (CSS grid lays them side-by-side at same Y in viewport, but DOM order has minigame-teaser first — see note). Header nav-link-voita-palkinto present FI='VOITA PALKINTO' EN='WIN A PRIZE' + mobile-nav-link-voita-palkinto. StreamerProfile jarttu84 commentary contains 'Mittari', no 'Topi'. Bilingual FI/EN toggle works. ZERO console errors on home.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": {
+    "backend_smartico_template_id_put_get": "PASS — PUT /api/admin/settings with smartico_template_id returns 200 with both fields; GET /api/settings/public reflects both without exposing updated_at; PUT with null clears it.",
+    "backend_regression_phase2_0_2_5": "PASS — /api/dial, /api/signup, /api/predictions, /api/game-scores POST/GET/me/leaderboard all green (29 prior tests).",
+    "frontend_topi_removal_weekly": "PASS — /viikon-kortti: no 'Topin'/'Topi byline'; 'Mittarin toimitus' bylines + Sanna_R past-weeks card present.",
+    "frontend_topi_removal_home_streamerprofile": "PASS — no 'Topin'/'TOPIN' on home or /striimaajat/jarttu84. Home eyebrow 'MITTARIN VIIKON KORTTI' (FI).",
+    "frontend_intl_streamer_page": "PASS — intl-streamers-page renders; 4 tabs (global/swedish/dutch/norwegian) with counts, switching works; intl-streamer-* + intl-iso-* testids per card; scene blurbs per active tab; Norwegian shows 'Lisätään myöhemmin' / 'Coming soon' placeholder; disclaimer footer present; intl-back-link goes to /striimaajat.",
+    "frontend_streamer_index_intl_link": "PASS — streamer-index-intl-link button present on /striimaajat (EN 'BROWSE THE INTERNATIONAL SCENE →') and navigates to intl page.",
+    "frontend_activity_feed_intl_tab": "PASS — activity-feed-scene-toggle present; clicking activity-feed-tab-intl swaps feed to Roshtein/Trainwreckstv/NederGaming/Halper-nl events with GLOBAL labels; footer disclaimer changes to 'KANSAINVÄLINEN SKENE · EI SYÖTÄ SUOMEN P*RKELE-MITTARIA'.",
+    "frontend_missasit_eilen_three_state": "PASS — section, toggle, 3 tabs (suomi/intl/all) + grid testids all present. intl tab renders Roshtein €124,800; all tab combines suomi+intl.",
+    "frontend_voita_palkinto_win_flow": "PASS — placeholder game renders; spin → win modal (visitor-win-modal+claim+close); cookie 'mittari_weezy_visitor_uuid' set on document.cookie AND localStorage; reload shows visitor-claim-prompt + visitor-uuid + visitor-claim-cta (uuid displayed on page: bfba22d1-71d1-...).",
+    "frontend_back_office_smartico_swap": "PASS — back-office-smartico-input present; saving tpl id propagates to /api/settings/public; placeholder gets replaced by data-testid='smartico-embed' wrapper containing inner div#smartico-visitor-mode[data-template-id={value}]; clearing tpl restores placeholder.",
+    "frontend_toimitus_page": "PASS — toimitus-page + 'Mittarin toimitus' + 3 standards cards + 'to be announced' placeholder + toimitus-method-link.",
+    "frontend_games_section_dial_aware": "PASS — games-section + games-section-state-hot banner 'MITTARI · KUUMA — ACTION MODE, RALLY UP TOP'; both minigame-teaser & visitor-teaser render (DOM order: minigame first).",
+    "frontend_header_nav_voita_palkinto": "PASS — nav-link-voita-palkinto (FI='VOITA PALKINTO', EN='WIN A PRIZE') + mobile-nav-link-voita-palkinto in burger menu.",
+    "frontend_console_health": "PASS — 0 console errors on home (Twitch autoplay warnings on streamer profile pages are expected in headless mode per prior iterations)."
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/backend/tests/test_game_scores.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "[CARRYOVER LOW] index.html title 'Emergent | Fullstack App' + meta description still not Mittari-branded (unchanged since iteration_3).",
+    "[CARRYOVER LOW from iter_5] data-testid='leaderboard-table' aggregate wrapper still missing on /peli (only leaderboard-row-1..10 exist). Non-blocking."
+  ],
+  "critical_code_review_comments": [
+    "Backend SettingsPayload + _get_settings_doc correctly handle smartico_template_id alongside telegram_channel — both fields optional, null-clears work, no _id leak.",
+    "Frontend VoitaPalkinto correctly nests inner id='smartico-visitor-mode' div with data-template-id={templateId} inside the data-testid='smartico-embed' wrapper — matches contract from brief.",
+    "Cookie persistence on /voita-palkinto: both document.cookie 'mittari_weezy_visitor_uuid' and localStorage key set on win — survives reload and reveals visitor-claim-prompt branch correctly.",
+    "Three-state MISSASIT EILEN filter implemented cleanly with intl/all variants — INTL_MOMENTS dataset includes Roshtein €124,800 and others as specified.",
+    "ActivityFeed scene toggle hot-swaps feed source between useActivityFeed (FI) and useIntlActivityFeed (intl) with appropriate footer disclaimer per tab.",
+    "Intl streamer page uses tab-scoped scene blurb pattern (only the active blurb is rendered) — clean implementation, matches per-tab testid contract.",
+    "Topi removal is comprehensive — verified absent from /viikon-kortti, home, and /striimaajat/jarttu84 commentary."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mittari_api.py (added TestSmarticoTemplateId class — 3 new tests)"
+  ],
+  "success_rate": {"backend": "100% (32/32 pytest)", "frontend": "100% — all 16 brief checks pass"},
+  "test_credentials": "Back-office admin token: mittari-admin (X-Admin-Token header). /voita-palkinto visitor cookie key: mittari_weezy_visitor_uuid (also in localStorage). Game scores cookie_id: localStorage 'mittari_cookie_id'.",
+  "seed_data_creation": "1 admin settings doc updated/cleared during testing (final state: telegram_channel=null, smartico_template_id=null — left clean for next agent). Game-scores rows from prior iteration still present.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 2.6 Batch A fully landed. All testids verified per brief: intl-streamers-page, intl-tab-{global|swedish|dutch|norwegian}, intl-streamer-{slug}, intl-iso-{slug}, intl-scene-blurb-{tab} (active-only), intl-back-link, streamer-index-intl-link, activity-feed-scene-toggle, activity-feed-tab-{suomi|intl}, missasit-eilen-section, missasit-eilen-toggle, missasit-eilen-tab-{suomi|intl|all}, missasit-eilen-grid, games-section, games-section-state-hot, minigame-teaser, visitor-teaser, voita-palkinto-page, visitor-placeholder-game, visitor-spin-btn, visitor-win-modal, visitor-modal-claim, visitor-modal-close, visitor-claim-prompt, visitor-uuid, visitor-claim-cta, visitor-cross-rally, smartico-embed (wraps inner div#smartico-visitor-mode[data-template-id]), toimitus-page, toimitus-method-link, back-office-smartico-input, nav-link-voita-palkinto, mobile-nav-link-voita-palkinto. To reset visitor for fresh testing: localStorage.removeItem('mittari_weezy_visitor_uuid') + clear document.cookie. CURRENT_DIAL is KUUMA → games-section-state-hot is active variant. Banner system is OUT OF SCOPE this iteration (Batch B next session).",
+  "rca_of_the_issue": "N/A — no blocking issues found. All Phase 2.6 Batch A features ship per brief."
+}

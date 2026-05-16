@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy } from 'lucide-react';
+import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucide-react';
 import DialCockpit from '../components/DialCockpit';
 import MomentCard from '../components/MomentCard';
 import { OperatorTeaserCard } from '../components/OperatorCard';
@@ -11,7 +11,7 @@ import { SocialProofTicker } from '../components/SocialProofTicker';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
 import ShareButton from '../components/ShareButton';
 import DialHistoryMiniChart from '../components/DialHistoryMiniChart';
-import { OPERATORS, MOMENTS, CURRENT_DIAL, DIAL_STATES, STREAMERS } from '../data/mock';
+import { OPERATORS, MOMENTS, INTL_MOMENTS, CURRENT_DIAL, DIAL_STATES, STREAMERS } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
 
 const isHotState = (state) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(state);
@@ -33,6 +33,69 @@ const MISSED_EN = [
   { id: 'me1', streamer: 'Korpisoturi', game: 'Money Train 4',  intensity: 'MYRSKY', win: '€24,800', headline: 'Korpisoturi pulled an all-nighter — finished at 4 AM.', body: 'You slept, he won. Eight-hour session, €24,800 in those eight hours.', source: 'Twitch · 04:12', operator: 'tilttarkka', operatorName: 'Tilttarkka' },
   { id: 'me2', streamer: 'Slotsband',   game: 'Razor Returns',    intensity: 'KUUMA',  win: '€7,400',  headline: 'Slotsband: a quiet night, bigger than it looked.', body: 'The clip didn\u2019t go viral on social — so Mittari surfaces it here.', source: 'Twitch · 22:47', operator: 'castcasino', operatorName: 'Cast Casino' },
 ];
+
+// MISSASIT EILEN — three-state filter (SUOMI / KANSAINVÄLINEN / KAIKKI) per Phase 2.6 brief.
+// Default to SUOMI to protect the Finnish-core editorial focus on the homepage.
+const MissasitEilenSection = ({ lang, fiCards }) => {
+  const [scene, setScene] = useState('suomi'); // 'suomi' | 'intl' | 'all'
+  const cards = scene === 'suomi'
+    ? fiCards
+    : scene === 'intl'
+      ? INTL_MOMENTS.slice(0, 4)
+      : [...fiCards, ...INTL_MOMENTS.slice(0, 4)];
+
+  return (
+    <section
+      className="py-12 sm:py-14"
+      style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
+      data-testid="missasit-eilen-section"
+    >
+      <div className="container-wide">
+        <div className="flex items-baseline justify-between mb-7 gap-3 flex-wrap">
+          <div>
+            <div className="eyebrow mb-2">{lang === 'en' ? 'WHAT YOU MISSED · LAST 24 H' : 'MISSASIT EILEN · 24 H'}</div>
+            <h2 className="display text-2xl sm:text-3xl">
+              {lang === 'en' ? 'Mittari noticed these while you were away' : 'Mittari huomasi nämä poissaolossasi'}
+            </h2>
+          </div>
+          {/* Three-state scene filter */}
+          <div
+            className="inline-flex items-stretch rounded-[3px] overflow-hidden"
+            style={{ border: '1px solid var(--border-strong)' }}
+            data-testid="missasit-eilen-toggle"
+          >
+            {[
+              { k: 'suomi', fi: 'SUOMI',          en: 'FINNISH' },
+              { k: 'intl',  fi: 'KANSAINVÄLINEN', en: 'INTERNATIONAL' },
+              { k: 'all',   fi: 'KAIKKI',         en: 'ALL' },
+            ].map((opt) => (
+              <button
+                key={opt.k}
+                type="button"
+                onClick={() => setScene(opt.k)}
+                data-testid={`missasit-eilen-tab-${opt.k}`}
+                className="mono"
+                style={{
+                  padding: '8px 14px', fontSize: 10.5, letterSpacing: '0.16em', fontWeight: 700,
+                  background: scene === opt.k ? 'var(--ink)' : 'transparent',
+                  color: scene === opt.k ? 'var(--bg)' : 'var(--muted)',
+                  transition: 'background 200ms ease, color 200ms ease',
+                }}
+              >
+                {lang === 'en' ? opt.en : opt.fi}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8" data-testid="missasit-eilen-grid">
+          {cards.map((m) => (
+            <MomentCard key={m.id} moment={m} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
 
 const HeroCapture = () => {
   const { t, lang } = useLang();
@@ -210,24 +273,8 @@ const Home = () => {
       {/* LIVE TILES GRID — new conversion engine */}
       <LiveTilesGrid />
 
-      {/* MISSASIT EILEN — auto-cards from prev 24h */}
-      <section className="py-12 sm:py-14" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <div className="container-wide">
-          <div className="flex items-baseline justify-between mb-7">
-            <div>
-              <div className="eyebrow mb-2">{lang === 'en' ? 'WHAT YOU MISSED · LAST 24 H' : 'MISSASIT EILEN · 24 H'}</div>
-              <h2 className="display text-2xl sm:text-3xl">
-                {lang === 'en' ? 'Mittari noticed these while you were away' : 'Mittari huomasi nämä poissaolossasi'}
-              </h2>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-            {missed.map((m) => (
-              <MomentCard key={m.id} moment={m} />
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* MISSASIT EILEN — auto-cards from prev 24h, with SUOMI/KANSAINVÄLINEN/KAIKKI filter */}
+      <MissasitEilenSection lang={lang} fiCards={missed} />
 
       {/* MOMENTS — "Mittari poimi nämä" */}
       <section className="py-12 sm:py-20" style={{ borderTop: '1px solid var(--border)' }}>
@@ -270,55 +317,139 @@ const Home = () => {
         </div>
       </section>
 
-      {/* RALLY + WEEKLY */}
-      <section className="py-12 sm:py-20" style={{ borderTop: '1px solid var(--border)' }}>
-        <div className="container-wide grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-          <Link to="/peli" className="block relative overflow-hidden panel panel-hover group" style={{ minHeight: 360 }} data-testid="minigame-teaser">
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #141414 50%, #1F1F1F 100%)' }} />
-            <div className="absolute inset-0 opacity-40" style={{ background: 'radial-gradient(ellipse at 80% 30%, rgba(232,146,74,0.18) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(90,123,184,0.16) 0%, transparent 55%)' }} />
-            <div className="absolute inset-0 opacity-30" style={{
-              background: 'radial-gradient(circle at 15% 25%, #F5F3EE 1px, transparent 1.5px), radial-gradient(circle at 75% 65%, #F5F3EE 1px, transparent 1.5px), radial-gradient(circle at 45% 85%, #F5F3EE 1px, transparent 1.5px), radial-gradient(circle at 85% 15%, #F5F3EE 1px, transparent 1.5px)',
-              backgroundSize: '120px 120px, 180px 180px, 220px 220px, 90px 90px',
-            }} />
-            <div className="relative p-7 sm:p-10 flex flex-col h-full" style={{ minHeight: 360, color: '#F5F3EE' }}>
-              <div className="mono mb-3" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'rgba(245,243,238,0.55)', fontWeight: 600 }}>
-                {t('home.rally_eyebrow')}
-              </div>
-              <h3 className="display text-4xl sm:text-5xl mb-3" style={{ color: '#F5F3EE' }}>500€ Weezybet</h3>
-              <div className="mono mb-7" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'rgba(245,243,238,0.7)', fontWeight: 500 }}>{t('home.rally_terms')}</div>
-              <div className="mt-auto">
-                <div className="inline-flex items-center gap-3 px-4 py-2.5 mb-6" style={{ background: 'rgba(245,243,238,0.08)', borderRadius: 3, border: '1px solid rgba(245,243,238,0.14)' }}>
-                  <div>
-                    <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.22em', color: 'rgba(245,243,238,0.55)', fontWeight: 600 }}>{t('home.rally_this_week')}</div>
-                    <div className="mono mt-0.5" style={{ fontSize: 14, letterSpacing: '-0.01em', color: '#F5F3EE', fontWeight: 500 }}>{t('home.rally_stats')}</div>
-                  </div>
-                </div>
-                <span className="inline-flex items-center justify-center mono" style={{ background: '#F5F3EE', color: '#0A0A0A', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600, padding: '14px 22px', borderRadius: 4 }}>
-                  {t('btn.play_round')}
-                </span>
-              </div>
-            </div>
-          </Link>
-
-          <Link to="/viikon-kortti" className="panel panel-hover block p-7 sm:p-10 flex flex-col" style={{ minHeight: 360 }} data-testid="weeklycard-teaser">
-            <div className="mono mb-3" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>{t('home.weekly_eyebrow')}</div>
-            <h3 className="display text-2xl sm:text-3xl mb-4 leading-tight" style={{ color: 'var(--ink)' }}>{t('home.weekly_headline')}</h3>
-            <div className="mono mb-6" style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)', fontWeight: 500 }}>{t('home.weekly_sub')}</div>
-            <div className="mt-auto">
-              <div className="flex flex-wrap gap-2 mb-7">
-                {['Tappara — TPS', 'Carolina — Florida', 'F1 Monza', 'Liverpool — Arsenal', 'HJK — KuPS'].map((f) => (
-                  <span key={f} className="mono" style={{ fontSize: 11, letterSpacing: '0.06em', padding: '6px 10px', border: '1px solid var(--border-strong)', borderRadius: 3, color: 'var(--ink)', fontWeight: 500 }}>{f}</span>
-                ))}
-              </div>
-              <span className="btn-ghost group-hover:text-brand-blue">
-                <Trophy strokeWidth={1.5} size={14} className="mr-2" />
-                {t('btn.read_full_card')}
-              </span>
-            </div>
-          </Link>
-        </div>
-      </section>
+      {/* RALLY + WEEKLY (dial-state-aware game emphasis per Phase 2.6 brief) */}
+      <GamesSection state={state} t={t} lang={lang} />
     </div>
+  );
+};
+
+// Cross-promotion logic: KUUMA/MYRSKY/KIIRASTULI → Weezy Rally tile prominent (action mood);
+// KYLMÄ/HAALEA → Voita Palkinto tile prominent (low-action, "play once, claim" simplicity).
+const GamesSection = ({ state, t, lang }) => {
+  const isHot = ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(state);
+  const rallyTile = (
+    <Link
+      to="/peli"
+      className="block relative overflow-hidden panel panel-hover group"
+      style={{ minHeight: 360 }}
+      data-testid="minigame-teaser"
+    >
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #141414 50%, #1F1F1F 100%)' }} />
+      <div className="absolute inset-0 opacity-40" style={{ background: 'radial-gradient(ellipse at 80% 30%, rgba(232,146,74,0.18) 0%, transparent 50%), radial-gradient(ellipse at 20% 80%, rgba(90,123,184,0.16) 0%, transparent 55%)' }} />
+      <div className="absolute inset-0 opacity-30" style={{
+        background: 'radial-gradient(circle at 15% 25%, #F5F3EE 1px, transparent 1.5px), radial-gradient(circle at 75% 65%, #F5F3EE 1px, transparent 1.5px), radial-gradient(circle at 45% 85%, #F5F3EE 1px, transparent 1.5px), radial-gradient(circle at 85% 15%, #F5F3EE 1px, transparent 1.5px)',
+        backgroundSize: '120px 120px, 180px 180px, 220px 220px, 90px 90px',
+      }} />
+      <div className="relative p-7 sm:p-10 flex flex-col h-full" style={{ minHeight: 360, color: '#F5F3EE' }}>
+        <div className="mono mb-3" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'rgba(245,243,238,0.55)', fontWeight: 600 }}>
+          {t('home.rally_eyebrow')}
+        </div>
+        <h3 className="display text-4xl sm:text-5xl mb-3" style={{ color: '#F5F3EE' }}>500€ Weezybet</h3>
+        <div className="mono mb-7" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'rgba(245,243,238,0.7)', fontWeight: 500 }}>{t('home.rally_terms')}</div>
+        <div className="mt-auto">
+          <div className="inline-flex items-center gap-3 px-4 py-2.5 mb-6" style={{ background: 'rgba(245,243,238,0.08)', borderRadius: 3, border: '1px solid rgba(245,243,238,0.14)' }}>
+            <div>
+              <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.22em', color: 'rgba(245,243,238,0.55)', fontWeight: 600 }}>{t('home.rally_this_week')}</div>
+              <div className="mono mt-0.5" style={{ fontSize: 14, letterSpacing: '-0.01em', color: '#F5F3EE', fontWeight: 500 }}>{t('home.rally_stats')}</div>
+            </div>
+          </div>
+          <span className="inline-flex items-center justify-center mono" style={{ background: '#F5F3EE', color: '#0A0A0A', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 600, padding: '14px 22px', borderRadius: 4 }}>
+            {t('btn.play_round')}
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+
+  const visitorTile = (
+    <Link
+      to="/voita-palkinto"
+      className="block relative overflow-hidden panel panel-hover group"
+      style={{ minHeight: 360 }}
+      data-testid="visitor-teaser"
+    >
+      <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #0A0A0A 0%, #1A0F0A 60%, #2D1810 100%)' }} />
+      <div className="absolute inset-0 opacity-50" style={{ background: 'radial-gradient(ellipse at 70% 30%, rgba(232,146,74,0.32) 0%, transparent 55%), radial-gradient(circle at 25% 80%, rgba(200,66,60,0.18) 0%, transparent 50%)' }} />
+      <div className="relative p-7 sm:p-10 flex flex-col h-full" style={{ minHeight: 360, color: '#F5F3EE' }}>
+        <div className="mono mb-3 inline-flex items-center gap-2" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'rgba(245,243,238,0.55)', fontWeight: 600 }}>
+          <Gift strokeWidth={1.5} size={12} />
+          {lang === 'en' ? 'WIN A PRIZE · ONE SPIN' : 'VOITA PALKINTO · YKSI PYÖRÄYTYS'}
+        </div>
+        <h3 className="display text-4xl sm:text-5xl mb-3" style={{ color: '#F5F3EE' }}>
+          {lang === 'en' ? 'Free spin. Claim at Weezybet.' : 'Ilmainen kierros. Lunasta Weezybetissä.'}
+        </h3>
+        <div className="mono mb-7" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'rgba(245,243,238,0.7)', fontWeight: 500 }}>
+          {lang === 'en' ? 'NO DEPOSIT · NO CARD · 18+' : 'EI TALLETUSTA · EI KORTTIA · 18+'}
+        </div>
+        <div className="mt-auto">
+          <div className="mono mb-6" style={{ fontSize: 11.5, letterSpacing: '0.04em', color: 'rgba(245,243,238,0.85)', fontWeight: 500, lineHeight: 1.5 }}>
+            {lang === 'en'
+              ? 'Every spin wins. Pick up your prize on a brand-new Weezybet account in five minutes.'
+              : 'Jokainen pyöräytys voittaa. Lunasta palkinto uudella Weezybet-tilillä viidessä minuutissa.'}
+          </div>
+          <span className="inline-flex items-center gap-2 mono" style={{ background: '#E8924A', color: '#0A0A0A', fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700, padding: '14px 22px', borderRadius: 4 }}>
+            {lang === 'en' ? 'PLAY NOW' : 'PELAA NYT'} <ArrowRight strokeWidth={1.7} size={14} />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+
+  const weeklyTile = (
+    <Link to="/viikon-kortti" className="panel panel-hover block p-7 sm:p-10 flex flex-col" style={{ minHeight: 360 }} data-testid="weeklycard-teaser">
+      <div className="mono mb-3" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>{t('home.weekly_eyebrow')}</div>
+      <h3 className="display text-2xl sm:text-3xl mb-4 leading-tight" style={{ color: 'var(--ink)' }}>{t('home.weekly_headline')}</h3>
+      <div className="mono mb-6" style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)', fontWeight: 500 }}>{t('home.weekly_sub')}</div>
+      <div className="mt-auto">
+        <div className="flex flex-wrap gap-2 mb-7">
+          {['Tappara — TPS', 'Carolina — Florida', 'F1 Monza', 'Liverpool — Arsenal', 'HJK — KuPS'].map((f) => (
+            <span key={f} className="mono" style={{ fontSize: 11, letterSpacing: '0.06em', padding: '6px 10px', border: '1px solid var(--border-strong)', borderRadius: 3, color: 'var(--ink)', fontWeight: 500 }}>{f}</span>
+          ))}
+        </div>
+        <span className="btn-ghost group-hover:text-brand-blue">
+          <Trophy strokeWidth={1.5} size={14} className="mr-2" />
+          {t('btn.read_full_card')}
+        </span>
+      </div>
+    </Link>
+  );
+
+  return (
+    <section
+      className="py-12 sm:py-20"
+      style={{ borderTop: '1px solid var(--border)' }}
+      data-testid="games-section"
+    >
+      <div className="container-wide">
+        {/* Dial-state awareness banner */}
+        <div
+          className="mono mb-6 inline-flex items-center gap-2"
+          style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}
+          data-testid={`games-section-state-${isHot ? 'hot' : 'cold'}`}
+        >
+          <span className="led" style={{ background: isHot ? '#E8924A' : '#5A7BB8' }} />
+          {isHot
+            ? (lang === 'en' ? `MITTARI · ${state} — ACTION MODE, RALLY UP TOP` : `MITTARI · ${state} — TOIMINTATILA, RALLY KÄRJESSÄ`)
+            : (lang === 'en' ? `MITTARI · ${state} — QUIET HOUR, FREE SPIN UP TOP` : `MITTARI · ${state} — HILJAINEN HETKI, ILMAISKIERROS KÄRJESSÄ`)}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+          {isHot ? (
+            <>
+              {rallyTile}
+              {visitorTile}
+            </>
+          ) : (
+            <>
+              {visitorTile}
+              {rallyTile}
+            </>
+          )}
+        </div>
+        <div className="mt-6">
+          {weeklyTile}
+        </div>
+      </div>
+    </section>
   );
 };
 

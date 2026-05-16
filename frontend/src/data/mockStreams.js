@@ -163,6 +163,82 @@ export const useActivityFeed = (max = 12) => {
   return events;
 };
 
+// ─────────────── Phase 2.6 — international scene activity feed ───────────────
+// Same generator shape but pulls international streamer/game/operator names.
+const INTL_STREAMER_NAMES = [
+  'Roshtein', 'Trainwreckstv', 'Classybeef', 'CasinoDaddy', 'SweetFlips', 'NederGaming', 'Halper-nl',
+];
+const INTL_OPERATORS = ['Stake', 'Roobet', 'BC.Game', 'Toaster.bet', 'Rollbit', 'TonyBet'];
+const INTL_FORUMS = ['Reddit r/onlinegambling', 'Twitter #slots', 'Discord global slots', 'Kick chat'];
+
+const generateIntlEvent = () => {
+  const types = ['streamer-live', 'big-win', 'big-win', 'jackpot-hit', 'forum-heat-spike'];
+  const type = pick(types);
+  const id = `intl-${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  const ts = new Date();
+  const fmt = (n) => '€' + Math.round(n).toLocaleString('en-US');
+
+  switch (type) {
+    case 'streamer-live': {
+      const name = pick(INTL_STREAMER_NAMES);
+      return { id, type, ts, icon: 'live', color: '#C8423C',
+        labelFi: 'KANSAINVÄLINEN · LIVE', labelEn: 'INTERNATIONAL · LIVE',
+        primaryFi: `${name} aloitti striimin`, primaryEn: `${name} just went live`,
+        secondaryFi: pick(GAMES), secondaryEn: pick(GAMES) };
+    }
+    case 'big-win': {
+      const name = pick(INTL_STREAMER_NAMES);
+      const amt = fmt(Math.random() * 80000 + 4000);
+      return { id, type, ts, icon: 'win', color: '#E8924A',
+        labelFi: 'ISO VOITTO · GLOBAL', labelEn: 'BIG WIN · GLOBAL',
+        primaryFi: `${name} osui — ${amt}`, primaryEn: `${name} hit ${amt}`,
+        secondaryFi: pick(GAMES), secondaryEn: pick(GAMES) };
+    }
+    case 'jackpot-hit': {
+      const op = pick(INTL_OPERATORS);
+      const amt = fmt(Math.random() * 220000 + 40000);
+      return { id, type, ts, icon: 'jackpot', color: '#8B1E1A',
+        labelFi: 'JACKPOT · GLOBAL', labelEn: 'JACKPOT · GLOBAL',
+        primaryFi: `${op} jakoi ${amt}`, primaryEn: `${op} paid out ${amt}`,
+        secondaryFi: 'Sattui pelaajalle', secondaryEn: 'Random player' };
+    }
+    case 'forum-heat-spike':
+    default: {
+      const f = pick(INTL_FORUMS);
+      const topic = pick(['Roshtein clip', 'Trainwreck stake', 'Classybeef marathon', 'Sweet Bonanza max', 'Stake giveaway']);
+      return { id, type, ts, icon: 'heat', color: '#E8924A',
+        labelFi: 'FOORUMI · GLOBAL', labelEn: 'FORUM · GLOBAL',
+        primaryFi: `${topic} nousi ${f}`, primaryEn: `${topic} trending on ${f}`,
+        secondaryFi: `+${Math.round(Math.random() * 600 + 120)} viestiä 30 min`, secondaryEn: `+${Math.round(Math.random() * 600 + 120)} posts in 30 min` };
+    }
+  }
+};
+
+const seedIntl = () => {
+  const arr = [];
+  for (let i = 0; i < 5; i++) {
+    const e = generateIntlEvent();
+    e.ts = new Date(Date.now() - (i * 90_000 + Math.random() * 60_000));
+    arr.push(e);
+  }
+  return arr;
+};
+
+export const useIntlActivityFeed = (max = 9) => {
+  const [events, setEvents] = useState(seedIntl);
+  useEffect(() => {
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled) return;
+      setEvents((prev) => [generateIntlEvent(), ...prev].slice(0, max));
+      timer = setTimeout(tick, 12000 + Math.random() * 18000);
+    };
+    let timer = setTimeout(tick, 6500);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [max]);
+  return events;
+};
+
 // ─────────────── Live counters (subscribers, watchers, forum heat) ───────────────
 
 export const useLiveCounters = (initial = { subs: 4283, watchers: 217, heat: 64 }) => {
@@ -183,7 +259,7 @@ export const useLiveCounters = (initial = { subs: 4283, watchers: 217, heat: 64 
 // ─────────────── Signup toasts (Finnish names + cities) ───────────────
 
 const FI_NAMES = [
-  'Antti', 'Jukka', 'Sanna', 'Mikko', 'Kaisa', 'Topi', 'Veera', 'Janne',
+  'Antti', 'Jukka', 'Sanna', 'Mikko', 'Kaisa', 'Eemeli', 'Veera', 'Janne',
   'Heikki', 'Lilja', 'Petri', 'Saara', 'Tuomas', 'Anni', 'Markus', 'Eveliina',
   'Otso', 'Ville', 'Henna', 'Ilkka',
 ];

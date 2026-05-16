@@ -137,14 +137,24 @@ export const MomentCard = ({ moment, featured = false }) => {
               }}
               dataTestId={`moment-share-${moment.id}`}
             />
-            <Link
-              to={`/kasinot/${moment.operator}`}
-              className="mono"
-              style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--brand-blue)', fontWeight: 600 }}
-              data-testid={`moment-operator-link-${moment.id}`}
-            >
-              {moment.operatorName.toUpperCase()} →
-            </Link>
+            {moment.operator ? (
+              <Link
+                to={`/kasinot/${moment.operator}`}
+                className="mono"
+                style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--brand-blue)', fontWeight: 600 }}
+                data-testid={`moment-operator-link-${moment.id}`}
+              >
+                {moment.operatorName.toUpperCase()} →
+              </Link>
+            ) : moment.scene ? (
+              <span
+                className="mono"
+                style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700 }}
+                data-testid={`moment-scene-${moment.id}`}
+              >
+                {moment.scene === 'global' ? 'INTL' : moment.scene === 'swedish' ? 'SWE' : moment.scene === 'dutch' ? 'NLD' : 'NOR'}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>

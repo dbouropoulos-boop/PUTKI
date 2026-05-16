@@ -217,3 +217,57 @@ class TestSiteSettings:
         assert r.json()["telegram_channel"] is None
         rp = session.get(f"{API}/settings/public")
         assert rp.json()["telegram_channel"] is None
+
+
+# ---------- Phase 2.6 Batch A: Smartico template id in settings ----------
+class TestSmarticoTemplateId:
+    def test_put_with_smartico_template_id(self, session):
+        payload = {
+            "telegram_channel": "https://t.me/x",
+            "smartico_template_id": "tpl-test-001",
+        }
+        r = requests.put(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"},
+            json=payload,
+        )
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["telegram_channel"] == payload["telegram_channel"]
+        assert data["smartico_template_id"] == "tpl-test-001"
+
+        # public reflects both fields, no auth
+        rp = session.get(f"{API}/settings/public")
+        assert rp.status_code == 200
+        pdata = rp.json()
+        assert pdata["telegram_channel"] == payload["telegram_channel"]
+        assert pdata["smartico_template_id"] == "tpl-test-001"
+        # Public should not leak admin metadata
+        assert "updated_at" not in pdata
+
+    def test_put_clear_smartico_template_id(self, session):
+        # set first
+        requests.put(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"},
+            json={"telegram_channel": "https://t.me/x", "smartico_template_id": "tpl-clear-me"},
+        )
+        # clear
+        r = requests.put(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"},
+            json={"telegram_channel": "https://t.me/x", "smartico_template_id": None},
+        )
+        assert r.status_code == 200
+        assert r.json()["smartico_template_id"] is None
+        rp = session.get(f"{API}/settings/public")
+        assert rp.status_code == 200
+        assert rp.json()["smartico_template_id"] is None
+
+    def test_public_settings_contains_smartico_key(self, session):
+        r = session.get(f"{API}/settings/public")
+        assert r.status_code == 200
+        data = r.json()
+        # contract: smartico_template_id key always present (value may be null)
+        assert "smartico_template_id" in data
+        assert "telegram_channel" in data

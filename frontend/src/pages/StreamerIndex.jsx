@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Globe } from 'lucide-react';
 import StreamerCard from '../components/StreamerCard';
 import { STREAMERS } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
@@ -37,6 +37,16 @@ const StreamerIndex = () => {
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
             {t('streamer.lede')}
           </p>
+          <div className="mt-5">
+            <Link
+              to="/striimaajat/kansainvaliset"
+              className="btn-secondary inline-flex items-center gap-2"
+              data-testid="streamer-index-intl-link"
+            >
+              <Globe strokeWidth={1.6} size={13} />
+              {t('streamer.intl_cta')}
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -267,7 +267,7 @@ const StreamerProfile = () => {
 
   const fmt = (n) => n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ');
 
-  // Editorial commentary (Topi voice) — name-localized
+  // Editorial commentary (institutional Mittarin toimitus voice) — name-localized
   const commentary = lang === 'en'
     ? [
         `${streamer.name} has been around long enough to know what slot streaming actually is — and it isn\u2019t shouting at every spin.`,

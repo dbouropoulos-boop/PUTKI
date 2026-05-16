@@ -8,6 +8,7 @@ export const translations = {
     'nav.streamers':   'Striimaajat',
     'nav.weekly':      'Viikon kortti',
     'nav.game':        'Peli',
+    'nav.prize':       'Voita palkinto',
     'nav.methodology': 'Menetelmä',
 
     // Common buttons / labels
@@ -72,8 +73,8 @@ export const translations = {
     'home.rally_terms':      'IMATRA · EI TALLETUSTA · EI EHTOJA',
     'home.rally_this_week':  'TÄLLÄ VIIKOLLA',
     'home.rally_stats':      '1 247 pelaajaa · paras 2:17.3',
-    'home.weekly_eyebrow':   'TOPIN VIIKON KORTTI · VKO 21',
-    'home.weekly_headline':  'Tappara on tulessa, mutta TPS:n maalivahti pelaa 4. peliä peräkkäin. Mittari sanoo: arvoa kotijoukkueessa.',
+    'home.weekly_eyebrow':   'MITTARIN VIIKON KORTTI · VKO 21',
+    'home.weekly_headline':  'Tappara on tulessa, mutta TPS:n maalivahti pelaa 4. peliä peräkkäin. Mittarin toimitus sanoo: arvoa kotijoukkueessa.',
     'home.weekly_sub':       '+ 4 MUUTA VEIKKAUSTA · 5 FIXTUREA · 5 TAKEA',
 
     // Casino ranking
@@ -118,6 +119,7 @@ export const translations = {
     'streamer.lede':         'Toimituksellinen valinta — ei kaikki, vaan ne, joiden seuraaminen kannattaa. Tier 1 ja Tier 2 -nimet, sekä uusi Kick-aalto. Päivittyy reaaliajassa.',
     'streamer.eyebrow':      'MITTARI-SEURANTA',
     'streamer.suggest':      'Ehdota striimaajaa',
+    'streamer.intl_cta':     'Selaa kansainvälistä skeneä →',
     'streamer.suggest_new':  'Uusi striimaaja seurantaan',
     'streamer.suggest_thanks_title': 'Kiitos.',
     'streamer.suggest_thanks_sub':   'Toimitus käy ehdotuksesi läpi viikon sisällä.',
@@ -206,9 +208,9 @@ export const translations = {
     'game.top10_title':      'Tämän viikon kärki',
 
     // Weekly card
-    'weekly.eyebrow':        'Topin viikon kortti · Vk 21 · {date}',
+    'weekly.eyebrow':        'Mittarin viikon kortti · Vk 21 · {date}',
     'weekly.title':          '5 fixturea, 5 takea',
-    'weekly.lede':           'Topi vetää viikon kortin Mittarin nimissä. Veikkaa lopputuloksia ja kerää pisteitä — kuukauden voittaja saa 200 € palkinnon. Ei talletusta, ei panostusta.',
+    'weekly.lede':           'Mittarin toimitus vetää viikon kortin. Veikkaa lopputuloksia ja kerää pisteitä — kuukauden voittaja saa 200 € palkinnon. Ei talletusta, ei panostusta.',
     'weekly.odds':           'Kerroin',
     'weekly.bet':            'Veikkaa',
     'weekly.submit':         'Lähetä veikkaukset →',
@@ -240,6 +242,7 @@ export const translations = {
     'nav.streamers':   'Streamers',
     'nav.weekly':      'Weekly card',
     'nav.game':        'Game',
+    'nav.prize':       'Win a prize',
     'nav.methodology': 'Method',
 
     'btn.read_review':       'Review →',
@@ -300,8 +303,8 @@ export const translations = {
     'home.rally_terms':      'IMATRA · NO DEPOSIT · NO TERMS',
     'home.rally_this_week':  'THIS WEEK',
     'home.rally_stats':      '1,247 players · best 2:17.3',
-    'home.weekly_eyebrow':   'TOPI\u2019S WEEKLY CARD · WK 21',
-    'home.weekly_headline':  'Tappara is on fire, but TPS\u2019s goalie is playing his 4th game in a row. Mittari says: value on the home side.',
+    'home.weekly_eyebrow':   'MITTARI WEEKLY CARD · WK 21',
+    'home.weekly_headline':  'Tappara is on fire, but TPS\u2019s goalie is playing his 4th game in a row. Mittari editorial says: value on the home side.',
     'home.weekly_sub':       '+ 4 MORE PICKS · 5 FIXTURES · 5 TAKES',
 
     'casino.eyebrow':        'MITTARI COMPARISON · UPDATED {date}',
@@ -343,6 +346,7 @@ export const translations = {
     'streamer.lede':         'An editorial selection — not everyone, but the ones worth following. Tier 1 and Tier 2 names plus the new Kick wave. Updates in real time.',
     'streamer.eyebrow':      'MITTARI TRACKING',
     'streamer.suggest':      'Suggest a streamer',
+    'streamer.intl_cta':     'Browse the international scene →',
     'streamer.suggest_new':  'New streamer for tracking',
     'streamer.suggest_thanks_title': 'Thanks.',
     'streamer.suggest_thanks_sub':   'The editorial team will review your suggestion within a week.',
@@ -426,9 +430,9 @@ export const translations = {
     'game.top10':            'Top 10 — Wk 21',
     'game.top10_title':      'This week\u2019s leaders',
 
-    'weekly.eyebrow':        'Topi\u2019s weekly card · Wk 21 · {date}',
+    'weekly.eyebrow':        'Mittari weekly card · Wk 21 · {date}',
     'weekly.title':          '5 fixtures, 5 takes',
-    'weekly.lede':           'Topi runs Mittari\u2019s weekly card. Pick outcomes and earn points — the month\u2019s winner takes a €200 prize. No deposit, no stake.',
+    'weekly.lede':           'Mittari editorial runs the weekly card. Pick outcomes and earn points — the month\u2019s winner takes a €200 prize. No deposit, no stake.',
     'weekly.odds':           'Odds',
     'weekly.bet':            'Pick',
     'weekly.submit':         'Submit picks →',

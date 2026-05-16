@@ -69,7 +69,7 @@ export const LEADERBOARD = [
   { rank: 1,  name: 'Mikko_84',      score: 4, points: 18 },
   { rank: 2,  name: 'KaisaP',        score: 4, points: 17 },
   { rank: 3,  name: 'Veikkari',      score: 3, points: 14 },
-  { rank: 4,  name: 'Topi',          score: 3, points: 13 },
+  { rank: 4,  name: 'Veikkari',      score: 3, points: 13 },
   { rank: 5,  name: 'Lilja92',       score: 3, points: 12 },
   { rank: 6,  name: 'Janne_K',       score: 2, points: 10 },
   { rank: 7,  name: 'Heikkinen',     score: 2, points: 9  },
@@ -82,11 +82,86 @@ export const MINIGAME_LEADERBOARD = [
   { rank: 1,  name: 'Mikko_84',  score: 18420, prize: '500€ Weezybet' },
   { rank: 2,  name: 'KaisaP',    score: 17890, prize: '250€ Weezybet' },
   { rank: 3,  name: 'Veikkari',  score: 17100, prize: '100€ Weezybet' },
-  { rank: 4,  name: 'Topi',      score: 15440, prize: '50€ FS' },
+  { rank: 4,  name: 'Antti_R',   score: 15440, prize: '50€ FS' },
   { rank: 5,  name: 'Lilja92',   score: 14920, prize: '50€ FS' },
   { rank: 6,  name: 'Janne_K',   score: 13800, prize: '25 FS' },
   { rank: 7,  name: 'Heikkinen', score: 12700, prize: '25 FS' },
   { rank: 8,  name: 'NHL_fani',  score: 11020, prize: '—' },
   { rank: 9,  name: 'Tampere_p', score: 10440, prize: '—' },
   { rank: 10, name: 'Salli',     score: 9820,  prize: '—' },
+];
+
+
+// ─────────────── Phase 2.6 — International streamer expansion ───────────────
+// Mittari covers the global slot scene without diluting Finnish identity.
+// CRITICAL: International activity DOES NOT feed the P*rkele-mittari (Finnish-only signal).
+// Each scene has its own card-tint + 3-letter ISO badge.
+
+export const INTL_SCENES = {
+  global: {
+    key: 'global',
+    labelFi: 'Globaali huippu',
+    labelEn: 'Global top',
+    blurbFi: 'Englanninkielisen slot-skenen kärkinimet — Stake-aikakauden globaalit superstarat.',
+    blurbEn: 'The English-speaking scene\u2019s top names — global superstars of the Stake era.',
+    iso: 'INTL',
+    tint: 'rgba(232, 146, 74, 0.05)',     // amber-neutral
+  },
+  swedish: {
+    key: 'swedish',
+    labelFi: 'Ruotsalaiset',
+    labelEn: 'Swedish',
+    blurbFi: 'Lähinaapurin slot-skene — pisin yhteinen historia ja kielirajan ylittävä yleisö.',
+    blurbEn: 'Sweden\u2019s slot scene — closest neighbour, longest shared history, audience overlap.',
+    iso: 'SWE',
+    tint: 'rgba(0, 102, 178, 0.06)',       // Swedish blue
+  },
+  dutch: {
+    key: 'dutch',
+    labelFi: 'Hollantilaiset',
+    labelEn: 'Dutch',
+    blurbFi: 'Hollannin KSA-säädelty slot-skene — striimaajat pelaavat ainoastaan NL-lisensoiduilla operaattoreilla. Sisältöä Suomen yleisölle, mutta affiliaattipolkua ei jaeta.',
+    blurbEn: 'Netherlands\u2019 KSA-regulated slot scene — only NL-licensed operators. Content reach for Finnish viewers; not a conversion path.',
+    iso: 'NLD',
+    tint: 'rgba(232, 113, 35, 0.06)',      // Dutch orange
+  },
+  norwegian: {
+    key: 'norwegian',
+    labelFi: 'Norjalaiset',
+    labelEn: 'Norwegian',
+    blurbFi: 'Norjan slot-skene on pieni — Norsk Tipping -monopolin vuoksi tilanne muistuttaa Suomen tilannetta ennen vuotta 2026. Lisäämme striimaajia kun skene kasvaa.',
+    blurbEn: 'Norway\u2019s slot scene is small — Norsk Tipping\u2019s monopoly mirrors Finland\u2019s pre-2026 situation. We\u2019ll add streamers as the scene grows.',
+    iso: 'NOR',
+    tint: 'rgba(186, 12, 47, 0.05)',       // Norwegian red
+  },
+};
+
+export const INTL_STREAMERS = [
+  // ── Globaali huippu ──
+  { slug: 'roshtein',       name: 'Roshtein',       platform: 'Kick',   channel: 'roshtein',       scene: 'global',  origin: 'Sverige · Malta',     live: true,  viewers: 18400, playing: 'Sweet Bonanza 1000',     photo: 'https://images.unsplash.com/photo-1606293459337-c9d6db26eb6c?w=600&h=600&fit=crop', followers: '1.1M', sub: 'Slot-striimauksen veteraani vuodelta 2016, ~500K katsottua tuntia viikossa.' },
+  { slug: 'trainwreckstv',  name: 'Trainwreckstv',  platform: 'Kick',   channel: 'trainwreckstv',  scene: 'global',  origin: 'USA',                  live: true,  viewers: 28100, playing: 'Gates of Olympus 1000',  photo: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&h=600&fit=crop', followers: '2.4M', sub: '#1 katsotuin uhkapelistreamaaja maailmassa, ~1.3M tuntia viikossa.' },
+  { slug: 'classybeef',     name: 'Classybeef',     platform: 'Kick',   channel: 'classybeef',     scene: 'global',  origin: 'Malta-kollektiivi',    live: true,  viewers: 14200, playing: 'Razor Returns',          photo: 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=600&h=600&fit=crop', followers: '900k', sub: 'Tiimiformaatti — Georgi, Jonte, Biggo, Freddy, Max, Rune, Espen.' },
+  { slug: 'casinodaddy',    name: 'CasinoDaddy',    platform: 'Twitch', channel: 'casinodaddy',    scene: 'global',  origin: 'Sverige',              live: false, viewers: 0,     playing: null,                      photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&h=600&fit=crop', followers: '420k', sub: '14h päivittäiset maraton-sessiot, AboutSlots.com -integraatio.' },
+
+  // ── Ruotsalaiset (additional beyond global tier) ──
+  { slug: 'sweetflips',     name: 'SweetFlips',     platform: 'Kick',   channel: 'sweetflips',     scene: 'swedish', origin: 'Sverige (kollektiivi)',live: true,  viewers: 6800,  playing: 'Big Bass Splash',        photo: 'https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=600&h=600&fit=crop', followers: '32k',  sub: 'Uudempi ryhmä — Dennylo, Damil, Jacko, Pingue, Baka, Motion, Blendz. Kuukausittaiset $150K-arvonnat.' },
+  { slug: 'matti-ruotsi',   name: 'MattiSlots',     platform: 'Twitch', channel: 'mattislots',     scene: 'swedish', origin: 'Sverige',              live: false, viewers: 0,     playing: null,                      photo: 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=600&h=600&fit=crop', followers: '54k',  sub: 'Pieni mutta vakaa ruotsalainen Twitch-striimari, päiväkohtainen sessio.' },
+
+  // ── Hollantilaiset ──
+  { slug: 'nedergaming',    name: 'NederGaming',    platform: 'Kick',   channel: 'nedergaming',    scene: 'dutch',   origin: 'Nederland',            live: true,  viewers: 1240,  playing: 'Book of Dead',           photo: 'https://images.unsplash.com/photo-1558981852-426c6c22a060?w=600&h=600&fit=crop', followers: '38k',  sub: '24+ vuotta uhkapelikokemusta. Vain NL-lisensoiduilla operaattoreilla.' },
+  { slug: 'halper-nl',      name: 'Halper-nl',      platform: 'Kick',   channel: 'halper-nl',      scene: 'dutch',   origin: 'Nederland',            live: false, viewers: 0,     playing: null,                      photo: 'https://images.unsplash.com/photo-1485463611174-f302f6a5c1c9?w=600&h=600&fit=crop', followers: '17k',  sub: 'Top Dutch Kick -striimari katsottujen tuntien mukaan.' },
+
+  // ── Norjalaiset (placeholder; scene is genuinely sparse) ──
+  { slug: 'norge-tba',      name: 'Lisätään myöhemmin', platform: 'Kick', channel: '',             scene: 'norwegian', origin: 'Norge',              live: false, viewers: 0,     playing: null,                      photo: 'https://images.unsplash.com/photo-1505765050516-f72dcac9c60e?w=600&h=600&fit=crop', followers: '—',    sub: 'Tila varattu — etsimme aktiivisia norjalaisia slot-striimaajia. Vinkkejä: toimitus@mittari.fi.' },
+];
+
+
+// Mittari-flavoured international moments (separate from the Finnish stream).
+export const INTL_MOMENTS = [
+  { id: 'i1', streamer: 'Roshtein',      scene: 'global',  game: 'Sweet Bonanza 1000', intensity: 'KIIRASTULI', win: '€124,800', headline: 'Roshteinin maxwin Sweet Bonanzassa — chat räjähti.', body: 'Pragmaticin 1000x-bonus osui 50€ panoksella. Pragmatic-tyypillinen lopputulos.', source: 'Kick-klippi', thumb: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1000&h=600&fit=crop' },
+  { id: 'i2', streamer: 'Trainwreckstv', scene: 'global',  game: 'Gates of Olympus 1000', intensity: 'MYRSKY', win: '€68,200', headline: 'Trainwreck osui taas — Olympus rivissä.', body: 'Tyler Niknamin tunnistettava tyyli: korkea panostus, dramaattinen reaktio.', source: 'Kick-klippi', thumb: 'https://images.unsplash.com/photo-1591269016391-2cefdac38f53?w=1000&h=600&fit=crop' },
+  { id: 'i3', streamer: 'Classybeef',    scene: 'global',  game: 'Razor Returns', intensity: 'KUUMA', win: '€42,400', headline: 'Classybeefin maraton — Razor Returns kantoi.', body: '12 tunnin sessio, ryhmä jakoi reaktiot. Tiimiformaatti rakentaa jännitettä.', source: 'Kick-stream', thumb: 'https://images.unsplash.com/photo-1543699936-c901ddbf0c05?w=1000&h=600&fit=crop' },
+  { id: 'i4', streamer: 'CasinoDaddy',   scene: 'swedish', game: 'Buffalo King',   intensity: 'MYRSKY', win: '€99,300', headline: 'CasinoDaddy ylitti €99K Buffalo Kingissa.', body: 'Klassinen Pragmatic-osuma 14 tunnin sessiossa. Veljen reaktiot ovat oma sisältönsä.', source: 'Twitch-stream', thumb: 'https://images.unsplash.com/photo-1518933165971-611dbc9c412d?w=1000&h=600&fit=crop' },
+  { id: 'i5', streamer: 'SweetFlips',    scene: 'swedish', game: 'Big Bass Splash', intensity: 'KUUMA', win: '€18,600', headline: 'SweetFlipsin yhteismaraton — chat ohjasi spinejä.', body: 'Ryhmäformaatti palkitsi rauhassa pelaamisen. Tiimi osui kollektiivisesti.', source: 'Kick-klippi', thumb: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1000&h=600&fit=crop' },
+  { id: 'i6', streamer: 'NederGaming',   scene: 'dutch',   game: 'Book of Dead',   intensity: 'HAALEA', win: '€4,200',  headline: 'NederGaming löysi rytmin Book of Deadissa.', body: 'NL-lisensoidulla operaattorilla, malttava panostus, pitkä sessio. Hollantilainen tyyli.', source: 'Kick-stream', thumb: 'https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1000&h=600&fit=crop' },
 ];

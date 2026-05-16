@@ -133,6 +133,7 @@ async def submit_prediction(data: PredictionRequest):
 
 class SettingsPayload(BaseModel):
     telegram_channel: Optional[str] = None
+    smartico_template_id: Optional[str] = None
 
 
 SETTINGS_KEY = "site"
@@ -142,6 +143,7 @@ async def _get_settings_doc():
     doc = await db.settings.find_one({"_id": SETTINGS_KEY}) or {}
     return {
         "telegram_channel": doc.get("telegram_channel"),
+        "smartico_template_id": doc.get("smartico_template_id"),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -150,7 +152,10 @@ async def _get_settings_doc():
 async def get_public_settings():
     """Public — only safe-to-expose settings."""
     s = await _get_settings_doc()
-    return {"telegram_channel": s.get("telegram_channel")}
+    return {
+        "telegram_channel": s.get("telegram_channel"),
+        "smartico_template_id": s.get("smartico_template_id"),
+    }
 
 
 @api_router.get("/admin/settings")
@@ -162,6 +167,7 @@ async def admin_get_settings(_: bool = Depends(require_admin)):
 async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require_admin)):
     update = {
         "telegram_channel": data.telegram_channel,
+        "smartico_template_id": data.smartico_template_id,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.settings.update_one(

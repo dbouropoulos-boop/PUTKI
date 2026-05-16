@@ -15,6 +15,7 @@ const BackOffice = () => {
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState('');
   const [telegram, setTelegram] = useState('');
+  const [smarticoTemplate, setSmarticoTemplate] = useState('');
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -41,6 +42,7 @@ const BackOffice = () => {
       if (!r.ok) throw new Error('Network error');
       const d = await r.json();
       setTelegram(d.telegram_channel || '');
+      setSmarticoTemplate(d.smartico_template_id || '');
       setAuthed(true);
       try { localStorage.setItem('mittari-admin-token', tk); } catch {}
     } catch (e) {
@@ -64,7 +66,10 @@ const BackOffice = () => {
       const r = await fetch(`${BACKEND}/api/admin/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ telegram_channel: telegram.trim() || null }),
+        body: JSON.stringify({
+          telegram_channel: telegram.trim() || null,
+          smartico_template_id: smarticoTemplate.trim() || null,
+        }),
       });
       if (!r.ok) throw new Error('Save failed');
       setSaved(true);
@@ -156,6 +161,25 @@ const BackOffice = () => {
                 <ExternalLink strokeWidth={1.6} size={11} /> PREVIEW
               </a>
             )}
+          </div>
+
+          <div>
+            <label className="mono" style={{ fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', fontWeight: 600 }}>
+              SMARTICO VISITOR-MODE TEMPLATE ID
+            </label>
+            <input
+              type="text"
+              value={smarticoTemplate}
+              onChange={(e) => setSmarticoTemplate(e.target.value)}
+              data-testid="back-office-smartico-input"
+              placeholder="e.g. vm-weezy-2026-q2-spinwheel"
+              className="mono w-full mt-2"
+              style={{ padding: '14px 16px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 13, letterSpacing: '0.04em' }}
+            />
+            <p className="font-serif mt-2" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+              The template_id Smartico provides after Visitor Mode setup. When set, <code>/voita-palkinto</code>
+              swaps the placeholder spin-wheel for the real Smartico embed. Leave empty to keep the placeholder.
+            </p>
           </div>
 
           {saveError && (

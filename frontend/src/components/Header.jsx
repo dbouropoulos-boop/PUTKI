@@ -10,11 +10,12 @@ export const Header = () => {
   const { lang, toggle: toggleLang, t } = useLang();
 
   const navLinks = [
-    { to: '/kasinot',       label: t('nav.casinos') },
-    { to: '/striimaajat',   label: t('nav.streamers') },
-    { to: '/viikon-kortti', label: t('nav.weekly') },
-    { to: '/peli',          label: t('nav.game') },
-    { to: '/menetelma',     label: t('nav.methodology') },
+    { to: '/kasinot',         label: t('nav.casinos') },
+    { to: '/striimaajat',     label: t('nav.streamers') },
+    { to: '/viikon-kortti',   label: t('nav.weekly') },
+    { to: '/peli',            label: t('nav.game') },
+    { to: '/voita-palkinto',  label: t('nav.prize') },
+    { to: '/menetelma',       label: t('nav.methodology') },
   ];
 
   return (

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Activity, Flame, Trophy, Radio, Bell, Zap } from 'lucide-react';
-import { useActivityFeed, timeAgo } from '../data/mockStreams';
+import { useActivityFeed, useIntlActivityFeed, timeAgo } from '../data/mockStreams';
 import { useLang } from '../context/LanguageContext';
 
 const ICON_MAP = {
@@ -68,8 +68,11 @@ const EventRow = ({ ev, lang, fresh }) => {
 
 // Inline section variant — used on Home between hero & live tiles
 export const ActivityFeedInline = () => {
-  const { lang, t } = useLang();
-  const events = useActivityFeed(10);
+  const { lang } = useLang();
+  const [tab, setTab] = useState('suomi'); // 'suomi' | 'intl'
+  const fiEvents = useActivityFeed(10);
+  const intlEvents = useIntlActivityFeed(9);
+  const events = tab === 'intl' ? intlEvents : fiEvents;
   const prevTopId = useRef(events[0]?.id);
   const [freshId, setFreshId] = useState(null);
 
@@ -89,7 +92,7 @@ export const ActivityFeedInline = () => {
       data-testid="activity-feed-section"
     >
       <div className="container-wide">
-        <div className="flex items-baseline justify-between mb-6">
+        <div className="flex items-baseline justify-between mb-6 gap-3 flex-wrap">
           <div>
             <div className="eyebrow mb-2 inline-flex items-center gap-2">
               <span className="led" style={{ background: '#E8924A' }} />
@@ -99,10 +102,39 @@ export const ActivityFeedInline = () => {
               {lang === 'en' ? 'What\u2019s happening right now' : 'Mitä juuri nyt tapahtuu'}
             </h2>
           </div>
-          <div className="mono hidden sm:block" style={{
-            fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600,
-          }}>
-            {lang === 'en' ? 'AUTO-UPDATE · 10 S' : 'PÄIVITTYY · 10 S'}
+          <div className="flex items-center gap-3">
+            {/* Scene tab toggle (default Suomi) */}
+            <div
+              className="inline-flex items-stretch rounded-[3px] overflow-hidden"
+              style={{ border: '1px solid var(--border-strong)' }}
+              data-testid="activity-feed-scene-toggle"
+            >
+              {[
+                { k: 'suomi', fi: 'SUOMI',          en: 'FINNISH' },
+                { k: 'intl',  fi: 'KANSAINVÄLINEN', en: 'INTERNATIONAL' },
+              ].map((opt) => (
+                <button
+                  key={opt.k}
+                  type="button"
+                  onClick={() => setTab(opt.k)}
+                  data-testid={`activity-feed-tab-${opt.k}`}
+                  className="mono"
+                  style={{
+                    padding: '8px 14px', fontSize: 10.5, letterSpacing: '0.16em', fontWeight: 700,
+                    background: tab === opt.k ? 'var(--ink)' : 'transparent',
+                    color: tab === opt.k ? 'var(--bg)' : 'var(--muted)',
+                    transition: 'background 200ms ease, color 200ms ease',
+                  }}
+                >
+                  {lang === 'en' ? opt.en : opt.fi}
+                </button>
+              ))}
+            </div>
+            <div className="mono hidden sm:block" style={{
+              fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600,
+            }}>
+              {lang === 'en' ? 'AUTO-UPDATE · 10 S' : 'PÄIVITTYY · 10 S'}
+            </div>
           </div>
         </div>
 
@@ -134,9 +166,13 @@ export const ActivityFeedInline = () => {
         <div className="mono mt-3" style={{
           fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600,
         }}>
-          {lang === 'en'
-            ? 'MOCK FEED · PHASE 2.0 BRIDGE — REAL SIGNALS COMING SOON'
-            : 'MOCK-VIRTA · PHASE 2.0 SILTA — OIKEAT SIGNAALIT TULOSSA'}
+          {tab === 'intl'
+            ? (lang === 'en'
+                ? 'INTERNATIONAL SCENE · DOES NOT FEED THE FINNISH P*RKELE-MITTARI — DIAL STAYS FINNISH-ONLY'
+                : 'KANSAINVÄLINEN SKENE · EI SYÖTÄ SUOMEN P*RKELE-MITTARIA — MITTARI PYSYY SUOMI-LÄHTÖISENÄ')
+            : (lang === 'en'
+                ? 'MOCK FEED · PHASE 2.0 BRIDGE — REAL SIGNALS COMING SOON'
+                : 'MOCK-VIRTA · PHASE 2.0 SILTA — OIKEAT SIGNAALIT TULOSSA')}
         </div>
       </div>
     </section>
