@@ -272,6 +272,211 @@ async def game_personal(cookie_id: str, week: Optional[str] = None, stage: str =
     return {"week": week, "stage": stage, "best": best, "rank": higher + 1, "total": total}
 
 
+# ───────────────── Phase 3 — Content automation engine ─────────────────
+from content_engine import (  # noqa: E402
+    CONTENT_TYPES,
+    DEFAULT_GUIDELINES,
+    distribute_content,
+    generate_content_for_signal,
+    list_guidelines,
+    seed_default_guidelines,
+    upsert_guideline,
+)
+
+
+class GenerateRequest(BaseModel):
+    content_type: str
+    signal_payload: dict
+    proposed_streamer_id: Optional[str] = None
+    proposed_operator_id: Optional[str] = None
+    source_signal_type: Optional[str] = None
+    source_signal_id: Optional[str] = None
+
+
+class ApprovalRequest(BaseModel):
+    selected_variant_index: Optional[int] = 0
+    edited_text: Optional[str] = None
+    reviewed_by: Optional[str] = "admin"
+
+
+class GuidelineUpdate(BaseModel):
+    text: str
+
+
+# ── content type registry (admin) ──
+@api_router.get("/admin/content-types")
+async def admin_content_types(_: bool = Depends(require_admin)):
+    return {
+        "content_types": [
+            {"key": k, **{kk: vv for kk, vv in v.items()}}
+            for k, v in CONTENT_TYPES.items()
+        ]
+    }
+
+
+# ── editorial guidelines CRUD ──
+@api_router.get("/admin/guidelines")
+async def admin_guidelines(_: bool = Depends(require_admin)):
+    rows = await list_guidelines(db)
+    return {"guidelines": rows}
+
+
+@api_router.put("/admin/guidelines/{key}")
+async def admin_update_guideline(key: str, data: GuidelineUpdate, _: bool = Depends(require_admin)):
+    if key not in DEFAULT_GUIDELINES:
+        raise HTTPException(404, f"Unknown guideline key: {key}")
+    return await upsert_guideline(db, key, data.text, updated_by="admin")
+
+
+# ── generate content (admin only — calls Claude) ──
+@api_router.post("/admin/queue/generate")
+async def admin_generate(data: GenerateRequest, _: bool = Depends(require_admin)):
+    if data.content_type not in CONTENT_TYPES:
+        raise HTTPException(400, f"Unknown content_type: {data.content_type}")
+    try:
+        doc = await generate_content_for_signal(
+            db,
+            content_type=data.content_type,
+            signal_payload=data.signal_payload,
+            proposed_streamer_id=data.proposed_streamer_id,
+            proposed_operator_id=data.proposed_operator_id,
+            source_signal_type=data.source_signal_type,
+            source_signal_id=data.source_signal_id,
+        )
+        return doc
+    except RuntimeError as e:
+        raise HTTPException(500, str(e))
+    except Exception as e:
+        logger.exception("Content generation failed")
+        raise HTTPException(502, f"Generation failed: {e}")
+
+
+# ── approval queue list ──
+@api_router.get("/admin/queue")
+async def admin_queue(
+    status: str = "queued",
+    content_type: Optional[str] = None,
+    limit: int = 50,
+    _: bool = Depends(require_admin),
+):
+    q: dict = {}
+    if status and status != "all":
+        q["status"] = status
+    if content_type:
+        q["content_type"] = content_type
+    limit = max(1, min(200, limit))
+    cur = db.generated_content.find(q, {"_id": 0}).sort("generated_at", -1).limit(limit)
+    rows = await cur.to_list(length=limit)
+    counts = {
+        "queued": await db.generated_content.count_documents({"status": "queued"}),
+        "approved": await db.generated_content.count_documents({"status": "approved"}),
+        "killed": await db.generated_content.count_documents({"status": "killed"}),
+    }
+    return {"items": rows, "counts": counts}
+
+
+@api_router.get("/admin/queue/{item_id}")
+async def admin_queue_item(item_id: str, _: bool = Depends(require_admin)):
+    doc = await db.generated_content.find_one({"id": item_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(404, "Not found")
+    return doc
+
+
+@api_router.post("/admin/queue/{item_id}/approve")
+async def admin_approve(item_id: str, data: ApprovalRequest, _: bool = Depends(require_admin)):
+    doc = await db.generated_content.find_one({"id": item_id})
+    if not doc:
+        raise HTTPException(404, "Not found")
+    if doc.get("status") not in ("queued", "approved"):
+        raise HTTPException(400, f"Cannot approve item in status {doc.get('status')}")
+
+    update: dict = {
+        "status": "approved",
+        "approval_action": "approve",
+        "selected_variant_index": data.selected_variant_index or 0,
+        "reviewed_by": data.reviewed_by or "admin",
+        "reviewed_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if data.edited_text:
+        update["edited_text"] = data.edited_text
+        update["approval_action"] = "edit"
+    await db.generated_content.update_one({"id": item_id}, {"$set": update})
+
+    fresh = await db.generated_content.find_one({"id": item_id}, {"_id": 0})
+    pub = await distribute_content(db, fresh)
+    return {"approved": fresh, "published": pub}
+
+
+@api_router.post("/admin/queue/{item_id}/kill")
+async def admin_kill(item_id: str, _: bool = Depends(require_admin)):
+    doc = await db.generated_content.find_one({"id": item_id})
+    if not doc:
+        raise HTTPException(404, "Not found")
+    await db.generated_content.update_one(
+        {"id": item_id},
+        {"$set": {
+            "status": "killed",
+            "approval_action": "kill",
+            "reviewed_by": "admin",
+            "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+    return {"killed": item_id}
+
+
+# ── public site surface — published content ──
+@api_router.get("/published")
+async def get_published(surface: Optional[str] = None, limit: int = 30):
+    """Return the most-recent published items for site surfaces."""
+    q: dict = {}
+    if surface:
+        q["surface"] = surface
+    limit = max(1, min(100, limit))
+    cur = db.published_content.find(q, {"_id": 0}).sort("published_at", -1).limit(limit)
+    rows = await cur.to_list(length=limit)
+    return {"items": rows}
+
+
+# ── live cockpit data — Pääsyy + Viimeisin piikki ──
+DIAL_DRIVER_LABELS = {
+    "sports":           {"fi": "URHEILUTAPAHTUMA AKTIIVINEN", "en": "SPORTS EVENT ACTIVE"},
+    "youtube":          {"fi": "YOUTUBE-VOITTO TUNNISTETTU", "en": "YOUTUBE WIN DETECTED"},
+    "streamers":        {"fi": "STRIIMAAJAT LIVENÄ",         "en": "STREAMERS LIVE"},
+    "forum":            {"fi": "FOORUMI HERÄSI",             "en": "FORUM ACTIVITY"},
+    "approved_content": {"fi": "TOIMITUS JULKAISI",          "en": "EDITORIAL PUBLISHED"},
+    "activity_events":  {"fi": "AKTIIVISUUS NOUSI",          "en": "ACTIVITY RISING"},
+}
+
+
+@api_router.get("/cockpit")
+async def cockpit_state():
+    """Until the real signal pipeline + dial recalc engine ships, surface the
+    most-recent published content as the 'last spike' and a synthetic primary
+    driver. Real recalc engine plugs in here next session.
+    """
+    latest = await db.published_content.find_one(
+        {},
+        {"_id": 0},
+        sort=[("published_at", -1)],
+    )
+    primary = "approved_content" if latest else "streamers"
+    return {
+        "primary_driver": primary,
+        "primary_driver_label": DIAL_DRIVER_LABELS.get(primary, {"fi": "", "en": ""}),
+        "last_spike": latest,
+        "computed_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@app.on_event("startup")
+async def _seed_phase3():
+    try:
+        await seed_default_guidelines(db)
+    except Exception:
+        logger.exception("Failed to seed editorial guidelines")
+
+
 app.include_router(api_router)
 
 app.add_middleware(

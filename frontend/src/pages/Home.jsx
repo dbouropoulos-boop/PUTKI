@@ -97,6 +97,56 @@ const MissasitEilenSection = ({ lang, fiCards }) => {
   );
 };
 
+// CockpitContext — Phase 3 Pääsyy + Viimeisin piikki lines below the dial.
+// Polls /api/cockpit every 30s; degrades silently if endpoint not available.
+const CockpitContext = ({ lang }) => {
+  const [data, setData] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    const fetchOnce = async () => {
+      try {
+        const r = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/cockpit`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled) setData(d);
+      } catch {}
+    };
+    fetchOnce();
+    const id = setInterval(fetchOnce, 30000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  if (!data) return null;
+
+  const driverLabel = (data.primary_driver_label && data.primary_driver_label[lang]) || data.primary_driver_label?.fi || '';
+  const spike = data.last_spike;
+
+  return (
+    <div className="mt-5 flex flex-col items-center gap-2" data-testid="cockpit-context">
+      {driverLabel && (
+        <div
+          className="mono inline-flex items-center gap-2"
+          style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700 }}
+          data-testid="cockpit-paasyy"
+        >
+          <span style={{ color: 'var(--muted)' }}>{lang === 'en' ? 'PRIMARY DRIVER' : 'PÄÄSYY'} ·</span>
+          {driverLabel}
+        </div>
+      )}
+      {spike && spike.text && (
+        <div
+          className="mono inline-flex items-center gap-2 max-w-md text-center"
+          style={{ fontSize: 10, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600, lineHeight: 1.5 }}
+          data-testid="cockpit-viimeisin-piikki"
+        >
+          <span style={{ color: '#E8924A' }}>{lang === 'en' ? 'LAST SPIKE' : 'VIIMEISIN PIIKKI'} ·</span>
+          <span style={{ color: 'var(--ink)' }}>{spike.text.length > 90 ? spike.text.slice(0, 90) + '…' : spike.text}</span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const HeroCapture = () => {
   const { t, lang } = useLang();
   const [email, setEmail] = useState('');
@@ -190,6 +240,7 @@ const Home = () => {
             {/* LEFT: cockpit dial */}
             <div className="flex flex-col items-center lg:items-center">
               <DialCockpit state={state} />
+              <CockpitContext lang={lang} />
               <div className="mt-6 w-full max-w-md">
                 <DialHistoryMiniChart currentState={state} />
               </div>

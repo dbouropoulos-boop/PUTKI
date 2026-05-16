@@ -12,6 +12,7 @@ import Signup from "@/pages/Signup";
 import MiniGame from "@/pages/MiniGame";
 import WeeklyCard from "@/pages/WeeklyCard";
 import BackOffice from "@/pages/BackOffice";
+import BackOfficeQueue from "@/pages/BackOfficeQueue";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
 import VoitaPalkinto from "@/pages/VoitaPalkinto";
@@ -26,6 +27,7 @@ function App() {
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
           <Route path="/back-office" element={<BackOffice />} />
+          <Route path="/back-office/queue" element={<BackOfficeQueue />} />
 
           {/* Main site */}
           <Route element={<Layout />}>

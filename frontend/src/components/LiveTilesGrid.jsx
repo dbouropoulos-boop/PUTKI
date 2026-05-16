@@ -122,13 +122,7 @@ const LiveTile = ({ streamer, onFollow }) => {
         {/* Mute icon as ambient detail */}
         <Volume2 strokeWidth={1.4} size={14} className="absolute bottom-3 left-3" style={{ color: 'rgba(245,243,238,0.5)' }} />
 
-        {/* Floating mock balance indicator */}
-        <div
-          className="absolute bottom-3 right-3 mono"
-          style={{ fontSize: 11, letterSpacing: '0.04em', color: '#E8924A', fontWeight: 600, background: 'rgba(10,10,10,0.75)', padding: '4px 8px', borderRadius: 3, border: '1px solid rgba(232,146,74,0.35)' }}
-        >
-          +€{((streamer.viewers % 5) * 480 + 1840).toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, ' ')}
-        </div>
+        {/* Phase 3 surface cleanup: removed fake floating session balance indicator (we don't observe streamers' actual session P&L) */}
 
         {/* Streamer name overlay bottom-left */}
         <div className="absolute bottom-2.5 left-3 right-24">
