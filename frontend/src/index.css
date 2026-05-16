@@ -430,4 +430,70 @@
   .state-pulse {
     animation: state-pulse 3.6s ease-in-out infinite;
   }
+
+  /* ── Phase 2.0 liveness layers ── */
+
+  /* Counter tick flash — brief brand-amber halo */
+  @keyframes flash-tick-anim {
+    0%   { color: var(--ink); text-shadow: 0 0 0 transparent; }
+    25%  { color: #E8924A; text-shadow: 0 0 14px rgba(232,146,74,0.8); }
+    100% { color: var(--ink); text-shadow: 0 0 0 transparent; }
+  }
+  .flash-tick {
+    animation: flash-tick-anim 700ms ease-out;
+  }
+
+  /* Activity event freshness — top stripe + soft glow */
+  .event-fresh {
+    animation: event-pop 600ms ease-out;
+  }
+  .event-fresh-stripe {
+    position: absolute; left: 0; right: 0; top: 0; height: 2px;
+    animation: stripe-sweep 1.4s ease-out forwards;
+  }
+  @keyframes event-pop {
+    0%   { transform: translateY(-6px); opacity: 0; }
+    60%  { opacity: 1; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes stripe-sweep {
+    0%   { transform: scaleX(0); transform-origin: left; }
+    50%  { transform: scaleX(1); transform-origin: left; }
+    100% { transform: scaleX(0); transform-origin: right; opacity: 0; }
+  }
+
+  /* Signup toast slide-in (bottom-left) */
+  .signup-toast-anim { animation: signup-toast-in 320ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  @keyframes signup-toast-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  /* Push notification slide-in (top-right) */
+  .push-toast-anim { animation: push-toast-in 360ms cubic-bezier(0.2, 0.7, 0.2, 1); }
+  @keyframes push-toast-in {
+    from { transform: translateY(-30px) scale(0.96); opacity: 0; }
+    to   { transform: translateY(0)     scale(1);    opacity: 1; }
+  }
+
+  /* Marquee rhythm — slows on dramatic states (KIIRASTULI = slowest) */
+  .ticker-rhythm-kylma     { animation-duration: 75s; }
+  .ticker-rhythm-haalea    { animation-duration: 65s; }
+  .ticker-rhythm-kuuma     { animation-duration: 50s; }
+  .ticker-rhythm-myrsky    { animation-duration: 38s; }
+  .ticker-rhythm-kiirastuli{ animation-duration: 92s; }   /* slows, dramatic */
+
+  /* LED — already exists; add color variants used in cockpit floats */
+  .led-blue   { background: #5A7BB8; box-shadow: 0 0 0 0 rgba(90,123,184,0.7); animation: led-pulse-blue 1.8s ease-out infinite; }
+  .led-amber  { background: #E8924A; box-shadow: 0 0 0 0 rgba(232,146,74,0.7); animation: led-pulse-amber 1.8s ease-out infinite; }
+  @keyframes led-pulse-blue {
+    0%   { box-shadow: 0 0 0 0 rgba(90,123,184,0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(90,123,184,0); }
+    100% { box-shadow: 0 0 0 0 rgba(90,123,184,0); }
+  }
+  @keyframes led-pulse-amber {
+    0%   { box-shadow: 0 0 0 0 rgba(232,146,74,0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(232,146,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(232,146,74,0); }
+  }
 }

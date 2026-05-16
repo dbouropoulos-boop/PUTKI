@@ -47,7 +47,9 @@ export const LiveTicker = () => {
       }}
       data-testid="live-ticker"
     >
-      <div className="ticker-track">
+      <div
+        className={`ticker-track ticker-rhythm-${CURRENT_DIAL.key.toLowerCase()}`}
+      >
         {renderRow('a')}
         {renderRow('b')}
       </div>

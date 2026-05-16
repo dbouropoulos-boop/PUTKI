@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import ShareButton from './ShareButton';
 
 // State tint colors for moment data panels (Fix 3)
 const STATE_TINTS = {
@@ -124,14 +125,27 @@ export const MomentCard = ({ moment, featured = false }) => {
           <span className="mono" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
             {moment.source.toUpperCase()}
           </span>
-          <Link
-            to={`/kasinot/${moment.operator}`}
-            className="mono"
-            style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--brand-blue)', fontWeight: 600 }}
-            data-testid={`moment-operator-link-${moment.id}`}
-          >
-            {moment.operatorName.toUpperCase()} →
-          </Link>
+          <div className="flex items-center gap-4">
+            <ShareButton
+              variant="moment"
+              payload={{
+                streamer: moment.streamer,
+                game: moment.game,
+                win: moment.win,
+                headline: moment.headline,
+                intensity,
+              }}
+              dataTestId={`moment-share-${moment.id}`}
+            />
+            <Link
+              to={`/kasinot/${moment.operator}`}
+              className="mono"
+              style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--brand-blue)', fontWeight: 600 }}
+              data-testid={`moment-operator-link-${moment.id}`}
+            >
+              {moment.operatorName.toUpperCase()} →
+            </Link>
+          </div>
         </div>
       </div>
     </article>

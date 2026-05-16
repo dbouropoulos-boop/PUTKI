@@ -5,6 +5,8 @@ import Footer from './Footer';
 import LiveTicker from './LiveTicker';
 import PersistentCapture from './PersistentCapture';
 import StateContextualFloat from './StateContextualFloat';
+import SignupToast from './SignupToast';
+import PushNotificationToast from './PushNotificationToast';
 
 export const Layout = () => {
   return (
@@ -17,6 +19,8 @@ export const Layout = () => {
       <Footer />
       <PersistentCapture />
       <StateContextualFloat />
+      <SignupToast />
+      <PushNotificationToast />
       <div className="grain-overlay" aria-hidden="true" />
     </div>
   );

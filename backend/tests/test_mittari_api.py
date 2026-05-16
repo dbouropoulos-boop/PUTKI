@@ -129,3 +129,91 @@ class TestPredictions:
     def test_prediction_missing_fields(self, session):
         r = session.post(f"{API}/predictions", json={"pick": "1"})
         assert r.status_code == 422
+
+
+# ---------- Phase 2.0: Site settings / back-office ----------
+ADMIN_TOKEN = "mittari-admin"
+
+
+class TestSiteSettings:
+    """Public + admin settings endpoints (Phase 2.0)."""
+
+    def test_public_settings_no_auth(self, session):
+        r = session.get(f"{API}/settings/public")
+        assert r.status_code == 200
+        data = r.json()
+        # contract: only telegram_channel key exposed
+        assert "telegram_channel" in data
+        # value must be either string or null (no other admin-only keys)
+        assert "updated_at" not in data
+
+    def test_admin_get_settings_requires_token(self, session):
+        r = requests.get(f"{API}/admin/settings")  # no header
+        assert r.status_code == 401
+
+    def test_admin_get_settings_wrong_token(self, session):
+        r = requests.get(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": "wrong-token"},
+        )
+        assert r.status_code == 401
+
+    def test_admin_get_settings_valid_token(self, session):
+        r = requests.get(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN},
+        )
+        assert r.status_code == 200
+        data = r.json()
+        assert "telegram_channel" in data
+        assert "updated_at" in data
+
+    def test_admin_put_settings_wrong_token(self, session):
+        r = requests.put(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": "bad", "Content-Type": "application/json"},
+            json={"telegram_channel": "https://t.me/x"},
+        )
+        assert r.status_code == 401
+
+    def test_admin_put_then_public_get_reflects(self, session):
+        target = "https://t.me/mittarifi"
+        r = requests.put(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"},
+            json={"telegram_channel": target},
+        )
+        assert r.status_code == 200, r.text
+        data = r.json()
+        assert data["telegram_channel"] == target
+        assert data.get("updated_at")
+
+        # public reflects it
+        rp = session.get(f"{API}/settings/public")
+        assert rp.status_code == 200
+        assert rp.json()["telegram_channel"] == target
+
+        # admin GET also reflects it
+        ra = requests.get(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN},
+        )
+        assert ra.status_code == 200
+        assert ra.json()["telegram_channel"] == target
+
+    def test_admin_put_settings_null_clears(self, session):
+        # set then clear
+        requests.put(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"},
+            json={"telegram_channel": "https://t.me/temp"},
+        )
+        r = requests.put(
+            f"{API}/admin/settings",
+            headers={"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"},
+            json={"telegram_channel": None},
+        )
+        assert r.status_code == 200
+        assert r.json()["telegram_channel"] is None
+        rp = session.get(f"{API}/settings/public")
+        assert rp.json()["telegram_channel"] is None

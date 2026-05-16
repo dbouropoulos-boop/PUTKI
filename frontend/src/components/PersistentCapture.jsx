@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Mail, MessageCircle, Smartphone, X, ChevronUp } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
+import TelegramSubscribeButton from './TelegramSubscribeButton';
 
 // Phase 1.5 (Revised): persistent notification capture
 // - Mobile: bottom sheet (~56px collapsed, expanded shows form)
@@ -51,6 +52,7 @@ const CaptureForm = ({ compact = false }) => {
       <button type="submit" className="btn-primary w-full" data-testid="persistent-capture-submit" style={compact ? { padding: '10px 16px', minHeight: 40 } : undefined}>
         {t('btn.subscribe')}
       </button>
+      <TelegramSubscribeButton compact dataTestId="persistent-capture-telegram" />
       <div className="flex items-center gap-3 mt-1 justify-center">
         <Mail strokeWidth={1.4} size={13} style={{ color: 'var(--muted)' }} />
         <MessageCircle strokeWidth={1.4} size={13} style={{ color: 'var(--muted)' }} />

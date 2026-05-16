@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { DIAL_STATES } from '../data/mock';
 
+// Helper: state hot check (re-used in breathing amplitude)
+const isHotState = (s) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(s);
+
 // Dial V2 — cockpit-grade instrument
 // - Mechanical bezel (concentric rings)
 // - Hierarchical ticks (major + minor)
@@ -106,7 +109,28 @@ export const Dial = ({
   const strokeWidth = isSmall ? 6 : isMedium ? 14 : 22;
 
   const targetAngle = valueToAngle(stateObj.value);
-  const angle = useSpringAngle(targetAngle, [state]);
+  const settledAngle = useSpringAngle(targetAngle, [state]);
+
+  // Continuous "breathing" drift — needle wavers ±2-3° around the settled angle
+  // so the instrument never feels frozen. Disabled for tiny dials.
+  const [breath, setBreath] = useState(0);
+  useEffect(() => {
+    if (isSmall) return;
+    let raf;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = (now - start) / 1000;
+      // Two superimposed sines for organic motion (frequencies don't divide evenly)
+      const amp = isHotState(state) ? 2.6 : 1.6;
+      const drift = Math.sin(t * 0.85) * amp + Math.sin(t * 1.37 + 0.6) * (amp * 0.4);
+      setBreath(drift);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isSmall, state]);
+
+  const angle = settledAngle + breath;
 
   // Major ticks: 6 (5 state boundaries + endpoints)
   const majorTicks = Array.from({ length: 6 }, (_, i) => ARC_START + (i * ARC_TOTAL) / 5);

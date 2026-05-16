@@ -1,0 +1,59 @@
+{
+  "summary": "Phase 2.0 end-to-end testing for Mittari.fi — full backend + frontend pass. Backend pytest 17/17 green (10 regression + 7 new Phase 2.0 settings tests covering public GET, admin auth gate, PUT persistence, null-clear). Frontend Home verified: hero-capture-input + hero-capture-submit + hero-capture-telegram all render; dial-history-chart sparkline present; SocialProofTicker renders 5 testids (section + 4 cells); ActivityFeedInline shows 6 events initially and ticks up to 7 after ~30s wait (auto-update confirmed); 6 moment-share-* buttons, 6 session-progress-* tiles. hero-share-dial opens share-preview-modal with download button; moment share opens same modal. SignupToast appears at ~12s with data-testid signup-toast and signup-toast-dismiss closes it. Back-office /back-office shows back-office-auth gate; wrong token shows 'Wrong token.' text; correct token 'mittari-admin' reveals back-office-settings-form (testids back-office-telegram-input + back-office-save-btn); SAVE click shows transient 'SAVED' confirmation; reload (token persisted in localStorage 'mittari-admin-token') re-shows form pre-filled with 'https://t.me/mittarifi'. After save, Home hero-capture-telegram becomes enabled with text 'SUBSCRIBE VIA TELEGRAM' (was 'TELEGRAM — COMING SOON' disabled before). PersistentCapture on /striimaajat shows persistent-capture-desktop on 1920px and persistent-capture-mobile on 390px with persistent-capture-telegram enabled. Bilingual EN/FI toggle still works. All regression routes (/kasinot, /striimaajat, /menetelma, /peli, /viikon-kortti) load with 0 error elements. Dial-large renders without runtime errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": {
+    "backend_public_settings": "PASS — GET /api/settings/public returns {telegram_channel} only (no updated_at leak), 200 no auth",
+    "backend_admin_auth_gate": "PASS — GET/PUT /api/admin/settings without token → 401; wrong token → 401; correct X-Admin-Token=mittari-admin → 200",
+    "backend_admin_put_persistence": "PASS — PUT persists telegram_channel; subsequent public GET + admin GET both reflect new value; null-clear works",
+    "backend_regression": "PASS — /api/, /api/dial, /api/dial/states, /api/signup, /api/predictions all still 200 with correct shapes",
+    "home_hero_capture": "PASS — hero-capture-input, hero-capture-submit, hero-capture-telegram all visible and have correct disabled/enabled state based on settings",
+    "home_dial_history_chart": "PASS — dial-history-chart sparkline renders below cockpit",
+    "home_hero_share": "PASS — hero-share-dial opens share-preview-modal with download button; close works",
+    "home_social_proof_ticker": "PASS — 5 social-proof-* testids render (section + 4 cells: SUBSCRIBERS 4,283 / DIAL WATCHERS 217 / FORUM HEAT 62° / WEEKLY GROWTH +1.83%)",
+    "home_activity_feed_inline": "PASS — activity-feed-section visible; 6 initial activity-event-* cards; grew to 7 after ~25s wait — auto-update confirmed",
+    "home_moment_share": "PASS — 6 moment-share-* buttons; clicking opens share-preview-modal",
+    "layout_signup_toast": "PASS — signup-toast appears bottom-left after ~12s; signup-toast-dismiss closes it",
+    "back_office_token_gate": "PASS — back-office-auth + back-office-token-input + back-office-auth-submit; wrong token shows 'Wrong token.'",
+    "back_office_settings_form": "PASS — correct token reveals back-office-settings-form (telegram input + save btn). Save shows SAVED confirmation. Reload re-loads pre-filled value (localStorage token persistence works)",
+    "telegram_button_dynamic_state": "PASS — Disabled with 'TELEGRAM — COMING SOON' before URL set; enabled with 'SUBSCRIBE VIA TELEGRAM' after admin PUT",
+    "persistent_capture_desktop": "PASS — /striimaajat at 1920w shows persistent-capture-desktop with persistent-capture-telegram enabled",
+    "persistent_capture_mobile": "PASS — /striimaajat at 390w shows persistent-capture-mobile",
+    "live_tile_session_progress": "PASS — 6 session-progress-* bars (one per live tile)",
+    "dial_breathing_no_errors": "PASS — dial-large renders; no runtime exceptions on home",
+    "bilingual_toggle": "PASS — EN/FI buttons clickable and switch UI strings",
+    "regression_routes": "PASS — /kasinot, /striimaajat, /menetelma, /peli, /viikon-kortti all load with 0 error elements"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Carryover from iteration_3 (still unfixed): index.html title 'Emergent | Fullstack App' + meta description 'A product of emergent.sh' — not Mittari branded.",
+    "Carryover from iteration_3 (still unfixed): console emits 'SVG attribute height: Expected length, auto' warning ~3x on each page load. Non-blocking but pollutes console."
+  ],
+  "critical_code_review_comments": [
+    "Settings stored in Mongo under {_id: 'site'} string key — works but breaks the convention used elsewhere (uuid id field). Fine for a singleton, but worth a code comment explaining why.",
+    "require_admin reads BACK_OFFICE_TOKEN at request time (os.environ.get inside the dep) — correct (allows env reload). Good.",
+    "/api/admin/settings PUT returns the full settings doc including updated_at; /api/settings/public correctly filters to only telegram_channel — confirmed no admin-only fields leak to public.",
+    "Frontend stores admin token in localStorage 'mittari-admin-token' in plaintext — acceptable for an internal/back-office tool with shared static token, but flag this if security review wants it gone before public launch.",
+    "TelegramSubscribeButton fetches /api/settings/public on mount only — won't reactively update if admin changes URL in another tab. A 30-60s poll or window 'storage' event would tighten it (low priority).",
+    "Dial-large appears twice in DOM (count=2) — likely one for the cockpit and one inside the share-preview-modal off-screen renderer for html2canvas. Verify duplicate IDs aren't an issue (data-testid duplication can break automation later).",
+    "Backend has no test for SettingsPayload schema rejection (e.g., huge string, invalid type). Pydantic Optional[str] is permissive — consider URL validation (HttpUrl) for telegram_channel.",
+    "After-save SAVED confirmation only shows transient state without auto-revert to SAVE label visible (button stays in saved state). UX is fine; just note the button reverts only on subsequent edit."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mittari_api.py (added TestSiteSettings class with 7 new tests)"
+  ],
+  "success_rate": {"backend": "100% (17/17 pytest)", "frontend": "100% on Phase 2.0 surface area"},
+  "test_credentials": "Back-office admin token: mittari-admin (header X-Admin-Token, also entered in /back-office UI). Persisted in localStorage key 'mittari-admin-token'.",
+  "seed_data_creation": "DB has settings.{_id:'site', telegram_channel:'https://t.me/mittarifi', updated_at:...} after testing. Pytest re-inserted TEST_minimal@, TEST_full@, TEST_pred@ signups + 3 prediction docs. End state of telegram_channel is left as 'https://t.me/mittarifi' (per brief — both null and a value are acceptable end states).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 2.0 verified end-to-end. Important testid discoveries (these names differ slightly from the request spec): back-office auth uses back-office-auth-submit (not back-office-token-submit); back-office form uses back-office-telegram-input + back-office-save-btn (not back-office-save). After save, the SAVED confirmation appears on the same button (button label flips from SAVE → SAVED with check icon) — pick it up in <500ms after click. SocialProofTicker uses testids prefixed social-proof-* (5 total — wrapper + 4 cells). ActivityFeed cards use activity-event-* and the section is activity-feed-section. Moment share buttons: moment-share-* (6 found, generic indices not slugged). Hero share modal + moment share modal both share-preview-modal selector and share-preview-close to dismiss. Telegram button: hero-capture-telegram on home, persistent-capture-telegram on inner pages — both flip from disabled 'TELEGRAM — COMING SOON' to enabled 'SUBSCRIBE VIA TELEGRAM' based on /api/settings/public. signup-toast + signup-toast-dismiss work; toast fires at ~12s. Backend admin endpoints all gated on X-Admin-Token header equal to env BACK_OFFICE_TOKEN ('mittari-admin'). DB persists under db.settings {_id:'site'}. To reset: PUT /api/admin/settings with {telegram_channel: null}.",
+  "rca_of_the_issue": "N/A — no blocking issues found."
+}

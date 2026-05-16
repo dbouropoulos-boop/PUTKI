@@ -147,6 +147,38 @@ const LiveTile = ({ streamer, onFollow }) => {
           {streamer.viewers.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, ' ')}
         </div>
       </div>
+      {/* Session progress bar — mocked, increases over time */}
+      <SessionProgress slug={streamer.slug} />
+    </div>
+  );
+};
+
+// Self-incrementing mock session progress (~3h max, +1% every ~6s)
+const SessionProgress = ({ slug }) => {
+  const [pct, setPct] = React.useState(() => {
+    // Stable seed per streamer slug so layout doesn't shift wildly
+    let h = 0;
+    for (let i = 0; i < slug.length; i++) h = (h * 31 + slug.charCodeAt(i)) | 0;
+    return Math.abs(h % 78) + 4;
+  });
+  React.useEffect(() => {
+    const id = setInterval(() => setPct((p) => Math.min(99, p + 0.4)), 6000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <div
+      style={{
+        height: 3, background: 'var(--surface-2)', position: 'relative', overflow: 'hidden',
+      }}
+      data-testid={`session-progress-${slug}`}
+    >
+      <div
+        style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0,
+          width: `${pct}%`, background: '#E8924A', transition: 'width 1200ms linear',
+          boxShadow: '0 0 8px rgba(232,146,74,0.55)',
+        }}
+      />
     </div>
   );
 };

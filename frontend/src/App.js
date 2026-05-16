@@ -11,6 +11,7 @@ import ColdEmailLanding from "@/pages/ColdEmailLanding";
 import Signup from "@/pages/Signup";
 import MiniGame from "@/pages/MiniGame";
 import WeeklyCard from "@/pages/WeeklyCard";
+import BackOffice from "@/pages/BackOffice";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           {/* Standalone (no header/footer) */}
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
+          <Route path="/back-office" element={<BackOffice />} />
 
           {/* Main site */}
           <Route element={<Layout />}>

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Header, Depends
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -9,6 +9,13 @@ from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
+
+
+async def require_admin(x_admin_token: Optional[str] = Header(None, alias='X-Admin-Token')):
+    expected = os.environ.get('BACK_OFFICE_TOKEN', 'mittari-admin')
+    if not x_admin_token or x_admin_token != expected:
+        raise HTTPException(status_code=401, detail='Invalid admin token')
+    return True
 
 
 ROOT_DIR = Path(__file__).parent
@@ -120,6 +127,49 @@ async def submit_prediction(data: PredictionRequest):
     await db.predictions.insert_one(doc)
     doc.pop("_id", None)
     return PredictionResponse(**doc)
+
+
+# ---------- Site settings (back-office) ----------
+
+class SettingsPayload(BaseModel):
+    telegram_channel: Optional[str] = None
+
+
+SETTINGS_KEY = "site"
+
+
+async def _get_settings_doc():
+    doc = await db.settings.find_one({"_id": SETTINGS_KEY}) or {}
+    return {
+        "telegram_channel": doc.get("telegram_channel"),
+        "updated_at": doc.get("updated_at"),
+    }
+
+
+@api_router.get("/settings/public")
+async def get_public_settings():
+    """Public — only safe-to-expose settings."""
+    s = await _get_settings_doc()
+    return {"telegram_channel": s.get("telegram_channel")}
+
+
+@api_router.get("/admin/settings")
+async def admin_get_settings(_: bool = Depends(require_admin)):
+    return await _get_settings_doc()
+
+
+@api_router.put("/admin/settings")
+async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require_admin)):
+    update = {
+        "telegram_channel": data.telegram_channel,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.settings.update_one(
+        {"_id": SETTINGS_KEY},
+        {"$set": update},
+        upsert=True,
+    )
+    return await _get_settings_doc()
 
 
 app.include_router(api_router)

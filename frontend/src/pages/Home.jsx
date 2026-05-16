@@ -6,6 +6,11 @@ import MomentCard from '../components/MomentCard';
 import { OperatorTeaserCard } from '../components/OperatorCard';
 import LiveTilesGrid from '../components/LiveTilesGrid';
 import UTMBanner from '../components/UTMBanner';
+import { ActivityFeedInline } from '../components/ActivityFeed';
+import { SocialProofTicker } from '../components/SocialProofTicker';
+import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
+import ShareButton from '../components/ShareButton';
+import DialHistoryMiniChart from '../components/DialHistoryMiniChart';
 import { OPERATORS, MOMENTS, CURRENT_DIAL, DIAL_STATES, STREAMERS } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
 
@@ -72,6 +77,7 @@ const HeroCapture = () => {
           <button type="submit" className="btn-primary w-full" data-testid="hero-capture-submit" style={{ padding: '18px 24px', minHeight: 56 }}>
             {lang === 'en' ? 'Subscribe to Mittari alerts →' : 'Tilaa Mittari-ilmoitukset →'}
           </button>
+          <TelegramSubscribeButton dataTestId="hero-capture-telegram" />
         </form>
       )}
 
@@ -121,8 +127,11 @@ const Home = () => {
             {/* LEFT: cockpit dial */}
             <div className="flex flex-col items-center lg:items-center">
               <DialCockpit state={state} />
+              <div className="mt-6 w-full max-w-md">
+                <DialHistoryMiniChart currentState={state} />
+              </div>
               <h1
-                className="display mt-8 sm:mt-10 max-w-xl text-center"
+                className="display mt-6 sm:mt-8 max-w-xl text-center"
                 style={{ fontSize: 'clamp(22px, 2.4vw, 30px)', lineHeight: 1.18, color: 'var(--ink)' }}
                 data-testid="hero-headline"
               >
@@ -139,6 +148,16 @@ const Home = () => {
                     {t('btn.read_full_card')}
                   </Link>
                 )}
+                <ShareButton
+                  variant="dial"
+                  payload={{
+                    label: lang === 'en' ? CURRENT_DIAL.label : CURRENT_DIAL.label,
+                    intensity: state,
+                    headline,
+                    color: CURRENT_DIAL.color,
+                  }}
+                  dataTestId="hero-share-dial"
+                />
               </div>
             </div>
 
@@ -181,6 +200,12 @@ const Home = () => {
           ))}
         </div>
       </section>
+
+      {/* SOCIAL PROOF — live counters */}
+      <SocialProofTicker />
+
+      {/* ACTIVITY FEED — Mittari-flavoured live events */}
+      <ActivityFeedInline />
 
       {/* LIVE TILES GRID — new conversion engine */}
       <LiveTilesGrid />
