@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Check, Minus, Shield, Clock, Globe, Smartphone } from 'lucide-react';
-import { OperatorTeaserCard, scoreColor } from '../components/OperatorCard';
+import { OperatorTeaserCard, ScoreReadout, scoreColor } from '../components/OperatorCard';
 import { OPERATORS, STREAMERS } from '../data/mock';
 import {
   Accordion,
@@ -80,30 +80,27 @@ const OperatorReview = () => {
             </a>
           </div>
 
-          {/* P*rkele Score panel */}
+          {/* P*rkele Score panel — instrument readout */}
           <div className="lg:col-span-5">
-            <div className="editorial-card p-6 sm:p-8 sticky top-24">
-              <div className="eyebrow mb-3">P*rkele-pisteet</div>
-              <div className="flex items-baseline gap-2 mb-6">
-                <span className="font-display font-black text-7xl sm:text-8xl tabular leading-none" style={{ color }}>
-                  {operator.score}
-                </span>
-                <span className="font-display text-lg text-muted-text">/100</span>
+            <div className="panel p-6 sm:p-8 sticky top-24">
+              <div className="flex items-start justify-between mb-7">
+                <div className="eyebrow">P*RKELE-PISTEET</div>
+                <ScoreReadout score={operator.score} size="lg" />
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3.5">
                 {SCORE_FACTORS.map((f) => (
                   <div key={f.label}>
-                    <div className="flex justify-between mb-1">
-                      <span className="font-display text-[13px] text-ink">{f.label}</span>
-                      <span className="font-display text-[13px] font-semibold tabular text-ink">{f.value}</span>
+                    <div className="flex justify-between mb-1.5">
+                      <span className="font-display text-[13px]" style={{ color: 'var(--ink)' }}>{f.label}</span>
+                      <span className="mono text-[13px]" style={{ fontWeight: 500, color: 'var(--ink)' }}>{f.value}</span>
                     </div>
-                    <div className="h-[3px] bg-subtle-border rounded-full overflow-hidden">
+                    <div className="h-[3px] rounded-full overflow-hidden" style={{ background: 'var(--border)' }}>
                       <div className="h-full" style={{ width: `${f.value}%`, backgroundColor: color }}></div>
                     </div>
                   </div>
                 ))}
               </div>
-              <Link to="/menetelma" className="btn-ghost mt-6 text-[13px]" data-testid="link-methodology">
+              <Link to="/menetelma" className="btn-ghost mt-6 inline-block" data-testid="link-methodology">
                 Lue arviointimenetelmästä →
               </Link>
             </div>

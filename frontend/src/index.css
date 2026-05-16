@@ -1,11 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  /* LIGHT — daytime variant */
   :root {
+    --bg:           #FBFAF8;
+    --surface:      #F4F2EE;
+    --surface-2:    #ECE9E3;
+    --ink:          #0A0A0A;
+    --muted:        #6B6862;
+    --border:       #E8E5DF;
+    --border-strong: #D4D1CB;
+    --brand-blue:   #1B2D5B;
+    --needle:       #0A0A0A;
+
     --background: 40 33% 98%;
     --foreground: 0 0% 4%;
     --card: 40 33% 98%;
@@ -16,36 +27,69 @@
     --primary-foreground: 40 33% 98%;
     --secondary: 36 13% 90%;
     --secondary-foreground: 0 0% 4%;
-    --muted: 36 13% 92%;
+    --muted-shadcn: 36 13% 92%;
     --muted-foreground: 36 5% 40%;
     --accent: 36 13% 90%;
     --accent-foreground: 0 0% 4%;
     --destructive: 3 56% 51%;
     --destructive-foreground: 40 33% 98%;
-    --border: 36 13% 89%;
+    --border-shadcn: 36 13% 89%;
     --input: 36 13% 89%;
     --ring: 222 54% 23%;
     --radius: 0.25rem;
+  }
+
+  /* DARK — evening / primary brand variant */
+  .dark {
+    --bg:           #0A0A0A;
+    --surface:      #141414;
+    --surface-2:    #1F1F1F;
+    --ink:          #F5F3EE;
+    --muted:        #8E8B85;
+    --border:       #2A2A2A;
+    --border-strong: #3A3A3A;
+    --brand-blue:   #5A7BB8;
+    --needle:       #F5F3EE;
+
+    --background: 0 0% 4%;
+    --foreground: 38 22% 95%;
+    --card: 0 0% 8%;
+    --card-foreground: 38 22% 95%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 38 22% 95%;
+    --primary: 218 38% 54%;
+    --primary-foreground: 0 0% 4%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 38 22% 95%;
+    --muted-shadcn: 0 0% 12%;
+    --muted-foreground: 36 4% 55%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 38 22% 95%;
+    --destructive: 3 56% 51%;
+    --destructive-foreground: 38 22% 95%;
+    --border-shadcn: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 218 38% 54%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--border);
   }
   html {
-    background-color: #FBFAF8;
+    background-color: var(--bg);
   }
   body {
     margin: 0;
-    background-color: #FBFAF8;
-    color: #0A0A0A;
+    background-color: var(--bg);
+    color: var(--ink);
     font-family: 'Source Serif 4', Georgia, serif;
     font-size: 17px;
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-feature-settings: 'ss01', 'tnum';
+    transition: background-color 200ms ease, color 200ms ease;
   }
 
   h1, h2, h3, h4, h5, h6, .display {
@@ -53,71 +97,164 @@
     line-height: 1.08;
     letter-spacing: -0.02em;
     font-weight: 800;
+    color: var(--ink);
   }
 
-  /* Tabular figures for all numerical UI */
-  .tabular,
+  /* MONO numerical readouts — instrument data */
+  .mono,
   .num,
-  time,
+  time.mono,
   .score,
   .viewer-count,
-  table td,
-  table th {
+  .readout {
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    font-feature-settings: 'tnum', 'zero', 'ss01';
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .tabular {
     font-variant-numeric: tabular-nums;
     font-feature-settings: 'tnum';
   }
 
   ::selection {
-    background: #1B2D5B;
-    color: #FBFAF8;
+    background: var(--brand-blue);
+    color: var(--bg);
+  }
+
+  /* Smooth theme transitions on backgrounds only */
+  html,
+  body,
+  header,
+  footer,
+  section,
+  aside,
+  article {
+    transition: background-color 250ms ease, border-color 250ms ease, color 200ms ease;
   }
 }
 
 @layer components {
   .container-narrow {
-    @apply mx-auto px-5 sm:px-8;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
     max-width: 720px;
   }
-  .container-wide {
-    @apply mx-auto px-5 sm:px-8;
-    max-width: 1200px;
-  }
-  .hairline {
-    @apply border-[#E8E5DF];
-  }
-  .section-rule {
-    @apply border-t border-[#E8E5DF];
+  @media (min-width: 640px) {
+    .container-narrow { padding-left: 2rem; padding-right: 2rem; }
   }
 
-  /* Brand button (rectangular, 4px radius, no gradients/glows) */
+  .container-wide {
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    max-width: 1280px;
+  }
+  @media (min-width: 640px) {
+    .container-wide { padding-left: 2rem; padding-right: 2rem; }
+  }
+
+  .section-rule {
+    border-top: 1px solid var(--border);
+  }
+
+  /* Buttons — rectangular, 4px, no gradients, mono labels */
   .btn-primary {
-    @apply inline-flex items-center justify-center bg-[#1B2D5B] text-[#FBFAF8] font-display font-semibold text-[15px] tracking-tight px-6 py-3.5 rounded-[4px] transition-colors duration-200 hover:bg-[#0F1F47] focus:outline-none focus:ring-2 focus:ring-[#1B2D5B] focus:ring-offset-2 focus:ring-offset-[#FBFAF8];
-    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ink);
+    color: var(--bg);
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 24px;
+    border-radius: 4px;
+    border: 1px solid var(--ink);
+    transition: background-color 200ms ease, color 200ms ease;
+    min-height: 48px;
+  }
+  .btn-primary:hover {
+    background: var(--brand-blue);
+    border-color: var(--brand-blue);
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center bg-transparent text-[#0A0A0A] font-display font-semibold text-[15px] tracking-tight px-6 py-3.5 rounded-[4px] border border-[#0A0A0A] transition-colors duration-200 hover:bg-[#0A0A0A] hover:text-[#FBFAF8];
-    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 14px 24px;
+    border-radius: 4px;
+    border: 1px solid var(--border-strong);
+    transition: border-color 200ms ease, color 200ms ease;
+    min-height: 48px;
+  }
+  .btn-secondary:hover {
+    border-color: var(--ink);
   }
   .btn-ghost {
-    @apply inline-flex items-center text-[#0A0A0A] font-display font-semibold text-[15px] tracking-tight transition-colors duration-200 hover:text-[#1B2D5B];
+    display: inline-flex;
+    align-items: center;
+    color: var(--ink);
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 200ms ease;
+  }
+  .btn-ghost:hover {
+    color: var(--brand-blue);
   }
 
-  /* Editorial section eyebrow */
+  /* Eyebrow — mono cockpit label */
   .eyebrow {
-    @apply font-display text-[11px] uppercase tracking-[0.18em] font-semibold text-[#6B6862];
+    font-family: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 600;
+    color: var(--muted);
   }
 
-  /* Card — flat, subtle border, generous padding */
+  /* Instrument panel — cockpit-framed data section */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 200ms ease, background-color 200ms ease;
+  }
+  .panel-hover:hover {
+    border-color: var(--ink);
+  }
+
+  /* Editorial card (Phase 1 alias kept for backward compat) */
   .editorial-card {
-    @apply bg-[#FBFAF8] border border-[#E8E5DF] rounded-[4px] transition-colors duration-200;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: border-color 200ms ease;
   }
   .editorial-card-hover:hover {
-    @apply border-[#0A0A0A];
+    border-color: var(--ink);
   }
 
-  /* Editorial body */
+  /* Prose */
   .prose-mittari {
-    @apply font-serif text-[#0A0A0A];
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--ink);
     font-size: 18px;
     line-height: 1.65;
   }
@@ -127,13 +264,52 @@
   .prose-mittari p:last-child {
     margin-bottom: 0;
   }
+  .prose-mittari strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
 
-  /* Hide scrollbar but keep scroll */
+  /* Hairline rule */
+  .hairline {
+    border-color: var(--border);
+  }
+
+  /* LED status indicator — instrument light */
+  .led {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #C8423C;
+    box-shadow: 0 0 0 0 rgba(200, 66, 60, 0.6);
+    animation: led-pulse 1.8s ease-out infinite;
+  }
+  @keyframes led-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(200, 66, 60, 0.7); }
+    70%  { box-shadow: 0 0 0 8px rgba(200, 66, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(200, 66, 60, 0); }
+  }
+
+  /* Hide scrollbar */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Cockpit micro divider */
+  .cockpit-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--border-strong) 20%, var(--border-strong) 80%, transparent 100%);
+  }
+
+  /* Arc pulse for KUUMA+ states */
+  @keyframes arc-glow {
+    0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 currentColor); }
+    50%      { opacity: 0.85; filter: drop-shadow(0 0 6px currentColor); }
+  }
+  .arc-glow {
+    animation: arc-glow 2.6s ease-in-out infinite;
   }
 }

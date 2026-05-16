@@ -1,0 +1,45 @@
+{
+  "summary": "Phase 1.5 visual identity testing on Mittari.fi. Backend regression: 10/10 pytest passing — no regression on /api/, /api/dial, /api/dial/states, /api/signup, /api/predictions. Frontend: All 8 fixes verified, DialCockpit composition correct, theme toggle + localStorage persistence works (desktop + mobile), JetBrains Mono confirmed on all numerical readouts, score tier colors correct on /kasinot (94=KIIRASTULI #8B1E1A, 88=MYRSKY #C8423C), 4 moment data panels with correct intensities (m1=KIIRASTULI, m2=MYRSKY, m3=KUUMA, m4=HAALEA) and zero stock <img> tags inside cards, Emergent badge confirmed removed from DOM, streamer-submission modal end-to-end works showing 'Kiitos … Toimitus käy ehdotuksesi läpi viikon sisällä', all 9 routes (/ /kasinot /kasinot/weezybet /striimaajat /striimaajat/jarttu84 /menetelma /landing /aloita /peli /viikon-kortti) return 200 without error boundary.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_fixes": {
+    "fix1_state_aware_cta": "PASS — primary='/kasinot' 'Pelaa nyt — viikon kuumimmat kasinot', ghost secondary='/striimaajat'",
+    "fix2_notification_capture": "PASS — Bell icon, mono placeholder ETUNIMI@ESIMERKKI.FI, 'Tilaa Mittari →', '4 283' social proof, 'PÄIVITTÄIN · 1 SÄHKÖPOSTI · 0 SPÄMMIÄ' micro line",
+    "fix3_moment_data_panels": "PASS — 4 cards, intensities m1..m4 = KIIRASTULI/MYRSKY/KUUMA/HAALEA, 0 <img> in cards (no stock photos)",
+    "fix4_tier_scores": "PASS — score-94 color=rgb(139,30,26), score-88 color=rgb(200,66,60), MITTARI label + tier text rendered",
+    "fix5_weezy_rally": "PASS — card height 435.75px (>=360), 'IMATRA · EI TALLETUSTA · EI EHTOJA', leaderboard teaser, 'Pelaa kierros →'",
+    "fix6_topi_weekly_card": "PASS — 'TOPIN VIIKON KORTTI · VKO 21', 'Tappara on tulessa…' headline, fixture chips, 'Lue koko kortti →'",
+    "fix7_footer_brand_moment": "PASS — Dial + tagline 'Mittari mittaa. Toimitus tulkitsee. Sinä päätät.' above column grid",
+    "fix8_emergent_badge_removed": "PASS — #emergent-badge query returns null",
+    "dial_cockpit": "PASS — mode label 'LAUANTAINA · ILTA · KUUKAUDEN 16. PÄIVÄ', LIVE NYT 8 STRIIMAAJAA + KATSOJAA 20 090 YHTEENSÄ panels flanking dial, contributors 'ANDYPYRO €42K · PACT KICK 5.6K · F1 MONZA'",
+    "dial_v2_visuals": "PASS — bezel rings, hierarchical ticks, state labels (KYLMÄ/HAALEA/KUUMA/MYRSKY/KIIRASTULI), tapered needle with counterweight cap, KUUMA active arc with glow (visible in mobile screenshot)",
+    "jetbrains_mono": "PASS — fontFamily on cockpit-mode-label, moment-intensity-*, ScoreReadout all resolve to '\"JetBrains Mono\", ui-monospace, …'",
+    "theme_toggle_persistence": "PASS — desktop testid theme-toggle and mobile-only theme-toggle-mobile both present; clicking toggles html.dark class and writes localStorage key 'mittari-theme'; value survives full page reload",
+    "streamer_submission_form": "PASS — suggest-streamer-trigger opens suggest-modal, suggest-name/channel/why fillable, suggest-submit shows 'Kiitos.' + 'Toimitus käy ehdotuksesi läpi viikon sisällä.'",
+    "routes_regression": "PASS — / /kasinot /kasinot/weezybet /striimaajat/jarttu84 /menetelma /landing /aloita /peli /viikon-kortti all return 200, no React error boundary"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "DialCockpit hour parsing uses parseInt on raw split of 'fi-FI' hour formatter — works but locale could theoretically prepend 'klo' on some node versions; defensive parse via /(\\d{2})/ would be safer.",
+    "Email-capture form onSubmit only preventDefault — no client validation feedback or post to backend yet. Acceptable for Phase 1.5 mock but worth a TODO for Phase 2.",
+    "Streamer-suggestion submission logs to console only (intentional mock per spec). Confirm Phase 2 plan wires this to a backend endpoint.",
+    "index.html title is still 'Emergent | Fullstack App' and meta description is 'A product of emergent.sh' — brand polish suggests updating these to 'Mittari.fi …' even though badge is removed.",
+    "Footer Dial uses fixed state='KUUMA' rather than CURRENT_DIAL — minor consistency nit; if dial state ever differs this will diverge from hero."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "100% on Phase 1.5 surface area (all 8 fixes + cockpit + theme + streamer form + JetBrains Mono + dial V2 verified)"},
+  "test_credentials": "N/A — no auth in Phase 1/1.5",
+  "seed_data_creation": "Pytest re-inserted 3 signup docs (TEST_minimal@, TEST_full@, TEST_pred@) and 3 prediction docs. Suggest-streamer test only console-logs, no DB write.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend unchanged from Phase 1. Phase 1.5 is pure frontend visual identity. Key testids: dial-cockpit, cockpit-mode-label, cockpit-contributors, theme-toggle / theme-toggle-mobile, moment-card-{m1..m5}, moment-intensity-{m1..m5} (note: moment IDs are m1..m5 NOT streamer slugs), score-{score_number}, operator-row-{slug}, suggest-streamer-trigger / suggest-modal / suggest-name / suggest-channel / suggest-why / suggest-submit, footer-tagline, hero-cta-primary / hero-cta-secondary. localStorage key is 'mittari-theme' (values 'dark' | 'light'). To force a theme in tests use page.evaluate then reload. CURRENT_DIAL in mock.js stays KUUMA — hero primary CTA therefore points to /kasinot.",
+  "rca_of_the_issue": "N/A — no blocking issues found."
+}

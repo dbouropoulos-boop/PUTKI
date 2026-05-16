@@ -1,169 +1,336 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { DIAL_STATES } from '../data/mock';
 
-// The Mittari signature component: P*rkele-mittari.
-// Sizes: large (480), medium (280), small (64). SVG-based, animated needle.
+// Dial V2 — cockpit-grade instrument
+// - Mechanical bezel (concentric rings)
+// - Hierarchical ticks (major + minor)
+// - Tapered needle with counterweight
+// - State-colored active arc, muted inactive arcs
+// - Spring physics needle settle
+// - Pulse glow on KUUMA+ states
 
 const STATE_ORDER = ['KYLMA', 'HAALEA', 'KUUMA', 'MYRSKY', 'KIIRASTULI'];
 
-const ARC_COLORS = [
-  '#2C5F8D', // KYLMÄ
-  '#7A7E83', // HAALEA
-  '#E8924A', // KUUMA
-  '#C8423C', // MYRSKY
-  '#8B1E1A', // KIIRASTULI
-];
-
-// Convert value 0..100 → angle on a 220° arc starting at -200° (left-bottom) to 20° (right-bottom)
-const valueToAngle = (value) => {
-  const start = -200; // left-bottom
-  const end = 20; // right-bottom
-  return start + ((end - start) * value) / 100;
+const ARC_COLORS = {
+  KYLMA:      '#2C5F8D',
+  HAALEA:     '#7A7E83',
+  KUUMA:      '#E8924A',
+  MYRSKY:     '#C8423C',
+  KIIRASTULI: '#8B1E1A',
 };
 
-export const Dial = ({ size = 'large', state = 'KUUMA', showLabel = true, animatedNeedle = true }) => {
-  const stateObj = DIAL_STATES[state] || DIAL_STATES.KUUMA;
-  const px = size === 'large' ? 480 : size === 'medium' ? 280 : 64;
-  const strokeWidth = size === 'large' ? 14 : size === 'medium' ? 10 : 5;
+// Arc geometry: 240° sweep, starting at -210° (lower-left) to 30° (lower-right)
+const ARC_START = -210;
+const ARC_END = 30;
+const ARC_TOTAL = ARC_END - ARC_START; // 240
+const SEG_SWEEP = ARC_TOTAL / 5;       // 48 each
 
-  const [angle, setAngle] = useState(valueToAngle(0));
+const valueToAngle = (value) => ARC_START + (ARC_TOTAL * value) / 100;
+
+const polar = (cx, cy, r, deg) => {
+  const rad = (deg * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+};
+
+const arcPath = (cx, cy, r, startDeg, endDeg) => {
+  const s = polar(cx, cy, r, startDeg);
+  const e = polar(cx, cy, r, endDeg);
+  const large = endDeg - startDeg <= 180 ? 0 : 1;
+  return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
+};
+
+// Spring physics — needle settles with damped oscillation
+const useSpringAngle = (target, deps = []) => {
+  const [angle, setAngle] = useState(target);
+  const angleRef = useRef(target);
+  const velocityRef = useRef(0);
+  const rafRef = useRef(null);
 
   useEffect(() => {
-    // Animate to target on mount / state change
-    const target = valueToAngle(stateObj.value);
-    let raf;
-    const start = performance.now();
-    const duration = animatedNeedle ? 900 : 0;
-    const initial = angle;
-    const animate = (t) => {
-      const elapsed = t - start;
-      const p = duration === 0 ? 1 : Math.min(elapsed / duration, 1);
-      // cubic-bezier-ish ease-out
-      const eased = 1 - Math.pow(1 - p, 3);
-      setAngle(initial + (target - initial) * eased);
-      if (p < 1) raf = requestAnimationFrame(animate);
+    cancelAnimationFrame(rafRef.current);
+    const stiffness = 90;
+    const damping = 11;
+    const mass = 1.1;
+    let last = performance.now();
+
+    const step = (now) => {
+      const dtRaw = (now - last) / 1000;
+      const dt = Math.min(dtRaw, 0.033); // cap to ~30fps slice for stability
+      last = now;
+
+      const x = angleRef.current;
+      const v = velocityRef.current;
+      const force = -stiffness * (x - target) - damping * v;
+      const a = force / mass;
+      const newV = v + a * dt;
+      const newX = x + newV * dt;
+      angleRef.current = newX;
+      velocityRef.current = newV;
+      setAngle(newX);
+
+      if (Math.abs(newX - target) > 0.05 || Math.abs(newV) > 0.05) {
+        rafRef.current = requestAnimationFrame(step);
+      } else {
+        angleRef.current = target;
+        velocityRef.current = 0;
+        setAngle(target);
+      }
     };
-    raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
+    rafRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafRef.current);
     // eslint-disable-next-line
-  }, [state, animatedNeedle]);
+  }, [target, ...deps]);
 
-  // SVG geometry
+  return angle;
+};
+
+export const Dial = ({
+  size = 'large',
+  state = 'KUUMA',
+  showLabel = true,
+}) => {
+  const stateObj = DIAL_STATES[state] || DIAL_STATES.KUUMA;
+  const px = size === 'large' ? 560 : size === 'medium' ? 280 : 64;
+  const isSmall = size === 'small';
+  const isMedium = size === 'medium';
+
+  // Geometry
   const cx = px / 2;
-  const cy = px * 0.58;
-  const r = px * 0.40;
+  const cy = px / 2;
+  const outerR = px * 0.46;      // bezel outer
+  const arcR = px * 0.38;        // colored arc radius
+  const tickInnerR = arcR + (isSmall ? 4 : 8);
+  const tickMajorR = arcR + (isSmall ? 6 : 14);
+  const labelR = arcR + (isSmall ? 0 : 26);
 
-  // Build 5 colored arc segments
-  const arcStart = -200;
-  const arcEnd = 20;
-  const totalSweep = arcEnd - arcStart; // 220
-  const segSweep = totalSweep / 5;
+  const strokeWidth = isSmall ? 6 : isMedium ? 14 : 22;
 
-  const polarToCartesian = (centerX, centerY, radius, angleDeg) => {
-    const rad = (angleDeg * Math.PI) / 180;
-    return { x: centerX + radius * Math.cos(rad), y: centerY + radius * Math.sin(rad) };
-  };
+  const targetAngle = valueToAngle(stateObj.value);
+  const angle = useSpringAngle(targetAngle, [state]);
 
-  const arcPath = (radius, startAngle, endAngle) => {
-    const s = polarToCartesian(cx, cy, radius, startAngle);
-    const e = polarToCartesian(cx, cy, radius, endAngle);
-    const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
-    return `M ${s.x} ${s.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${e.x} ${e.y}`;
-  };
+  // Major ticks: 6 (5 state boundaries + endpoints)
+  const majorTicks = Array.from({ length: 6 }, (_, i) => ARC_START + (i * ARC_TOTAL) / 5);
+  // Minor ticks: 3 between each pair of major ticks → 15 total
+  const minorTicks = [];
+  for (let seg = 0; seg < 5; seg++) {
+    const segStart = ARC_START + seg * SEG_SWEEP;
+    for (let m = 1; m <= 3; m++) {
+      minorTicks.push(segStart + (m * SEG_SWEEP) / 4);
+    }
+  }
 
-  const needleLen = r - strokeWidth / 2 - (size === 'small' ? 3 : 8);
-  const needleEnd = polarToCartesian(cx, cy, needleLen, angle);
+  // State labels
+  const stateLabels = STATE_ORDER.map((key, i) => ({
+    key,
+    label: DIAL_STATES[key].label,
+    // Center of each segment
+    angle: ARC_START + (i + 0.5) * SEG_SWEEP,
+  }));
 
-  // Tick marks (only for large + medium)
-  const showTicks = size !== 'small';
-  const ticks = showTicks
-    ? Array.from({ length: 11 }, (_, i) => {
-        const a = arcStart + (i * totalSweep) / 10;
-        const outer = polarToCartesian(cx, cy, r + strokeWidth / 2 + 4, a);
-        const inner = polarToCartesian(cx, cy, r + strokeWidth / 2 + (i % 5 === 0 ? 14 : 8), a);
-        return { x1: inner.x, y1: inner.y, x2: outer.x, y2: outer.y, major: i % 5 === 0 };
-      })
-    : [];
+  const needleLen = arcR - (isSmall ? 4 : 22);
+  const needleTip = polar(cx, cy, needleLen, angle);
+  const counterEnd = polar(cx, cy, isSmall ? -8 : -22, angle);
 
   const isHot = ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(state);
+  const activeColor = ARC_COLORS[state];
 
   return (
-    <div className={`flex flex-col items-center ${size === 'small' ? 'gap-0' : 'gap-3'}`} data-testid={`dial-${size}`}>
+    <div className="flex flex-col items-center" style={{ width: px }} data-testid={`dial-${size}`}>
       <svg
         width={px}
-        height={size === 'small' ? px : px * 0.78}
-        viewBox={`0 0 ${px} ${px * 0.78}`}
-        className={isHot && size !== 'small' ? 'animate-live-pulse' : ''}
-        style={{ animationDuration: '2.4s' }}
+        height={px}
+        viewBox={`0 0 ${px} ${px}`}
+        style={{ display: 'block' }}
       >
-        {/* 5 colored arc segments */}
-        {ARC_COLORS.map((color, i) => {
-          const sa = arcStart + i * segSweep;
-          const ea = arcStart + (i + 1) * segSweep;
+        <defs>
+          {/* Subtle radial gradient on dial face */}
+          <radialGradient id={`face-${size}`} cx="50%" cy="48%" r="60%">
+            <stop offset="0%"   stopColor="var(--bg)" stopOpacity="0" />
+            <stop offset="65%"  stopColor="var(--bg)" stopOpacity="0" />
+            <stop offset="100%" stopColor="var(--ink)" stopOpacity="0.06" />
+          </radialGradient>
+
+          {/* Needle drop shadow */}
+          <filter id={`needle-shadow-${size}`} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="1.2" />
+          </filter>
+
+          {/* Active arc glow for KUUMA+ */}
+          {isHot && (
+            <filter id={`arc-glow-${size}`} x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          )}
+        </defs>
+
+        {/* Bezel — outer ring */}
+        {!isSmall && (
+          <>
+            <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="var(--border-strong)" strokeWidth="1.5" />
+            <circle cx={cx} cy={cy} r={outerR - 5} fill="none" stroke="var(--border)" strokeWidth="1" />
+            {/* Inner chamfer highlight (subtle) */}
+            <circle cx={cx} cy={cy} r={outerR - 9} fill="none" stroke="var(--ink)" strokeWidth="0.5" opacity="0.15" />
+          </>
+        )}
+
+        {/* Dial face gradient */}
+        {!isSmall && <circle cx={cx} cy={cy} r={outerR - 10} fill={`url(#face-${size})`} />}
+
+        {/* All 5 arc segments — inactive dim, active glows */}
+        {STATE_ORDER.map((key, i) => {
+          const sa = ARC_START + i * SEG_SWEEP + 0.6; // tiny gap between segments
+          const ea = ARC_START + (i + 1) * SEG_SWEEP - 0.6;
+          const isActive = key === state;
           return (
             <path
-              key={i}
-              d={arcPath(r, sa, ea)}
+              key={key}
+              d={arcPath(cx, cy, arcR, sa, ea)}
               fill="none"
-              stroke={color}
+              stroke={ARC_COLORS[key]}
               strokeWidth={strokeWidth}
               strokeLinecap="butt"
-              opacity={STATE_ORDER[i] === state ? 1 : 0.22}
+              opacity={isActive ? 1 : 0.12}
+              filter={isActive && isHot ? `url(#arc-glow-${size})` : undefined}
+              style={{
+                color: ARC_COLORS[key],
+                transition: 'opacity 600ms ease',
+              }}
+              className={isActive && isHot ? 'arc-glow' : ''}
             />
           );
         })}
 
-        {/* Ticks */}
-        {ticks.map((t, i) => (
+        {/* Minor ticks */}
+        {!isSmall && minorTicks.map((a, i) => {
+          const inner = polar(cx, cy, tickInnerR, a);
+          const outer = polar(cx, cy, tickInnerR + 5, a);
+          return (
+            <line
+              key={`mi-${i}`}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              stroke="var(--ink)"
+              strokeWidth={0.7}
+              opacity={0.35}
+            />
+          );
+        })}
+
+        {/* Major ticks */}
+        {!isSmall && majorTicks.map((a, i) => {
+          const inner = polar(cx, cy, tickInnerR, a);
+          const outer = polar(cx, cy, tickMajorR, a);
+          return (
+            <line
+              key={`ma-${i}`}
+              x1={inner.x}
+              y1={inner.y}
+              x2={outer.x}
+              y2={outer.y}
+              stroke="var(--ink)"
+              strokeWidth={1.6}
+              opacity={0.75}
+            />
+          );
+        })}
+
+        {/* State name labels (around arc, large only) */}
+        {!isSmall && !isMedium && stateLabels.map((s) => {
+          const p = polar(cx, cy, labelR, s.angle);
+          return (
+            <text
+              key={`lbl-${s.key}`}
+              x={p.x}
+              y={p.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              style={{
+                fontFamily: '"JetBrains Mono", ui-monospace, Menlo, monospace',
+                fontSize: 8.5,
+                fontWeight: 600,
+                letterSpacing: '0.18em',
+                fill: s.key === state ? ARC_COLORS[s.key] : 'var(--muted)',
+                opacity: s.key === state ? 1 : 0.5,
+              }}
+            >
+              {s.label}
+            </text>
+          );
+        })}
+
+        {/* Needle — tapered, with counterweight */}
+        <g filter={`url(#needle-shadow-${size})`}>
+          {/* Counterweight (small fin past pivot) */}
+          {!isSmall && (
+            <line
+              x1={cx}
+              y1={cy}
+              x2={counterEnd.x}
+              y2={counterEnd.y}
+              stroke="var(--needle)"
+              strokeWidth={isMedium ? 4 : 5}
+              strokeLinecap="round"
+              opacity={0.85}
+            />
+          )}
+          {/* Main needle — tapered using two strokes */}
           <line
-            key={i}
-            x1={t.x1}
-            y1={t.y1}
-            x2={t.x2}
-            y2={t.y2}
-            stroke="#0A0A0A"
-            strokeWidth={t.major ? 1.4 : 0.8}
-            opacity={t.major ? 0.9 : 0.45}
+            x1={cx}
+            y1={cy}
+            x2={needleTip.x}
+            y2={needleTip.y}
+            stroke="var(--needle)"
+            strokeWidth={isSmall ? 1.6 : isMedium ? 3 : 4.5}
+            strokeLinecap="round"
           />
-        ))}
+          {/* Needle tip accent — pick up state color when hot */}
+          <line
+            x1={cx + (needleTip.x - cx) * 0.7}
+            y1={cy + (needleTip.y - cy) * 0.7}
+            x2={needleTip.x}
+            y2={needleTip.y}
+            stroke={isHot ? activeColor : 'var(--needle)'}
+            strokeWidth={isSmall ? 1.6 : isMedium ? 3 : 4.5}
+            strokeLinecap="round"
+          />
+        </g>
 
-        {/* Center hub */}
-        <circle cx={cx} cy={cy} r={size === 'small' ? 3 : size === 'medium' ? 8 : 14} fill="#0A0A0A" />
-        <circle cx={cx} cy={cy} r={size === 'small' ? 1.4 : size === 'medium' ? 3 : 5} fill="#FBFAF8" />
-
-        {/* Needle */}
-        <line
-          x1={cx}
-          y1={cy}
-          x2={needleEnd.x}
-          y2={needleEnd.y}
-          stroke="#0A0A0A"
-          strokeWidth={size === 'large' ? 4 : size === 'medium' ? 2.6 : 1.6}
-          strokeLinecap="round"
-        />
-
-        {/* Inner ring shadow */}
-        <circle
-          cx={cx}
-          cy={cy}
-          r={r - strokeWidth}
-          fill="none"
-          stroke="#E8E5DF"
-          strokeWidth={0.6}
-          opacity={size === 'small' ? 0 : 0.7}
-        />
+        {/* Central hub */}
+        <circle cx={cx} cy={cy} r={isSmall ? 3 : isMedium ? 9 : 14} fill="var(--ink)" />
+        <circle cx={cx} cy={cy} r={isSmall ? 1.2 : isMedium ? 3.5 : 5.5} fill="var(--bg)" />
       </svg>
 
       {showLabel && (
-        <div className="flex flex-col items-center">
-          {size !== 'small' && (
-            <div className="eyebrow mb-1.5">P*rkele-mittari</div>
+        <div className="flex flex-col items-center mt-1">
+          {!isSmall && (
+            <div
+              className="mono"
+              style={{
+                fontSize: 10,
+                letterSpacing: '0.22em',
+                color: 'var(--muted)',
+                marginBottom: 8,
+                fontWeight: 600,
+              }}
+            >
+              P*RKELE-MITTARI
+            </div>
           )}
           <div
-            className={`font-display font-black tracking-tight ${
-              size === 'large' ? 'text-5xl sm:text-6xl' : size === 'medium' ? 'text-3xl' : 'text-xs'
-            }`}
-            style={{ color: stateObj.color }}
+            className="display"
+            style={{
+              fontSize: isSmall ? 11 : isMedium ? 36 : 64,
+              fontWeight: 900,
+              color: activeColor,
+              letterSpacing: '-0.02em',
+              lineHeight: 1,
+            }}
             data-testid={`dial-state-label-${stateObj.key}`}
           >
             {stateObj.label}
