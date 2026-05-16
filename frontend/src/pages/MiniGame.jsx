@@ -325,7 +325,7 @@ const MiniGame = () => {
               {lang === 'en' ? 'NO RUNS YET — BE THE FIRST →' : 'EI AJOJA VIELÄ — OLE ENSIMMÄINEN →'}
             </div>
           ) : (
-            <div className="panel overflow-hidden">
+            <div className="panel overflow-hidden" data-testid="leaderboard-table">
               <div className="grid" style={{ gridTemplateColumns: '60px 1fr 100px 110px', borderBottom: '1px solid var(--border-strong)' }}>
                 <div className="eyebrow p-3">{lang === 'en' ? 'RANK' : 'SIJA'}</div>
                 <div className="eyebrow p-3">{lang === 'en' ? 'PLAYER' : 'PELAAJA'}</div>

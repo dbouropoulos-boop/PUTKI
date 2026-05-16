@@ -2,88 +2,103 @@
 
 ## Phase History
 - **Phase 1** (2026-02) — 9-page editorial site with mock data
-- **Phase 1.5** (2026-02) — Cockpit-instrument visual elevation, dial V2, 8 fixes, streamer-submission form
+- **Phase 1.5** (2026-02) — Cockpit-instrument visual elevation, dial V2, 8 fixes
 - **Phase 1.6** (2026-02) — Bilingual FI / EN
 - **Phase 1.7** (2026-02) — Visual energy layers (live ticker, atmospheric glow, grain, count-ups)
 - **Phase 1.5 (Revised)** (2026-02) — Architectural restructure for conversion
-- **Phase 2.0** (2026-05) — Liveness layer: real-time activity feed, breathing dial, social-proof signals, signup toasts, push toasts, Telegram + back-office, shareable cards, 24h dial sparkline
+- **Phase 2.0** (2026-05) — Liveness layer (real-time activity feed, breathing dial, social-proof signals, signup toasts, push toasts, Telegram + back-office, shareable cards, 24h sparkline)
+- **Phase 2.5** (2026-05) — Page-by-page completion: real Twitch/Kick autoplay previews, full StreamerProfile rebuild, Weezy Rally canvas game with persisted leaderboard
 
 ## Architecture
 - Frontend: React 19 + React Router v7 + Tailwind + shadcn/ui + html2canvas
 - Backend: FastAPI + Motor (async MongoDB)
-- DB: MongoDB collections — `signups`, `predictions`, `settings` (singleton _id="site")
+- DB: MongoDB collections — `signups`, `predictions`, `settings` (singleton _id="site"), `game_scores`
 - Theming: CSS-variable-driven (light/dark), Helsinki-time default at 16:00+
 - i18n: LanguageContext (FI default + EN)
 - Fonts: Inter, Source Serif 4, JetBrains Mono
-- Auth: Public site has none; /back-office gated by `BACK_OFFICE_TOKEN` env (header `X-Admin-Token`)
+- Auth: Public site has none. /back-office gated by `BACK_OFFICE_TOKEN`. Game personalisation gated by client-generated cookie_id (uuid in localStorage `mittari_cookie_id`).
 
-## Phase 2.0 — What's been built (2026-05)
+## Phase 2.5 — What's been built (2026-05)
 
-### Liveness micro-motion
-- **Dial breathing** — needle drifts ±2-3° via superimposed sin waves (amplitude scales with hot states)
-- **Counter flash** — `CountUp` flashes amber on every value change
-- **LED variants** — `.led`, `.led-blue`, `.led-amber` keyframes with state-coloured halos
-- **Marquee rhythm** — `LiveTicker` slows/speeds via `ticker-rhythm-{state}` class (38 s on MYRSKY → 92 s on KIIRASTULI)
-- **Session progress bars** — auto-incrementing amber bar at the bottom of every live tile (data-testid `session-progress-{slug}`)
-- **State pulse** + **arc glow** — already present
+### Real Twitch/Kick autoplay video previews
+- **`StreamerVideoPreview`** — single shared component used by:
+  - `LiveTilesGrid` (homepage live tiles)
+  - `StreamerCard` (streamer index)
+  - `StreamerProfile` profile-live-embed
+- Twitch parent whitelist includes localhost, current hostname, and the production preview hostname.
+- Trigger: `auto` resolves to `hover` on devices with hover, `viewport` (IntersectionObserver, threshold 0.45) on touch.
+- Falls back to streamer.photo on iframe error or when offline.
+- All 18 STREAMERS now carry a `channel` field for embed URLs.
 
-### Real-time surfaces (mocked client-side)
-- **`/data/mockStreams.js`** — `useActivityFeed`, `useLiveCounters`, `useSignupToast`, `usePushNotification`, `generateDialHistory`, `timeAgo`
-- **ActivityFeedInline** (homepage) — Mittari-flavoured events: `streamer-live`, `big-win`, `jackpot-hit`, `operator-score-change`, `forum-heat-spike`, `dial-state-change`. Auto-updates every 8-17 s with stripe-sweep animation on new events.
-- **SocialProofTicker** (homepage) — 4 cells (subscribers, dial-watchers, forum-heat, weekly-growth) ticking every 2.2 s; border flashes state-colour on tick.
-- **SignupToast** — bottom-left dismissible toast (Finnish names + cities only) firing ~12 s after mount; auto-hides after 7 s; dismiss pauses for the session.
-- **PushNotificationToast** — top-right mocked push, fires ~22 s after mount on a probabilistic gate.
-- **DialHistoryMiniChart** — 24h sparkline below cockpit dial with state-band thresholds and pulsing tip.
+### StreamerProfile full rebuild
+Sections (in order, with data-testids):
+- Cockpit hero — `streamer-profile-{slug}`, `profile-name`, `live-status` / OFFLINE row, `profile-stats` (4 stat cards: HOURS·7D, AVG WIN, AVG VIEW, STREAK·D), `profile-cockpit` (mini-dial + BIG WIN FREQ + TOP GAME)
+- Status-aware CTA: `profile-watch-cta` + `profile-follow-when-offline` (LIVE) OR `profile-follow-form` → `follow-success` (OFFLINE)
+- `profile-live-embed` full-width iframe (LIVE only)
+- Mittari commentary (Topi voice, name-localized FI/EN)
+- Biggest moments (4 cards)
+- `schedule-grid` — cockpit calendar heatmap (7 days × 8 blocks)
+- 4 `profile-op-{slug}` operator cards with hours played + last seen
+- `profile-activity-feed` — 12-card mock event stream
+- `rhythm-heatmap` — viewer concentration 7d × 24h
+- Social posts (3 cards, mocked Phyllo placeholder)
+- `profile-share` — html2canvas dial-state share
+- 5 `profile-related-{slug}` carousel
+- All per-streamer mock data is deterministic from slug seed (same streamer → same numbers across reloads)
 
-### Shareable cards (html2canvas)
-- **ShareButton** with variants: `moment`, `dial`, `operator`. Generates 1080×1080 PNG via offscreen template, opens preview modal with download + native Web Share fallback.
-- Wired into hero (dial state) and every MomentCard.
+### Weezy Rally — canvas + RAF game
+- `/app/frontend/src/components/WeezyRally.jsx` — lightweight (no Phaser dep) canvas game
+- 75-second stage, 3 crashes max, perspective road with lane stripes, cone + rock obstacles, blue nitro pickups
+- Controls: ← → / A D steer, Space brake, ↑/W accelerate, mobile drag-to-steer
+- HUD overlay: SCORE, TIME, CRASHES (red flash on time<10s and crashes≥2)
+- Calls `onFinish({score, crashes, time_left, finished})`
+- Wrapping `MiniGame.jsx` page submits to backend `/api/game-scores`, shows result panel with `rally-share` + `rally-challenge` CTAs, live `leaderboard-table` (with rank-tier coloring) + `leaderboard-personal` banner
 
-### Telegram + back-office
-- **TelegramSubscribeButton** — fetches `/api/settings/public` on mount; disabled "coming soon" until URL set, enabled "Subscribe via Telegram" otherwise. Mounted in `HeroCapture` and `PersistentCapture`.
-- **`/back-office`** route — token-gated (localStorage 'mittari-admin-token'); single editable setting `telegram_channel`. Token: `mittari-admin` (env `BACK_OFFICE_TOKEN`).
-- **Backend endpoints**:
-  - `GET  /api/settings/public` — `{ telegram_channel }` only, no auth
-  - `GET  /api/admin/settings` — full settings doc, requires `X-Admin-Token`
-  - `PUT  /api/admin/settings` — body `{ telegram_channel: string|null }`, requires `X-Admin-Token`
+### Backend additions
+- `POST /api/game-scores` — body `{cookie_id (8-64), name?, score, crashes?, time_left?, week?, stage?}`. Returns `{id, rank, total, is_personal_best, week, stage, ...}`. Pydantic-validated.
+- `GET /api/game-scores/leaderboard?stage=imatra&week=&limit=10` — sorted DESC by score, no cookie_id/_id leak. limit clamped 1..50.
+- `GET /api/game-scores/me?cookie_id=&stage=imatra&week=` — personal best + rank + total.
+- Week format: ISO calendar `2026W20`.
 
 ### Test results
-- **Iteration 4** (Phase 2.0): backend pytest 17/17 (10 regression + 7 new settings); frontend 100% on every Phase 2.0 surface (hero capture, telegram dynamic state, dial-history chart, social-proof ticker, activity feed auto-update, signup toast, share modals, back-office auth + persistence, persistent capture telegram, session progress bars, regression on all routes, EN/FI toggle).
+- **Iteration 5** (Phase 2.5): backend pytest 29/29 (12 new game-score + 17 regression); frontend 100% on retest after `leaderboard-table` testid added. All Phase 2.0 surfaces still green (regression).
 
 ## Prioritized backlog
 
-### P0 (Phase 2 — real signal layer)
-- Twitch/Kick muted-autoplay iframes for live tiles (replace photo placeholder)
-- Backend `/api/notify-signup` to persist hero + follow + persistent emails (replace console.log mocks)
-- Real activity-feed signal sourcing (Twitch helix poll, Kick API, RSS for forum heat)
-- Twitch/Kick live-status polling for actual streamer list
-- Suomi24 + Ylilauta activity-volume signal scraping
-- Notification delivery (Resend + Telegram bot + web push)
-- Dial calculation engine fusing real signals → state changes propagate to dial, contextual float, ranking sort default
+### P0 — next session
+- **Personalization layer** (Priority 4): cookie-based returning-user treatment on Home + MISSASIT EILEN OMASI/KAIKKI toggle + ranking page contextual sort + Weezy Rally personal stats card on Home + Weekly Card personal status
+- **Operator review pages** (Priority 5): live data strip, score component breakdown, tracked-streamer activity, alternative operators, recent moments at this operator, deeper analysis link
+- **Casino ranking page** (Priority 6): #1 hero treatment, micro-stats per card, offer-vs-score visual hierarchy invert, expand to 25-30 operators, "Your streamers play at" filter, editorial pieces upgrades
 
 ### P1
-- Operator click escalation 24h cookie + secondary CTA on persistent capture
-- State-driven default ranking sort (best-for-action vs best-for-research)
-- Real operator data + Trustpilot/AskGamblers signals
-- CMS for editorial commentary (FI + EN)
-- Affiliate link infrastructure
-- Sports data feed (API-Football)
-- Telegram-channel polling (sync UI when admin updates URL in another tab)
-- Streak / prediction-game scaffolding
+- **Weekly Card** (Priority 7): Topi as a character + bio + weekly commentary, "Topi's strongest pick" elevation, deeper-take expanders, live match status, odds movement, personal rank banner
+- **Methodology page** (Priority 8): 70/30 split visualization, score factor bar chart, score-waterfall example, score change log, About Mittari, affiliate disclosure table, conflicts-of-interest section, methodology version history
+- **Signup flow** (Priority 9): single-field magic-link compression, Step 2 in later session, granular notification preferences
 
-### P2 (post-July 2027)
+### P0 — Phase 3 (real signal layer, post-2.5)
+- Twitch helix + Kick API live-status polling for actual streamer list
+- Suomi24 + Ylilauta activity-volume signal scraping
+- Notification delivery (Resend + Telegram bot + web push)
+- Dial calculation engine fusing real signals
+- `/api/notify-signup` endpoint + wire all email captures
+- Real operator data + Trustpilot/AskGamblers signals
+- Sports data feed (API-Football)
+
+### P2
 - Licensed Finnish operator partner onboarding
 - CPA monetisation activation
 - Pydantic HttpUrl validation on telegram_channel
-- Operator-score share variant on `/kasinot/:slug`
+- Phyllo integration for social posts on streamer profiles
 
 ## Test credentials
 - Public site: no auth required
 - Back-office: token `mittari-admin` at `/back-office`
+- Game scores: client cookie_id (uuid in localStorage `mittari_cookie_id`)
 
 ## Next tasks
-1. Replace mock activity feed with real Twitch/Kick + forum scraping signal pipeline
-2. `/api/notify-signup` endpoint + wire hero, follow, persistent capture (remove client-side console.log)
-3. Telegram-bot delivery + web-push infrastructure
-4. Dial calculation engine fusing real signals
-5. Twitch/Kick autoplay embed integration (swap LiveTile placeholder for real iframes)
+1. Personalization layer — cookie-based returning-user treatment across Home, MISSASIT EILEN, ranking
+2. Operator review pages — live data strip, score breakdown, tracked-streamer activity, alternatives
+3. Casino ranking page — #1 hero, micro-stats, expanded list, your-streamers-play-at section
+4. Weekly Card upgrades — Topi character, deeper takes, live match status
+5. Methodology page — visualizations, score-waterfall, change log, about
+6. Signup flow — single-field magic-link compression
