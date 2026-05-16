@@ -1,104 +1,109 @@
 # Mittari.fi — PRD
 
 ## Phase History
-- **Phase 1** (2026-02) — 9-page editorial site with mock data
-- **Phase 1.5** (2026-02) — Cockpit-instrument visual elevation, dial V2, 8 fixes
+- **Phase 1** (2026-02) — 9-page editorial site
+- **Phase 1.5** (2026-02) — Cockpit-instrument visual elevation
 - **Phase 1.6** (2026-02) — Bilingual FI / EN
-- **Phase 1.7** (2026-02) — Visual energy layers (live ticker, atmospheric glow, grain, count-ups)
+- **Phase 1.7** (2026-02) — Visual energy layers
 - **Phase 1.5 (Revised)** (2026-02) — Architectural restructure for conversion
-- **Phase 2.0** (2026-05) — Liveness layer (real-time activity feed, breathing dial, social-proof signals, signup toasts, push toasts, Telegram + back-office, shareable cards, 24h sparkline)
-- **Phase 2.5** (2026-05) — Page-by-page completion: real Twitch/Kick autoplay previews, full StreamerProfile rebuild, Weezy Rally canvas game with persisted leaderboard
+- **Phase 2.0** (2026-05) — Liveness layer (activity feed, breathing dial, social-proof, toasts, Telegram, sharable cards, sparkline)
+- **Phase 2.5** (2026-05) — Page-by-page completion (autoplay previews, StreamerProfile rebuild, Weezy Rally + leaderboard)
+- **Phase 2.6 Batch A** (2026-05) — Architectural corrections + International expansion + Smartico Visitor Mode shell
 
 ## Architecture
-- Frontend: React 19 + React Router v7 + Tailwind + shadcn/ui + html2canvas
+- Frontend: React 19 + Tailwind + shadcn/ui + html2canvas
 - Backend: FastAPI + Motor (async MongoDB)
 - DB: MongoDB collections — `signups`, `predictions`, `settings` (singleton _id="site"), `game_scores`
-- Theming: CSS-variable-driven (light/dark), Helsinki-time default at 16:00+
-- i18n: LanguageContext (FI default + EN)
-- Fonts: Inter, Source Serif 4, JetBrains Mono
-- Auth: Public site has none. /back-office gated by `BACK_OFFICE_TOKEN`. Game personalisation gated by client-generated cookie_id (uuid in localStorage `mittari_cookie_id`).
+- Auth: Public site has none; /back-office gated by `BACK_OFFICE_TOKEN`; game personalisation by client cookie_id
+- i18n: LanguageContext FI default + EN
 
-## Phase 2.5 — What's been built (2026-05)
+## Phase 2.6 Batch A — What's been built (2026-05)
 
-### Real Twitch/Kick autoplay video previews
-- **`StreamerVideoPreview`** — single shared component used by:
-  - `LiveTilesGrid` (homepage live tiles)
-  - `StreamerCard` (streamer index)
-  - `StreamerProfile` profile-live-embed
-- Twitch parent whitelist includes localhost, current hostname, and the production preview hostname.
-- Trigger: `auto` resolves to `hover` on devices with hover, `viewport` (IntersectionObserver, threshold 0.45) on touch.
-- Falls back to streamer.photo on iframe error or when offline.
-- All 18 STREAMERS now carry a `channel` field for embed URLs.
+### Correction 1: Topi character removal
+- All Topi references reattributed to **Mittarin toimitus** (institutional editorial team) — copy + bylines + leaderboard names + activity-feed Finnish-name pool
+- New page **/toimitus** — placeholder editorial team page with three standards cards (INDEPENDENCE / CORRECTIONS / CONTACT) + "to be announced" contributors block + link to methodology
+- WeeklyCard rebrand: "Mittarin viikon kortti", lede + bylines updated FI + EN
 
-### StreamerProfile full rebuild
-Sections (in order, with data-testids):
-- Cockpit hero — `streamer-profile-{slug}`, `profile-name`, `live-status` / OFFLINE row, `profile-stats` (4 stat cards: HOURS·7D, AVG WIN, AVG VIEW, STREAK·D), `profile-cockpit` (mini-dial + BIG WIN FREQ + TOP GAME)
-- Status-aware CTA: `profile-watch-cta` + `profile-follow-when-offline` (LIVE) OR `profile-follow-form` → `follow-success` (OFFLINE)
-- `profile-live-embed` full-width iframe (LIVE only)
-- Mittari commentary (Topi voice, name-localized FI/EN)
-- Biggest moments (4 cards)
-- `schedule-grid` — cockpit calendar heatmap (7 days × 8 blocks)
-- 4 `profile-op-{slug}` operator cards with hours played + last seen
-- `profile-activity-feed` — 12-card mock event stream
-- `rhythm-heatmap` — viewer concentration 7d × 24h
-- Social posts (3 cards, mocked Phyllo placeholder)
-- `profile-share` — html2canvas dial-state share
-- 5 `profile-related-{slug}` carousel
-- All per-streamer mock data is deterministic from slug seed (same streamer → same numbers across reloads)
+### Correction 2: International streamer expansion (Finnish core preserved)
+- New route **/striimaajat/kansainvaliset** with 4 country tabs (`global` / `swedish` / `dutch` / `norwegian`)
+- 8 mocked streamers across scenes (Roshtein, Trainwreckstv, Classybeef, CasinoDaddy, SweetFlips, MattiSlots, NederGaming, Halper-nl + Norwegian "to be announced" placeholder)
+- Country-coded card tints + ISO badges (INTL/SWE/NLD/NOR)
+- Per-scene editorial blurb panels (Mittari voice, FI/EN)
+- Scene-specific moments (`INTL_MOMENTS`) — 6 mocked international highlights
+- Hard disclaimer footer: **"KANSAINVÄLINEN AKTIVITEETTI EI SYÖTÄ P*RKELE-MITTARIA"** — dial stays exclusively Finnish
+- Cross-link from `/striimaajat`: "Selaa kansainvälistä skeneä →"
 
-### Weezy Rally — canvas + RAF game
-- `/app/frontend/src/components/WeezyRally.jsx` — lightweight (no Phaser dep) canvas game
-- 75-second stage, 3 crashes max, perspective road with lane stripes, cone + rock obstacles, blue nitro pickups
-- Controls: ← → / A D steer, Space brake, ↑/W accelerate, mobile drag-to-steer
-- HUD overlay: SCORE, TIME, CRASHES (red flash on time<10s and crashes≥2)
-- Calls `onFinish({score, crashes, time_left, finished})`
-- Wrapping `MiniGame.jsx` page submits to backend `/api/game-scores`, shows result panel with `rally-share` + `rally-challenge` CTAs, live `leaderboard-table` (with rank-tier coloring) + `leaderboard-personal` banner
+### Correction 3: ActivityFeed + MISSASIT EILEN scene tabs
+- ActivityFeed on home now has **SUOMI / KANSAINVÄLINEN** tab toggle (default SUOMI)
+- New `useIntlActivityFeed` hook generates global-flavoured events (Roshtein/Trainwreckstv/Stake/Roobet/Reddit etc.)
+- MISSASIT EILEN now has **SUOMI / KANSAINVÄLINEN / KAIKKI** three-state filter (default SUOMI)
+- "all" combines FI + INTL moments
+
+### Smartico Visitor Mode shell
+- New page **/voita-palkinto** — separate from Weezy Rally retention game (per brief)
+- Mittari-styled spin-the-wheel placeholder with 6 prize tiers — every spin wins
+- Win flow: `mittari_weezy_visitor_uuid` cookie + localStorage (90-day) + win modal + claim CTA
+- Returning-visitor state: replaces game with `visitor-claim-prompt` showing prize + UUID + Weezybet register link with UTM + UUID query params
+- Back-office field `smartico_template_id` — when set, placeholder is replaced with `smartico-embed` wrapper containing `id='smartico-visitor-mode'` div carrying `data-template-id` (for future Smartico script injection)
+- Cross-link to Weezy Rally for the alternate experience
+
+### Cross-promotion (dial-state aware)
+- New `GamesSection` on home replaces the old RALLY+WEEKLY block
+- Dial-state banner: `MITTARI · {state} — ACTION MODE, RALLY UP TOP` (KUUMA+) vs `… QUIET HOUR, FREE SPIN UP TOP` (KYLMÄ/HAALEA)
+- DOM order swap: hot states put `minigame-teaser` first, cold states put `visitor-teaser` first
+- Weekly card teaser sits below in full-width
 
 ### Backend additions
-- `POST /api/game-scores` — body `{cookie_id (8-64), name?, score, crashes?, time_left?, week?, stage?}`. Returns `{id, rank, total, is_personal_best, week, stage, ...}`. Pydantic-validated.
-- `GET /api/game-scores/leaderboard?stage=imatra&week=&limit=10` — sorted DESC by score, no cookie_id/_id leak. limit clamped 1..50.
-- `GET /api/game-scores/me?cookie_id=&stage=imatra&week=` — personal best + rank + total.
-- Week format: ISO calendar `2026W20`.
+- `SettingsPayload` extended: `smartico_template_id: Optional[str]` alongside `telegram_channel`
+- `GET /api/settings/public` now returns `{telegram_channel, smartico_template_id}`
+- Back-office UI gains the Smartico template ID input
+
+### Header navigation
+- Added "Voita palkinto" / "Win a prize" nav link
 
 ### Test results
-- **Iteration 5** (Phase 2.5): backend pytest 29/29 (12 new game-score + 17 regression); frontend 100% on retest after `leaderboard-table` testid added. All Phase 2.0 surfaces still green (regression).
+- **Iteration 6** (Phase 2.6 Batch A): backend pytest **32/32** (3 new TestSmarticoTemplateId + 17 prior + 12 game-score regression). Frontend **100%** on all 16 brief checks. Zero console errors.
 
 ## Prioritized backlog
 
-### P0 — next session
-- **Personalization layer** (Priority 4): cookie-based returning-user treatment on Home + MISSASIT EILEN OMASI/KAIKKI toggle + ranking page contextual sort + Weezy Rally personal stats card on Home + Weekly Card personal status
-- **Operator review pages** (Priority 5): live data strip, score component breakdown, tracked-streamer activity, alternative operators, recent moments at this operator, deeper analysis link
-- **Casino ranking page** (Priority 6): #1 hero treatment, micro-stats per card, offer-vs-score visual hierarchy invert, expand to 25-30 operators, "Your streamers play at" filter, editorial pieces upgrades
+### P0 — next session (Phase 2.6 Batch B — Banner revenue infrastructure)
+- 4 surface placements: right-rail (operator/methodology/streamer profile pages), homepage horizontal, operator featured-offer slot, sponsored ranking slot
+- Mandatory `KAUPALLINEN YHTEISTYÖ` / `KAUPALLINEN SIJOITTELU` labels (cannot be disabled)
+- Back-office banner CRUD: creative URL, surface assignment, start/end dates, operator attribution, click tracking, A/B variant, preview mode
+- Forbidden surfaces enforcement: activity feed, MISSASIT EILEN, methodology interior, above-fold home, transparency pages, editorial columns
 
-### P1
-- **Weekly Card** (Priority 7): Topi as a character + bio + weekly commentary, "Topi's strongest pick" elevation, deeper-take expanders, live match status, odds movement, personal rank banner
-- **Methodology page** (Priority 8): 70/30 split visualization, score factor bar chart, score-waterfall example, score change log, About Mittari, affiliate disclosure table, conflicts-of-interest section, methodology version history
-- **Signup flow** (Priority 9): single-field magic-link compression, Step 2 in later session, granular notification preferences
+### P0 — Emergent Priority 4-9 roadmap (after Batch B)
+- **Priority 4** Personalization layer (cookie-based returning-user treatment; intersects with intl filter on MISSASIT EILEN)
+- **Priority 5** Operator review pages (live data strip, score breakdown, tracked-streamer activity)
+- **Priority 6** Casino ranking page (#1 hero, micro-stats, expand to 25-30 ops)
+- **Priority 7** Weekly Card upgrades — rebranded to "Mittarin viikon kortti" already; needs deeper-take expanders, live match status, odds movement, "Toimituksen vahvin veikkaus" elevation
+- **Priority 8** Methodology page upgrades — 70/30 visualization, score-waterfall, change log, About Mittari (links to /toimitus), affiliate disclosure table
+- **Priority 9** Signup flow compression to single-field magic-link
 
-### P0 — Phase 3 (real signal layer, post-2.5)
-- Twitch helix + Kick API live-status polling for actual streamer list
-- Suomi24 + Ylilauta activity-volume signal scraping
+### P0 — Phase 3 (real signal layer)
+- Twitch helix + Kick API live status polling
+- Suomi24 + Ylilauta forum signal scraping
 - Notification delivery (Resend + Telegram bot + web push)
-- Dial calculation engine fusing real signals
+- Dial calculation engine fusing real signals (Finnish-only)
 - `/api/notify-signup` endpoint + wire all email captures
-- Real operator data + Trustpilot/AskGamblers signals
-- Sports data feed (API-Football)
+- Phyllo for streamer social posts
+- Real Smartico script injection once user provides template_id
 
 ### P2
 - Licensed Finnish operator partner onboarding
 - CPA monetisation activation
 - Pydantic HttpUrl validation on telegram_channel
-- Phyllo integration for social posts on streamer profiles
 
 ## Test credentials
-- Public site: no auth required
 - Back-office: token `mittari-admin` at `/back-office`
 - Game scores: client cookie_id (uuid in localStorage `mittari_cookie_id`)
+- Visitor mode: `mittari_weezy_visitor_uuid` (90d cookie + localStorage; reset to test)
 
 ## Next tasks
-1. Personalization layer — cookie-based returning-user treatment across Home, MISSASIT EILEN, ranking
-2. Operator review pages — live data strip, score breakdown, tracked-streamer activity, alternatives
-3. Casino ranking page — #1 hero, micro-stats, expanded list, your-streamers-play-at section
-4. Weekly Card upgrades — Topi character, deeper takes, live match status
-5. Methodology page — visualizations, score-waterfall, change log, about
-6. Signup flow — single-field magic-link compression
+1. **Banner infrastructure** (Phase 2.6 Batch B): 4 surface placements, back-office CRUD, mandatory labels, click tracking
+2. Priority 4 — Personalization layer (cookie-based returning-user state)
+3. Priority 5 — Operator review pages depth
+4. Priority 6 — Casino ranking page hierarchy + expansion
+5. Priority 7 — Weekly Card upgrades
+6. Priority 8 — Methodology visualizations
+7. Priority 9 — Signup flow compression
