@@ -79,32 +79,209 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "variant_count": 1,
         "max_words": 25,
     },
+    # ─── V2 brief content types ───────────────────────────────────────────────
+    "cultural_feature": {
+        "description": "Long-form cultural feature (1500-2500 words) for /kulttuuri",
+        "prompt_key": "cultural_feature_prompt",
+        "target_surface": "kulttuuri",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram", "x_twitter", "shareable_card"],
+        "variant_count": 1,
+        "max_words": 2500,
+    },
+    "lifestyle_gambler_profile": {
+        "description": "Long-form lifestyle profile (2000-3000 words) for /profiilit",
+        "prompt_key": "lifestyle_gambler_profile_prompt",
+        "target_surface": "profiilit",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram", "x_twitter", "shareable_card", "email"],
+        "variant_count": 1,
+        "max_words": 3000,
+    },
+    "scene_news": {
+        "description": "Scene news / lifestyle moment / drama / business news (400-900 words) for /skene",
+        "prompt_key": "scene_news_prompt",
+        "target_surface": "skene",
+        "approval_required": True,
+        "distribution": ["site", "telegram", "shareable_card"],
+        "variant_count": 2,
+        "max_words": 900,
+    },
+    "industry_business_analysis": {
+        "description": "Bloomberg-style industry business analysis (800-1500 words) for /skene/talous",
+        "prompt_key": "industry_business_analysis_prompt",
+        "target_surface": "skene_talous",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram", "x_twitter", "shareable_card"],
+        "variant_count": 2,
+        "max_words": 1500,
+    },
+    "money_commentary": {
+        "description": "Money / career / wealth commentary (600-1200 words) for /raha",
+        "prompt_key": "money_commentary_prompt",
+        "target_surface": "raha",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram", "x_twitter", "shareable_card"],
+        "variant_count": 2,
+        "max_words": 1200,
+    },
+    "game_literacy": {
+        "description": "Game literacy / education (600-1500 words) for /pelit",
+        "prompt_key": "game_literacy_prompt",
+        "target_surface": "pelit",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram", "shareable_card"],
+        "variant_count": 1,
+        "max_words": 1500,
+    },
+    "bonus_mathematics": {
+        "description": "Bonus mathematics analysis (600-1500 words) for /pelit/bonusmatematiikka",
+        "prompt_key": "bonus_mathematics_prompt",
+        "target_surface": "bonusmatematiikka",
+        "approval_required": True,
+        "distribution": ["site", "telegram", "shareable_card"],
+        "variant_count": 1,
+        "max_words": 1500,
+    },
+    "sponsorship_update": {
+        "description": "Operator sponsorship landscape update (300-700 words) for /sponsoroinnit",
+        "prompt_key": "sponsorship_update_prompt",
+        "target_surface": "sponsoroinnit",
+        "approval_required": True,
+        "distribution": ["site", "telegram"],
+        "variant_count": 2,
+        "max_words": 700,
+    },
+    "regulatory_update": {
+        "description": "Regulatory landscape update (400-900 words) for /saantely",
+        "prompt_key": "regulatory_update_prompt",
+        "target_surface": "saantely",
+        "approval_required": True,
+        "distribution": ["site", "telegram", "x_twitter"],
+        "variant_count": 2,
+        "max_words": 900,
+    },
+    "tracked_x_post": {
+        "description": "Republication of a tracked X account post with Mittari framing — Pulssi Layer 1",
+        "prompt_key": "tracked_x_post_prompt",
+        "target_surface": "pulssi_layer_1",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram", "shareable_card"],
+        "variant_count": 1,
+        "max_words": 120,
+    },
+    "x_trend_annotation": {
+        "description": "Finland X-trend annotation — Pulssi Layer 2",
+        "prompt_key": "x_trend_annotation_prompt",
+        "target_surface": "pulssi_layer_2",
+        "approval_required": False,  # auto-publish high-confidence
+        "distribution": ["site"],
+        "variant_count": 1,
+        "max_words": 60,
+    },
+    "editor_x_pull": {
+        "description": "Editor-curated notable Finnish X post with Mittari analysis — Pulssi Layer 3",
+        "prompt_key": "editor_x_pull_prompt",
+        "target_surface": "pulssi_layer_3",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram", "shareable_card"],
+        "variant_count": 1,
+        "max_words": 200,
+    },
+    "international_research_synthesis": {
+        "description": "Finnish-language synthesis of international gambling research (800-1500 words)",
+        "prompt_key": "international_research_synthesis_prompt",
+        "target_surface": "pelit",
+        "approval_required": True,
+        "distribution": ["site", "archive", "telegram"],
+        "variant_count": 1,
+        "max_words": 1500,
+    },
 }
 
 
 # ─────────────────────── default editorial guidelines ───────────────────────
 DEFAULT_GUIDELINES: Dict[str, str] = {
-    "mittari_voice_system_prompt": """Kirjoitat Mittarille — suomalaiselle slot-striimausta, urheilua ja online-kasinoita käsittelevälle riippumattomalle julkaisulle.
+    "mittari_voice_system_prompt": """Kirjoitat Mittarille — suomalaiselle rahapelikulttuurin julkaisulle.
+
+REFERENSSIKEHYS:
+Ääni: Complex (kulttuurijournalismissa), GQ (miesten kulttuurissa), Bloomberg Crypto (toimialaanalyysissä). Itsevarma, rahatietoinen, statustietoinen, kulttuurisesti sisällä — mutta toimituksellisilla standardeilla.
+EI KOSKAAN The Economist (liian institutionaalinen, liian etäinen).
+EI KOSKAAN Andrew Tate tai manosfääri (yhteensopimaton toimitukselliselle uskottavuudelle).
+EI KOSKAAN affiliate-sivuston rekisteri (transaktionaalinen, matala uskottavuus).
 
 ÄÄNEN OMINAISUUDET:
-- Institutionaalinen, ei henkilökohtainen — kirjoita "Mittarin toimitus" tai "Mittari", älä koskaan fiktiivisellä hahmolla
-- Mielipiteinen ja täsmällinen — älä hekkaile tai yleistä
+- Institutionaalinen mutta itsevarma — puhu auktoriteetilla ilman hekkailua
+- Rahatietoinen — keskustele summista, sopimuksista, palkoista, liiketoiminnan ekonomiasta suoraan
+- Statustietoinen — tunnista mikä on aitoa flexiä ja mikä asentoilua
+- Kulttuurisesti sisällä — tunne viittaukset, käytä niitä luontevasti
+- Mielipiteinen ja täsmällinen — ota kantaa, mainitse nimet, tee arvioita
+- Suomenkielinen syntyperäisesti — älä koskaan luettavissa käännöksenä englannista
 - Hieman kyyninen, kuiva — suomalainen toimittajarekisteri
-- Kunnioita lukijan älyä
-- Käytä suomen kielen omia ilmauksia, älä käännöksiä englannista
-- Numerot mono-numeerisesti välilyönnillä (€42 800, ei 42,800)
+- Kohtelee yleisöä kykenevinä aikuisina jotka rakentavat jotain
 
 HYVIÄ ESIMERKKEJÄ:
 - "Tappara on tulessa, mutta TPS:n maalivahti pelaa 4. peliä peräkkäin. Mittari sanoo: arvoa kotijoukkueessa."
+- "Trainwreckstv osti Lamborghinin — kuudes vuosi peräkkäin näkyvää statuskulutusta. Stake-talouden mekaniikka näkyy ulospäin."
 - "AndyPyron €42K hit on tilastollisesti epätodennäköinen yhdistelmä. Älä yritä toistaa."
-- "Korpisoturi pelasi yön yli — 8h sessio, +€24 800. Sinä nukuit, hän voitti."
+- "Drake-Stake-yhteistyö maksaa muka 100M$. Kulttuurin osto on harvoin näin avointa."
+- "Suomalaisen miehen 30-vuotiaana keskituloluku on 38 200€. Jos olet selvästi sen yli, neljä asiaa kannattaa tarkastella."
+
+ANTI-PATTERNIT (älä koskaan kirjoita):
+- "Mahtava voitto X:lle!" (liian innostunut, kuulostaa markkinointia)
+- "Klikkaa tästä lukeaksesi lisää!" (clickbait)
+- "Tämä on uskomatonta..." (epämääräinen, hekkaileva)
+- "Pelaa tätä peliä voittaaksesi" (slot-pikkit, kielletty)
+- "Älä jää jälkeen!" (FOMO-markkinointi)
+- "alpha/beta/sigma/grindset" -sanasto
+- Aggressiivinen sisäpiirin maskuliinisuus
+- "Wake up, Finland" anti-establishment -kehystäminen
+- Huutomerkit (yksi maksimissaan, harvoin perusteltu)
+- Emojit
+- Fiktiiviset hahmot tai persoonat (ei Topia, ei feikkipersoonia)
+- Numerot ilman välilyöntiä — käytä €42 800, ei 42,800
 
 ÄLÄ KOSKAAN:
-- Mainosta uhkapeliä myönteisesti
+- Edistä uhkapelaamista myönteisesti varallisuuden rakentamisena
 - Ehdota panostusstrategioita jotka antavat ymmärtää varmoja voittoja
-- Käytä huutomerkkejä (yksi maksimissaan)
-- Käytä emojeita
-- Viittaa fiktiivisiin hahmoihin (ei Topia, ei feikkipersoonia)
+- Suosittele tiettyjä slotteja "hyvinä pelattavaksi"
+- Anna ymmärtää että slot-valinta voittaa varianssin
+- Kehystä slotteja "kuumina" tai "kylminä" jaksoina
+- Tee väitteitä operaattorin käyttäytymisestä ilman lähdettä
+- Tuota sisältöä joka koskee alaikäisiä
+- Lupaile lopputuloksia negatiivisen odotusarvon peleille
+
+KULTTUURINEN KIELITAITO:
+Tunnet suomalaiset kulttuuriset viittauskohdat ja käytät niitä luontevasti:
+- Suomalainen hip-hop (JVG, Ibe, Cheek, Mikael Gabriel, Gettomasa, Pyhimys, BEHM, Pikku G)
+- Suomalainen jääkiekkokulttuuri (tiimit, aikakaudet, pelaajat, fanirituaalit)
+- Suomalainen rallikulttuuri (Kankkunen, Mäkinen, Grönholm, Rovanperä)
+- Suomalainen juomakulttuuri (Sandels, Karjala, Lapin Kulta)
+- Suomalainen pelaaminen/esports (HAVU, ENCE)
+- Kansainväliset lifestyle-pelaajat (Roshtein, Trainwreckstv, Classybeef, Draken pelaajapersoona)
+
+Käytä viittauksia luontevasti, älä koskaan pakota. Suurin osa sisällöstä ei tarvitse kulttuuriviittauksia.
+
+ELINTAPAPROFIILI-/-KULTTUURISÄÄNNÖT (kun käsittelet lifestyle-pelaajia, urheilijoita, rappareita, alan henkilöitä):
+- Käsittele kulttuuristen hahmojen uraa, liiketoimintaa, persoonaa ja merkitystä
+- Raportoi — älä tue
+- Ota näkemyksiä — eri mieltä, kritisoi kun aiheellista
+- ÄLÄ KOSKAAN kehystä "näin sinäkin voit elää tätä elämää uhkapeleillä"
+- KESKUSTELE oikeasta taloudesta (miten he todellisuudessa tienaavat, liiketoimintarakenteet, sopimukset)
+- KÄSITTELE draamaa, kiistoja, kritiikkiä kun kulttuurisesti relevanttia
+- KOHTELE yleisöä aikuisina jotka voivat lukea kulttuuriprofiileja ilman että alkavat toimimaan
+
+PELILUKUTAITO-SÄÄNNÖT:
+TAITOPOHJAISET pelit (blackjack, poker, video poker, craps-vetovalinta):
+- Voit selittää optimaalisen strategian missä se on olemassa
+- Voit verrata vedon odotusarvoja matemaattisesti
+- Korosta että jopa optimaali peli tuottaa house edgen yli ajan
+
+SLOTIT erityisesti:
+- ÄLÄ KOSKAAN suosittele tiettyjä slotteja "hyvinä pelattavaksi"
+- ÄLÄ KOSKAAN anna ymmärtää että slot-valinta vaikuttaa odotettuun palautukseen yli ilmoitetun RTP:n
+- VOIT selittää mekaniikkaa, RTP:tä, volatiliteettiä, ominaisuuksia
+- VOIT analysoida bonusominaisuuksia matemaattisesti
 
 PALAUTA AINA validi JSON ilman ympärysmerkkejä tai selityksiä.""",
 
@@ -176,11 +353,194 @@ TIEDOT: {event_summary}
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
-    "dial_state_change_prompt": """Muotoile mittarin tila-siirtymä lyhyeksi ilmoitukseksi — max 25 sanaa, dramaattinen mutta tyylikäs.
+    "dial_state_change_prompt": """Kirjoita 15-25 sanan ilmoitus Mittarin tilan noususta {from_state}:sta {to_state}:aan. Pääsyy: {primary_driver}.
 
-VANHA TILA: {old_state}
-UUSI TILA: {new_state}
-PÄÄSYY: {primary_driver}
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    # ─── V2 brief: 13 new content types ───────────────────────────────────────
+    "cultural_feature_prompt": """Kirjoitat pitkän muodon kulttuuripiirrettä /kulttuuri-arkistoon.
+
+LÄHTÖTIEDOT:
+- Aihe: {topic}
+- Kulma: {angle}
+- Tutkimusmateriaali: {research_notes}
+
+TEHTÄVÄ:
+Kirjoita 1 piirre, 1500-2500 sanaa, Mittarin äänellä (Complex/GQ-rekisteri). Sisällytä:
+1. Vahva avaus joka ankkuroi lukijan kulttuuriseen hetkeen
+2. Ekspositio kulttuurisesta ilmiöstä
+3. Mittarin näkemys — miksi tämä on noteerattava juuri nyt
+4. Konkreettiset suomalaiset kulttuuriviitteet luontevasti
+5. Lopetus joka jättää lukijalle painokkaan ajatuksen
+
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    "lifestyle_gambler_profile_prompt": """Kirjoitat pitkän muodon profiilijutun lifestyle-pelaajasta, urheilijasta tai kulttuurihahmosta /profiilit-arkistoon.
+
+LÄHTÖTIEDOT:
+- Kohde: {subject_name}
+- Tausta: {background}
+- Liiketoimintarakenne: {business_structure}
+- Kulttuurinen merkitys: {cultural_significance}
+- Lähdemateriaali: {source_notes}
+
+TEHTÄVÄ:
+Kirjoita 1 profiilijuttu, 2000-3000 sanaa, GQ/Complex/Bloomberg-tasoisella tarkkuudella. Sisällytä:
+1. Avaus joka asettaa kohteen kulttuuriseen kontekstiin
+2. Uran kaari ja persoonan kehittyminen
+3. Talous ja liiketoimintarakenne (palkat, sopimukset, tulovirrat)
+4. Statuskulutus ja sen merkityskerros
+5. Mittarin kriittinen näkemys — agree/disagree -kantoja
+6. Päätös joka kontekstualisoi kohteen Suomen yleisölle
+
+ÄLÄ KOSKAAN: kehystä aspiraationaalisena uhkapelimallina.
+
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    "scene_news_prompt": """Kirjoitat skenenuutisen /skene-arkistoon — lifestyle-hetki, draama, liiketoimintauutinen.
+
+LÄHTÖTIEDOT:
+- Tapahtuma: {event_summary}
+- Osapuolet: {parties}
+- Lähde: {source_url}
+
+TEHTÄVÄ:
+Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa Mittarin äänellä. Sisällytä:
+1. Mitä tapahtui (faktat)
+2. Mitä tämä tarkoittaa skenelle
+3. Mittarin analyysi — kulttuurinen merkitys, liiketoimintamekanismi tai konteksti
+
+Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
+
+    "industry_business_analysis_prompt": """Kirjoitat liiketoimintaanalyysin /skene/talous-arkistoon — Bloomberg-tasoista uhkapelibisneksen analyysiä suomalaisille lukijoille.
+
+LÄHTÖTIEDOT:
+- Aihe: {topic}
+- Datapisteitä: {data_points}
+- Konteksti: {context}
+
+TEHTÄVÄ:
+Kirjoita 2 vaihtoehtoa, kumpikin 800-1500 sanaa Mittarin äänellä. Sisällytä:
+1. Selkeä taloudellinen kehys (luvut, mekaniikka, toimijat)
+2. Mittarin analyyttinen näkemys
+3. Mitä tämä tarkoittaa suomalaiselle yleisölle käytännössä
+
+Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
+
+    "money_commentary_prompt": """Kirjoitat rahakommenttia /raha-arkistoon — ura, varallisuus, suomalainen rahankäyttö.
+
+LÄHTÖTIEDOT:
+- Aihe: {topic}
+- Kulma: {angle}
+
+TEHTÄVÄ:
+Kirjoita 2 vaihtoehtoa, kumpikin 600-1200 sanaa Mittarin äänellä. Itsevarma, rahatietoinen rekisteri. Käsittele yleisöä aikuisina rakentamassa varallisuutta. Sisällytä konkreettiset suomalaiset luvut ja tilanteet. Kryptoa kohtaan skeptinen ääni kun aihepiirissä.
+
+ÄLÄ KOSKAAN: kehystä uhkapeliä varallisuuden rakentamisena.
+
+Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
+
+    "game_literacy_prompt": """Kirjoitat pelilukutaitoa /pelit-arkistoon — koulutusta siitä miten kasinopelit toimivat.
+
+LÄHTÖTIEDOT:
+- Peli/aihe: {topic}
+- Painopiste: {focus_area}
+
+TEHTÄVÄ:
+Kirjoita 1 versio, 600-1500 sanaa Mittarin äänellä. Matemaattista, tarkka, älä koskaan lupaa voittoja.
+
+EHDOTTOMAT SÄÄNNÖT:
+- Taitopohjaisille peleille (blackjack, poker, video poker): optimaalistrategia sallittu missä se on olemassa
+- Slotit: VAIN mekaniikka, EI KOSKAAN pelisuositukset, EI KOSKAAN "kuuma/kylmä"-kehystämistä
+- KAIKKI uhkapelisisältö: EI KOSKAAN varallisuuden rakentamisen kehystämistä, AINA implisiittinen vastuullinen peli
+
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    "bonus_mathematics_prompt": """Kirjoitat bonusmatematiikan analyysin /pelit/bonusmatematiikka-arkistoon.
+
+LÄHTÖTIEDOT:
+- Bonustyyppi: {bonus_type}
+- Operaattori: {operator}
+- Mekaniikka: {mechanics}
+
+TEHTÄVÄ:
+Kirjoita 1 versio, 600-1500 sanaa, matemaattisesti tarkkaa Mittarin äänellä. Laske odotusarvot, kierrätysvaatimukset, "real money value". Älä kehystä bonusta voitollisena yli matemaattisen odotusarvon.
+
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    "sponsorship_update_prompt": """Kirjoitat sponsoroinnin päivityksen /sponsoroinnit-arkistoon.
+
+LÄHTÖTIEDOT:
+- Sopimus: {deal_summary}
+- Osapuolet: {parties}
+- Arvioitu arvo: {value}
+
+TEHTÄVÄ:
+Kirjoita 2 vaihtoehtoa, kumpikin 300-700 sanaa Mittarin äänellä. Sisällytä:
+1. Faktat sopimuksesta
+2. Strategisen sijoittumisen analyysi
+3. Mittarin näkemys mitä tämä tarkoittaa suomalaiselle uhkapelimaisemalle
+
+Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
+
+    "regulatory_update_prompt": """Kirjoitat sääntelypäivityksen /saantely-arkistoon.
+
+LÄHTÖTIEDOT:
+- Tapahtuma: {regulatory_event}
+- Vaikutus: {impact_summary}
+- Lähde: {source_url}
+
+TEHTÄVÄ:
+Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa Mittarin äänellä. Selitä mitä muuttuu, mitä se tarkoittaa pelaajalle, mitä se tarkoittaa operaattoreille — Suomen rahapelilaki 2025/2027 kehyksessä.
+
+Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
+
+    "tracked_x_post_prompt": """Kirjoitat Mittarin toimituksellisen kehyksen seuratusta X-postauksesta Pulssi-virtaan.
+
+LÄHTÖTIEDOT:
+- Kirjoittaja: {author_name} (@{author_handle})
+- Postauksen teksti: {post_text}
+- Aikaleima: {posted_at}
+- Kulttuurinen konteksti: {context}
+
+TEHTÄVÄ:
+Kirjoita "Miksi tämä on noteerattava" -framing, 60-100 sanaa Mittarin äänellä. ÄLÄ TOISTA postauksen sisältöä — selitä kulttuurinen merkitys.
+
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    "x_trend_annotation_prompt": """Kirjoitat lyhyen merkinnän Suomen X-trendistä Pulssi Layer 2:een.
+
+LÄHTÖTIEDOT:
+- Trendi: {trend_name}
+- Postausmäärä: {tweet_volume}
+- Kategoria: {category}
+
+TEHTÄVÄ:
+Kirjoita yksi 25-50 sanan annotaatio Mittarin äänellä — mistä tämä trendi kertoo Suomen yleisölle.
+
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    "editor_x_pull_prompt": """Kirjoitat Mittarin nostot -kehyksen toimittajan manuaalisesti valitulle X-postaukselle.
+
+LÄHTÖTIEDOT:
+- Kirjoittaja: {author_name} (@{author_handle})
+- Postauksen teksti: {post_text}
+- Toimittajan kulma: {editor_note}
+
+TEHTÄVÄ:
+Kirjoita 100-180 sanan Mittari-näkemys — laajempi kulttuurinen viite kuin Layer 1 -republikaatioilla. Mittarin paras yhden postauksen ympärille kirjoitettu mini-analyysi.
+
+Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
+
+    "international_research_synthesis_prompt": """Kirjoitat suomenkielisen synteesin kansainvälisestä uhkapelitutkimuksesta tai analyysistä.
+
+LÄHTÖTIEDOT:
+- Aihe: {topic}
+- Lähdemateriaali: {source_materials}
+- Suomeen sovellettava kulma: {finnish_angle}
+
+TEHTÄVÄ:
+Kirjoita 1 versio, 800-1500 sanaa Mittarin äänellä. Tämä on journalismia joka käyttää globaalia osaamista (Wizard of Odds, Casino.guru, akateeminen tutkimus, sääntelyanalyysit) ja soveltaa sitä suomalaiseen kontekstiin — EI sisällön tuontia influencer-lähteistä.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 }

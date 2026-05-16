@@ -1,4 +1,5 @@
 import React from 'react';
+import { EditorialFooter } from '../components/EditorialFooter';
 
 const SECTIONS = [
   { id: 'mista',       title: 'Mistä Mittari-pisteet kertovat' },
@@ -17,6 +18,9 @@ const Methodology = () => {
         <div className="max-w-3xl">
           <div className="eyebrow mb-4">Toimituksellinen menetelmä</div>
           <h1 className="display text-4xl sm:text-6xl mb-6">Miten Mittari-pisteet syntyvät</h1>
+          <p className="mono mb-5" data-testid="methodology-tagline" style={{ fontSize: 13, letterSpacing: '0.12em', color: '#E8924A', fontWeight: 700 }}>
+            MITTARI EI MITTAA RAHAA. MITTARI MITTAA HUOMIOTA.
+          </p>
           <p className="prose-mittari text-muted-text">
             Mittari-pisteet (0–100) muodostuvat kahdesta osasta: kovasta datasta ja toimituksellisesta painotuksesta. Tämä sivu on auki kaikille. Jos joku väittää meidän mainostaneen sijoituksia, lue tämä ja katso uudelleen.
           </p>
@@ -119,6 +123,9 @@ const Methodology = () => {
               </p>
             </section>
           </article>
+        </div>
+        <div className="max-w-3xl mt-6">
+          <EditorialFooter />
         </div>
       </section>
     </div>

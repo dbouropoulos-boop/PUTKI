@@ -6,7 +6,44 @@
 - **Phase 2.0** (2026-05) — Liveness layer (activity feed, breathing dial, social-proof)
 - **Phase 2.5** (2026-05) — Page-by-page completion (autoplay previews, Streamer profile, Weezy Rally)
 - **Phase 2.6 Batch A** (2026-05) — Topi removal, intl streamer expansion, Smartico Visitor Mode shell
-- **Phase 3 Foundation Slice + Batches 3A / 3B / 3C** (2026-05) — Real signal pipeline, dial recalc engine, distribution fanout, full surface cleanup
+- **Phase 3 Foundation Slice + Batches 3A / 3B / 3C / 3D** (2026-05) — Signal pipeline, dial recalc engine, distribution fanout, Smartico Voyager loader, signal status widget
+- **Phase 3 V2 — Batch 3A V2** (2026-05) — Master Brief V2: voice register Complex×GQ×Bloomberg, 19 content types, 21 new public route shells, editorial accountability footer, surface cleanup honesty pass
+
+## Phase 3 V2 — Master Brief V2 (Batch 3A V2 shipped)
+
+### Voice register overhaul (`mittari_voice_system_prompt`)
+- Rewritten to **Complex × GQ × Bloomberg Crypto** register (confident, money-aware, status-fluent, opinionated)
+- Explicit anti-patterns: no Tate/manosphere, no clickbait, no exclamation marks, no emojis, no slot picks, no "kuuma/kylmä" framing
+- Cultural fluency block: Finnish hip-hop (JVG, Ibe, Cheek, Pyhimys, etc.), hockey, rally heritage, drinking culture, esports
+- Lifestyle/profile rules + game literacy strict rules (skill-based vs slots, never wealth-building frame)
+
+### Content type registry expansion (6 → 19)
+Added 13 new types per V2 §3, each with its own Claude prompt template:
+`cultural_feature`, `lifestyle_gambler_profile`, `scene_news`, `industry_business_analysis`, `money_commentary`, `game_literacy`, `bonus_mathematics`, `sponsorship_update`, `regulatory_update`, `tracked_x_post`, `x_trend_annotation`, `editor_x_pull`, `international_research_synthesis`. Distribution targets configured per V2 brief.
+
+### New public routes (21 total)
+- Editorial archives: `/profiilit`, `/skene`, `/skene/talous`, `/raha`, `/kulttuuri`, `/sponsoroinnit`, `/saantely`, `/pulssi`
+- Game literacy: `/pelit` + sub-pages `/blackjack`, `/poker`, `/slotit`, `/craps`, `/ruletti`, `/live`, `/bonusmatematiikka`
+- Accountability: `/korjaukset`, `/affiliaatti`, `/avoimuus/2026`, `/lehdisto`, `/paivityslog`
+- Each renders the latest items of its content type from `/api/published?surface=<key>` with editorial accountability footer + coming-soon panel when empty.
+
+### Editorial accountability footer (`EditorialFooter.jsx`)
+- Reusable component: byline (`MITTARIN TOIMITUS` placeholder) + päivitetty timestamp + lukuaika + muutokset link
+- Mounted on every new editorial surface + Methodology page
+
+### Methodology tagline
+- `/menetelma` now displays "**MITTARI EI MITTAA RAHAA. MITTARI MITTAA HUOMIOTA.**" in orange below the headline + editorial footer at the bottom
+
+### Surface cleanup honesty pass
+- `StreamerProfile.jsx`: removed un-measurable stats (`avgWin`, `streak`, `bigWinFreq`). Stats grid now: HOURS·7D, KATSOJA·KA, HETKIÄ·30PV (all pipeline-derivable). Personal mittari panel: MOMENTS·30D + TOP GAME.
+- `OperatorReview.jsx` partner-vs-non-partner gating (iter_7 carryover, still green)
+
+### Test coverage (iteration 9)
+- 51/51 backend pytest pass (full regression). 4 new V2 registry/guideline tests pass.
+- 4 E2E generation tests skip on transient upstream LLM 502 (Emergent gateway flakiness, not our code) — they validate generate→approve→publish flow when gateway is healthy.
+- Frontend: 21 new routes verified by static review + lint clean + Methodology tagline visually confirmed via screenshot.
+
+## Prioritized backlog
 
 ## Architecture
 - Frontend: React 19 + Tailwind + shadcn/ui + html2canvas
@@ -72,10 +109,10 @@
 
 ## Prioritized backlog
 
-### P0 — Phase 3 next sessions
-- **Real API key wiring** — once user supplies Twitch / YouTube / Telegram / Resend / VAPID creds, signal pipeline + distribution flip from mocked to live with zero code changes. Smartico SDK also activates once `smartico_loader_url` is set in /back-office.
-- **Streamer auto-discovery worker** — flag candidate streamers by viewer count + content match
-- **Push web notifications** — VAPID + per-subscriber DB
+### P0 — Phase 3 V2 next batches
+- **Batch 3B V2 — Real signal wiring + content production**: Twitch/YouTube/API-Football/Smartico real keys; begin producing real content for the 13 new V2 content types via the queue (1-2 lifestyle profiles + 5-10 scene news per week + 4-8 money commentaries per month + 1-2 game-literacy pieces per week + 1-2 cultural features per month, all per V2 brief).
+- **Batch 3C V2 — Distribution + Pulssi + email**: Telegram @MittariBot, X @mittarifi posting, Resend weekly digest, shareable card pipeline (Puppeteer), AND full **Pulssi** (three layers + tracked X accounts table + Finland trends + editor pulls) on X API Basic tier ($200/mo per user decision).
+- **Streamer auto-discovery worker** + push notifications (VAPID).
 
 ### P0 — Phase 2.6 Batch B (deferred)
 - 4 surface placements: right-rail, homepage horizontal, operator featured-offer, sponsored ranking

@@ -16,6 +16,12 @@ import BackOfficeQueue from "@/pages/BackOfficeQueue";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
 import VoitaPalkinto from "@/pages/VoitaPalkinto";
+import Profiilit from "@/pages/Profiilit";
+import { Skene, SkeneTalous } from "@/pages/Skene";
+import { Raha, Kulttuuri, Sponsoroinnit, Saantely } from "@/pages/EditorialArchives";
+import { Pelit, PelitBlackjack, PelitPoker, PelitSlotit, PelitCraps, PelitRuletti, PelitLive, PelitBonusmatematiikka } from "@/pages/Pelit";
+import Pulssi from "@/pages/Pulssi";
+import { Korjaukset, Affiliaatti, Avoimuus, Lehdisto, Paivityslog } from "@/pages/Accountability";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -42,6 +48,32 @@ function App() {
             <Route path="peli" element={<MiniGame />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
             <Route path="viikon-kortti" element={<WeeklyCard />} />
+
+            {/* V2 Master Brief: new editorial surfaces */}
+            <Route path="profiilit" element={<Profiilit />} />
+            <Route path="skene" element={<Skene />} />
+            <Route path="skene/talous" element={<SkeneTalous />} />
+            <Route path="raha" element={<Raha />} />
+            <Route path="kulttuuri" element={<Kulttuuri />} />
+            <Route path="sponsoroinnit" element={<Sponsoroinnit />} />
+            <Route path="saantely" element={<Saantely />} />
+            <Route path="pelit" element={<Pelit />} />
+            <Route path="pelit/blackjack" element={<PelitBlackjack />} />
+            <Route path="pelit/poker" element={<PelitPoker />} />
+            <Route path="pelit/slotit" element={<PelitSlotit />} />
+            <Route path="pelit/craps" element={<PelitCraps />} />
+            <Route path="pelit/ruletti" element={<PelitRuletti />} />
+            <Route path="pelit/live" element={<PelitLive />} />
+            <Route path="pelit/bonusmatematiikka" element={<PelitBonusmatematiikka />} />
+            <Route path="pulssi" element={<Pulssi />} />
+
+            {/* V2 accountability surfaces */}
+            <Route path="korjaukset" element={<Korjaukset />} />
+            <Route path="affiliaatti" element={<Affiliaatti />} />
+            <Route path="avoimuus/2026" element={<Avoimuus />} />
+            <Route path="lehdisto" element={<Lehdisto />} />
+            <Route path="paivityslog" element={<Paivityslog />} />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

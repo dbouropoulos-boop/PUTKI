@@ -250,11 +250,9 @@ const StreamerProfile = () => {
   const r = rng(seed);
 
   const stats = useMemo(() => ({
-    hours7d:    Math.round(28 + r() * 22), // 28-50 h / wk
-    avgWin:     Math.round(800 + r() * 3200),
-    avgViewer:  Math.round(1200 + r() * 4500),
-    bigWinFreq: Math.max(2, Math.round(4 + r() * 12)),
-    streak:     Math.max(2, Math.round(6 + r() * 18)),
+    hours7d:    Math.round(28 + r() * 22), // 28-50 h / wk — Twitch-derivable
+    avgViewer:  Math.round(1200 + r() * 4500), // Twitch-derivable
+    momentsCount: Math.max(1, Math.round(2 + r() * 6)), // archive-derivable
   }), [streamer.slug]); // eslint-disable-line
 
   const moments = useMemo(() => buildBiggest(streamer.name), [streamer.name]);
@@ -307,12 +305,11 @@ const StreamerProfile = () => {
 
             {streamer.sub && <p className="prose-mittari mb-7 max-w-xl">{streamer.sub}</p>}
 
-            {/* Cockpit stat row */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-7" data-testid="profile-stats">
+            {/* Cockpit stat row — only metrics the real pipeline can verify (V2 honesty rule). */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-7" data-testid="profile-stats">
               <StatCard icon={Clock}    label={lang === 'en' ? 'HOURS · 7D' : 'TUNTIA · 7PV'}  value={`${stats.hours7d}h`} />
-              <StatCard icon={Trophy}   label={lang === 'en' ? 'AVG WIN'    : 'KESKIVOITTO'}    value={`+€${fmt(stats.avgWin)}`} />
               <StatCard icon={Users}    label={lang === 'en' ? 'AVG VIEW'   : 'KATSOJA·KA'}     value={fmt(stats.avgViewer)} />
-              <StatCard icon={Activity} label={lang === 'en' ? 'STREAK · D' : 'STREAK · PV'}    value={`${stats.streak}`} />
+              <StatCard icon={Activity} label={lang === 'en' ? 'MOMENTS · 30D' : 'HETKIÄ · 30PV'} value={`${stats.momentsCount}`} />
             </div>
 
             {/* Follow CTA — varies by status */}
@@ -374,7 +371,7 @@ const StreamerProfile = () => {
               </div>
               <Dial size="medium" state={streamer.dial} />
               <div className="grid grid-cols-2 gap-3 mt-5 w-full">
-                <StatCard icon={Trophy} label={lang === 'en' ? 'BIG WIN FREQ' : 'BIG WIN -TIHEYS'} value={`1 / ${stats.bigWinFreq}h`} />
+                <StatCard icon={Activity} label={lang === 'en' ? 'MOMENTS · 30D' : 'HETKIÄ · 30PV'} value={`${stats.momentsCount}`} />
                 <StatCard icon={Flame}  label={lang === 'en' ? 'TOP GAME' : 'SUOSIKKIPELI'} value={(streamer.playing || 'Sweet Bonanza').split(' ').slice(0, 2).join(' ')} />
               </div>
             </div>
