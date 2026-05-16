@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucide-react';
+import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift, Newspaper } from 'lucide-react';
 import DialCockpit from '../components/DialCockpit';
 import MomentCard from '../components/MomentCard';
 import { OperatorTeaserCard } from '../components/OperatorCard';
@@ -11,11 +11,23 @@ import { SocialProofTicker } from '../components/SocialProofTicker';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
 import ShareButton from '../components/ShareButton';
 import DialHistoryMiniChart from '../components/DialHistoryMiniChart';
-import { OPERATORS, MOMENTS, INTL_MOMENTS, CURRENT_DIAL, DIAL_STATES, STREAMERS } from '../data/mock';
+import { OPERATORS } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
+
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const isHotState = (state) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(state);
 
+// V2 honesty pass: STATE_HEADLINES kept (editorial copy, not data).
+// Removed: MOMENTS, INTL_MOMENTS, CURRENT_DIAL, DIAL_STATES, STREAMERS, MISSED_FI, MISSED_EN —
+// all fake live data. Now reads dial from /api/dial and missasit/moments from /api/published.
+const STATE_HEADLINES_FI = {
+  KYLMA:      'Mittari on KYLMÄ. Skene nukkuu.',
+  HAALEA:     'Mittari on HAALEA. Tasaista taustakohinaa.',
+  KUUMA:      'Mittari on KUUMA. Slot-skene lämpenee illaksi.',
+  MYRSKY:     'Mittari on MYRSKY. Striimit täynnä, klippejä syntyy.',
+  KIIRASTULI: 'Mittari on KIIRASTULI. Älä katso pois.',
+};
 const STATE_HEADLINES_EN = {
   KYLMA:      'The dial is KYLMÄ. The scene is asleep.',
   HAALEA:     'The dial is HAALEA. Steady background hum.',
@@ -24,25 +36,20 @@ const STATE_HEADLINES_EN = {
   KIIRASTULI: 'The dial is KIIRASTULI. Don\u2019t look away.',
 };
 
-// "Missasit eilen" — auto-card moments from previous 24h (mocked)
-const MISSED_FI = [
-  { id: 'me1', streamer: 'Korpisoturi', game: 'Money Train 4',  intensity: 'MYRSKY', win: '€24,800', headline: 'Korpisoturi veti yön — heräsi vasta klo 4.', body: 'Sinä nukuit, hän voitti. Kahdeksan tuntia sessioo, kahdeksan tunnin aikana €24 800.', source: 'Twitch · 04:12', operator: 'tilttarkka', operatorName: 'Tilttarkka' },
-  { id: 'me2', streamer: 'Slotsband',   game: 'Razor Returns',    intensity: 'KUUMA',  win: '€7,400',  headline: 'Slotsband: rauhallinen ilta, isompi kuin näytti.', body: 'Klippi ei levinnyt sosiaalisessa mediassa — joten Mittari nostaa sen tässä.', source: 'Twitch · 22:47', operator: 'castcasino', operatorName: 'Cast Casino' },
-];
-const MISSED_EN = [
-  { id: 'me1', streamer: 'Korpisoturi', game: 'Money Train 4',  intensity: 'MYRSKY', win: '€24,800', headline: 'Korpisoturi pulled an all-nighter — finished at 4 AM.', body: 'You slept, he won. Eight-hour session, €24,800 in those eight hours.', source: 'Twitch · 04:12', operator: 'tilttarkka', operatorName: 'Tilttarkka' },
-  { id: 'me2', streamer: 'Slotsband',   game: 'Razor Returns',    intensity: 'KUUMA',  win: '€7,400',  headline: 'Slotsband: a quiet night, bigger than it looked.', body: 'The clip didn\u2019t go viral on social — so Mittari surfaces it here.', source: 'Twitch · 22:47', operator: 'castcasino', operatorName: 'Cast Casino' },
-];
+// MISSASIT EILEN — pulled from /api/published?surface=missasit_eilen.
+// Empty state when the editorial pipeline hasn't shipped anything yet.
+const MissasitEilenSection = ({ lang }) => {
+  const [items, setItems] = useState([]);
+  const [loaded, setLoaded] = useState(false);
 
-// MISSASIT EILEN — three-state filter (SUOMI / KANSAINVÄLINEN / KAIKKI) per Phase 2.6 brief.
-// Default to SUOMI to protect the Finnish-core editorial focus on the homepage.
-const MissasitEilenSection = ({ lang, fiCards }) => {
-  const [scene, setScene] = useState('suomi'); // 'suomi' | 'intl' | 'all'
-  const cards = scene === 'suomi'
-    ? fiCards
-    : scene === 'intl'
-      ? INTL_MOMENTS.slice(0, 4)
-      : [...fiCards, ...INTL_MOMENTS.slice(0, 4)];
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${BACKEND}/api/published?surface=missasit_eilen&limit=6`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) { setItems(d.items || []); setLoaded(true); } })
+      .catch(() => { if (!cancelled) setLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <section
@@ -58,40 +65,30 @@ const MissasitEilenSection = ({ lang, fiCards }) => {
               {lang === 'en' ? 'Mittari noticed these while you were away' : 'Mittari huomasi nämä poissaolossasi'}
             </h2>
           </div>
-          {/* Three-state scene filter */}
-          <div
-            className="inline-flex items-stretch rounded-[3px] overflow-hidden"
-            style={{ border: '1px solid var(--border-strong)' }}
-            data-testid="missasit-eilen-toggle"
-          >
-            {[
-              { k: 'suomi', fi: 'SUOMI',          en: 'FINNISH' },
-              { k: 'intl',  fi: 'KANSAINVÄLINEN', en: 'INTERNATIONAL' },
-              { k: 'all',   fi: 'KAIKKI',         en: 'ALL' },
-            ].map((opt) => (
-              <button
-                key={opt.k}
-                type="button"
-                onClick={() => setScene(opt.k)}
-                data-testid={`missasit-eilen-tab-${opt.k}`}
-                className="mono"
-                style={{
-                  padding: '8px 14px', fontSize: 10.5, letterSpacing: '0.16em', fontWeight: 700,
-                  background: scene === opt.k ? 'var(--ink)' : 'transparent',
-                  color: scene === opt.k ? 'var(--bg)' : 'var(--muted)',
-                  transition: 'background 200ms ease, color 200ms ease',
-                }}
-              >
-                {lang === 'en' ? opt.en : opt.fi}
-              </button>
+        </div>
+        {!loaded ? null : items.length === 0 ? (
+          <div className="panel p-7 text-center" data-testid="missasit-eilen-empty">
+            <Newspaper strokeWidth={1.4} size={20} style={{ color: 'var(--muted)', margin: '0 auto 10px' }} />
+            <div className="mono" style={{ fontSize: 11.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
+              {lang === 'en'
+                ? 'NO 24H EDITORIAL YET · MOMENT-COMMENTARY SURFACES FROM REAL CLIP DETECTIONS ONCE POLLERS HAVE API KEYS'
+                : 'EI 24H-TOIMITUSTA VIELÄ · HETKI-KOMMENTAARIT SYNTYVÄT OIKEISTA KLIPPIHAVAINNOISTA KUN POLLERIT SAAVAT API-AVAIMET'}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {items.map((item) => (
+              <div key={item.id} className="panel panel-hover" style={{ padding: '14px 16px' }} data-testid={`missasit-card-${item.id}`}>
+                <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.22em', color: '#E8924A', fontWeight: 700 }}>
+                  {(item.content_type || '').replace(/_/g, ' ').toUpperCase()}
+                </div>
+                <p className="font-serif mt-2" style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--ink)' }}>
+                  {String(item.text || '').slice(0, 200)}{(item.text || '').length > 200 ? '…' : ''}
+                </p>
+              </div>
             ))}
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8" data-testid="missasit-eilen-grid">
-          {cards.map((m) => (
-            <MomentCard key={m.id} moment={m} />
-          ))}
-        </div>
+        )}
       </div>
     </section>
   );
@@ -147,6 +144,21 @@ const CockpitContext = ({ lang }) => {
   );
 };
 
+const SubscriberCount = ({ lang }) => {
+  const [n, setN] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${BACKEND}/api/signup/count`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setN(d.count ?? 0); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  if (n == null) return null;
+  const fmt = n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ');
+  return <div data-testid="hero-subscriber-count">{lang === 'en' ? `${fmt} SUBSCRIBE` : `${fmt} TILAA`}</div>;
+};
+
 const HeroCapture = () => {
   const { t, lang } = useLang();
   const [email, setEmail] = useState('');
@@ -197,7 +209,7 @@ const HeroCapture = () => {
       <div className="mt-6 space-y-1 mono" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
         <div>{lang === 'en' ? 'DAILY · 1 EMAIL' : 'PÄIVITTÄIN · 1 SÄHKÖPOSTI'}</div>
         <div>{lang === 'en' ? '0 SPAM · 0 STRINGS' : '0 SPÄMMIÄ · 0 EHTOA'}</div>
-        <div>{lang === 'en' ? '4 283 FINNS SUBSCRIBE' : '4 283 SUOMALAISTA TILAA'}</div>
+        <SubscriberCount lang={lang} />
       </div>
 
       <div className="mt-7 flex items-center gap-5">
@@ -211,13 +223,28 @@ const HeroCapture = () => {
 
 const Home = () => {
   const { lang, t } = useLang();
-  const state = CURRENT_DIAL.key;
+  const [dial, setDial] = useState(null);
+  const [moments, setMoments] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      fetch(`${BACKEND}/api/dial`).then((r) => r.json()).catch(() => null),
+      fetch(`${BACKEND}/api/published?surface=moments&limit=4`).then((r) => r.json()).catch(() => ({ items: [] })),
+    ]).then(([d, p]) => {
+      if (cancelled) return;
+      setDial(d);
+      setMoments(p?.items || []);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const state = dial?.state?.key || 'KYLMA';
   const hot = isHotState(state);
-  const featuredMoment = MOMENTS[0];
-  const otherMoments = MOMENTS.slice(1, 4);
-  const topOperators = OPERATORS.slice(0, 4);
-  const missed = lang === 'en' ? MISSED_EN : MISSED_FI;
-  const headline = lang === 'en' ? STATE_HEADLINES_EN[state] : DIAL_STATES[state].headline;
+  const featuredMoment = moments[0];
+  const otherMoments = moments.slice(1, 4);
+  const topOperators = OPERATORS.slice(0, 4); // editorial roster, not live data
+  const headline = (lang === 'en' ? STATE_HEADLINES_EN : STATE_HEADLINES_FI)[state] || '';
 
   return (
     <div data-testid="home-page">
@@ -265,10 +292,10 @@ const Home = () => {
                 <ShareButton
                   variant="dial"
                   payload={{
-                    label: lang === 'en' ? CURRENT_DIAL.label : CURRENT_DIAL.label,
+                    label: dial?.state?.label || '',
                     intensity: state,
                     headline,
-                    color: CURRENT_DIAL.color,
+                    color: dial?.state?.color || '#7A7E83',
                   }}
                   dataTestId="hero-share-dial"
                 />
@@ -286,32 +313,21 @@ const Home = () => {
         </div>
       </section>
 
-      {/* MARQUEE FIXTURE STRIP */}
+      {/* MARQUEE FIXTURE STRIP — honesty: kept structure for future real sports
+          feed but renders an empty honesty notice until API-Football / Liiga RSS
+          adapters are wired with real API keys. No more fabricated TAPPARA—TPS
+          fixtures or fake LIVE NYT claims. */}
       <section
         className="relative overflow-hidden py-3"
         style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}
         data-testid="fixture-marquee"
       >
-        <div className="marquee-track">
-          {[0, 1].map((rep) => (
-            <div key={rep} className="flex items-center shrink-0">
-              {[
-                { color: '#C8423C', a: 'LIIGA',   b: 'TAPPARA — TPS',         t: 'LA 18:30' },
-                { color: '#5A7BB8', a: 'NHL',     b: 'CAROLINA — FLORIDA',     t: 'SU 02:00' },
-                { color: '#E8924A', a: 'F1',      b: 'MONZA GP',               t: 'SU 16:00' },
-                { color: '#7A7E83', a: 'PL',      b: 'LIVERPOOL — ARSENAL',    t: 'SU 18:30' },
-                { color: '#8B1E1A', a: 'VEIKK.',  b: 'HJK — KUPS',             t: 'LA 18:00' },
-                { color: '#2C5F8D', a: 'KICK',    b: 'PACT LIVE',              t: 'NYT' },
-              ].map((it, i) => (
-                <div key={`${rep}-${i}`} className="flex items-baseline gap-3 shrink-0 px-8">
-                  <span className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: it.color, fontWeight: 700 }}>{it.a}</span>
-                  <span className="mono" style={{ fontSize: 13, letterSpacing: '0.02em', color: 'var(--ink)', fontWeight: 500 }}>{it.b}</span>
-                  <span className="mono" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>{it.t}</span>
-                  <span style={{ color: 'var(--border-strong)' }}>·</span>
-                </div>
-              ))}
-            </div>
-          ))}
+        <div className="container-wide">
+          <div className="mono text-center" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>
+            {lang === 'en'
+              ? '— SPORTS FIXTURE STRIP · API-FOOTBALL / LIIGA RSS PENDING KEYS —'
+              : '— URHEILUFIKSTUURIT · API-FOOTBALL / LIIGA RSS ODOTTAA AVAIMIA —'}
+          </div>
         </div>
       </section>
 
@@ -324,10 +340,10 @@ const Home = () => {
       {/* LIVE TILES GRID — new conversion engine */}
       <LiveTilesGrid />
 
-      {/* MISSASIT EILEN — auto-cards from prev 24h, with SUOMI/KANSAINVÄLINEN/KAIKKI filter */}
-      <MissasitEilenSection lang={lang} fiCards={missed} />
+      {/* MISSASIT EILEN — auto-cards from prev 24h, pulled from /api/published */}
+      <MissasitEilenSection lang={lang} />
 
-      {/* MOMENTS — "Mittari poimi nämä" */}
+      {/* MOMENTS — "Mittari poimi nämä" — pulled from /api/published?surface=moments */}
       <section className="py-12 sm:py-20" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
           <div className="flex items-baseline justify-between mb-10">
@@ -336,14 +352,25 @@ const Home = () => {
               <h2 className="display text-2xl sm:text-4xl">{t('home.moments_title')}</h2>
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-            <div className="lg:row-span-2">
-              <MomentCard moment={featuredMoment} featured />
+          {moments.length === 0 ? (
+            <div className="panel p-7 text-center" data-testid="moments-empty">
+              <Newspaper strokeWidth={1.4} size={20} style={{ color: 'var(--muted)', margin: '0 auto 10px' }} />
+              <div className="mono" style={{ fontSize: 11.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
+                {lang === 'en'
+                  ? 'NO MOMENTS PUBLISHED YET · TOIMITUS BUILDS THE PIPELINE'
+                  : 'EI HETKIÄ JULKAISTU VIELÄ · TOIMITUS RAKENTAA PUTKEA'}
+              </div>
             </div>
-            {otherMoments.map((m) => (
-              <MomentCard key={m.id} moment={m} />
-            ))}
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+              <div className="lg:row-span-2">
+                {featuredMoment && <MomentCard moment={featuredMoment} featured />}
+              </div>
+              {otherMoments.map((m) => (
+                <MomentCard key={m.id} moment={m} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -452,10 +479,10 @@ const GamesSection = ({ state, t, lang }) => {
       <h3 className="display text-2xl sm:text-3xl mb-4 leading-tight" style={{ color: 'var(--ink)' }}>{t('home.weekly_headline')}</h3>
       <div className="mono mb-6" style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)', fontWeight: 500 }}>{t('home.weekly_sub')}</div>
       <div className="mt-auto">
-        <div className="flex flex-wrap gap-2 mb-7">
-          {['Tappara — TPS', 'Carolina — Florida', 'F1 Monza', 'Liverpool — Arsenal', 'HJK — KuPS'].map((f) => (
-            <span key={f} className="mono" style={{ fontSize: 11, letterSpacing: '0.06em', padding: '6px 10px', border: '1px solid var(--border-strong)', borderRadius: 3, color: 'var(--ink)', fontWeight: 500 }}>{f}</span>
-          ))}
+        <div className="mono mb-7" style={{ fontSize: 11.5, letterSpacing: '0.04em', color: 'var(--muted)', fontWeight: 500, lineHeight: 1.5 }}>
+          {lang === 'en'
+            ? 'Weekly Card publishes Mittari\u2019s editorial take on Liiga, NHL, F1, Premier League and Veikkausliiga fixtures. Fixture data wires to API-Football and Liiga RSS once keys are configured.'
+            : 'Viikon Kortti julkaisee Mittarin toimituksellisen näkemyksen Liigan, NHL:n, F1:n, Valioliigan ja Veikkausliigan otteluista. Fikstuuridata kytkeytyy API-Footballiin ja Liigan RSS:ään kun avaimet on konfiguroitu.'}
         </div>
         <span className="btn-ghost group-hover:text-brand-blue">
           <Trophy strokeWidth={1.5} size={14} className="mr-2" />

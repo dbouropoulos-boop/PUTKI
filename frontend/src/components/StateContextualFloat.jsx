@@ -1,34 +1,56 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
-import { CURRENT_DIAL } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
 
-// Floating contextual element bottom-right, dial-state-driven
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
+// V2 honesty pass: reads /api/dial. No mock CURRENT_DIAL import.
+// When dial is KUUMA+ → /kasinot CTA; KYLMA/HAALEA → /viikon-kortti CTA.
+// Hidden entirely when the dial is at the static-seed KYLMA fallback
+// (any_real=false AND no signals yet) so it doesn't pretend to point
+// readers at "active offers" that haven't been audited.
+
 const StateContextualFloat = () => {
   const { lang } = useLang();
   const [closed, setClosed] = useState(false);
-  if (closed) return null;
+  const [dial, setDial] = useState(null);
 
-  const state = CURRENT_DIAL.key;
-  const hot = ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(state);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${BACKEND}/api/dial`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setDial(d); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  if (closed || !dial?.state) return null;
+
+  const stateKey = dial.state.key;
+  const hot = ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(stateKey);
+  const anyReal = !!dial.any_real;
+
+  // Honesty guard — don't surface a "hot offers" link from a first-boot
+  // KYLMA fallback. Only surface if we have a real recomputed snapshot.
+  if (!anyReal && stateKey === 'KYLMA') return null;
 
   const config = hot
     ? {
         href: '/kasinot',
-        label: 'MITTARI ' + CURRENT_DIAL.label,
+        label: 'MITTARI ' + dial.state.label,
         body: lang === 'en'
-          ? '3 of the week\u2019s best offers active now →'
-          : '3 viikon parasta tarjousta nyt voimassa →',
-        accent: CURRENT_DIAL.color,
+          ? 'Mittari is hot — see operator ranking →'
+          : 'Mittari on kuuma — katso operaattorisijoitus →',
+        accent: dial.state.color,
       }
     : {
         href: '/viikon-kortti',
-        label: 'MITTARI ' + CURRENT_DIAL.label,
+        label: 'MITTARI ' + dial.state.label,
         body: lang === 'en'
           ? 'Read this week\u2019s card →'
           : 'Lue viikon kortti →',
-        accent: CURRENT_DIAL.color,
+        accent: dial.state.color,
       };
 
   return (

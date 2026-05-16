@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Dial from './Dial';
 import CountUp from './CountUp';
-import { DIAL_STATES, STREAMERS } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
+
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
+// V2 honesty pass — DialCockpit reads /api/cockpit + /api/admin/signals
+// summary surface (/api/signals/summary public would be ideal, but the
+// composite_score + sub_scores + signal_count already on /api/cockpit
+// gives us everything we need without admin auth).
+//
+// No hardcoded "ANDYPYRO €42K · PACT KICK 5.6K · F1 MONZA" — contributors
+// come from real sub_scores (which categories actually drove the dial).
+// If no real signal yet, show "EI SIGNAALIA" instead of fabricated viewers.
 
 const PanelStat = ({ label, value, sub, align = 'left', lang = 'fi' }) => {
   const isNumeric = typeof value === 'number';
@@ -33,12 +43,45 @@ const PanelStat = ({ label, value, sub, align = 'left', lang = 'fi' }) => {
   );
 };
 
-export const DialCockpit = ({ state = 'KUUMA' }) => {
-  const { lang, t } = useLang();
-  const live = STREAMERS.filter((s) => s.live);
-  const totalViewers = live.reduce((a, s) => a + s.viewers, 0);
+const SUBSCORE_LABEL = {
+  streamers: { fi: 'STRIIMAAJAT', en: 'STREAMERS' },
+  sports:    { fi: 'URHEILU',     en: 'SPORTS' },
+  youtube:   { fi: 'YOUTUBE',     en: 'YOUTUBE' },
+  forum:     { fi: 'FOORUMI',     en: 'FORUM' },
+  internal:  { fi: 'TOIMITUS',    en: 'EDITORIAL' },
+};
 
-  const contributors = ['ANDYPYRO €42K', 'PACT KICK 5.6K', 'F1 MONZA'];
+export const DialCockpit = ({ state = 'KYLMA' }) => {
+  const { lang, t } = useLang();
+  const [cockpit, setCockpit] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => {
+      fetch(`${BACKEND}/api/cockpit`)
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled) setCockpit(d); })
+        .catch(() => {});
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  const composite = typeof cockpit?.composite_score === 'number' ? Math.round(cockpit.composite_score) : null;
+  const signalCount = cockpit?.signal_count ?? 0;
+  const anyReal = !!cockpit?.any_real;
+  const subScores = cockpit?.sub_scores || {};
+
+  // Contributors: top 3 sub_scores (non-zero) by value, mapped to labels.
+  const contributors = Object.entries(subScores)
+    .filter(([, v]) => typeof v === 'number' && v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k, v]) => {
+      const label = (SUBSCORE_LABEL[k] || { fi: k.toUpperCase(), en: k.toUpperCase() })[lang];
+      return `${label} ${Math.round(v)}`;
+    });
 
   const now = new Date();
   const localeTag = lang === 'en' ? 'en-GB' : 'fi-FI';
@@ -63,36 +106,70 @@ export const DialCockpit = ({ state = 'KUUMA' }) => {
 
       <div className="hidden md:grid w-full" style={{ gridTemplateColumns: '1fr auto 1fr', gap: 32, alignItems: 'center' }}>
         <div className="flex justify-end">
-          <PanelStat label={t('common.live_label')} value={live.length} sub={t('common.live_streamers')} align="right" lang={lang} />
+          <PanelStat
+            label={lang === 'en' ? 'COMPOSITE' : 'KOKONAISLUKU'}
+            value={composite ?? (lang === 'en' ? 'NO SIGNAL' : 'EI SIGNAALIA')}
+            sub={anyReal ? (lang === 'en' ? 'REAL SIGNALS' : 'OIKEAT SIGNAALIT') : (lang === 'en' ? 'MOCKED INPUTS' : 'MOCK-SYÖTTEET')}
+            align="right"
+            lang={lang}
+          />
         </div>
         <div className="flex flex-col items-center">
           <Dial size="large" state={state} />
         </div>
         <div className="flex justify-start">
-          <PanelStat label={t('common.viewers_label')} value={totalViewers} sub={t('common.viewers_sub')} align="left" lang={lang} />
+          <PanelStat
+            label={lang === 'en' ? 'SIGNALS' : 'SIGNAALEJA'}
+            value={signalCount}
+            sub={lang === 'en' ? 'LAST POLL WINDOW' : 'EDELLINEN POLLAUS'}
+            align="left"
+            lang={lang}
+          />
         </div>
       </div>
 
       <div className="md:hidden w-full flex flex-col items-center">
         <div className="flex justify-between w-full max-w-xs mb-6">
-          <PanelStat label={t('common.live')} value={live.length} sub={t('common.live_streamers')} align="left" lang={lang} />
-          <PanelStat label={t('common.viewers_label')} value={totalViewers} sub={t('common.viewers_sub')} align="right" lang={lang} />
+          <PanelStat
+            label={lang === 'en' ? 'COMPOSITE' : 'KOKONAISLUKU'}
+            value={composite ?? '—'}
+            sub={anyReal ? (lang === 'en' ? 'REAL' : 'OIKEA') : (lang === 'en' ? 'MOCK' : 'MOCK')}
+            align="left"
+            lang={lang}
+          />
+          <PanelStat
+            label={lang === 'en' ? 'SIGNALS' : 'SIGNAALEJA'}
+            value={signalCount}
+            sub={lang === 'en' ? 'LAST POLL' : 'EDELLINEN'}
+            align="right"
+            lang={lang}
+          />
         </div>
         <Dial size="large" state={state} />
       </div>
 
-      <div
-        className="mono mt-6 flex items-center gap-2 flex-wrap justify-center px-4"
-        style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}
-        data-testid="cockpit-contributors"
-      >
-        {contributors.map((c, i) => (
-          <React.Fragment key={c}>
-            <span>{c}</span>
-            {i < contributors.length - 1 && <span style={{ color: 'var(--border-strong)' }}>·</span>}
-          </React.Fragment>
-        ))}
-      </div>
+      {contributors.length > 0 ? (
+        <div
+          className="mono mt-6 flex items-center gap-2 flex-wrap justify-center px-4"
+          style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}
+          data-testid="cockpit-contributors"
+        >
+          {contributors.map((c, i) => (
+            <React.Fragment key={c}>
+              <span>{c}</span>
+              {i < contributors.length - 1 && <span style={{ color: 'var(--border-strong)' }}>·</span>}
+            </React.Fragment>
+          ))}
+        </div>
+      ) : (
+        <div
+          className="mono mt-6"
+          style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}
+          data-testid="cockpit-contributors-empty"
+        >
+          {lang === 'en' ? 'NO ACTIVE CONTRIBUTORS · POLLERS HAVE NOT RETURNED REAL DATA YET' : 'EI AKTIIVISIA SYÖTTEITÄ · POLLERIT EIVÄT VIELÄ TUOTA OIKEAA DATAA'}
+        </div>
+      )}
     </div>
   );
 };

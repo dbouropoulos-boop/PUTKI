@@ -5,8 +5,10 @@ import Footer from './Footer';
 import LiveTicker from './LiveTicker';
 import PersistentCapture from './PersistentCapture';
 import StateContextualFloat from './StateContextualFloat';
-import SignupToast from './SignupToast';
-import PushNotificationToast from './PushNotificationToast';
+
+// V2 honesty pass: SignupToast + PushNotificationToast removed.
+// Both manufactured "John from Helsinki just subscribed" / fake push notifications
+// with no real backing data. Per V2 brief: empty surfaces ok, lying surfaces not.
 
 export const Layout = () => {
   return (
@@ -19,8 +21,6 @@ export const Layout = () => {
       <Footer />
       <PersistentCapture />
       <StateContextualFloat />
-      <SignupToast />
-      <PushNotificationToast />
       <div className="grain-overlay" aria-hidden="true" />
     </div>
   );

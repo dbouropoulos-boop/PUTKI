@@ -39,7 +39,7 @@ DIAL_STATES = {
     "KIIRASTULI":  {"key": "KIIRASTULI",  "label": "KIIRASTULI",  "color": "#8B1E1A", "value": 96, "headline": "Mittari on KIIRASTULI. Älä katso pois."},
 }
 
-CURRENT_STATE_KEY = "KUUMA"
+CURRENT_STATE_KEY = "KYLMA"  # Honest default: no signal yet on first boot. Real state is computed by dial_engine.
 
 
 # ---------- ENDPOINTS ----------
@@ -75,9 +75,8 @@ async def get_dial():
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "any_real": False,
         "context": {
-            "live_streamers": 7,
-            "total_viewers": 19_590,
-            "active_signals": ["finnish-prime-time", "ylilauta-volume-high", "liiga-friday"],
+            "active_signals": [],
+            "note": "Ei signaalia vielä — Mittarin pollerit eivät ole vielä keränneet dataa.",
         },
     }
 
@@ -131,6 +130,13 @@ class PredictionResponse(BaseModel):
     pick: str
     user_email: Optional[EmailStr] = None
     created_at: str
+
+
+@api_router.get("/signup/count")
+async def signup_count():
+    """Public — honest live count of newsletter subscribers."""
+    n = await db.signups.count_documents({})
+    return {"count": n}
 
 
 @api_router.post("/predictions", response_model=PredictionResponse)
@@ -558,6 +564,20 @@ async def admin_signals_poll(_: bool = Depends(require_admin)):
     poll_summary = await poll_all_sources(db)
     snapshot = await recalculate_dial(db)
     return {"poll": poll_summary, "snapshot": snapshot}
+
+
+@api_router.get("/signals/live")
+async def public_live_signals(limit: int = 12):
+    """Public — honest live signals only. Returns non-mocked streamer/youtube signals
+    surfaced for the public live-tiles grid. If nothing real exists, returns empty
+    list (no fabrication)."""
+    limit = max(1, min(30, limit))
+    cur = db.signals.find(
+        {"mocked": {"$ne": True}, "source": {"$in": ["twitch", "kick", "youtube"]}},
+        {"_id": 0},
+    ).sort("observed_at", -1).limit(limit)
+    rows = await cur.to_list(length=limit)
+    return {"signals": rows, "count": len(rows), "any_real": len(rows) > 0}
 
 
 @api_router.get("/admin/dial/history")

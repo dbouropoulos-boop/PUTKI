@@ -1,28 +1,62 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
-import { STREAMERS, MOMENTS, CURRENT_DIAL } from '../data/mock';
 
-// Sticky narrow bar above header — rotating instrument readings.
-// Continuous CSS marquee, mono micro-type, dial-state-color accent.
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
+// V2 honesty pass — LiveTicker reads /api/cockpit only.
+// No fabricated viewer counts, no hardcoded streamer names, no fake spike copy.
+// When the polling pipeline has no real data, the strip displays a single
+// neutral status: "MITTARI · EI SIGNAALIA — TOIMITUS PÄIVITTÄÄ".
 
 export const LiveTicker = () => {
-  const { t, lang } = useLang();
-  const live = STREAMERS.filter((s) => s.live);
-  const totalViewers = live.reduce((a, s) => a + s.viewers, 0);
-  const topMoment = MOMENTS[0];
+  const { lang } = useLang();
+  const [data, setData] = useState(null);
 
-  const items = [
-    { color: '#C8423C', label: `${t('common.live_label')} ${live.length}` },
-    { color: 'var(--ink)', label: `${t('common.viewers_label')} ${totalViewers.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ')}` },
-    { color: CURRENT_DIAL.color, label: `MITTARI ${CURRENT_DIAL.label}` },
-    { color: '#E8924A', label: `${topMoment.streamer.toUpperCase()} ${topMoment.win}` },
-    { color: 'var(--brand-blue)', label: 'F1 MONZA · SUNDAY 16:00' },
-    { color: 'var(--ink)', label: lang === 'en' ? 'NEXT PAYDAY · FRI 30' : 'PALKKAPÄIVÄ · PE 30' },
-    { color: 'var(--muted)', label: 'PACT KICK 5.6K' },
-    { color: 'var(--muted)', label: 'JARTTU84 SWEET BONANZA' },
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    const fetchOnce = async () => {
+      try {
+        const r = await fetch(`${BACKEND}/api/cockpit`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled) setData(d);
+      } catch {}
+    };
+    fetchOnce();
+    const id = setInterval(fetchOnce, 30000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
-  // Render twice for seamless loop
+  const state = data?.state;
+  const stateLabel = state?.label || 'EI SIGNAALIA';
+  const stateColor = state?.color || 'var(--muted)';
+  const composite = typeof data?.composite_score === 'number' ? Math.round(data.composite_score) : null;
+  const drivers = data?.primary_driver_label
+    ? [data.primary_driver_label[lang] || data.primary_driver_label.fi]
+    : [];
+  const lastSpike = data?.last_spike;
+  const anyReal = !!data?.any_real;
+
+  // Honest item list. Each chip carries a real value or is omitted.
+  const items = [];
+  items.push({
+    color: stateColor,
+    label: `MITTARI · ${stateLabel}${composite != null ? ` ${composite}` : ''}`,
+  });
+  if (drivers.length) {
+    items.push({ color: 'var(--brand-blue)', label: `${lang === 'en' ? 'DRIVER' : 'PÄÄSYY'} · ${drivers[0]}` });
+  }
+  if (lastSpike?.text) {
+    const snippet = String(lastSpike.text).slice(0, 80).replace(/\s+\S*$/, '');
+    items.push({ color: '#E8924A', label: `${lang === 'en' ? 'LATEST' : 'VIIMEISIN'} · ${snippet}…` });
+  }
+  if (!anyReal) {
+    items.push({
+      color: 'var(--muted)',
+      label: lang === 'en' ? 'NO LIVE SIGNAL YET · EDITORIAL UPDATING' : 'EI LIVESIGNAALIA · TOIMITUS PÄIVITTÄÄ',
+    });
+  }
+
   const renderRow = (key) => (
     <div key={key} className="flex items-center shrink-0">
       {items.map((it, i) => (
@@ -37,6 +71,8 @@ export const LiveTicker = () => {
     </div>
   );
 
+  const stateKey = (state?.key || 'KYLMA').toLowerCase();
+
   return (
     <div
       className="sticky top-0 z-50 overflow-hidden border-b"
@@ -47,9 +83,7 @@ export const LiveTicker = () => {
       }}
       data-testid="live-ticker"
     >
-      <div
-        className={`ticker-track ticker-rhythm-${CURRENT_DIAL.key.toLowerCase()}`}
-      >
+      <div className={`ticker-track ticker-rhythm-${stateKey}`}>
         {renderRow('a')}
         {renderRow('b')}
       </div>
