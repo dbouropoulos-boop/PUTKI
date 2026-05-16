@@ -172,6 +172,100 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     return await _get_settings_doc()
 
 
+# ---------- Game scores (Phase 2.5 — Weezy Rally) ----------
+
+class GameScoreRequest(BaseModel):
+    cookie_id: str = Field(..., min_length=8, max_length=64)
+    name: Optional[str] = Field(default=None, max_length=32)
+    score: int = Field(..., ge=0, le=10_000_000)
+    crashes: int = Field(default=0, ge=0, le=10)
+    time_left: int = Field(default=0, ge=0, le=300)
+    week: Optional[str] = Field(default=None, max_length=8)
+    stage: Optional[str] = Field(default='imatra', max_length=24)
+
+
+class GameScoreResponse(BaseModel):
+    id: str
+    cookie_id: str
+    name: Optional[str]
+    score: int
+    rank: int
+    total: int
+    is_personal_best: bool
+    week: str
+    stage: str
+    created_at: str
+
+
+def _current_week():
+    iso = datetime.now(timezone.utc).isocalendar()
+    return f"{iso[0]}W{iso[1]:02d}"
+
+
+@api_router.post("/game-scores", response_model=GameScoreResponse)
+async def submit_game_score(data: GameScoreRequest):
+    week = data.week or _current_week()
+    # Personal best check
+    prev = await db.game_scores.find_one({
+        "cookie_id": data.cookie_id, "week": week, "stage": data.stage
+    }, sort=[("score", -1)])
+    is_pb = prev is None or data.score > (prev.get("score") or 0)
+
+    doc = {
+        "id": str(uuid.uuid4()),
+        "cookie_id": data.cookie_id,
+        "name": (data.name or "").strip()[:32] or None,
+        "score": data.score,
+        "crashes": data.crashes,
+        "time_left": data.time_left,
+        "week": week,
+        "stage": data.stage,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.game_scores.insert_one(doc)
+    doc.pop("_id", None)
+
+    total = await db.game_scores.count_documents({"week": week, "stage": data.stage})
+    higher = await db.game_scores.count_documents({
+        "week": week, "stage": data.stage, "score": {"$gt": data.score}
+    })
+    rank = higher + 1
+    return GameScoreResponse(rank=rank, total=total, is_personal_best=is_pb, **doc)
+
+
+@api_router.get("/game-scores/leaderboard")
+async def game_leaderboard(
+    week: Optional[str] = None,
+    stage: str = 'imatra',
+    limit: int = 10,
+):
+    week = week or _current_week()
+    limit = max(1, min(50, limit))
+    cur = db.game_scores.find(
+        {"week": week, "stage": stage},
+        {"_id": 0, "cookie_id": 0, "crashes": 0, "time_left": 0},
+    ).sort("score", -1).limit(limit)
+    rows = await cur.to_list(length=limit)
+    return {"week": week, "stage": stage, "leaderboard": rows}
+
+
+@api_router.get("/game-scores/me")
+async def game_personal(cookie_id: str, week: Optional[str] = None, stage: str = 'imatra'):
+    week = week or _current_week()
+    best = await db.game_scores.find_one(
+        {"cookie_id": cookie_id, "week": week, "stage": stage},
+        {"_id": 0, "cookie_id": 0},
+        sort=[("score", -1)],
+    )
+    if not best:
+        return {"week": week, "stage": stage, "best": None, "rank": None, "total": 0}
+    higher = await db.game_scores.count_documents({
+        "week": week, "stage": stage, "score": {"$gt": best["score"]}
+    })
+    total = await db.game_scores.count_documents({"week": week, "stage": stage})
+    return {"week": week, "stage": stage, "best": best, "rank": higher + 1, "total": total}
+
+
 app.include_router(api_router)
 
 app.add_middleware(

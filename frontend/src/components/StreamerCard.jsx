@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import StreamerVideoPreview from './StreamerVideoPreview';
 
 const formatViewers = (n) => {
   if (n >= 1000) return `${(n / 1000).toFixed(1).replace('.0', '')}K`;
@@ -7,7 +8,7 @@ const formatViewers = (n) => {
 };
 
 export const StreamerCard = ({ streamer }) => {
-  const { slug, name, platform, live, viewers, playing, photo } = streamer;
+  const { slug, name, platform, live, viewers, playing } = streamer;
   return (
     <Link
       to={`/striimaajat/${slug}`}
@@ -16,7 +17,11 @@ export const StreamerCard = ({ streamer }) => {
       style={{ width: 260 }}
     >
       <div className="relative aspect-[5/4] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-        <img src={photo} alt={name} className="w-full h-full object-cover" />
+        <StreamerVideoPreview
+          streamer={streamer}
+          className="absolute inset-0 w-full h-full"
+          testId={`streamer-card-preview-${slug}`}
+        />
         {live && (
           <div
             className="absolute top-3 left-3 flex items-center gap-2 px-2 py-1 rounded-[2px]"

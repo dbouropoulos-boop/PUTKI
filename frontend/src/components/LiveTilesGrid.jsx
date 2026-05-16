@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Bell, Plus, X, Volume2 } from 'lucide-react';
 import { STREAMERS } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
+import StreamerVideoPreview from './StreamerVideoPreview';
 
 // Phase 1.5 (Revised): Live tile grid with autoplay-style video previews + 1-click follow modal.
 // Phase 2 will swap the visual placeholder for real Twitch/Kick muted-autoplay iframes.
@@ -84,16 +85,16 @@ const LiveTile = ({ streamer, onFollow }) => {
   const { lang } = useLang();
   return (
     <div className="panel panel-hover relative overflow-hidden flex-shrink-0" style={{ width: 320, scrollSnapAlign: 'start' }} data-testid={`live-tile-${streamer.slug}`}>
-      {/* Video preview slot — Phase 2 swaps for real iframe */}
+      {/* Video preview — Twitch/Kick muted-autoplay; falls back to photo when offline */}
       <div className="relative aspect-video overflow-hidden scanlines" style={{ background: '#0A0A0A' }}>
-        <img
-          src={streamer.photo}
-          alt={streamer.name}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ filter: 'brightness(0.55) saturate(1.1)' }}
+        <StreamerVideoPreview
+          streamer={streamer}
+          className="absolute inset-0 w-full h-full"
+          borderColor="#E8924A"
+          testId={`live-preview-${streamer.slug}`}
         />
         {/* Dark gradient overlay */}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 30%, rgba(10,10,10,0.85) 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 30%, rgba(10,10,10,0.85) 100%)', pointerEvents: 'none' }} />
 
         {/* LIVE pill */}
         <div className="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1 rounded-[2px]" style={{ background: 'rgba(10,10,10,0.85)' }}>

@@ -1,0 +1,61 @@
+{
+  "summary": "Phase 2.5 (Weezy Rally + StreamerProfile rebuild + autoplay live previews) end-to-end testing. Backend pytest 29/29 PASS (12 new game-score tests + 17 regression). Frontend: Home live tiles (6) + StreamerVideoPreview iframes mount on hover; /striimaajat/jarttu84 (LIVE) renders all 11 expected testids + 4 stat cells + 4 op cards + 5 related tiles + iframe inside profile-live-embed (Twitch shows 'proxy detected' overlay in headless — DOM presence verified per brief); /striimaajat/andypyro (OFFLINE) hides live-status, shows OFFLINE text + profile-follow-form, submit replaces form with follow-success; /peli weezy-rally + rally-start + game-stats (3 cells) render, click start hides button and reveals rally-hud; submitting a score via in-page fetch with localStorage cookie_id returns rank/total/is_personal_best correctly and leaderboard-personal banner appears after reload (showing #2 / 88,888 pts / OF 12 PLAYERS). Game UI strings render in English with proper curly apostrophe (no literal \\u2019). Zero console errors across home/profile/game.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "MiniGame leaderboard", "issue": "Brief expects a 'leaderboard-table' aggregate testid; instead implementation uses leaderboard-row-1..10. Leaderboard-empty also missing (only rendered when 0 rows). Not blocking but doesn't match the testid contract from the brief.", "selector": "[data-testid='leaderboard-table']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_features": {
+    "backend_game_score_post": "PASS — POST /api/game-scores returns id, rank, total, is_personal_best, week (e.g. '2026W20'), stage. Pydantic 422 on missing cookie_id, negative score, short cookie. is_personal_best=False after second lower score with same cookie.",
+    "backend_leaderboard": "PASS — sorted DESC, no _id/cookie_id leaked, fields {id, score, week, stage, created_at} present. limit=999 clamped to 50. limit=0 clamped to 1.",
+    "backend_me_endpoint": "PASS — empty cookie returns best=null/rank=null/total>=0; after submit returns best with score, rank, total, no cookie_id leak.",
+    "backend_rank_three_cookies": "PASS — 90000/70000/50000 sort, /me for 50000 cookie returns rank=3/total=3 (with isolated unique stage).",
+    "backend_regression_phase2_0": "PASS — /api/, /api/dial, /api/dial/states, /api/signup, /api/predictions, /api/settings/public, /api/admin/settings all still 200 (17/17 prior tests still green).",
+    "home_live_previews": "PASS — 6 live-preview-* tiles render in 'Live right now' grid; iframe mounts on hover for live streamers (verified DOM presence — Twitch shows proxy-block overlay in headless, expected per brief).",
+    "home_session_progress": "PASS — 6 session-progress-* bars render per brief.",
+    "streamer_profile_live_jarttu84": "PASS — all 11 testids present: streamer-profile-jarttu84, profile-name='Jarttu84', live-status, profile-stats (4 stat cells), profile-cockpit (with embedded Dial+sub-cards), profile-watch-cta, profile-live-embed (with iframe), profile-activity-feed, schedule-grid, rhythm-heatmap, profile-share, plus profile-follow-when-offline. 4 profile-op-* + 5 profile-related-*.",
+    "streamer_profile_offline_andypyro": "PASS — same testid surface minus live-status + profile-live-embed + profile-watch-cta (replaced by follow form). OFFLINE text present. profile-follow-form + profile-follow-email + profile-follow-submit render. After submit, follow-success element appears.",
+    "minigame_basic_flow": "PASS — weezy-rally container, rally-start button, game-stats (3 cells: PRIZE 925€ / PLAYERS / TIME LEFT 2 pv 14 h). Click rally-start hides button and renders rally-hud.",
+    "minigame_score_submit_flow": "PASS — In-browser fetch POST with localStorage 'mittari_cookie_id' (uuid) returned {status:200, rank:2, total:12, is_personal_best:true, week:'2026W20', stage:'imatra'}. After reload, leaderboard-personal banner shows '#2 YOUR PLACE 88,888 pts OF 12 PLAYERS'.",
+    "minigame_leaderboard_rows": "PASS (partial) — 10 leaderboard-row-1..10 testids render with TestUser/Anonymous/etc + scores DESC. Aggregate leaderboard-table testid NOT present (see ui_bugs).",
+    "minigame_english_strings": "PASS — 'Run the stage', 'START STAGE', 'SCORE', 'TIME', 'CRASHES', 'YOUR BEST · THIS WEEK', 'TOP 10 · LIVE LEADERBOARD', 'This week's leaders' all render. Apostrophe is curly ' — no literal \\u2019 leaked.",
+    "rules_and_prizes_panels": "PASS — Rules panel (5 bullets incl 18+), Prizes panel (5 tiers 500€/250€/100€/50€/25€), Tips panel (3 bullets) all render.",
+    "console_health": "PASS — 0 console errors on home + jarttu84 + andypyro + peli pages."
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_game_scores.py",
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "[LOW] Add data-testid='leaderboard-table' to the leaderboard wrapper element in /app/frontend/src/pages/MiniGame.jsx so it matches the contract from the brief. Currently only per-row testids (leaderboard-row-1..10) exist.",
+    "[LOW] Add data-testid='leaderboard-empty' for the empty placeholder state (currently the leaderboard always has rows in test env, but the placeholder element needs the testid when DB is empty).",
+    "[CARRYOVER] index.html title 'Emergent | Fullstack App' + meta description still not Mittari-branded (unchanged since iteration_3)."
+  ],
+  "critical_code_review_comments": [
+    "Backend /api/game-scores correctly projects out _id, cookie_id, crashes, time_left from leaderboard rows — confirmed no PII leak via Mongo projection. Good.",
+    "Pydantic GameScoreRequest enforces cookie_id min_length=8/max=64, score 0..10M, crashes 0..10, time_left 0..300 — solid input validation.",
+    "Week format YYYYWww (2026W20) — uses ISO calendar; aligns with brief.",
+    "Personal best check queries Mongo for prev highest then compares — could be racy under concurrent submissions from same cookie (both could mark is_personal_best=True). Low-traffic concern only.",
+    "Leaderboard limit clamped via max(1, min(50, limit)) — correctly handles limit=0 and limit=999.",
+    "Frontend MiniGame submits {cookie_id, name, score, crashes, time_left} matching the Pydantic schema — clean contract.",
+    "StreamerVideoPreview uses iframe with Twitch parent param that includes localhost + pelisignaali-fi.preview.emergentagent.com — verified iframe mounts on hover. Twitch displays a 'proxy detected' overlay in headless test mode (expected per brief).",
+    "StreamerProfile renders correctly for both live & offline branches with consistent testid surface (minor differences: live-status, profile-live-embed, profile-watch-cta only on live; profile-follow-form only on offline).",
+    "After follow-form submit, success state replaces form (verified follow-success testid appears).",
+    "Apostrophe handling: all curly ' rendered via JSX string literals — no \\u2019 literal escaping leaking to DOM. Both FI and EN strings clean.",
+    "MiniGame English copy intact: 'Run the stage', 'This week's leaders', 'START STAGE' all render with proper curly quote."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_game_scores.py (NEW — 12 tests across POST/leaderboard/me/rank)"
+  ],
+  "success_rate": {"backend": "100% (29/29 pytest)", "frontend": "~95% — all critical flows pass; only missing leaderboard-table/leaderboard-empty aggregate testids"},
+  "test_credentials": "Back-office admin token: mittari-admin. Game scores need no auth — cookie_id is client uuid in localStorage 'mittari_cookie_id'.",
+  "seed_data_creation": "Pytest inserted ~10 TESTCK-* game_scores docs across stages 'imatra' + 'teststage-*' for current ISO week 2026W20. In-browser fetch added 1 row with name='TEST_inbrowser', score=88888, cookie_id=5a1e83f0-390a-... for the existing localStorage cookie. After all tests current week 2026W20 stage=imatra leaderboard had 12 rows.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 2.5 game-scores API, StreamerProfile rebuild, and MiniGame all working. KEY testid notes: leaderboard rows are leaderboard-row-1..10 NOT leaderboard-table; profile-watch-cta only renders for LIVE streamer (not OFFLINE — replaced by follow form there); profile-live-embed only on LIVE; profile-follow-form only on OFFLINE; after follow submit, follow-success replaces form. localStorage keys: mittari_cookie_id (uuid), mittari_player_name. To force fresh-cookie test on /peli use page.evaluate to localStorage.removeItem before navigating. /peli defaults to EN strings in current state — verified EN copy. Twitch iframes in profile-live-embed will show 'proxy/unblocker detected' overlay in headless browser — DOM presence is what to assert (not visual content). Backend tests at /app/backend/tests/test_game_scores.py + test_mittari_api.py — run via `pytest /app/backend/tests/ -v` (29 total tests, all pass).",
+  "rca_of_the_issue": "N/A — no blocking issues. Only LOW-priority testid naming deviation (leaderboard-table not present on the wrapper; rows are testid'd per-row instead)."
+}
