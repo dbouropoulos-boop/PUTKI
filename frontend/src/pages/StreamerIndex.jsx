@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Plus, X } from 'lucide-react';
 import StreamerCard from '../components/StreamerCard';
 import { STREAMERS } from '../data/mock';
+import { useLang } from '../context/LanguageContext';
 
 const StreamerIndex = () => {
   const navigate = useNavigate();
+  const { t } = useLang();
   const live = STREAMERS.filter((s) => s.live);
   const offline = STREAMERS.filter((s) => !s.live);
 
@@ -15,7 +17,6 @@ const StreamerIndex = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Mock submission — Phase 2 wires to Supabase
     console.log('Streamer suggestion:', form);
     setSubmitDone(true);
     setTimeout(() => {
@@ -30,11 +31,11 @@ const StreamerIndex = () => {
       <section className="container-wide pt-12 sm:pt-20 pb-10">
         <div className="max-w-3xl">
           <div className="eyebrow mb-4">
-            MITTARI-SEURANTA · <span className="mono">{STREAMERS.length}</span> STRIIMAAJAA
+            {t('streamer.eyebrow')} · <span className="mono">{STREAMERS.length}</span> {t('common.streamers').toUpperCase()}
           </div>
-          <h1 className="display text-4xl sm:text-6xl mb-5">Suomen seuratut slot-striimaajat</h1>
+          <h1 className="display text-4xl sm:text-6xl mb-5">{t('streamer.title')}</h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
-            Toimituksellinen valinta — ei kaikki, vaan ne, joiden seuraaminen kannattaa. Tier 1 ja Tier 2 -nimet, sekä uusi Kick-aalto. Päivittyy reaaliajassa.
+            {t('streamer.lede')}
           </p>
         </div>
       </section>
@@ -44,7 +45,7 @@ const StreamerIndex = () => {
           <div className="flex items-baseline gap-3 mb-6">
             <span className="led mt-1"></span>
             <h2 className="display text-2xl sm:text-3xl">
-              Livenä nyt · <span className="mono" style={{ fontWeight: 500 }}>{live.length}</span>
+              {t('common.live_now')} · <span className="mono" style={{ fontWeight: 500 }}>{live.length}</span>
             </h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -57,14 +58,13 @@ const StreamerIndex = () => {
 
       <section className="py-10 sm:py-12" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
-          <h2 className="display text-2xl sm:text-3xl mb-6">Offline</h2>
+          <h2 className="display text-2xl sm:text-3xl mb-6">{t('common.offline')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {offline.map((s) => (
               <StreamerCard key={s.slug} streamer={s} />
             ))}
           </div>
 
-          {/* Submit-a-streamer link (Phase 1.5 addition) */}
           <div className="mt-12 text-center">
             <button
               onClick={() => setSubmitOpen(true)}
@@ -73,7 +73,7 @@ const StreamerIndex = () => {
               data-testid="suggest-streamer-trigger"
             >
               <Plus strokeWidth={1.6} size={14} />
-              Ehdota striimaajaa
+              {t('streamer.suggest')}
             </button>
           </div>
         </div>
@@ -81,15 +81,14 @@ const StreamerIndex = () => {
 
       <section className="py-12 sm:py-16" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-narrow text-center">
-          <h2 className="display text-3xl sm:text-4xl mb-4">Saa ilmoitus livenä</h2>
-          <p className="font-serif mb-7" style={{ color: 'var(--muted)' }}>Sähköposti, Telegram tai web push. Ilmaista. Ei spämmiä.</p>
+          <h2 className="display text-3xl sm:text-4xl mb-4">{t('streamer.notify_title')}</h2>
+          <p className="font-serif mb-7" style={{ color: 'var(--muted)' }}>{t('streamer.notify_sub')}</p>
           <button onClick={() => navigate('/aloita')} className="btn-primary" data-testid="streamer-index-cta">
-            Aloita ilmoitukset →
+            {t('btn.start_notifications')}
           </button>
         </div>
       </section>
 
-      {/* Submit modal */}
       {submitOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -97,44 +96,40 @@ const StreamerIndex = () => {
           onClick={() => !submitDone && setSubmitOpen(false)}
           data-testid="suggest-modal"
         >
-          <div
-            className="panel p-7 sm:p-10 w-full max-w-md"
-            style={{ background: 'var(--bg)' }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="panel p-7 sm:p-10 w-full max-w-md" style={{ background: 'var(--bg)' }} onClick={(e) => e.stopPropagation()}>
             {submitDone ? (
               <div className="text-center py-6">
                 <div className="led mx-auto mb-5" style={{ background: '#E8924A' }}></div>
-                <h3 className="display text-2xl mb-3">Kiitos.</h3>
-                <p className="font-serif" style={{ color: 'var(--muted)' }}>Toimitus käy ehdotuksesi läpi viikon sisällä.</p>
+                <h3 className="display text-2xl mb-3">{t('streamer.suggest_thanks_title')}</h3>
+                <p className="font-serif" style={{ color: 'var(--muted)' }}>{t('streamer.suggest_thanks_sub')}</p>
               </div>
             ) : (
               <>
                 <div className="flex items-start justify-between mb-6">
                   <div>
-                    <div className="eyebrow mb-2">EHDOTA</div>
-                    <h3 className="display text-2xl sm:text-3xl">Uusi striimaaja seurantaan</h3>
+                    <div className="eyebrow mb-2">{t('streamer.suggest').toUpperCase()}</div>
+                    <h3 className="display text-2xl sm:text-3xl">{t('streamer.suggest_new')}</h3>
                   </div>
-                  <button onClick={() => setSubmitOpen(false)} aria-label="Sulje" style={{ color: 'var(--muted)' }}>
+                  <button onClick={() => setSubmitOpen(false)} aria-label={t('common.menu_close')} style={{ color: 'var(--muted)' }}>
                     <X strokeWidth={1.5} size={20} />
                   </button>
                 </div>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="eyebrow block mb-2">STRIIMAAJAN NIMI</label>
+                    <label className="eyebrow block mb-2">{t('streamer.field_name')}</label>
                     <input
                       type="text"
                       required
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
-                      placeholder="Esim. Slotsband"
+                      placeholder={t('streamer.placeholder_name')}
                       data-testid="suggest-name"
                       className="w-full font-serif"
                       style={{ padding: '12px 14px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 15 }}
                     />
                   </div>
                   <div>
-                    <label className="eyebrow block mb-2">TWITCH / KICK / YOUTUBE URL</label>
+                    <label className="eyebrow block mb-2">{t('streamer.field_url')}</label>
                     <input
                       type="url"
                       required
@@ -147,11 +142,13 @@ const StreamerIndex = () => {
                     />
                   </div>
                   <div>
-                    <label className="eyebrow block mb-2">MIKSI TÄTÄ KANNATTAA SEURATA <span style={{ textTransform: 'none', letterSpacing: 0 }}>(valinnainen)</span></label>
+                    <label className="eyebrow block mb-2">
+                      {t('streamer.field_why')} <span style={{ textTransform: 'none', letterSpacing: 0 }}>{t('streamer.field_why_opt')}</span>
+                    </label>
                     <textarea
                       value={form.why}
                       onChange={(e) => setForm({ ...form, why: e.target.value })}
-                      placeholder="Yksi rivi. Toimitus arvostaa rehellisyyttä."
+                      placeholder={t('streamer.placeholder_why')}
                       rows={3}
                       data-testid="suggest-why"
                       className="w-full font-serif"
@@ -160,7 +157,7 @@ const StreamerIndex = () => {
                   </div>
                   <div className="pt-2">
                     <button type="submit" className="btn-primary w-full" data-testid="suggest-submit">
-                      Lähetä ehdotus →
+                      {t('streamer.send_suggestion')}
                     </button>
                   </div>
                 </form>

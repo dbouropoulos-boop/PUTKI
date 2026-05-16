@@ -9,8 +9,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../components/ui/accordion';
+import { useLang } from '../context/LanguageContext';
 
-const SCORE_FACTORS = [
+const SCORE_FACTORS_FI = [
   { label: 'Lisenssi & turva',           value: 95 },
   { label: 'Maksunopeus',                value: 92 },
   { label: 'Pelivalikoima',              value: 88 },
@@ -18,21 +19,40 @@ const SCORE_FACTORS = [
   { label: 'Asiakaspalvelu',             value: 78 },
   { label: 'Bonusehdot (rehellisyys)',    value: 90 },
 ];
+const SCORE_FACTORS_EN = [
+  { label: 'License & safety',     value: 95 },
+  { label: 'Payout speed',         value: 92 },
+  { label: 'Game library',         value: 88 },
+  { label: 'Finnish-language UX',  value: 82 },
+  { label: 'Support',              value: 78 },
+  { label: 'Bonus honesty',        value: 90 },
+];
 
-const PROS = [
+const PROS_FI = [
   'Talletukset 1 minuutissa, kotiutukset alle 2 tunnissa.',
   'Pragmatic Play, Nolimit City, Hacksaw — täysi kirjasto.',
   'Pay N Play -tuki Brite-pankkitunnistautumisella.',
   'Suomenkielinen chat 24/7, vastausaika alle minuutti.',
 ];
+const PROS_EN = [
+  'Deposits in 1 minute, withdrawals under 2 hours.',
+  'Pragmatic Play, Nolimit City, Hacksaw — full library.',
+  'Pay N Play with Brite bank authentication.',
+  'Finnish-language chat 24/7, response under a minute.',
+];
 
-const CONS = [
+const CONS_FI = [
   'Tervetuliaisbonuksen kierto on 35x — markkinastandardi, ei loistava.',
   'Pikamaksut vain SEPA-instantilla — kortilla 6–8 h.',
   'VIP-ohjelmaa ei ole julkisesti dokumentoitu.',
 ];
+const CONS_EN = [
+  'Welcome bonus wagering is 35x — market-standard, not exceptional.',
+  'Fast payouts only via SEPA Instant — card takes 6–8 h.',
+  'VIP programme not publicly documented.',
+];
 
-const FAQS = [
+const FAQS_FI = [
   { q: 'Onko Weezybet luotettava?',                  a: 'Weezybet toimii MGA-lisenssillä, mikä on EU:n korkein vakiintunut sääntelystandardi. Operaattori on toiminut vuodesta 2022. Trustpilot 4.4 / 5, AskGamblersin valitusratkaisuprosentti yli 90 %.' },
   { q: 'Kuinka kauan kotiutus kestää?',              a: 'SEPA-instantilla alle 2 tuntia. Kortille 6–8 tuntia. Pankkisiirrolla 1–2 arkipäivää. Mittarin mittauksissa Weezybet on Suomen kärkikolmikossa maksunopeudessa.' },
   { q: 'Tarvitseeko verifioida tili erikseen?',       a: 'Pay N Play -menetelmällä ei tarvitse — pankkitunnistautuminen riittää. Kortilla talletettaessa KYC tehdään ennen ensimmäistä kotiutusta.' },
@@ -42,9 +62,20 @@ const FAQS = [
   { q: 'Mitkä maksumenetelmät toimivat?',             a: 'Brite (pankkimaksu), Visa/Mastercard, Skrill, Neteller, MuchBetter, Trustly, SEPA-tilisiirto.' },
   { q: 'Onko vastuullisen pelaamisen työkaluja?',     a: 'Kyllä. Talletusrajat, tappiorajat, aikarajat, oma-aloitteinen sulku 24h–pysyvä. Linkit Peluuriin ja Peli poikki -ohjelmaan.' },
 ];
+const FAQS_EN = [
+  { q: 'Is Weezybet trustworthy?',                a: 'Weezybet operates under an MGA license — the EU\u2019s most established regulatory standard. Operator since 2022. Trustpilot 4.4 / 5, AskGamblers complaint-resolution rate over 90%.' },
+  { q: 'How long does a withdrawal take?',        a: 'SEPA Instant under 2 hours. Card 6–8 hours. Bank transfer 1–2 business days. In Mittari testing, Weezybet is top-3 in Finland for payout speed.' },
+  { q: 'Do I need to verify the account?',        a: 'Not with Pay N Play — bank authentication is enough. With card deposits, KYC happens before the first withdrawal.' },
+  { q: 'Can I play in Finnish?',                  a: 'The whole site is in Finnish, including support and bonus terms.' },
+  { q: 'Is there a mobile app?',                  a: 'No separate app, but the browser-based mobile UI is native-class.' },
+  { q: 'Are Finnish players accepted?',           a: 'Yes. Weezybet openly accepts Finnish players. Note that Finland\u2019s own license regime opens July 2027.' },
+  { q: 'Which payment methods are supported?',    a: 'Brite (bank), Visa / Mastercard, Skrill, Neteller, MuchBetter, Trustly, SEPA transfer.' },
+  { q: 'Are responsible-gambling tools provided?', a: 'Yes. Deposit limits, loss limits, time limits, self-exclusion 24h–permanent. Links to Peluuri and Peli poikki.' },
+];
 
 const OperatorReview = () => {
   const { slug } = useParams();
+  const { lang, t } = useLang();
   const operator = OPERATORS.find((o) => o.slug === slug) || OPERATORS[0];
   const color = scoreColor(operator.score);
   const related = OPERATORS.filter((o) => o.slug !== operator.slug).slice(0, 3);

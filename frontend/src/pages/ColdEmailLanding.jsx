@@ -2,119 +2,126 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Users, Bell } from 'lucide-react';
 import { STREAMERS } from '../data/mock';
+import { useLang } from '../context/LanguageContext';
 
-const FAQS = [
+const FAQS_FI = [
   { q: 'Onko palvelu ilmainen?',         a: 'Kyllä. Mittari-ilmoitukset ovat täysin ilmaisia. Emme veloita käyttäjältä — affiliaatti rahoittaa toiminnan.' },
   { q: 'Tarvitseeko luoda tili?',        a: 'Voit aloittaa pelkällä sähköpostilla. Tiliä ei tarvitse rekisteröidä erikseen.' },
   { q: 'Kuinka usein ilmoituksia tulee?', a: 'Vain silloin kun valitsemasi striimaaja menee liveen. Keskimäärin 3–10 viestiä viikossa per seurattava.' },
   { q: 'Voiko ilmoitukset peruuttaa?',    a: 'Yhdellä klikkauksella. Jokainen viesti sisältää suoran perumislinkin.' },
 ];
+const FAQS_EN = [
+  { q: 'Is the service free?',          a: 'Yes. Mittari notifications are completely free. We don\u2019t charge users — affiliates fund the operation.' },
+  { q: 'Do I need to create an account?', a: 'Email is enough to start. No separate registration required.' },
+  { q: 'How often will I get alerts?',   a: 'Only when a streamer you\u2019ve picked goes live. Typically 3–10 messages per week per streamer.' },
+  { q: 'Can I unsubscribe?',             a: 'One click. Every message includes a direct unsubscribe link.' },
+];
 
 const ColdEmailLanding = () => {
+  const { lang, t } = useLang();
   const featuredStreamers = STREAMERS.filter((s) => s.tier === 1).slice(0, 3);
+  const faqs = lang === 'en' ? FAQS_EN : FAQS_FI;
 
   return (
-    <div className="bg-paper min-h-screen" data-testid="cold-email-page">
-      {/* Minimal nav */}
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }} data-testid="cold-email-page">
       <header className="py-6">
         <div className="container-wide">
           <Link to="/" className="flex items-baseline gap-2">
-            <span className="font-display font-black text-xl tracking-tighter text-ink">Mittari</span>
-            <span className="font-display text-[10px] tracking-widest uppercase text-muted-text">.fi</span>
+            <span className="font-display font-black text-xl tracking-tighter" style={{ color: 'var(--ink)' }}>Mittari</span>
+            <span className="mono text-[10px] tracking-[0.2em] uppercase" style={{ color: 'var(--muted)' }}>.fi</span>
           </Link>
         </div>
       </header>
 
-      {/* HERO */}
       <section className="container-wide pt-8 sm:pt-16 pb-12">
         <div className="max-w-3xl">
           <h1 className="display text-4xl sm:text-6xl lg:text-7xl mb-6 leading-[1.05]">
-            Saa ilmoitus kun lempi-striimari menee liveen
+            {t('landing.headline')}
           </h1>
-          <p className="font-serif text-lg sm:text-xl text-muted-text leading-relaxed mb-10 max-w-2xl">
-            Valitse striimaajat. Saa ilmoitus sähköpostiin, Telegramiin tai puhelimeen heti kun he menevät liveen. Ei spämmiä, ei ehtoja, ilmainen.
+          <p className="font-serif text-lg sm:text-xl leading-relaxed mb-10 max-w-2xl" style={{ color: 'var(--muted)' }}>
+            {t('landing.sub')}
           </p>
 
           <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-3 max-w-xl">
             <input
               type="email"
               required
-              placeholder="etunimi@esimerkki.fi"
-              className="flex-1 px-4 py-4 rounded-[4px] border border-subtle-border bg-paper font-serif text-base text-ink placeholder:text-muted-text focus:outline-none focus:border-ink"
+              placeholder={t('home.placeholder_email')}
+              className="flex-1 mono"
+              style={{ padding: '18px 20px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', fontSize: 13, letterSpacing: '0.08em', outline: 'none' }}
               data-testid="landing-email-input"
             />
             <Link to="/aloita" className="btn-primary" data-testid="landing-cta">
-              Aloita ilmoitukset →
+              {t('btn.start_notifications')}
             </Link>
           </form>
 
           <div className="mt-8 flex items-center gap-4">
             <div className="flex -space-x-2">
               {featuredStreamers.map((s) => (
-                <img key={s.slug} src={s.photo} alt={s.name} className="w-10 h-10 rounded-full border-2 border-paper object-cover" />
+                <img key={s.slug} src={s.photo} alt={s.name} className="w-10 h-10 rounded-full border-2 object-cover" style={{ borderColor: 'var(--bg)' }} />
               ))}
             </div>
-            <div className="font-display text-[13px] tabular text-ink">
-              <strong>4 283</strong> suomalaista saa jo Mittari-ilmoituksia.
+            <div className="mono" style={{ fontSize: 13, letterSpacing: '0.04em', color: 'var(--ink)', fontWeight: 500 }}>
+              <strong>4 283</strong> {t('home.email_proof')}
             </div>
           </div>
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
-      <section className="border-t border-subtle-border py-16 sm:py-20">
+      <section className="py-16 sm:py-20" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
-          <div className="eyebrow mb-3">Miten se toimii</div>
-          <h2 className="display text-3xl sm:text-4xl mb-12 max-w-2xl">Kolme askelta. Kymmenen sekuntia.</h2>
+          <div className="eyebrow mb-3">{t('landing.how').toUpperCase()}</div>
+          <h2 className="display text-3xl sm:text-4xl mb-12 max-w-2xl">{t('landing.how_title')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { icon: Mail,  title: 'Anna sähköpostisi',  body: 'Sähköposti riittää. Ei salasanaa, ei lomaketta.' },
-              { icon: Users, title: 'Valitse striimaajat', body: '18 suomalaista striimaajaa. Toggle päälle, toggle pois.' },
-              { icon: Bell,  title: 'Saa ilmoitus livenä', body: 'Sekunnin kuluttua kun striimi alkaa. Sähköposti, Telegram tai push.' },
+              { icon: Mail,  title: t('landing.step1.title'), body: t('landing.step1.body') },
+              { icon: Users, title: t('landing.step2.title'), body: t('landing.step2.body') },
+              { icon: Bell,  title: t('landing.step3.title'), body: t('landing.step3.body') },
             ].map((step, i) => (
-              <div key={i} className="border-t border-ink pt-6" data-testid={`step-${i}`}>
-                <div className="font-display text-[11px] uppercase tracking-widest font-semibold text-brand-blue mb-3">
+              <div key={i} className="pt-6" style={{ borderTop: '1px solid var(--ink)' }} data-testid={`step-${i}`}>
+                <div className="mono mb-3" style={{ fontSize: 11, letterSpacing: '0.22em', fontWeight: 600, color: 'var(--brand-blue)' }}>
                   {String(i + 1).padStart(2, '0')}
                 </div>
-                <step.icon strokeWidth={1.4} size={32} className="text-ink mb-4" />
+                <step.icon strokeWidth={1.4} size={32} className="mb-4" style={{ color: 'var(--ink)' }} />
                 <h3 className="display text-2xl mb-2">{step.title}</h3>
-                <p className="font-serif text-[15px] text-muted-text leading-relaxed">{step.body}</p>
+                <p className="font-serif text-[15px] leading-relaxed" style={{ color: 'var(--muted)' }}>{step.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="border-t border-subtle-border py-16">
+      <section className="py-16" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-narrow">
-          <div className="eyebrow mb-3">Kysyttyä</div>
-          <h2 className="display text-3xl sm:text-4xl mb-8">Tiedät jo kaiken — mutta tässä lisätietoa</h2>
+          <div className="eyebrow mb-3">{t('common.faq').toUpperCase()}</div>
+          <h2 className="display text-3xl sm:text-4xl mb-8">
+            {lang === 'en' ? 'You probably know enough — but here\u2019s more' : 'Tiedät jo kaiken — mutta tässä lisätietoa'}
+          </h2>
           <div className="space-y-6">
-            {FAQS.map((f, i) => (
-              <div key={i} className="border-t border-subtle-border pt-5" data-testid={`faq-item-${i}`}>
-                <h3 className="font-display text-lg font-semibold mb-2 text-ink">{f.q}</h3>
-                <p className="font-serif text-[15px] text-ink leading-relaxed">{f.a}</p>
+            {faqs.map((f, i) => (
+              <div key={i} className="pt-5" data-testid={`faq-item-${i}`} style={{ borderTop: '1px solid var(--border)' }}>
+                <h3 className="font-display text-lg font-semibold mb-2" style={{ color: 'var(--ink)' }}>{f.q}</h3>
+                <p className="font-serif text-[15px] leading-relaxed" style={{ color: 'var(--ink)' }}>{f.a}</p>
               </div>
             ))}
           </div>
 
           <div className="mt-12 text-center">
-            <Link to="/aloita" className="btn-primary text-base" data-testid="landing-bottom-cta">
-              Aloita ilmoitukset →
+            <Link to="/aloita" className="btn-primary" data-testid="landing-bottom-cta">
+              {t('btn.start_notifications')}
             </Link>
           </div>
         </div>
       </section>
 
-      {/* MINIMAL FOOTER */}
-      <footer className="border-t border-subtle-border py-8">
-        <div className="container-wide flex flex-col sm:flex-row gap-3 justify-between text-[12px] font-display text-muted-text">
-          <span>© Mittari.fi · 18+ vain täysi-ikäisille</span>
+      <footer className="py-8" style={{ borderTop: '1px solid var(--border)' }}>
+        <div className="container-wide flex flex-col sm:flex-row gap-3 justify-between mono" style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)' }}>
+          <span>© MITTARI.FI · {t('common.18plus')}</span>
           <div className="flex gap-4">
-            <span>Tietosuoja</span>
-            <span>GDPR-suostumus</span>
-            <a href="https://peluuri.fi" target="_blank" rel="noreferrer" className="hover:text-brand-blue">Peluuri</a>
+            <span>{t('footer.privacy')}</span>
+            <span>GDPR</span>
+            <a href="https://peluuri.fi" target="_blank" rel="noreferrer" className="hover:opacity-70">{t('footer.peluuri')}</a>
           </div>
         </div>
       </footer>

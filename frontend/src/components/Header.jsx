@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-
-const navLinks = [
-  { to: '/kasinot',       label: 'Kasinot' },
-  { to: '/striimaajat',   label: 'Striimaajat' },
-  { to: '/viikon-kortti', label: 'Viikon kortti' },
-  { to: '/peli',          label: 'Peli' },
-  { to: '/menetelma',     label: 'Menetelmä' },
-];
+import { useLang } from '../context/LanguageContext';
 
 export const Header = () => {
   const [open, setOpen] = useState(false);
   const { theme, toggle } = useTheme();
+  const { lang, toggle: toggleLang, t } = useLang();
+
+  const navLinks = [
+    { to: '/kasinot',       label: t('nav.casinos') },
+    { to: '/striimaajat',   label: t('nav.streamers') },
+    { to: '/viikon-kortti', label: t('nav.weekly') },
+    { to: '/peli',          label: t('nav.game') },
+    { to: '/menetelma',     label: t('nav.methodology') },
+  ];
 
   return (
     <header
@@ -27,7 +29,7 @@ export const Header = () => {
           <span className="mono text-[10px] tracking-[0.2em] uppercase" style={{ color: 'var(--muted)' }}>.fi</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-7">
+        <div className="hidden md:flex items-center gap-6">
           {navLinks.map((l) => (
             <NavLink
               key={l.to}
@@ -43,12 +45,22 @@ export const Header = () => {
               {l.label}
             </NavLink>
           ))}
+          {/* Language toggle */}
+          <button
+            onClick={toggleLang}
+            aria-label="Toggle language"
+            data-testid="lang-toggle"
+            className="mono text-[11px] font-semibold tracking-[0.16em] uppercase ml-2 px-3 h-9 rounded-full border flex items-center"
+            style={{ borderColor: 'var(--border-strong)', color: 'var(--ink)' }}
+          >
+            {lang === 'fi' ? 'FI / EN' : 'EN / FI'}
+          </button>
           {/* Theme toggle */}
           <button
             onClick={toggle}
-            aria-label="Vaihda teema"
+            aria-label={t('common.theme_toggle')}
             data-testid="theme-toggle"
-            className="ml-2 w-9 h-9 rounded-full border flex items-center justify-center transition-colors"
+            className="w-9 h-9 rounded-full border flex items-center justify-center transition-colors"
             style={{ borderColor: 'var(--border-strong)', color: 'var(--ink)' }}
           >
             {theme === 'dark' ? <Sun strokeWidth={1.5} size={16} /> : <Moon strokeWidth={1.5} size={16} />}
@@ -57,8 +69,17 @@ export const Header = () => {
 
         <div className="md:hidden flex items-center gap-1">
           <button
+            onClick={toggleLang}
+            data-testid="lang-toggle-mobile"
+            aria-label="Toggle language"
+            className="mono text-[11px] font-semibold tracking-[0.12em] uppercase px-2.5 h-8 rounded-full border flex items-center"
+            style={{ borderColor: 'var(--border-strong)', color: 'var(--ink)' }}
+          >
+            {lang.toUpperCase()}
+          </button>
+          <button
             onClick={toggle}
-            aria-label="Vaihda teema"
+            aria-label={t('common.theme_toggle')}
             data-testid="theme-toggle-mobile"
             className="p-2"
             style={{ color: 'var(--ink)' }}
@@ -66,7 +87,7 @@ export const Header = () => {
             {theme === 'dark' ? <Sun strokeWidth={1.5} size={18} /> : <Moon strokeWidth={1.5} size={18} />}
           </button>
           <button
-            aria-label="Avaa valikko"
+            aria-label={t('common.menu_open')}
             className="p-2 -mr-2"
             onClick={() => setOpen((v) => !v)}
             data-testid="mobile-menu-toggle"
