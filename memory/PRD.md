@@ -52,17 +52,28 @@
 - `LiveTilesGrid.jsx` — fake balances removed (Phase 3 foundation)
 - DialCockpit Home — Pääsyy / PRIMARY DRIVER + Viimeisin piikki / LATEST SPIKE chips backed by `/api/cockpit`
 
-### Test coverage (iteration 7)
-- 40 backend pytest passing (12 game-score + 21 mittari + 7 phase3 pipeline)
-- Tester added 6 review-specific tests = 46/46 green
-- Frontend brief checks all PASS for partner gating + cockpit + queue + console health
-- Critical Home.jsx missing-useEffect bug found+fixed in iteration 7
+### Batch 3D — Smartico Voyager (loader auto-injection)
+- Settings extended: `smartico_loader_url` + `smartico_brand_key` (in addition to existing `smartico_template_id`)
+- `/back-office` UI shows three Smartico inputs (template_id, loader URL, brand key)
+- `/voita-palkinto` auto-injects `<script src={loader_url} data-mittari-smartico="1" data-smartico-brand-key={brand}>` once both template_id + loader_url are set; the existing `#smartico-visitor-mode[data-template-id]` div is auto-discovered by the SDK
+- Idempotent — guards against double-injection via `querySelector('script[data-mittari-smartico="1"]')`
+- Cleanup on component unmount
+
+### Signal Pipeline Status widget (operational observability)
+- New `SignalPipelineStatus` panel on `/back-office/queue`
+- 6 source tiles (twitch / kick / youtube / forum / sports / internal) showing recent count + REAL/MOCK/TOTAL split + LIVE/MOCKED tag
+- 30s auto-refresh + manual `FORCE POLL →` button hitting `/api/admin/signals/poll`
+- Border colour reflects state (green=live, grey=mocked-only, dim=empty)
+
+### Test coverage (iteration 8)
+- 51 backend pytest passing (46 from iter_7 + 5 new TestSmarticoVoyagerSettings)
+- Frontend brief checks all PASS — Batch 3D loader injection verified via DOM query
+- 0 page errors / 0 critical console errors
 
 ## Prioritized backlog
 
 ### P0 — Phase 3 next sessions
-- **Batch 3D — Smartico Voyager full integration** — back-office field for `smartico_template_id` already wired (Batch A). Next: inject Smartico SDK loader script when `smartico_loader_url` set. Replace placeholder spin wheel with real Voyager game-of-the-week.
-- **Real API key wiring** — once user supplies Twitch / YouTube / Telegram / Resend / VAPID keys, signal pipeline + distribution flip from mocked to live with no code changes.
+- **Real API key wiring** — once user supplies Twitch / YouTube / Telegram / Resend / VAPID creds, signal pipeline + distribution flip from mocked to live with zero code changes. Smartico SDK also activates once `smartico_loader_url` is set in /back-office.
 - **Streamer auto-discovery worker** — flag candidate streamers by viewer count + content match
 - **Push web notifications** — VAPID + per-subscriber DB
 
@@ -91,7 +102,7 @@
 - See `/app/memory/test_credentials.md`
 
 ## Next tasks
-1. Batch 3D — Smartico Voyager loader script + game-of-the-week shell
-2. Wire real API keys (Twitch, YouTube, Telegram, Resend) once user supplies them
-3. Phase 2.6 Batch B — Banner revenue infrastructure
-4. ErrorBoundary around CockpitContext (P1 hardening)
+1. Wire real API keys (Twitch, YouTube, Telegram, Resend, Smartico SDK URL) once user supplies them — pipeline flips from mocked to live with zero code changes
+2. Phase 2.6 Batch B — Banner revenue infrastructure (4 surfaces + back-office CRUD + commercial labels)
+3. ErrorBoundary around CockpitContext + similar polling components (P1 hardening per iter_7 RCA)
+4. Streamer auto-discovery worker
