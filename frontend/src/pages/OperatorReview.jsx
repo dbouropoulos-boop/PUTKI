@@ -79,7 +79,12 @@ const OperatorReview = () => {
   const operator = OPERATORS.find((o) => o.slug === slug) || OPERATORS[0];
   const color = scoreColor(operator.score);
   const related = OPERATORS.filter((o) => o.slug !== operator.slug).slice(0, 3);
+  const [showDeeper, setShowDeeper] = React.useState(false);
   const streamerSample = STREAMERS.slice(0, 3);
+  const SCORE_FACTORS = lang === 'en' ? SCORE_FACTORS_EN : SCORE_FACTORS_FI;
+  const PROS = lang === 'en' ? PROS_EN : PROS_FI;
+  const CONS = lang === 'en' ? CONS_EN : CONS_FI;
+  const FAQS = lang === 'en' ? FAQS_EN : FAQS_FI;
 
   return (
     <div data-testid={`operator-review-${operator.slug}`}>
@@ -148,20 +153,43 @@ const OperatorReview = () => {
             { icon: Globe,      label: 'Trustpilot',  value: `${operator.trustpilot} / 5` },
             { icon: Smartphone, label: 'Perustettu',  value: operator.year },
             { icon: Check,      label: 'Tuki',        value: '24/7 suomeksi' },
-          ].map((t, i) => (
+          ].map((tr, i) => (
             <div key={i} className="flex items-center gap-3" data-testid={`trust-${i}`}>
-              <t.icon strokeWidth={1.5} size={22} className="text-muted-text flex-shrink-0" />
+              <tr.icon strokeWidth={1.5} size={22} className="flex-shrink-0" style={{ color: 'var(--muted)' }} />
               <div>
-                <div className="eyebrow text-[10px]">{t.label}</div>
-                <div className="font-display text-[14px] font-semibold text-ink tabular">{t.value}</div>
+                <div className="eyebrow text-[10px]">{tr.label.toUpperCase()}</div>
+                <div className="mono" style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)' }}>{tr.value}</div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* QUICK FACTS */}
-      <section className="container-wide py-12 sm:py-16">
+      {/* LIVE DATA STRIP — cockpit-framed, mock for v1 */}
+      <section className="py-8" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+        <div className="container-wide">
+          <div className="eyebrow mb-4 inline-flex items-center gap-2">
+            <span className="led" /> {lang === 'en' ? 'LIVE DATA · LAST 5 MIN' : 'LIVEDATA · VIIMEISET 5 MIN'}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { label: lang === 'en' ? 'CURRENT JACKPOT' : 'NYKYINEN JACKPOT', value: '€284 102' },
+              { label: lang === 'en' ? 'NEW PLAYERS' : 'UUSIA PELAAJIA',       value: '47' },
+              { label: lang === 'en' ? 'PAYOUT MEDIAN' : 'KOTIUTUS MEDIAANI', value: '1 h 38 min' },
+              { label: lang === 'en' ? 'STREAMS LIVE' : 'STRIIMIT NYT',       value: '3' },
+            ].map((s) => (
+              <div key={s.label}>
+                <div className="eyebrow mb-1">{s.label}</div>
+                <div className="mono" style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--ink)' }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* QUICK FACTS — hidden by default in compressed mode (Phase 1.5 Revised) */}
+      {showDeeper && (<>
+      <section className="container-wide py-12 sm:py-16" data-testid="deeper-quickfacts">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-16">
           <div className="lg:col-span-7">
             <div className="eyebrow mb-3">Mittarin näkemys</div>
@@ -205,7 +233,7 @@ const OperatorReview = () => {
       </section>
 
       {/* PROS / CONS */}
-      <section className="border-t border-subtle-border py-12 sm:py-16">
+      <section className="border-t border-subtle-border py-12 sm:py-16" data-testid="deeper-proscons">
         <div className="container-wide grid grid-cols-1 md:grid-cols-2 gap-10 sm:gap-16">
           <div>
             <div className="eyebrow mb-3">Puolesta</div>
@@ -233,7 +261,7 @@ const OperatorReview = () => {
       </section>
 
       {/* RECENT ACTIVITY */}
-      <section className="border-t border-subtle-border py-12 sm:py-16">
+      <section className="border-t border-subtle-border py-12 sm:py-16" data-testid="deeper-activity">
         <div className="container-wide">
           <div className="eyebrow mb-3">Striimaajat täällä viimeisen 7 päivän aikana</div>
           <div className="flex flex-wrap gap-4">
@@ -251,7 +279,7 @@ const OperatorReview = () => {
       </section>
 
       {/* FAQ */}
-      <section className="border-t border-subtle-border py-12 sm:py-16">
+      <section className="border-t border-subtle-border py-12 sm:py-16" data-testid="deeper-faq">
         <div className="container-narrow">
           <div className="eyebrow mb-3">Usein kysytyt</div>
           <h2 className="display text-3xl sm:text-4xl mb-8">Kysymyksiä {operator.name}ista</h2>
@@ -270,6 +298,20 @@ const OperatorReview = () => {
           </Accordion>
         </div>
       </section>
+      </>)}
+
+      {/* DEEPER ANALYSIS TOGGLE */}
+      {!showDeeper && (
+        <section className="py-10 text-center" style={{ borderTop: '1px solid var(--border)' }}>
+          <button
+            onClick={() => setShowDeeper(true)}
+            className="btn-ghost inline-flex items-center"
+            data-testid="show-deeper-toggle"
+          >
+            {lang === 'en' ? 'Read the deeper analysis →' : 'Lue syvempi analyysi →'}
+          </button>
+        </section>
+      )}
 
       {/* BOTTOM CTA */}
       <section id="cta" className="border-t border-subtle-border py-16 bg-[#F4F2EE]">

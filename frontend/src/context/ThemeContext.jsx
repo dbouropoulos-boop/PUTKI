@@ -17,7 +17,7 @@ const getInitialTheme = () => {
       10
     );
     // Dark mode default 18:00 → 07:00; light during daytime
-    if (hours >= 18 || hours < 7) return 'dark';
+    if (hours >= 16 || hours < 7) return 'dark';
     return 'light';
   } catch {
     return 'dark';

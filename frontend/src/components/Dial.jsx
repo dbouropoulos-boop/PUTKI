@@ -90,7 +90,7 @@ export const Dial = ({
   showLabel = true,
 }) => {
   const stateObj = DIAL_STATES[state] || DIAL_STATES.KUUMA;
-  const px = size === 'large' ? 560 : size === 'medium' ? 280 : 64;
+  const px = size === 'large' ? 480 : size === 'medium' ? 280 : 64;
   const isSmall = size === 'small';
   const isMedium = size === 'medium';
 
@@ -135,12 +135,12 @@ export const Dial = ({
   const activeColor = ARC_COLORS[state];
 
   return (
-    <div className="flex flex-col items-center" style={{ width: px }} data-testid={`dial-${size}`}>
+    <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: px }} data-testid={`dial-${size}`}>
       <svg
-        width={px}
-        height={px}
+        width="100%"
+        height="auto"
         viewBox={`0 0 ${px} ${px}`}
-        style={{ display: 'block' }}
+        style={{ display: 'block', maxWidth: px }}
       >
         <defs>
           {/* Subtle radial gradient on dial face */}

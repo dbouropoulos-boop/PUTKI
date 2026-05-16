@@ -3,6 +3,8 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import LiveTicker from './LiveTicker';
+import PersistentCapture from './PersistentCapture';
+import StateContextualFloat from './StateContextualFloat';
 
 export const Layout = () => {
   return (
@@ -13,7 +15,8 @@ export const Layout = () => {
         <Outlet />
       </main>
       <Footer />
-      {/* Site-wide grain texture (fixed; non-interactive) */}
+      <PersistentCapture />
+      <StateContextualFloat />
       <div className="grain-overlay" aria-hidden="true" />
     </div>
   );

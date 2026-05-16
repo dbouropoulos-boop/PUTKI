@@ -1,0 +1,55 @@
+{
+  "summary": "Mittari.fi Phase 1.5 (Revised) — architectural restructure verified end-to-end. Backend pytest 10/10 still green (no API changes). Frontend: split hero on desktop (DialCockpit left + HeroCapture right with vertical divider) verified at 1440x900; hero email input is exactly 64px tall; brand-blue 'Tilaa Mittari-ilmoitukset →' submit shows 'OLET LISTALLA. MITTARI HOITAA LOPUT.' confirmation; LiveTilesGrid section renders 6 live tiles (follow-btn-jarttu84 et al.); FollowModal flow works end-to-end with auto-close after 2s showing 'Olet listalla. Ilmoitamme heti kun Jarttu84 menee liveen.'; MISSASIT EILEN section present with Korpisoturi + Slotsband cards; mid-page Bell capture confirmed REMOVED (mid_page_capture_check=none); PersistentCapture desktop right-rail appears correctly on /striimaajat, /menetelma, /viikon-kortti, /peli, /kasinot and is absent on /, /aloita, /landing, /kasinot/weezybet; PersistentCapture mobile bottom-sheet collapsed→expand→form→collapse cycle works; StateContextualFloat 'MITTARI KUUMA · 3 viikon parasta tarjousta nyt voimassa →' shows + close button dismisses; UTMBanner triggers with ?utm_campaign=KESA2026 showing 'Tulit \"KESA2026\" -uutiskirjeestä…' + close works; ThemeContext dark default at 16:00+ Helsinki + localStorage 'mittari-theme' override verified (html class='dark'); OperatorReview compressed on /kasinot/weezybet — show-deeper-toggle present, deeper-{quickfacts,proscons,activity,faq} all absent from DOM until toggle clicked, then all 4 appear; bottom #cta + related operators still render; mobile stacking confirmed (hero-capture y > dial-cockpit y); lang/theme toggles desktop+mobile all present.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Global (any page)", "issues": ["Console logs 3x 'SVG attribute height: Expected length, \"auto\"' warnings. Non-blocking but worth fixing — likely an inline SVG with height='auto' (probably in dial bezel or one of the lucide icons being styled with CSS height:auto)."]}
+    ]
+  },
+  "verified_features": {
+    "split_hero_desktop": "PASS — grid grid-cols-[1.15fr_auto_0.85fr], DialCockpit left, HeroCapture right, vertical divider (aria-hidden middle col) present",
+    "hero_capture_input_64px": "PASS — measured bounding box height = 64px",
+    "hero_capture_submit_flow": "PASS — submitting email shows OLET LISTALLA. MITTARI HOITAA LOPUT. confirmation panel; FI micro-lines PÄIVITTÄIN · 1 SÄHKÖPOSTI / 0 SPÄMMIÄ · 0 EHTOA / 4 283 SUOMALAISTA TILAA all render; 3 channel icons present",
+    "live_tiles_grid": "PASS — live-tiles-section present, follow-btn-jarttu84 etc. selectors render with bell+plus glyph",
+    "follow_modal_flow": "PASS — opens on tile follow click, follow-email-input + follow-submit work, success state 'Olet listalla.' + auto-close after 2s confirmed",
+    "missasit_eilen": "PASS — eyebrow MISSASIT EILEN · 24 H present, both Korpisoturi + Slotsband MomentCards render",
+    "mid_page_capture_removed": "PASS — no Bell/Tilaa Mittari section between live tiles and Missasit Eilen (mid_page_capture_check returned 'none')",
+    "persistent_capture_route_logic": "PASS — visible on /striimaajat, /menetelma, /viikon-kortti, /peli, /kasinot; absent on /, /aloita, /landing, /kasinot/weezybet (operator review)",
+    "persistent_capture_mobile_bottom_sheet": "PASS — starts collapsed with chevron, expand reveals form (input+submit+3 icons), collapse button returns to collapsed",
+    "persistent_capture_desktop_rail": "PASS — fixed right:24 top:120, mini headline + form + 3 channel icons",
+    "state_contextual_float": "PASS — bottom-right desktop / bottom-left mobile, label 'MITTARI KUUMA', body '3 viikon parasta tarjousta nyt voimassa →', state-float-close dismisses",
+    "utm_banner": "PASS — only renders when ?utm_campaign present; content 'Tulit \"KESA2026\" -uutiskirjeestä. Seuraa suosikkistriimaajaasi alta — anna sähköposti, hoidamme loput.'; close button dismisses",
+    "dark_mode_default_helsinki": "PASS — html.className='dark' after reload; localStorage 'mittari-theme' read+write works",
+    "operator_review_compression": "PASS — show-deeper-toggle present; deeper-quickfacts, deeper-proscons, deeper-activity, deeper-faq all hidden initially; clicking toggle reveals all four; live data strip (NYKYINEN JACKPOT €284 102, UUSIA PELAAJIA 47, KOTIUTUS MEDIAANI 1h 38min, STRIIMIT NYT 3) appears under trust signal row; #cta + related still render",
+    "mobile_hero_stack": "PASS — hero-capture.y > dial-cockpit.y on 390x844 viewport, no divider visible",
+    "lang_theme_toggles": "PASS — data-testid lang-toggle-mobile + theme-toggle-mobile present",
+    "phase15_visuals_preserved": "PASS — ticker, marquee, atmospheric glow, scanlines, dial V2 with bezel/ticks/needle, KUUMA active arc, MomentCard data panels all rendering as in iteration_2"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Investigate console SVG warning: 'Error: <svg> attribute height: Expected length, \"auto\"' fires 3x on every page load. Likely an SVG using height='auto' as attribute rather than CSS — invalid for SVG attribute (must be a CSS rule or numeric). Non-blocking but pollutes console.",
+    "index.html title still 'Emergent | Fullstack App' and meta description 'A product of emergent.sh' — leftover from boilerplate, not Mittari-branded (carried from iteration_2; still unfixed)."
+  ],
+  "critical_code_review_comments": [
+    "PersistentCapture skip-list is hard-coded in component ('/aloita', '/landing', '/'). Operator review uses regex /^\\/kasinot\\/[^/]+$/ — fine but worth promoting to a shared route-meta map if more pages need exclusion.",
+    "Hero capture, persistent capture, and follow modal all only console.log emails. Acknowledged as Phase 2 work, but adding a single backend endpoint POST /api/notify-signup (or reusing existing /api/signup) would already be a low-effort win.",
+    "StateContextualFloat reads CURRENT_DIAL directly from mock; if dial state polling is added later this won't reactively update. Wrap in dial state hook in Phase 2.",
+    "UTMBanner reads window.location.search once on mount — does not react to client-side route changes that change the query. Acceptable since UTM is captured on first arrival; document this in code comment.",
+    "OperatorReview deeper-toggle uses useState only — no URL hash/scroll-to-anchor when expanded. Adding scrollIntoView on the revealed section would improve UX.",
+    "Theme default uses hours >= 16 OR < 7 for dark (16:00–07:00). Brief says 16:00+ — matches. Good.",
+    "Dial state on home is single-source from CURRENT_DIAL — fine for now; once dial poll is added, ensure StateContextualFloat + Home read the same source (or a shared context)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (10/10 pytest)", "frontend": "100% on Phase 1.5 (Revised) surface area — split hero, LiveTiles, FollowModal, MissasitEilen, PersistentCapture (desktop+mobile), StateContextualFloat, UTMBanner, ThemeContext dark default, OperatorReview compression with show-deeper toggle all verified"},
+  "test_credentials": "N/A — no auth in Phase 1.5",
+  "seed_data_creation": "pytest re-inserted TEST_minimal@, TEST_full@, TEST_pred@ signups + 3 prediction docs (carry-over from iteration_2). Frontend captures only console.log (mocked per spec).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 1.5 (Revised) is now ARCHITECTURALLY stable. Key new testids: utm-banner / utm-banner-close, hero-capture / hero-capture-input / hero-capture-submit / hero-capture-headline, live-tiles-section, live-tile-{slug}, follow-btn-{slug}, follow-modal / follow-email-input / follow-submit, persistent-capture-desktop / persistent-capture-mobile / persistent-capture-expand / persistent-capture-collapse / persistent-capture-input / persistent-capture-submit / persistent-capture-form, state-contextual-float / state-float-close, show-deeper-toggle / deeper-quickfacts / deeper-proscons / deeper-activity / deeper-faq. PersistentCapture skip routes: '/', '/aloita', '/landing', and regex /^\\/kasinot\\/[^/]+$/. For UTM testing visit /?utm_campaign=KESA2026. Theme localStorage key 'mittari-theme'. Mock email submissions log to console only — Phase 2 work to wire to backend. CURRENT_DIAL = KUUMA still, so StateContextualFloat points to /kasinot.",
+  "rca_of_the_issue": "N/A — no blocking issues found. One non-blocking console SVG warning + boilerplate index.html title carryover."
+}
