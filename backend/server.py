@@ -318,6 +318,27 @@ from dial_engine import (  # noqa: E402
     latest_snapshot as latest_dial_snapshot,
     dial_history,
 )
+from source_map import seed_tracked_sources, list_sources  # noqa: E402
+from foundational_research import (  # noqa: E402
+    seed_from_file as seed_foundational_research,
+    list_entries as list_foundational_entries,
+    get_entry as get_foundational_entry,
+    upsert_entry as upsert_foundational_entry,
+    delete_entry as delete_foundational_entry,
+    stats as foundational_research_stats,
+    CONTENT_TYPE_TO_BEATS,
+    VALID_BEATS,
+)
+from seed_scheduler import (  # noqa: E402
+    seed_default_cadences,
+    get_cadences as get_scheduler_cadences,
+    set_cadences as set_scheduler_cadences,
+    run_scheduler_tick,
+    run_variant_filler,
+    schedule_status as scheduler_schedule_status,
+    scheduler_worker_loop,
+    variant_filler_worker_loop,
+)
 
 
 class GenerateRequest(BaseModel):
@@ -544,16 +565,163 @@ async def admin_dial_history(limit: int = 60, _: bool = Depends(require_admin)):
     return {"history": await dial_history(db, limit=limit)}
 
 
+# ── Phase 3 V2: source map (§4.1) ──
+@api_router.get("/admin/sources")
+async def admin_sources(category: Optional[str] = None, _: bool = Depends(require_admin)):
+    return {"sources": await list_sources(db, category=category)}
+
+
+@api_router.get("/sources/public")
+async def public_sources():
+    """Public — surfaces on /lehdisto. Returns active named editorial sources."""
+    rows = await list_sources(db, category=None)
+    # group by category for ergonomic frontend rendering
+    grouped: dict = {}
+    for r in rows:
+        grouped.setdefault(r["category"], []).append({
+            "key": r["key"], "name": r["name"], "url": r["url"],
+            "tier": r.get("tier"), "note": r.get("note"),
+        })
+    return {"by_category": grouped, "total": len(rows)}
+
+
+# ── Phase 3 V2: foundational research store ──
+class FoundationalResearchPayload(BaseModel):
+    id: Optional[str] = None
+    topic_area: str
+    beat: str
+    sub_beat: Optional[str] = None
+    editorial_angle: Optional[str] = ""
+    key_facts: List[dict] = Field(default_factory=list)
+    named_sources_cited: List[str] = Field(default_factory=list)
+    applicable_content_types: List[str] = Field(default_factory=list)
+    freshness_window_days: int = 90
+    active: bool = True
+
+
+@api_router.get("/admin/foundational-research")
+async def admin_list_foundational(
+    beat: Optional[str] = None,
+    content_type: Optional[str] = None,
+    limit: int = 200,
+    _: bool = Depends(require_admin),
+):
+    rows = await list_foundational_entries(db, beat=beat, content_type=content_type, active_only=False, limit=limit)
+    return {
+        "entries": rows,
+        "stats": await foundational_research_stats(db),
+        "valid_beats": sorted(VALID_BEATS),
+        "content_type_to_beats": CONTENT_TYPE_TO_BEATS,
+    }
+
+
+@api_router.get("/admin/foundational-research/{entry_id}")
+async def admin_get_foundational(entry_id: str, _: bool = Depends(require_admin)):
+    doc = await get_foundational_entry(db, entry_id)
+    if not doc:
+        raise HTTPException(404, "Not found")
+    return doc
+
+
+@api_router.put("/admin/foundational-research/{entry_id}")
+async def admin_upsert_foundational(
+    entry_id: str, data: FoundationalResearchPayload, _: bool = Depends(require_admin),
+):
+    entry = data.dict()
+    entry["id"] = entry_id
+    return await upsert_foundational_entry(db, entry, updated_by="admin")
+
+
+@api_router.post("/admin/foundational-research")
+async def admin_create_foundational(data: FoundationalResearchPayload, _: bool = Depends(require_admin)):
+    entry = data.dict()
+    return await upsert_foundational_entry(db, entry, updated_by="admin")
+
+
+@api_router.delete("/admin/foundational-research/{entry_id}")
+async def admin_delete_foundational(entry_id: str, _: bool = Depends(require_admin)):
+    ok = await delete_foundational_entry(db, entry_id)
+    if not ok:
+        raise HTTPException(404, "Not found")
+    return {"deleted": entry_id}
+
+
+class BulkResearchPayload(BaseModel):
+    entries: List[FoundationalResearchPayload]
+
+
+@api_router.post("/admin/foundational-research/bulk")
+async def admin_bulk_foundational(data: BulkResearchPayload, _: bool = Depends(require_admin)):
+    """Bulk import — used by CSV/JSON drops from /back-office/foundational-research."""
+    out = []
+    for e in data.entries:
+        out.append(await upsert_foundational_entry(db, e.dict(), updated_by="admin_bulk"))
+    return {"imported": len(out), "entries": out}
+
+
+# ── Phase 3 V2: editorial seed scheduler ──
+class CadencesPayload(BaseModel):
+    cadences: List[dict]
+
+
+@api_router.get("/admin/scheduler/cadences")
+async def admin_get_cadences(_: bool = Depends(require_admin)):
+    return {"cadences": await get_scheduler_cadences(db)}
+
+
+@api_router.put("/admin/scheduler/cadences")
+async def admin_set_cadences(data: CadencesPayload, _: bool = Depends(require_admin)):
+    return {"cadences": await set_scheduler_cadences(db, data.cadences)}
+
+
+@api_router.get("/admin/scheduler/status")
+async def admin_scheduler_status(_: bool = Depends(require_admin)):
+    return await scheduler_schedule_status(db)
+
+
+@api_router.post("/admin/scheduler/tick")
+async def admin_scheduler_tick(
+    force_content_type: Optional[str] = None,
+    _: bool = Depends(require_admin),
+):
+    """Force-fire the scheduler now. With `force_content_type` set, bypass the
+    weekday/min-gap check for that single content type."""
+    return await run_scheduler_tick(db, force_content_type=force_content_type)
+
+
+@api_router.post("/admin/scheduler/fill-variants")
+async def admin_fill_variants(max_per_tick: int = 5, _: bool = Depends(require_admin)):
+    return await run_variant_filler(db, max_per_tick=max_per_tick)
+
+
 @app.on_event("startup")
 async def _seed_phase3():
     try:
         await seed_default_guidelines(db)
     except Exception:
         logger.exception("Failed to seed editorial guidelines")
+    try:
+        await seed_tracked_sources(db)
+    except Exception:
+        logger.exception("Failed to seed tracked sources")
+    try:
+        result = await seed_foundational_research(db)
+        logger.info("Foundational research seed: %s", result)
+    except Exception:
+        logger.exception("Failed to seed foundational research")
+    try:
+        await seed_default_cadences(db)
+    except Exception:
+        logger.exception("Failed to seed editorial cadences")
     # Kick off background signal pipeline + dial recalc loop.
     if os.environ.get("MITTARI_DISABLE_WORKERS", "0") != "1":
         import asyncio as _aio
         _aio.create_task(_signal_dial_worker())
+    # Kick off editorial seed scheduler + variant filler.
+    if os.environ.get("MITTARI_DISABLE_SCHEDULER", "0") != "1":
+        import asyncio as _aio
+        _aio.create_task(scheduler_worker_loop(db))
+        _aio.create_task(variant_filler_worker_loop(db))
 
 
 async def _signal_dial_worker():

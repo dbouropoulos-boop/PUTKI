@@ -381,6 +381,82 @@ const SignalPipelineStatus = ({ token }) => {
   );
 };
 
+const ScheduleStatus = ({ token }) => {
+  const [data, setData] = useState(null);
+  const [busy, setBusy] = useState(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/scheduler/status`, { headers: { 'X-Admin-Token': token } });
+      if (!r.ok) return;
+      setData(await r.json());
+    } catch {}
+  }, [token]);
+
+  useEffect(() => {
+    refresh();
+    const id = setInterval(refresh, 60000);
+    return () => clearInterval(id);
+  }, [refresh]);
+
+  const fire = async (ct) => {
+    setBusy(ct);
+    try {
+      await fetch(`${BACKEND}/api/admin/scheduler/tick?force_content_type=${encodeURIComponent(ct)}`, {
+        method: 'POST', headers: { 'X-Admin-Token': token },
+      });
+      await refresh();
+    } finally { setBusy(null); }
+  };
+
+  if (!data) return null;
+  const { cadences = [], research_available = {} } = data;
+  return (
+    <div className="panel p-5 mb-5" data-testid="schedule-status">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div className="eyebrow inline-flex items-center gap-2">
+          <span className="led" style={{ background: '#E8924A' }} /> EDITORIAL SCHEDULER · CADENCE STATUS
+        </div>
+        <button onClick={refresh} className="btn-ghost" data-testid="schedule-refresh">REFRESH</button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {cadences.map((c) => {
+          const research = research_available[c.content_type] ?? 0;
+          const blocked = research === 0;
+          const status = blocked ? 'NO RESEARCH' : (c.is_due_now ? 'DUE NOW' : 'WAITING');
+          const color = blocked ? '#7A7E83' : (c.is_due_now ? '#E8924A' : '#3B7A57');
+          return (
+            <div key={c.content_type} className="panel" style={{ padding: '12px 14px', borderColor: color }} data-testid={`schedule-row-${c.content_type}`}>
+              <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.18em', color, fontWeight: 700 }}>
+                {c.content_type.replace(/_/g, ' ').toUpperCase()} · {status}
+              </div>
+              <div className="mono mt-1" style={{ fontSize: 11, letterSpacing: '0.06em', color: 'var(--muted)' }}>
+                {c.surface_label} · {c.frequency} · GAP {c.min_gap_hours}H
+              </div>
+              <div className="mono mt-1" style={{ fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink)' }}>
+                RESEARCH POOL · {research} {research === 0 && '— PIPELINE BLOCKED'}
+              </div>
+              <div className="mono mt-1" style={{ fontSize: 10.5, letterSpacing: '0.06em', color: 'var(--muted)' }}>
+                LAST · {c.last_seeded_at ? new Date(c.last_seeded_at).toISOString().slice(0, 10) : 'never'}
+                {c.last_status && ` (${c.last_status})`}
+              </div>
+              <button
+                onClick={() => fire(c.content_type)}
+                disabled={busy === c.content_type || blocked}
+                className="btn-ghost mt-2"
+                data-testid={`schedule-fire-${c.content_type}`}
+                style={{ opacity: blocked ? 0.5 : 1 }}
+              >
+                {busy === c.content_type ? 'FIRING…' : 'FORCE FIRE →'}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const BackOfficeQueue = () => {
   const [token, setToken] = useToken();
   const [authed, setAuthed] = useState(false);
@@ -388,6 +464,7 @@ const BackOfficeQueue = () => {
   const [items, setItems] = useState([]);
   const [counts, setCounts] = useState({ queued: 0, approved: 0, killed: 0 });
   const [statusFilter, setStatusFilter] = useState('queued');
+  const [contentTypeFilter, setContentTypeFilter] = useState('');
   const [contentTypes, setContentTypes] = useState([]);
   const [busy, setBusy] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
@@ -396,14 +473,16 @@ const BackOfficeQueue = () => {
 
   const refresh = useCallback(async () => {
     if (!token) return;
-    const r = await fetch(`${BACKEND}/api/admin/queue?status=${statusFilter}`, { headers: headers() });
+    const qs = new URLSearchParams({ status: statusFilter });
+    if (contentTypeFilter) qs.set('content_type', contentTypeFilter);
+    const r = await fetch(`${BACKEND}/api/admin/queue?${qs.toString()}`, { headers: headers() });
     if (!r.ok) { setAuthError('Wrong token'); setAuthed(false); return; }
     const d = await r.json();
     setItems(d.items || []);
     setCounts(d.counts || {});
     setAuthed(true);
     setAuthError('');
-  }, [statusFilter, token, headers]);
+  }, [statusFilter, contentTypeFilter, token, headers]);
 
   useEffect(() => {
     if (!authed) return;
@@ -512,13 +591,29 @@ const BackOfficeQueue = () => {
 
         <GenerateForm token={token} onGenerated={onGenerated} contentTypes={contentTypes} />
 
+        <ScheduleStatus token={token} />
+
         <SignalPipelineStatus token={token} />
 
-        <div className="flex items-baseline justify-between mb-3 mt-7">
+        <div className="flex items-baseline justify-between mb-3 mt-7 flex-wrap gap-3">
           <div className="eyebrow">{statusFilter.toUpperCase()} · {items.length}</div>
-          <button onClick={refresh} className="btn-ghost" data-testid="queue-refresh">
-            <RefreshCw strokeWidth={1.5} size={13} className="mr-2" /> REFRESH
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={contentTypeFilter}
+              onChange={(e) => setContentTypeFilter(e.target.value)}
+              data-testid="queue-content-type-filter"
+              className="mono"
+              style={{ padding: '8px 12px', border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', fontSize: 11, borderRadius: 4 }}
+            >
+              <option value="">ALL CONTENT TYPES</option>
+              {contentTypes.map((c) => (
+                <option key={c.key} value={c.key}>{c.key}</option>
+              ))}
+            </select>
+            <button onClick={refresh} className="btn-ghost" data-testid="queue-refresh">
+              <RefreshCw strokeWidth={1.5} size={13} className="mr-2" /> REFRESH
+            </button>
+          </div>
         </div>
 
         <div className="space-y-4" data-testid="queue-list">

@@ -13,6 +13,7 @@ import MiniGame from "@/pages/MiniGame";
 import WeeklyCard from "@/pages/WeeklyCard";
 import BackOffice from "@/pages/BackOffice";
 import BackOfficeQueue from "@/pages/BackOfficeQueue";
+import FoundationalResearch from "@/pages/FoundationalResearch";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
 import VoitaPalkinto from "@/pages/VoitaPalkinto";
@@ -34,6 +35,7 @@ function App() {
           <Route path="/aloita" element={<Signup />} />
           <Route path="/back-office" element={<BackOffice />} />
           <Route path="/back-office/queue" element={<BackOfficeQueue />} />
+          <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
 
           {/* Main site */}
           <Route element={<Layout />}>

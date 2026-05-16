@@ -283,6 +283,13 @@ SLOTIT erityisesti:
 - VOIT selittää mekaniikkaa, RTP:tä, volatiliteettiä, ominaisuuksia
 - VOIT analysoida bonusominaisuuksia matemaattisesti
 
+SUOMENKIELINEN LÄHDETYÖSKENTELY:
+- Suosi suomenkielistä lähdemateriaalia foundational_researchista. Kansainvälisiä lähteitä siteerataan vain kun aihe on kansainvälinen (kansainvälinen pelaaja, sääntelyvertailu).
+- Tuotetun sisällön tulee lukea natiivina suomenkielisenä toimitusjuttuna — ei englannista käännetynä.
+- Käytä suomalaista toimituksellista idiomia, suomalaisia kulttuuriviitteitä luontevasti, suomalaisten uutisjulkaisujen lauserytmiä.
+- Referenssi on Bloomberg-suomeksi, ei Bloomberg-käännettynä.
+- Jos lähde on englanninkielinen mutta aihe suomalainen, käännä faktat suomalaiseen toimitusrekisteriin — älä siirrä englantilaista syntaksia.
+
 PALAUTA AINA validi JSON ilman ympärysmerkkejä tai selityksiä.""",
 
     "moment_commentary_prompt": """Kirjoitat kommenttia striimaajan merkittävästä hetkestä, joka on havaittu YouTube-videosta tai Twitch-klipistä.
@@ -556,7 +563,9 @@ def _strip_code_fence(text: str) -> str:
 
 
 async def call_claude(system_prompt: str, user_prompt: str, session_id: str) -> str:
-    """One-shot Claude call. Returns raw text."""
+    """One-shot Claude call. Returns raw text.
+    Hard-capped at 45s so a flaky upstream gateway never blocks the event loop."""
+    import asyncio as _aio
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
         raise RuntimeError("EMERGENT_LLM_KEY missing in /app/backend/.env")
@@ -567,7 +576,13 @@ async def call_claude(system_prompt: str, user_prompt: str, session_id: str) -> 
         system_message=system_prompt,
     ).with_model("anthropic", "claude-4-sonnet-20250514")
 
-    response = await chat.send_message(UserMessage(text=user_prompt))
+    try:
+        response = await _aio.wait_for(
+            chat.send_message(UserMessage(text=user_prompt)),
+            timeout=45.0,
+        )
+    except _aio.TimeoutError:
+        raise RuntimeError("Claude call timed out after 45s (upstream gateway flake)")
     return response
 
 
@@ -705,7 +720,10 @@ async def distribute_content(db, generated_content: Dict[str, Any]) -> Dict[str,
 
 # ─────────────────────── editorial_guidelines helpers ───────────────────────
 async def seed_default_guidelines(db) -> None:
-    """Idempotently seed default guidelines into the editorial_guidelines collection."""
+    """Idempotently seed default guidelines into the editorial_guidelines collection.
+    If a row exists but was never admin-edited (updated_by=='seed'), refresh its
+    text from the source — keeps the seeded voice prompt aligned with code
+    changes while preserving admin edits."""
     for key, text in DEFAULT_GUIDELINES.items():
         existing = await db.editorial_guidelines.find_one({"key": key})
         if not existing:
@@ -716,6 +734,14 @@ async def seed_default_guidelines(db) -> None:
                 "updated_at": datetime.now(timezone.utc).isoformat(),
                 "updated_by": "seed",
             })
+        elif existing.get("updated_by") == "seed" and existing.get("text") != text:
+            await db.editorial_guidelines.update_one(
+                {"key": key},
+                {"$set": {
+                    "text": text,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }},
+            )
 
 
 async def get_guideline(db, key: str) -> str:

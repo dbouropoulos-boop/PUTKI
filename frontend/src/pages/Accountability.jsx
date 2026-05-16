@@ -114,6 +114,27 @@ export const Avoimuus = () => {
 
 export const Lehdisto = () => {
   const { lang } = useLang();
+  const [sources, setSources] = React.useState({});
+  const [total, setTotal] = React.useState(0);
+
+  React.useEffect(() => {
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/sources/public`)
+      .then((r) => r.json())
+      .then((d) => { setSources(d.by_category || {}); setTotal(d.total || 0); })
+      .catch(() => {});
+  }, []);
+
+  const CATEGORY_LABELS = {
+    regulatory:        { fi: 'Sääntely ja toimiala',         en: 'Regulatory and industry' },
+    betting_discourse: { fi: 'Vedonlyöntidiskurssi',         en: 'Betting discourse' },
+    sports_media:      { fi: 'Urheilumedia',                 en: 'Sports media' },
+    streamer_data:     { fi: 'Striimaajadataekosysteemi',    en: 'Streamer data ecosystem' },
+    esports:           { fi: 'Esports-referenssit',          en: 'Esports references' },
+    culture:           { fi: 'Kulttuuri ja musiikkimedia',   en: 'Culture and music media' },
+    operator_signal:   { fi: 'Operaattorisignaalit',         en: 'Operator signals' },
+  };
+  const CATEGORY_ORDER = ['regulatory', 'betting_discourse', 'sports_media', 'streamer_data', 'esports', 'culture', 'operator_signal'];
+
   return (
     <StaticPage testId="lehdisto-page" eyebrow={lang === 'en' ? 'PRESS · MEDIA KIT' : 'LEHDISTÖ · MEDIAKITTI'}
       headline={lang === 'en' ? 'Press kit and media contact' : 'Lehdistöpaketti ja mediayhteydet'}>
@@ -137,6 +158,50 @@ export const Lehdisto = () => {
           {lang === 'en' ? 'METHODOLOGY →' : 'MENETELMÄ →'}
         </Link>
       </p>
+
+      {/* V2 §4.1 — Named Finnish editorial sources */}
+      <div className="mt-10" data-testid="lehdisto-sources">
+        <div className="eyebrow mb-2">{lang === 'en' ? `EDITORIAL SOURCE MAP · ${total}` : `TOIMITUKSELLINEN LÄHDEKARTTA · ${total}`}</div>
+        <h2 className="display text-2xl mb-3" data-testid="lehdisto-sources-headline">
+          {lang === 'en' ? 'Named sources Mittari monitors' : 'Mittarin seuraamat nimetyt lähteet'}
+        </h2>
+        <p style={{ marginBottom: 20 }}>
+          {lang === 'en'
+            ? 'Mittari\u2019s editorial pipeline monitors a curated set of named Finnish-language and international sources for regulatory, sponsorship, scene, and cultural context. Tier 1 sources feed primary editorial coverage; Tier 2–3 sources provide secondary context and cross-reference. We publish this map so readers can audit who informs our coverage.'
+            : 'Mittarin toimituksellinen putki seuraa kuratoitua joukkoa nimettyjä suomenkielisiä ja kansainvälisiä lähteitä sääntelyn, sponsoroinnin, skenen ja kulttuurin konteksteihin. Tier 1 -lähteet syöttävät pääosin toimituksellista kattavuutta; Tier 2–3 antaa toissijaista kontekstia ja ristireferenssejä. Julkaisemme tämän kartan jotta lukijat voivat tarkistaa kuka kattavuuttamme informoi.'}
+        </p>
+
+        {CATEGORY_ORDER.map((cat) => {
+          const rows = sources[cat];
+          if (!rows || !rows.length) return null;
+          return (
+            <div key={cat} className="mb-6" data-testid={`lehdisto-cat-${cat}`}>
+              <div className="mono mb-2" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--brand-blue, #5A7BB8)', fontWeight: 700 }}>
+                {(CATEGORY_LABELS[cat] || {})[lang] || cat.toUpperCase()} · {rows.length}
+              </div>
+              <table className="w-full font-display text-[13.5px]">
+                <tbody>
+                  {rows.sort((a, b) => (a.tier || 9) - (b.tier || 9)).map((s) => (
+                    <tr key={s.key} style={{ borderBottom: '1px solid var(--border)' }} data-testid={`lehdisto-source-${s.key}`}>
+                      <td className="py-2 pr-3" style={{ width: 56, verticalAlign: 'top' }}>
+                        <span className="mono" style={{ fontSize: 10, letterSpacing: '0.14em', color: s.tier === 1 ? '#E8924A' : 'var(--muted)', fontWeight: 700 }}>
+                          T{s.tier}
+                        </span>
+                      </td>
+                      <td className="py-2 pr-3" style={{ verticalAlign: 'top' }}>
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-ink hover:underline">{s.name}</a>
+                        {s.note && (
+                          <div className="font-serif" style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 2 }}>{s.note}</div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+      </div>
     </StaticPage>
   );
 };

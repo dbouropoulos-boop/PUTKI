@@ -133,7 +133,11 @@ const BackOffice = () => {
       <div className="container-narrow">
         <div className="flex items-baseline justify-between mb-2">
           <div className="eyebrow">MITTARI · BACK OFFICE</div>
-          <Link to="/" className="btn-ghost">← Back to site</Link>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link to="/back-office/queue" className="btn-ghost" data-testid="back-office-link-queue">QUEUE →</Link>
+            <Link to="/back-office/foundational-research" className="btn-ghost" data-testid="back-office-link-research">RESEARCH →</Link>
+            <Link to="/" className="btn-ghost">← Back to site</Link>
+          </div>
         </div>
         <h1 className="display text-3xl sm:text-4xl mb-8" style={{ color: 'var(--ink)' }}>Site settings</h1>
 
