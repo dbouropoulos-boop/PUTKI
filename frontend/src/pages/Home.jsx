@@ -139,7 +139,7 @@ const CockpitContext = ({ lang }) => {
           style={{ fontSize: 10, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600, lineHeight: 1.5 }}
           data-testid="cockpit-viimeisin-piikki"
         >
-          <span style={{ color: '#E8924A' }}>{lang === 'en' ? 'LAST SPIKE' : 'VIIMEISIN PIIKKI'} ·</span>
+          <span style={{ color: '#E8924A' }}>{lang === 'en' ? 'LATEST SPIKE' : 'VIIMEISIN PIIKKI'} ·</span>
           <span style={{ color: 'var(--ink)' }}>{spike.text.length > 90 ? spike.text.slice(0, 90) + '…' : spike.text}</span>
         </div>
       )}
