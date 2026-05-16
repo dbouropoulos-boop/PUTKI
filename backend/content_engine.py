@@ -30,7 +30,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "prompt_key": "moment_commentary_prompt",
         "target_surface": "missasit_eilen",
         "approval_required": True,
-        "distribution": ["site", "archive"],
+        "distribution": ["site", "archive", "telegram"],
         "variant_count": 3,
         "max_words": 80,
     },
@@ -39,7 +39,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "prompt_key": "sports_take_prompt",
         "target_surface": "weekly_card",
         "approval_required": True,
-        "distribution": ["site"],
+        "distribution": ["site", "telegram", "email"],
         "variant_count": 3,
         "max_words": 100,
     },
@@ -48,7 +48,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "prompt_key": "streamer_observation_prompt",
         "target_surface": "streamer_profile_observation",
         "approval_required": True,
-        "distribution": ["site", "archive"],
+        "distribution": ["site", "archive", "telegram"],
         "variant_count": 2,
         "max_words": 100,
     },
@@ -57,7 +57,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "prompt_key": "operator_update_prompt",
         "target_surface": "operator_review_page",
         "approval_required": True,
-        "distribution": ["site", "archive"],
+        "distribution": ["site", "archive", "telegram", "email"],
         "variant_count": 2,
         "max_words": 150,
     },
@@ -75,7 +75,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "prompt_key": "dial_state_change_prompt",
         "target_surface": "dial_strip",
         "approval_required": False,
-        "distribution": ["site"],
+        "distribution": ["site", "telegram"],
         "variant_count": 1,
         "max_words": 25,
     },
@@ -292,10 +292,11 @@ async def generate_content_for_signal(
 
 
 async def distribute_content(db, generated_content: Dict[str, Any]) -> Dict[str, Any]:
-    """Write the approved content to the site-publication collection.
+    """Write the approved content to the site-publication collection AND fan
+    out to every channel listed in distribution_targets (telegram, email, etc).
 
-    For Phase 3 foundation slice we only support the 'site' distribution target.
-    Telegram/X/push/shareable_card stubs are deferred to follow-up sessions.
+    Site target is always written first; remote channels are best-effort and
+    never block the publish (errors are logged + surfaced via distribution_log).
     """
     variant_idx = generated_content.get("selected_variant_index", 0) or 0
     variants = generated_content.get("generated_variants") or []
@@ -321,9 +322,23 @@ async def distribute_content(db, generated_content: Dict[str, Any]) -> Dict[str,
     await db.published_content.insert_one(pub)
     pub.pop("_id", None)
 
+    # Fan out to remote channels (best-effort, captures per-channel result).
+    try:
+        from distribution import fanout
+        delivery_results = await fanout(db, generated_content, text)
+        pub["distribution_results"] = delivery_results
+    except Exception:
+        # Never block site publish on a remote-channel failure.
+        import logging
+        logging.getLogger(__name__).exception("Distribution fanout failed")
+        pub["distribution_results"] = []
+
     await db.generated_content.update_one(
         {"id": generated_content["id"]},
-        {"$set": {"published_at": pub["published_at"]}},
+        {"$set": {
+            "published_at": pub["published_at"],
+            "distribution_results": pub.get("distribution_results", []),
+        }},
     )
     return pub
 

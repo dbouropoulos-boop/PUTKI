@@ -85,6 +85,8 @@ const OperatorReview = () => {
   const PROS = lang === 'en' ? PROS_EN : PROS_FI;
   const CONS = lang === 'en' ? CONS_EN : CONS_FI;
   const FAQS = lang === 'en' ? FAQS_EN : FAQS_FI;
+  // Phase 3 honesty rule: only partner operators get affiliate CTAs + bonus blocks. Non-partners are editorial-only.
+  const isPartner = operator.slug === 'weezybet';
 
   return (
     <div data-testid={`operator-review-${operator.slug}`}>
@@ -100,20 +102,33 @@ const OperatorReview = () => {
               <h1 className="display text-5xl sm:text-7xl">{operator.name}</h1>
             </div>
             <p className="prose-mittari mb-8 max-w-xl">
-              {operator.oneLiner} Mittarin näkemys: paketti on kerralla suomalaiselle pelaajalle suunniteltu — Brite, suomenkielinen chat, Pragmatic-kirjasto ja oikeasti nopeat maksut.
+              {operator.oneLiner}{isPartner ? ' Mittarin näkemys: paketti on kerralla suomalaiselle pelaajalle suunniteltu — Brite, suomenkielinen chat, Pragmatic-kirjasto ja oikeasti nopeat maksut.' : ''}
             </p>
 
-            <div className="editorial-card p-5 mb-6 max-w-xl">
-              <div className="eyebrow mb-2">Tarjous</div>
-              <div className="font-display text-xl sm:text-2xl font-bold text-ink mb-1">
-                100 % tervetuliaisbonus 500 € asti + 200 ilmaiskierrosta
-              </div>
-              <div className="font-serif text-[13px] text-muted-text">35x kierto, 30 päivän voimassaolo. Ei käytössä Pragmatic-jättibonuksissa.</div>
-            </div>
+            {isPartner ? (
+              <>
+                <div className="editorial-card p-5 mb-6 max-w-xl">
+                  <div className="eyebrow mb-2">Tarjous</div>
+                  <div className="font-display text-xl sm:text-2xl font-bold text-ink mb-1">
+                    100 % tervetuliaisbonus 500 € asti + 200 ilmaiskierrosta
+                  </div>
+                  <div className="font-serif text-[13px] text-muted-text">35x kierto, 30 päivän voimassaolo. Ei käytössä Pragmatic-jättibonuksissa.</div>
+                </div>
 
-            <a href="#cta" className="btn-primary" data-testid="operator-primary-cta">
-              Pelaa {operator.name}issa →
-            </a>
+                <a href="#cta" className="btn-primary" data-testid="operator-primary-cta">
+                  Pelaa {operator.name}issa →
+                </a>
+              </>
+            ) : (
+              <div className="editorial-card p-5 mb-6 max-w-xl" data-testid="operator-non-partner-notice">
+                <div className="eyebrow mb-2">{lang === 'en' ? 'EDITORIAL ASSESSMENT ONLY' : 'VAIN TOIMITUKSELLINEN ARVIO'}</div>
+                <div className="font-serif text-[14px] text-ink leading-relaxed">
+                  {lang === 'en'
+                    ? `Mittari has no partnership with ${operator.name}. No affiliate links, no bonus offers, no real-time tracking — only the P*rkele score and license metadata above.`
+                    : `Mittarilla ei ole kumppanuutta operaattorin ${operator.name} kanssa. Ei affiliate-linkkejä, ei bonustarjouksia, ei reaaliaikaista seurantaa — vain yllä oleva P*rkele-pisteytys ja lisenssitieto.`}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* P*rkele Score panel — instrument readout */}
@@ -165,27 +180,43 @@ const OperatorReview = () => {
         </div>
       </section>
 
-      {/* LIVE DATA STRIP — cockpit-framed, mock for v1 */}
-      <section className="py-8" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
-        <div className="container-wide">
-          <div className="eyebrow mb-4 inline-flex items-center gap-2">
-            <span className="led" /> {lang === 'en' ? 'LIVE DATA · LAST 5 MIN' : 'LIVEDATA · VIIMEISET 5 MIN'}
+      {/* LIVE DATA STRIP — partner-only (Phase 3 surface cleanup). Non-partners get an honest placeholder. */}
+      {operator.slug === 'weezybet' ? (
+        <section className="py-8" data-testid="operator-live-strip-partner" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+          <div className="container-wide">
+            <div className="eyebrow mb-4 inline-flex items-center gap-2">
+              <span className="led" /> {lang === 'en' ? 'LIVE DATA · LAST 5 MIN' : 'LIVEDATA · VIIMEISET 5 MIN'}
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {[
+                { label: lang === 'en' ? 'CURRENT JACKPOT' : 'NYKYINEN JACKPOT', value: '€284 102' },
+                { label: lang === 'en' ? 'NEW PLAYERS' : 'UUSIA PELAAJIA',       value: '47' },
+                { label: lang === 'en' ? 'PAYOUT MEDIAN' : 'KOTIUTUS MEDIAANI', value: '1 h 38 min' },
+                { label: lang === 'en' ? 'STREAMS LIVE' : 'STRIIMIT NYT',       value: '3' },
+              ].map((s) => (
+                <div key={s.label}>
+                  <div className="eyebrow mb-1">{s.label}</div>
+                  <div className="mono" style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--ink)' }}>{s.value}</div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {[
-              { label: lang === 'en' ? 'CURRENT JACKPOT' : 'NYKYINEN JACKPOT', value: '€284 102' },
-              { label: lang === 'en' ? 'NEW PLAYERS' : 'UUSIA PELAAJIA',       value: '47' },
-              { label: lang === 'en' ? 'PAYOUT MEDIAN' : 'KOTIUTUS MEDIAANI', value: '1 h 38 min' },
-              { label: lang === 'en' ? 'STREAMS LIVE' : 'STRIIMIT NYT',       value: '3' },
-            ].map((s) => (
-              <div key={s.label}>
-                <div className="eyebrow mb-1">{s.label}</div>
-                <div className="mono" style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.02em', color: 'var(--ink)' }}>{s.value}</div>
-              </div>
-            ))}
+        </section>
+      ) : (
+        <section className="py-8" data-testid="operator-no-live-strip" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
+          <div className="container-wide">
+            <div className="eyebrow mb-3 inline-flex items-center gap-2">
+              <span className="led" style={{ background: 'var(--muted)' }} />
+              {lang === 'en' ? 'NO LIVE TRACKING' : 'EI REAALIAIKAISTA SEURANTAA'}
+            </div>
+            <p className="font-serif" style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink)', maxWidth: 640 }}>
+              {lang === 'en'
+                ? 'Mittari does not track this operator\u2019s real-time data. Only the editorial assessment above applies.'
+                : 'Mittari ei seuraa tämän operaattorin reaaliaikaista dataa. Vain yllä oleva toimituksellinen arvio pätee.'}
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* QUICK FACTS — hidden by default in compressed mode (Phase 1.5 Revised) */}
       {showDeeper && (<>
@@ -313,17 +344,19 @@ const OperatorReview = () => {
         </section>
       )}
 
-      {/* BOTTOM CTA */}
-      <section id="cta" className="border-t border-subtle-border py-16 bg-[#F4F2EE]">
-        <div className="container-narrow text-center">
-          <div className="eyebrow mb-4">Pelaa</div>
-          <h2 className="display text-4xl sm:text-5xl mb-4">{operator.name}</h2>
-          <p className="font-serif text-lg text-muted-text mb-8 max-w-md mx-auto">{operator.offer} — 35x kierto, 30 päivän voimassaolo.</p>
-          <a href="#" className="btn-primary text-lg" data-testid="operator-bottom-cta">
-            Avaa tili {operator.name}issa →
-          </a>
-        </div>
-      </section>
+      {/* BOTTOM CTA — partner only (Phase 3 honesty rule) */}
+      {isPartner && (
+        <section id="cta" className="border-t border-subtle-border py-16 bg-[#F4F2EE]">
+          <div className="container-narrow text-center">
+            <div className="eyebrow mb-4">Pelaa</div>
+            <h2 className="display text-4xl sm:text-5xl mb-4">{operator.name}</h2>
+            <p className="font-serif text-lg text-muted-text mb-8 max-w-md mx-auto">{operator.offer} — 35x kierto, 30 päivän voimassaolo.</p>
+            <a href="#" className="btn-primary text-lg" data-testid="operator-bottom-cta">
+              Avaa tili {operator.name}issa →
+            </a>
+          </div>
+        </section>
+      )}
 
       {/* RELATED */}
       <section className="border-t border-subtle-border py-12 sm:py-16">
@@ -338,13 +371,17 @@ const OperatorReview = () => {
         </div>
       </section>
 
-      {/* STICKY MOBILE CTA */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-paper border-t border-subtle-border p-3 z-30" data-testid="sticky-mobile-cta">
-        <a href="#cta" className="btn-primary w-full justify-center">
-          Pelaa {operator.name}issa →
-        </a>
-      </div>
-      <div className="lg:hidden h-16" /> {/* spacer for sticky CTA */}
+      {/* STICKY MOBILE CTA — partner only */}
+      {isPartner && (
+        <>
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-paper border-t border-subtle-border p-3 z-30" data-testid="sticky-mobile-cta">
+            <a href="#cta" className="btn-primary w-full justify-center">
+              Pelaa {operator.name}issa →
+            </a>
+          </div>
+          <div className="lg:hidden h-16" /> {/* spacer for sticky CTA */}
+        </>
+      )}
     </div>
   );
 };

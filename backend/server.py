@@ -51,11 +51,29 @@ async def root():
 
 @api_router.get("/dial")
 async def get_dial():
-    """Current Mittari state."""
+    """Current Mittari state — sourced from latest dial_snapshot if available,
+    otherwise the static seed for first-boot. The recalc worker writes
+    snapshots every POLL_INTERVAL_SECONDS once the app has booted."""
+    snap = await latest_dial_snapshot(db)
+    if snap:
+        state = dict(snap["state"])
+        state["value"] = int(round(snap["composite_score"]))  # back-compat: frontend + tests expect state.value as int
+        return {
+            "state": state,
+            "composite_score": snap["composite_score"],
+            "updated_at": snap["computed_at"],
+            "any_real": snap.get("any_real", False),
+            "context": {
+                "primary_driver": snap.get("primary_driver"),
+                "signal_count": snap.get("signal_count", 0),
+                "sub_scores": snap.get("sub_scores", {}),
+            },
+        }
     state = DIAL_STATES[CURRENT_STATE_KEY]
     return {
         "state": state,
         "updated_at": datetime.now(timezone.utc).isoformat(),
+        "any_real": False,
         "context": {
             "live_streamers": 7,
             "total_viewers": 19_590,
@@ -282,6 +300,16 @@ from content_engine import (  # noqa: E402
     seed_default_guidelines,
     upsert_guideline,
 )
+from signal_engine import (  # noqa: E402
+    poll_all_sources,
+    list_recent_signals,
+    POLL_INTERVAL_SECONDS,
+)
+from dial_engine import (  # noqa: E402
+    recalculate_dial,
+    latest_snapshot as latest_dial_snapshot,
+    dial_history,
+)
 
 
 class GenerateRequest(BaseModel):
@@ -451,22 +479,61 @@ DIAL_DRIVER_LABELS = {
 
 @api_router.get("/cockpit")
 async def cockpit_state():
-    """Until the real signal pipeline + dial recalc engine ships, surface the
-    most-recent published content as the 'last spike' and a synthetic primary
-    driver. Real recalc engine plugs in here next session.
-    """
-    latest = await db.published_content.find_one(
-        {},
-        {"_id": 0},
-        sort=[("published_at", -1)],
+    """Real-time cockpit data backed by dial_snapshots + last published item.
+    Falls back to synthetic driver if no snapshot exists yet."""
+    snap = await latest_dial_snapshot(db)
+    latest_pub = await db.published_content.find_one(
+        {}, {"_id": 0}, sort=[("published_at", -1)],
     )
-    primary = "approved_content" if latest else "streamers"
+    if snap:
+        return {
+            "primary_driver": snap.get("primary_driver"),
+            "primary_driver_label": snap.get("primary_driver_label"),
+            "composite_score": snap.get("composite_score"),
+            "state": snap.get("state"),
+            "sub_scores": snap.get("sub_scores", {}),
+            "signal_count": snap.get("signal_count", 0),
+            "any_real": snap.get("any_real", False),
+            "last_spike": latest_pub,
+            "computed_at": snap.get("computed_at"),
+        }
+    primary = "approved_content" if latest_pub else "streamers"
     return {
         "primary_driver": primary,
         "primary_driver_label": DIAL_DRIVER_LABELS.get(primary, {"fi": "", "en": ""}),
-        "last_spike": latest,
+        "last_spike": latest_pub,
+        "any_real": False,
         "computed_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+# ── Phase 3: signal pipeline observability + manual recalc ──
+@api_router.get("/admin/signals")
+async def admin_signals(source: Optional[str] = None, limit: int = 100, _: bool = Depends(require_admin)):
+    rows = await list_recent_signals(db, source=source, limit=limit)
+    counts = {
+        "twitch": await db.signals.count_documents({"source": "twitch"}),
+        "kick": await db.signals.count_documents({"source": "kick"}),
+        "youtube": await db.signals.count_documents({"source": "youtube"}),
+        "forum": await db.signals.count_documents({"source": "forum"}),
+        "sports": await db.signals.count_documents({"source": "sports"}),
+        "internal": await db.signals.count_documents({"source": "internal"}),
+    }
+    return {"signals": rows, "counts": counts}
+
+
+@api_router.post("/admin/signals/poll")
+async def admin_signals_poll(_: bool = Depends(require_admin)):
+    """Force an immediate poll of all signal sources + dial recalc.
+    Useful for testing without waiting for the background worker tick."""
+    poll_summary = await poll_all_sources(db)
+    snapshot = await recalculate_dial(db)
+    return {"poll": poll_summary, "snapshot": snapshot}
+
+
+@api_router.get("/admin/dial/history")
+async def admin_dial_history(limit: int = 60, _: bool = Depends(require_admin)):
+    return {"history": await dial_history(db, limit=limit)}
 
 
 @app.on_event("startup")
@@ -475,6 +542,25 @@ async def _seed_phase3():
         await seed_default_guidelines(db)
     except Exception:
         logger.exception("Failed to seed editorial guidelines")
+    # Kick off background signal pipeline + dial recalc loop.
+    if os.environ.get("MITTARI_DISABLE_WORKERS", "0") != "1":
+        import asyncio as _aio
+        _aio.create_task(_signal_dial_worker())
+
+
+async def _signal_dial_worker():
+    """Background loop: poll all signal sources, recompute dial, sleep.
+    Disabled by setting MITTARI_DISABLE_WORKERS=1 (used in unit tests)."""
+    import asyncio as _aio
+    # Wait a beat so the app finishes booting before the first poll.
+    await _aio.sleep(5)
+    while True:
+        try:
+            await poll_all_sources(db)
+            await recalculate_dial(db)
+        except Exception:
+            logger.exception("Signal/dial worker tick failed")
+        await _aio.sleep(POLL_INTERVAL_SECONDS)
 
 
 app.include_router(api_router)

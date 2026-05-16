@@ -1,0 +1,62 @@
+{
+  "summary": "Phase 3 Batches 3A/3B/3C end-to-end testing. Backend: 40/40 pytest PASS (12 game-score + 21 mittari + 7 phase3 pipeline) plus 6/6 new review-specific tests (auth 401 checks, dial.state.value int, cockpit shape, operator_update→site+telegram+email fanout, distribution_results on /admin/queue/{id}) = 46/46 green. Frontend: weezybet (PARTNER) shows operator-live-strip-partner (LIVE DATA · LAST 5 MIN) + operator-primary-cta + operator-bottom-cta + sticky-mobile-cta and ZERO no-strip/non-partner-notice — gate correct. Non-partners norgekasino + paf both show operator-no-live-strip + operator-non-partner-notice with ZERO operator-primary-cta / operator-bottom-cta / sticky-mobile-cta. Norgekasino FI copy verified: 'EI REAALIAIKAISTA SEURANTAA' / 'Mittari ei seuraa tämän operaattorin reaaliaikaista dataa' + 'VAIN TOIMITUKSELLINEN ARVIO' eyebrow; EN variant 'NO LIVE TRACKING / Mittari does not track this operator's real-time data' also rendered. Back-office /back-office/queue auth screen renders with token input + CONTINUE button + BACK TO MITTARI link. Home DialCockpit Pääsyy/PRIMARY DRIVER chip + Viimeisin piikki/LAST SPIKE block — CRITICAL FRONTEND BUG FOUND & FIXED: Home.jsx imported only `useState` but CockpitContext component used `useEffect`, causing 'useEffect is not defined' PAGE ERROR that crashed the entire React tree on home (white screen, no hero, no dial, no cockpit). After 1-line import fix (added useEffect), home now renders fully: hero-capture present, cockpit-context present, cockpit-paasyy='PRIMARY DRIVER · STREAMERS LIVE', cockpit-viimeisin-piikki='LAST SPIKE · Testipromo kiertää jakelukanavissa…', 0 console errors, 0 page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Home.jsx CockpitContext", "issue": "FIXED by tester — 'useEffect is not defined' page error crashed entire home (white screen). useEffect was not imported in Home.jsx line 1. One-line fix applied. Verify on retest.", "selector": "[data-testid='cockpit-context']", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Home DialCockpit", "issues": ["Spec calls for 'LATEST SPIKE' eyebrow but code renders 'LAST SPIKE' (Home.jsx line 142). Minor copy mismatch — confirm intended wording with PM."]}
+    ]
+  },
+  "verified_features": {
+    "backend_signals_poll": "PASS — POST /api/admin/signals/poll returns {poll:{polled_at,total,by_source:{twitch,kick,youtube,forum,sports,internal},errors}, snapshot:{composite_score,state,sub_scores,primary_driver}}",
+    "backend_signals_list_and_filter": "PASS — /api/admin/signals?limit=10 lists with counts for all 6 sources; ?source=twitch filters correctly",
+    "backend_dial_history": "PASS — /api/admin/dial/history returns history[] with composite_score+state_key+primary_driver",
+    "backend_dial_shape": "PASS — /api/dial returns state.{key,label,color,value(int),headline} + composite_score + any_real",
+    "backend_cockpit_shape": "PASS — /api/cockpit returns primary_driver + primary_driver_label.{fi,en} + composite_score + sub_scores + last_spike",
+    "backend_distribution_moment_commentary": "PASS — approve writes distribution_results with site+archive+telegram (telegram status=mocked)",
+    "backend_distribution_operator_update": "PASS — approve writes distribution_results with site+archive+telegram+email (email+telegram mocked)",
+    "backend_admin_queue_id_includes_distribution_results": "PASS — GET /api/admin/queue/{id} after approve includes distribution_results array",
+    "backend_admin_auth_401": "PASS — /api/admin/signals, /api/admin/signals/poll, /api/admin/dial/history all return 401 without X-Admin-Token",
+    "backend_no_regressions": "PASS — all 32 prior mittari+game-score tests still green",
+    "frontend_weezybet_partner_gating": "PASS — partner_strip+primary_cta+bottom_cta+sticky_mobile all present; no non-partner elements",
+    "frontend_norgekasino_non_partner": "PASS — no_strip+non_partner_notice present; FI copy 'Mittari ei seuraa tämän operaattorin reaaliaikaista dataa' + 'VAIN TOIMITUKSELLINEN ARVIO' verified; primary_cta=0, bottom_cta=0, sticky_mobile=0",
+    "frontend_paf_non_partner": "PASS — same gating as norgekasino",
+    "frontend_home_cockpit_chip": "PASS (after fix) — cockpit-paasyy 'PRIMARY DRIVER · STREAMERS LIVE' + cockpit-viimeisin-piikki 'LAST SPIKE · Testipromo kiertää…' both render below dial",
+    "frontend_back_office_queue_auth": "PASS — token entry screen with input + CONTINUE button renders",
+    "frontend_console_health": "PASS — 0 console errors on home + /kasinot/weezybet + /kasinot/norgekasino after Home.jsx fix"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase3_pipeline.py",
+    "/app/backend/tests/test_phase3_review.py",
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/backend/tests/test_game_scores.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "[CRITICAL — already fixed by tester, please verify retest] Home.jsx missing useEffect import caused white-screen crash on home. Fix applied: line 1 now reads `import React, { useState, useEffect } from 'react';`. Please confirm this doesn't conflict with main agent's pending changes.",
+    "[LOW] Copy mismatch — Home.jsx line 142 uses 'LAST SPIKE' but review brief says 'LATEST SPIKE'. Decide canonical wording.",
+    "[CARRYOVER LOW] index.html title 'Emergent | Fullstack App' still not Mittari-branded.",
+    "[CARRYOVER LOW] data-testid='leaderboard-table' wrapper still missing on /peli."
+  ],
+  "critical_code_review_comments": [
+    "Home.jsx line 1: useEffect missing from React import was a P0 regression — entire home page tree crashed silently (PAGE_ERROR, no console.error). Recommend an ErrorBoundary around CockpitContext (and similar cockpit/dial children) so a single component crash doesn't blank the home page.",
+    "signal_engine + dial_engine + distribution modules all behave per spec under mocked-API mode (twitch/youtube/forum/sports/telegram/email all gracefully fall back with mocked:true; kick hits real public API).",
+    "Distribution fanout cleanly attaches results to both approve response.published.distribution_results AND persists onto queue item retrievable via GET /api/admin/queue/{id} — good.",
+    "401 gating is consistent across all admin/* endpoints without X-Admin-Token.",
+    "OperatorReview gating logic by `operator.slug === 'weezybet'` works exactly as described — clean partner-vs-non-partner surface separation."
+  ],
+  "updated_files": [
+    "/app/frontend/src/pages/Home.jsx (added missing useEffect import — 1 line)",
+    "/app/backend/tests/test_phase3_review.py (new — 6 review-request-specific tests against public URL)"
+  ],
+  "success_rate": {"backend": "100% (46/46 pytest)", "frontend": "100% after Home.jsx import fix; 0/6 before fix (home crashed)"},
+  "test_credentials": "X-Admin-Token: mittari-admin",
+  "seed_data_creation": "Multiple signal poll cycles + 3 queue items generated+approved during distribution fanout tests (moment_commentary x2 + operator_update x1). Distribution log + signal/dial_snapshot collections populated with test data; not cleaned up since they're append-only history.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 (3A signals + 3B dial recalc + 3C distribution) fully landed and passing. OperatorReview surface cleanup is the only frontend change and is correct (weezybet partner / non-partners gated cleanly). One critical-but-trivial bug (missing useEffect import in Home.jsx) was found and fixed by tester — verify it persists. Spec wording 'LATEST SPIKE' vs code's 'LAST SPIKE' is the only outstanding minor mismatch. All admin endpoints require X-Admin-Token: mittari-admin. Mocked channels (twitch/yt/forum/sports/telegram/email) are by design — kick is the only live external poll.",
+  "rca_of_the_issue": "Home white-screen RCA: Home.jsx imported only `useState` from React but the newly added CockpitContext component (lines 102-148) calls `useEffect(...)` to poll /api/cockpit every 30s. Calling an undefined function inside a function component throws 'useEffect is not defined' on first render, which propagates up through React's reconciler and unmounts the entire tree under <Home/>. No ErrorBoundary was present so the page rendered as blank body. Reproduction: visit `/` → page is blank white + page-error console listener catches 'useEffect is not defined'. Fix: add useEffect to the React import on Home.jsx line 1. Mitigation: long-term, wrap CockpitContext in an ErrorBoundary so any future runtime error in optional cockpit subcomponents doesn't take down the whole home page."
+}
