@@ -1,0 +1,135 @@
+{
+  "theme": "LIGHT",
+  "archetype": "Swiss & High-Contrast (Editorial/Publication)",
+  "color_palette": {
+    "background": "#FBFAF8",
+    "body_ink": "#0A0A0A",
+    "brand_blue": "#1B2D5B",
+    "subtle_border": "#E8E5DF",
+    "muted_text": "#6B6862",
+    "dial_states": {
+      "KYLMÄ": "#2C5F8D",
+      "HAALEA": "#7A7E83",
+      "KUUMA": "#E8924A",
+      "MYRSKY": "#C8423C",
+      "KIIRASTULI": "#8B1E1A"
+    }
+  },
+  "typography": {
+    "fonts": {
+      "display": "Inter, sans-serif",
+      "reading": "'Source Serif 4', serif",
+      "fallback": "Söhne, Tiempos, sans-serif"
+    },
+    "micro_typography": {
+      "h1": {
+        "mobile": "text-4xl",
+        "desktop": "md:text-6xl",
+        "classes": "font-bold tracking-tight text-[#0A0A0A] font-sans"
+      },
+      "h2": {
+        "mobile": "text-2xl",
+        "desktop": "md:text-4xl",
+        "classes": "font-bold tracking-tight text-[#0A0A0A] font-sans"
+      },
+      "h3": {
+        "mobile": "text-xl",
+        "desktop": "md:text-2xl",
+        "classes": "font-semibold tracking-tight text-[#0A0A0A] font-sans"
+      },
+      "body": {
+        "mobile": "text-base",
+        "desktop": "md:text-lg",
+        "classes": "leading-relaxed text-[#0A0A0A] font-serif"
+      },
+      "eyebrow": {
+        "classes": "uppercase tracking-widest text-xs font-bold text-[#6B6862] font-sans"
+      },
+      "numbers": {
+        "classes": "tabular-nums"
+      }
+    }
+  },
+  "layout_and_spacing": {
+    "grid_system": "12-column responsive grid",
+    "container_max_width": "max-w-7xl",
+    "padding": {
+      "mobile": "px-4",
+      "desktop": "md:px-8"
+    },
+    "section_gap": {
+      "mobile": "py-12",
+      "desktop": "md:py-24"
+    },
+    "border_radius": "4px",
+    "shadows": "None (No gradients, no glows, no heavy shadows. Flat and editorial)"
+  },
+  "icons": {
+    "library": "lucide-react",
+    "stroke_width": "1.5px",
+    "style": "clean, line-based, monochrome unless semantic"
+  },
+  "motion": {
+    "dial_transitions": "600ms cubic-bezier(0.4, 0, 0.2, 1)",
+    "live_pulse": "1.5s ease-in-out infinite",
+    "score_count_up": "300ms ease-out"
+  },
+  "components": {
+    "perkele_mittari_dial": {
+      "description": "Animated SVG half-circle dial (180 degrees).",
+      "sizes": {
+        "hero": "480px",
+        "cards": "280px",
+        "inline": "64px"
+      },
+      "visual_rendering": {
+        "proportions": "Half-circle (180 deg).",
+        "tick_marks": "5 distinct segments matching dial states. Segments separated by minimal whitespace (1-2px gap).",
+        "needle": "Base width 4px tapering to 1px tip. Anchored at bottom center. Color: #0A0A0A.",
+        "labels": "Placed at tick marks along outer edge, font: Inter, text-xs, uppercase, tracking-widest.",
+        "animation": "Needle rotates based on score (0-100 mapped to 0-180deg) with 600ms cubic-bezier."
+      }
+    },
+    "trust_score_visualisations": {
+      "description": "Score representations on operator pages.",
+      "style": "Editorial, no gambling-affiliate cliches.",
+      "radial": "Thin stroke circle (stroke-width: 2px), empty track is #E8E5DF, filled track uses dial state color. Score centered in Inter bold.",
+      "horizontal_bar": "4px height, background #E8E5DF, fill uses dial state color. Square or 4px rounded edges."
+    },
+    "buttons": {
+      "style": "Rectangular, 4px radius, #1B2D5B background, #FBFAF8 text, hover to slightly lighter blue, NO gradients, NO shadows."
+    }
+  },
+  "media": {
+    "image_urls": {
+      "streamer_portraits": [
+        "https://images.unsplash.com/photo-1637059880830-59a90102de77?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxub3JkaWMlMjBtYW4lMjBwb3J0cmFpdCUyMGludGVuc2V8ZW58MHx8fHwxNzc4OTQ4Nzk4fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1587397845856-e6cf49176c70?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwxfHxub3JkaWMlMjBtYW4lMjBwb3J0cmFpdCUyMGludGVuc2V8ZW58MHx8fHwxNzc4OTQ4Nzk4fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHwyfHx5b3VuZyUyMHdvbWFuJTIwcG9ydHJhaXQlMjBzdHVkaW8lMjBzZXJpb3VzfGVufDB8fHx8MTc3ODk0ODc5OHww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1667053508464-eb11b394df83?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHw0fHx5b3VuZyUyMHdvbWFuJTIwcG9ydHJhaXQlMjBzdHVkaW8lMjBzZXJpb3VzfGVufDB8fHx8MTc3ODk0ODc5OHww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1545254644-a60835b8d36e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHw0fHxub3JkaWMlMjBtYW4lMjBwb3J0cmFpdCUyMGludGVuc2V8ZW58MHx8fHwxNzc4OTQ4Nzk4fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1506863530036-1efeddceb993?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHwxfHx5b3VuZyUyMHdvbWFuJTIwcG9ydHJhaXQlMjBzdHVkaW8lMjBzZXJpb3VzfGVufDB8fHx8MTc3ODk0ODc5OHww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1590399903675-3eb0b66fe2eb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwyfHxmaW5uaXNoJTIwbWFuJTIwcG9ydHJhaXQlMjBpbnRlbnNlfGVufDB8fHx8MTc3ODk0ODgxMHww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1555508923-57fc2a19656a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzZ8MHwxfHNlYXJjaHwzfHxmaW5uaXNoJTIwbWFuJTIwcG9ydHJhaXQlMjBpbnRlbnNlfGVufDB8fHx8MTc3ODk0ODgxMHww&ixlib=rb-4.1.0&q=85"
+      ],
+      "moment_thumbnails": [
+        "https://images.unsplash.com/photo-1488972685288-c3fd157d7c7a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjBtaW5pbWFsaXN0JTIwYXJjaGl0ZWN0dXJlfGVufDB8fHx8MTc3ODk0ODc5OHww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1526289034009-0240ddb68ce3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGRhcmslMjBtaW5pbWFsaXN0JTIwYXJjaGl0ZWN0dXJlfGVufDB8fHx8MTc3ODk0ODc5OHww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1632667680404-572c57873c21?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMGRhcmslMjBtaW5pbWFsaXN0JTIwYXJjaGl0ZWN0dXJlfGVufDB8fHx8MTc3ODk0ODc5OHww&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1475070929565-c985b496cb9f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMG5vcmRpYyUyMG5hdHVyZSUyMGRhcmt8ZW58MHx8fHwxNzc4OTQ4ODEwfDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1582721691120-d1db3852893e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMG5vcmRpYyUyMG5hdHVyZSUyMGRhcmt8ZW58MHx8fHwxNzc4OTQ4ODEwfDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "hero_atmosphere": [
+        "https://images.unsplash.com/photo-1601662528567-526cd06f6582?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMHBhcGVyJTIwdGV4dHVyZSUyMHdhcm0lMjBvZmYtd2hpdGV8ZW58MHx8fHwxNzc4OTQ4Nzk4fDA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1548362851-ea052637ad64?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzl8MHwxfHNlYXJjaHw0fHxhYnN0cmFjdCUyMG5vcmRpYyUyMG5hdHVyZSUyMGRhcmt8ZW58MHx8fHwxNzc4OTQ4ODEwfDA&ixlib=rb-4.1.0&q=85"
+      ]
+    }
+  },
+  "instructions_to_main_agent": [
+    "Strictly follow the HS.fi / Bloomberg Businessweek editorial aesthetic.",
+    "Do NOT use any gradients, heavy shadows, or aggressive rounding. Flat, clean, editorial UI is required.",
+    "Use tabular-nums class for any score or statistic to ensure vertical alignment of digits.",
+    "All interactive elements must have a data-testid attribute in kebab-case.",
+    "The P*rkele-mittari dial should be the centerpiece component, accurately rendering the 5 states using the provided color tokens."
+  ]
+}

@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;0,8..60,700;1,8..60,400;1,8..60,500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 33% 98%;
+    --foreground: 0 0% 4%;
+    --card: 40 33% 98%;
+    --card-foreground: 0 0% 4%;
+    --popover: 40 33% 98%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 222 54% 23%;
+    --primary-foreground: 40 33% 98%;
+    --secondary: 36 13% 90%;
+    --secondary-foreground: 0 0% 4%;
+    --muted: 36 13% 92%;
+    --muted-foreground: 36 5% 40%;
+    --accent: 36 13% 90%;
+    --accent-foreground: 0 0% 4%;
+    --destructive: 3 56% 51%;
+    --destructive-foreground: 40 33% 98%;
+    --border: 36 13% 89%;
+    --input: 36 13% 89%;
+    --ring: 222 54% 23%;
+    --radius: 0.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    background-color: #FBFAF8;
+  }
+  body {
+    margin: 0;
+    background-color: #FBFAF8;
+    color: #0A0A0A;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'ss01', 'tnum';
+  }
+
+  h1, h2, h3, h4, h5, h6, .display {
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+
+  /* Tabular figures for all numerical UI */
+  .tabular,
+  .num,
+  time,
+  .score,
+  .viewer-count,
+  table td,
+  table th {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
+  }
+
+  ::selection {
+    background: #1B2D5B;
+    color: #FBFAF8;
+  }
+}
+
+@layer components {
+  .container-narrow {
+    @apply mx-auto px-5 sm:px-8;
+    max-width: 720px;
+  }
+  .container-wide {
+    @apply mx-auto px-5 sm:px-8;
+    max-width: 1200px;
+  }
+  .hairline {
+    @apply border-[#E8E5DF];
+  }
+  .section-rule {
+    @apply border-t border-[#E8E5DF];
+  }
+
+  /* Brand button (rectangular, 4px radius, no gradients/glows) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center bg-[#1B2D5B] text-[#FBFAF8] font-display font-semibold text-[15px] tracking-tight px-6 py-3.5 rounded-[4px] transition-colors duration-200 hover:bg-[#0F1F47] focus:outline-none focus:ring-2 focus:ring-[#1B2D5B] focus:ring-offset-2 focus:ring-offset-[#FBFAF8];
+    min-height: 44px;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center bg-transparent text-[#0A0A0A] font-display font-semibold text-[15px] tracking-tight px-6 py-3.5 rounded-[4px] border border-[#0A0A0A] transition-colors duration-200 hover:bg-[#0A0A0A] hover:text-[#FBFAF8];
+    min-height: 44px;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center text-[#0A0A0A] font-display font-semibold text-[15px] tracking-tight transition-colors duration-200 hover:text-[#1B2D5B];
+  }
+
+  /* Editorial section eyebrow */
+  .eyebrow {
+    @apply font-display text-[11px] uppercase tracking-[0.18em] font-semibold text-[#6B6862];
+  }
+
+  /* Card — flat, subtle border, generous padding */
+  .editorial-card {
+    @apply bg-[#FBFAF8] border border-[#E8E5DF] rounded-[4px] transition-colors duration-200;
+  }
+  .editorial-card-hover:hover {
+    @apply border-[#0A0A0A];
+  }
+
+  /* Editorial body */
+  .prose-mittari {
+    @apply font-serif text-[#0A0A0A];
+    font-size: 18px;
+    line-height: 1.65;
+  }
+  .prose-mittari p {
+    margin-bottom: 1.25em;
+  }
+  .prose-mittari p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Hide scrollbar but keep scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
