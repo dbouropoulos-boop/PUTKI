@@ -1,23 +1,37 @@
 import React from 'react';
 import Dial from './Dial';
+import CountUp from './CountUp';
 import { DIAL_STATES, STREAMERS } from '../data/mock';
 import { useLang } from '../context/LanguageContext';
 
-const PanelStat = ({ label, value, sub, align = 'left' }) => (
-  <div style={{ textAlign: align }} className="px-3 sm:px-0">
-    <div className="mono mb-2" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>
-      {label}
-    </div>
-    <div className="mono" style={{ fontSize: 36, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
-      {value}
-    </div>
-    {sub && (
-      <div className="mono mt-2" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 500 }}>
-        {sub}
+const PanelStat = ({ label, value, sub, align = 'left', lang = 'fi' }) => {
+  const isNumeric = typeof value === 'number';
+  const formatLocale = lang === 'en' ? 'en-US' : 'fi-FI';
+  const formatNum = (n) => {
+    const r = Math.round(n);
+    const s = r.toLocaleString(formatLocale);
+    return lang === 'en' ? s : s.replace(/,/g, ' ');
+  };
+  return (
+    <div style={{ textAlign: align }} className="px-3 sm:px-0">
+      <div className="mono mb-2" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>
+        {label}
       </div>
-    )}
-  </div>
-);
+      <div className="mono" style={{ fontSize: 36, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
+        {isNumeric ? (
+          <CountUp to={value} duration={1400} format={formatNum} />
+        ) : (
+          value
+        )}
+      </div>
+      {sub && (
+        <div className="mono mt-2" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 500 }}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const DialCockpit = ({ state = 'KUUMA' }) => {
   const { lang, t } = useLang();
@@ -39,29 +53,30 @@ export const DialCockpit = ({ state = 'KUUMA' }) => {
   return (
     <div className="flex flex-col items-center w-full" data-testid="dial-cockpit">
       <div
-        className="mono mb-8"
+        className="mono mb-8 inline-flex items-center gap-2"
         style={{ fontSize: 11, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 600 }}
         data-testid="cockpit-mode-label"
       >
+        <span className="inline-block" style={{ width: 6, height: 6, borderRadius: 999, background: '#E8924A' }} />
         {weekday.toUpperCase()} · {t(todKey)} · {t('time.month_day', { day })}
       </div>
 
       <div className="hidden md:grid w-full" style={{ gridTemplateColumns: '1fr auto 1fr', gap: 32, alignItems: 'center' }}>
         <div className="flex justify-end">
-          <PanelStat label={t('common.live_label')} value={live.length} sub={t('common.live_streamers')} align="right" />
+          <PanelStat label={t('common.live_label')} value={live.length} sub={t('common.live_streamers')} align="right" lang={lang} />
         </div>
         <div className="flex flex-col items-center">
           <Dial size="large" state={state} />
         </div>
         <div className="flex justify-start">
-          <PanelStat label={t('common.viewers_label')} value={totalViewers.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ')} sub={t('common.viewers_sub')} align="left" />
+          <PanelStat label={t('common.viewers_label')} value={totalViewers} sub={t('common.viewers_sub')} align="left" lang={lang} />
         </div>
       </div>
 
       <div className="md:hidden w-full flex flex-col items-center">
         <div className="flex justify-between w-full max-w-xs mb-6">
-          <PanelStat label={t('common.live')} value={live.length} sub={t('common.live_streamers')} align="left" />
-          <PanelStat label={t('common.viewers_label')} value={totalViewers.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ')} sub={t('common.viewers_sub')} align="right" />
+          <PanelStat label={t('common.live')} value={live.length} sub={t('common.live_streamers')} align="left" lang={lang} />
+          <PanelStat label={t('common.viewers_label')} value={totalViewers} sub={t('common.viewers_sub')} align="right" lang={lang} />
         </div>
         <Dial size="large" state={state} />
       </div>

@@ -19,8 +19,8 @@ export const Header = () => {
 
   return (
     <header
-      className="sticky top-0 z-40 border-b backdrop-blur-md"
-      style={{ background: 'color-mix(in oklab, var(--bg) 88%, transparent)', borderColor: 'var(--border)' }}
+      className="sticky z-40 border-b backdrop-blur-md"
+      style={{ top: 30, background: 'color-mix(in oklab, var(--bg) 88%, transparent)', borderColor: 'var(--border)' }}
       data-testid="site-header"
     >
       <div className="container-wide flex items-center justify-between h-16">

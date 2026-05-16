@@ -312,4 +312,122 @@
   .arc-glow {
     animation: arc-glow 2.6s ease-in-out infinite;
   }
+
+  /* --- Phase 1.7 visual energy layers --- */
+
+  /* Grain overlay — adds film texture without color noise */
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .dark .grain-overlay { opacity: 0.06; }
+
+  /* Hero ambient radial glow — colored by dial state via CSS var */
+  .hero-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 35%, var(--glow-color, transparent) 0%, transparent 60%),
+      radial-gradient(ellipse 90% 60% at 50% 50%, var(--glow-color-2, transparent) 0%, transparent 70%);
+    opacity: 0.5;
+    animation: glow-breathe 6s ease-in-out infinite;
+  }
+  @keyframes glow-breathe {
+    0%, 100% { opacity: 0.45; transform: scale(1); }
+    50%      { opacity: 0.62; transform: scale(1.04); }
+  }
+
+  /* Subtle scan lines for dark surfaces */
+  .scanlines::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 3px);
+    mix-blend-mode: overlay;
+  }
+  .dark .scanlines::before {
+    background-image: repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(245,243,238,0.025) 2px, rgba(245,243,238,0.025) 3px);
+  }
+
+  /* Marquee track */
+  .ticker-track {
+    display: flex;
+    width: max-content;
+    animation: ticker 60s linear infinite;
+    will-change: transform;
+    height: 100%;
+    align-items: center;
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .ticker-track:hover { animation-play-state: paused; }
+
+  /* Marquee — slower, larger for fixture strip */
+  .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: marquee 50s linear infinite;
+    will-change: transform;
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  .marquee-track:hover { animation-play-state: paused; }
+
+  /* Stronger hover micro-interaction on panels — colored ring lift */
+  .panel.panel-hover {
+    position: relative;
+    transition: border-color 220ms ease, transform 320ms cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 320ms ease;
+    will-change: transform;
+  }
+  .panel.panel-hover:hover {
+    transform: translateY(-2px);
+    border-color: var(--ink);
+    box-shadow: 0 0 0 1px var(--ink), 0 14px 40px -18px rgba(0,0,0,0.35);
+  }
+  .dark .panel.panel-hover:hover {
+    box-shadow: 0 0 0 1px var(--ink), 0 14px 40px -10px rgba(232,146,74,0.18);
+  }
+
+  /* Arrow slide on .btn-ghost links */
+  .btn-ghost svg, .btn-ghost {
+    transition: transform 240ms cubic-bezier(0.2, 0.7, 0.2, 1), color 200ms ease;
+  }
+  .btn-ghost:hover svg { transform: translateX(3px); }
+
+  /* Kinetic h1 letters — staggered fade */
+  @keyframes kinetic {
+    0%   { opacity: 0; transform: translateY(14px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Ambient grid background — barely visible */
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 80px 80px;
+    opacity: 0.55;
+  }
+  .dark .grid-bg { opacity: 0.4; }
+
+  /* Live status soft pulse for dial state label */
+  @keyframes state-pulse {
+    0%, 100% { text-shadow: 0 0 0 currentColor; }
+    50%      { text-shadow: 0 0 14px currentColor; }
+  }
+  .state-pulse {
+    animation: state-pulse 3.6s ease-in-out infinite;
+  }
 }

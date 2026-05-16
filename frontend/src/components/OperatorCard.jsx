@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import CountUp from './CountUp';
 
 // Tier-colored score per dial-state thresholds (Fix 4)
 const scoreColor = (score) => {
@@ -18,7 +19,7 @@ const scoreState = (score) => {
   return 'KYLMA';
 };
 
-// Instrument-readout score block — large mono, "MITTARI" label
+// Instrument-readout score block — large mono, "MITTARI" label, count-up animation
 export const ScoreReadout = ({ score, size = 'md' }) => {
   const color = scoreColor(score);
   const state = scoreState(score);
@@ -34,7 +35,7 @@ export const ScoreReadout = ({ score, size = 'md' }) => {
         MITTARI
       </div>
       <div className="mono" style={{ fontSize: s.num, fontWeight: 500, letterSpacing: '-0.04em', color, lineHeight: 1 }} data-testid={`score-${score}`}>
-        {score}
+        <CountUp to={score} duration={1100} format={(n) => Math.round(n).toString()} />
       </div>
       <div className="mono" style={{ fontSize: s.state, letterSpacing: '0.16em', color, fontWeight: 600, marginTop: 4 }}>
         {state}

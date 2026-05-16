@@ -323,7 +323,7 @@ export const Dial = ({
             </div>
           )}
           <div
-            className="display"
+            className="display state-pulse"
             style={{
               fontSize: isSmall ? 11 : isMedium ? 36 : 64,
               fontWeight: 900,

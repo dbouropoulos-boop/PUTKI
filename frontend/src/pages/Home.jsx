@@ -33,41 +33,84 @@ const Home = () => {
 
   return (
     <div data-testid="home-page">
-      <section className="container-wide pt-12 sm:pt-20 pb-16 sm:pb-24">
-        <div className="flex flex-col items-center text-center animate-fade-up">
-          <DialCockpit state={state} />
+      {/* HERO with cockpit + atmospheric glow */}
+      <section
+        className="relative overflow-hidden"
+        style={{
+          '--glow-color': hot ? 'rgba(232,146,74,0.30)' : 'rgba(122,126,131,0.18)',
+          '--glow-color-2': hot ? 'rgba(200,66,60,0.18)' : 'rgba(44,95,141,0.16)',
+        }}
+      >
+        {/* Ambient grid + radial glow + scan-line overlay */}
+        <div className="hero-glow" />
+        <div className="absolute inset-0 grid-bg pointer-events-none" style={{ zIndex: 0 }} />
+        <div className="scanlines absolute inset-0 pointer-events-none" style={{ zIndex: 1 }} />
 
-          <h1
-            className="display mt-12 sm:mt-14 max-w-4xl"
-            style={{ fontSize: 'clamp(36px, 5vw, 64px)', lineHeight: 1.05, color: 'var(--ink)' }}
-            data-testid="hero-headline"
-          >
-            {headline}
-          </h1>
+        <div className="container-wide pt-12 sm:pt-20 pb-16 sm:pb-24 relative" style={{ zIndex: 2 }}>
+          <div className="flex flex-col items-center text-center animate-fade-up">
+            <DialCockpit state={state} />
 
-          <div className="mt-10 flex flex-col sm:flex-row gap-3 sm:gap-6 items-center">
-            {hot ? (
-              <>
-                <Link to="/kasinot" className="btn-primary" data-testid="hero-cta-primary">
-                  {t('home.cta_play')}
-                  <ArrowRight strokeWidth={1.8} className="ml-2" size={14} />
-                </Link>
-                <Link to="/striimaajat" className="btn-ghost" data-testid="hero-cta-secondary">
-                  {t('home.cta_watch_live')} ({liveStreamers.length}) →
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/aloita" className="btn-primary" data-testid="hero-cta-primary">
-                  {t('home.cta_notify')}
-                  <ArrowRight strokeWidth={1.8} className="ml-2" size={14} />
-                </Link>
-                <Link to="/striimaajat" className="btn-ghost" data-testid="hero-cta-secondary">
-                  {t('home.cta_watch_live')} →
-                </Link>
-              </>
-            )}
+            <h1
+              className="display mt-12 sm:mt-14 max-w-4xl"
+              style={{ fontSize: 'clamp(36px, 5vw, 64px)', lineHeight: 1.05, color: 'var(--ink)' }}
+              data-testid="hero-headline"
+            >
+              {headline}
+            </h1>
+
+            <div className="mt-10 flex flex-col sm:flex-row gap-3 sm:gap-6 items-center">
+              {hot ? (
+                <>
+                  <Link to="/kasinot" className="btn-primary" data-testid="hero-cta-primary">
+                    {t('home.cta_play')}
+                    <ArrowRight strokeWidth={1.8} className="ml-2" size={14} />
+                  </Link>
+                  <Link to="/striimaajat" className="btn-ghost" data-testid="hero-cta-secondary">
+                    {t('home.cta_watch_live')} ({liveStreamers.length}) →
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/aloita" className="btn-primary" data-testid="hero-cta-primary">
+                    {t('home.cta_notify')}
+                    <ArrowRight strokeWidth={1.8} className="ml-2" size={14} />
+                  </Link>
+                  <Link to="/striimaajat" className="btn-ghost" data-testid="hero-cta-secondary">
+                    {t('home.cta_watch_live')} →
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* MARQUEE FIXTURE STRIP — sports fixtures + scene signals */}
+      <section
+        className="relative overflow-hidden py-3"
+        style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}
+        data-testid="fixture-marquee"
+      >
+        <div className="marquee-track">
+          {[0, 1].map((rep) => (
+            <div key={rep} className="flex items-center shrink-0">
+              {[
+                { color: '#C8423C', a: 'LIIGA',   b: 'TAPPARA — TPS',         t: 'LA 18:30' },
+                { color: '#5A7BB8', a: 'NHL',     b: 'CAROLINA — FLORIDA',     t: 'SU 02:00' },
+                { color: '#E8924A', a: 'F1',      b: 'MONZA GP',               t: 'SU 16:00' },
+                { color: '#7A7E83', a: 'PL',      b: 'LIVERPOOL — ARSENAL',    t: 'SU 18:30' },
+                { color: '#8B1E1A', a: 'VEIKK.',  b: 'HJK — KUPS',             t: 'LA 18:00' },
+                { color: '#2C5F8D', a: 'KICK',    b: 'PACT LIVE',              t: 'NYT' },
+              ].map((it, i) => (
+                <div key={`${rep}-${i}`} className="flex items-baseline gap-3 shrink-0 px-8">
+                  <span className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: it.color, fontWeight: 700 }}>{it.a}</span>
+                  <span className="mono" style={{ fontSize: 13, letterSpacing: '0.02em', color: 'var(--ink)', fontWeight: 500 }}>{it.b}</span>
+                  <span className="mono" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>{it.t}</span>
+                  <span style={{ color: 'var(--border-strong)' }}>·</span>
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       </section>
 
