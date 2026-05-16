@@ -138,9 +138,10 @@ export const Dial = ({
     <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: px }} data-testid={`dial-${size}`}>
       <svg
         width="100%"
-        height="auto"
+        height={px}
         viewBox={`0 0 ${px} ${px}`}
-        style={{ display: 'block', maxWidth: px }}
+        preserveAspectRatio="xMidYMid meet"
+        style={{ display: 'block', maxWidth: px, height: 'auto' }}
       >
         <defs>
           {/* Subtle radial gradient on dial face */}

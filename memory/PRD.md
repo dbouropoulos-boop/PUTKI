@@ -1,83 +1,64 @@
 # Mittari.fi — PRD
 
-## Original problem statement
-Build a Finnish editorial website for the online slot-streaming and casino scene. Phase 1 = UI build with mock data. Phase 1.5 = visual identity elevation (cockpit-editorial, dark mode primary, dial V2, 8 fixes, streamer-submission form, Emergent badge removed). Phase 1.6 = bilingual FI/EN.
+## Phase History
+- **Phase 1** (2026-02) — 9-page editorial site with mock data
+- **Phase 1.5** (2026-02) — Cockpit-instrument visual elevation, dial V2, 8 fixes, streamer-submission form
+- **Phase 1.6** (2026-02) — Bilingual FI / EN
+- **Phase 1.7** (2026-02) — Visual energy layers (live ticker, atmospheric glow, grain, count-ups)
+- **Phase 1.5 (Revised)** (2026-02) — Architectural restructure for conversion
 
 ## Architecture
-- **Frontend**: React 19 + React Router v7 + Tailwind + shadcn/ui
-- **Backend**: FastAPI (Phase 1 mock endpoints)
-- **DB**: MongoDB (motor)
-- **Theming**: CSS-variable-driven (light/dark), `ThemeContext`, Helsinki-time default
-- **i18n**: `LanguageContext` with translations dict (FI default + EN), browser-language fallback
-- **Fonts**: Inter (display), Source Serif 4 (reading), JetBrains Mono (all numerical readouts)
+- Frontend: React 19 + React Router v7 + Tailwind + shadcn/ui
+- Backend: FastAPI mock endpoints
+- DB: MongoDB
+- Theming: CSS-variable-driven (light/dark), Helsinki-time default at 16:00+
+- i18n: LanguageContext (FI default + EN)
+- Fonts: Inter, Source Serif 4, JetBrains Mono
 
-## What's been implemented
-
-### Phase 1 (2026-02)
-- 9 pages with mock data: Home, Casino Ranking, Operator Review, Streamer Index, Streamer Profile, Methodology, Cold-Email Landing, Signup, Mini-Game, Topi's Weekly Card
-- P*rkele-mittari signature dial (Phase 1 version)
-- Editorial system: warm off-white, brand-blue, dial state palette
-- Backend: `/api/`, `/api/dial`, `/api/dial/states`, `/api/signup`, `/api/predictions`
-
-### Phase 1.5 (2026-02) — visual identity elevation
-- Dark mode is the brand's primary identity (default 18:00–07:00 Helsinki); theme toggle in header; localStorage persists
-- JetBrains Mono for all numerical readouts (scores, viewer counts, leaderboard positions, times)
-- **Dial V2**: bezel rings, hierarchical ticks (major + minor + minor), state name labels around arc, tapered needle with counterweight, drop shadow, active arc segment fully lit, inactive arcs dimmed, spring physics needle settle, KUUMA+ active-arc glow
-- **DialCockpit** hero composition: LIVE NYT + KATSOJAA panels flanking dial, mode label above, contributing factors below (R8 cluster reference)
-- Fix 1: state-aware hero CTA hierarchy
-- Fix 2: notification capture upgraded (bigger bell, mono input, real button, mono micro reassurance)
-- Fix 3: moment cards rebuilt as DATA PANELS with state-tinted backgrounds (no stock photos)
-- Fix 4: casino ranking scores tier-colored (90+ KIIRASTULI, 80-89 MYRSKY, 70-79 KUUMA, 60-69 HAALEA) with mono `ScoreReadout`
-- Fix 5: Weezy Rally card upgraded (illustrated dark background, prize callout, leaderboard teaser, real button)
-- Fix 6: Topi's Weekly Card editorial preview (display headline + fixture tag strip)
-- Fix 7: footer brand moment (dial mark + tagline)
-- Fix 8: "Made with Emergent" badge removed from `public/index.html`
-- Streamer-submission modal on `/striimaajat` with name/URL/why fields (mock save)
-- LED status indicator with `box-shadow` pulse (replaces opacity badge)
-- index.html title + description updated to Mittari.fi branding
-
-### Phase 1.6 (2026-02) — bilingual FI/EN
-- `LanguageContext` with `t()` function and `translations.js` dictionary (FI default, EN secondary)
-- Language toggle button next to theme toggle in header (desktop + mobile)
-- Browser-language detection on first visit (en-* → English); choice persisted in localStorage
-- Translated surfaces: header nav, footer (all columns + tagline + warnings), Home page (hero, all sections, headline state-aware), Casino Ranking (eyebrows, filters, sort labels, articles), Cold-Email Landing, Streamer Index (incl. submission form), DialCockpit (mode label, panel labels), Operator Review (score factors, pros, cons, FAQ — all bilingual data arrays)
-- Brand terms (P*rkele-mittari, KYLMÄ/HAALEA/KUUMA/MYRSKY/KIIRASTULI state names) preserved across languages — they are Mittari proper nouns
-- Mock data (streamer names, operator names, editorial body copy on some inner pages) remains Finnish — this is Phase 2 work (CMS layer)
+## Phase 1.5 (Revised) — What's been built (2026-02)
+- **Split hero** on homepage — DialCockpit left (55%) + HeroCapture right (45%) with vertical divider; mobile stacks vertically
+- **HeroCapture** — 64px-tall email field, filled brand-blue "Tilaa Mittari-ilmoitukset" button, 3 mono micro-reassurance lines, 3 channel icons
+- **LiveTilesGrid** — 6 live streamer tiles with video-preview placeholder (real Twitch/Kick iframes = Phase 2), bell-plus follow button, LIVE LED pill, platform pill, viewer count, current game
+- **FollowModal** — one-click streamer follow with single email field, success state + auto-close
+- **MISSASIT EILEN** section — 2 mock "missed last 24h" auto-cards
+- **PersistentCapture** — desktop right-rail (top:120 right:24 on /striimaajat, /menetelma, /viikon-kortti, /peli, /kasinot) + mobile bottom-sheet (collapsed→expand→form→collapse). Skipped on /, /aloita, /landing, and operator review pages.
+- **StateContextualFloat** — bottom-right floating dial-state-driven contextual element (KUUMA → ranking link with "3 viikon parasta tarjousta nyt voimassa", KYLMÄ → weekly card link)
+- **UTMBanner** — top-of-homepage when `?utm_campaign=X` present
+- **OperatorReview compressed** — above-fold (eyebrow + name + take + bonus + CTA) + score panel + trust signal row + live data strip (4 mock stats: Current Jackpot €284,102 / New Players 47 / Payout Median 1h 38min / Streams Live 3) + Mittarin näkemys. Everything else (Quick Facts, Pros/Cons, Activity, FAQ) hidden behind "Lue syvempi analyysi →" toggle.
+- **Dark mode default at 16:00+** Helsinki time (was 18:00)
+- **Mid-page notification capture REMOVED** — replaced by hero + persistent
 
 ### Test results
-- Phase 1 baseline: 10/10 backend, 95% frontend
-- Phase 1.5: 10/10 backend (no regression), 100% on all 8 fixes + cockpit + theme + streamer form + dial V2
-- Phase 1.6 i18n: lint clean, language toggle verified visually
+- Phase 1.5 (Revised): 10/10 backend (no regression), 100% on all new surface (split hero, live tiles, follow modal, missasit eilen, persistent capture desktop+mobile, state float, UTM banner, theme default, operator compression)
 
 ## Prioritized backlog
 
-### P0 (Phase 2 — backend integrations)
-- Twitch + Kick live-status polling for tracked streamers
-- Suomi24 + Ylilauta activity-volume signal (no content republishing)
-- Dial calculation engine fusing live signals
-- RSS aggregation (Yle, HS, Iltalehti, Iltasanomat, MTV, Liiga.fi, Helsinki Times)
-- Sports data feed (API-Football or TheSportsDB)
+### P0 (Phase 2)
+- Twitch/Kick muted-autoplay iframes for live tiles (the visual placeholder swap)
+- Backend `/api/notify-signup` to persist hero + follow + persistent emails
+- Dial calculation engine fusing real signals → state changes propagate to dial, contextual float, ranking sort default
+- Twitch/Kick live-status polling for actual streamer list
+- Suomi24 + Ylilauta activity-volume signal scraping
 - Notification delivery (Resend + Telegram + web push)
-- Streamer-suggestion form → MongoDB write + admin queue
 
-### P1 (Phase 2 — content + monetisation prep)
-- CMS for editorial Mittari commentary (per-language)
-- Real operator data + Trustpilot/AskGamblers/Casino.Guru trust signals
-- MGA license register verification
+### P1 (Phase 2)
+- Operator click escalation 24h cookie + secondary CTA on persistent capture
+- State-driven default ranking sort (best-for-action vs best-for-research)
+- Real operator data + Trustpilot/AskGamblers signals
+- CMS for editorial commentary (FI + EN)
 - Affiliate link infrastructure
-- Translate remaining mock editorial body copy on Methodology / Operator Review prose paragraphs / StreamerProfile commentary
+- Sports data feed (API-Football)
 
 ### P2 (post-July 2027)
 - Licensed Finnish operator partner onboarding
 - CPA monetisation activation
-- Veikkaus license register integration
 
 ## Test credentials
-N/A — no authentication in Phase 1/1.5/1.6.
+N/A — no authentication.
 
 ## Next tasks
-1. Phase 2 kickoff — Twitch/Kick live-status integration
-2. Dial calculation engine (Python service fusing live signals → state)
-3. Notification delivery (Resend + Telegram bot + web push)
-4. Persist streamer suggestions in MongoDB + admin moderation queue
-5. CMS for editorial commentary in both FI + EN
+1. Twitch/Kick autoplay embed integration (swap LiveTile placeholder for real iframes)
+2. Single `/api/notify-signup` endpoint + wire hero, follow, persistent capture
+3. Dial calculation engine
+4. Real streamer live-status polling
+5. Operator click escalation cookie + escalation prompt in PersistentCapture
