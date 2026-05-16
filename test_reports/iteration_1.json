@@ -1,0 +1,42 @@
+{
+  "summary": "Phase-1 testing of Mittari.fi (UI + minimal FastAPI mock). All 10 backend tests pass. All 10 frontend routes load without runtime errors. Multi-step signup (steps 1→2→3→4) works end-to-end including POST /api/signup. Weekly-card prediction buttons render (5 fixtures × 3 picks = 15) and submit button is present. Dial renders with current state KUUMA on home. Mobile menu toggle works at 390px. Nav routing & tabular-nums on score cells verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Console", "issues": ["React warning: 'Encountered two children with the same key' — duplicate keys somewhere in list rendering. Non-breaking but should be fixed."]}
+    ],
+    "missing_testids": [
+      {"page": "/menetelma", "issue": "The 7 long-read sections have no per-section data-testid (e.g. article-0..article-6 or section-0..). Only methodology-page and methodology-toc exist. Spec asked for 7 sections to be addressable."},
+      {"page": "/landing", "issue": "FAQ items on the cold-email landing page have no data-testid. Only 3 step-{i} testids exist for the how-it-works section."}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mittari_api.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Add data-testid={`article-${i}`} (or section-i) to each of the 7 sections in Methodology.jsx to satisfy spec testability requirement.",
+    "Add data-testid={`faq-item-${i}`} to FAQ entries in ColdEmailLanding.jsx.",
+    "Investigate React duplicate-key warning (most likely in a list using a non-unique key); check live-strip / streamer-card / moments-grid mappings in Home.jsx."
+  ],
+  "critical_code_review_comments": [
+    "server.py uses deprecated @app.on_event('shutdown'); prefer FastAPI lifespan handler (non-blocking).",
+    "DIAL_STATES key uses ASCII 'KYLMA' but label uses 'KYLMÄ' — consistent enough, but consumers must use key for lookups (currently fine).",
+    "No rate-limit / duplicate-email guard on /api/signup — acceptable for Phase 1 mock but worth a TODO comment.",
+    "CORS_ORIGINS env default is '*' with allow_credentials=True — browsers will reject this combo. For Phase 1 mock not impacting, but flag for Phase 2."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mittari_api.py (created)"
+  ],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "95% — all routes load, all main flows work; minor missing testids on methodology sections and landing FAQ"},
+  "seed_data_creation": "Pytest inserted 3 signup docs (TEST_minimal@, TEST_full@, TEST_pred@) and 3 prediction docs in mongo. Safe — only Phase 1 mock collections.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests live at /app/backend/tests/test_mittari_api.py — run with `pytest backend/tests/test_mittari_api.py -v`. Frontend testids map: home uses home-page/hero-headline/hero-cta-primary/live-strip/streamer-card-{slug}/moment-card-{id}/email-capture-input/operator-teaser-{slug}/minigame-teaser/weeklycard-teaser. Predictions are individual buttons data-testid=predict-{fixtureId}-{1|X|2}. Multi-step signup uses signup-step1-next/step2-next/step3-next, channels use channel-{key}, streamers use signup-streamer-{slug}. Mobile menu toggle: mobile-menu-toggle then mobile-nav-link-{path}.",
+  "rca_of_the_issue": "N/A — no blocking issues found."
+}

@@ -1,12 +1,12 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 
@@ -14,59 +14,114 @@ from datetime import datetime, timezone
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app without a prefix
-app = FastAPI()
-
-# Create a router with the /api prefix
+app = FastAPI(title="Mittari.fi API — Phase 1")
 api_router = APIRouter(prefix="/api")
 
 
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+# ---------- MOCK CONTENT MODELS & DATA (Phase 1) ----------
 
-class StatusCheckCreate(BaseModel):
-    client_name: str
+DIAL_STATES = {
+    "KYLMA":       {"key": "KYLMA",       "label": "KYLMÄ",       "color": "#2C5F8D", "value": 12, "headline": "Mittari on KYLMÄ. Skene nukkuu."},
+    "HAALEA":      {"key": "HAALEA",      "label": "HAALEA",      "color": "#7A7E83", "value": 38, "headline": "Mittari on HAALEA. Tasaista taustakohinaa."},
+    "KUUMA":       {"key": "KUUMA",       "label": "KUUMA",       "color": "#E8924A", "value": 64, "headline": "Mittari on KUUMA. Slot-skene lämpenee illaksi."},
+    "MYRSKY":      {"key": "MYRSKY",      "label": "MYRSKY",      "color": "#C8423C", "value": 82, "headline": "Mittari on MYRSKY. Striimit täynnä, klippejä syntyy."},
+    "KIIRASTULI":  {"key": "KIIRASTULI",  "label": "KIIRASTULI",  "color": "#8B1E1A", "value": 96, "headline": "Mittari on KIIRASTULI. Älä katso pois."},
+}
 
-# Add your routes to the router instead of directly to app
+CURRENT_STATE_KEY = "KUUMA"
+
+
+# ---------- ENDPOINTS ----------
+
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"service": "Mittari.fi API", "phase": 1, "status": "ok"}
 
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
 
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
+@api_router.get("/dial")
+async def get_dial():
+    """Current Mittari state."""
+    state = DIAL_STATES[CURRENT_STATE_KEY]
+    return {
+        "state": state,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "context": {
+            "live_streamers": 7,
+            "total_viewers": 19_590,
+            "active_signals": ["finnish-prime-time", "ylilauta-volume-high", "liiga-friday"],
+        },
+    }
 
-# Include the router in the main app
+
+@api_router.get("/dial/states")
+async def get_dial_states():
+    return {"states": list(DIAL_STATES.values())}
+
+
+# ---------- Newsletter signup (lightweight, no auth) ----------
+
+class SignupRequest(BaseModel):
+    email: EmailStr
+    streamers: List[str] = Field(default_factory=list)
+    channels: List[str] = Field(default_factory=list)
+
+
+class SignupResponse(BaseModel):
+    id: str
+    email: EmailStr
+    streamers: List[str]
+    channels: List[str]
+    created_at: str
+
+
+@api_router.post("/signup", response_model=SignupResponse)
+async def signup(data: SignupRequest):
+    doc = {
+        "id": str(uuid.uuid4()),
+        "email": data.email,
+        "streamers": data.streamers,
+        "channels": data.channels,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.signups.insert_one(doc)
+    doc.pop("_id", None)
+    return SignupResponse(**doc)
+
+
+# ---------- Predictions (Weekly Card) ----------
+
+class PredictionRequest(BaseModel):
+    fixture_id: str
+    pick: str
+    user_email: Optional[EmailStr] = None
+
+
+class PredictionResponse(BaseModel):
+    id: str
+    fixture_id: str
+    pick: str
+    user_email: Optional[EmailStr] = None
+    created_at: str
+
+
+@api_router.post("/predictions", response_model=PredictionResponse)
+async def submit_prediction(data: PredictionRequest):
+    doc = {
+        "id": str(uuid.uuid4()),
+        "fixture_id": data.fixture_id,
+        "pick": data.pick,
+        "user_email": data.user_email,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.predictions.insert_one(doc)
+    doc.pop("_id", None)
+    return PredictionResponse(**doc)
+
+
 app.include_router(api_router)
 
 app.add_middleware(
@@ -77,12 +132,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
