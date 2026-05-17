@@ -76,21 +76,26 @@ def _verify_twitch(secret: str, request: Request, body: bytes) -> Tuple[bool, Op
 
 
 # ── Kick ────────────────────────────────────────────────────────────────────
-# Header + algorithm are env-configurable so we can adjust without redeploy
-# when Kick's docs finalise (community libraries currently lean on
-# HMAC-SHA256-over-raw-body as the canonical pattern).
-def _kick_secret() -> Optional[str]:
-    return os.environ.get("KICK_WEBHOOK_SECRET") or None
+# Per https://docs.kick.com/events/webhook-security — RSA PKCS1v15 SHA-256
+# verification over `{message_id}.{timestamp}.{raw_body}`. The shared
+# `KICK_WEBHOOK_SECRET` (set in our dev portal) is stored but unused for
+# signature validation; Kick's published scheme is asymmetric-only as of
+# 2026-Q1. We keep it in env in case Kick adds an HMAC second layer later.
+def _kick_configured() -> bool:
+    return bool(os.environ.get("KICK_CLIENT_ID") and os.environ.get("KICK_CLIENT_SECRET"))
 
 
-def _verify_kick(secret: str, request: Request, body: bytes) -> Tuple[bool, Optional[str]]:
-    header_name = os.environ.get("KICK_SIGNATURE_HEADER", "Kick-Event-Signature")
-    sig = request.headers.get(header_name) or request.headers.get("X-Kick-Signature")
-    if not sig:
-        return False, "missing_signature"
-    sig_clean = sig[len("sha256="):] if sig.startswith("sha256=") else sig
-    expected = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
-    if not hmac.compare_digest(expected, sig_clean):
+async def _verify_kick(request: Request, body: bytes) -> Tuple[bool, Optional[str]]:
+    from kick_api import fetch_public_key, verify_signature
+    msg_id    = request.headers.get("Kick-Event-Message-Id")
+    timestamp = request.headers.get("Kick-Event-Message-Timestamp")
+    sig_b64   = request.headers.get("Kick-Event-Signature")
+    if not (msg_id and timestamp and sig_b64):
+        return False, "missing_headers"
+    pem = await fetch_public_key()
+    if not pem:
+        return False, "public_key_unavailable"
+    if not verify_signature(pem, msg_id, timestamp, body, sig_b64):
         return False, "signature_mismatch"
     return True, None
 
@@ -228,22 +233,16 @@ def build_webhook_router(db) -> APIRouter:
 
     @r.post("/kick")
     async def kick_webhook(request: Request):
-        secret = _kick_secret()
-        if not secret:
+        if not _kick_configured():
             return JSONResponse(status_code=503, content={"detail": "Kick integration not configured"})
 
         body = await request.body()
-        ok, why = _verify_kick(secret, request, body)
+        ok, why = await _verify_kick(request, body)
         if not ok:
             return JSONResponse(status_code=403, content={"detail": f"kick_verify_failed:{why}"})
 
-        # Kick uses an event-id header (community libraries surface it as
-        # `Kick-Event-Message-Id`). Treat any of these as the dedup key.
-        msg_id = (
-            request.headers.get("Kick-Event-Message-Id")
-            or request.headers.get("X-Kick-Event-Id")
-            or ""
-        )
+        # Kick-Event-Message-Id is the idempotency key per official docs.
+        msg_id = request.headers.get("Kick-Event-Message-Id") or ""
         if msg_id and not await _record_message_id(db, "kick", msg_id):
             return Response(status_code=200)
 
@@ -364,7 +363,7 @@ def build_webhook_router(db) -> APIRouter:
         return {
             "now": now.isoformat(),
             "twitch_configured": bool(_twitch_secret()),
-            "kick_configured": bool(_kick_secret()),
+            "kick_configured": _kick_configured(),
             "youtube_configured": bool(_youtube_secret()),
             "last_webhook_signal_by_source": last,
             "callback_urls": {
@@ -388,14 +387,15 @@ def build_webhook_router(db) -> APIRouter:
 
     # ── Operational recovery — force resubscribe (admin only) ──
     @r.post("/resubscribe/{source}")
-    async def force_resubscribe(source: str, x_admin_token: Optional[str] = Header(default=None)):
-        """Stub endpoint. Returns 503 when secrets/callback URLs are not
-        configured. When credentials arrive, this will:
-          • Twitch  → POST /helix/eventsub/subscriptions with stream.online type
-          • Kick    → POST channel-subscription API once Kick docs finalise
-          • YouTube → POST hub.mode=subscribe to pubsubhubbub.appspot.com
-        For now we keep the operational button live so on-call has a single
-        place to click; the body returns the exact reason it cannot proceed."""
+    async def force_resubscribe(source: str,
+                                 x_admin_token: Optional[str] = Header(default=None),
+                                 dry_run: bool = False):
+        """Manage live webhook subscriptions for a source.
+          dry_run=true → return what WOULD be done (count + plan), no API calls.
+          dry_run=false → execute. Twitch creates stream.online + stream.offline;
+                          Kick creates channel.subscription.gifts as a smoke event
+                          (we'll expand once Kick documents stream.* event names).
+        """
         expected = os.environ.get("BACK_OFFICE_TOKEN")
         if not expected or x_admin_token != expected:
             raise HTTPException(status_code=401, detail="admin_token_required")
@@ -403,68 +403,48 @@ def build_webhook_router(db) -> APIRouter:
         if source not in ("twitch", "kick", "youtube"):
             return JSONResponse(status_code=400, content={"detail": "unknown_source"})
 
-        secret_fn = {"twitch": _twitch_secret, "kick": _kick_secret, "youtube": _youtube_secret}[source]
-        callback_env = {
-            "twitch": "TWITCH_EVENTSUB_CALLBACK_URL",
-            "kick": "KICK_WEBHOOK_URL",
-            "youtube": "YOUTUBE_PUBSUB_CALLBACK_URL",
-        }[source]
-        if not secret_fn():
-            return JSONResponse(status_code=503, content={
-                "detail": f"{source}_secret_missing",
-                "source": source,
-                "blockers": [f"set {source.upper()}_WEBHOOK_SECRET / {source.upper()}_EVENTSUB_SECRET / YOUTUBE_PUBSUB_SECRET in backend/.env"],
-            })
-        if not os.environ.get(callback_env):
-            return JSONResponse(status_code=503, content={
-                "detail": f"{callback_env}_missing",
-                "source": source,
-                "blockers": [f"set {callback_env} in backend/.env"],
-            })
-
-        # ── Twitch: real EventSub bootstrap ───────────────────────────────
+        # ── Twitch: real EventSub bootstrap (stream.online + stream.offline) ──
         if source == "twitch":
             from twitch_eventsub import (
                 is_configured as twitch_is_configured,
                 get_app_access_token,
                 list_subscriptions,
                 resolve_user_id,
-                create_stream_online_subscription,
+                create_subscription as twitch_create_subscription,
             )
             if not twitch_is_configured():
                 return JSONResponse(status_code=503, content={
                     "detail": "twitch_oauth_credentials_missing",
                     "source": source,
-                    "blockers": ["set TWITCH_CLIENT_ID + TWITCH_CLIENT_SECRET in backend/.env"],
+                    "blockers": ["set TWITCH_CLIENT_ID + TWITCH_CLIENT_SECRET + TWITCH_EVENTSUB_SECRET + TWITCH_EVENTSUB_CALLBACK_URL in backend/.env"],
                 })
             try:
-                # Probe OAuth so we fail fast with a clean reason if creds are wrong.
                 await get_app_access_token()
             except Exception as exc:
                 return JSONResponse(status_code=502, content={
-                    "detail": "twitch_oauth_failed",
-                    "source": source,
-                    "error": str(exc),
+                    "detail": "twitch_oauth_failed", "source": source, "error": str(exc),
                 })
 
-            # Existing subscriptions (so we don't double-subscribe).
+            wanted_types = ["stream.online", "stream.offline"]
             current = await list_subscriptions()
-            existing_broadcaster_ids: set[str] = set()
+            existing: dict[str, set] = {t: set() for t in wanted_types}
             if current.get("ok"):
                 for sub in current.get("subscriptions") or []:
-                    if sub.get("type") == "stream.online":
+                    t = sub.get("type")
+                    if t in existing:
                         cond = sub.get("condition") or {}
                         if cond.get("broadcaster_user_id"):
-                            existing_broadcaster_ids.add(str(cond["broadcaster_user_id"]))
+                            existing[t].add(str(cond["broadcaster_user_id"]))
 
-            # Pull tracked Twitch streamers from registry.
             streamer_cur = db.streamers.find(
                 {"platform": {"$in": ["twitch", "Twitch"]}, "market_id": "FI"},
                 {"_id": 0, "slug": 1, "name": 1},
-            ).limit(200)
-            streamers = await streamer_cur.to_list(length=200)
+            ).limit(500)
+            streamers = await streamer_cur.to_list(length=500)
 
-            results = {"subscribed": [], "skipped": [], "errors": []}
+            results: dict[str, list] = {"subscribed": [], "skipped": [], "errors": []}
+            plan: list[dict] = []
+
             for s in streamers:
                 login = (s.get("slug") or "").strip().lower()
                 if not login:
@@ -474,21 +454,35 @@ def build_webhook_router(db) -> APIRouter:
                     if not user_id:
                         results["errors"].append({"slug": login, "error": "unresolved_login"})
                         continue
-                    if user_id in existing_broadcaster_ids:
-                        results["skipped"].append({"slug": login, "user_id": user_id, "reason": "already_subscribed"})
-                        continue
-                    sub_res = await create_stream_online_subscription(user_id)
-                    if sub_res.get("ok"):
-                        results["subscribed"].append({"slug": login, "user_id": user_id})
-                    else:
-                        results["errors"].append({
-                            "slug": login,
-                            "user_id": user_id,
-                            "status_code": sub_res.get("status_code"),
-                            "body": sub_res.get("body"),
-                        })
+                    for ev_type in wanted_types:
+                        if user_id in existing[ev_type]:
+                            results["skipped"].append({"slug": login, "user_id": user_id,
+                                                       "event": ev_type, "reason": "already_subscribed"})
+                            continue
+                        plan.append({"slug": login, "user_id": user_id, "event": ev_type})
+                        if dry_run:
+                            continue
+                        sub_res = await twitch_create_subscription(ev_type, user_id)
+                        if sub_res.get("ok"):
+                            results["subscribed"].append({"slug": login, "user_id": user_id, "event": ev_type})
+                        else:
+                            results["errors"].append({"slug": login, "user_id": user_id,
+                                                      "event": ev_type,
+                                                      "status_code": sub_res.get("status_code"),
+                                                      "body": sub_res.get("body")})
                 except Exception as exc:
                     results["errors"].append({"slug": login, "error": str(exc)})
+
+            if dry_run:
+                return {
+                    "source": "twitch",
+                    "status": "dry_run",
+                    "streamer_count": len(streamers),
+                    "plan_count": len(plan),
+                    "would_create": plan[:50],  # cap preview
+                    "would_skip": results["skipped"],
+                    "would_error": results["errors"],
+                }
 
             await db.webhook_audit.insert_one({
                 "source": "twitch",
@@ -497,7 +491,6 @@ def build_webhook_router(db) -> APIRouter:
                 "results": results,
                 "streamer_count": len(streamers),
             })
-
             return {
                 "source": "twitch",
                 "status": "executed",
@@ -508,7 +501,123 @@ def build_webhook_router(db) -> APIRouter:
                 "results": results,
             }
 
-        # Kick + YouTube: still stubbed until their creds + callback URLs land.
+        # ── Kick: real subscription bootstrap ─────────────────────────────
+        if source == "kick":
+            from kick_api import (
+                is_configured as kick_is_configured,
+                get_app_access_token as kick_token,
+                list_subscriptions as kick_list_subs,
+                resolve_broadcaster_user_id,
+                create_subscription as kick_create_subs,
+            )
+            if not kick_is_configured():
+                return JSONResponse(status_code=503, content={
+                    "detail": "kick_oauth_credentials_missing",
+                    "source": source,
+                    "blockers": ["set KICK_CLIENT_ID + KICK_CLIENT_SECRET in backend/.env"],
+                })
+            try:
+                await kick_token()
+            except Exception as exc:
+                return JSONResponse(status_code=502, content={
+                    "detail": "kick_oauth_failed", "source": source, "error": str(exc),
+                })
+
+            # Kick event names per docs/event-types — most channels currently
+            # supported: subscription gifts + subscription renewal. Stream
+            # live/offline events are not yet first-class on Kick's public
+            # API; once they are, add them here.
+            wanted_events = [
+                {"name": "channel.subscription.gifts", "version": 1},
+                {"name": "channel.subscription.renewal", "version": 1},
+            ]
+
+            # Pull tracked Kick streamers from registry.
+            streamer_cur = db.streamers.find(
+                {"platform": {"$in": ["kick", "Kick"]}, "market_id": "FI"},
+                {"_id": 0, "slug": 1, "name": 1},
+            ).limit(500)
+            streamers = await streamer_cur.to_list(length=500)
+
+            # Existing subs per broadcaster (one call per channel — small N).
+            existing_per_user: dict[int, set] = {}
+
+            results = {"subscribed": [], "skipped": [], "errors": []}
+            plan: list[dict] = []
+
+            for s in streamers:
+                slug = (s.get("slug") or "").strip().lower()
+                if not slug:
+                    continue
+                try:
+                    bid = await resolve_broadcaster_user_id(slug)
+                    if not bid:
+                        results["errors"].append({"slug": slug, "error": "unresolved_slug"})
+                        continue
+                    bid = int(bid)
+                    if bid not in existing_per_user:
+                        existing_res = await kick_list_subs(broadcaster_user_id=bid)
+                        existing_per_user[bid] = {
+                            sub.get("event")
+                            for sub in (existing_res.get("subscriptions") or [])
+                        }
+                    new_events = [e for e in wanted_events if e["name"] not in existing_per_user[bid]]
+                    if not new_events:
+                        results["skipped"].append({"slug": slug, "user_id": bid, "reason": "already_subscribed"})
+                        continue
+                    for e in new_events:
+                        plan.append({"slug": slug, "user_id": bid, "event": e["name"]})
+                    if dry_run:
+                        continue
+                    sub_res = await kick_create_subs(bid, new_events)
+                    if sub_res.get("ok"):
+                        for row in sub_res.get("data") or []:
+                            if row.get("subscription_id"):
+                                results["subscribed"].append({
+                                    "slug": slug, "user_id": bid,
+                                    "event": row.get("name"),
+                                    "subscription_id": row.get("subscription_id"),
+                                })
+                            else:
+                                results["errors"].append({"slug": slug, "user_id": bid,
+                                                          "event": row.get("name"),
+                                                          "error": row.get("error") or "unknown"})
+                    else:
+                        results["errors"].append({"slug": slug, "user_id": bid,
+                                                  "status_code": sub_res.get("status_code"),
+                                                  "body": sub_res.get("body")})
+                except Exception as exc:
+                    results["errors"].append({"slug": slug, "error": str(exc)})
+
+            if dry_run:
+                return {
+                    "source": "kick",
+                    "status": "dry_run",
+                    "streamer_count": len(streamers),
+                    "plan_count": len(plan),
+                    "would_create": plan[:50],
+                    "would_skip": results["skipped"],
+                    "would_error": results["errors"],
+                }
+
+            await db.webhook_audit.insert_one({
+                "source": "kick",
+                "action": "resubscribe_executed",
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+                "results": results,
+                "streamer_count": len(streamers),
+            })
+            return {
+                "source": "kick",
+                "status": "executed",
+                "streamer_count": len(streamers),
+                "subscribed_count": len(results["subscribed"]),
+                "skipped_count": len(results["skipped"]),
+                "error_count": len(results["errors"]),
+                "results": results,
+            }
+
+        # YouTube: still stubbed
         await db.webhook_audit.insert_one({
             "source": source,
             "action": "resubscribe_requested",
@@ -517,7 +626,7 @@ def build_webhook_router(db) -> APIRouter:
         return {
             "source": source,
             "status": "queued",
-            "detail": "Credentials configured; live subscription call wiring is the next implementation step.",
+            "detail": "Credentials pending — YouTube PubSubHubbub subscribe call wiring is next.",
         }
 
     # ── Twitch operational verify + list endpoints ────────────────────────
@@ -564,6 +673,55 @@ def build_webhook_router(db) -> APIRouter:
             if "secret" in t:
                 t["secret"] = "***"
         return out
+
+    # ── Kick operational verify + list endpoints ──────────────────────────
+    @r.get("/kick/verify")
+    async def kick_verify(x_admin_token: Optional[str] = Header(default=None)):
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        from kick_api import (
+            is_configured as kick_is_configured,
+            get_app_access_token as kick_token,
+            list_subscriptions as kick_list_subs,
+            fetch_public_key,
+        )
+        if not kick_is_configured():
+            return JSONResponse(status_code=503, content={"detail": "kick_not_configured"})
+        try:
+            token = await kick_token()
+        except Exception as exc:
+            return JSONResponse(status_code=502, content={"detail": "kick_oauth_failed", "error": str(exc)})
+        try:
+            pem = await fetch_public_key()
+            pubkey_ok = pem is not None and b"BEGIN PUBLIC KEY" in pem
+        except Exception:
+            pubkey_ok = False
+        subs = await kick_list_subs()
+        return {
+            "ok": True,
+            "oauth_token_length": len(token),  # length only — never the value
+            "public_key_reachable": pubkey_ok,
+            "subscriptions": {
+                "total": len(subs.get("subscriptions") or []),
+                "by_event": _count_by(subs.get("subscriptions") or [], "event"),
+            },
+            "callback_url": os.environ.get("KICK_WEBHOOK_CALLBACK_URL", ""),
+        }
+
+    @r.get("/kick/subscriptions")
+    async def kick_list_subscriptions(x_admin_token: Optional[str] = Header(default=None),
+                                       broadcaster_user_id: Optional[int] = None):
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        from kick_api import (
+            is_configured as kick_is_configured,
+            list_subscriptions as kick_list_subs,
+        )
+        if not kick_is_configured():
+            return JSONResponse(status_code=503, content={"detail": "kick_not_configured"})
+        return await kick_list_subs(broadcaster_user_id=broadcaster_user_id)
 
     return r
 

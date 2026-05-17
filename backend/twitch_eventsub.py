@@ -148,12 +148,12 @@ async def resolve_user_id(login: str) -> Optional[str]:
     return rows[0].get("id")
 
 
-async def create_stream_online_subscription(broadcaster_user_id: str) -> dict:
-    """Create a stream.online EventSub subscription via webhook transport."""
+async def create_subscription(event_type: str, broadcaster_user_id: str) -> dict:
+    """Create an EventSub subscription of any type via webhook transport."""
     if not is_configured():
         return {"ok": False, "error": "twitch_not_configured"}
     payload = {
-        "type": "stream.online",
+        "type": event_type,
         "version": "1",
         "condition": {"broadcaster_user_id": str(broadcaster_user_id)},
         "transport": {
@@ -166,6 +166,11 @@ async def create_stream_online_subscription(broadcaster_user_id: str) -> dict:
     if code in (200, 202):
         return {"ok": True, "status_code": code, "subscription": (body or {}).get("data", [{}])[0]}
     return {"ok": False, "status_code": code, "body": body}
+
+
+async def create_stream_online_subscription(broadcaster_user_id: str) -> dict:
+    """Back-compat alias for the older callsite."""
+    return await create_subscription("stream.online", broadcaster_user_id)
 
 
 async def delete_subscription(subscription_id: str) -> dict:

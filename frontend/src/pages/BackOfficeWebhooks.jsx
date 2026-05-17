@@ -178,6 +178,14 @@ const BackOfficeWebhooks = () => {
   const [twitchVerifyResult, setTwitchVerifyResult] = useState(null);
   const [twitchVerifyError, setTwitchVerifyError] = useState('');
 
+  // Kick verify state.
+  const [kickVerifyBusy, setKickVerifyBusy] = useState(false);
+  const [kickVerifyResult, setKickVerifyResult] = useState(null);
+  const [kickVerifyError, setKickVerifyError] = useState('');
+
+  // Pending confirm dialog for force-resubscribe (dry-run preview).
+  const [pendingConfirm, setPendingConfirm] = useState(null);
+
   const headers = useCallback((tok = token) => ({ 'Content-Type': 'application/json', 'X-Admin-Token': tok }), [token]);
 
   const fetchStatus = useCallback(async () => {
@@ -210,6 +218,33 @@ const BackOfficeWebhooks = () => {
   }, [authed, fetchStatus]);
 
   const onResubscribe = useCallback(async (source) => {
+    // First leg: dry-run preview. Confirm modal opens before the real call.
+    setBusy(source);
+    setLastAction(null);
+    try {
+      const r = await fetch(`${BACKEND}/api/webhooks/resubscribe/${source}?dry_run=true`, {
+        method: 'POST',
+        headers: headers(),
+      });
+      const raw = await r.text();
+      let body;
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = { raw }; }
+      if (!r.ok) {
+        setLastAction({ source, status: r.status, body });
+        return;
+      }
+      setPendingConfirm({ source, dryRun: body });
+    } catch (e) {
+      setLastAction({ source, status: 0, body: { detail: String(e) } });
+    } finally {
+      setBusy(null);
+    }
+  }, [headers]);
+
+  const onConfirmResubscribe = useCallback(async () => {
+    if (!pendingConfirm) return;
+    const source = pendingConfirm.source;
+    setPendingConfirm(null);
     setBusy(source);
     setLastAction(null);
     try {
@@ -227,7 +262,7 @@ const BackOfficeWebhooks = () => {
       setBusy(null);
       fetchStatus();
     }
-  }, [headers, fetchStatus]);
+  }, [headers, fetchStatus, pendingConfirm]);
 
   const onForceRebuild = useCallback(async () => {
     setRebuildBusy(true);
@@ -280,6 +315,27 @@ const BackOfficeWebhooks = () => {
       setTwitchVerifyError(String(e));
     } finally {
       setTwitchVerifyBusy(false);
+    }
+  }, [headers]);
+
+  const onKickVerify = useCallback(async () => {
+    setKickVerifyBusy(true);
+    setKickVerifyError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/webhooks/kick/verify`, { headers: headers() });
+      const raw = await r.text();
+      let body;
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = { raw }; }
+      if (!r.ok) {
+        setKickVerifyError(`HTTP ${r.status} · ${body.detail || body.error || raw || 'tuntematon virhe'}`);
+        setKickVerifyResult(null);
+        return;
+      }
+      setKickVerifyResult({ ...body, verified_at: new Date().toISOString() });
+    } catch (e) {
+      setKickVerifyError(String(e));
+    } finally {
+      setKickVerifyBusy(false);
     }
   }, [headers]);
 
@@ -464,6 +520,52 @@ const BackOfficeWebhooks = () => {
           ) : null}
         </div>
 
+        {/* Kick connection verify panel — same shape as Twitch, green accent */}
+        <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #53FC18' }}
+             data-testid="kick-verify-panel">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-[260px]">
+              <div className="mono inline-flex items-center gap-2 mb-2"
+                   style={{ fontSize: 11, letterSpacing: '0.22em', color: '#3FAA10', fontWeight: 700 }}>
+                <Webhook strokeWidth={1.7} size={13} />
+                KICK · YHTEYDEN VARMENNUS
+              </div>
+              <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 6 }}>
+                Vaihtaa client_credentials → app token ja hakee Kickin webhook-signing-julkisen avaimen.
+                Ei luo uusia tilauksia.
+              </p>
+              {kickVerifyResult ? (
+                <div className="mono" style={{ fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--ink)', fontWeight: 600, lineHeight: 1.6 }}
+                     data-testid="kick-verify-summary">
+                  TILAUKSIA · {kickVerifyResult.subscriptions?.total ?? 0}
+                  {' · '}OAUTH {kickVerifyResult.ok ? '✓' : '✗'}
+                  {' · '}PUBLIC KEY {kickVerifyResult.public_key_reachable ? '✓' : '✗'}
+                </div>
+              ) : (
+                <div className="mono" style={{ fontSize: 10, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
+                  EI VIELÄ VARMISTETTU
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={onKickVerify} disabled={kickVerifyBusy}
+                    className="btn-primary mono inline-flex items-center gap-2"
+                    style={{ fontSize: 11, letterSpacing: '0.16em', fontWeight: 700, padding: '12px 18px',
+                             background: '#53FC18', color: '#0A0A0A', opacity: kickVerifyBusy ? 0.7 : 1 }}
+                    data-testid="kick-verify-button">
+              {kickVerifyBusy ? <Loader2 strokeWidth={1.8} size={13} className="animate-spin" />
+                                : <CheckCircle2 strokeWidth={1.8} size={13} />}
+              {kickVerifyBusy ? 'YHDISTETÄÄN…' : 'VARMENNA KICK-YHTEYS'}
+            </button>
+          </div>
+          {kickVerifyError ? (
+            <div className="mono mt-4" style={{ fontSize: 10.5, letterSpacing: '0.12em', color: '#C8423C', fontWeight: 600 }}
+                 data-testid="kick-verify-error">
+              VIRHE · {kickVerifyError}
+            </div>
+          ) : null}
+        </div>
+
+
 
         <div className="grid grid-cols-1 gap-3" data-testid="webhook-source-rows">
           {sources.map((s) => (
@@ -505,6 +607,75 @@ const BackOfficeWebhooks = () => {
             </Link>
           </div>
         </div>
+
+      {/* Confirm modal — gates execution of resubscribe behind a preview */}
+      {pendingConfirm ? (
+        <div
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.62)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 100, padding: 24,
+          }}
+          data-testid="resubscribe-confirm-modal"
+          onClick={() => setPendingConfirm(null)}
+        >
+          <div
+            className="panel"
+            style={{ padding: '24px 28px', maxWidth: 640, width: '100%', background: 'var(--bg)', borderLeft: '3px solid #E8924A' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mono inline-flex items-center gap-2 mb-3"
+                 style={{ fontSize: 11, letterSpacing: '0.22em', color: '#E8924A', fontWeight: 700 }}>
+              <AlertTriangle strokeWidth={1.7} size={13} />
+              VAHVISTA · {pendingConfirm.source.toUpperCase()} RESUBSCRIBE
+            </div>
+            <div className="font-serif mb-4" style={{ fontSize: 14, lineHeight: 1.55, color: 'var(--ink)' }}>
+              Tämä luo <strong>{pendingConfirm.dryRun?.plan_count ?? 0}</strong> oikeaa webhook-tilausta {pendingConfirm.source === 'twitch' ? 'Twitchin Helix-EventSub-rajapintaan' : 'Kickin events-rajapintaan'}.
+              {' '}{pendingConfirm.dryRun?.would_skip?.length ? `${pendingConfirm.dryRun.would_skip.length} ohitetaan jo olemassa.` : ''}
+              {' '}{pendingConfirm.dryRun?.would_error?.length ? `${pendingConfirm.dryRun.would_error.length} virhettä esikatselussa.` : ''}
+            </div>
+            <div className="mono mb-4"
+                 style={{ fontSize: 10.5, letterSpacing: '0.10em', color: 'var(--muted)', fontWeight: 500, lineHeight: 1.55, maxHeight: 220, overflowY: 'auto' }}
+                 data-testid="resubscribe-confirm-plan">
+              {(pendingConfirm.dryRun?.would_create || []).slice(0, 20).map((p, i) => (
+                <div key={i}>
+                  {p.slug} · {p.event}{p.user_id ? ` · uid ${p.user_id}` : ''}
+                </div>
+              ))}
+              {(pendingConfirm.dryRun?.would_create || []).length > 20 ? (
+                <div>… ja {pendingConfirm.dryRun.would_create.length - 20} muuta</div>
+              ) : null}
+              {(pendingConfirm.dryRun?.would_create || []).length === 0 ? (
+                <div>EI UUSIA TILAUKSIA — KAIKKI JO OLEMASSA</div>
+              ) : null}
+            </div>
+            {(pendingConfirm.dryRun?.would_error?.length ?? 0) > 0 ? (
+              <div className="mono mb-4" style={{ fontSize: 10.5, letterSpacing: '0.10em', color: '#C8423C', fontWeight: 600, lineHeight: 1.6 }}
+                   data-testid="resubscribe-confirm-errors">
+                ESIKATSELUVIRHEET:
+                {(pendingConfirm.dryRun.would_error || []).slice(0, 5).map((e, i) => (
+                  <div key={i} style={{ marginLeft: 8 }}>· {e.slug || '?'} — {e.error || `HTTP ${e.status_code}`}</div>
+                ))}
+              </div>
+            ) : null}
+            <div className="flex items-center justify-end gap-3">
+              <button type="button" onClick={() => setPendingConfirm(null)} className="btn-ghost mono"
+                      data-testid="resubscribe-confirm-cancel">
+                PERUUTA
+              </button>
+              <button type="button" onClick={onConfirmResubscribe}
+                      disabled={(pendingConfirm.dryRun?.plan_count ?? 0) === 0}
+                      className="btn-primary mono"
+                      style={{ background: '#E8924A', color: '#0A0A0A', fontWeight: 700, letterSpacing: '0.14em',
+                               opacity: (pendingConfirm.dryRun?.plan_count ?? 0) === 0 ? 0.4 : 1 }}
+                      data-testid="resubscribe-confirm-execute">
+                LUO {pendingConfirm.dryRun?.plan_count ?? 0} TILAUSTA →
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       </div>
     </div>
   );

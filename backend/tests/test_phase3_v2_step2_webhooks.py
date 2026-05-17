@@ -1,12 +1,14 @@
 """Phase 3 V2 Step 2 — Webhook signal ingestion tests.
 
-Covers Twitch (HMAC-SHA256), Kick (HMAC-SHA256), and YouTube PubSubHubbub
+Covers Twitch (HMAC-SHA256), Kick (RSA PKCS1v15 SHA-256 over the documented
+{msg_id}.{timestamp}.{body} signing string), and YouTube PubSubHubbub
 (HMAC-SHA1) endpoints exposed by webhooks.py. Uses FastAPI TestClient so
-env-controlled secrets can be set per-test without touching the running
-supervisor backend.
+env-controlled secrets / test keypairs can be set per-test without touching
+the running supervisor backend.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -15,6 +17,8 @@ import uuid
 from datetime import datetime, timezone
 
 import pytest
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 # Disable background workers before importing server (they would conflict
 # with the supervised uvicorn already running on 8001 by touching the same
@@ -24,14 +28,29 @@ os.environ.setdefault("PUTKI_HQ_DISABLE_SCHEDULER", "1")
 
 # Set webhook secrets before app import so the lazy env readers see them.
 TWITCH_SECRET = "twitch_test_secret_phase3v2_step2"
-KICK_SECRET = "kick_test_secret_phase3v2_step2"
 YOUTUBE_SECRET = "yt_pubsub_test_secret_phase3v2_step2"
 os.environ["TWITCH_EVENTSUB_SECRET"] = TWITCH_SECRET
-os.environ["KICK_WEBHOOK_SECRET"] = KICK_SECRET
 os.environ["YOUTUBE_PUBSUB_SECRET"] = YOUTUBE_SECRET
+# Kick now requires CLIENT_ID + CLIENT_SECRET (RSA verification, not HMAC).
+os.environ["KICK_CLIENT_ID"] = "test_kick_client_id"
+os.environ["KICK_CLIENT_SECRET"] = "test_kick_client_secret"
+
+# Generate an in-process RSA keypair for Kick test signing. Inject the public
+# key into the Kick api module's cache so the webhook handler verifies
+# against our keypair instead of fetching from Kick servers.
+_kick_test_priv = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+_kick_test_pub_pem = _kick_test_priv.public_key().public_bytes(
+    serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
+)
 
 import sys  # noqa: E402
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+# Patch Kick public-key cache BEFORE app import so the first request finds
+# our test key in the cache.
+import kick_api as _kick_api  # noqa: E402
+_kick_api._PUBKEY_CACHE["pem"] = _kick_test_pub_pem
+_kick_api._PUBKEY_CACHE["fetched_at"] = 9999999999  # far future — never refreshes
 
 from fastapi.testclient import TestClient  # noqa: E402
 from server import app, db as server_db  # noqa: E402
@@ -53,8 +72,12 @@ def _twitch_sign(secret: str, msg_id: str, ts: str, body: bytes) -> str:
     return "sha256=" + hmac.new(secret.encode("utf-8"), base, hashlib.sha256).hexdigest()
 
 
-def _kick_sign(secret: str, body: bytes) -> str:
-    return "sha256=" + hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+def _kick_sign(msg_id: str, timestamp: str, body: bytes) -> str:
+    """RSA PKCS1v15 SHA-256 signature over `{msg_id}.{timestamp}.{body}`,
+    base64-encoded. Mirrors the documented Kick scheme."""
+    signed = f"{msg_id}.{timestamp}.".encode("utf-8") + body
+    sig = _kick_test_priv.sign(signed, padding.PKCS1v15(), hashes.SHA256())
+    return base64.b64encode(sig).decode("ascii")
 
 
 def _youtube_sign(secret: str, body: bytes) -> str:
@@ -211,13 +234,15 @@ class TestKickWebhook:
                 "session_title": "PACT KICK LIVE",
             },
         }).encode("utf-8")
-        sig = _kick_sign(KICK_SECRET, body)
         msg_id = f"kick-{uuid.uuid4()}"
+        timestamp = _now_iso()
+        sig = _kick_sign(msg_id, timestamp, body)
         r = client.post(
             "/api/webhooks/kick",
             content=body,
             headers={
                 "Kick-Event-Signature": sig,
+                "Kick-Event-Message-Timestamp": timestamp,
                 "Kick-Event-Type": "livestream.started",
                 "Kick-Event-Message-Id": msg_id,
                 "Content-Type": "application/json",
@@ -239,7 +264,9 @@ class TestKickWebhook:
             "/api/webhooks/kick",
             content=body,
             headers={
-                "Kick-Event-Signature": "sha256=nope",
+                "Kick-Event-Signature": base64.b64encode(b"deadbeef" * 32).decode("ascii"),
+                "Kick-Event-Message-Id": f"bad-{uuid.uuid4()}",
+                "Kick-Event-Message-Timestamp": _now_iso(),
                 "Content-Type": "application/json",
             },
         )
@@ -332,7 +359,8 @@ class TestUnconfiguredDormant:
             assert r.status_code == 503
 
     def test_kick_503_when_secret_missing(self, monkeypatch):
-        monkeypatch.delenv("KICK_WEBHOOK_SECRET", raising=False)
+        monkeypatch.delenv("KICK_CLIENT_ID", raising=False)
+        monkeypatch.delenv("KICK_CLIENT_SECRET", raising=False)
         from importlib import reload
         import webhooks as wh
         reload(wh)

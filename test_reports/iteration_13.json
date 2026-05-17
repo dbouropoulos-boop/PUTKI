@@ -1,0 +1,52 @@
+{
+  "summary": "Iteration 13 — Phase 3 V2 Kick live-wiring + dry-run/confirm safety upgrades verified end-to-end. Backend pytest 112/112 PASS (60.9s) under PUTKI_HQ_DISABLE_WORKERS=1 PUTKI_HQ_DISABLE_SCHEDULER=1 (--ignore=tests/test_phase3a_v2_content.py). Kick webhooks subset 16/16 PASS (test_phase3_v2_step2_webhooks.py, 1.92s) — RSA PKCS1v15-SHA256 verification, replay protection, dormant 503. 8/8 NEW endpoint tests PASS (test_iter13_kick_endpoints.py): /api/webhooks/status returns kick_configured=true; /api/webhooks/kick/verify (admin) returns ok=true, oauth_token_length>0, public_key_reachable=true, callback_url='https://putkihq.fi/api/webhooks/kick', subscriptions {total:0,by_event:{}}; /api/webhooks/kick/subscriptions returns ok=true, []; both endpoints 401 without admin token; POST /api/webhooks/resubscribe/twitch?dry_run=true returns status='dry_run', streamer_count=17, plan_count=30 = 2*15 resolved (2 unresolved logins reported in would_error[vihis, mattislots]); twitch verify total stays 0 before+after; POST /api/webhooks/resubscribe/kick?dry_run=true returns dry_run with events scoped to {channel.subscription.gifts, channel.subscription.renewal}; POST /api/webhooks/resubscribe/foo?dry_run=true → 400 unknown_source. Frontend Playwright (1920×4000): /back-office/webhooks unlocks with X-Admin-Token=putki-hq-admin, kick-verify-panel (green) renders AFTER twitch-verify-panel (purple) in DOM order. Clicking kick-verify-button populates kick-verify-summary with exact string 'TILAUKSIA · 0 · OAUTH ✓ · PUBLIC KEY ✓'. Clicking webhook-resubscribe-twitch opens resubscribe-confirm-modal with plan listing 30 entries (online+offline pairs for 15 streamers, e.g. 'jarttu84 · stream.online · uid 36467610'), execute btn 'LUO 30 TILAUSTA →' (opacity 1, enabled), cancel btn 'PERUUTA'. PERUUTA closes modal cleanly; twitch /verify subs.total stays 0 — NO real subscriptions created. Same flow for Kick: modal opens with 18 entries scoped to channel.subscription.gifts/renewal (e.g. 'pact · channel.subscription.gifts · uid 79517150'), execute 'LUO 18 TILAUSTA →', PERUUTA closes modal. Homepage /: mosaic 'POLL · 30 S · REAL SIGNALS ONLY' indicator rendered; PUTKI HQ live frame, dial HAALEA 43, no console errors, no regression on home. DID NOT execute LUO N TILAUSTA → on either source (per agent_to_agent_context_note — quota protection).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verified_checks": {
+    "pytest_full_regression": "PASS — 112/112",
+    "pytest_kick_webhooks_subset": "PASS — 16/16 in test_phase3_v2_step2_webhooks.py (RSA-verified)",
+    "status_kick_configured": "PASS — kick_configured=true",
+    "kick_verify_endpoint": "PASS — ok=true, oauth_token_length>0, public_key_reachable=true, callback_url match",
+    "kick_verify_401_unauth": "PASS",
+    "kick_subscriptions_endpoint": "PASS — ok=true, []",
+    "kick_subscriptions_401_unauth": "PASS",
+    "twitch_dry_run_plan_2x_resolved": "PASS — plan_count=30 = 2*15 resolved streamers (17 registry, 2 unresolved in would_error)",
+    "twitch_dry_run_no_real_subs": "PASS — twitch/verify total unchanged at 0 before+after",
+    "kick_dry_run_events_scope": "PASS — channel.subscription.gifts + channel.subscription.renewal only",
+    "resubscribe_unknown_source_400": "PASS",
+    "fe_kick_panel_after_twitch_panel": "PASS — DOM order kick_after_twitch",
+    "fe_kick_verify_summary_exact": "PASS — 'TILAUKSIA · 0 · OAUTH ✓ · PUBLIC KEY ✓'",
+    "fe_twitch_confirm_modal_opens": "PASS — modal visible, plan 30 entries, exec 'LUO 30 TILAUSTA →' opacity 1, PERUUTA cancels",
+    "fe_twitch_no_subs_created_after_cancel": "PASS — /twitch/verify total=0",
+    "fe_kick_confirm_modal_opens": "PASS — modal visible, plan 18 entries (gifts+renewal), exec 'LUO 18 TILAUSTA →' opacity 1, PERUUTA cancels",
+    "fe_mosaic_poll_indicator": "PASS — 'POLL · 30 S · REAL SIGNALS ONLY' rendered on home",
+    "fe_no_regression_home": "PASS — dial HAALEA 43, mosaic 5 frames, voyager card, no console errors"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter13_kick_endpoints.py",
+    "/app/backend/tests/test_phase3_v2_step2_webhooks.py",
+    "/app/test_reports/pytest/iter13_full.xml",
+    "/app/test_reports/pytest/iter13_webhooks.xml",
+    "/app/test_reports/pytest/iter13_endpoints.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BackOfficeWebhooks.jsx onResubscribe sets busy=source DURING the dry-run preview fetch. For Kick this includes an OAuth client_credentials exchange (live network), which can take 2-6s, so the row shows 'WORKING...' for a noticeable beat before the modal opens. Consider showing a 'Hetki — luetaan suunnitelma' state in the button or pre-fetching the dry-run on hover/focus to reduce confusion (current behaviour is correct, just slow-feeling on first click).",
+    "test_iter13_kick_endpoints.py initial draft asserted plan_count==2*streamer_count which fails because 2/17 Twitch logins (vihis, mattislots) are unresolvable — the contract is 2*RESOLVED, not 2*REGISTRY. Updated test to subtract len(would_error). Worth surfacing in the operator UI that 2 streamers can never have subs because their Twitch handles don't resolve — currently they only show in would_error during dry-run, easy to miss.",
+    "Kick dry-run /resubscribe/kick exposes 9 channels × 2 events = 18 entries in plan even though kick-verify-panel says TILAUKSIA · 0 — the panel reflects EXISTING subscriptions, the modal reflects PLANNED ones. UX-wise this is correct but reviewers might conflate the two; consider adding 'olemassa: 0 · suunnitellaan: 18' to the modal header for symmetry.",
+    "kick_api._PUBKEY_CACHE is module-level dict mutated by tests — fine for current single-process pytest, but if production ever runs multi-worker uvicorn each worker fetches independently (acceptable trade-off; documented in plan).",
+    "Static KICK_PUBLIC_KEY_FALLBACK pinned to docs.kick.com value gives correct resilience; verify_signature helper correctly returns False on invalid sig (16/16 webhook pytest covers this)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter13_kick_endpoints.py (NEW — 8 endpoint tests for Kick live wiring + dry-run flow)"
+  ],
+  "success_rate": {
+    "backend": "100% (112/112 pytest regression + 16/16 webhooks subset + 8/8 new endpoint tests = 136/136)",
+    "frontend": "100% (19/19 UI checks across back-office webhooks + home mosaic)"
+  },
+  "test_credentials": "X-Admin-Token: putki-hq-admin (no change since iter12).",
+  "seed_data_creation": "None. Dry-run-only — verified no Twitch or Kick real subscriptions were created (twitch/verify total stayed at 0; kick/subscriptions stayed at []).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 V2 Kick wiring + confirm-modal is GA. Live Kick OAuth client_credentials (no scope) works against id.kick.com — token length ~700, expires_in 5,184,000s (60d), cached with 5-min buffer in kick_api._OAUTH_TOKEN_CACHE. Public key fetched from api.kick.com/public/v1/public-key with 24h cache + static PEM fallback; verify_signature uses RSA PKCS1v15-SHA256. DO NOT execute POST /api/webhooks/resubscribe/{twitch,kick} without dry_run=true — production lacks TWITCH_EVENTSUB_SECRET so any executed Twitch subs would get auto-cleaned-up by Twitch after retries (operational incident from iter ≤12 confirmed cleaned up; iter13 did NOT execute). Confirm modal flow is the only safe path: data-testid='resubscribe-confirm-modal' / 'resubscribe-confirm-plan' / 'resubscribe-confirm-cancel' (PERUUTA) / 'resubscribe-confirm-execute' (LUO N TILAUSTA → with opacity 0.4 when plan_count===0, opacity 1 otherwise). The 2 unresolvable Twitch logins (vihis, mattislots) show in would_error every dry-run — main agent may want to either remove these from the registry or wire up a UI surfacing of unresolved handles. New test file at /app/backend/tests/test_iter13_kick_endpoints.py covers all endpoint contracts and should be kept as regression."
+}
