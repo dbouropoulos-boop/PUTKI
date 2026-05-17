@@ -127,7 +127,7 @@ const PickRow = ({ p, idx }) => {
   );
 };
 
-const PaivaVitoset = () => {
+const PaivaVitoset = ({ compact = false }) => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -163,6 +163,7 @@ const PaivaVitoset = () => {
   }, [showModal]);
 
   const picks = data?.picks || [];
+  const visible = compact ? picks.slice(0, 3) : picks;
   const dormant = data?.dormant;
   const fetchedLabel = data?.fetched_at
     ? new Date(data.fetched_at * 1000).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' })
@@ -234,7 +235,17 @@ const PaivaVitoset = () => {
           </div>
         ) : (
           <ul data-testid="paivan-vitoset-list">
-            {picks.map((p, i) => <PickRow key={p.event_id || i} p={p} idx={i} />)}
+            {visible.map((p, i) => <PickRow key={p.event_id || i} p={p} idx={i} />)}
+            {compact && picks.length > visible.length && (
+              <li className="px-4 sm:px-5 py-3 mono"
+                  style={{ borderTop: '1px solid var(--border)', fontSize: 10.5,
+                           letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+                <a href="/viikon-kortti" data-testid="paivan-vitoset-view-all"
+                   style={{ color: 'var(--ink)', textDecoration: 'none' }}>
+                  KATSO KAIKKI 5 VINKKIÄ · VIIKON KORTTI →
+                </a>
+              </li>
+            )}
           </ul>
         )}
 

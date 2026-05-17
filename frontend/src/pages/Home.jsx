@@ -20,6 +20,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucide-react';
 import LiveDataTicker from '../components/LiveDataTicker';
+import TrustStrip from '../components/TrustStrip';
 import DialCockpit from '../components/DialCockpit';
 import LiveActivityFeed from '../components/LiveActivityFeed';
 import StreamerLiveGrid from '../components/StreamerLiveGrid';
@@ -362,7 +363,7 @@ const Home = () => {
       </div>
 
       <div className="py-10" style={{ borderTop: '1px solid var(--border)' }} data-testid="zone-paivan-vitoset">
-        <PaivaVitoset />
+        <PaivaVitoset compact />
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)' }}>
@@ -380,6 +381,7 @@ const Home = () => {
       </div>
 
       {/* ZONE 5 — capture form */}
+      <TrustStrip />
       <CaptureSection />
 
       {/* Pulssi + Operaattoritapahtumat: HIDDEN until commercial decisions land

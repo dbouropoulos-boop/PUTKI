@@ -61,10 +61,10 @@ const ActivityStats = () => {
         <div className="mono inline-flex items-center gap-2"
              style={{ fontSize: 10.5, letterSpacing: '0.28em', color: 'var(--ink)', fontWeight: 700 }}>
           <span style={{ width: 6, height: 6, borderRadius: 999, background: '#2c7a4b', boxShadow: '0 0 6px #2c7a4b' }} />
-          AKTIVITEETTI · LIVE
+          PUTKI HQ · LIVE
         </div>
         <span className="mono" style={{ fontSize: 9.5, letterSpacing: '0.16em', color: 'var(--muted)', opacity: 0.7 }}>
-          PUBLISHED CONTENT
+          JULKAISTU SISÄLTÖ
         </span>
       </div>
 

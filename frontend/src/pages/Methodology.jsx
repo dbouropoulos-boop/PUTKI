@@ -1,130 +1,182 @@
+/**
+ * Methodology (/menetelma) — boxed, scannable layout per Dioni's spec.
+ * Replaces the previous wall-of-text rendering with 7 self-contained cards.
+ */
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { Compass, Database, Hand, Slash, BarChart3, Clock, FileCheck } from 'lucide-react';
+import useDocumentMeta from '../hooks/useDocumentMeta';
 import { EditorialFooter } from '../components/EditorialFooter';
 
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
 const SECTIONS = [
-  { id: 'mista',       title: 'Mistä Mittari-pisteet kertovat' },
-  { id: 'objektiivi',  title: 'Objektiiviset tekijät' },
-  { id: 'kaupallinen', title: 'Kaupallinen painotus' },
-  { id: 'ei-vaikuta',  title: 'Mikä ei vaikuta pisteisiin' },
-  { id: 'floor',       title: 'Floor: minimivaatimukset' },
-  { id: 'paivitykset', title: 'Päivitysten taajuus' },
-  { id: 'affiliaatti', title: 'Affiliaatiosuhteet' },
+  {
+    id: 'mista',
+    icon: Compass,
+    title: 'Mistä Mittari-pisteet kertovat',
+    body: (
+      <>
+        <p>
+          Mittari-pisteet (0–100) kertovat yhdessä numerossa, kuinka hyvä operaattori on
+          suomalaiselle pelaajalle <em>juuri tänään</em>. Pisteet päivittyvät viikoittain
+          ja reagoivat siihen, mitä todella tapahtuu — maksunopeudet, valitukset, lisenssi.
+        </p>
+        <p>
+          Pisteet eivät kerro voitatko sinä. Ne kertovat, kuinka todennäköisesti
+          operaattori käyttäytyy reilusti kun jotain menee pieleen.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'objektiivi',
+    icon: Database,
+    title: 'Objektiiviset tekijät · 70 %',
+    body: (
+      <ul className="list-disc pl-5 space-y-1.5">
+        <li><strong>Lisenssi ja turva · 20 %</strong></li>
+        <li><strong>Maksunopeus · 18 %</strong> — 50 testitalletuksen mediaani</li>
+        <li><strong>Pelivalikoima · 12 %</strong></li>
+        <li><strong>Suomenkieliset ominaisuudet · 10 %</strong></li>
+        <li><strong>Asiakaspalvelun reagointi · 5 %</strong></li>
+        <li><strong>Bonusten rehellisyys · 5 %</strong></li>
+      </ul>
+    ),
+  },
+  {
+    id: 'kaupallinen',
+    icon: Hand,
+    title: 'Toimituksellinen painotus · 30 %',
+    body: (
+      <p>
+        Yhteisön signaalit, valitusten käsittely, toimituksen näkemys siitä, miten
+        operaattori käyttäytyy poikkeuksissa. Kaupallinen yhteistyö <em>ei nosta</em>{' '}
+        pisteitä. Affiliaatti-suhteet listataan sivulla{' '}
+        <Link to="/affiliaatti" className="underline">affiliaatti</Link>.
+      </p>
+    ),
+  },
+  {
+    id: 'ei-vaikuta',
+    icon: Slash,
+    title: 'Mikä EI vaikuta pisteisiin',
+    body: (
+      <ul className="list-disc pl-5 space-y-1.5">
+        <li>Affiliaatti-CPA · paljonko meille maksetaan asiakkaasta</li>
+        <li>Mainossponsorit · ei mainoksia, ei sponsoreita</li>
+        <li>Striimaajien suhteet operaattoriin</li>
+        <li>Tervetuliaisbonuksen koko</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'floor',
+    icon: BarChart3,
+    title: 'Floor · minimivaatimukset',
+    body: (
+      <ul className="list-disc pl-5 space-y-1.5">
+        <li>Voimassa oleva eurooppalainen lisenssi</li>
+        <li>Maksunopeus mediaani &lt; 48 h</li>
+        <li>Suomenkielinen asiakaspalvelu arkisin 09–21</li>
+        <li>Bonusehdot avoimesti suomeksi</li>
+        <li>Vähintään 60 / 100 — alemmat eivät listalla</li>
+      </ul>
+    ),
+  },
+  {
+    id: 'paivitykset',
+    icon: Clock,
+    title: 'Päivitysten taajuus',
+    body: (
+      <p>
+        Datapohjaiset tekijät päivitetään <strong>viikoittain</strong>. Toimitukselliset
+        arviot <strong>kuukausittain</strong>. Merkittävät muutokset (lisenssi katoaa,
+        valitukset kasvavat) → päivitämme heti.
+      </p>
+    ),
+  },
+  {
+    id: 'affiliaatti',
+    icon: FileCheck,
+    title: 'Affiliaatti-suhteet',
+    body: (
+      <p>
+        Kaupalliset suhteet on rajattu maksimissaan <strong>+5 / 100</strong> ja
+        ilmoitetaan jokaisen operaattorin arvio-sivulla. Vuonna 2027 (Suomen oma lisenssi)
+        päivitämme suhteet kokonaan ja kerromme uudet etukäteen.
+      </p>
+    ),
+  },
 ];
 
+const SectionCard = ({ section, idx }) => {
+  const Icon = section.icon;
+  return (
+    <article
+      id={section.id}
+      data-testid={`methodology-section-${idx}`}
+      className="panel p-6 sm:p-7"
+      style={{ background: 'var(--bg)', borderRadius: 4 }}
+    >
+      <div className="flex items-start gap-4 mb-4">
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 40, height: 40, borderRadius: 2,
+            background: 'var(--surface)',
+            border: '1px solid var(--border-strong)',
+          }}
+        >
+          <Icon strokeWidth={1.5} size={18} style={{ color: 'var(--ink)' }} />
+        </div>
+        <div>
+          <div className="mono mb-1" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+            {String(idx + 1).padStart(2,'0')} · MENETELMÄ
+          </div>
+          <h2 className="display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15 }}>
+            {section.title}
+          </h2>
+        </div>
+      </div>
+      <div className="font-serif space-y-3"
+           style={{ fontSize: 14.5, color: 'var(--ink)', lineHeight: 1.55 }}>
+        {section.body}
+      </div>
+    </article>
+  );
+};
+
 const Methodology = () => {
+  useDocumentMeta({
+    title: 'Menetelmä — PUTKI HQ',
+    description: 'Miten Mittari-pisteet syntyvät — objektiiviset tekijät 70 %, toimituksellinen painotus 30 %, ja mikä ei vaikuta.',
+    canonical: `${BACKEND}/menetelma`,
+  });
+
   return (
     <div data-testid="methodology-page">
       <section className="container-wide pt-12 sm:pt-20 pb-10 sm:pb-12">
         <div className="max-w-3xl">
-          <div className="eyebrow mb-4">Toimituksellinen menetelmä</div>
+          <div className="eyebrow mb-4">TOIMITUKSELLINEN MENETELMÄ</div>
           <h1 className="display text-4xl sm:text-6xl mb-6">Miten Mittari-pisteet syntyvät</h1>
-          <p className="mono mb-5" data-testid="methodology-tagline" style={{ fontSize: 13, letterSpacing: '0.12em', color: '#E8924A', fontWeight: 700 }}>
+          <p className="mono mb-5"
+             style={{ fontSize: 13, letterSpacing: '0.12em', color: '#E8924A', fontWeight: 700 }}>
             MITTARI EI MITTAA RAHAA. MITTARI MITTAA HUOMIOTA.
           </p>
-          <p className="prose-mittari text-muted-text">
-            Mittari-pisteet (0–100) muodostuvat kahdesta osasta: kovasta datasta ja toimituksellisesta painotuksesta. Tämä sivu on auki kaikille. Jos joku väittää meidän mainostaneen sijoituksia, lue tämä ja katso uudelleen.
+          <p className="prose-mittari max-w-2xl">
+            Mittari-pisteet (0–100) muodostuvat <strong>objektiivisesta datasta (70 %)</strong> ja{' '}
+            <strong>toimituksellisesta painotuksesta (30 %)</strong>. Tämä sivu on auki
+            kaikille. Jos joku väittää meidän mainostaneen sijoituksia, lue tämä ja katso uudelleen.
           </p>
         </div>
       </section>
 
       <section className="container-wide pb-20 sm:pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
-          {/* TOC */}
-          <aside className="lg:col-span-3 lg:sticky lg:top-24 lg:self-start" data-testid="methodology-toc">
-            <div className="eyebrow mb-4">Sisältö</div>
-            <nav className="space-y-2">
-              {SECTIONS.map((s) => (
-                <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  className="block font-display text-[13px] text-ink hover:text-brand-blue py-1"
-                >
-                  {s.title}
-                </a>
-              ))}
-            </nav>
-          </aside>
-
-          {/* CONTENT */}
-          <article className="lg:col-span-9 prose-mittari max-w-3xl">
-            <section id="mista" className="mb-16" data-testid="section-0">
-              <h2 className="display text-3xl sm:text-4xl mb-5">Mistä Mittari-pisteet kertovat</h2>
-              <p>
-                Mittari-pisteet kertovat yhdessä numerossa, kuinka hyvä operaattori on suomalaiselle pelaajalle <em>juuri tänään</em>. Pisteet eivät ole pysyvät — ne päivittyvät viikoittain ja reagoivat siihen, mitä todella tapahtuu (maksunopeudet hidastuvat, valitusten määrä kasvaa, lisenssi muuttuu).
-              </p>
-              <p>
-                Pisteet eivät kerro, voitatko juuri sinä. Ne kertovat, kuinka todennäköisesti operaattori käyttäytyy reilusti, kun jotain menee pieleen.
-              </p>
-            </section>
-
-            <section id="objektiivi" className="mb-16" data-testid="section-1">
-              <h2 className="display text-3xl sm:text-4xl mb-5">Objektiiviset tekijät</h2>
-              <p>
-                70 prosenttia pisteistä tulee mitattavasta datasta:
-              </p>
-              <ul className="list-disc pl-6 space-y-2 mt-4">
-                <li><strong>Lisenssi ja turva (20 %)</strong> — MGA, AGCC, UKGC, Curaçao. Painotus eroavaisuuksiin.</li>
-                <li><strong>Maksunopeus (18 %)</strong> — 50 testitalletuksen ja kotiutuksen mediaani per operaattori.</li>
-                <li><strong>Pelivalikoima (12 %)</strong> — pelistudioiden määrä, uusien julkaisujen aikataulu.</li>
-                <li><strong>Suomenkieliset ominaisuudet (10 %)</strong> — käyttöliittymä, asiakaspalvelu, bonusehdot suomeksi.</li>
-                <li><strong>Asiakaspalvelun reagointi (5 %)</strong> — chat-vastausaika eri vuorokaudenaikoina.</li>
-                <li><strong>Bonusten rehellisyys (5 %)</strong> — kierron, voimassaolon ja peli-rajoitusten selkeys.</li>
-              </ul>
-            </section>
-
-            <section id="kaupallinen" className="mb-16" data-testid="section-2">
-              <h2 className="display text-3xl sm:text-4xl mb-5">Kaupallinen painotus</h2>
-              <p>
-                30 prosenttia pisteistä on toimituksellinen arvio. Tähän kuuluu yhteisön signaalit (Ylilauta, Suomi24, Discord), pitkän aikavälin maine, valitusten käsittely AskGamblersilla ja Casino.Gurussa, sekä toimituksen oma näkemys siitä, kuinka operaattori käyttäytyy poikkeustilanteissa.
-              </p>
-              <p>
-                Kaupallinen yhteistyö operaattorin kanssa <em>ei nosta</em> pisteitä. Affiliaatiosuhteet on listattu erikseen sivulla, ja ne ovat aina näkyvissä.
-              </p>
-            </section>
-
-            <section id="ei-vaikuta" className="mb-16" data-testid="section-3">
-              <h2 className="display text-3xl sm:text-4xl mb-5">Mikä ei vaikuta pisteisiin</h2>
-              <ul className="list-disc pl-6 space-y-2 mt-4">
-                <li>Affiliaatti-CPA — paljonko meille maksetaan asiakkaasta.</li>
-                <li>Mainossponsorit — ei mainoksia, ei sponsoreita.</li>
-                <li>Striimaajien suhteet — operaattorin yhteistyö Jarttu84:n kanssa ei nosta pisteitä.</li>
-                <li>Tervetuliaisbonuksen koko — bonuksen suuruus ei nosta pisteitä, ehdot voivat laskea niitä.</li>
-              </ul>
-            </section>
-
-            <section id="floor" className="mb-16" data-testid="section-4">
-              <h2 className="display text-3xl sm:text-4xl mb-5">Floor: minimivaatimukset</h2>
-              <p>
-                PUTKI HQ:n listauksessa olevien operaattoreiden täytyy täyttää nämä ehdot:
-              </p>
-              <ul className="list-disc pl-6 space-y-2 mt-4">
-                <li>Voimassa oleva eurooppalainen lisenssi (tai vastaava).</li>
-                <li>Maksunopeus alle 48 tuntia mediaanina.</li>
-                <li>Suomenkielinen asiakaspalvelu vähintään arkisin 09–21.</li>
-                <li>Avoin bonusehtojen julkaisu suomeksi.</li>
-                <li>Vähintään 60 / 100 Mittari-pisteissä — alemmat eivät listalla.</li>
-              </ul>
-            </section>
-
-            <section id="paivitykset" className="mb-16" data-testid="section-5">
-              <h2 className="display text-3xl sm:text-4xl mb-5">Päivitysten taajuus</h2>
-              <p>
-                Datapohjaiset tekijät päivitetään viikoittain. Toimitukselliset arviot kuukausittain. Jos operaattorilla tapahtuu merkittävä muutos (lisenssi katoaa, maksuvalitukset kasvavat) — päivitämme heti.
-              </p>
-            </section>
-
-            <section id="affiliaatti" className="mb-4" data-testid="section-6">
-              <h2 className="display text-3xl sm:text-4xl mb-5">Affiliaatiosuhteet</h2>
-              <p>
-                PUTKI HQ saa affiliaattipalkkion osasta operaattoreita, kun pelaaja avaa tilin sivumme kautta. Tämä on ainoa ansaintamallimme. Se on listattu jokaisen operaattorin arvio-sivulla erikseen.
-              </p>
-              <p>
-                Vuonna 2027, kun Suomen oma lisenssijärjestelmä avautuu, päivitämme tämän sivun täysin uudelleen ja kerromme uudet suhteet ennen niiden voimaantuloa.
-              </p>
-            </section>
-          </article>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+          {SECTIONS.map((s, i) => <SectionCard key={s.id} section={s} idx={i} />)}
         </div>
-        <div className="max-w-3xl mt-6">
+        <div className="max-w-3xl mt-8">
           <EditorialFooter />
         </div>
       </section>

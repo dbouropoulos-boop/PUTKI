@@ -1,0 +1,61 @@
+{
+  "summary": "Iteration 15 — Pre-Launch Polish 16-item P0 batch. Backend regression: 17/17 iter14 pytest PASS (test_iter14_phase4_prelaunch.py, 1.18s). Frontend Playwright on https://pelisignaali-fi.preview.emergentagent.com (1920x1080) verified 15 of 16 items shipped correctly. ONE BLOCKER: TESTAPI cleanup did NOT happen — /api/content/published still returns document id=9ca75e8b-6a8e-4897-9421-70016be19ced with headline 'TESTAPI_94FC9871 live – 9 001 katsojaa' and slug 'testapi-94fc9871-live-9-001-katsojaa'. It is visible in the homepage Live Activity sidebar 'JULKAISTU SISÄLTÖ' and is the top/most-recent article. Spec explicitly listed this as 'already done — only 3 real Layer 2 articles remain, no TESTAPI in DOM' — that claim is incorrect. All other items verified.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/content/published", "issue": "Document id=9ca75e8b-6a8e-4897-9421-70016be19ced with headline 'TESTAPI_94FC9871 live – 9 001 katsojaa' (slug=testapi-94fc9871-live-9-001-katsojaa) was NOT purged from MongoDB published_content collection. Spec required removal. It is the top item by recency so it surfaces on homepage Live Activity. ALSO: 'Jarttu84 live – 1 240 katsojaa' looks like a streamer-livecheck synthetic doc that probably should not be in editorial /uutiset either — only Florida + Antonelli are genuine Layer 2 editorial articles, matching the '3 real Layer 2 articles' claim only if both bot-style 'live – N katsojaa' docs are removed.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Home ActivityStats / Live Activity sidebar", "issue": "Renders TESTAPI_94FC9871 article because the underlying API still returns it (root cause is backend data, not frontend). 'TESTAPI' substring confirmed present in homepage body text.", "selector": "[data-testid='activity-stats'] (article list)", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verified_checks": {
+    "be_iter14_regression": "PASS — 17/17 pytest (be_streamers_live_*, be_alerts_streamer_*, be_data_live_stats, be_odds_featured, be_static_og_mount, be_uutiset_published_feed, be_dial_history, be_no_regression)",
+    "fe_header_finnish_nav": "PASS — UUTISET / STRIIMAAJAT / VIIKON KORTTI / PELI · VOITA 500 € / MENETELMÄ / TIETOA visible; no CASINOS / KASINOT / WIN A PRIZE",
+    "fe_lang_toggle_hidden": "PASS — no FI/EN toggle in header desktop or mobile",
+    "fe_finnish_only_strings": "PASS — 'PUBLISHED CONTENT' absent → replaced by 'JULKAISTU SISÄLTÖ'; 'GET ALERTED' absent; 'Streamer goes live' absent",
+    "fe_language_context_force_fi": "PASS — after localStorage.removeItem('mittari-lang') + reload, page still renders Finnish (getInitial returns 'fi' unconditionally)",
+    "fe_carousel_arrows_desktop": "PASS — data-testid='streamer-carousel-prev' (1) + 'streamer-carousel-next' (1) rendered + clickable; page indicator '2 / 3' visible",
+    "fe_paivan_vitoset_compact": "PASS on homepage — data-testid='paivan-vitoset-view-all' (link to /viikon-kortti) rendered + 'KATSO KAIKKI 5 VINKKIÄ' copy in DOM; compact mode is engaged. (Note: 12 paivan-vitonen-* DOM hits = 3 unique picks rendered across desktop grid + mobile carousel + duplicate layout layers — view-all link presence confirms compact)",
+    "fe_trust_strip_4_badges": "PASS — data-testid='trust-strip-0' through trust-strip-3 rendered between LiveActivityFeed and capture section",
+    "fe_footer_admin_gear": "PASS — data-testid='footer-admin-gear' present linking to /back-office; gear icon (Settings, opacity 0.35) visible",
+    "fe_footer_page_list_finnish": "PASS — UUTISET / STRIIMAAJAT / VIIKON KORTTI / PELI · VOITA 500 € / TIETOA / MENETELMÄ; no KASINOT",
+    "fe_peli_page": "PASS — data-testid='peli-page', peli-iframe-section, peli-iframe-placeholder (since REACT_APP_SMARTICO_URL is unset — correct), peli-prize-1/2/3 (showing 500€/250€/100€), peli-step-1..4, peli-leaderboard-empty, peli-uutiset-link, peli-trust + peli-trust-0..3 all present; hero shows 'Voita 500 €'",
+    "fe_tietoa_meista_page": "PASS — manifesto headline 'Suomen rehellisin kasino- ja striimaaja-lähde' + 'Toimituksellinen — ei mainontaa' visible, 3 pillar cards, 3-step method, team section, 3 contact cards (vinkit@/korjaukset@/toimitus@putkihq.fi), data-testid='contact-card-tips'/-corrections/-press",
+    "fe_menetelma_7_sections": "PASS — methodology-section-0 through methodology-section-6 (7 boxed sections) rendered, not wall of text",
+    "fe_striimaajat_grid_tighter": "PASS — primary grid classes: 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3' (matches 2/3/4/5/6 spec)",
+    "fe_affiliaatti_empty": "PASS — data-testid='affiliaatti-empty' present; 'weezy' substring absent from page body",
+    "fe_viikon_kortti": "PASS — no 'EI FIKSTUUREITA' empty state; 22 buttons (predictions + nav) rendered; real fixtures from Odds API still working post-changes",
+    "fe_no_console_errors": "PASS — 0 console errors across home, /peli, /tietoa-meista, /menetelma, /striimaajat, /affiliaatti, /viikon-kortti",
+    "fe_testapi_in_dom": "FAIL — 'TESTAPI' substring present in homepage body (Live Activity sidebar shows 'TESTAPI_94FC9871 live – 9 001 katsojaa' as latest article)"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter14_phase4_prelaunch.py"
+  ],
+  "action_items": [
+    "CRITICAL: Run the TESTAPI cleanup script against MongoDB published_content collection — delete the doc id=9ca75e8b-6a8e-4897-9421-70016be19ced (headline 'TESTAPI_94FC9871 live – 9 001 katsojaa', slug 'testapi-94fc9871-live-9-001-katsojaa'). Also evaluate whether 'Jarttu84 live – 1 240 katsojaa' (id=687d8831-642a-404c-81e7-985e528b887d) is real editorial or a streamer-livecheck synthetic that should also be purged so the feed shows only the 2 real Layer 2 articles (Florida + Antonelli) per spec's '3 real Layer 2 articles' wording.",
+    "After cleanup, add a guard in the Layer 2 publisher or a defensive filter in /api/content/published that drops headlines/slugs matching /^TESTAPI[_-]/i so the regression cannot reoccur from leftover dev fixtures."
+  ],
+  "critical_code_review_comments": [
+    "TESTAPI cleanup was claimed-done in the problem statement but the database was never actually purged. Verify scripts are idempotent and add a one-time migration plus a permanent regex filter at the publisher level so test fixtures cannot leak into production again.",
+    "Peli.jsx fetches /api/signup/count for leaderboard count but the endpoint's existence is not regression-tested in test_iter14. If the endpoint changes/404s, the page silently shows fallback 'PÄIVITTYY KISAN ALKAESSA' — fine UX, but worth a smoke test.",
+    "LanguageContext.getInitial() forces 'fi' but the consumer still writes localStorage('mittari-lang', lang) on every render in the useEffect. Harmless but means the localStorage entry is unconditionally 'fi' for all users, defeating any future toggle until that effect is rewritten.",
+    "Footer admin gear is reachable by /back-office but the route is rendered without auth in App.js (uses X-Admin-Token only in API calls). The gear is intentionally discrete (opacity 0.35) but it is still a clickable element on the public footer — fine for honesty/staff convenience, just be aware crawlers will index the existence.",
+    "/peli iframe placeholder is well-handled (Loader2 spinner + Finnish copy) but the placeholder does not include an inline email-capture for the 'OTA HÄLYTYS PÄÄLLE ALLE' microcopy directly under it — the closest capture form is the global PersistentCapture sidebar. Consider lifting an inline form into the iframe panel until Smartico whitelist clears."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (17/17 iter14 regression). Data-content failure logged separately as backend_issue.critical — no endpoint code is broken, the MongoDB data is dirty.",
+    "frontend": "94% — 15/16 P0 items PASS; 1 fails (TESTAPI visible in DOM) but the root cause is backend data, not frontend code."
+  },
+  "test_credentials": "None required for the public preview surfaces tested. Back-office still X-Admin-Token=putki-hq-admin.",
+  "seed_data_creation": "None this iteration.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Single blocker is dirty MongoDB data — once main agent purges the TESTAPI document (and optionally the Jarttu84 livecheck doc) from published_content, re-run the iter14 backend pytest (will still pass) and re-curl /api/content/published?limit=10 to confirm headline matching /TESTAPI/i is 0 and url_slug starting with 'testapi' is 0. Frontend will then automatically be clean since it just renders the API feed. All other 15 items (header, footer, /peli, /tietoa-meista, /menetelma, /striimaajat grid, /affiliaatti, /viikon-kortti, TrustStrip, carousel arrows, PaivaVitoset compact + view-all link, Finnish-only language) are verified shipped. New testids added this iter: peli-page / peli-iframe-section / peli-iframe-placeholder / peli-prize-1..3 / peli-step-1..4 / peli-leaderboard-empty / peli-uutiset-link / peli-trust / peli-trust-0..3 / tietoa-meista-page / contact-card-tips/-corrections/-press / tietoa-method-link / methodology-section-0..6 / trust-strip-0..3 / footer-admin-gear / streamer-carousel-prev/-next / paivan-vitoset-view-all / affiliaatti-empty.",
+  "rca of the issue": "TESTAPI cleanup RCA: The published_content collection still contains id=9ca75e8b-6a8e-4897-9421-70016be19ced (slug=testapi-94fc9871-live-9-001-katsojaa). The cleanup operation referenced in the problem statement was either not executed, executed against a different environment, or failed silently. Reproduction: `curl https://pelisignaali-fi.preview.emergentagent.com/api/content/published?limit=10` — the first item returned matches /^TESTAPI/. Mitigation: (a) run a one-shot Mongo delete filtering on regex {'headline': {'$regex': '^TESTAPI', '$options': 'i'}} or {'url_slug': {'$regex': '^testapi-'}}; (b) add a permanent publisher-side guard that rejects insertions matching that pattern; (c) re-run /api/content/published verification to confirm count drops to 3 (or 2)."
+}

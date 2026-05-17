@@ -12,12 +12,15 @@ export const Header = () => {
   // Pre-launch polish: CASINOS + VOITA PALKINTO (Voyager) hidden from nav
   // per user spec. Routes remain so deep-links still resolve. CasinoRanking
   // also carries a robots:noindex meta tag during this window.
+  // Finnish-only labels per Dioni's strategy reset — t() not used here to
+  // avoid English keys leaking in via the language toggle.
   const navLinks = [
     { to: '/uutiset',         label: 'UUTISET' },
-    { to: '/striimaajat',     label: t('nav.streamers') },
-    { to: '/viikon-kortti',   label: t('nav.weekly') },
-    { to: '/peli',            label: t('nav.game') },
-    { to: '/menetelma',       label: t('nav.methodology') },
+    { to: '/striimaajat',     label: 'STRIIMAAJAT' },
+    { to: '/viikon-kortti',   label: 'VIIKON KORTTI' },
+    { to: '/peli',            label: 'PELI · VOITA 500 €' },
+    { to: '/menetelma',       label: 'MENETELMÄ' },
+    { to: '/tietoa-meista',   label: 'TIETOA' },
   ];
 
   return (
@@ -48,16 +51,8 @@ export const Header = () => {
               {l.label}
             </NavLink>
           ))}
-          {/* Language toggle */}
-          <button
-            onClick={toggleLang}
-            aria-label="Toggle language"
-            data-testid="lang-toggle"
-            className="mono text-[11px] font-semibold tracking-[0.16em] uppercase ml-2 px-3 h-9 rounded-full border flex items-center"
-            style={{ borderColor: 'var(--border-strong)', color: 'var(--ink)' }}
-          >
-            {lang === 'fi' ? 'FI / EN' : 'EN / FI'}
-          </button>
+          {/* Language toggle hidden during Finnish-only launch.
+              Theme toggle remains visible. */}
           {/* Theme toggle */}
           <button
             onClick={toggle}
@@ -71,15 +66,7 @@ export const Header = () => {
         </div>
 
         <div className="md:hidden flex items-center gap-1">
-          <button
-            onClick={toggleLang}
-            data-testid="lang-toggle-mobile"
-            aria-label="Toggle language"
-            className="mono text-[11px] font-semibold tracking-[0.12em] uppercase px-2.5 h-8 rounded-full border flex items-center"
-            style={{ borderColor: 'var(--border-strong)', color: 'var(--ink)' }}
-          >
-            {lang.toUpperCase()}
-          </button>
+          {/* Mobile lang toggle hidden during Finnish-only launch. */}
           <button
             onClick={toggle}
             aria-label={t('common.theme_toggle')}

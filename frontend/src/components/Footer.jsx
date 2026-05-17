@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 import Dial from './Dial';
 import { useLang } from '../context/LanguageContext';
 
@@ -34,10 +35,12 @@ export const Footer = () => {
           <div>
             <div className="eyebrow mb-3">{t('footer.col_pages')}</div>
             <ul className="space-y-2 mono text-[12px]" style={{ letterSpacing: '0.08em' }}>
-              <li><Link to="/kasinot" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.casinos').toUpperCase()}</Link></li>
-              <li><Link to="/striimaajat" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.streamers').toUpperCase()}</Link></li>
-              <li><Link to="/viikon-kortti" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.weekly').toUpperCase()}</Link></li>
-              <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.methodology').toUpperCase()}</Link></li>
+              <li><Link to="/uutiset" style={{ color: 'var(--ink)' }} className="hover:opacity-70">UUTISET</Link></li>
+              <li><Link to="/striimaajat" style={{ color: 'var(--ink)' }} className="hover:opacity-70">STRIIMAAJAT</Link></li>
+              <li><Link to="/viikon-kortti" style={{ color: 'var(--ink)' }} className="hover:opacity-70">VIIKON KORTTI</Link></li>
+              <li><Link to="/peli" style={{ color: 'var(--ink)' }} className="hover:opacity-70">PELI · VOITA 500 €</Link></li>
+              <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70">TIETOA</Link></li>
+              <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">MENETELMÄ</Link></li>
             </ul>
           </div>
           <div>
@@ -61,7 +64,18 @@ export const Footer = () => {
 
         <div className="section-rule mt-10 pt-6 flex flex-col sm:flex-row justify-between gap-3 mono text-[10.5px]" style={{ letterSpacing: '0.12em', color: 'var(--muted)' }}>
           <span>© {new Date().getFullYear()} PUTKIHQ.FI · {t('footer.indep')}</span>
-          <span>{t('footer.warning')} · {t('common.responsible')}</span>
+          <span className="inline-flex items-center gap-3">
+            {t('footer.warning')} · {t('common.responsible')}
+            <Link
+              to="/back-office"
+              aria-label="Toimituksen takatila"
+              data-testid="footer-admin-gear"
+              className="hover:opacity-100 transition-opacity"
+              style={{ color: 'var(--muted)', opacity: 0.35, display: 'inline-flex' }}
+            >
+              <Settings strokeWidth={1.4} size={13} />
+            </Link>
+          </span>
         </div>
       </div>
     </footer>

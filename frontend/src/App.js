@@ -10,6 +10,8 @@ import Methodology from "@/pages/Methodology";
 import ColdEmailLanding from "@/pages/ColdEmailLanding";
 import Signup from "@/pages/Signup";
 import MiniGame from "@/pages/MiniGame";
+import Peli from "@/pages/Peli";
+import TietoaMeista from "@/pages/TietoaMeista";
 import WeeklyCard from "@/pages/WeeklyCard";
 import BackOffice from "@/pages/BackOffice";
 import BackOfficeQueue from "@/pages/BackOfficeQueue";
@@ -58,7 +60,9 @@ function App() {
             <Route path="striimaajat/:slug" element={<StreamerProfile />} />
             <Route path="menetelma" element={<Methodology />} />
             <Route path="toimitus" element={<Toimitus />} />
-            <Route path="peli" element={<MiniGame />} />
+            <Route path="peli" element={<Peli />} />
+            <Route path="peli/legacy" element={<MiniGame />} />
+            <Route path="tietoa-meista" element={<TietoaMeista />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
             <Route path="viikon-kortti" element={<WeeklyCard />} />
             <Route path="mittari/historia" element={<MittariHistoria />} />

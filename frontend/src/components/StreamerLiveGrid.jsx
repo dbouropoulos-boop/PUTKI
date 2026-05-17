@@ -7,7 +7,7 @@
  * Telegram). No more "open Twitch in new tab" link.
  */
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { ExternalLink, Eye, Users, Bell } from 'lucide-react';
+import { ExternalLink, Eye, Users, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import StreamerAlertModal from './StreamerAlertModal';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -151,6 +151,8 @@ const StreamerLiveGrid = () => {
   const [platform, setPlatform] = useState('twitch');
   const [data, setData] = useState({});  // { twitch: {...}, kick: {...}, youtube: {...} }
   const [alertTarget, setAlertTarget] = useState(null);
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 4;
 
   const load = useCallback(async (p) => {
     try {
@@ -173,6 +175,15 @@ const StreamerLiveGrid = () => {
   const streamers = active.streamers || [];
   const dormant = active.dormant;
 
+  // Reset page index whenever platform or count changes so the new tab
+  // starts at the first card.
+  useEffect(() => { setPage(0); }, [platform, streamers.length]);
+
+  const totalPages = Math.max(1, Math.ceil(streamers.length / PAGE_SIZE));
+  const pageStreamers = streamers.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const canPrev = page > 0;
+  const canNext = (page + 1) * PAGE_SIZE < streamers.length;
+
   const counts = useMemo(() => {
     const out = {};
     PLATFORMS.forEach((p) => {
@@ -193,6 +204,50 @@ const StreamerLiveGrid = () => {
             Striimit livenä
           </h2>
         </div>
+        {/* Carousel nav — desktop only; mobile uses native scroll-snap */}
+        {streamers.length > PAGE_SIZE && (
+          <div className="hidden sm:inline-flex items-center gap-2" data-testid="streamer-carousel-nav">
+            <span className="mono" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+              {page + 1} / {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={!canPrev}
+              data-testid="streamer-carousel-prev"
+              aria-label="Edellinen"
+              className="inline-flex items-center justify-center"
+              style={{
+                width: 36, height: 36, borderRadius: 2,
+                background: 'var(--bg)',
+                border: '1px solid var(--border-strong)',
+                color: 'var(--ink)',
+                cursor: canPrev ? 'pointer' : 'not-allowed',
+                opacity: canPrev ? 1 : 0.35,
+              }}
+            >
+              <ChevronLeft strokeWidth={1.7} size={16} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={!canNext}
+              data-testid="streamer-carousel-next"
+              aria-label="Seuraava"
+              className="inline-flex items-center justify-center"
+              style={{
+                width: 36, height: 36, borderRadius: 2,
+                background: 'var(--bg)',
+                border: '1px solid var(--border-strong)',
+                color: 'var(--ink)',
+                cursor: canNext ? 'pointer' : 'not-allowed',
+                opacity: canNext ? 1 : 0.35,
+              }}
+            >
+              <ChevronRight strokeWidth={1.7} size={16} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Platform tabs */}
@@ -258,13 +313,13 @@ const StreamerLiveGrid = () => {
               </div>
             ))}
           </div>
-          {/* Desktop grid (carousel-feel: cap at 4 visible) */}
+          {/* Desktop/tablet grid (carousel-feel: 4 visible per page) */}
           <div
             className="hidden sm:grid gap-5"
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
             data-testid="streamer-live-list"
           >
-            {streamers.slice(0, 4).map((s) => (
+            {pageStreamers.map((s) => (
               <StreamerCard key={s.user_login} s={s} onAlert={setAlertTarget} />
             ))}
           </div>

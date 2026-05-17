@@ -85,12 +85,12 @@ export const PersistentCapture = () => {
         }}
         data-testid="persistent-capture-desktop"
       >
-        <div className="eyebrow mb-2">{lang === 'en' ? 'GET ALERTED' : 'TILAA'}</div>
+        <div className="eyebrow mb-2">ASETA HÄLYTYS</div>
         <h3 className="display text-base mb-2" style={{ color: 'var(--ink)', lineHeight: 1.2 }}>
-          {lang === 'en' ? 'Streamer goes live — you know first' : 'Striimari liveen — sinä ekana'}
+          Striimari liveen — sinä ekana
         </h3>
         <p className="font-serif mb-4" style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
-          {lang === 'en' ? 'Mittari signal the moment something happens.' : 'Mittarin signaali heti kun jotain tapahtuu.'}
+          Mittarin signaali heti kun jotain tapahtuu.
         </p>
         <CaptureForm compact />
       </aside>
@@ -124,7 +124,7 @@ export const PersistentCapture = () => {
         <div className="px-5 py-4">
           <div className="flex items-start justify-between mb-3">
             <h4 className="display text-base" style={{ color: 'var(--ink)' }}>
-              {lang === 'en' ? 'Get notified live' : 'Saa ilmoitus livenä'}
+              Saa ilmoitus livenä
             </h4>
             <button onClick={() => setExpanded(false)} aria-label="Close" style={{ color: 'var(--muted)' }} data-testid="persistent-capture-collapse">
               <X strokeWidth={1.5} size={18} />
