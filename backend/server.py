@@ -358,6 +358,16 @@ from rosters import (  # noqa: E402
     delete_streamer,
     INTL_SCENES_META,
 )
+from rotation import (  # noqa: E402
+    upsert_week as rotation_upsert,
+    list_weeks as rotation_list,
+    get_week as rotation_get,
+    get_current_week as rotation_get_current,
+    delete_week as rotation_delete,
+    stats as rotation_stats,
+    current_iso_week,
+    next_iso_weeks,
+)
 
 
 class GenerateRequest(BaseModel):
@@ -828,6 +838,62 @@ async def admin_delete_streamer(slug: str, _: bool = Depends(require_admin)):
     if not ok:
         raise HTTPException(404, "Not found")
     return {"deleted": slug}
+
+
+# ── Phase 3 V2 Step 1+3 fold: Voyager rotation calendar ──
+class VoyagerWeekPayload(BaseModel):
+    iso_week: str                                  # "YYYY-Www"
+    market_id: str = "FI"
+    partner_operator_slug: Optional[str] = None
+    theme: Optional[str] = ""
+    prize_summary: Optional[str] = ""
+    smartico_template_id: Optional[str] = None
+    notes: Optional[str] = None
+    status: Optional[str] = "planned"
+
+
+@api_router.get("/voyager/current-week")
+async def public_current_voyager_week(market_id: str = "FI"):
+    """Public — what's this week's Voyager? Powers hub `Tämän viikon peli` card."""
+    week = await rotation_get_current(db, market_id=market_id)
+    if not week:
+        return {"week": None, "iso_week": current_iso_week(), "market_id": market_id}
+    return {"week": week, "iso_week": week["iso_week"], "market_id": market_id}
+
+
+@api_router.get("/voyager/weeks")
+async def public_voyager_weeks(market_id: str = "FI", upcoming_only: bool = True, limit: int = 12):
+    """Public — for the /voita-palkinto/arkisto/* surface and editor planning views."""
+    return {"weeks": await rotation_list(db, market_id=market_id, upcoming_only=upcoming_only, limit=limit)}
+
+
+@api_router.get("/admin/voyager/weeks")
+async def admin_list_voyager_weeks(market_id: str = "FI", _: bool = Depends(require_admin)):
+    weeks = await rotation_list(db, market_id=market_id, limit=500)
+    return {
+        "weeks": weeks,
+        "stats": await rotation_stats(db, market_id=market_id),
+        "current_iso_week": current_iso_week(),
+        "next_iso_weeks": next_iso_weeks(12),
+    }
+
+
+@api_router.put("/admin/voyager/weeks/{iso_week}")
+async def admin_upsert_voyager_week(iso_week: str, data: VoyagerWeekPayload, _: bool = Depends(require_admin)):
+    payload = data.dict()
+    payload["iso_week"] = iso_week
+    try:
+        return await rotation_upsert(db, payload, updated_by="admin")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@api_router.delete("/admin/voyager/weeks/{iso_week}")
+async def admin_delete_voyager_week(iso_week: str, market_id: str = "FI", _: bool = Depends(require_admin)):
+    ok = await rotation_delete(db, iso_week, market_id=market_id)
+    if not ok:
+        raise HTTPException(404, "Not found")
+    return {"deleted": iso_week, "market_id": market_id}
 
 
 @app.on_event("startup")
