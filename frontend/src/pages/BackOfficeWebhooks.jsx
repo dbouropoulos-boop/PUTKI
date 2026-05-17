@@ -16,6 +16,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, RefreshCw, Webhook, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Hammer, Loader2 } from 'lucide-react';
+import Layer2StatusPanel from '../components/Layer2StatusPanel';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const FEED_REBUILD_TIMESTAMP_KEY = 'putki-hq-admin-last-feed-rebuild';
@@ -444,6 +445,9 @@ const BackOfficeWebhooks = () => {
             </div>
           </div>
         </div>
+
+        {/* Phase 4 — Layer 2 signal poller monitoring grid */}
+        <Layer2StatusPanel token={token} />
 
         {/* Force-rebuild panel — Step 4 operational button */}
         <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #3B5BA5' }}

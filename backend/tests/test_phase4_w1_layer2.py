@@ -97,15 +97,15 @@ class TestDialFormula:
         assert snap["primary_driver_label"]["fi"] and snap["primary_driver_label"]["en"]
 
     def test_twitch_max_viewers_dominates(self):
-        # 20 000 viewers → stream intensity ≈ 1 → sub_scores.stream ≈ 40
+        # 20 000 viewers → stream intensity ≈ 1 → sub_scores.stream ≈ 57
         db = _StubDB({
             "stream_signals": {"total_viewers": 20_000, "active_streams": 12, "captured_at": "x"},
         })
         snap = _run(dial_engine.recalculate_dial(db))
         assert snap["primary_driver"] == "stream"
-        assert snap["sub_scores"]["stream"] >= 39.0
-        # 40% weight cap so composite alone never exceeds 40 from stream
-        assert snap["sub_scores"]["stream"] <= 40.0
+        assert snap["sub_scores"]["stream"] >= 56.0
+        # 57% weight cap so composite alone never exceeds 57 from stream
+        assert snap["sub_scores"]["stream"] <= 57.0
 
     def test_weights_sum_correctly(self):
         # Force every signal to max so we can verify the weights sum to 100
@@ -123,25 +123,34 @@ class TestDialFormula:
         assert snap["state_key"] == "KIIRASTULI"
 
     def test_news_intensity_partial(self):
-        # 5 matched articles → news intensity = 0.5 → sub_score = 5
+        # 5 matched articles → news intensity = 0.5 → sub_score = 7 (0.5 × 14% weight)
         db = _StubDB({"news_signals": {"matched_count": 5}})
         snap = _run(dial_engine.recalculate_dial(db))
-        assert snap["sub_scores"]["news"] == pytest.approx(5.0, abs=0.5)
+        assert snap["sub_scores"]["news"] == pytest.approx(7.0, abs=0.5)
         assert snap["primary_driver"] == "news"
 
     def test_sports_binary(self):
-        # 1 game active should yield full 20 weight
+        # 1 game active should yield full 29 weight (Phase 1 reweighted)
         db = _StubDB({"sports_signals": {"games_active": 1}})
         snap = _run(dial_engine.recalculate_dial(db))
-        assert snap["sub_scores"]["sports"] == pytest.approx(20.0, abs=0.5)
+        assert snap["sub_scores"]["sports"] == pytest.approx(29.0, abs=0.5)
         assert snap["primary_driver"] == "sports"
 
     def test_state_thresholds_boundary_haalea(self):
-        # Tune intensities so composite ≈ 30 (HAALEA range 20-44)
-        db = _StubDB({"social_signals": {"mention_count": 20}})  # 30% × 1 = 30
+        # Tune intensities so composite lands in HAALEA range 20-44.
+        # NHL games_active=1 → 29% × 1 = 29 → HAALEA
+        db = _StubDB({"sports_signals": {"games_active": 1}})
         snap = _run(dial_engine.recalculate_dial(db))
-        assert snap["composite_score"] == pytest.approx(30.0, abs=0.5)
+        assert snap["composite_score"] == pytest.approx(29.0, abs=0.5)
         assert snap["state_key"] == "HAALEA"
+
+    def test_reddit_weight_zero_phase1(self):
+        # Phase 1 has Reddit dropped — social weight = 0 means no matter how
+        # many mentions appear, dial doesn't move from social signal alone.
+        db = _StubDB({"social_signals": {"mention_count": 100}})
+        snap = _run(dial_engine.recalculate_dial(db))
+        assert snap["sub_scores"]["social"] == 0.0
+        assert snap["composite_score"] == 0.0
 
     def test_dormant_twitch_flag_propagates(self):
         db = _StubDB({"stream_signals": {"dormant": True, "total_viewers": 0, "active_streams": 0}})

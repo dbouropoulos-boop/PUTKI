@@ -34,12 +34,14 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 
-# ─────────────────── 4-signal weights (locked user spec) ───────────────────
+# ─────────────────── 3-signal weights (Reddit dropped, awaiting OAuth approval) ───────────────────
 SOURCE_WEIGHTS: Dict[str, int] = {
-    "stream":  40,   # Twitch live viewer count
-    "social":  30,   # Reddit keyword mentions
-    "sports":  20,   # Finnish-NHL games active today
-    "news":    10,   # gambling/regulatory RSS keyword hits
+    "stream":  57,   # Twitch live viewer count (was 40 before Reddit dropped)
+    "sports":  29,   # NHL games active today  (was 20)
+    "news":    14,   # gambling/regulatory RSS keyword hits (was 10)
+    # `social` retained at 0 in the snapshot for back-compat — re-enable when
+    # Reddit OAuth approval lands by restoring a non-zero weight here.
+    "social":   0,
 }
 
 STATE_THRESHOLDS = [

@@ -331,8 +331,26 @@ from layer2_workers import (  # noqa: E402
     reddit_tick,
     nhl_tick,
     rss_tick,
+    f1_tick,
+    football_tick,
 )
 import dial_sse  # noqa: E402
+from editorial_subjects import (  # noqa: E402
+    seed_from_file as seed_editorial_subjects,
+    list_subjects as list_editorial_subjects,
+    get_subject as get_editorial_subject,
+    stats as editorial_subjects_stats,
+)
+from content_generator import (  # noqa: E402
+    ContentGenerator,
+    fan_out_from_layer2 as content_fan_out,
+    list_drafts as cg_list_drafts,
+    get_draft as cg_get_draft,
+    list_published as cg_list_published,
+    get_published_by_slug as cg_get_published_by_slug,
+    ensure_indexes as content_ensure_indexes,
+    TEMPLATES as CONTENT_TEMPLATES,
+)
 from source_map import seed_tracked_sources, list_sources  # noqa: E402
 from foundational_research import (  # noqa: E402
     seed_from_file as seed_foundational_research,
@@ -669,7 +687,8 @@ async def admin_layer2_status(_: bool = Depends(require_admin)):
     """Operational view of the four Layer 2 workers — last-tick timestamps,
     document counts, and the most recent dial snapshot summary."""
     out: Dict[str, Any] = {}
-    for coll_name in ("stream_signals", "social_signals", "sports_signals", "news_signals"):
+    for coll_name in ("stream_signals", "social_signals", "sports_signals",
+                      "news_signals", "f1_signals", "football_signals"):
         latest = await db[coll_name].find_one({}, {"_id": 0}, sort=[("captured_at", -1)])
         count = await db[coll_name].count_documents({})
         out[coll_name] = {
@@ -702,6 +721,13 @@ def _summarize_layer2_doc(coll_name: str, doc: Optional[Dict[str, Any]]) -> Opti
         return {"games_active": doc.get("games_active", 0), "games": [{"home": g.get("home"), "away": g.get("away"), "start_time_utc": g.get("start_time_utc"), "game_state": g.get("game_state")} for g in doc.get("games", [])]}
     if coll_name == "news_signals":
         return {"matched_count": doc.get("matched_count", 0), "feeds": doc.get("feeds", [])}
+    if coll_name == "f1_signals":
+        return {"race_active": doc.get("race_active", False), "race_name": doc.get("race_name"),
+                "finnish_drivers": doc.get("finnish_drivers", []), "dormant": doc.get("dormant", False)}
+    if coll_name == "football_signals":
+        return {"matches_active": doc.get("matches_active", 0),
+                "finnish_scoring_matches": sum(1 for m in doc.get("matches", []) if m.get("finnish_scorers")),
+                "dormant": doc.get("dormant", False)}
     return None
 
 
@@ -710,7 +736,8 @@ async def admin_layer2_tick(worker: Optional[str] = None, _: bool = Depends(requ
     """Manually trigger one Layer 2 worker tick (or all if `worker` omitted)
     then recompute the dial. Returns the resulting dial snapshot."""
     out: Dict[str, Any] = {}
-    workers = {"twitch": twitch_tick, "reddit": reddit_tick, "nhl": nhl_tick, "rss": rss_tick}
+    workers = {"twitch": twitch_tick, "reddit": reddit_tick, "nhl": nhl_tick,
+               "rss": rss_tick, "f1": f1_tick, "football": football_tick}
     targets = [worker] if worker else list(workers.keys())
     for w in targets:
         if w not in workers:
@@ -722,6 +749,142 @@ async def admin_layer2_tick(worker: Optional[str] = None, _: bool = Depends(requ
     snap = await recalculate_dial(db)
     await dial_sse.publish(snap)
     return {"workers": out, "dial": snap}
+
+
+# ── Phase 4 Week 2: Editorial subjects + Content generator ──
+
+@api_router.get("/admin/editorial-subjects")
+async def admin_editorial_subjects(
+    subject_type: Optional[str] = None,
+    category: Optional[str] = None,
+    limit: int = 200,
+    _: bool = Depends(require_admin),
+):
+    rows = await list_editorial_subjects(db, subject_type=subject_type, category=category, limit=limit)
+    return {"subjects": rows, "count": len(rows)}
+
+
+@api_router.get("/admin/editorial-subjects/stats")
+async def admin_editorial_subjects_stats(_: bool = Depends(require_admin)):
+    return await editorial_subjects_stats(db)
+
+
+@api_router.get("/admin/editorial-subjects/{subject_id}")
+async def admin_editorial_subject_get(subject_id: str, _: bool = Depends(require_admin)):
+    row = await get_editorial_subject(db, subject_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="subject not found")
+    return row
+
+
+@api_router.get("/admin/content/templates")
+async def admin_content_templates(_: bool = Depends(require_admin)):
+    """Surface the registered ContentGenerator templates for the back-office UI."""
+    return {
+        "templates": [
+            {"id": tid, "tier": t["tier"], "category": t["category"], "uses_llm": t["uses_llm"]}
+            for tid, t in CONTENT_TEMPLATES.items()
+        ],
+    }
+
+
+@api_router.get("/content/drafts")
+async def admin_list_drafts(
+    status: Optional[str] = None, tier: Optional[int] = None, limit: int = 50,
+    _: bool = Depends(require_admin),
+):
+    rows = await cg_list_drafts(db, status=status, tier=tier, limit=limit)
+    return {"drafts": rows, "count": len(rows)}
+
+
+@api_router.get("/content/drafts/{draft_id}")
+async def admin_get_draft(draft_id: str, _: bool = Depends(require_admin)):
+    row = await cg_get_draft(db, draft_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="draft not found")
+    return row
+
+
+class _DraftEditBody(BaseModel):
+    headline: Optional[str] = None
+    subhead: Optional[str] = None
+    body: Optional[str] = None
+    tags: Optional[List[str]] = None
+    category: Optional[str] = None
+    url_slug: Optional[str] = None
+    external_link: Optional[str] = None
+    social: Optional[Dict[str, Any]] = None
+
+
+@api_router.put("/content/drafts/{draft_id}")
+async def admin_edit_draft(draft_id: str, payload: _DraftEditBody, _: bool = Depends(require_admin)):
+    if _content_generator is None:
+        raise HTTPException(status_code=503, detail="ContentGenerator not initialised")
+    res = await _content_generator.edit_draft(draft_id, payload.dict(exclude_none=True))
+    if res.get("status") != "edited":
+        raise HTTPException(status_code=400, detail=res)
+    return res
+
+
+@api_router.post("/content/drafts/{draft_id}/publish")
+async def admin_publish_draft(draft_id: str, _: bool = Depends(require_admin)):
+    if _content_generator is None:
+        raise HTTPException(status_code=503, detail="ContentGenerator not initialised")
+    res = await _content_generator.publish_draft(draft_id, reviewed_by="admin")
+    if res.get("status") == "error":
+        raise HTTPException(status_code=404, detail=res)
+    return res
+
+
+class _RejectBody(BaseModel):
+    note: Optional[str] = None
+
+
+@api_router.post("/content/drafts/{draft_id}/reject")
+async def admin_reject_draft(draft_id: str, payload: _RejectBody, _: bool = Depends(require_admin)):
+    if _content_generator is None:
+        raise HTTPException(status_code=503, detail="ContentGenerator not initialised")
+    res = await _content_generator.reject_draft(draft_id, reviewed_by="admin", note=payload.note)
+    if res.get("status") == "error":
+        raise HTTPException(status_code=404, detail=res)
+    return res
+
+
+class _ManualGenerateBody(BaseModel):
+    template_id: str
+    signal_data: Dict[str, Any]
+    force: bool = False
+
+
+@api_router.post("/admin/content/generate")
+async def admin_manual_generate(payload: _ManualGenerateBody, _: bool = Depends(require_admin)):
+    """Manually trigger content generation for a template (operator_news, etc.)."""
+    if _content_generator is None:
+        raise HTTPException(status_code=503, detail="ContentGenerator not initialised")
+    return await _content_generator.generate_from_signal(
+        payload.template_id, payload.signal_data, force=payload.force,
+    )
+
+
+# ── Public content endpoints (Week 2 published content surface) ──
+
+@api_router.get("/content/published")
+async def public_list_published(category: Optional[str] = None, limit: int = 50):
+    rows = await cg_list_published(db, category=category, limit=limit)
+    return {"items": rows, "count": len(rows)}
+
+
+@api_router.get("/content/published/{slug}")
+async def public_get_published_by_slug(slug: str):
+    row = await cg_get_published_by_slug(db, slug)
+    if not row:
+        raise HTTPException(status_code=404, detail="content not found")
+    # Best-effort view increment (fire and forget)
+    try:
+        await db.published_content.update_one({"url_slug": slug}, {"$inc": {"views": 1}})
+    except Exception:
+        pass
+    return row
 
 
 # ── Phase 3 V2: source map (§4.1) ──
@@ -1080,6 +1243,18 @@ async def _seed_phase3():
         await layer2_ensure_indexes(db)
     except Exception:
         logger.exception("Failed to create Layer 2 indexes")
+    try:
+        result = await seed_editorial_subjects(db)
+        logger.info("Editorial subjects seed: %s", result)
+    except Exception:
+        logger.exception("Failed to seed editorial subjects")
+    try:
+        await content_ensure_indexes(db)
+    except Exception:
+        logger.exception("Failed to create content_drafts indexes")
+    # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
+    global _content_generator
+    _content_generator = ContentGenerator(db)
     # Kick off background signal pipeline + dial recalc loop.
     if os.environ.get("PUTKI_HQ_DISABLE_WORKERS", "0") != "1":
         import asyncio as _aio
@@ -1101,13 +1276,26 @@ async def _seed_phase3():
         _aio.create_task(variant_filler_worker_loop(db))
 
 
+_content_generator: Optional[ContentGenerator] = None
+
+
 async def _layer2_on_tick(worker_name: str, result: Any) -> None:
-    """Layer 2 worker hook — recompute dial + broadcast to SSE subscribers."""
+    """Layer 2 worker hook — recompute dial + broadcast to SSE subscribers,
+    then fan out signal items to the ContentGenerator for the Week 2
+    automated editorial system."""
     try:
         snap = await recalculate_dial(db)
         await dial_sse.publish(snap)
     except Exception:
         logger.exception("Dial recompute after layer2.%s tick failed", worker_name)
+
+    if _content_generator and os.environ.get("PUTKI_HQ_DISABLE_CONTENT_GENERATOR", "0") != "1":
+        try:
+            fan_out_result = await content_fan_out(db, worker_name, _content_generator)
+            if fan_out_result.get("generated", 0) > 0 or fan_out_result.get("errors", 0) > 0:
+                logger.info("ContentGenerator fan-out after layer2.%s: %s", worker_name, fan_out_result)
+        except Exception:
+            logger.exception("ContentGenerator fan-out after layer2.%s failed", worker_name)
 
 
 async def _signal_dial_worker():

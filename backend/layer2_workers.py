@@ -44,6 +44,8 @@ TWITCH_POLL_SECONDS = int(os.environ.get("LAYER2_TWITCH_INTERVAL", "60"))
 REDDIT_POLL_SECONDS = int(os.environ.get("LAYER2_REDDIT_INTERVAL", "3600"))
 NHL_POLL_SECONDS    = int(os.environ.get("LAYER2_NHL_INTERVAL", "300"))
 RSS_POLL_SECONDS    = int(os.environ.get("LAYER2_RSS_INTERVAL", "900"))
+F1_POLL_SECONDS     = int(os.environ.get("LAYER2_F1_INTERVAL", "3600"))       # Ergast — race weekends only
+FOOTBALL_POLL_SECONDS = int(os.environ.get("LAYER2_FOOTBALL_INTERVAL", "600")) # 10 min during match windows
 
 HTTP_TIMEOUT_SECONDS = 15.0
 
@@ -57,8 +59,8 @@ REDDIT_KEYWORDS = ["kasino", "slotti", "vedonlyönti", "pelaaminen", "weezybet"]
 
 # RSS feeds + keywords per user spec
 RSS_FEEDS = [
-    {"source": "YLE Uutiset",       "url": "https://feeds.yle.fi/uutiset/v1/recent.rss"},
-    {"source": "Helsingin Sanomat", "url": "https://www.hs.fi/rss/kotimaa.xml"},
+    {"source": "YLE Uutiset",       "url": "https://yle.fi/rss/uutiset/tuoreimmat"},
+    {"source": "Helsingin Sanomat", "url": "https://www.hs.fi/rss/tuoreimmat.xml"},
     {"source": "Iltalehti",         "url": "https://www.iltalehti.fi/rss.xml"},
 ]
 NEWS_KEYWORDS = ["uhkapeli", "rahapeli", "veikkaus", "kasino", "pelaaminen"]
@@ -66,7 +68,10 @@ NEWS_KEYWORDS = ["uhkapeli", "rahapeli", "veikkaus", "kasino", "pelaaminen"]
 
 # ─────────────────────── Retention helpers ───────────────────────
 
-LAYER2_COLLECTIONS = ("stream_signals", "social_signals", "sports_signals", "news_signals")
+LAYER2_COLLECTIONS = (
+    "stream_signals", "social_signals", "sports_signals",
+    "news_signals", "f1_signals", "football_signals",
+)
 LAYER2_TTL_DAYS = int(os.environ.get("LAYER2_TTL_DAYS", "14"))
 
 
@@ -368,6 +373,154 @@ async def rss_tick(db) -> Dict[str, Any]:
     return {"matched_count": len(matched_articles)}
 
 
+# ─────────────────────── F1 poller (Ergast public API) ───────────────────────
+
+ERGAST_FINNISH_DRIVERS = ("Valtteri Bottas", "Bottas")
+
+
+async def f1_tick(db) -> Dict[str, Any]:
+    """Poll Ergast for the most recent F1 race result. Stores once per race so
+    repeated ticks during the same week are deduped downstream in
+    ContentGenerator via the fingerprint (season + round)."""
+    url = "https://api.jolpi.ca/ergast/f1/current/last/results.json"
+    try:
+        async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as http:
+            r = await http.get(url)
+            r.raise_for_status()
+            data = r.json()
+    except Exception as e:
+        logger.warning("Ergast F1 fetch failed: %s", e)
+        doc = {"captured_at": datetime.now(timezone.utc), "expires_at": _expires_at(),
+               "sport": "f1", "race_active": False, "dormant": True,
+               "reason": f"fetch_error:{e.__class__.__name__}"}
+        await db.f1_signals.insert_one(dict(doc))
+        return {"dormant": True}
+
+    races = data.get("MRData", {}).get("RaceTable", {}).get("Races", []) or []
+    race = races[0] if races else {}
+    results = race.get("Results", []) or []
+
+    finnish_drivers: List[Dict[str, Any]] = []
+    for res in results:
+        drv = res.get("Driver", {}) or {}
+        full = f"{drv.get('givenName', '')} {drv.get('familyName', '')}".strip()
+        nat = (drv.get("nationality") or "").lower()
+        if nat == "finnish" or full in ERGAST_FINNISH_DRIVERS:
+            finnish_drivers.append({
+                "name": full,
+                "position": res.get("position"),
+                "constructor": (res.get("Constructor", {}) or {}).get("name"),
+                "points": res.get("points"),
+                "status": res.get("status"),
+            })
+
+    doc = {
+        "captured_at": datetime.now(timezone.utc),
+        "expires_at": _expires_at(),
+        "sport": "f1",
+        "race_id": f"{race.get('season', '')}-{race.get('round', '')}",
+        "race_name": race.get("raceName"),
+        "season": race.get("season"),
+        "round": race.get("round"),
+        "circuit": (race.get("Circuit", {}) or {}).get("circuitName"),
+        "date": race.get("date"),
+        "race_active": bool(results),
+        "podium": [
+            {"position": r.get("position"),
+             "driver": f"{(r.get('Driver', {}) or {}).get('givenName', '')} {(r.get('Driver', {}) or {}).get('familyName', '')}".strip(),
+             "constructor": (r.get("Constructor", {}) or {}).get("name")}
+            for r in results[:3]
+        ],
+        "finnish_drivers": finnish_drivers,
+    }
+    await db.f1_signals.insert_one(dict(doc))
+    return {"race_active": bool(results), "race": race.get("raceName"),
+            "finnish_drivers": len(finnish_drivers)}
+
+
+# ─────────────────────── Football poller (football-data.org) ───────────────────────
+
+FOOTBALL_COMPETITIONS = ("PL", "BL1", "PD", "SA", "FL1", "CL", "EL")
+FINNISH_FOOTBALL_NAMES = (
+    "Pukki", "Pohjanpalo", "Kallman", "Hetemaj", "Antman", "Walta",
+    "Niskanen", "O'Shaughnessy", "Hradecky", "Markkanen",
+)
+
+
+async def football_tick(db) -> Dict[str, Any]:
+    """Poll football-data.org for matches finished in the last 24h across the
+    top European competitions. Retains all matches; downstream template
+    decides whether to recap based on Finnish-player participation."""
+    api_key = os.environ.get("FOOTBALL_DATA_API_KEY")
+    if not api_key:
+        doc = {"captured_at": datetime.now(timezone.utc), "expires_at": _expires_at(),
+               "sport": "football", "matches_active": 0, "matches": [],
+               "dormant": True, "reason": "no_api_key"}
+        await db.football_signals.insert_one(dict(doc))
+        return {"dormant": True}
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    headers = {"X-Auth-Token": api_key}
+
+    finished_matches: List[Dict[str, Any]] = []
+    async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS, headers=headers) as http:
+        try:
+            url = (f"https://api.football-data.org/v4/matches?"
+                   f"dateFrom={yesterday}&dateTo={today}&status=FINISHED")
+            r = await http.get(url)
+            if r.status_code == 429:
+                doc = {"captured_at": datetime.now(timezone.utc), "expires_at": _expires_at(),
+                       "sport": "football", "matches_active": 0, "matches": [],
+                       "dormant": True, "reason": "rate_limited"}
+                await db.football_signals.insert_one(dict(doc))
+                return {"dormant": True, "reason": "rate_limited"}
+            r.raise_for_status()
+            data = r.json()
+        except Exception as e:
+            logger.warning("football-data fetch failed: %s", e)
+            doc = {"captured_at": datetime.now(timezone.utc), "expires_at": _expires_at(),
+                   "sport": "football", "matches_active": 0, "matches": [],
+                   "dormant": True, "reason": f"fetch_error:{e.__class__.__name__}"}
+            await db.football_signals.insert_one(dict(doc))
+            return {"dormant": True}
+
+        for m in data.get("matches", []) or []:
+            comp = (m.get("competition", {}) or {}).get("code")
+            if comp not in FOOTBALL_COMPETITIONS:
+                continue
+            home = (m.get("homeTeam", {}) or {}).get("shortName") or (m.get("homeTeam", {}) or {}).get("name")
+            away = (m.get("awayTeam", {}) or {}).get("shortName") or (m.get("awayTeam", {}) or {}).get("name")
+            full_score = (m.get("score", {}) or {}).get("fullTime", {}) or {}
+            scorers = [(g.get("scorer") or {}).get("name") or "" for g in (m.get("goals") or [])]
+            finnish_scorers = [s for s in scorers if any(fn in s for fn in FINNISH_FOOTBALL_NAMES)]
+            finished_matches.append({
+                "match_id": m.get("id"),
+                "competition": comp,
+                "competition_name": (m.get("competition", {}) or {}).get("name"),
+                "home": home,
+                "away": away,
+                "home_score": full_score.get("home"),
+                "away_score": full_score.get("away"),
+                "utc_date": m.get("utcDate"),
+                "scorers": scorers[:10],
+                "finnish_scorers": finnish_scorers,
+            })
+
+    doc = {
+        "captured_at": datetime.now(timezone.utc),
+        "expires_at": _expires_at(),
+        "sport": "football",
+        "matches_active": len(finished_matches),
+        "matches": finished_matches,
+        "competitions_polled": list(FOOTBALL_COMPETITIONS),
+    }
+    await db.football_signals.insert_one(dict(doc))
+    return {"matches_active": len(finished_matches),
+            "finnish_scoring": sum(1 for m in finished_matches if m["finnish_scorers"])}
+
+
+
 # ─────────────────────── Worker loops ───────────────────────
 
 async def _loop(name: str, fn, db, interval: int, env_disable_key: str,
@@ -393,8 +546,13 @@ async def _loop(name: str, fn, db, interval: int, env_disable_key: str,
 
 
 async def start_layer2_workers(db, on_tick=None) -> List[asyncio.Task]:
-    """Spawn all four pollers as background tasks. Returns the tasks so
-    callers can cancel them on shutdown."""
+    """Spawn the active pollers as background tasks. Returns the tasks so
+    callers can cancel them on shutdown.
+
+    Reddit poller is OFF by default since Reddit blocks datacenter IPs;
+    flip back on by setting PUTKI_HQ_ENABLE_REDDIT_POLLER=1 once OAuth
+    credentials are wired.
+    """
     if os.environ.get("PUTKI_HQ_DISABLE_LAYER2", "0") == "1":
         logger.info("Layer 2 workers fully disabled via PUTKI_HQ_DISABLE_LAYER2=1")
         return []
@@ -402,11 +560,18 @@ async def start_layer2_workers(db, on_tick=None) -> List[asyncio.Task]:
     tasks = [
         asyncio.create_task(_loop("twitch", twitch_tick, db, TWITCH_POLL_SECONDS,
                                   "PUTKI_HQ_DISABLE_TWITCH_POLLER", on_tick)),
-        asyncio.create_task(_loop("reddit", reddit_tick, db, REDDIT_POLL_SECONDS,
-                                  "PUTKI_HQ_DISABLE_REDDIT_POLLER", on_tick)),
         asyncio.create_task(_loop("nhl", nhl_tick, db, NHL_POLL_SECONDS,
                                   "PUTKI_HQ_DISABLE_NHL_POLLER", on_tick)),
         asyncio.create_task(_loop("rss", rss_tick, db, RSS_POLL_SECONDS,
                                   "PUTKI_HQ_DISABLE_RSS_POLLER", on_tick)),
+        asyncio.create_task(_loop("f1", f1_tick, db, F1_POLL_SECONDS,
+                                  "PUTKI_HQ_DISABLE_F1_POLLER", on_tick)),
+        asyncio.create_task(_loop("football", football_tick, db, FOOTBALL_POLL_SECONDS,
+                                  "PUTKI_HQ_DISABLE_FOOTBALL_POLLER", on_tick)),
     ]
+    if os.environ.get("PUTKI_HQ_ENABLE_REDDIT_POLLER", "0") == "1":
+        tasks.append(asyncio.create_task(_loop("reddit", reddit_tick, db, REDDIT_POLL_SECONDS,
+                                               "PUTKI_HQ_DISABLE_REDDIT_POLLER", on_tick)))
+    else:
+        logger.info("Reddit poller dormant (set PUTKI_HQ_ENABLE_REDDIT_POLLER=1 once OAuth approved)")
     return tasks
