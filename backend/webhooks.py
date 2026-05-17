@@ -422,8 +422,93 @@ def build_webhook_router(db) -> APIRouter:
                 "blockers": [f"set {callback_env} in backend/.env"],
             })
 
-        # Real subscription API calls deferred until credentials arrive.
-        # Recording the operator action is still useful for audit.
+        # ── Twitch: real EventSub bootstrap ───────────────────────────────
+        if source == "twitch":
+            from twitch_eventsub import (
+                is_configured as twitch_is_configured,
+                get_app_access_token,
+                list_subscriptions,
+                resolve_user_id,
+                create_stream_online_subscription,
+            )
+            if not twitch_is_configured():
+                return JSONResponse(status_code=503, content={
+                    "detail": "twitch_oauth_credentials_missing",
+                    "source": source,
+                    "blockers": ["set TWITCH_CLIENT_ID + TWITCH_CLIENT_SECRET in backend/.env"],
+                })
+            try:
+                # Probe OAuth so we fail fast with a clean reason if creds are wrong.
+                await get_app_access_token()
+            except Exception as exc:
+                return JSONResponse(status_code=502, content={
+                    "detail": "twitch_oauth_failed",
+                    "source": source,
+                    "error": str(exc),
+                })
+
+            # Existing subscriptions (so we don't double-subscribe).
+            current = await list_subscriptions()
+            existing_broadcaster_ids: set[str] = set()
+            if current.get("ok"):
+                for sub in current.get("subscriptions") or []:
+                    if sub.get("type") == "stream.online":
+                        cond = sub.get("condition") or {}
+                        if cond.get("broadcaster_user_id"):
+                            existing_broadcaster_ids.add(str(cond["broadcaster_user_id"]))
+
+            # Pull tracked Twitch streamers from registry.
+            streamer_cur = db.streamers.find(
+                {"platform": {"$in": ["twitch", "Twitch"]}, "market_id": "FI"},
+                {"_id": 0, "slug": 1, "name": 1},
+            ).limit(200)
+            streamers = await streamer_cur.to_list(length=200)
+
+            results = {"subscribed": [], "skipped": [], "errors": []}
+            for s in streamers:
+                login = (s.get("slug") or "").strip().lower()
+                if not login:
+                    continue
+                try:
+                    user_id = await resolve_user_id(login)
+                    if not user_id:
+                        results["errors"].append({"slug": login, "error": "unresolved_login"})
+                        continue
+                    if user_id in existing_broadcaster_ids:
+                        results["skipped"].append({"slug": login, "user_id": user_id, "reason": "already_subscribed"})
+                        continue
+                    sub_res = await create_stream_online_subscription(user_id)
+                    if sub_res.get("ok"):
+                        results["subscribed"].append({"slug": login, "user_id": user_id})
+                    else:
+                        results["errors"].append({
+                            "slug": login,
+                            "user_id": user_id,
+                            "status_code": sub_res.get("status_code"),
+                            "body": sub_res.get("body"),
+                        })
+                except Exception as exc:
+                    results["errors"].append({"slug": login, "error": str(exc)})
+
+            await db.webhook_audit.insert_one({
+                "source": "twitch",
+                "action": "resubscribe_executed",
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+                "results": results,
+                "streamer_count": len(streamers),
+            })
+
+            return {
+                "source": "twitch",
+                "status": "executed",
+                "streamer_count": len(streamers),
+                "subscribed_count": len(results["subscribed"]),
+                "skipped_count": len(results["skipped"]),
+                "error_count": len(results["errors"]),
+                "results": results,
+            }
+
+        # Kick + YouTube: still stubbed until their creds + callback URLs land.
         await db.webhook_audit.insert_one({
             "source": source,
             "action": "resubscribe_requested",
@@ -435,4 +520,57 @@ def build_webhook_router(db) -> APIRouter:
             "detail": "Credentials configured; live subscription call wiring is the next implementation step.",
         }
 
+    # ── Twitch operational verify + list endpoints ────────────────────────
+    @r.get("/twitch/verify")
+    async def twitch_verify(x_admin_token: Optional[str] = Header(default=None)):
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        from twitch_eventsub import is_configured as twitch_is_configured, get_app_access_token, list_subscriptions
+        if not twitch_is_configured():
+            return JSONResponse(status_code=503, content={"detail": "twitch_not_configured"})
+        try:
+            token = await get_app_access_token()
+        except Exception as exc:
+            return JSONResponse(status_code=502, content={"detail": "twitch_oauth_failed", "error": str(exc)})
+        subs = await list_subscriptions()
+        return {
+            "ok": True,
+            "oauth_token_length": len(token),  # length only — never the value
+            "subscriptions": {
+                "total": subs.get("total"),
+                "total_cost": subs.get("total_cost"),
+                "max_total_cost": subs.get("max_total_cost"),
+                "by_status": _count_by(subs.get("subscriptions") or [], "status"),
+                "by_type": _count_by(subs.get("subscriptions") or [], "type"),
+            },
+            "callback_url": os.environ.get("TWITCH_EVENTSUB_CALLBACK_URL", ""),
+        }
+
+    @r.get("/twitch/subscriptions")
+    async def twitch_list_subs(x_admin_token: Optional[str] = Header(default=None),
+                                status: Optional[str] = None):
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        from twitch_eventsub import is_configured as twitch_is_configured, list_subscriptions
+        if not twitch_is_configured():
+            return JSONResponse(status_code=503, content={"detail": "twitch_not_configured"})
+        out = await list_subscriptions(status=status)
+        # Strip secrets from transport before returning. (Helix never echoes them,
+        # but we're defensive.)
+        for sub in out.get("subscriptions") or []:
+            t = sub.get("transport") or {}
+            if "secret" in t:
+                t["secret"] = "***"
+        return out
+
     return r
+
+
+def _count_by(rows: list[dict], key: str) -> dict[str, int]:
+    out: dict[str, int] = {}
+    for r in rows:
+        k = r.get(key) or "unknown"
+        out[k] = out.get(k, 0) + 1
+    return out

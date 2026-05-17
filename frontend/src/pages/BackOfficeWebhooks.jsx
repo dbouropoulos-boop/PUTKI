@@ -173,6 +173,11 @@ const BackOfficeWebhooks = () => {
   });
   const [rebuildError, setRebuildError] = useState('');
 
+  // Twitch verify state — surfaces OAuth probe + subscription summary.
+  const [twitchVerifyBusy, setTwitchVerifyBusy] = useState(false);
+  const [twitchVerifyResult, setTwitchVerifyResult] = useState(null);
+  const [twitchVerifyError, setTwitchVerifyError] = useState('');
+
   const headers = useCallback((tok = token) => ({ 'Content-Type': 'application/json', 'X-Admin-Token': tok }), [token]);
 
   const fetchStatus = useCallback(async () => {
@@ -254,6 +259,27 @@ const BackOfficeWebhooks = () => {
       setRebuildError(String(e));
     } finally {
       setRebuildBusy(false);
+    }
+  }, [headers]);
+
+  const onTwitchVerify = useCallback(async () => {
+    setTwitchVerifyBusy(true);
+    setTwitchVerifyError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/webhooks/twitch/verify`, { headers: headers() });
+      const raw = await r.text();
+      let body;
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = { raw }; }
+      if (!r.ok) {
+        setTwitchVerifyError(`HTTP ${r.status} · ${body.detail || body.error || raw || 'tuntematon virhe'}`);
+        setTwitchVerifyResult(null);
+        return;
+      }
+      setTwitchVerifyResult({ ...body, verified_at: new Date().toISOString() });
+    } catch (e) {
+      setTwitchVerifyError(String(e));
+    } finally {
+      setTwitchVerifyBusy(false);
     }
   }, [headers]);
 
@@ -391,6 +417,53 @@ const BackOfficeWebhooks = () => {
             </div>
           ) : null}
         </div>
+
+        {/* Twitch connection verify panel — proves OAuth + lists subscriptions */}
+        <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #9146FF' }}
+             data-testid="twitch-verify-panel">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-[260px]">
+              <div className="mono inline-flex items-center gap-2 mb-2"
+                   style={{ fontSize: 11, letterSpacing: '0.22em', color: '#9146FF', fontWeight: 700 }}>
+                <Webhook strokeWidth={1.7} size={13} />
+                TWITCH · YHTEYDEN VARMENNUS
+              </div>
+              <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 6 }}>
+                Vaihtaa client_credentials → app-access-token ja hakee nykyiset EventSub-tilaukset.
+                Ei luo uusia tilauksia. Käytä ennen kuin painat &quot;Pakota uudelleentilaus&quot;.
+              </p>
+              {twitchVerifyResult ? (
+                <div className="mono" style={{ fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--ink)', fontWeight: 600, lineHeight: 1.6 }}
+                     data-testid="twitch-verify-summary">
+                  TILAUKSIA · {twitchVerifyResult.subscriptions?.total ?? 0}
+                  {' · '}KÄYTÖSSÄ {twitchVerifyResult.subscriptions?.total_cost ?? 0}
+                  /{twitchVerifyResult.subscriptions?.max_total_cost ?? '?'}
+                  {' · '}OAUTH {twitchVerifyResult.ok ? '✓' : '✗'}
+                </div>
+              ) : (
+                <div className="mono" style={{ fontSize: 10, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
+                  EI VIELÄ VARMISTETTU
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={onTwitchVerify} disabled={twitchVerifyBusy}
+                    className="btn-primary mono inline-flex items-center gap-2"
+                    style={{ fontSize: 11, letterSpacing: '0.16em', fontWeight: 700, padding: '12px 18px',
+                             background: '#9146FF', opacity: twitchVerifyBusy ? 0.7 : 1 }}
+                    data-testid="twitch-verify-button">
+              {twitchVerifyBusy ? <Loader2 strokeWidth={1.8} size={13} className="animate-spin" />
+                                 : <CheckCircle2 strokeWidth={1.8} size={13} />}
+              {twitchVerifyBusy ? 'YHDISTETÄÄN…' : 'VARMENNA TWITCH-YHTEYS'}
+            </button>
+          </div>
+          {twitchVerifyError ? (
+            <div className="mono mt-4" style={{ fontSize: 10.5, letterSpacing: '0.12em', color: '#C8423C', fontWeight: 600 }}
+                 data-testid="twitch-verify-error">
+              VIRHE · {twitchVerifyError}
+            </div>
+          ) : null}
+        </div>
+
 
         <div className="grid grid-cols-1 gap-3" data-testid="webhook-source-rows">
           {sources.map((s) => (
