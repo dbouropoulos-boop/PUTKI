@@ -186,8 +186,10 @@ const BackOfficeWebhooks = () => {
         method: 'POST',
         headers: headers(),
       });
-      const d = await r.json().catch(() => ({}));
-      setLastAction({ source, status: r.status, body: d });
+      const raw = await r.text();
+      let body;
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = { raw }; }
+      setLastAction({ source, status: r.status, body });
     } catch (e) {
       setLastAction({ source, status: 0, body: { detail: String(e) } });
     } finally {

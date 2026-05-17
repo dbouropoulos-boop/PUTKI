@@ -12,6 +12,8 @@
 - **Phase 3 V2 — UI Honesty Pass** (2026-05-16) — Killed all fake-live-data UI manufacturing per V2 brief
 - **Phase 3 V2 — Final Architecture Step 1: Mock Purge** (2026-05-17) — Repo now mock-free. Operators + streamers as real backend collections with admin CRUD.
 - **Phase 3 V2 — Final Architecture Step 2: Webhook signal handlers** (2026-05-17) — Twitch EventSub / Kick / YouTube PubSubHubbub webhook receivers shipped, dormant-503 when secrets unset, full HMAC verification + replay dedup, 16 pytest cases green.
+- **Phase 3 V2 — Final Architecture Step 4: Live-feed aggregation** (2026-05-17) — `feed_items` collection + aggregation worker (60s rebuild) + public `GET /api/feed` (mocked filtered) + admin `/api/admin/feed{,/rebuild}` + 14 pytest cases green.
+- **Phase 3 V2 — Final Architecture Step 5: Hub homepage rewrite** (2026-05-17) — Compact top strip (dial top-left, Voyager top-right), 5-card live mosaic (Streamerit live, Urheilu nyt, Tuoreet hetket, Foorumit kuumana, Mittari live) with 30s poll, Zone 3 publication-depth (8 pillars), Pulssi + Operaattoritapahtumat HIDDEN, accountability footer. `/back-office/webhooks` operational console (per-source state, PubSub lease indicator, force-resubscribe button) shipped.
 
 ## Phase 3 V2 — Architecture-only Track (this session)
 
