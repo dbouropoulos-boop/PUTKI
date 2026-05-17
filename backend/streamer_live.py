@@ -34,6 +34,12 @@ CACHE_TTL_SECONDS = int(os.environ.get("STREAMER_LIVE_CACHE_TTL", "60"))
 LIVE_LANGUAGE = os.environ.get("STREAMER_LIVE_LANGUAGE", "fi")
 MAX_RESULTS = int(os.environ.get("STREAMER_LIVE_MAX_RESULTS", "12"))
 
+# Optional editorial whitelist: comma-separated Twitch login names. When set
+# we surface ONLY these channels (still ordered by current viewer count) and
+# silently drop everyone else. Empty value = auto-discover everything.
+_WHITELIST_RAW = os.environ.get("STREAMER_LIVE_WHITELIST", "").strip()
+WHITELIST = {x.strip().lower() for x in _WHITELIST_RAW.split(",") if x.strip()}
+
 _cache: Dict[str, Any] = {"payload": None, "expires_at": 0.0}
 _lock = asyncio.Lock()
 
@@ -80,9 +86,13 @@ async def _build_payload() -> Dict[str, Any]:
         }
 
     try:
+        # When a whitelist is active we widen the fetch window to make sure
+        # our editorial picks aren't outranked off the page by larger
+        # general-audience streams (Helix returns top-by-viewer first).
+        fetch_first = max(MAX_RESULTS, 50) if WHITELIST else MAX_RESULTS
         raw = await _helix_get(
             "/streams",
-            {"language": LIVE_LANGUAGE, "first": MAX_RESULTS},
+            {"language": LIVE_LANGUAGE, "first": fetch_first},
             token,
         )
     except Exception as e:
@@ -95,6 +105,9 @@ async def _build_payload() -> Dict[str, Any]:
         }
 
     streams = raw.get("data", []) or []
+    # Editorial whitelist filter (env STREAMER_LIVE_WHITELIST).
+    if WHITELIST:
+        streams = [s for s in streams if (s.get("user_login") or "").lower() in WHITELIST]
     if not streams:
         return {
             "streamers": [],

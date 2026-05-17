@@ -347,6 +347,21 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
           {lang === 'en' ? 'NO ACTIVE CONTRIBUTORS · POLLERS HAVE NOT RETURNED REAL DATA YET' : 'EI AKTIIVISIA SYÖTTEITÄ · POLLERIT EIVÄT VIELÄ TUOTA OIKEAA DATAA'}
         </div>
       )}
+      <a
+        href="/mittari/historia"
+        className="mono mt-3 inline-flex items-center gap-1.5 transition-opacity hover:opacity-100"
+        style={{
+          fontSize: 9.5,
+          letterSpacing: '0.22em',
+          color: 'var(--muted)',
+          fontWeight: 600,
+          textDecoration: 'none',
+          opacity: 0.7,
+        }}
+        data-testid="cockpit-history-link"
+      >
+        MITTARIN HISTORIA →
+      </a>
     </div>
   );
 };

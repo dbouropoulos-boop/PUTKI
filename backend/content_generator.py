@@ -566,6 +566,13 @@ class ContentGenerator:
         if draft.get("status") == "published":
             return {"status": "already_published", "id": draft["id"]}
 
+        # Phase 4 Pre-Launch Polish: social meta carries forward from draft.
+        # Nano Banana OG image is generated in the BACKGROUND (after insert)
+        # so a 5-30s Gemini call doesn't block the publish response. The
+        # default category SVG ships immediately; the AI card replaces it
+        # asynchronously via _backfill_og_image once Gemini returns.
+        social = dict(draft.get("social") or {})
+
         published_doc = {
             "id": str(uuid.uuid4()),
             "draft_id": draft["id"],
@@ -584,7 +591,7 @@ class ContentGenerator:
             "clicks": 0,
             # Social meta carries over verbatim — no re-derivation at publish
             # time so an editor's manual edit during draft review is preserved.
-            "social": draft.get("social") or {},
+            "social": social,
             "canonical_url": f"https://putkihq.fi/uutiset/{draft['url_slug']}",
         }
         await self.db.published_content.insert_one(dict(published_doc))
@@ -593,8 +600,40 @@ class ContentGenerator:
             {"$set": {"status": "published", "published_at": published_doc["published_at"],
                       "reviewed_by": reviewed_by}},
         )
+        # Schedule Nano Banana backfill — never awaited from the publish path.
+        try:
+            asyncio.create_task(self._backfill_og_image(
+                published_doc["id"], draft["url_slug"], draft["headline"], draft.get("category"),
+            ))
+        except Exception:
+            logger.exception("Failed to schedule OG backfill for %s", draft.get("url_slug"))
         return {"status": "published", "published_id": published_doc["id"],
                 "url_slug": published_doc["url_slug"]}
+
+    async def _backfill_og_image(self, published_id: str, slug: str, headline: str,
+                                 category: Optional[str]) -> None:
+        """Generate a Nano Banana OG card for a freshly-published article and
+        patch the document once it's ready. Silent on failure — the existing
+        category SVG fallback in `social.og_image_url` keeps social shares
+        working in the meantime."""
+        try:
+            from og_image_generator import ensure_og_image
+            url = await ensure_og_image(slug, headline, category)
+        except Exception:
+            logger.exception("OG image generation failed for %s", slug)
+            return
+        if not url:
+            return
+        try:
+            await self.db.published_content.update_one(
+                {"id": published_id},
+                {"$set": {
+                    "social.og_image_url": url,
+                    "social.twitter_card": "summary_large_image",
+                }},
+            )
+        except Exception:
+            logger.exception("Failed to patch OG image url for %s", published_id)
 
     async def reject_draft(self, draft_id: str, *, reviewed_by: str = "manual", note: Optional[str] = None) -> Dict[str, Any]:
         result = await self.db.content_drafts.update_one(

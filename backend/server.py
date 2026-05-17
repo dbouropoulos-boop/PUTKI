@@ -1424,6 +1424,17 @@ async def _signal_dial_worker():
 
 app.include_router(api_router)
 
+# Phase 4 Pre-Launch Polish — serve Nano Banana-generated OG images.
+# StaticFiles is mounted under /api/static so the existing K8s ingress
+# rule that routes /api/* to the backend pod handles social-card lookups
+# without extra config.
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path as _StaticPath
+_static_dir = _StaticPath(__file__).parent / "static"
+_static_dir.mkdir(parents=True, exist_ok=True)
+(_static_dir / "og").mkdir(parents=True, exist_ok=True)
+app.mount("/api/static", StaticFiles(directory=str(_static_dir)), name="static")
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

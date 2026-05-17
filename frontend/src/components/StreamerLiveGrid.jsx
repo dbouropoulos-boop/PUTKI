@@ -9,7 +9,7 @@
  * Used on Home as "Mitä tapahtuu nyt".
  */
 import React, { useEffect, useState, useCallback } from 'react';
-import { ExternalLink, Eye, Users } from 'lucide-react';
+import { ExternalLink, Eye, Users, Bell } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 60_000;
@@ -30,6 +30,11 @@ const fmtAgo = (iso) => {
     return `${hrs}h ${mins % 60}min livenä`;
   } catch { return ''; }
 };
+
+// Twitch "follow" page opens directly on the channel with the follow CTA
+// inline. Cleaner than asking the user for a separate Telegram bot opt-in
+// here; the homepage capture form still handles email + Telegram alerts.
+const followUrl = (login) => login ? `https://www.twitch.tv/${login}/follow` : '#';
 
 const StreamerCard = ({ s }) => (
   <a
@@ -140,6 +145,32 @@ const StreamerCard = ({ s }) => (
           {fmtAgo(s.started_at).toUpperCase()}
         </div>
       )}
+      {/* Follow CTA — opens twitch.tv/<login>/follow in a new tab. Stops the
+          click from bubbling up so we don't double-fire the card link. */}
+      <button
+        type="button"
+        data-testid={`streamer-follow-${s.user_login}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.open(followUrl(s.user_login), '_blank', 'noopener,noreferrer');
+        }}
+        className="mono mt-2 inline-flex items-center justify-center gap-1.5 transition-colors"
+        style={{
+          padding: '8px 12px',
+          fontSize: 10.5,
+          letterSpacing: '0.16em',
+          fontWeight: 700,
+          background: 'var(--ink)',
+          color: 'var(--bg)',
+          border: 'none',
+          borderRadius: 2,
+          cursor: 'pointer',
+        }}
+      >
+        <Bell strokeWidth={1.8} size={11} />
+        FOLLOW ALERT
+      </button>
     </div>
   </a>
 );
@@ -214,15 +245,35 @@ const StreamerLiveGrid = () => {
           KUKAAN SUOMENKIELINEN STRIIMAAJA EI OLE LIVENÄ JUURI NYT
         </div>
       ) : (
-        <div
-          className="grid gap-5"
-          style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
-          data-testid="streamer-live-list"
-        >
-          {streamers.slice(0, 8).map((s) => (
-            <StreamerCard key={s.user_login} s={s} />
-          ))}
-        </div>
+        <>
+          {/* Mobile-only horizontal swipe lane — premium card swiper with
+              scroll-snap. Hidden ≥sm where the responsive grid kicks in. */}
+          <div
+            className="sm:hidden flex gap-4 overflow-x-auto pb-3 -mx-4 px-4"
+            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
+            data-testid="streamer-live-swipe"
+          >
+            {streamers.slice(0, 8).map((s) => (
+              <div
+                key={s.user_login}
+                style={{ scrollSnapAlign: 'start', flex: '0 0 80%', minWidth: 280 }}
+              >
+                <StreamerCard s={s} />
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop/tablet grid (≥sm). */}
+          <div
+            className="hidden sm:grid gap-5"
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
+            data-testid="streamer-live-list"
+          >
+            {streamers.slice(0, 8).map((s) => (
+              <StreamerCard key={s.user_login} s={s} />
+            ))}
+          </div>
+        </>
       )}
     </section>
   );
