@@ -21,6 +21,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucide-react';
 import DialCockpit from '../components/DialCockpit';
 import HubMosaic from '../components/HubMosaic';
+import LiveActivityFeed from '../components/LiveActivityFeed';
 import ZonePublicationDepth from '../components/ZonePublicationDepth';
 import VoyagerCorner from '../components/VoyagerCorner';
 import ActivityStats from '../components/ActivityStats';
@@ -351,7 +352,13 @@ const Home = () => {
         </div>
       </section>
 
-      {/* ZONE 2 — 5-card live mosaic */}
+      {/* ZONE 2 — Live activity feed (Phase 4 chronological feed replaces
+          the legacy 5-card mosaic per launch spec). Real-time stream of
+          auto-published articles straight from /api/content/published. */}
+      <LiveActivityFeed />
+
+      {/* ZONE 2.5 — legacy 5-card mosaic kept below the feed for editorial
+          curation. Comment out / remove later if no longer needed. */}
       <HubMosaic />
 
       {/* ZONE 3 — publication depth: 8 archive entry points */}

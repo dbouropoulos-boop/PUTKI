@@ -106,12 +106,27 @@ def _social_intensity(social_doc: Optional[Dict[str, Any]]) -> float:
     return max(0.0, min(1.0, mentions / 20.0))
 
 
-def _sports_intensity(sports_doc: Optional[Dict[str, Any]]) -> float:
-    """1.0 if any Finnish-roster NHL game today, else 0 (binary per spec)."""
-    if not sports_doc:
-        return 0.0
-    games = int(sports_doc.get("games_active", 0) or 0)
-    return 1.0 if games > 0 else 0.0
+def _sports_intensity(sports_doc: Optional[Dict[str, Any]],
+                       f1_doc: Optional[Dict[str, Any]] = None,
+                       football_doc: Optional[Dict[str, Any]] = None) -> float:
+    """Combined sports intensity across NHL + F1 + Football.
+
+    Each sub-sport contributes a binary signal (active=1, idle=0). Three
+    sub-sports → divide by 3 so a single active sport returns ~0.33 and all
+    three active returns 1.0. Dormant docs (no API key) are excluded.
+    """
+    def _active(doc, key):
+        if not doc or doc.get("dormant"):
+            return 0
+        return 1 if int(doc.get(key, 0) or 0) > 0 else 0
+    nhl_active = _active(sports_doc, "games_active")
+    f1_active  = _active(f1_doc, "race_active") if f1_doc and not f1_doc.get("dormant") else 0
+    # F1 is event-driven; race_active is a bool not a count
+    if f1_doc and not f1_doc.get("dormant"):
+        f1_active = 1 if f1_doc.get("race_active") else 0
+    fb_active = _active(football_doc, "matches_active")
+    score = (nhl_active + f1_active + fb_active) / 3.0
+    return max(0.0, min(1.0, score))
 
 
 def _news_intensity(news_doc: Optional[Dict[str, Any]]) -> float:
@@ -140,11 +155,13 @@ async def recalculate_dial(db) -> Dict[str, Any]:
     social_doc = await _latest(db, "social_signals")
     sports_doc = await _latest(db, "sports_signals")
     news_doc   = await _latest(db, "news_signals")
+    f1_doc       = await _latest(db, "f1_signals")
+    football_doc = await _latest(db, "football_signals")
 
     intensities = {
         "stream":  _stream_intensity(stream_doc),
         "social":  _social_intensity(social_doc),
-        "sports":  _sports_intensity(sports_doc),
+        "sports":  _sports_intensity(sports_doc, f1_doc, football_doc),
         "news":    _news_intensity(news_doc),
     }
     sub_scores = {cat: round(intensities[cat] * SOURCE_WEIGHTS[cat], 2)
@@ -167,6 +184,8 @@ async def recalculate_dial(db) -> Dict[str, Any]:
         int(social_doc.get("mention_count", 0)) if social_doc else 0,
         int(sports_doc.get("games_active", 0)) if sports_doc else 0,
         int(news_doc.get("matched_count", 0)) if news_doc else 0,
+        (1 if (f1_doc and not f1_doc.get("dormant") and f1_doc.get("race_active")) else 0),
+        int(football_doc.get("matches_active", 0)) if football_doc and not football_doc.get("dormant") else 0,
     ])
 
     state_def = _state_for_score(composite)
@@ -182,10 +201,14 @@ async def recalculate_dial(db) -> Dict[str, Any]:
         "signal_count": signal_count,
         "any_real": any_real,
         "layer2": {
-            "stream":  {"present": bool(stream_doc), "captured_at": str(stream_doc.get("captured_at")) if stream_doc else None},
-            "social":  {"present": bool(social_doc), "captured_at": str(social_doc.get("captured_at")) if social_doc else None},
-            "sports":  {"present": bool(sports_doc), "captured_at": str(sports_doc.get("captured_at")) if sports_doc else None},
-            "news":    {"present": bool(news_doc),   "captured_at": str(news_doc.get("captured_at")) if news_doc else None},
+            "stream":   {"present": bool(stream_doc),   "captured_at": str(stream_doc.get("captured_at")) if stream_doc else None},
+            "social":   {"present": bool(social_doc),   "captured_at": str(social_doc.get("captured_at")) if social_doc else None},
+            "sports":   {"present": bool(sports_doc),   "captured_at": str(sports_doc.get("captured_at")) if sports_doc else None},
+            "news":     {"present": bool(news_doc),     "captured_at": str(news_doc.get("captured_at")) if news_doc else None},
+            "f1":       {"present": bool(f1_doc),       "captured_at": str(f1_doc.get("captured_at")) if f1_doc else None,
+                         "race_active": bool(f1_doc.get("race_active")) if f1_doc else False},
+            "football": {"present": bool(football_doc), "captured_at": str(football_doc.get("captured_at")) if football_doc else None,
+                         "matches_active": int(football_doc.get("matches_active", 0)) if football_doc else 0},
         },
     }
 

@@ -110,10 +110,12 @@ class TestDialFormula:
     def test_weights_sum_correctly(self):
         # Force every signal to max so we can verify the weights sum to 100
         db = _StubDB({
-            "stream_signals": {"total_viewers": 20_000, "active_streams": 5},
-            "social_signals": {"mention_count": 20},
-            "sports_signals": {"games_active": 3},
-            "news_signals":   {"matched_count": 10},
+            "stream_signals":   {"total_viewers": 20_000, "active_streams": 5},
+            "social_signals":   {"mention_count": 20},
+            "sports_signals":   {"games_active": 3},
+            "news_signals":     {"matched_count": 10},
+            "f1_signals":       {"race_active": True, "dormant": False},
+            "football_signals": {"matches_active": 10, "dormant": False},
         })
         snap = _run(dial_engine.recalculate_dial(db))
         # Each sub_score should equal its weight when intensity = 1
@@ -130,16 +132,37 @@ class TestDialFormula:
         assert snap["primary_driver"] == "news"
 
     def test_sports_binary(self):
-        # 1 game active should yield full 29 weight (Phase 1 reweighted)
+        # Phase 4 W3b: sports intensity now spans NHL + F1 + Football. One
+        # NHL game alone → 1/3 of the 29-weight band ≈ 9.67. All three sports
+        # active simultaneously would yield the full 29.
         db = _StubDB({"sports_signals": {"games_active": 1}})
+        snap = _run(dial_engine.recalculate_dial(db))
+        assert snap["sub_scores"]["sports"] == pytest.approx(29.0 / 3, abs=0.5)
+        assert snap["primary_driver"] == "sports"
+
+    def test_sports_all_three_active_caps_at_weight(self):
+        # NHL game + F1 race + finished football match → intensity = 1
+        # Stub all three Layer 2 collections.
+        from tests.test_phase4_w1_layer2 import _StubColl
+        # Build a stub that returns one doc per collection.
+        latests = {
+            "sports_signals":   {"games_active": 1},
+            "f1_signals":       {"race_active": True, "dormant": False},
+            "football_signals": {"matches_active": 5, "dormant": False},
+        }
+        db = _StubDB(latests)
         snap = _run(dial_engine.recalculate_dial(db))
         assert snap["sub_scores"]["sports"] == pytest.approx(29.0, abs=0.5)
         assert snap["primary_driver"] == "sports"
 
     def test_state_thresholds_boundary_haalea(self):
         # Tune intensities so composite lands in HAALEA range 20-44.
-        # NHL games_active=1 → 29% × 1 = 29 → HAALEA
-        db = _StubDB({"sports_signals": {"games_active": 1}})
+        # NHL+F1+Football all active → 29 × 1.0 = 29 → HAALEA.
+        db = _StubDB({
+            "sports_signals":   {"games_active": 1},
+            "f1_signals":       {"race_active": True, "dormant": False},
+            "football_signals": {"matches_active": 1, "dormant": False},
+        })
         snap = _run(dial_engine.recalculate_dial(db))
         assert snap["composite_score"] == pytest.approx(29.0, abs=0.5)
         assert snap["state_key"] == "HAALEA"
