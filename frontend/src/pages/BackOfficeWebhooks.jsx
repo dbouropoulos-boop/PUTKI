@@ -183,6 +183,11 @@ const BackOfficeWebhooks = () => {
   const [kickVerifyResult, setKickVerifyResult] = useState(null);
   const [kickVerifyError, setKickVerifyError] = useState('');
 
+  // YouTube verify state.
+  const [youtubeVerifyBusy, setYoutubeVerifyBusy] = useState(false);
+  const [youtubeVerifyResult, setYoutubeVerifyResult] = useState(null);
+  const [youtubeVerifyError, setYoutubeVerifyError] = useState('');
+
   // Pending confirm dialog for force-resubscribe (dry-run preview).
   const [pendingConfirm, setPendingConfirm] = useState(null);
 
@@ -336,6 +341,27 @@ const BackOfficeWebhooks = () => {
       setKickVerifyError(String(e));
     } finally {
       setKickVerifyBusy(false);
+    }
+  }, [headers]);
+
+  const onYoutubeVerify = useCallback(async () => {
+    setYoutubeVerifyBusy(true);
+    setYoutubeVerifyError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/webhooks/youtube/verify`, { headers: headers() });
+      const raw = await r.text();
+      let body;
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = { raw }; }
+      if (!r.ok) {
+        setYoutubeVerifyError(`HTTP ${r.status} · ${body.detail || body.error || raw || 'tuntematon virhe'}`);
+        setYoutubeVerifyResult(null);
+        return;
+      }
+      setYoutubeVerifyResult({ ...body, verified_at: new Date().toISOString() });
+    } catch (e) {
+      setYoutubeVerifyError(String(e));
+    } finally {
+      setYoutubeVerifyBusy(false);
     }
   }, [headers]);
 
@@ -564,6 +590,52 @@ const BackOfficeWebhooks = () => {
             </div>
           ) : null}
         </div>
+
+        {/* YouTube PubSub verify panel — red accent */}
+        <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #FF0033' }}
+             data-testid="youtube-verify-panel">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-[260px]">
+              <div className="mono inline-flex items-center gap-2 mb-2"
+                   style={{ fontSize: 11, letterSpacing: '0.22em', color: '#C8423C', fontWeight: 700 }}>
+                <Webhook strokeWidth={1.7} size={13} />
+                YOUTUBE · YHTEYDEN VARMENNUS
+              </div>
+              <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 6 }}>
+                Tarkistaa Data API -avaimen toimivuuden ja kertoo PubSubHubbub-tilausten lukumäärän
+                (vuokra-aika ~5–10 vrk, automaattinen uusinta tulossa).
+              </p>
+              {youtubeVerifyResult ? (
+                <div className="mono" style={{ fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--ink)', fontWeight: 600, lineHeight: 1.6 }}
+                     data-testid="youtube-verify-summary">
+                  DATA API {youtubeVerifyResult.data_api_reachable ? '✓' : '✗'}
+                  {' · '}AKTIIVISIA VUOKRIA · {youtubeVerifyResult.lease_summary?.active ?? 0}
+                  {' · '}48 H VANHENEMASSA · {youtubeVerifyResult.lease_summary?.expiring_within_48h ?? 0}
+                </div>
+              ) : (
+                <div className="mono" style={{ fontSize: 10, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
+                  EI VIELÄ VARMISTETTU
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={onYoutubeVerify} disabled={youtubeVerifyBusy}
+                    className="btn-primary mono inline-flex items-center gap-2"
+                    style={{ fontSize: 11, letterSpacing: '0.16em', fontWeight: 700, padding: '12px 18px',
+                             background: '#FF0033', opacity: youtubeVerifyBusy ? 0.7 : 1 }}
+                    data-testid="youtube-verify-button">
+              {youtubeVerifyBusy ? <Loader2 strokeWidth={1.8} size={13} className="animate-spin" />
+                                  : <CheckCircle2 strokeWidth={1.8} size={13} />}
+              {youtubeVerifyBusy ? 'YHDISTETÄÄN…' : 'VARMENNA YOUTUBE-YHTEYS'}
+            </button>
+          </div>
+          {youtubeVerifyError ? (
+            <div className="mono mt-4" style={{ fontSize: 10.5, letterSpacing: '0.12em', color: '#C8423C', fontWeight: 600 }}
+                 data-testid="youtube-verify-error">
+              VIRHE · {youtubeVerifyError}
+            </div>
+          ) : null}
+        </div>
+
 
 
 

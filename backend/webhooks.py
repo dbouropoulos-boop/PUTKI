@@ -617,7 +617,125 @@ def build_webhook_router(db) -> APIRouter:
                 "results": results,
             }
 
-        # YouTube: still stubbed
+        # ── YouTube PubSubHubbub: real subscription bootstrap ──────────────
+        if source == "youtube":
+            from youtube_pubsub import (
+                is_configured as yt_is_configured,
+                can_resolve_channels,
+                resolve_channel_id,
+                subscribe as yt_subscribe,
+                DEFAULT_LEASE_SECS,
+            )
+            if not yt_is_configured():
+                return JSONResponse(status_code=503, content={
+                    "detail": "youtube_pubsub_not_configured",
+                    "source": source,
+                    "blockers": ["set YOUTUBE_PUBSUB_SECRET + YOUTUBE_PUBSUB_CALLBACK_URL in backend/.env"],
+                })
+
+            # Pull YouTube streamers from registry.
+            streamer_cur = db.streamers.find(
+                {"platform": {"$in": ["youtube", "YouTube"]}, "market_id": "FI"},
+                {"_id": 0, "slug": 1, "name": 1},
+            ).limit(500)
+            streamers = await streamer_cur.to_list(length=500)
+
+            # Existing leases for dedup (and skip if still > 24h to go).
+            leases = await db.youtube_pubsub_leases.find({"market_id": "FI"}, {"_id": 0}).to_list(length=500)
+            now_ts = datetime.now(timezone.utc).timestamp()
+            healthy_channels: set[str] = set()
+            for lease in leases:
+                exp = lease.get("expires_at_ts") or 0
+                if exp - now_ts > 86400:  # >24h left
+                    healthy_channels.add(lease.get("channel_id"))
+
+            results = {"subscribed": [], "skipped": [], "errors": []}
+            plan: list[dict] = []
+
+            for s in streamers:
+                slug = (s.get("slug") or "").strip()
+                if not slug:
+                    continue
+                try:
+                    if not can_resolve_channels() and not slug.startswith("UC"):
+                        results["errors"].append({"slug": slug, "error": "no_youtube_api_key_for_handle_resolution"})
+                        continue
+                    resolved = await resolve_channel_id(slug)
+                    if not resolved or not resolved.get("channel_id"):
+                        results["errors"].append({"slug": slug, "error": "unresolved_handle"})
+                        continue
+                    channel_id = resolved["channel_id"]
+                    if channel_id in healthy_channels:
+                        results["skipped"].append({"slug": slug, "channel_id": channel_id, "reason": "lease_still_healthy"})
+                        continue
+                    plan.append({"slug": slug, "channel_id": channel_id, "event": "video.published"})
+                    if dry_run:
+                        continue
+                    sub_res = await yt_subscribe(channel_id, lease_seconds=DEFAULT_LEASE_SECS)
+                    if sub_res.get("ok"):
+                        # Store the lease record (hub will confirm via challenge → handler ACKs).
+                        expires_ts = datetime.now(timezone.utc).timestamp() + DEFAULT_LEASE_SECS
+                        await db.youtube_pubsub_leases.update_one(
+                            {"channel_id": channel_id, "market_id": "FI"},
+                            {"$set": {
+                                "channel_id": channel_id,
+                                "slug": slug,
+                                "title": resolved.get("title"),
+                                "market_id": "FI",
+                                "topic": sub_res.get("topic"),
+                                "subscribed_at": datetime.now(timezone.utc).isoformat(),
+                                "expires_at": datetime.fromtimestamp(expires_ts, tz=timezone.utc).isoformat(),
+                                "expires_at_ts": expires_ts,
+                                "lease_seconds": DEFAULT_LEASE_SECS,
+                            }},
+                            upsert=True,
+                        )
+                        # Also update the cross-source surface used by /webhooks/status.
+                        await db.settings.update_one(
+                            {"key": "webhook_youtube_pubsub_lease"},
+                            {"$set": {
+                                "key": "webhook_youtube_pubsub_lease",
+                                "expires_at": datetime.fromtimestamp(expires_ts, tz=timezone.utc).isoformat(),
+                            }},
+                            upsert=True,
+                        )
+                        results["subscribed"].append({"slug": slug, "channel_id": channel_id})
+                    else:
+                        results["errors"].append({"slug": slug, "channel_id": channel_id,
+                                                   "status_code": sub_res.get("status_code"),
+                                                   "body": sub_res.get("body")})
+                except Exception as exc:
+                    results["errors"].append({"slug": slug, "error": str(exc)})
+
+            if dry_run:
+                return {
+                    "source": "youtube",
+                    "status": "dry_run",
+                    "streamer_count": len(streamers),
+                    "plan_count": len(plan),
+                    "would_create": plan[:50],
+                    "would_skip": results["skipped"],
+                    "would_error": results["errors"],
+                }
+
+            await db.webhook_audit.insert_one({
+                "source": "youtube",
+                "action": "resubscribe_executed",
+                "requested_at": datetime.now(timezone.utc).isoformat(),
+                "results": results,
+                "streamer_count": len(streamers),
+            })
+            return {
+                "source": "youtube",
+                "status": "executed",
+                "streamer_count": len(streamers),
+                "subscribed_count": len(results["subscribed"]),
+                "skipped_count": len(results["skipped"]),
+                "error_count": len(results["errors"]),
+                "results": results,
+            }
+
+        # Truly unknown / future source — stubbed audit record.
         await db.webhook_audit.insert_one({
             "source": source,
             "action": "resubscribe_requested",
@@ -722,6 +840,56 @@ def build_webhook_router(db) -> APIRouter:
         if not kick_is_configured():
             return JSONResponse(status_code=503, content={"detail": "kick_not_configured"})
         return await kick_list_subs(broadcaster_user_id=broadcaster_user_id)
+
+    # ── YouTube PubSub verify + lease list ────────────────────────────────
+    @r.get("/youtube/verify")
+    async def youtube_verify(x_admin_token: Optional[str] = Header(default=None)):
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        from youtube_pubsub import (
+            is_configured as yt_is_configured,
+            can_resolve_channels,
+            resolve_channel_id,
+        )
+        if not yt_is_configured():
+            return JSONResponse(status_code=503, content={"detail": "youtube_pubsub_not_configured"})
+
+        # Probe Data API key with a known canonical channel handle (YouTube's own).
+        data_api_ok = False
+        sample_resolved = None
+        if can_resolve_channels():
+            try:
+                sample_resolved = await resolve_channel_id("YouTube")
+                data_api_ok = bool(sample_resolved and sample_resolved.get("channel_id"))
+            except Exception:
+                data_api_ok = False
+
+        leases = await db.youtube_pubsub_leases.find({"market_id": "FI"}, {"_id": 0}).to_list(length=200)
+        now_ts = datetime.now(timezone.utc).timestamp()
+        active = [lease for lease in leases if (lease.get("expires_at_ts") or 0) > now_ts]
+        expiring_soon = [lease for lease in active if (lease.get("expires_at_ts") or 0) - now_ts < 48 * 3600]
+
+        return {
+            "ok": True,
+            "data_api_configured": can_resolve_channels(),
+            "data_api_reachable": data_api_ok,
+            "data_api_sample_resolve": sample_resolved,
+            "pubsub_callback_url": os.environ.get("YOUTUBE_PUBSUB_CALLBACK_URL", ""),
+            "lease_summary": {
+                "total": len(leases),
+                "active": len(active),
+                "expiring_within_48h": len(expiring_soon),
+            },
+        }
+
+    @r.get("/youtube/leases")
+    async def youtube_list_leases(x_admin_token: Optional[str] = Header(default=None)):
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        leases = await db.youtube_pubsub_leases.find({"market_id": "FI"}, {"_id": 0}).to_list(length=200)
+        return {"ok": True, "leases": leases, "count": len(leases)}
 
     return r
 
