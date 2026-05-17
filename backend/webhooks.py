@@ -179,12 +179,12 @@ def build_webhook_router(db) -> APIRouter:
     async def twitch_webhook(request: Request):
         secret = _twitch_secret()
         if not secret:
-            return JSONResponse(503, content={"detail": "Twitch integration not configured"})
+            return JSONResponse(status_code=503, content={"detail": "Twitch integration not configured"})
 
         body = await request.body()
         ok, why = _verify_twitch(secret, request, body)
         if not ok:
-            return JSONResponse(403, content={"detail": f"twitch_verify_failed:{why}"})
+            return JSONResponse(status_code=403, content={"detail": f"twitch_verify_failed:{why}"})
 
         msg_id = request.headers.get(TWITCH_MSG_ID_HEADER, "")
         if not await _record_message_id(db, "twitch", msg_id):
@@ -193,7 +193,7 @@ def build_webhook_router(db) -> APIRouter:
         try:
             payload = json.loads(body.decode("utf-8"))
         except Exception:
-            return JSONResponse(400, content={"detail": "invalid_json"})
+            return JSONResponse(status_code=400, content={"detail": "invalid_json"})
 
         msg_type = (request.headers.get(TWITCH_TYPE_HEADER) or "").lower()
         if msg_type == "webhook_callback_verification":
@@ -230,12 +230,12 @@ def build_webhook_router(db) -> APIRouter:
     async def kick_webhook(request: Request):
         secret = _kick_secret()
         if not secret:
-            return JSONResponse(503, content={"detail": "Kick integration not configured"})
+            return JSONResponse(status_code=503, content={"detail": "Kick integration not configured"})
 
         body = await request.body()
         ok, why = _verify_kick(secret, request, body)
         if not ok:
-            return JSONResponse(403, content={"detail": f"kick_verify_failed:{why}"})
+            return JSONResponse(status_code=403, content={"detail": f"kick_verify_failed:{why}"})
 
         # Kick uses an event-id header (community libraries surface it as
         # `Kick-Event-Message-Id`). Treat any of these as the dedup key.
@@ -250,7 +250,7 @@ def build_webhook_router(db) -> APIRouter:
         try:
             payload = json.loads(body.decode("utf-8"))
         except Exception:
-            return JSONResponse(400, content={"detail": "invalid_json"})
+            return JSONResponse(status_code=400, content={"detail": "invalid_json"})
 
         event_type = (
             request.headers.get("Kick-Event-Type")
@@ -284,19 +284,19 @@ def build_webhook_router(db) -> APIRouter:
         """Hub challenge handshake. Returns 503 when unconfigured so dormant
         endpoints don't accidentally subscribe themselves to feeds."""
         if not _youtube_secret():
-            return JSONResponse(503, content={"detail": "YouTube PubSub integration not configured"})
+            return JSONResponse(status_code=503, content={"detail": "YouTube PubSub integration not configured"})
         params = request.query_params
         mode = params.get("hub.mode")
         challenge = params.get("hub.challenge")
         if mode in ("subscribe", "unsubscribe") and challenge:
             return PlainTextResponse(content=challenge, status_code=200)
-        return JSONResponse(400, content={"detail": "invalid_pubsub_verify"})
+        return JSONResponse(status_code=400, content={"detail": "invalid_pubsub_verify"})
 
     @r.post("/youtube/pubsub")
     async def youtube_pubsub_notify(request: Request):
         secret = _youtube_secret()
         if not secret:
-            return JSONResponse(503, content={"detail": "YouTube PubSub integration not configured"})
+            return JSONResponse(status_code=503, content={"detail": "YouTube PubSub integration not configured"})
 
         body = await request.body()
         ok, why = _verify_youtube_pubsub(secret, request, body)

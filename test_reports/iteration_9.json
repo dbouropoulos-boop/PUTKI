@@ -1,0 +1,39 @@
+{
+  "summary": "Phase 3 V2 Step 2 — Webhook signal handlers. Verified live dormant 503 behaviour on supervised backend (no secrets set) for Twitch/Kick/YouTube (GET+POST), confirmed /api/webhooks/status returns expected JSON shape with all three *_configured=false and last_webhook_signal_by_source dict + callback_urls dict. Ran new pytest suite tests/test_phase3_v2_step2_webhooks.py: 16/16 PASS covering Twitch challenge handshake, valid notification → signals collection write (mocked=false, ingress=webhook), signature mismatch 403, missing headers 403, replay dedup, Kick valid/mismatch/missing-sig, YouTube GET challenge + invalid GET 400, YouTube notification write, YouTube bad signature → 202 silent, and 503-when-secrets-unset for all three sources. Full backend regression: 98/98 PASS (test_game_scores, test_mittari_api, test_phase3_pipeline, test_phase3_review, test_phase3_smartico, test_phase3_v2_source_scheduler, test_phase3_v2_step1_registries, test_phase3_v2_step2_webhooks, test_phase3_v2_voyager_rotation; LLM-dependent test_phase3a_v2_content.py intentionally skipped per handoff). 6 public regression endpoints (/api/dial, /api/operators, /api/streamers, /api/sources/public, /api/signals/live, /api/signup/count) all return 200. Router correctly mounted under /api prefix (POST /api/webhooks/twitch reachable; /webhooks/twitch at root not exposed). TTL index `ttl_first_seen` confirmed present on webhook_message_ids collection with expireAfterSeconds=600.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verified_features": {
+    "live_status_endpoint": "PASS — GET /api/webhooks/status returns 200 with twitch_configured/kick_configured/youtube_configured all false, last_webhook_signal_by_source populated from prior test signals, callback_urls dict all empty",
+    "live_twitch_dormant_503": "PASS — POST /api/webhooks/twitch → 503 {'detail':'Twitch integration not configured'}",
+    "live_kick_dormant_503": "PASS — POST /api/webhooks/kick → 503 {'detail':'Kick integration not configured'}",
+    "live_youtube_get_dormant_503": "PASS — GET /api/webhooks/youtube/pubsub?hub.mode=subscribe&hub.challenge=x → 503",
+    "live_youtube_post_dormant_503": "PASS — POST /api/webhooks/youtube/pubsub → 503",
+    "router_mount_prefix": "PASS — all 4 webhook paths reachable under /api/webhooks/* via Kubernetes ingress; status endpoint confirms api_router.include_router(build_webhook_router(db)) mount is correct",
+    "ttl_replay_index": "PASS — webhook_message_ids collection has ttl_first_seen index with expireAfterSeconds=600 (created on startup via _ensure_replay_index)",
+    "pytest_step2_webhooks_suite": "PASS — 16/16 tests green covering all HMAC verification paths, challenge handshakes, replay dedup, dormant 503",
+    "regression_6_public_endpoints": "PASS — /api/dial, /api/operators, /api/streamers, /api/sources/public, /api/signals/live, /api/signup/count all return 200",
+    "full_backend_regression": "PASS — 98/98 pytest green (excluding LLM-gated test_phase3a_v2_content.py per handoff)"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase3_v2_step2_webhooks.py",
+    "/app/test_reports/pytest/pytest_step2_webhooks.xml",
+    "/app/test_reports/pytest/pytest_full_iter9.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "webhooks.py is well-scoped (~350 lines, single responsibility) with clean separation of secret-getter helpers, verifiers, replay protection, signal write, and router factory. Lazy env reads (called per-request) enable runtime config flips without restart and make per-test monkeypatching trivial.",
+    "Twitch verification correctly enforces ±600s timestamp skew window + HMAC-SHA256 over (msg_id+ts+body) — matches Twitch EventSub 2024+ spec exactly.",
+    "Replay protection via webhook_message_ids with Mongo TTL (600s) + DuplicateKeyError catch is idempotent and race-safe. YouTube uses sha256 of body as synthetic msg_id (no native id in Atom) — pragmatic choice.",
+    "YouTube PubSub bad-signature returns 202 (silent ack) per WebSub spec rather than 403 — correct behaviour; prevents subscription churn from hub misroutes.",
+    "Kick verification header is env-configurable (KICK_SIGNATURE_HEADER) — good forward-compatibility hedge given Kick's still-evolving public webhook docs.",
+    "Signal docs always carry ingress='webhook' + mocked=false — consistent with editorial honesty contract and downstream dial/aggregation pipeline shape from signal_engine.py polling adapters.",
+    "Minor (non-blocking): _record_message_id silently returns True when message_id is empty string — fine for YouTube path (always synthesises one) but means a Kick payload arriving with no Kick-Event-Message-Id header bypasses replay dedup. Consider logging a debug when this happens, or computing body-hash fallback like YouTube does."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (98/98 pytest + 5/5 live curls + 6/6 regression endpoints)", "frontend": "n/a (backend-only per request)"},
+  "test_credentials": "X-Admin-Token: mittari-admin (not used for webhook endpoints — public, signed)",
+  "seed_data_creation": "pytest suite writes Twitch/Kick/YouTube signals to MongoDB signals collection during TestClient runs (TEST_-style unique broadcaster logins via uuid4). Not cleaned up post-test but these are dev signals — webhook_message_ids entries auto-expire via TTL in 600s.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 3 V2 Step 2 (webhook signal handlers) verified end-to-end. Live supervised backend behaves correctly as dormant (503) on all webhook POST/GET because TWITCH_EVENTSUB_SECRET / KICK_WEBHOOK_SECRET / YOUTUBE_PUBSUB_SECRET are unset in /app/backend/.env — when those env vars are added, handlers will start processing real signed payloads. TTL index ttl_first_seen exists. All HMAC paths (SHA256 for Twitch+Kick, SHA1 for YouTube), replay dedup, challenge handshakes, and signature-mismatch responses verified via TestClient in tests/test_phase3_v2_step2_webhooks.py. Full backend regression 98/98 green. Frontend untouched this iteration (backend-only request)."
+}

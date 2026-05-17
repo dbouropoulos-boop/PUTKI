@@ -369,6 +369,10 @@ from rotation import (  # noqa: E402
     next_iso_weeks,
 )
 
+from webhooks import build_webhook_router  # noqa: E402
+
+api_router.include_router(build_webhook_router(db))
+
 
 class GenerateRequest(BaseModel):
     content_type: str
@@ -920,6 +924,11 @@ async def _seed_phase3():
         await seed_default_cadences(db)
     except Exception:
         logger.exception("Failed to seed editorial cadences")
+    try:
+        from webhooks import _ensure_replay_index
+        await _ensure_replay_index(db)
+    except Exception:
+        logger.exception("Failed to create webhook replay TTL index")
     # Kick off background signal pipeline + dial recalc loop.
     if os.environ.get("MITTARI_DISABLE_WORKERS", "0") != "1":
         import asyncio as _aio
