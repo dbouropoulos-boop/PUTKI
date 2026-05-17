@@ -9,12 +9,13 @@ export const Header = () => {
   const { theme, toggle } = useTheme();
   const { lang, toggle: toggleLang, t } = useLang();
 
+  // Pre-launch polish: CASINOS + VOITA PALKINTO (Voyager) hidden from nav
+  // per user spec. Routes remain so deep-links still resolve. CasinoRanking
+  // also carries a robots:noindex meta tag during this window.
   const navLinks = [
-    { to: '/kasinot',         label: t('nav.casinos') },
     { to: '/striimaajat',     label: t('nav.streamers') },
     { to: '/viikon-kortti',   label: t('nav.weekly') },
     { to: '/peli',            label: t('nav.game') },
-    { to: '/voita-palkinto',  label: t('nav.prize') },
     { to: '/menetelma',       label: t('nav.methodology') },
   ];
 

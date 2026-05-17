@@ -643,6 +643,24 @@ async def public_live_signals(limit: int = 12):
     return {"signals": rows, "count": len(rows), "any_real": len(rows) > 0}
 
 
+@api_router.get("/streamers/live")
+async def public_streamers_live():
+    """Pre-launch polish — REAL live Twitch streamers in Finnish, top by viewer
+    count. 60s in-process cache. Returns dormant=true if Twitch creds missing
+    so the frontend can render an honest empty state instead of fake data."""
+    from streamer_live import get_live_streamers
+    return await get_live_streamers()
+
+
+@api_router.get("/odds/featured")
+async def public_odds_featured():
+    """Pre-launch polish — REAL betting odds for "Päivän Vitoset" homepage strip.
+    Top 5 favourites by implied probability across NHL + select football.
+    15 min cache. Dormant=true when ODDS_API_KEY is unset."""
+    from odds_api import get_featured_picks
+    return await get_featured_picks()
+
+
 @api_router.get("/dial/history")
 async def public_dial_history(limit: int = 48):
     """Public — last N dial snapshots for the home mini-chart."""

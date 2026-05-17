@@ -20,16 +20,15 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucide-react';
 import DialCockpit from '../components/DialCockpit';
-import HubMosaic from '../components/HubMosaic';
 import LiveActivityFeed from '../components/LiveActivityFeed';
 import ZonePublicationDepth from '../components/ZonePublicationDepth';
-import VoyagerCorner from '../components/VoyagerCorner';
+import StreamerLiveGrid from '../components/StreamerLiveGrid';
+import PaivaVitoset from '../components/PaivaVitoset';
 import ActivityStats from '../components/ActivityStats';
 import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
 import ShareButton from '../components/ShareButton';
-import DialHistoryMiniChart from '../components/DialHistoryMiniChart';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -301,7 +300,7 @@ const Home = () => {
         <div className="absolute inset-0 grid-bg pointer-events-none" style={{ zIndex: 0 }} />
         <div className="scanlines absolute inset-0 pointer-events-none" style={{ zIndex: 1 }} />
 
-        <div className="container-wide pt-6 sm:pt-10 pb-8 sm:pb-12 relative" style={{ zIndex: 2 }}>
+        <div className="container-wide pt-6 pb-8 relative" style={{ zIndex: 2 }}>
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-8 lg:gap-10 items-start"
                data-testid="hero-strip">
             {/* TOP-LEFT — dial cockpit (compact) */}
@@ -336,30 +335,39 @@ const Home = () => {
                   dataTestId="hero-share-dial"
                 />
               </div>
-              <div className="mt-5 w-full max-w-md">
-                <DialHistoryMiniChart currentState={state} />
-              </div>
             </div>
 
-            {/* TOP-RIGHT — Phase 4: Activity stats panel replaces the
-                previous Voyager corner. Voyager moves below the mosaic so
-                the hero stays content-first + balanced (dial · stats grid). */}
+            {/* TOP-RIGHT — Phase 4 Pre-Launch Polish: Activity stats only.
+                VoyagerCorner / WIN A PRIZE removed from the homepage per
+                pre-launch spec (route stays, header link hidden). */}
             <div data-testid="hero-activity-slot" className="flex flex-col gap-4">
               <ActivityStats />
-              <VoyagerCorner />
             </div>
           </div>
         </div>
       </section>
 
-      {/* ZONE 2 — Live activity feed (Phase 4 chronological feed replaces
-          the legacy 5-card mosaic per launch spec). Real-time stream of
-          auto-published articles straight from /api/content/published. */}
-      <LiveActivityFeed />
+      {/* Pre-Launch Polish — new order:
+          1. Hero (above)
+          2. Streamer live grid · "Mitä tapahtuu nyt"
+          3. Live activity feed · auto-published articles
+          4. Päivän Vitoset · real betting consensus
+          5. Archive · 8 publication-depth entries
+          6. Games (Rally / Visitor / Weekly card)
+          7. Capture form
+          Vertical rhythm tightened to py-10 between zones (~40 px each side). */}
 
-      {/* ZONE 2.5 — legacy 5-card mosaic kept below the feed for editorial
-          curation. Comment out / remove later if no longer needed. */}
-      <HubMosaic />
+      <div className="py-10" data-testid="zone-streamer-live">
+        <StreamerLiveGrid />
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--border)' }}>
+        <LiveActivityFeed />
+      </div>
+
+      <div className="py-10" style={{ borderTop: '1px solid var(--border)' }} data-testid="zone-paivan-vitoset">
+        <PaivaVitoset />
+      </div>
 
       {/* ZONE 3 — publication depth: 8 archive entry points */}
       <ZonePublicationDepth />

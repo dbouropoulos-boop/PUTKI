@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Info } from 'lucide-react';
 import { OperatorRow } from '../components/OperatorCard';
@@ -11,6 +11,20 @@ import {
 } from '../components/ui/select';
 import { useOperators } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
+
+// Pre-launch polish: hide /kasinot from search engines while still keeping
+// the route active. Injects `<meta name="robots" content="noindex, nofollow">`
+// for the lifetime of this page, removing it on unmount.
+const useNoIndex = () => {
+  useEffect(() => {
+    const tag = document.createElement('meta');
+    tag.setAttribute('name', 'robots');
+    tag.setAttribute('content', 'noindex, nofollow');
+    tag.setAttribute('data-casino-noindex', '1');
+    document.head.appendChild(tag);
+    return () => { tag.parentNode && tag.parentNode.removeChild(tag); };
+  }, []);
+};
 
 const ARTICLES_FI = [
   { title: 'Miten Suomen rahapelilainsäädäntö muuttuu heinäkuussa 2027', excerpt: 'PUTKI HQ:n selitys uudesta lisenssijärjestelmästä ja siitä, mitä se merkitsee pelaajalle.' },
@@ -26,6 +40,7 @@ const ARTICLES_EN = [
 ];
 
 const CasinoRanking = () => {
+  useNoIndex();
   const [filter, setFilter] = useState('kaikki');
   const [sort, setSort] = useState('mittari');
   const { lang, t } = useLang();
