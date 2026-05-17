@@ -42,18 +42,25 @@ const arcPath = (cx, cy, r, startDeg, endDeg) => {
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
 };
 
-// Spring physics — needle settles with damped oscillation
+// Spring physics — needle settles with damped oscillation.
+// First mount uses a more aggressive spring so the dial snaps to its target
+// fast on page load; subsequent state changes use a softer settle for the
+// premium "instrument easing" feel.
 const useSpringAngle = (target, deps = []) => {
   const [angle, setAngle] = useState(target);
   const angleRef = useRef(target);
   const velocityRef = useRef(0);
   const rafRef = useRef(null);
+  const isFirstRunRef = useRef(true);
 
   useEffect(() => {
     cancelAnimationFrame(rafRef.current);
-    const stiffness = 90;
-    const damping = 11;
+    // Faster initial reveal (~400 ms) → softer ongoing easing (~800 ms target).
+    const isFirst = isFirstRunRef.current;
+    const stiffness = isFirst ? 170 : 90;
+    const damping = isFirst ? 18 : 11;
     const mass = 1.1;
+    isFirstRunRef.current = false;
     let last = performance.now();
 
     const step = (now) => {
@@ -91,6 +98,7 @@ export const Dial = ({
   size = 'large',
   state = 'KUUMA',
   showLabel = true,
+  pulseTick = 0,
 }) => {
   const stateObj = DIAL_STATES[state] || DIAL_STATES.KUUMA;
   const px = size === 'large' ? 480 : size === 'medium' ? 280 : 64;
@@ -131,6 +139,15 @@ export const Dial = ({
   }, [isSmall, state]);
 
   const angle = settledAngle + breath;
+
+  // SSE pulse — render a 600ms fade-out ring whenever pulseTick changes.
+  // Subtle "we just received fresh data" cue without distracting from the
+  // primary reading.
+  const [pulseId, setPulseId] = useState(0);
+  useEffect(() => {
+    if (!pulseTick || isSmall) return;
+    setPulseId((n) => n + 1);
+  }, [pulseTick, isSmall]);
 
   // Major ticks: 6 (5 state boundaries + endpoints)
   const majorTicks = Array.from({ length: 6 }, (_, i) => ARC_START + (i * ARC_TOTAL) / 5);
@@ -205,29 +222,52 @@ export const Dial = ({
         {/* Dial face gradient */}
         {!isSmall && <circle cx={cx} cy={cy} r={outerR - 10} fill={`url(#face-${size})`} />}
 
-        {/* All 5 arc segments — inactive dim, active glows */}
+        {/* All 5 arc segments — active glows in its state color, inactive
+            ones share a single muted blue tint (premium dial feel; the brown
+            undertone the previous orange/red dim caused is gone). */}
         {STATE_ORDER.map((key, i) => {
           const sa = ARC_START + i * SEG_SWEEP + 0.6; // tiny gap between segments
           const ea = ARC_START + (i + 1) * SEG_SWEEP - 0.6;
           const isActive = key === state;
+          // Inactive arcs use a single muted steel-blue so the dial reads as
+          // a "trading instrument" instead of a hot/cold thermometer that
+          // showed brown-ish dim segments before.
+          const INACTIVE_BLUE = '#2C5F8D';
           return (
             <path
               key={key}
               d={arcPath(cx, cy, arcR, sa, ea)}
               fill="none"
-              stroke={ARC_COLORS[key]}
+              stroke={isActive ? ARC_COLORS[key] : INACTIVE_BLUE}
               strokeWidth={strokeWidth}
               strokeLinecap="butt"
-              opacity={isActive ? 1 : 0.12}
+              opacity={isActive ? 1 : 0.10}
               filter={isActive && isHot ? `url(#arc-glow-${size})` : undefined}
               style={{
                 color: ARC_COLORS[key],
-                transition: 'opacity 600ms ease',
+                transition: 'opacity 600ms ease, stroke 400ms ease',
               }}
               className={isActive && isHot ? 'arc-glow' : ''}
             />
           );
         })}
+
+        {/* SSE pulse ring — keyed by pulseId so each tick mounts a fresh
+            element and animates from 0 → 1 then fades out. */}
+        {!isSmall && pulseId > 0 ? (
+          <circle
+            key={pulseId}
+            cx={cx}
+            cy={cy}
+            r={outerR}
+            fill="none"
+            stroke={activeColor}
+            strokeWidth={1.5}
+            opacity={0}
+            className="dial-sse-pulse"
+            data-testid="dial-sse-pulse-ring"
+          />
+        ) : null}
 
         {/* Minor ticks */}
         {!isSmall && minorTicks.map((a, i) => {
@@ -333,20 +373,9 @@ export const Dial = ({
 
       {showLabel && (
         <div className="flex flex-col items-center mt-1">
-          {!isSmall && (
-            <div
-              className="mono"
-              style={{
-                fontSize: 10,
-                letterSpacing: '0.22em',
-                color: 'var(--muted)',
-                marginBottom: 8,
-                fontWeight: 600,
-              }}
-            >
-              P*RKELE-MITTARI
-            </div>
-          )}
+          {/* Maker's-mark eyebrow moved to DialCockpit (perkele wink at the
+              top of the cockpit). The dial itself just shows the state name
+              now — cleaner trading-instrument readout. */}
           <div
             className="display state-pulse"
             style={{

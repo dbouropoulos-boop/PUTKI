@@ -44,16 +44,23 @@ const PanelStat = ({ label, value, sub, align = 'left', lang = 'fi' }) => {
 };
 
 const SUBSCORE_LABEL = {
-  streamers: { fi: 'STRIIMAAJAT', en: 'STREAMERS' },
-  sports:    { fi: 'URHEILU',     en: 'SPORTS' },
-  youtube:   { fi: 'YOUTUBE',     en: 'YOUTUBE' },
-  forum:     { fi: 'FOORUMI',     en: 'FORUM' },
+  // Phase 4 — new 3-signal layer
+  stream:    { fi: 'STRIIMIT',  en: 'STREAMS',  weightPct: 57 },
+  sports:    { fi: 'URHEILU',   en: 'SPORTS',   weightPct: 29 },
+  news:      { fi: 'UUTISVIRTA',en: 'NEWSFLOW', weightPct: 14 },
+  // Legacy (kept so older snapshots still render labels)
+  streamers: { fi: 'STRIIMAAJAT', en: 'STREAMERS', weightPct: null },
+  social:    { fi: 'REDDIT',      en: 'REDDIT',    weightPct: 0 },
+  youtube:   { fi: 'YOUTUBE',     en: 'YOUTUBE',   weightPct: null },
+  forum:     { fi: 'FOORUMI',     en: 'FORUM',    weightPct: null },
   internal:  { fi: 'TOIMITUS',    en: 'EDITORIAL' },
 };
 
 export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
   const { lang, t } = useLang();
   const [cockpit, setCockpit] = useState(null);
+  const [pulseTick, setPulseTick] = useState(0);
+  const [sseConnected, setSseConnected] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -77,12 +84,15 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
           try {
             const snap = JSON.parse(ev.data);
             if (cancelled) return;
+            setSseConnected(true);
+            setPulseTick((n) => n + 1);
             setCockpit({
               primary_driver: snap.primary_driver,
               primary_driver_label: snap.primary_driver_label,
               composite_score: snap.composite_score,
               state: snap.state,
               sub_scores: snap.sub_scores || {},
+              intensities: snap.intensities || {},
               signal_count: snap.signal_count || 0,
               any_real: !!snap.any_real,
               computed_at: snap.computed_at,
@@ -91,6 +101,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         });
         es.onerror = () => {
           // SSE flaked — fall back to polling so we don't go silent
+          setSseConnected(false);
           if (es) { es.close(); es = null; }
           if (!pollId) {
             load();
@@ -117,6 +128,15 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
   const signalCount = cockpit?.signal_count ?? 0;
   const anyReal = !!cockpit?.any_real;
   const subScores = cockpit?.sub_scores || {};
+  const intensities = cockpit?.intensities || {};
+
+  // Phase 4 — Layer 2 three-signal bars (Twitch / NHL / News). Show every
+  // tracked signal so editorial can see what's driving the dial.
+  const layer2Signals = [
+    { key: 'stream', weight: 57, value: intensities.stream ?? (subScores.stream || 0) / 57 },
+    { key: 'sports', weight: 29, value: intensities.sports ?? (subScores.sports || 0) / 29 },
+    { key: 'news',   weight: 14, value: intensities.news   ?? (subScores.news   || 0) / 14 },
+  ];
 
   // Contributors: top 3 sub_scores (non-zero) by value, mapped to labels.
   const contributors = Object.entries(subScores)
@@ -140,12 +160,36 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
 
   return (
     <div className="flex flex-col items-center w-full" data-testid="dial-cockpit">
-      <div className="mono mb-8 inline-flex items-center gap-2"
-        style={{ fontSize: 11, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 600, marginBottom: compact ? 16 : 32 }}
+      {/* Premium trading-dashboard eyebrow — date/time on the left, live SSE
+          indicator on the right. "Perkele-mittari" reads as a faint maker's
+          mark above the primary label rather than the main brand line. */}
+      <div className="mono mb-3 inline-flex items-center gap-3"
+        style={{ fontSize: 9.5, letterSpacing: '0.32em', color: 'var(--muted)', fontWeight: 500, opacity: 0.55, marginBottom: 6 }}
+        data-testid="cockpit-makers-mark"
+      >
+        <span style={{ fontStyle: 'italic' }}>perkele-mittari</span>
+        <span style={{ color: 'var(--border-strong)' }}>·</span>
+        <span>v4</span>
+      </div>
+      <div className="mono mb-8 inline-flex items-center gap-3 flex-wrap justify-center"
+        style={{ fontSize: 11, letterSpacing: '0.28em', color: 'var(--ink)', fontWeight: 700, marginBottom: compact ? 14 : 26 }}
         data-testid="cockpit-mode-label"
       >
-        <span className="inline-block" style={{ width: 6, height: 6, borderRadius: 999, background: '#E8924A' }} />
-        {weekday.toUpperCase()} · {t(todKey)} · {t('time.month_day', { day })}
+        <span
+          className="inline-block"
+          data-testid="cockpit-live-dot"
+          style={{
+            width: 7, height: 7, borderRadius: 999,
+            background: sseConnected ? '#2c7a4b' : '#7A7E83',
+            boxShadow: sseConnected ? '0 0 8px #2c7a4b' : 'none',
+            transition: 'background 400ms ease, box-shadow 400ms ease',
+          }}
+        />
+        SKENEN LÄMPÖTILA
+        <span style={{ color: 'var(--border-strong)' }}>·</span>
+        PUTKI HQ MITTARI
+        <span style={{ color: 'var(--border-strong)' }}>·</span>
+        <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{weekday.toUpperCase()} {t('time.month_day', { day })} · {t(todKey)}</span>
       </div>
 
       <div className="hidden md:grid w-full" style={{ gridTemplateColumns: '1fr auto 1fr', gap: compact ? 20 : 32, alignItems: 'center' }}>
@@ -159,7 +203,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
           />
         </div>
         <div className="flex flex-col items-center">
-          <Dial size={compact ? 'medium' : 'large'} state={state} />
+          <Dial size={compact ? 'medium' : 'large'} state={state} pulseTick={pulseTick} />
         </div>
         <div className="flex justify-start">
           <PanelStat
@@ -189,15 +233,76 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
             lang={lang}
           />
         </div>
-        <Dial size={compact ? 'medium' : 'large'} state={state} />
+        <Dial size={compact ? 'medium' : 'large'} state={state} pulseTick={pulseTick} />
+      </div>
+
+      {/* Phase 4 — Layer 2 three-signal sub-bars. Premium trading-dashboard
+          row: ticker label · weighted value · intensity bar · raw % share.
+          Always rendered so even an idle scene shows the structure. */}
+      <div
+        className="mt-8 w-full grid grid-cols-1 sm:grid-cols-3"
+        style={{ gap: 1, background: 'var(--border-strong)', border: '1px solid var(--border-strong)', maxWidth: 760 }}
+        data-testid="cockpit-layer2-bars"
+      >
+        {layer2Signals.map((sig) => {
+          const meta = SUBSCORE_LABEL[sig.key];
+          const pct = Math.max(0, Math.min(1, Number(sig.value) || 0));
+          const subScore = Math.round((subScores[sig.key] || 0) * 10) / 10;
+          return (
+            <div
+              key={sig.key}
+              className="p-4 flex flex-col gap-2"
+              style={{ background: 'var(--bg)' }}
+              data-testid={`cockpit-layer2-bar-${sig.key}`}
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+                  {meta[lang]}
+                </div>
+                <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.18em', color: 'var(--muted)', opacity: 0.7 }}>
+                  W {sig.weight}%
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <div className="mono" style={{ fontSize: 24, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
+                  {subScore}
+                </div>
+                <div className="mono" style={{ fontSize: 10, color: 'var(--muted)', letterSpacing: '0.12em', fontWeight: 500 }}>
+                  / {sig.weight}
+                </div>
+              </div>
+              <div
+                style={{
+                  height: 4,
+                  background: 'rgba(44, 95, 141, 0.10)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: 1,
+                }}
+              >
+                <div
+                  data-testid={`cockpit-layer2-fill-${sig.key}`}
+                  style={{
+                    height: '100%',
+                    width: `${Math.round(pct * 100)}%`,
+                    background: pct > 0 ? '#2C5F8D' : 'transparent',
+                    transition: 'width 800ms cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {contributors.length > 0 ? (
         <div
-          className="mono mt-6 flex items-center gap-2 flex-wrap justify-center px-4"
+          className="mono mt-5 flex items-center gap-2 flex-wrap justify-center px-4"
           style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}
           data-testid="cockpit-contributors"
         >
+          <span style={{ color: 'var(--muted)', opacity: 0.7 }}>PRIMARY DRIVERS</span>
+          <span style={{ color: 'var(--border-strong)' }}>·</span>
           {contributors.map((c, i) => (
             <React.Fragment key={c}>
               <span>{c}</span>
@@ -207,7 +312,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         </div>
       ) : (
         <div
-          className="mono mt-6"
+          className="mono mt-5"
           style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}
           data-testid="cockpit-contributors-empty"
         >
