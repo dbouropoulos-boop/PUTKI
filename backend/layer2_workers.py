@@ -58,12 +58,24 @@ REDDIT_KEYWORDS = ["kasino", "slotti", "vedonlyönti", "pelaaminen", "weezybet"]
 # nationality weighting via the NHL API directly to avoid stale hardcoded IDs.
 
 # RSS feeds + keywords per user spec
+# RSS feeds + keywords per user spec
 RSS_FEEDS = [
+    # Direct Finnish news feeds — primary signal sources
     {"source": "YLE Uutiset",       "url": "https://yle.fi/rss/uutiset/tuoreimmat"},
     {"source": "Helsingin Sanomat", "url": "https://www.hs.fi/rss/tuoreimmat.xml"},
     {"source": "Iltalehti",         "url": "https://www.iltalehti.fi/rss.xml"},
+    # Google News aggregation — volume + breadth (Dioni's launch spec).
+    # URL dedup downstream collapses cross-source repeats.
+    {"source": "Google News · uhkapeli",      "url": "https://news.google.com/rss/search?q=uhkapeli+finland&hl=fi&gl=FI&ceid=FI:fi"},
+    {"source": "Google News · veikkaus",      "url": "https://news.google.com/rss/search?q=veikkaus&hl=fi&gl=FI&ceid=FI:fi"},
+    {"source": "Google News · rahapeli",      "url": "https://news.google.com/rss/search?q=rahapeli+suomi&hl=fi&gl=FI&ceid=FI:fi"},
+    {"source": "Google News · NHL suomi",     "url": "https://news.google.com/rss/search?q=NHL+suomi&hl=fi&gl=FI&ceid=FI:fi"},
+    {"source": "Google News · veikkausliiga", "url": "https://news.google.com/rss/search?q=veikkausliiga&hl=fi&gl=FI&ceid=FI:fi"},
+    {"source": "Google News · Liiga",         "url": "https://news.google.com/rss/search?q=liiga+jääkiekko&hl=fi&gl=FI&ceid=FI:fi"},
+    {"source": "Google News · kasino",        "url": "https://news.google.com/rss/search?q=kasino+suomi&hl=fi&gl=FI&ceid=FI:fi"},
+    {"source": "Google News · nettikasinot",  "url": "https://news.google.com/rss/search?q=nettikasinot&hl=fi&gl=FI&ceid=FI:fi"},
 ]
-NEWS_KEYWORDS = ["uhkapeli", "rahapeli", "veikkaus", "kasino", "pelaaminen"]
+NEWS_KEYWORDS = ["uhkapeli", "rahapeli", "veikkaus", "kasino", "pelaaminen", "vedonlyönti"]
 
 
 # ─────────────────────── Retention helpers ───────────────────────
@@ -333,8 +345,14 @@ def _parse_rss(xml_text: str) -> List[Dict[str, Any]]:
 
 
 async def rss_tick(db) -> Dict[str, Any]:
-    """One RSS poll tick. Counts gambling-keyword matches across feeds."""
+    """One RSS poll tick. Counts gambling-keyword matches across feeds.
+
+    With Google News aggregation enabled, the same article appears across
+    multiple searches — we dedupe by URL inside the tick so the matched
+    count and downstream content generation see each story once.
+    """
     matched_articles: List[Dict[str, Any]] = []
+    seen_urls: set = set()
 
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS,
                                  headers={"User-Agent": REDDIT_USER_AGENT}) as http:
@@ -353,10 +371,17 @@ async def rss_tick(db) -> Dict[str, Any]:
                 kw_hits = [kw for kw in NEWS_KEYWORDS if kw.lower() in title_l]
                 if not kw_hits:
                     continue
+                # Strip Google News URL wrapping so dedup hits real article
+                # URLs (Google wraps as /url?... but their RSS uses direct
+                # publisher links — we still normalize to be safe).
+                url = (it.get("url") or "").strip()
+                if not url or url in seen_urls:
+                    continue
+                seen_urls.add(url)
                 matched_articles.append({
                     "source": feed["source"],
                     "title": it["title"],
-                    "url": it["url"],
+                    "url": url,
                     "published": it["published"],
                     "keywords_matched": kw_hits,
                 })

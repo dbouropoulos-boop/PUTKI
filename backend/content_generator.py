@@ -487,7 +487,24 @@ class ContentGenerator:
         else:
             content = self._generate_structured(template_id, signal_data)
 
-        # 5. assemble draft document
+        # 5. validation gate — editorial guidelines enforce betting angle,
+        # length bounds, forbidden phrases, off-limits topics. LLM-emitted
+        # `skip_reason` also routes here.
+        validation = validate_content(template_id, content)
+        if validation.get("skipped"):
+            return {
+                "status": "skipped",
+                "reason": "llm_skip",
+                "skip_reason": validation.get("skip_reason"),
+                "fingerprint": fp,
+            }
+        # Auto-tier content that fails validation gets downgraded to draft
+        # for human review (per Dioni's "10% sampling" + "skip weak content"
+        # editorial policy). Hard validation errors land in the draft notes.
+        if not validation["passed"] and tmpl["tier"] == TIER_AUTO:
+            downgrade_to_draft = True
+
+        # 6. assemble draft document
         category = tmpl["category"]
         slug = _slugify(content.get("headline") or signal_data.get("title") or template_id)
         # collision-safe: append short uuid suffix if slug already taken
@@ -519,6 +536,11 @@ class ContentGenerator:
             # fallbacks fire when the LLM forgets a field so we NEVER ship
             # an article without Open Graph + Twitter Card metadata.
             "social": _build_social_meta(content, signal_data, template_id, slug),
+            "validation": {
+                "passed": validation["passed"],
+                "errors": validation.get("errors", []),
+                "warnings": validation.get("warnings", []),
+            },
         }
 
         await self.db.content_drafts.insert_one(dict(draft))
@@ -741,11 +763,13 @@ def _build_social_meta(content: Dict[str, Any], signal_data: Dict[str, Any],
 
     Order of preference for each field:
       1. LLM-emitted value (clamped to spec character limits)
-      2. Deterministic fallback from headline/subhead/category defaults
+      2. Signal-provided value (e.g. streamer thumbnail)
+      3. Category default OG image (clean SVG, no AI artifacts)
+      4. Deterministic fallback from headline/subhead for text fields
 
-    Image URL: only set if the LLM returned one OR the signal provides a
-    natural image (e.g. streamer_alert thumbnail). Otherwise null — the
-    frontend renders a brand fallback rather than us inventing a URL.
+    Per Dioni's launch spec: default category OG images live at
+    /og-defaults/{category}.svg so social shares ALWAYS render with a
+    branded card even when the LLM forgets to emit `og_image_url`.
     """
     headline = (content.get("headline") or signal_data.get("title") or signal_data.get("user_name") or "")
     subhead = (content.get("subhead") or "")
@@ -756,7 +780,16 @@ def _build_social_meta(content: Dict[str, Any], signal_data: Dict[str, Any],
     og_title = _clip(content.get("og_title") or headline, 60)
     og_desc = _clip(content.get("og_description") or subhead or body_text, 155)
     tw_desc = _clip(content.get("twitter_description") or subhead or body_text, 200)
-    og_image = content.get("og_image_url") or signal_data.get("thumbnail_url") or signal_data.get("og_image_url")
+
+    # Resolve OG image with category default fallback
+    category = (TEMPLATES.get(template_id) or {}).get("category")
+    og_image = (
+        content.get("og_image_url")
+        or signal_data.get("thumbnail_url")
+        or signal_data.get("og_image_url")
+        or DEFAULT_OG_IMAGE_BY_CATEGORY.get(category)
+    )
+
     tags = list(content.get("article_tags") or content.get("tags") or [])
 
     return {

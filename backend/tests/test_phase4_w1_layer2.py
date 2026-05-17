@@ -216,12 +216,16 @@ class TestLayer2Ticks:
             return R()
 
         db = _StubDBLayer2()
-        import httpx
+        import httpx, layer2_workers as lw
         with patch.object(httpx.AsyncClient, "get", new=_fake_get):
             result = _run(rss_tick(db))
-        # 2 matched items per feed × 3 feeds = 6
-        assert result["matched_count"] == 6
-        assert db.news_signals.docs[0]["matched_count"] == 6
+        # New behaviour: each feed yields the same 2 matching items, but URL
+        # dedup inside the tick collapses cross-source repeats to 2 unique
+        # articles. Old non-dedup math (2 × feed_count) would be wrong now.
+        feed_count = len(lw.RSS_FEEDS)
+        assert feed_count >= 3, f"expected baseline feed count >=3, got {feed_count}"
+        assert result["matched_count"] == 2, f"dedup expected 2, got {result['matched_count']}"
+        assert db.news_signals.docs[0]["matched_count"] == 2
 
     def test_nhl_tick_phase1_all_games(self):
         games = [

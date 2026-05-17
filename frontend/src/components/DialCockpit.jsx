@@ -158,8 +158,36 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
   const hour = parseInt((hourStr.match(/\d{2}/) || ['00'])[0], 10);
   const todKey = hour >= 18 ? 'time.evening' : hour >= 12 ? 'time.afternoon' : hour >= 6 ? 'time.morning' : 'time.night';
 
+  // useNow drives the live "last update Xs ago" ticker in the cockpit
+  // header — re-renders every second when computedAt is set.
+  const [tickerNow, setTickerNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setTickerNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const lastUpdateLabel = (() => {
+    void tickerNow;
+    if (!cockpit?.computed_at) return null;
+    try {
+      const t = new Date(String(cockpit.computed_at).replace(' ', 'T'));
+      const secs = Math.max(0, Math.floor((Date.now() - t.getTime()) / 1000));
+      if (secs < 60) return `${secs}s sitten`;
+      if (secs < 3600) return `${Math.floor(secs / 60)}min sitten`;
+      return `${Math.floor(secs / 3600)}h sitten`;
+    } catch { return null; }
+  })();
+
   return (
     <div className="flex flex-col items-center w-full" data-testid="dial-cockpit">
+      {/* LAST UPDATE ticker — small, monospace, sits above the maker's mark
+          to reinforce the "live trading instrument" feel. */}
+      <div
+        className="mono mb-1 inline-flex items-center gap-2"
+        style={{ fontSize: 9.5, letterSpacing: '0.32em', color: 'var(--muted)', fontWeight: 500, opacity: 0.55 }}
+        data-testid="cockpit-last-update"
+      >
+        LAST UPDATE · {lastUpdateLabel || '— SITTEN'}
+      </div>
       {/* Premium trading-dashboard eyebrow — date/time on the left, live SSE
           indicator on the right. "Perkele-mittari" reads as a faint maker's
           mark above the primary label rather than the main brand line. */}

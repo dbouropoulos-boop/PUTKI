@@ -23,6 +23,7 @@ import DialCockpit from '../components/DialCockpit';
 import HubMosaic from '../components/HubMosaic';
 import ZonePublicationDepth from '../components/ZonePublicationDepth';
 import VoyagerCorner from '../components/VoyagerCorner';
+import ActivityStats from '../components/ActivityStats';
 import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
@@ -339,8 +340,11 @@ const Home = () => {
               </div>
             </div>
 
-            {/* TOP-RIGHT — Voyager corner */}
-            <div data-testid="hero-voyager-slot">
+            {/* TOP-RIGHT — Phase 4: Activity stats panel replaces the
+                previous Voyager corner. Voyager moves below the mosaic so
+                the hero stays content-first + balanced (dial · stats grid). */}
+            <div data-testid="hero-activity-slot" className="flex flex-col gap-4">
+              <ActivityStats />
               <VoyagerCorner />
             </div>
           </div>

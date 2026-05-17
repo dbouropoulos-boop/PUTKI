@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional, Any, Dict
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 
 async def require_admin(x_admin_token: Optional[str] = Header(None, alias='X-Admin-Token')):
@@ -924,6 +924,44 @@ async def admin_content_preview(payload: _PreviewBody, _: bool = Depends(require
 async def public_list_published(category: Optional[str] = None, limit: int = 50):
     rows = await cg_list_published(db, category=category, limit=limit)
     return {"items": rows, "count": len(rows)}
+
+
+@api_router.get("/content/stats")
+async def public_content_stats():
+    """Activity stats for the homepage credibility panel.
+
+    Returns:
+      - articles_today: published since UTC midnight
+      - articles_this_week: published in the last 7 rolling days
+      - articles_total: cumulative published count
+      - last_published_at: ISO timestamp of the most recent publish
+    """
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    week_start = (now - timedelta(days=7)).isoformat()
+
+    q_base = {"draft_id": {"$exists": True}}
+    today_count = await db.published_content.count_documents(
+        {**q_base, "published_at": {"$gte": today_start}}
+    )
+    week_count = await db.published_content.count_documents(
+        {**q_base, "published_at": {"$gte": week_start}}
+    )
+    total = await db.published_content.count_documents(q_base)
+    latest = await db.published_content.find_one(
+        q_base, {"_id": 0, "published_at": 1, "headline": 1, "url_slug": 1, "category": 1},
+        sort=[("published_at", -1)],
+    )
+    return {
+        "articles_today": today_count,
+        "articles_this_week": week_count,
+        "articles_total": total,
+        "last_published_at": (latest or {}).get("published_at"),
+        "last_headline": (latest or {}).get("headline"),
+        "last_url_slug": (latest or {}).get("url_slug"),
+        "last_category": (latest or {}).get("category"),
+        "computed_at": now.isoformat(),
+    }
 
 
 @api_router.get("/content/published/{slug}")

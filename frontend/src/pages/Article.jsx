@@ -10,6 +10,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, Tag, ArrowUpRight } from 'lucide-react';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import LegalDisclaimer from '../components/LegalDisclaimer';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -188,6 +189,8 @@ const Article = () => {
             AVAA LÄHDE <ArrowUpRight strokeWidth={1.7} size={12} />
           </a>
         ) : null}
+
+        <LegalDisclaimer />
 
         {tags.length ? (
           <div className="mt-12 pt-8" style={{ borderTop: '1px solid #e8e4dc' }} data-testid="article-tags">

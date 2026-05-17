@@ -168,21 +168,33 @@ class _MemDB:
 
 async def _fake_llm(system_prompt: str, user_prompt: str) -> str:
     # Return JSON the generator expects per template — INCLUDE social meta
-    # so we can assert it survives intact end-to-end.
+    # so we can assert it survives intact end-to-end. Also include the new
+    # validation-required fields (betting_angle ≥ 20 chars + facts_used).
     base = ('"og_title":"OG title","og_description":"OG desc","twitter_description":"TW desc",'
-            '"og_image_url":null,"article_tags":["tag1","tag2"]')
+            '"og_image_url":null,"article_tags":["tag1","tag2"],'
+            '"betting_angle":"Kerroinmuutos vaikuttaa playoff-veikkauksiin selvästi.",'
+            '"facts_used":["api_score","api_player_stat","api_standings"],'
+            '"skip_reason":null')
+    body_filler = "<p>" + ("Otteluraportti, jossa kuvataan tapahtumat. " * 12) + "</p>"
     if "F1" in user_prompt or "Formula" in system_prompt:
-        return '{"headline":"Bottas Miami","subhead":"P18","body":"<p>kisaraportti</p>",' + base + '}'
+        return ('{"headline":"Bottas Miami","subhead":"P18 vaikea kisa",'
+                f'"body":"{body_filler}",' + base + '}')
     if "OTTELU" in user_prompt and "Joukkueet" in user_prompt:
-        return '{"headline":"Norwich kaatui","subhead":"Pukki 1+1","body":"<p>jalkapallo</p>",' + base + '}'
+        return ('{"headline":"Norwich kaatui","subhead":"Pukki 1+1 Premier-illassa",'
+                f'"body":"{body_filler}",' + base + '}')
     if "NHL" in system_prompt or ("OTTELU:" in user_prompt and "NHL" in user_prompt):
-        return '{"headline":"NHL recap","subhead":"sub","body":"<p>nhl</p>",' + base + '}'
+        return ('{"headline":"NHL recap","subhead":"Suomalaishyökkääjä iskussa",'
+                f'"body":"{body_filler}",' + base + '}')
     if "regulatorisen" in system_prompt:
-        return ('{"headline":"Rahapelilaki","subhead":"sub","summary":"<p>x</p>","analysis":"<p>y</p><p>z</p>",'
-                '"impact":"<p>i</p>",' + base + '}')
+        long_para = "<p>" + ("Lain vaikutukset markkinoille. " * 8) + "</p>"
+        return ('{"headline":"Rahapelilaki","subhead":"Veikkaus monopoli muuttuu",'
+                f'"summary":"{long_para}","analysis":"{long_para}{long_para}",'
+                f'"impact":"{long_para}",' + base + '}')
     if "operaattori" in system_prompt:
-        return '{"headline":"Operaattori","subhead":"sub","body":"<p>x</p>",' + base + '}'
-    return '{"headline":"Generic","subhead":"","body":"<p>x</p>",' + base + '}'
+        return ('{"headline":"Operaattori","subhead":"Bonusehdot muuttuvat",'
+                f'"body":"{body_filler}",' + base + '}')
+    return ('{"headline":"Generic","subhead":"sub",'
+            f'"body":"{body_filler}",' + base + '}')
 
 
 # ─────────────────── Per-template generation ───────────────────

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Gift, Sparkles, ArrowRight, KeyRound, Check, Clock } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
+import VoyagerNewsFeed from '../components/VoyagerNewsFeed';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const VISITOR_COOKIE = 'putki_hq_visitor_uuid';
@@ -342,6 +343,12 @@ const VoitaPalkinto = () => {
             {lang === 'en' ? 'WEEZY RALLY →' : 'WEEZY RALLY →'}
           </Link>
         </div>
+      </section>
+
+      {/* Phase 4: real-time PUTKI HQ feed as a trust signal on the
+          conversion page. Quietly demonstrates an active publication. */}
+      <section className="container-wide pb-12">
+        <VoyagerNewsFeed />
       </section>
 
       {/* Win modal */}
