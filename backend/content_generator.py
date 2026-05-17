@@ -37,6 +37,145 @@ TIER_MANUAL = 3 # signal only, no generation
 
 RATE_LIMIT_PER_HOUR = int(os.environ.get("CONTENT_GENERATOR_HOURLY_CAP", "10"))
 DEDUP_WINDOW_HOURS = int(os.environ.get("CONTENT_GENERATOR_DEDUP_WINDOW_HOURS", "24"))
+# ─────────────────── Editorial guidelines (per launch brief) ───────────────────
+#
+# Locked-in by Dioni 2026-05-17: PUTKI HQ voice is Complex × GQ × Bloomberg
+# Crypto. Snarky-but-sophisticated, professional baseline, light Finnish
+# swearing OK in moderation, ZERO problem-gambling / underage / addiction
+# language. Every article MUST carry an explicit betting angle (≥20 chars).
+# These rules ride on top of every LLM template's existing system prompt.
+
+EDITORIAL_GUIDELINES_DIRECTIVE = (
+    "PUTKI HQ -ÄÄNI JA TYYLI (PAKOLLISET SÄÄNNÖT):\n"
+    "- Sävy: ammattilainen pohjavire, älykäs purevuus sallittu. Tyyli kuten "
+    "Complex × GQ × Bloomberg Crypto — fakta+kommentti, ei tylsää uutispuuroa.\n"
+    "- Saa olla terävä ja itsevarma, jopa hivenen ilkikurinen.\n"
+    "- Kevyt suomalainen kiroilu (esim. \"perkele\") sallittua harkitusti.\n"
+    "- EI markkinointikieltä, EI superlatiivihypeä.\n"
+    "\nVEDONLYÖNTIKULMA (PAKOLLINEN, EI NEUVOTELTAVISSA):\n"
+    "- Joka artikkelin on sisällettävä eksplisiittinen vedonlyöntinäkökulma "
+    "(esim. kerroin, markkinaliike, lopputuloksen analyysi, mitä tämä tarkoittaa "
+    "pitkän aikavälin trendille). Minimissään 20 merkkiä.\n"
+    "- Jos vedonlyöntikulmaa ei ole, JÄTÄ ARTIKKELI KIRJOITTAMATTA — heikkoa "
+    "sisältöä ei julkaista.\n"
+    "\nKIELLETYT AIHEET (ÄLÄ KOSKAAN KIRJOITA):\n"
+    "- Peliongelmista varoittelu artikkelitekstissä (laillinen disclaimer "
+    "renderöityy automaattisesti UI-komponenttina).\n"
+    "- Alaikäisten pelaaminen.\n"
+    "- Peliriippuvuus tai riippuvuusterminologia.\n"
+    "\nKIELLETYT FRAASIT:\n"
+    "- \"lähteiden mukaan\" / \"asiantuntijat ennustavat\" / \"sources say\" — "
+    "ole konkreettinen, älä kierrä.\n"
+    "- Englanninkieliset sanat lukuun ottamatta erisnimiä (joukkueet, pelaajat, "
+    "operaattorit).\n"
+    "\nRAKENNE:\n"
+    "- Otsikko: max 60 merkkiä, aktiivimuoto, sisältää keskeisen nimen + "
+    "vedonlyöntikulman.\n"
+    "- Alaotsikko: max 100 merkkiä, taustakonteksti tai vaikutus.\n"
+    "- Body: 150–250 sanaa, 3 kappaletta (mitä tapahtui / miksi tällä on "
+    "merkitystä / mitä seuraavaksi).\n"
+)
+
+
+FORBIDDEN_PHRASES = (
+    "lähteiden mukaan",
+    "asiantuntijat ennustavat",
+    "sources say",
+    "experts predict",
+    "monet uskovat",
+    "many believe",
+    "huhujen mukaan",
+)
+
+OFF_LIMITS_TERMS = (
+    "peliongelma",
+    "peliriippuvu",
+    "alaikäinen",
+    "underage",
+    "addiction",
+    "recovery",
+)
+
+# Default OG images per category. Served by the frontend from /og-defaults/.
+# Path is relative to the public origin — frontend resolves to absolute URL
+# when injecting into meta tags. Files are inline SVG (no external deps).
+DEFAULT_OG_IMAGE_BASE = "/og-defaults"
+DEFAULT_OG_IMAGE_BY_CATEGORY = {
+    "urheilijat": f"{DEFAULT_OG_IMAGE_BASE}/urheilijat.svg",
+    "striimaajat": f"{DEFAULT_OG_IMAGE_BASE}/striimaajat.svg",
+    "saannot": f"{DEFAULT_OG_IMAGE_BASE}/saannot.svg",
+    "kasinot": f"{DEFAULT_OG_IMAGE_BASE}/kasinot.svg",
+}
+
+
+def _word_count(html_or_text: str) -> int:
+    text = re.sub(r"<[^>]+>", " ", str(html_or_text or ""))
+    return len([w for w in re.split(r"\s+", text.strip()) if w])
+
+
+def validate_content(template_id: str, content: Dict[str, Any]) -> Dict[str, Any]:
+    """Run the launch-blocker editorial validation checklist. Returns a dict
+    with `passed: bool` + `errors: [str]` + `warnings: [str]`.
+
+    Caller decides what to do when `passed=False` — current policy is to
+    downgrade auto-publish to draft (never hard-fail the generation)."""
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    # Skip_reason short-circuits everything.
+    if content.get("skip_reason"):
+        return {"passed": False, "skipped": True, "errors": [], "warnings": [],
+                "skip_reason": content["skip_reason"]}
+
+    # streamer_alert is structured + non-editorial — validation is lenient.
+    if template_id == "streamer_alert":
+        if not content.get("headline"):
+            errors.append("missing_headline")
+        return {"passed": not errors, "skipped": False, "errors": errors, "warnings": warnings}
+
+    headline = (content.get("headline") or "").strip()
+    subhead = (content.get("subhead") or "").strip()
+    body = content.get("body") or _resolve_body(template_id, content) or ""
+    betting_angle = (content.get("betting_angle") or "").strip()
+    facts = content.get("facts_used") or []
+
+    # Length checks
+    if not (1 <= len(headline) <= 60):
+        errors.append(f"headline_length({len(headline)})_outside_1_60")
+    if subhead and len(subhead) > 100:
+        errors.append(f"subhead_length({len(subhead)})_over_100")
+
+    body_words = _word_count(body)
+    # Regulatory uses summary+analysis+impact pieces; relax to 100..400 there.
+    if template_id == "regulatory_analysis":
+        if not (100 <= body_words <= 400):
+            warnings.append(f"body_word_count_{body_words}_outside_100_400")
+    else:
+        if not (120 <= body_words <= 280):
+            warnings.append(f"body_word_count_{body_words}_outside_120_280")
+
+    # Betting angle is non-negotiable
+    if len(betting_angle) < 20:
+        errors.append(f"betting_angle_too_short({len(betting_angle)})")
+
+    # Facts traceability (warning only — LLM sometimes omits even when present)
+    if isinstance(facts, list) and len(facts) < 2:
+        warnings.append("facts_used_count_lt_2")
+
+    # Forbidden phrase scan over headline + subhead + body
+    haystack = " ".join([headline, subhead, str(body), betting_angle]).lower()
+    for phrase in FORBIDDEN_PHRASES:
+        if phrase in haystack:
+            errors.append(f"forbidden_phrase:{phrase}")
+
+    # Off-limits topic scan
+    for term in OFF_LIMITS_TERMS:
+        if term in haystack:
+            errors.append(f"off_limits_term:{term}")
+
+    return {"passed": not errors, "skipped": False, "errors": errors, "warnings": warnings}
+
+
 CLAUDE_MODEL = os.environ.get("CONTENT_GENERATOR_MODEL", "claude-opus-4-20250514")
 
 # Reusable directive injected into EVERY LLM template's system prompt. Per
@@ -70,13 +209,25 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "uses_llm": True,
         "system_prompt": (
             "Olet PUTKI HQ:n urheilutoimittaja. Kirjoitat suomeksi NHL-otteluraportteja "
-            "Bloomberg-tyylillä — faktoihin nojaten, vedonlyöntinäkökulma huomioiden. "
-            "EI markkinointikieltä, EI hypeä. Vastauksesi on PELKKÄ JSON-objekti "
-            "muotoa {\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p>\","
+            "Complex × GQ × Bloomberg Crypto -tyylillä — faktoihin nojaten, "
+            "vedonlyöntinäkökulma huomioiden, terävää kommentaaria mukaan.\n"
+            "Vastauksesi on PELKKÄ JSON-objekti muotoa "
+            "{\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p>\","
             "\"betting_angle\":\"\","
+            "\"facts_used\":[],"
+            "\"skip_reason\":null,"
             "\"og_title\":\"\",\"og_description\":\"\",\"twitter_description\":\"\","
-            "\"og_image_url\":null,\"article_tags\":[]}. "
-            "Älä laita JSON:in ulkopuolelle mitään.\n\n" + NATURAL_FINNISH_DIRECTIVE
+            "\"og_image_url\":null,\"article_tags\":[]}.\n"
+            "Älä laita JSON:in ulkopuolelle mitään.\n\n"
+            + EDITORIAL_GUIDELINES_DIRECTIVE
+            + "\n\n" + NATURAL_FINNISH_DIRECTIVE
+            + "\n\nNHL-SÄÄNNÖT:\n"
+            "- Kirjoita VAIN jos suomalaispelaajalla oli merkityksellinen rooli "
+            "(1+ piste, 20+ min jäällä, tai ratkaiseva tilanne).\n"
+            "- Skipa: alle 10 min TOI ja 0 pistettä, blowout ilman suomalaisrelevanssia, "
+            "esikausi tai merkityksetön peli. Palauta skip_reason.\n"
+            "- Vedonlyöntikulma: playoff-paikka, seuraavan pelin vastustaja, "
+            "pelaajan maaliputki, joukkueen voitto/tappio-putki."
         ),
         "user_prompt": (
             "OTTELU:\n"
@@ -85,8 +236,9 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "- Aikaleima: {start_time_utc}\n"
             "- Tila: {game_state}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita 200 sanaa. Otsikko max 60 merkkiä, alaotsikko max 100 merkkiä. "
-            "Body 3 kappaletta HTML-merkattuna <p>-tageilla."
+            "\nKirjoita 150–250 sanaa, 3 kappaletta (mitä tapahtui / miksi tällä on "
+            "merkitystä vedonlyönnin kannalta / mitä seuraavaksi). Otsikko max 60 merkkiä, "
+            "alaotsikko max 100 merkkiä."
         ),
     },
 
@@ -104,13 +256,23 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "uses_llm": True,
         "system_prompt": (
             "Olet PUTKI HQ:n regulatorisen toimituksen analyytikko. Käytät neutraalia, "
-            "analyyttistä äänensävyä. EI mielipiteitä, EI markkinointia. "
-            "Selität rahapelilaki/Veikkaus/EU-konteksti selkokielellä. "
+            "analyyttistä äänensävyä — terävä kommentaari sallittu, mutta EI mielipiteitä "
+            "lain hyvyydestä/huonoudesta. Selität rahapelilaki/Veikkaus/EU-konteksti "
+            "selkokielellä.\n"
             "Vastauksesi on PELKKÄ JSON {\"headline\":\"\",\"subhead\":\"\","
             "\"summary\":\"<p>...</p>\",\"analysis\":\"<p>...</p><p>...</p>\","
             "\"impact\":\"<p>...</p>\","
+            "\"betting_angle\":\"\",\"facts_used\":[],\"skip_reason\":null,"
             "\"og_title\":\"\",\"og_description\":\"\",\"twitter_description\":\"\","
-            "\"og_image_url\":null,\"article_tags\":[]}.\n\n" + NATURAL_FINNISH_DIRECTIVE
+            "\"og_image_url\":null,\"article_tags\":[]}.\n\n"
+            + EDITORIAL_GUIDELINES_DIRECTIVE
+            + "\n\n" + NATURAL_FINNISH_DIRECTIVE
+            + "\n\nREGULATORISET SÄÄNNÖT:\n"
+            "- Kirjoita VAIN jos uutinen vaikuttaa Suomen pelimarkkinaan tai pelaajiin.\n"
+            "- Skipa: kansainväliset uutiset ilman Suomi-kytkentää, huhut ilman virallista "
+            "lähdettä, pienet operaattorimuutokset. Palauta skip_reason.\n"
+            "- Vedonlyöntikulma: vaikutus pelaajien valintoihin, Veikkaus-monopoliin, "
+            "ulkomaisten operaattoreiden toimintaan, aikajana muutoksille."
         ),
         "user_prompt": (
             "UUTINEN:\n"
@@ -120,10 +282,9 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "- Avainsanat: {keywords_matched}\n"
             "- Julkaistu: {published}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita yhteensä noin 300 sanaa. Otsikko max 60 merkkiä, alaotsikko max 100 merkkiä. "
-            "Yksi summary-kappale (mitä tapahtui), kaksi analysis-kappaletta "
-            "(mitä se tarkoittaa operaattoreille/pelaajille), yksi impact-kappale "
-            "(vedonlyöntimarkkinavaikutukset)."
+            "\nKirjoita yhteensä noin 300 sanaa. Summary-kappale (mitä tapahtui), kaksi "
+            "analysis-kappaletta (mitä se tarkoittaa operaattoreille/pelaajille), "
+            "impact-kappale (vedonlyöntimarkkinavaikutukset)."
         ),
     },
 
@@ -132,19 +293,29 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "category": "kasinot",
         "uses_llm": True,
         "system_prompt": (
-            "Olet PUTKI HQ:n operaattori-toimittaja. Neutraali sävy, kuluttajakeskeinen. "
-            "EI markkinointikieltä. Vastauksesi on PELKKÄ JSON "
+            "Olet PUTKI HQ:n operaattori-toimittaja. Neutraali sävy, kuluttajakeskeinen, "
+            "terävä kommentaari sallittu. EI promotionaalista kieltä — emme shilliä.\n"
+            "Vastauksesi on PELKKÄ JSON "
             "{\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p><p>...</p>\","
+            "\"betting_angle\":\"\",\"facts_used\":[],\"skip_reason\":null,"
             "\"og_title\":\"\",\"og_description\":\"\",\"twitter_description\":\"\","
-            "\"og_image_url\":null,\"article_tags\":[]}.\n\n" + NATURAL_FINNISH_DIRECTIVE
+            "\"og_image_url\":null,\"article_tags\":[]}.\n\n"
+            + EDITORIAL_GUIDELINES_DIRECTIVE
+            + "\n\n" + NATURAL_FINNISH_DIRECTIVE
+            + "\n\nOPERAATTORI-SÄÄNNÖT:\n"
+            "- Kirjoita VAIN merkittävistä ilmoituksista (uusi peli, bonusmuutos, "
+            "markkinasiirto). Skipa: pienet UI-muutokset, kampanjat, kv-uutiset ilman "
+            "Suomi-relevanssia, promomateriaali. Palauta skip_reason.\n"
+            "- Vedonlyöntikulma: vaikutus pelaajan valintoihin (uudet vetokohteet, "
+            "bonusehdot, kerroinmuutokset, kilpailutilanne)."
         ),
         "user_prompt": (
             "OPERAATTORI: {operator}\n"
             "TAPAHTUMA: {event}\n"
             "YKSITYISKOHDAT: {details}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita 200 sanaa. Otsikko max 60 merkkiä. Yksi kappale: mitä tapahtui. "
-            "Yksi kappale: mitä se tarkoittaa pelaajille."
+            "\nKirjoita 200 sanaa. 1. kappale: mitä tapahtui. 2. kappale: mitä se "
+            "tarkoittaa pelaajille."
         ),
     },
 
@@ -153,12 +324,20 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "category": "urheilijat",
         "uses_llm": True,
         "system_prompt": (
-            "Olet PUTKI HQ:n moottoriurheilutoimittaja. Kirjoitat suomeksi Formula 1 -kisaraportteja "
-            "Bloomberg-tyylillä — faktoja, neutraali sävy, vedonlyöntinäkökulma kun relevanttia. "
-            "EI markkinointikieltä, EI hypeä. Vastauksesi on PELKKÄ JSON-objekti "
+            "Olet PUTKI HQ:n moottoriurheilutoimittaja. Kirjoitat F1-kisaraportteja "
+            "Complex × GQ × Bloomberg Crypto -tyylillä — faktoja, terävä sävy.\n"
+            "Vastauksesi on PELKKÄ JSON "
             "{\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p>\","
+            "\"betting_angle\":\"\",\"facts_used\":[],\"skip_reason\":null,"
             "\"og_title\":\"\",\"og_description\":\"\",\"twitter_description\":\"\","
-            "\"og_image_url\":null,\"article_tags\":[]}.\n\n" + NATURAL_FINNISH_DIRECTIVE
+            "\"og_image_url\":null,\"article_tags\":[]}.\n\n"
+            + EDITORIAL_GUIDELINES_DIRECTIVE
+            + "\n\n" + NATURAL_FINNISH_DIRECTIVE
+            + "\n\nF1-SÄÄNNÖT:\n"
+            "- Kirjoita VAIN jos Bottas (tai muu suomalaiskuljettaja) maaliin tai dramaattinen DNF.\n"
+            "- Skipa: Bottas 15. tai huonompi ilman draamaa, ei MM-vaikutusta. Palauta skip_reason.\n"
+            "- Vedonlyöntikulma: MM-kerroinmuutokset, valmistajien välinen taistelu, "
+            "seuraavan kisan kertoimet, suomalaiskuljettajan kausinäkymä."
         ),
         "user_prompt": (
             "KISA:\n"
@@ -168,8 +347,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "- Podium: {podium}\n"
             "- Suomalaiskuljettajat: {finnish_drivers}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita 200 sanaa. Otsikko max 60 merkkiä. Body 3 kappaletta <p>-tageilla. "
-            "Mainitse suomalaiskuljettajan suoritus jos relevanttia."
+            "\nKirjoita 150–250 sanaa, 3 kappaletta. Otsikko max 60 merkkiä."
         ),
     },
 
@@ -178,11 +356,21 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "category": "urheilijat",
         "uses_llm": True,
         "system_prompt": (
-            "Olet PUTKI HQ:n jalkapallotoimittaja. Kirjoitat lyhyitä ottelu­raportteja "
-            "Bloomberg-tyylillä. Vastauksesi on PELKKÄ JSON "
+            "Olet PUTKI HQ:n jalkapallotoimittaja. Lyhyitä ottelu­raportteja "
+            "Complex × GQ × Bloomberg Crypto -tyylillä.\n"
+            "Vastauksesi on PELKKÄ JSON "
             "{\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p><p>...</p>\","
+            "\"betting_angle\":\"\",\"facts_used\":[],\"skip_reason\":null,"
             "\"og_title\":\"\",\"og_description\":\"\",\"twitter_description\":\"\","
-            "\"og_image_url\":null,\"article_tags\":[]}.\n\n" + NATURAL_FINNISH_DIRECTIVE
+            "\"og_image_url\":null,\"article_tags\":[]}.\n\n"
+            + EDITORIAL_GUIDELINES_DIRECTIVE
+            + "\n\n" + NATURAL_FINNISH_DIRECTIVE
+            + "\n\nJALKAPALLO-SÄÄNNÖT:\n"
+            "- Kirjoita VAIN jos suomalaispelaaja teki vaikutuksen (maali, syöttö, 60+ min, "
+            "ratkaiseva tilanne). Skipa: penkillä koko ottelun, garbage-time -vaihto, "
+            "merkityksetön mid-table -peli. Palauta skip_reason.\n"
+            "- Vedonlyöntikulma: sarjataulukkomuutos, putoamis/nousutaistelu, "
+            "pelaajan maalimarkkina, seuraava vastustaja."
         ),
         "user_prompt": (
             "OTTELU:\n"
@@ -193,8 +381,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "- Maalintekijät: {scorers}\n"
             "- Suomalaiset maalintekijät: {finnish_scorers}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita 150 sanaa. Otsikko max 60 merkkiä. Body 2 kappaletta <p>-tageilla. "
-            "Mainitse suomalaispelaajan suoritus jos relevanttia."
+            "\nKirjoita 150–200 sanaa, 2–3 kappaletta. Otsikko max 60 merkkiä."
         ),
     },
 }
