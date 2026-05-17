@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 11 — Verified the new force-rebuild operational button on /back-office/webhooks + backend pytest regression and POST /api/admin/feed/rebuild smoke. Backend: 112/112 pytest PASS under MITTARI_DISABLE_WORKERS=1 MITTARI_DISABLE_SCHEDULER=1 (--ignore=tests/test_phase3a_v2_content.py). Direct curl POST /api/admin/feed/rebuild with X-Admin-Token=mittari-admin returned the exact contract {rebuilt_at, candidates:216, upserted:216, pruned:0, signals_scanned:200, published_scanned:40} — endpoint shape unchanged. Frontend (Playwright @1920×1080): auth gate unlocked via password input + UNLOCK button using token 'mittari-admin'; webhooks-force-rebuild-panel renders BETWEEN webhooks-pubsub-lease-panel and webhook-source-row-twitch (compareDocumentPosition verified). Header reads 'SYÖTTEEN UUDELLEENRAKENNUS'; button label 'PAKOTA SYÖTTEEN UUDELLEENRAKENNUS'. First-visit stamp 'VIIMEISIN AJO · EI VIELÄ AJETTU' confirmed after localStorage clear. Click → button became disabled with label 'AJETAAN…' (in-flight state captured at 100ms). After resolve, webhooks-force-rebuild-stats grid shows EXACTLY 5 children: rebuild-stat-candidates(216), rebuild-stat-upserted(216), rebuild-stat-pruned(0), rebuild-stat-signals(200), rebuild-stat-published(40). Stamp updated to 'VIIMEISIN AJO · 2026-05-17 10:54:48 UTC'. localStorage key 'mittari-admin-last-feed-rebuild' persisted with rebuilt_at + all 5 counters. After reload + re-auth, stamp + stats grid both still rendered. webhooks-force-rebuild-error count = 0 throughout success path (conditional render confirmed absent on success).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verified_features": {
+    "backend_pytest_regression": "PASS — 112/112 green (46.82s)",
+    "backend_feed_rebuild_endpoint_shape": "PASS — {rebuilt_at, candidates, upserted, pruned, signals_scanned, published_scanned} returned with X-Admin-Token",
+    "frontend_panel_render_and_order": "PASS — webhooks-force-rebuild-panel rendered between webhooks-pubsub-lease-panel and webhook-source-row-twitch",
+    "frontend_header_and_button_labels": "PASS — 'SYÖTTEEN UUDELLEENRAKENNUS' header + 'PAKOTA SYÖTTEEN UUDELLEENRAKENNUS' button",
+    "frontend_first_visit_stamp": "PASS — 'VIIMEISIN AJO · EI VIELÄ AJETTU' on first visit (localStorage cleared)",
+    "frontend_in_flight_state": "PASS — button.disabled=true and label='AJETAAN…' during in-flight POST",
+    "frontend_stats_grid_5_tiles": "PASS — exactly 5 children: rebuild-stat-candidates/upserted/pruned/signals/published, each numeric",
+    "frontend_stamp_update": "PASS — updated to 'VIIMEISIN AJO · 2026-05-17 10:54:48 UTC' after success",
+    "frontend_localstorage_persistence": "PASS — 'mittari-admin-last-feed-rebuild' persisted; stamp+stats survive reload+re-auth",
+    "frontend_error_branch_absent_on_success": "PASS — webhooks-force-rebuild-error count=0 throughout success path"
+  },
+  "test_report_links": [
+    "/app/test_reports/pytest/pytest_iter11_full.xml",
+    "/app/backend/tests/test_phase3_v2_step4_feed.py",
+    "/app/backend/tests/test_phase3_v2_step2_webhooks.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BackOfficeWebhooks.jsx Stat helper + force-rebuild panel cleanly inserted between lease panel and source rows — ordering matches spec.",
+    "localStorage write happens inside onForceRebuild on success and on initial useState lazy init read; both branches stable. No XSS risk because no innerHTML usage on stored value.",
+    "Spec says 'honest error surface on 5xx'. Verified webhooks-force-rebuild-error is conditionally rendered (count=0 on success). Per review_request, simulating 5xx with valid token was explicitly out of scope (no backend mock harness available). Code path looks correct: rebuildError state is set on !r.ok via setRebuildError; rendered only when truthy and rebuildResult is also gated by !rebuildError so stale stats don't survive a failure.",
+    "Minor: rebuildResult is restored from localStorage on mount, so a stale-on-disk error scenario could surface old stats if backend later fails — acceptable for this operational tool but worth documenting; the latest error always takes precedence in the UI because rebuildError clears rebuildResult render via the && !rebuildError guard.",
+    "seed_scheduler.py F841 cleanup (unused 'cfg = CONTENT_TYPES[content_type]') did not affect tests — 112/112 still green. Note: grep still shows 'cfg = CONTENT_TYPES[content_type]' at line 369 of current file; if main agent meant a different unused assignment, that one survives. Either way, pytest is green so no regression."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (112/112 pytest + endpoint shape curl)", "frontend": "100% (10/10 force-rebuild checks)"},
+  "test_credentials": "X-Admin-Token: mittari-admin (BACK_OFFICE_TOKEN, used for /api/admin/feed/rebuild and /back-office/webhooks auth gate)",
+  "seed_data_creation": "Single POST /api/admin/feed/rebuild via UI click upserted 216 candidates (200 signals + 40 published, dedup) — same shape as iteration_10 (218 prior → 216 now after natural TTL).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Force-rebuild panel fully verified end-to-end. Auth gate on /back-office/webhooks requires UNLOCK click after password fill — localStorage pre-seed of 'mittari-admin-token' alone does NOT bypass gate (component reads input state). Always type token into input then click the UNLOCK button (or press Enter). Backend rebuild endpoint stable. localStorage key for persistence: 'mittari-admin-last-feed-rebuild'."
+}

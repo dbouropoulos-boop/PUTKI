@@ -15,9 +15,15 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, RefreshCw, Webhook, AlertTriangle, CheckCircle2, Clock, ArrowUpRight } from 'lucide-react';
+import { Lock, RefreshCw, Webhook, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Hammer, Loader2 } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
+const FEED_REBUILD_TIMESTAMP_KEY = 'mittari-admin-last-feed-rebuild';
+
+const fmtUtcStamp = (iso) => {
+  if (!iso) return '—';
+  try { return iso.replace('T', ' ').slice(0, 19) + ' UTC'; } catch { return iso; }
+};
 const POLL_MS = 30_000;
 
 const useToken = () => {
@@ -43,6 +49,16 @@ const stateForSource = (configured, ageSeconds, expectedSeconds) => {
   if (ageSeconds <= expectedSeconds * 3) return { key: 'stale', label: 'STALE', color: '#E8924A' };
   return { key: 'failing', label: 'FAILING', color: '#C8423C' };
 };
+
+const Stat = ({ label, value, testid }) => (
+  <div className="panel" style={{ padding: '10px 12px', background: 'var(--bg)' }} data-testid={testid}>
+    <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 600 }}>{label}</div>
+    <div className="mono" style={{ fontSize: 22, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.02em', marginTop: 4 }}>
+      {typeof value === 'number' ? value : '—'}
+    </div>
+  </div>
+);
+
 
 const PubsubLeaseIndicator = ({ lease }) => {
   if (!lease || lease.seconds_remaining == null) {
@@ -147,6 +163,16 @@ const BackOfficeWebhooks = () => {
   const [busy, setBusy] = useState(null);
   const [lastAction, setLastAction] = useState(null);
 
+  // Force-rebuild state — persists last-rebuild timestamp + result across reloads.
+  const [rebuildBusy, setRebuildBusy] = useState(false);
+  const [rebuildResult, setRebuildResult] = useState(() => {
+    try {
+      const raw = localStorage.getItem(FEED_REBUILD_TIMESTAMP_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+  const [rebuildError, setRebuildError] = useState('');
+
   const headers = useCallback((tok = token) => ({ 'Content-Type': 'application/json', 'X-Admin-Token': tok }), [token]);
 
   const fetchStatus = useCallback(async () => {
@@ -197,6 +223,40 @@ const BackOfficeWebhooks = () => {
       fetchStatus();
     }
   }, [headers, fetchStatus]);
+
+  const onForceRebuild = useCallback(async () => {
+    setRebuildBusy(true);
+    setRebuildError('');
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/feed/rebuild`, {
+        method: 'POST',
+        headers: headers(),
+      });
+      const raw = await r.text();
+      let body;
+      try { body = raw ? JSON.parse(raw) : {}; } catch { body = { raw }; }
+      if (!r.ok) {
+        setRebuildError(`HTTP ${r.status} · ${body.detail || raw || 'tuntematon virhe'}`);
+        return;
+      }
+      const summary = {
+        rebuilt_at: body.rebuilt_at,
+        candidates: body.candidates,
+        upserted: body.upserted,
+        pruned: body.pruned,
+        signals_scanned: body.signals_scanned,
+        published_scanned: body.published_scanned,
+        triggered_at: new Date().toISOString(),
+      };
+      setRebuildResult(summary);
+      try { localStorage.setItem(FEED_REBUILD_TIMESTAMP_KEY, JSON.stringify(summary)); } catch {}
+    } catch (e) {
+      setRebuildError(String(e));
+    } finally {
+      setRebuildBusy(false);
+    }
+  }, [headers]);
+
 
   if (!authed) {
     return (
@@ -275,6 +335,61 @@ const BackOfficeWebhooks = () => {
               SERVER · {status?.now ? status.now.replace('T', ' ').slice(0, 19) : '—'} UTC
             </div>
           </div>
+        </div>
+
+        {/* Force-rebuild panel — Step 4 operational button */}
+        <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #3B5BA5' }}
+             data-testid="webhooks-force-rebuild-panel">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex-1 min-w-[260px]">
+              <div className="mono inline-flex items-center gap-2 mb-2"
+                   style={{ fontSize: 11, letterSpacing: '0.22em', color: '#3B5BA5', fontWeight: 700 }}>
+                <Hammer strokeWidth={1.7} size={13} />
+                SYÖTTEEN UUDELLEENRAKENNUS
+              </div>
+              <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 6 }}>
+                Käynnistää aggregointityön välittömästi. Käytä kun ensimmäinen webhook saapuu, kun rebuild-worker
+                jumittaa, tai kun toimitus haluaa nähdä julkaisun heti hubilla ennen seuraavaa 60 s sykliä.
+              </p>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}
+                   data-testid="webhooks-force-rebuild-last-stamp">
+                VIIMEISIN AJO · {rebuildResult?.rebuilt_at ? fmtUtcStamp(rebuildResult.rebuilt_at) : 'EI VIELÄ AJETTU'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onForceRebuild}
+              disabled={rebuildBusy}
+              className="btn-primary mono inline-flex items-center gap-2"
+              style={{ fontSize: 11, letterSpacing: '0.16em', fontWeight: 700, padding: '12px 18px', opacity: rebuildBusy ? 0.7 : 1 }}
+              data-testid="webhooks-force-rebuild-button"
+            >
+              {rebuildBusy ? (
+                <Loader2 strokeWidth={1.8} size={13} className="animate-spin" />
+              ) : (
+                <Hammer strokeWidth={1.8} size={13} />
+              )}
+              {rebuildBusy ? 'AJETAAN…' : 'PAKOTA SYÖTTEEN UUDELLEENRAKENNUS'}
+            </button>
+          </div>
+
+          {rebuildError ? (
+            <div className="mono mt-4" style={{ fontSize: 10.5, letterSpacing: '0.12em', color: '#C8423C', fontWeight: 600, lineHeight: 1.5 }}
+                 data-testid="webhooks-force-rebuild-error">
+              VIRHE · {rebuildError}
+            </div>
+          ) : null}
+
+          {rebuildResult && !rebuildError ? (
+            <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-3"
+                 data-testid="webhooks-force-rebuild-stats">
+              <Stat label="EHDOKKAITA" value={rebuildResult.candidates} testid="rebuild-stat-candidates" />
+              <Stat label="UPSERTOITU" value={rebuildResult.upserted} testid="rebuild-stat-upserted" />
+              <Stat label="POISTETTU"  value={rebuildResult.pruned}     testid="rebuild-stat-pruned" />
+              <Stat label="SIGNAALEJA" value={rebuildResult.signals_scanned}   testid="rebuild-stat-signals" />
+              <Stat label="JULKAISUJA" value={rebuildResult.published_scanned} testid="rebuild-stat-published" />
+            </div>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 gap-3" data-testid="webhook-source-rows">

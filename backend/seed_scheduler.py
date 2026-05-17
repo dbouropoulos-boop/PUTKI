@@ -258,7 +258,6 @@ async def build_topic_payload(
     ) or "—"
     sources_text = ", ".join(s["name"] for s in sources) or "—"
 
-    cfg = CONTENT_TYPES[content_type]
     # Build a per-content-type signal_payload aligned with prompt placeholders.
     payload: Dict[str, Any] = {
         "research_id": chosen["id"],
