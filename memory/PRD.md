@@ -10,6 +10,7 @@
 - **Phase 3 V2 — Batch 3A V2** (2026-05) — Master Brief V2: voice register Complex×GQ×Bloomberg, 19 content types, 21 new public route shells, editorial accountability footer, surface cleanup honesty pass
 - **Phase 3 V2 — Source Map + Editorial Seed Scheduler** (2026-05-16) — §4.1 named source map (28 sources) + foundational_research store + cadence-driven scheduler + LLM-502-tolerant variant filler
 - **Phase 3 V2 — UI Honesty Pass** (2026-05-16) — Killed all fake-live-data UI manufacturing per V2 brief
+- **Phase 3 V2 — Final Architecture Step 1: Mock Purge** (2026-05-17) — Repo now mock-free. Operators + streamers as real backend collections with admin CRUD.
 
 ## Phase 3 V2 — Architecture-only Track (this session)
 
@@ -51,6 +52,34 @@
 - Prefers Finnish-language foundational_research sources
 - Native Finnish editorial syntax + idiom, not translated English
 - Seed function now refreshes the voice prompt text on boot **only** if `updated_by == 'seed'` (preserves admin edits)
+
+## Final Architecture — Step 1 Mock Purge (this session)
+
+Per `mittari-fi-FINAL-ARCHITECTURE.md` §8 Step 1.
+
+### Backend
+- New module `rosters.py` — operators + streamers registries with idempotent seed (lifted from `data/mock.js` as editorial fact per user direction)
+- 12 operators seeded · 27 streamers seeded (FI tier 1+2, intl global/swedish/dutch)
+- `INTL_SCENES_META` for ISO badges + tinted labels
+- All collections seeded with `market_id="FI"` default (Batch 3C multi-market prep)
+- Endpoints: `GET /api/operators?partner_only=&market_id=`, `GET /api/operators/{slug}`, `GET /api/streamers?scene=&market=&market_id=`, `GET /api/streamers/{slug}`, admin CRUD on both, public `GET /api/dial/history?limit=`
+- Hard 45s timeout on Claude calls (prevents event-loop hang during gateway flake)
+- `seed_default_guidelines` now refreshes seeded prompts on boot only if `updated_by == 'seed'` (admin edits preserved)
+
+### Frontend
+- New `useRegistry.js` hook: `useOperators`, `useOperator`, `useStreamers`, `useStreamer`
+- New `constants/dial.js` for the DIAL_STATES palette (extracted from mock.js as editorial constant)
+- DialHistoryMiniChart rewritten — reads `/api/dial/history`; empty-state when no snapshots yet
+- 8 page files migrated off `data/mock.js`: CasinoRanking, OperatorReview, StreamerIndex, StreamerProfile, StreamerIntl, WeeklyCard, Signup, ColdEmailLanding, Home
+- WeeklyCard fixture marquee + leaderboard now empty-state when no real data
+- 2 new back-office surfaces: `/back-office/operators`, `/back-office/streamers` (CRUD + scene filter)
+- Deleted: `data/mock.js`, `data/mockStreams.js`, `SignupToast.jsx`, `PushNotificationToast.jsx`
+- Repo is now **mock-free**
+
+### Test coverage
+- 12 new tests in `tests/test_phase3_v2_step1_registries.py` — public list/get/filter, admin CRUD, market_id propagation, intl scene metadata, dial history endpoint
+- All 12 pass. Full backend regression: 73/77 green (4 phase3a_v2_content tests skip/timeout on transient LLM gateway 502 — unrelated to Step 1)
+- Lint clean across all touched files
 
 ## Phase 3 V2 — UI Honesty Pass (this session)
 

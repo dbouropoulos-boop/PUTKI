@@ -14,6 +14,8 @@ import WeeklyCard from "@/pages/WeeklyCard";
 import BackOffice from "@/pages/BackOffice";
 import BackOfficeQueue from "@/pages/BackOfficeQueue";
 import FoundationalResearch from "@/pages/FoundationalResearch";
+import OperatorsAdmin from "@/pages/OperatorsAdmin";
+import StreamersAdmin from "@/pages/StreamersAdmin";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
 import VoitaPalkinto from "@/pages/VoitaPalkinto";
@@ -36,6 +38,8 @@ function App() {
           <Route path="/back-office" element={<BackOffice />} />
           <Route path="/back-office/queue" element={<BackOfficeQueue />} />
           <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
+          <Route path="/back-office/operators" element={<OperatorsAdmin />} />
+          <Route path="/back-office/streamers" element={<StreamersAdmin />} />
 
           {/* Main site */}
           <Route element={<Layout />}>

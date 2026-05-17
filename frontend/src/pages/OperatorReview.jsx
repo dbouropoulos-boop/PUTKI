@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Check, Minus, Shield, Clock, Globe, Smartphone } from 'lucide-react';
 import { OperatorTeaserCard, ScoreReadout, scoreColor } from '../components/OperatorCard';
-import { OPERATORS, STREAMERS } from '../data/mock';
+import { useOperators, useStreamers } from '../hooks/useRegistry';
 import {
   Accordion,
   AccordionContent,
@@ -76,17 +76,30 @@ const FAQS_EN = [
 const OperatorReview = () => {
   const { slug } = useParams();
   const { lang, t } = useLang();
-  const operator = OPERATORS.find((o) => o.slug === slug) || OPERATORS[0];
-  const color = scoreColor(operator.score);
-  const related = OPERATORS.filter((o) => o.slug !== operator.slug).slice(0, 3);
+  const { data: operators } = useOperators();
+  const { data: streamers } = useStreamers({ market: 'fi' });
+  const operator = operators.find((o) => o.slug === slug);
   const [showDeeper, setShowDeeper] = React.useState(false);
-  const streamerSample = STREAMERS.slice(0, 3);
   const SCORE_FACTORS = lang === 'en' ? SCORE_FACTORS_EN : SCORE_FACTORS_FI;
   const PROS = lang === 'en' ? PROS_EN : PROS_FI;
   const CONS = lang === 'en' ? CONS_EN : CONS_FI;
   const FAQS = lang === 'en' ? FAQS_EN : FAQS_FI;
-  // Phase 3 honesty rule: only partner operators get affiliate CTAs + bonus blocks. Non-partners are editorial-only.
-  const isPartner = operator.slug === 'weezybet';
+
+  if (!operator) {
+    if (operators.length === 0) return null; // still loading
+    return (
+      <div className="container-wide py-20 text-center">
+        <h1 className="display text-3xl mb-3">{lang === 'en' ? 'Operator not found' : 'Operaattoria ei löytynyt'}</h1>
+        <Link to="/kasinot" className="btn-ghost">← {lang === 'en' ? 'Back to ranking' : 'Takaisin sijoituksiin'}</Link>
+      </div>
+    );
+  }
+
+  const color = scoreColor(operator.score);
+  const related = operators.filter((o) => o.slug !== operator.slug).slice(0, 3);
+  const streamerSample = streamers.slice(0, 3);
+  // Honesty rule: only partner operators get affiliate CTAs + bonus blocks. Non-partners are editorial-only.
+  const isPartner = !!operator.partner;
 
   return (
     <div data-testid={`operator-review-${operator.slug}`}>

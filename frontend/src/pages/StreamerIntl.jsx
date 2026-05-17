@@ -2,14 +2,15 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Globe, Info } from 'lucide-react';
 import StreamerVideoPreview from '../components/StreamerVideoPreview';
-import MomentCard from '../components/MomentCard';
-import { INTL_STREAMERS, INTL_SCENES, INTL_MOMENTS } from '../data/mock';
+import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
-// Country-coded streamer card variation — same general layout, scene-specific tint + ISO badge.
-const IntlStreamerCard = ({ streamer }) => {
-  const scene = INTL_SCENES[streamer.scene];
-  const live = streamer.live && streamer.channel;
+// V2 honesty pass — INTL streamer page reads /api/streamers?market=intl.
+// Live state/playing/viewers no longer surface (real values come from
+// Step 2 webhook handlers via /api/signals/live).
+
+const IntlStreamerCard = ({ streamer, scenes }) => {
+  const scene = scenes[streamer.scene] || { iso: '?', tint: 'transparent' };
 
   return (
     <Link
@@ -20,16 +21,7 @@ const IntlStreamerCard = ({ streamer }) => {
       data-testid={`intl-streamer-${streamer.slug}`}
     >
       <div className="relative aspect-[5/4] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-        {live ? (
-          <StreamerVideoPreview
-            streamer={streamer}
-            className="absolute inset-0 w-full h-full"
-            testId={`intl-preview-${streamer.slug}`}
-          />
-        ) : (
-          <img src={streamer.photo} alt={streamer.name} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.7) grayscale(0.2)' }} />
-        )}
-        {/* ISO scene badge */}
+        <img src={streamer.photo} alt={streamer.name} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.7) grayscale(0.2)' }} />
         <div
           className="absolute top-3 right-3 px-2 py-0.5 rounded-[2px] mono"
           style={{ background: 'rgba(10,10,10,0.85)', color: '#F5F3EE', fontSize: 9.5, letterSpacing: '0.22em', fontWeight: 700 }}
@@ -37,12 +29,6 @@ const IntlStreamerCard = ({ streamer }) => {
         >
           {scene.iso}
         </div>
-        {live && (
-          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-0.5 rounded-[2px]" style={{ background: 'rgba(10,10,10,0.85)' }}>
-            <span className="led" />
-            <span className="mono" style={{ fontSize: 9, letterSpacing: '0.22em', color: '#F5F3EE', fontWeight: 700 }}>LIVE</span>
-          </div>
-        )}
         <div
           className="absolute bottom-3 left-3 px-2 py-0.5 rounded-[2px] mono"
           style={{ background: 'rgba(10,10,10,0.85)', color: '#F5F3EE', fontSize: 9.5, letterSpacing: '0.18em', fontWeight: 600 }}
@@ -55,20 +41,15 @@ const IntlStreamerCard = ({ streamer }) => {
           <div className="font-display font-bold tracking-tight" style={{ color: 'var(--ink)', fontSize: 16 }}>{streamer.name}</div>
           <div className="mono" style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }}>{streamer.followers}</div>
         </div>
-        <div className="mono mt-1" style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }}>
-          {streamer.origin.toUpperCase()}
-        </div>
-        {live ? (
-          <div className="mt-3 flex items-baseline justify-between gap-2">
-            <div className="font-serif text-[13px] truncate" style={{ color: 'var(--muted)' }}>{streamer.playing}</div>
-            <div className="mono whitespace-nowrap" style={{ fontSize: 12, fontWeight: 500, color: 'var(--ink)' }}>
-              {streamer.viewers >= 1000 ? `${(streamer.viewers / 1000).toFixed(1).replace('.0', '')}K` : streamer.viewers}
-            </div>
+        {streamer.origin && (
+          <div className="mono mt-1" style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }}>
+            {streamer.origin.toUpperCase()}
           </div>
-        ) : streamer.sub ? (
+        )}
+        {streamer.sub ? (
           <p className="font-serif mt-3 text-[13px] leading-snug" style={{ color: 'var(--muted)' }}>{streamer.sub}</p>
         ) : (
-          <div className="mt-3 mono" style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 500 }}>OFFLINE</div>
+          <div className="mt-3 mono" style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 500 }}>{streamer.platform.toUpperCase()}</div>
         )}
       </div>
     </Link>
@@ -77,11 +58,11 @@ const IntlStreamerCard = ({ streamer }) => {
 
 const StreamerIntl = () => {
   const { lang } = useLang();
-  const [tab, setTab] = useState('global'); // global | swedish | dutch | norwegian
-  const sceneOrder = ['global', 'swedish', 'dutch', 'norwegian'];
-  const filtered = useMemo(() => INTL_STREAMERS.filter((s) => s.scene === tab), [tab]);
-  const sceneMoments = useMemo(() => INTL_MOMENTS.filter((m) => m.scene === tab).slice(0, 4), [tab]);
-  const scene = INTL_SCENES[tab];
+  const { data: streamers, intlScenes } = useStreamers({ market: 'intl' });
+  const sceneOrder = ['intl_global', 'intl_swedish', 'intl_dutch', 'intl_norwegian'];
+  const [tab, setTab] = useState('intl_global');
+  const filtered = useMemo(() => streamers.filter((s) => s.scene === tab), [tab, streamers]);
+  const scene = intlScenes[tab] || { label_fi: '', label_en: '', iso: '?', tint: 'transparent' };
 
   return (
     <div data-testid="intl-streamers-page">
@@ -115,8 +96,8 @@ const StreamerIntl = () => {
         >
           <div className="inline-flex items-stretch rounded-[3px] overflow-hidden" style={{ border: '1px solid var(--border-strong)' }}>
             {sceneOrder.map((k) => {
-              const s = INTL_SCENES[k];
-              const count = INTL_STREAMERS.filter((x) => x.scene === k).length;
+              const s = intlScenes[k] || { iso: '?', label_fi: k, label_en: k };
+              const count = streamers.filter((x) => x.scene === k).length;
               const active = tab === k;
               return (
                 <button
@@ -136,7 +117,7 @@ const StreamerIntl = () => {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  {s.iso} · {(lang === 'en' ? s.labelEn : s.labelFi).toUpperCase()} <span style={{ opacity: 0.6 }}>· {count}</span>
+                  {s.iso} · {(lang === 'en' ? s.label_en : s.label_fi).toUpperCase()} <span style={{ opacity: 0.6 }}>· {count}</span>
                 </button>
               );
             })}
@@ -153,10 +134,12 @@ const StreamerIntl = () => {
         >
           <div className="eyebrow mb-2 inline-flex items-center gap-2">
             <Info strokeWidth={1.5} size={12} />
-            {scene.iso} · {(lang === 'en' ? scene.labelEn : scene.labelFi).toUpperCase()}
+            {scene.iso} · {(lang === 'en' ? scene.label_en : scene.label_fi).toUpperCase()}
           </div>
           <p className="font-serif" style={{ fontSize: 14.5, color: 'var(--ink)', lineHeight: 1.55 }}>
-            {lang === 'en' ? scene.blurbEn : scene.blurbFi}
+            {lang === 'en'
+              ? 'Mittari surfaces this scene editorially; activity here does not feed the dial.'
+              : 'Mittari nostaa tämän skenen toimituksellisesti; aktiviteetti täällä ei syötä mittaria.'}
           </p>
         </div>
       </section>
@@ -165,7 +148,7 @@ const StreamerIntl = () => {
       <section className="container-wide pb-12 sm:pb-16">
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5" data-testid="intl-grid">
-            {filtered.map((s) => <IntlStreamerCard key={s.slug} streamer={s} />)}
+            {filtered.map((s) => <IntlStreamerCard key={s.slug} streamer={s} scenes={intlScenes} />)}
           </div>
         ) : (
           <div className="panel p-10 text-center mono" style={{ fontSize: 12, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }} data-testid="intl-empty">
@@ -173,21 +156,6 @@ const StreamerIntl = () => {
           </div>
         )}
       </section>
-
-      {/* Scene moments */}
-      {sceneMoments.length > 0 && (
-        <section className="py-12 sm:py-14" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
-          <div className="container-wide">
-            <div className="eyebrow mb-3">{lang === 'en' ? 'SCENE MOMENTS · LAST 24 H' : 'SKENEN HETKET · 24 H'}</div>
-            <h2 className="display text-2xl sm:text-3xl mb-7">
-              {lang === 'en' ? `${scene.labelEn} · what we noticed` : `${scene.labelFi} · mitä huomasimme`}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8" data-testid="intl-moments-grid">
-              {sceneMoments.map((m) => <MomentCard key={m.id} moment={m} />)}
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Footer reminder */}
       <section className="container-wide py-10">

@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Mail, MessageCircle, Smartphone } from 'lucide-react';
 import Dial from '../components/Dial';
-import { STREAMERS, CURRENT_DIAL } from '../data/mock';
+import { useStreamers } from '../hooks/useRegistry';
+import { DIAL_STATES } from '../constants/dial';
+
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const Signup = () => {
   const [step, setStep] = useState(1);
@@ -10,8 +13,18 @@ const Signup = () => {
   const [selected, setSelected] = useState([]);
   const [channels, setChannels] = useState({ email: true, telegram: false, push: false });
   const [showMore, setShowMore] = useState(false);
+  const { data: streamers } = useStreamers({ market: 'fi' });
+  const [dial, setDial] = useState(null);
 
-  const visible = showMore ? STREAMERS : STREAMERS.slice(0, 12);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${BACKEND}/api/dial`).then((r) => r.json()).then((d) => { if (!cancelled) setDial(d?.state); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  const dialState = dial || DIAL_STATES.KYLMA;
+
+  const visible = showMore ? streamers : streamers.slice(0, 12);
 
   const toggle = (slug) => {
     setSelected((s) => (s.includes(slug) ? s.filter((x) => x !== slug) : [...s, slug]));
@@ -151,7 +164,7 @@ const Signup = () => {
         {step === 4 && (
           <div className="text-center" data-testid="signup-step-4">
             <div className="flex justify-center mb-8">
-              <Dial size="medium" state={CURRENT_DIAL.key} />
+              <Dial size="medium" state={dialState.key} />
             </div>
             <h1 className="display text-4xl sm:text-5xl mb-4">Valmis. Mittari valvoo.</h1>
             <p className="prose-mittari text-muted-text mb-10 max-w-md mx-auto">
@@ -159,10 +172,10 @@ const Signup = () => {
             </p>
             <div className="editorial-card p-6 mb-8 text-left max-w-md mx-auto">
               <div className="eyebrow mb-3">Mittari juuri nyt</div>
-              <div className="font-display text-2xl font-bold text-ink mb-1" style={{ color: CURRENT_DIAL.color }}>
-                {CURRENT_DIAL.label}
+              <div className="font-display text-2xl font-bold text-ink mb-1" style={{ color: dialState.color }}>
+                {dialState.label}
               </div>
-              <p className="font-serif text-[14px] text-muted-text">{CURRENT_DIAL.headline}</p>
+              <p className="font-serif text-[14px] text-muted-text">{dialState.headline || ''}</p>
             </div>
             <Link to="/" className="btn-ghost" data-testid="signup-complete-cta">
               Katso mitä tapahtuu juuri nyt →

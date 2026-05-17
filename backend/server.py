@@ -345,6 +345,19 @@ from seed_scheduler import (  # noqa: E402
     scheduler_worker_loop,
     variant_filler_worker_loop,
 )
+from rosters import (  # noqa: E402
+    seed_operators,
+    seed_streamers,
+    list_operators,
+    get_operator,
+    upsert_operator,
+    delete_operator,
+    list_streamers,
+    get_streamer,
+    upsert_streamer,
+    delete_streamer,
+    INTL_SCENES_META,
+)
 
 
 class GenerateRequest(BaseModel):
@@ -580,6 +593,13 @@ async def public_live_signals(limit: int = 12):
     return {"signals": rows, "count": len(rows), "any_real": len(rows) > 0}
 
 
+@api_router.get("/dial/history")
+async def public_dial_history(limit: int = 48):
+    """Public — last N dial snapshots for the home mini-chart."""
+    limit = max(1, min(200, limit))
+    return {"history": await dial_history(db, limit=limit)}
+
+
 @api_router.get("/admin/dial/history")
 async def admin_dial_history(limit: int = 60, _: bool = Depends(require_admin)):
     return {"history": await dial_history(db, limit=limit)}
@@ -714,6 +734,102 @@ async def admin_fill_variants(max_per_tick: int = 5, _: bool = Depends(require_a
     return await run_variant_filler(db, max_per_tick=max_per_tick)
 
 
+# ── Phase 3 V2 Step 1: Operators + Streamers registries ──
+class OperatorPayload(BaseModel):
+    name: str
+    logo: Optional[str] = ""
+    score: Optional[int] = 0
+    oneLiner: Optional[str] = ""
+    offer: Optional[str] = ""
+    payout: Optional[str] = ""
+    license: Optional[str] = ""
+    trustpilot: Optional[float] = None
+    year: Optional[int] = None
+    partner: bool = False
+    active: bool = True
+    market_id: str = "FI"
+
+
+class StreamerPayload(BaseModel):
+    name: str
+    platform: str
+    channel: str
+    tier: int = 2
+    scene: str = "finnish"  # finnish | intl_global | intl_swedish | intl_dutch | intl_norwegian
+    origin: Optional[str] = None
+    photo: Optional[str] = ""
+    followers: Optional[str] = ""
+    sub: Optional[str] = None
+    active: bool = True
+    market_id: str = "FI"
+
+
+@api_router.get("/operators")
+async def public_list_operators(partner_only: bool = False, market_id: Optional[str] = None):
+    return {"operators": await list_operators(db, partner_only=partner_only, market_id=market_id)}
+
+
+@api_router.get("/operators/{slug}")
+async def public_get_operator(slug: str):
+    op = await get_operator(db, slug)
+    if not op:
+        raise HTTPException(404, "Not found")
+    return op
+
+
+@api_router.get("/streamers")
+async def public_list_streamers(scene: Optional[str] = None, market: Optional[str] = None, market_id: Optional[str] = None):
+    """Public — list streamers. `market` filter: 'fi' or 'intl' (convenience)."""
+    return {
+        "streamers": await list_streamers(db, scene=scene, market=market, market_id=market_id),
+        "intl_scenes": INTL_SCENES_META,
+    }
+
+
+@api_router.get("/streamers/{slug}")
+async def public_get_streamer(slug: str):
+    s = await get_streamer(db, slug)
+    if not s:
+        raise HTTPException(404, "Not found")
+    return s
+
+
+@api_router.get("/admin/operators")
+async def admin_list_operators(_: bool = Depends(require_admin)):
+    return {"operators": await list_operators(db, active_only=False)}
+
+
+@api_router.put("/admin/operators/{slug}")
+async def admin_upsert_operator(slug: str, data: OperatorPayload, _: bool = Depends(require_admin)):
+    return await upsert_operator(db, slug, data.dict(), updated_by="admin")
+
+
+@api_router.delete("/admin/operators/{slug}")
+async def admin_delete_operator(slug: str, _: bool = Depends(require_admin)):
+    ok = await delete_operator(db, slug)
+    if not ok:
+        raise HTTPException(404, "Not found")
+    return {"deleted": slug}
+
+
+@api_router.get("/admin/streamers")
+async def admin_list_streamers(_: bool = Depends(require_admin)):
+    return {"streamers": await list_streamers(db, active_only=False)}
+
+
+@api_router.put("/admin/streamers/{slug}")
+async def admin_upsert_streamer(slug: str, data: StreamerPayload, _: bool = Depends(require_admin)):
+    return await upsert_streamer(db, slug, data.dict(), updated_by="admin")
+
+
+@api_router.delete("/admin/streamers/{slug}")
+async def admin_delete_streamer(slug: str, _: bool = Depends(require_admin)):
+    ok = await delete_streamer(db, slug)
+    if not ok:
+        raise HTTPException(404, "Not found")
+    return {"deleted": slug}
+
+
 @app.on_event("startup")
 async def _seed_phase3():
     try:
@@ -724,6 +840,11 @@ async def _seed_phase3():
         await seed_tracked_sources(db)
     except Exception:
         logger.exception("Failed to seed tracked sources")
+    try:
+        await seed_operators(db)
+        await seed_streamers(db)
+    except Exception:
+        logger.exception("Failed to seed editorial rosters")
     try:
         result = await seed_foundational_research(db)
         logger.info("Foundational research seed: %s", result)

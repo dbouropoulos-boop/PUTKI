@@ -2,14 +2,19 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, X, Globe } from 'lucide-react';
 import StreamerCard from '../components/StreamerCard';
-import { STREAMERS } from '../data/mock';
+import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
 const StreamerIndex = () => {
   const navigate = useNavigate();
   const { t } = useLang();
-  const live = STREAMERS.filter((s) => s.live);
-  const offline = STREAMERS.filter((s) => !s.live);
+  const { data: streamers } = useStreamers({ market: 'fi' });
+  // Live state is now sourced from real Twitch/Kick webhooks (Step 2). Until
+  // those are wired with API keys, no streamer is rendered as "live" in this
+  // surface — the entire roster shows as the editorial list and the dedicated
+  // /api/signals/live endpoint surfaces real live streams elsewhere.
+  const live = [];
+  const offline = streamers;
 
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitDone, setSubmitDone] = useState(false);
@@ -31,7 +36,7 @@ const StreamerIndex = () => {
       <section className="container-wide pt-12 sm:pt-20 pb-10">
         <div className="max-w-3xl">
           <div className="eyebrow mb-4">
-            {t('streamer.eyebrow')} · <span className="mono">{STREAMERS.length}</span> {t('common.streamers').toUpperCase()}
+            {t('streamer.eyebrow')} · <span className="mono">{streamers.length}</span> {t('common.streamers').toUpperCase()}
           </div>
           <h1 className="display text-4xl sm:text-6xl mb-5">{t('streamer.title')}</h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
@@ -50,25 +55,27 @@ const StreamerIndex = () => {
         </div>
       </section>
 
-      <section className="py-10 sm:py-12" style={{ borderTop: '1px solid var(--border)' }}>
-        <div className="container-wide">
-          <div className="flex items-baseline gap-3 mb-6">
-            <span className="led mt-1"></span>
-            <h2 className="display text-2xl sm:text-3xl">
-              {t('common.live_now')} · <span className="mono" style={{ fontWeight: 500 }}>{live.length}</span>
-            </h2>
+      {live.length > 0 && (
+        <section className="py-10 sm:py-12" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="container-wide">
+            <div className="flex items-baseline gap-3 mb-6">
+              <span className="led mt-1"></span>
+              <h2 className="display text-2xl sm:text-3xl">
+                {t('common.live_now')} · <span className="mono" style={{ fontWeight: 500 }}>{live.length}</span>
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {live.map((s) => (
+                <StreamerCard key={s.slug} streamer={s} />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {live.map((s) => (
-              <StreamerCard key={s.slug} streamer={s} />
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <section className="py-10 sm:py-12" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
-          <h2 className="display text-2xl sm:text-3xl mb-6">{t('common.offline')}</h2>
+          <h2 className="display text-2xl sm:text-3xl mb-6">{t('streamer.eyebrow')}</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {offline.map((s) => (
               <StreamerCard key={s.slug} streamer={s} />

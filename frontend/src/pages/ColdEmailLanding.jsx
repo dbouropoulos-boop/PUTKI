@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Users, Bell } from 'lucide-react';
-import { STREAMERS } from '../data/mock';
+import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
 const FAQS_FI = [
@@ -17,9 +17,18 @@ const FAQS_EN = [
   { q: 'Can I unsubscribe?',             a: 'One click. Every message includes a direct unsubscribe link.' },
 ];
 
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
 const ColdEmailLanding = () => {
   const { lang, t } = useLang();
-  const featuredStreamers = STREAMERS.filter((s) => s.tier === 1).slice(0, 3);
+  const { data: streamers } = useStreamers({ market: 'fi' });
+  const featuredStreamers = streamers.filter((s) => s.tier === 1).slice(0, 3);
+  const [subCount, setSubCount] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${BACKEND}/api/signup/count`).then((r) => r.json()).then((d) => { if (!cancelled) setSubCount(d.count ?? 0); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
   const faqs = lang === 'en' ? FAQS_EN : FAQS_FI;
 
   return (
@@ -63,7 +72,7 @@ const ColdEmailLanding = () => {
               ))}
             </div>
             <div className="mono" style={{ fontSize: 13, letterSpacing: '0.04em', color: 'var(--ink)', fontWeight: 500 }}>
-              <strong>4 283</strong> {t('home.email_proof')}
+              {subCount != null && <strong>{subCount.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, ' ')}</strong>} {t('home.email_proof')}
             </div>
           </div>
         </div>

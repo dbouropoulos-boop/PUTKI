@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { DIAL_STATES } from '../data/mock';
+import { DIAL_STATES } from '../constants/dial';
 
 // Helper: state hot check (re-used in breathing amplitude)
 const isHotState = (s) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(s);

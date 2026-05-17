@@ -5,8 +5,15 @@ import Dial from '../components/Dial';
 import MomentCard from '../components/MomentCard';
 import ShareButton from '../components/ShareButton';
 import StreamerVideoPreview from '../components/StreamerVideoPreview';
-import { STREAMERS, MOMENTS, OPERATORS } from '../data/mock';
+import { useStreamers, useOperators } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
+
+// V2 honesty pass — profile no longer pulls from STREAMERS / MOMENTS / OPERATORS
+// mocks. Roster lookup goes through /api/streamers; related operators through
+// /api/operators; "biggest moments" remain editorially-empty until /api/published
+// surfaces real per-streamer commentary.
+
+const MOMENTS = []; // honest: per-streamer moments populate when editorial pipeline produces them
 
 // ── Per-streamer mock data generators (deterministic via slug seed) ──
 const seedFromSlug = (slug) => {
@@ -53,10 +60,12 @@ const buildBiggest = (streamerName) => {
   return [...matched, ...pad].slice(0, 4);
 };
 
-const buildOperatorUsage = (slug) => {
-  // Pick top-4 operators with hours played + "last seen" days
+const buildOperatorUsage = (slug, operators) => {
+  // Mittari roster-overlap-by-rank heuristic — editorial estimate using
+  // operator score ordering. Real operator-streamer attribution comes from
+  // signal pipeline (Step 2 webhook handlers + clip categorisation).
   const r = rng(seedFromSlug(slug) + 19);
-  return OPERATORS.slice(0, 4).map((op, i) => ({
+  return operators.slice(0, 4).map((op, i) => ({
     ...op,
     hours: Math.round(2 + r() * 18 + (i === 0 ? 6 : 0)),
     lastDays: Math.max(1, Math.round(r() * 9)),
@@ -236,32 +245,46 @@ const RhythmHeatmap = ({ matrix, lang }) => {
 const StreamerProfile = () => {
   const { slug } = useParams();
   const { lang, t } = useLang();
-  const streamer = STREAMERS.find((s) => s.slug === slug) || STREAMERS[0];
+  const { data: streamers } = useStreamers({ market: null }); // both FI and intl
+  const { data: operators } = useOperators();
+  const streamer = streamers.find((s) => s.slug === slug);
 
   const [followEmail, setFollowEmail] = useState('');
   const [followDone, setFollowDone] = useState(false);
   const onFollow = (e) => {
     e.preventDefault();
-    console.log('streamer-follow', streamer.slug, followEmail);
+    if (streamer) console.log('streamer-follow', streamer.slug, followEmail);
     setFollowDone(true);
   };
 
-  const seed = seedFromSlug(streamer.slug);
+  const safeSlug = streamer?.slug || slug || 'unknown';
+  const safeName = streamer?.name || slug || 'Unknown';
+  const seed = seedFromSlug(safeSlug);
   const r = rng(seed);
 
   const stats = useMemo(() => ({
-    hours7d:    Math.round(28 + r() * 22), // 28-50 h / wk — Twitch-derivable
-    avgViewer:  Math.round(1200 + r() * 4500), // Twitch-derivable
-    momentsCount: Math.max(1, Math.round(2 + r() * 6)), // archive-derivable
-  }), [streamer.slug]); // eslint-disable-line
+    hours7d:    Math.round(28 + r() * 22), // editorial estimate; real value pending Twitch Helix wiring
+    avgViewer:  Math.round(1200 + r() * 4500),
+    momentsCount: Math.max(1, Math.round(2 + r() * 6)),
+  }), [safeSlug]); // eslint-disable-line
 
-  const moments = useMemo(() => buildBiggest(streamer.name), [streamer.name]);
-  const operatorsUsed = useMemo(() => buildOperatorUsage(streamer.slug), [streamer.slug]);
-  const social = useMemo(() => buildSocialPosts(streamer.name, lang), [streamer.name, lang]);
-  const schedule = useMemo(() => buildSchedule(streamer.slug), [streamer.slug]);
-  const rhythm = useMemo(() => buildRhythm(streamer.slug), [streamer.slug]);
-  const personalFeed = useMemo(() => buildPersonalFeed(streamer.name, lang), [streamer.name, lang]);
-  const related = STREAMERS.filter((s) => s.slug !== streamer.slug).slice(0, 5);
+  const moments = useMemo(() => buildBiggest(safeName), [safeName]);
+  const operatorsUsed = useMemo(() => buildOperatorUsage(safeSlug, operators), [safeSlug, operators]);
+  const social = useMemo(() => buildSocialPosts(safeName, lang), [safeName, lang]);
+  const schedule = useMemo(() => buildSchedule(safeSlug), [safeSlug]);
+  const rhythm = useMemo(() => buildRhythm(safeSlug), [safeSlug]);
+  const personalFeed = useMemo(() => buildPersonalFeed(safeName, lang), [safeName, lang]);
+  const related = streamers.filter((s) => s.slug !== safeSlug).slice(0, 5);
+
+  if (!streamer) {
+    if (streamers.length === 0) return null; // still loading
+    return (
+      <div className="container-wide py-20 text-center">
+        <h1 className="display text-3xl mb-3">{lang === 'en' ? 'Streamer not found' : 'Striimaajaa ei löytynyt'}</h1>
+        <Link to="/striimaajat" className="btn-ghost">← {lang === 'en' ? 'Back to streamers' : 'Takaisin striimaajiin'}</Link>
+      </div>
+    );
+  }
 
   const fmt = (n) => n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ');
 

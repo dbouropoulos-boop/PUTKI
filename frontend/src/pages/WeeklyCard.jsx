@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
-import { WEEKLY_FIXTURES, LEADERBOARD } from '../data/mock';
 
-const PAST_WEEKS = [
-  { week: 20, leader: 'Mikko_84', points: 19 },
-  { week: 19, leader: 'KaisaP',   points: 17 },
-  { week: 18, leader: 'Veikkari', points: 16 },
-  { week: 17, leader: 'Sanna_R',  points: 21 },
-  { week: 16, leader: 'Janne_K',  points: 15 },
-];
+// V2 honesty pass — WeeklyCard renders structure but no fabricated fixtures
+// or leaderboard. Real fixtures wire via API-Football / NHL / Ergast / RSS
+// in Step 2/Batch 3B once API keys are configured. Real leaderboard pulls
+// from the predictions collection when real fixtures exist.
+const WEEKLY_FIXTURES = [];
+const LEADERBOARD = [];
+
+const PAST_WEEKS = [];
 
 const WeeklyCard = () => {
   const [predictions, setPredictions] = useState({});
@@ -33,6 +33,14 @@ const WeeklyCard = () => {
       </section>
 
       <section className="container-wide pb-12 sm:pb-16">
+        {WEEKLY_FIXTURES.length === 0 ? (
+          <div className="panel p-7 text-center" data-testid="weekly-card-empty">
+            <Calendar strokeWidth={1.4} size={20} style={{ color: 'var(--muted)', margin: '0 auto 10px' }} />
+            <div className="mono" style={{ fontSize: 11.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
+              EI FIKSTUUREITA VIELÄ · TOIMITUS LIITTYY API-FOOTBALL / NHL / ERGAST / LIIGA RSS -DATAAN KUN AVAIMET ON KONFIGUROITU
+            </div>
+          </div>
+        ) : (
         <div className="space-y-8">
           {WEEKLY_FIXTURES.map((f, i) => (
             <article key={f.id} className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 border-t border-ink pt-8" data-testid={`fixture-${f.id}`}>
@@ -89,12 +97,15 @@ const WeeklyCard = () => {
             </article>
           ))}
         </div>
+        )}
 
+        {WEEKLY_FIXTURES.length > 0 && (
         <div className="mt-12 flex justify-end">
           <button className="btn-primary" data-testid="submit-predictions">
             Lähetä veikkaukset →
           </button>
         </div>
+        )}
       </section>
 
       {/* LEADERBOARD */}
@@ -129,7 +140,11 @@ const WeeklyCard = () => {
                 </tr>
               </thead>
               <tbody>
-                {LEADERBOARD.map((p) => (
+                {LEADERBOARD.length === 0 ? (
+                  <tr><td colSpan={4} className="py-6 text-center mono" style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }} data-testid="leaderboard-empty">
+                    EI VEIKKAUKSIA VIELÄ · TULOSPISTEET KERTYVÄT KUN FIKSTUURIT JULKAISTAAN
+                  </td></tr>
+                ) : LEADERBOARD.map((p) => (
                   <tr key={p.rank} className="border-b border-subtle-border">
                     <td className="py-4 font-display font-bold tabular text-ink text-xl">{String(p.rank).padStart(2, '0')}</td>
                     <td className="py-4 font-display text-[14px] font-semibold text-ink">{p.name}</td>
@@ -143,7 +158,7 @@ const WeeklyCard = () => {
         </div>
       </section>
 
-      {/* PAST WEEKS */}
+      {PAST_WEEKS.length > 0 && (
       <section className="border-t border-subtle-border py-12">
         <div className="container-wide">
           <div className="eyebrow mb-3">Aiempia viikkoja</div>
@@ -161,6 +176,7 @@ const WeeklyCard = () => {
           </div>
         </div>
       </section>
+      )}
     </div>
   );
 };

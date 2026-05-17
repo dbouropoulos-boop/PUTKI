@@ -11,7 +11,7 @@ import { SocialProofTicker } from '../components/SocialProofTicker';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
 import ShareButton from '../components/ShareButton';
 import DialHistoryMiniChart from '../components/DialHistoryMiniChart';
-import { OPERATORS } from '../data/mock';
+import { useOperators } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -243,7 +243,8 @@ const Home = () => {
   const hot = isHotState(state);
   const featuredMoment = moments[0];
   const otherMoments = moments.slice(1, 4);
-  const topOperators = OPERATORS.slice(0, 4); // editorial roster, not live data
+  const { data: operators } = useOperators();
+  const topOperators = operators.slice(0, 4);
   const headline = (lang === 'en' ? STATE_HEADLINES_EN : STATE_HEADLINES_FI)[state] || '';
 
   return (

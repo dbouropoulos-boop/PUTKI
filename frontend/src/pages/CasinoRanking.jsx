@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { OPERATORS } from '../data/mock';
+import { useOperators } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
 const ARTICLES_FI = [
@@ -29,6 +29,7 @@ const CasinoRanking = () => {
   const [filter, setFilter] = useState('kaikki');
   const [sort, setSort] = useState('mittari');
   const { lang, t } = useLang();
+  const { data: operators } = useOperators();
 
   const FILTERS = [
     { key: 'kaikki',     label: t('casino.filter_all') },
@@ -48,12 +49,12 @@ const CasinoRanking = () => {
   ];
 
   const sorted = useMemo(() => {
-    const arr = [...OPERATORS];
+    const arr = [...operators];
     if (sort === 'mittari') arr.sort((a, b) => b.score - a.score);
-    else if (sort === 'trust') arr.sort((a, b) => b.trustpilot - a.trustpilot);
-    else if (sort === 'newest') arr.sort((a, b) => b.year - a.year);
+    else if (sort === 'trust') arr.sort((a, b) => (b.trustpilot || 0) - (a.trustpilot || 0));
+    else if (sort === 'newest') arr.sort((a, b) => (b.year || 0) - (a.year || 0));
     return arr;
-  }, [sort]);
+  }, [sort, operators]);
 
   const articles = lang === 'en' ? ARTICLES_EN : ARTICLES_FI;
   const dateStr = new Date().toLocaleDateString(lang === 'en' ? 'en-GB' : 'fi-FI');
