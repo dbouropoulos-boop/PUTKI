@@ -51,7 +51,7 @@ const SUBSCORE_LABEL = {
   internal:  { fi: 'TOIMITUS',    en: 'EDITORIAL' },
 };
 
-export const DialCockpit = ({ state = 'KYLMA' }) => {
+export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
   const { lang, t } = useLang();
   const [cockpit, setCockpit] = useState(null);
 
@@ -95,16 +95,15 @@ export const DialCockpit = ({ state = 'KYLMA' }) => {
 
   return (
     <div className="flex flex-col items-center w-full" data-testid="dial-cockpit">
-      <div
-        className="mono mb-8 inline-flex items-center gap-2"
-        style={{ fontSize: 11, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 600 }}
+      <div className="mono mb-8 inline-flex items-center gap-2"
+        style={{ fontSize: 11, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 600, marginBottom: compact ? 16 : 32 }}
         data-testid="cockpit-mode-label"
       >
         <span className="inline-block" style={{ width: 6, height: 6, borderRadius: 999, background: '#E8924A' }} />
         {weekday.toUpperCase()} · {t(todKey)} · {t('time.month_day', { day })}
       </div>
 
-      <div className="hidden md:grid w-full" style={{ gridTemplateColumns: '1fr auto 1fr', gap: 32, alignItems: 'center' }}>
+      <div className="hidden md:grid w-full" style={{ gridTemplateColumns: '1fr auto 1fr', gap: compact ? 20 : 32, alignItems: 'center' }}>
         <div className="flex justify-end">
           <PanelStat
             label={lang === 'en' ? 'COMPOSITE' : 'KOKONAISLUKU'}
@@ -115,7 +114,7 @@ export const DialCockpit = ({ state = 'KYLMA' }) => {
           />
         </div>
         <div className="flex flex-col items-center">
-          <Dial size="large" state={state} />
+          <Dial size={compact ? 'medium' : 'large'} state={state} />
         </div>
         <div className="flex justify-start">
           <PanelStat
@@ -145,7 +144,7 @@ export const DialCockpit = ({ state = 'KYLMA' }) => {
             lang={lang}
           />
         </div>
-        <Dial size="large" state={state} />
+        <Dial size={compact ? 'medium' : 'large'} state={state} />
       </div>
 
       {contributors.length > 0 ? (

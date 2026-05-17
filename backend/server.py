@@ -373,6 +373,15 @@ from webhooks import build_webhook_router  # noqa: E402
 
 api_router.include_router(build_webhook_router(db))
 
+from feed import (  # noqa: E402
+    rebuild_feed,
+    list_feed,
+    feed_stats,
+    ensure_indexes as feed_ensure_indexes,
+    feed_worker_loop,
+    FEED_DEFAULT_MARKET,
+)
+
 
 class GenerateRequest(BaseModel):
     content_type: str
@@ -900,6 +909,44 @@ async def admin_delete_voyager_week(iso_week: str, market_id: str = "FI", _: boo
     return {"deleted": iso_week, "market_id": market_id}
 
 
+# ── Step 4: Live-feed aggregation ─────────────────────────────────────────
+@api_router.get("/feed")
+async def public_feed(
+    source: Optional[str] = None,
+    kind: Optional[str] = None,
+    market_id: str = FEED_DEFAULT_MARKET,
+    limit: int = 12,
+):
+    """Public hub feed. Mocked signals are excluded — endpoint will return
+    [] until real Twitch/Kick/YouTube API keys are supplied. Editorial drops
+    are always real (sourced from published_content)."""
+    items = await list_feed(db, source=source, kind=kind, market_id=market_id, limit=limit, include_mocked=False)
+    return {"items": items, "count": len(items), "market_id": market_id}
+
+
+@api_router.get("/admin/feed")
+async def admin_feed(
+    source: Optional[str] = None,
+    kind: Optional[str] = None,
+    market_id: str = FEED_DEFAULT_MARKET,
+    limit: int = 50,
+    include_mocked: bool = True,
+    _: bool = Depends(require_admin),
+):
+    items = await list_feed(db, source=source, kind=kind, market_id=market_id, limit=limit, include_mocked=include_mocked)
+    return {"items": items, "count": len(items), "market_id": market_id, "include_mocked": include_mocked}
+
+
+@api_router.get("/feed/stats")
+async def public_feed_stats(market_id: str = FEED_DEFAULT_MARKET):
+    return await feed_stats(db, market_id=market_id)
+
+
+@api_router.post("/admin/feed/rebuild")
+async def admin_feed_rebuild(market_id: str = FEED_DEFAULT_MARKET, _: bool = Depends(require_admin)):
+    return await rebuild_feed(db, market_id=market_id)
+
+
 @app.on_event("startup")
 async def _seed_phase3():
     try:
@@ -929,10 +976,16 @@ async def _seed_phase3():
         await _ensure_replay_index(db)
     except Exception:
         logger.exception("Failed to create webhook replay TTL index")
+    try:
+        await feed_ensure_indexes(db)
+    except Exception:
+        logger.exception("Failed to create feed_items indexes")
     # Kick off background signal pipeline + dial recalc loop.
     if os.environ.get("MITTARI_DISABLE_WORKERS", "0") != "1":
         import asyncio as _aio
         _aio.create_task(_signal_dial_worker())
+        if os.environ.get("MITTARI_DISABLE_FEED_WORKER", "0") != "1":
+            _aio.create_task(feed_worker_loop(db))
     # Kick off editorial seed scheduler + variant filler.
     if os.environ.get("MITTARI_DISABLE_SCHEDULER", "0") != "1":
         import asyncio as _aio

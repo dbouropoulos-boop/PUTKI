@@ -1,0 +1,54 @@
+{
+  "summary": "Phase 3 V2 Step 4 (feed aggregation) + Step 5 (hub homepage rewrite) + admin webhooks console — full backend+frontend verification. Backend pytest regression 112/112 PASS (MITTARI_DISABLE_WORKERS=1 MITTARI_DISABLE_SCHEDULER=1, ignored test_phase3a_v2_content.py per handoff). All new live endpoints verified via curl: GET /api/feed (envelope {items,count,market_id}, every item mocked=false), GET /api/feed?source=editorial (46/46 items source=editorial), GET /api/feed?kind=stream_live (empty list as expected — pollers are mock-mode so filtered out), GET /api/feed/stats returns total=60, by_source dict, market_id=FI, cache_ttl_seconds=10, rebuild_interval_seconds=60, ttl_minutes=180. /api/admin/feed?include_mocked=true with X-Admin-Token returns mocked rows (any mocked=true confirmed); without token returns 401. POST /api/admin/feed/rebuild returns {rebuilt_at, candidates:218, upserted:218, pruned:0, signals_scanned:200, published_scanned:40}. /api/webhooks/status now returns now, expected_cadence_seconds {twitch:3600, kick:3600, youtube:86400}, youtube_pubsub_lease {expires_at:null, seconds_remaining:null}, and last_webhook_signal_by_source[src].last_event_age_seconds (verified 32s and 147s on live data). All three *_configured=false. POST /api/webhooks/resubscribe/twitch with admin token → 503 with detail 'twitch_secret_missing' + source + blockers list; without token → 401; /resubscribe/foo with admin token → 400 unknown_source. Frontend home page verified: home-page testid, zone-hero strip with hero-dial-slot + hero-voyager-slot above the fold, voyager-corner-empty rendered (no rotation scheduled), hub-mosaic with EXACTLY 5 cards in correct order (streamerit_live, urheilu_nyt, tuoreet_hetket, foorumit_kuumana, mittari_live), 4 honest empty states + mittari_live populated with real editorial drops, hub-mosaic-poll-indicator visible ('POLL · 30 S · REAL SIGNALS ONLY'), zone-publication-depth with EXACTLY 8 cards in correct pillar order (kasinot, striimaajat, profiilit, skene, saantely, sponsoroinnit, raha, pelit), each with correct href. Pulssi + Operaattoritapahtumat testids count = 0 on the home page (confirmed absent). hub-accountability-section + editorial-footer render at the bottom. /api/feed polled 10× on mount (one per card × initial + double-render). Back-office: back-office-link-webhooks present after auth on /back-office, links to /back-office/webhooks. /back-office/webhooks page: auth gate shown initially, after entering mittari-admin → back-office-webhooks dashboard renders with EXACTLY 3 webhook-source-row-{twitch,kick,youtube}, each with webhook-resubscribe-* button + webhook-state-* badge, webhooks-pubsub-lease-panel visible, polls /api/webhooks/status on mount. Clicking webhook-resubscribe-twitch fires POST and populates webhooks-last-action panel showing 'LAST ACTION · TWITCH · HTTP 503'. Backend confirmed (curl) returns the full detail body — note below on UI rendering.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "BackOfficeWebhooks · last-action body display", "issue": "The webhooks-last-action <pre> renders empty '{}' under 'HTTP 503' instead of the full JSON body {detail:'twitch_secret_missing', source, blockers}. Curl proves the backend response has the body. Could be Playwright fetch-interception artifact OR a real bug in r.json().catch(()=>({})) path (e.g. AbortController or duplicate read in dev). Main agent: verify in a normal browser; if reproducible, log r.text() before parsing or use response.clone().", "affected_selectors": ["webhooks-last-action"]}
+    ],
+    "design_issues": []
+  },
+  "verified_features": {
+    "backend_feed_envelope": "PASS — {items, count, market_id} returned, every item mocked=false on /api/feed?limit=50",
+    "backend_feed_filters": "PASS — source=editorial returns only source==editorial; kind=stream_live returns [] (mock-only signals filtered)",
+    "backend_feed_stats": "PASS — total/by_source/market_id/cache_ttl_seconds/rebuild_interval_seconds/ttl_minutes all present",
+    "backend_admin_feed_gate": "PASS — 401 without token, mocked rows included with token+include_mocked=true",
+    "backend_admin_feed_rebuild": "PASS — returns rebuilt_at/candidates/upserted/pruned/signals_scanned/published_scanned",
+    "backend_webhooks_status_v2": "PASS — now/expected_cadence_seconds/youtube_pubsub_lease/last_event_age_seconds all present, *_configured=false (no secrets)",
+    "backend_resubscribe_dormant": "PASS — twitch admin → 503 twitch_secret_missing; no token → 401; foo → 400 unknown_source",
+    "backend_pytest_regression": "PASS — 112/112 green",
+    "frontend_hub_mosaic": "PASS — 5 cards exact order, 4 honest empty states + mittari_live populated, poll indicator visible, polls /api/feed",
+    "frontend_zone_publication_depth": "PASS — 8 cards exact pillar order with correct hrefs",
+    "frontend_hidden_cards": "PASS — Pulssi & Operaattoritapahtumat testids count = 0",
+    "frontend_accountability_footer": "PASS — hub-accountability-section + editorial-footer at bottom",
+    "frontend_voyager_corner_empty_honest": "PASS — voyager-corner-empty rendered (no rotation scheduled)",
+    "frontend_back_office_link_webhooks": "PASS — back-office-link-webhooks present on /back-office (post-auth) → /back-office/webhooks",
+    "frontend_webhooks_dashboard": "PASS — auth gate, 3 source rows, force-resubscribe buttons, state badges, lease panel, 30s poll, HTTP 503 surfaced on twitch resubscribe"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase3_v2_step4_feed.py",
+    "/app/backend/tests/test_phase3_v2_step2_webhooks.py",
+    "/app/test_reports/pytest/pytest_iter10_full.xml"
+  ],
+  "action_items": [
+    "(Minor) Verify webhooks-last-action body actually renders detail JSON in a real browser; if it shows '{}' there too, fix BackOfficeWebhooks.jsx onResubscribe to use response.text() then JSON.parse so single-stream-read browsers still capture the error body."
+  ],
+  "critical_code_review_comments": [
+    "feed.py rebuild → upsert by dedup_key with TTL pruning is idempotent and race-safe. Honesty filter on list_feed (mocked:false) is enforced server-side — frontend cannot accidentally surface mock signals. Good defense-in-depth.",
+    "webhooks.py resubscribe handler correctly differentiates 401 (no token) / 400 (unknown source) / 503 (secret missing) — granular enough for the admin UI to render actionable error states.",
+    "HubMosaic.jsx uses fixed 5-card schema with per-key empty-state copy — matches honesty contract (no fake placeholder rows). Each card independently polls its slice of /api/feed; consider consolidating to a single /api/feed?limit=N request and partitioning client-side to reduce network chatter (10 requests on mount currently).",
+    "BackOfficeWebhooks.jsx — minor: r.json().catch(()=>({})) silently swallows parse errors so the operator never sees the detail. Recommend r.text() then JSON.parse(t) and store raw text as fallback so admins always see 'twitch_secret_missing' on screen.",
+    "Pulssi + Operaattoritapahtumat correctly excluded from Home.jsx render tree — no DOM presence at all (testid-grep returned 0). Good — no 'Tulossa' fakes.",
+    "DialCockpit compact prop reduces vertical space well for the above-the-fold hero strip — Dial+Voyager pair fit without crowding at 1920×1080."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (112/112 pytest + 11/11 live curl checks)",
+    "frontend": "~97% (all structural + integration checks pass; one minor body-render quirk on webhooks-last-action)"
+  },
+  "test_credentials": "X-Admin-Token: mittari-admin (used for /api/admin/feed, /api/admin/feed/rebuild, /api/webhooks/resubscribe/*, /back-office, /back-office/webhooks)",
+  "seed_data_creation": "pytest run inserted Twitch/Kick/YouTube webhook test signals; /api/admin/feed/rebuild upserted 218 candidates (200 signals + 40 published, dedup). Editorial published_content already had 46 honest drops from prior iterations.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Step 4+5 fully verified. Backend 112/112 pytest green. Public feed honesty contract holds: mocked signals never leak (server-side filter in feed.py list_feed). Webhook admin console works end-to-end against dormant backend (no secrets set). Only minor finding is webhooks-last-action <pre> body rendering '{}' instead of full detail JSON — backend returns correct body (verified curl). Likely a r.json() parse quirk or Playwright artifact; needs a real-browser check. Run pytest with MITTARI_DISABLE_WORKERS=1 MITTARI_DISABLE_SCHEDULER=1 to avoid background poller noise."
+}

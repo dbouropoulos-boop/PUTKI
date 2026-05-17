@@ -36,7 +36,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from pymongo.errors import DuplicateKeyError
 
@@ -326,6 +326,7 @@ def build_webhook_router(db) -> APIRouter:
     # ── Status surface for /back-office (handler health + last events) ──
     @r.get("/status")
     async def webhook_status():
+        now = datetime.now(timezone.utc)
         last = {}
         for src in ("twitch", "kick", "youtube"):
             doc = await db.signals.find_one(
@@ -333,8 +334,35 @@ def build_webhook_router(db) -> APIRouter:
                 {"_id": 0, "event_type": 1, "observed_at": 1},
                 sort=[("observed_at", -1)],
             )
-            last[src] = doc
+            age_seconds = None
+            if doc and doc.get("observed_at"):
+                try:
+                    obs = datetime.fromisoformat(doc["observed_at"].replace("Z", "+00:00"))
+                    age_seconds = int((now - obs).total_seconds())
+                except Exception:
+                    age_seconds = None
+            last[src] = {
+                "last_event": doc,
+                "last_event_age_seconds": age_seconds,
+            }
+
+        # YouTube PubSub lease tracking. Hub leases are typically 5-10 days.
+        # Stored as ISO-8601 string in settings.webhook_youtube_pubsub_lease_expires_at;
+        # null when no subscription has been performed yet.
+        lease_doc = await db.settings.find_one(
+            {"key": "webhook_youtube_pubsub_lease"}, {"_id": 0}
+        )
+        lease_expires = lease_doc.get("expires_at") if lease_doc else None
+        lease_seconds_remaining = None
+        if lease_expires:
+            try:
+                exp_dt = datetime.fromisoformat(lease_expires.replace("Z", "+00:00"))
+                lease_seconds_remaining = int((exp_dt - now).total_seconds())
+            except Exception:
+                lease_seconds_remaining = None
+
         return {
+            "now": now.isoformat(),
             "twitch_configured": bool(_twitch_secret()),
             "kick_configured": bool(_kick_secret()),
             "youtube_configured": bool(_youtube_secret()),
@@ -344,6 +372,67 @@ def build_webhook_router(db) -> APIRouter:
                 "kick":    os.environ.get("KICK_WEBHOOK_URL", ""),
                 "youtube": os.environ.get("YOUTUBE_PUBSUB_CALLBACK_URL", ""),
             },
+            "youtube_pubsub_lease": {
+                "expires_at": lease_expires,
+                "seconds_remaining": lease_seconds_remaining,
+            },
+            "expected_cadence_seconds": {
+                # Used by /back-office/webhooks to colour-code freshness.
+                # Stream pings are roughly one per minute when channels are
+                # live; static "stale" threshold of 1 h is generous.
+                "twitch": 3600,
+                "kick": 3600,
+                "youtube": 86400,  # YT videos are sparse; daily is healthy.
+            },
+        }
+
+    # ── Operational recovery — force resubscribe (admin only) ──
+    @r.post("/resubscribe/{source}")
+    async def force_resubscribe(source: str, x_admin_token: Optional[str] = Header(default=None)):
+        """Stub endpoint. Returns 503 when secrets/callback URLs are not
+        configured. When credentials arrive, this will:
+          • Twitch  → POST /helix/eventsub/subscriptions with stream.online type
+          • Kick    → POST channel-subscription API once Kick docs finalise
+          • YouTube → POST hub.mode=subscribe to pubsubhubbub.appspot.com
+        For now we keep the operational button live so on-call has a single
+        place to click; the body returns the exact reason it cannot proceed."""
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        source = source.lower()
+        if source not in ("twitch", "kick", "youtube"):
+            return JSONResponse(status_code=400, content={"detail": "unknown_source"})
+
+        secret_fn = {"twitch": _twitch_secret, "kick": _kick_secret, "youtube": _youtube_secret}[source]
+        callback_env = {
+            "twitch": "TWITCH_EVENTSUB_CALLBACK_URL",
+            "kick": "KICK_WEBHOOK_URL",
+            "youtube": "YOUTUBE_PUBSUB_CALLBACK_URL",
+        }[source]
+        if not secret_fn():
+            return JSONResponse(status_code=503, content={
+                "detail": f"{source}_secret_missing",
+                "source": source,
+                "blockers": [f"set {source.upper()}_WEBHOOK_SECRET / {source.upper()}_EVENTSUB_SECRET / YOUTUBE_PUBSUB_SECRET in backend/.env"],
+            })
+        if not os.environ.get(callback_env):
+            return JSONResponse(status_code=503, content={
+                "detail": f"{callback_env}_missing",
+                "source": source,
+                "blockers": [f"set {callback_env} in backend/.env"],
+            })
+
+        # Real subscription API calls deferred until credentials arrive.
+        # Recording the operator action is still useful for audit.
+        await db.webhook_audit.insert_one({
+            "source": source,
+            "action": "resubscribe_requested",
+            "requested_at": datetime.now(timezone.utc).isoformat(),
+        })
+        return {
+            "source": source,
+            "status": "queued",
+            "detail": "Credentials configured; live subscription call wiring is the next implementation step.",
         }
 
     return r

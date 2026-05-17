@@ -16,6 +16,7 @@ import BackOfficeQueue from "@/pages/BackOfficeQueue";
 import FoundationalResearch from "@/pages/FoundationalResearch";
 import OperatorsAdmin from "@/pages/OperatorsAdmin";
 import StreamersAdmin from "@/pages/StreamersAdmin";
+import BackOfficeWebhooks from "@/pages/BackOfficeWebhooks";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
 import VoitaPalkinto from "@/pages/VoitaPalkinto";
@@ -40,6 +41,7 @@ function App() {
           <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
           <Route path="/back-office/operators" element={<OperatorsAdmin />} />
           <Route path="/back-office/streamers" element={<StreamersAdmin />} />
+          <Route path="/back-office/webhooks" element={<BackOfficeWebhooks />} />
 
           {/* Main site */}
           <Route element={<Layout />}>
