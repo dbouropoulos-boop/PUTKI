@@ -866,6 +866,58 @@ async def admin_manual_generate(payload: _ManualGenerateBody, _: bool = Depends(
     )
 
 
+class _PreviewBody(BaseModel):
+    template_id: str
+    signal_data: Dict[str, Any]
+
+
+@api_router.post("/admin/content/preview")
+async def admin_content_preview(payload: _PreviewBody, _: bool = Depends(require_admin)):
+    """Generate content WITHOUT persisting it. Useful for spot-checking Finnish
+    quality + social meta against synthetic inputs without burning a draft slot
+    or hitting the rate-limit. Returns the raw template output + assembled
+    draft-shaped preview document."""
+    from content_generator import TEMPLATES, _build_social_meta, _resolve_body, _slugify
+    tmpl = TEMPLATES.get(payload.template_id)
+    if not tmpl:
+        raise HTTPException(status_code=400, detail=f"unknown template_id '{payload.template_id}'")
+    if _content_generator is None:
+        raise HTTPException(status_code=503, detail="ContentGenerator not initialised")
+
+    context_obj = await _content_generator._fetch_context(payload.template_id, payload.signal_data)
+    try:
+        if tmpl["uses_llm"]:
+            content = await _content_generator._generate_via_llm(
+                payload.template_id, tmpl, payload.signal_data, context_obj,
+            )
+        else:
+            content = _content_generator._generate_structured(payload.template_id, payload.signal_data)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"generation_failed: {e.__class__.__name__}: {e}")
+
+    slug = _slugify(content.get("headline") or payload.signal_data.get("title") or payload.template_id)
+    preview = {
+        "template_id": payload.template_id,
+        "tier": tmpl["tier"],
+        "category": tmpl["category"],
+        "uses_llm": tmpl["uses_llm"],
+        "raw_llm_content": content,
+        "preview_draft": {
+            "headline": (content.get("headline") or "")[:240],
+            "subhead": (content.get("subhead") or "")[:300],
+            "body": _resolve_body(payload.template_id, content),
+            "url_slug": slug,
+            "category": tmpl["category"],
+            "tags": list(content.get("article_tags") or content.get("tags") or []),
+            "external_link": content.get("external_link"),
+            "expires_at": content.get("expires_at"),
+            "social": _build_social_meta(content, payload.signal_data, payload.template_id, slug),
+        },
+        "context_used": context_obj.get("matched_subject"),
+    }
+    return preview
+
+
 # ── Public content endpoints (Week 2 published content surface) ──
 
 @api_router.get("/content/published")

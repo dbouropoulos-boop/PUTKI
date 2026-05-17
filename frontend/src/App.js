@@ -17,6 +17,8 @@ import FoundationalResearch from "@/pages/FoundationalResearch";
 import OperatorsAdmin from "@/pages/OperatorsAdmin";
 import StreamersAdmin from "@/pages/StreamersAdmin";
 import BackOfficeWebhooks from "@/pages/BackOfficeWebhooks";
+import BackOfficeDrafts from "@/pages/BackOfficeDrafts";
+import Article from "@/pages/Article";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
 import VoitaPalkinto from "@/pages/VoitaPalkinto";
@@ -42,6 +44,7 @@ function App() {
           <Route path="/back-office/operators" element={<OperatorsAdmin />} />
           <Route path="/back-office/streamers" element={<StreamersAdmin />} />
           <Route path="/back-office/webhooks" element={<BackOfficeWebhooks />} />
+          <Route path="/back-office/drafts" element={<BackOfficeDrafts />} />
 
           {/* Main site */}
           <Route element={<Layout />}>
@@ -77,6 +80,14 @@ function App() {
 
             {/* V2 accountability surfaces */}
             <Route path="korjaukset" element={<Korjaukset />} />
+            {/* Phase 4 Week 3: auto-published Layer 2 articles. Unified /uutiset
+                prefix covers every category. Dedicated category prefixes are
+                added where they don't collide with existing profile routes
+                (urheilijat / saannot are net-new; kasinot/:slug + striimaajat/:slug
+                are reserved for operator/streamer profiles). */}
+            <Route path="uutiset/:slug" element={<Article />} />
+            <Route path="urheilijat/:slug" element={<Article />} />
+            <Route path="saannot/:slug" element={<Article />} />
             <Route path="affiliaatti" element={<Affiliaatti />} />
             <Route path="avoimuus/2026" element={<Avoimuus />} />
             <Route path="lehdisto" element={<Lehdisto />} />

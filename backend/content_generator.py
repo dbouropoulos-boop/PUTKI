@@ -376,7 +376,7 @@ class ContentGenerator:
             # Social meta carries over verbatim — no re-derivation at publish
             # time so an editor's manual edit during draft review is preserved.
             "social": draft.get("social") or {},
-            "canonical_url": f"https://putkihq.fi/{draft['category']}/{draft['url_slug']}",
+            "canonical_url": f"https://putkihq.fi/uutiset/{draft['url_slug']}",
         }
         await self.db.published_content.insert_one(dict(published_doc))
         await self.db.content_drafts.update_one(

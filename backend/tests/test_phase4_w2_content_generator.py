@@ -284,8 +284,9 @@ class TestSocialMeta:
         assert social["og_description"] == "OG desc"
         assert social["twitter_description"] == "TW desc"
         assert social["article_tags"] == ["tag1", "tag2"]
-        # Canonical URL stamped
-        assert pub["canonical_url"].startswith("https://putkihq.fi/urheilijat/")
+        # Canonical URL stamped — unified /uutiset/ prefix to avoid colliding
+        # with the existing /kasinot/:slug + /striimaajat/:slug profile routes.
+        assert pub["canonical_url"].startswith("https://putkihq.fi/uutiset/")
 
     def test_streamer_alert_social_meta_derived_deterministically(self):
         db = _MemDB()

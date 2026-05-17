@@ -57,15 +57,60 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
 
   useEffect(() => {
     let cancelled = false;
+
+    // Phase 4 Week 3: prefer Server-Sent Events stream when supported; falls
+    // back to /api/cockpit polling if the connection fails or EventSource is
+    // unavailable. Keeps the dial in sync with Layer 2 worker ticks instantly.
     const load = () => {
       fetch(`${BACKEND}/api/cockpit`)
         .then((r) => r.json())
         .then((d) => { if (!cancelled) setCockpit(d); })
         .catch(() => {});
     };
-    load();
-    const id = setInterval(load, 30000);
-    return () => { cancelled = true; clearInterval(id); };
+
+    let pollId = null;
+    let es = null;
+    try {
+      if (typeof EventSource !== 'undefined') {
+        es = new EventSource(`${BACKEND}/api/dial/stream`);
+        es.addEventListener('dial', (ev) => {
+          try {
+            const snap = JSON.parse(ev.data);
+            if (cancelled) return;
+            setCockpit({
+              primary_driver: snap.primary_driver,
+              primary_driver_label: snap.primary_driver_label,
+              composite_score: snap.composite_score,
+              state: snap.state,
+              sub_scores: snap.sub_scores || {},
+              signal_count: snap.signal_count || 0,
+              any_real: !!snap.any_real,
+              computed_at: snap.computed_at,
+            });
+          } catch (_) { /* ignore */ }
+        });
+        es.onerror = () => {
+          // SSE flaked — fall back to polling so we don't go silent
+          if (es) { es.close(); es = null; }
+          if (!pollId) {
+            load();
+            pollId = setInterval(load, 30000);
+          }
+        };
+      } else {
+        load();
+        pollId = setInterval(load, 30000);
+      }
+    } catch (_) {
+      load();
+      pollId = setInterval(load, 30000);
+    }
+
+    return () => {
+      cancelled = true;
+      if (es) es.close();
+      if (pollId) clearInterval(pollId);
+    };
   }, []);
 
   const composite = typeof cockpit?.composite_score === 'number' ? Math.round(cockpit.composite_score) : null;
