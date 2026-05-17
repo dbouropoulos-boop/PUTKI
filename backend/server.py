@@ -6,7 +6,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 import uuid
 from datetime import datetime, timezone
 
@@ -324,6 +324,15 @@ from dial_engine import (  # noqa: E402
     latest_snapshot as latest_dial_snapshot,
     dial_history,
 )
+from layer2_workers import (  # noqa: E402
+    start_layer2_workers,
+    ensure_indexes as layer2_ensure_indexes,
+    twitch_tick,
+    reddit_tick,
+    nhl_tick,
+    rss_tick,
+)
+import dial_sse  # noqa: E402
 from source_map import seed_tracked_sources, list_sources  # noqa: E402
 from foundational_research import (  # noqa: E402
     seed_from_file as seed_foundational_research,
@@ -626,6 +635,93 @@ async def public_dial_history(limit: int = 48):
 @api_router.get("/admin/dial/history")
 async def admin_dial_history(limit: int = 60, _: bool = Depends(require_admin)):
     return {"history": await dial_history(db, limit=limit)}
+
+
+# ── Phase 4 Week 1: Layer 2 SSE dial stream + admin ──
+
+@api_router.get("/dial/stream")
+async def dial_stream():
+    """Server-Sent Events stream of dial snapshots.
+
+    Client opens an `EventSource('/api/dial/stream')` and receives:
+      - one bootstrap `event: dial` immediately (last known snapshot)
+      - one `event: dial` whenever a Layer 2 worker tick recomputes the dial
+      - a `: heartbeat` comment every ~15s to keep the connection alive
+    """
+    from starlette.responses import StreamingResponse
+
+    # Pre-seed with the most recent persisted snapshot so a brand-new client
+    # doesn't have to wait for the next worker tick.
+    initial = await latest_dial_snapshot(db)
+    return StreamingResponse(
+        dial_sse.event_stream(initial_snapshot=initial),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@api_router.get("/admin/layer2/status")
+async def admin_layer2_status(_: bool = Depends(require_admin)):
+    """Operational view of the four Layer 2 workers — last-tick timestamps,
+    document counts, and the most recent dial snapshot summary."""
+    out: Dict[str, Any] = {}
+    for coll_name in ("stream_signals", "social_signals", "sports_signals", "news_signals"):
+        latest = await db[coll_name].find_one({}, {"_id": 0}, sort=[("captured_at", -1)])
+        count = await db[coll_name].count_documents({})
+        out[coll_name] = {
+            "doc_count": count,
+            "latest_captured_at": str(latest.get("captured_at")) if latest else None,
+            "latest_summary": _summarize_layer2_doc(coll_name, latest),
+        }
+    snap = await latest_dial_snapshot(db)
+    return {
+        "collections": out,
+        "latest_dial": {
+            "composite_score": snap.get("composite_score") if snap else None,
+            "state_key": snap.get("state_key") if snap else None,
+            "primary_driver": snap.get("primary_driver") if snap else None,
+            "computed_at": snap.get("computed_at") if snap else None,
+            "sub_scores": snap.get("sub_scores") if snap else None,
+        } if snap else None,
+        "sse_subscribers": dial_sse.subscriber_count(),
+    }
+
+
+def _summarize_layer2_doc(coll_name: str, doc: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not doc:
+        return None
+    if coll_name == "stream_signals":
+        return {"active_streams": doc.get("active_streams", 0), "total_viewers": doc.get("total_viewers", 0), "dormant": doc.get("dormant", False)}
+    if coll_name == "social_signals":
+        return {"mention_count": doc.get("mention_count", 0), "subreddits": doc.get("subreddits", [])}
+    if coll_name == "sports_signals":
+        return {"games_active": doc.get("games_active", 0), "games": [{"home": g.get("home"), "away": g.get("away"), "start_time_utc": g.get("start_time_utc"), "game_state": g.get("game_state")} for g in doc.get("games", [])]}
+    if coll_name == "news_signals":
+        return {"matched_count": doc.get("matched_count", 0), "feeds": doc.get("feeds", [])}
+    return None
+
+
+@api_router.post("/admin/layer2/tick")
+async def admin_layer2_tick(worker: Optional[str] = None, _: bool = Depends(require_admin)):
+    """Manually trigger one Layer 2 worker tick (or all if `worker` omitted)
+    then recompute the dial. Returns the resulting dial snapshot."""
+    out: Dict[str, Any] = {}
+    workers = {"twitch": twitch_tick, "reddit": reddit_tick, "nhl": nhl_tick, "rss": rss_tick}
+    targets = [worker] if worker else list(workers.keys())
+    for w in targets:
+        if w not in workers:
+            raise HTTPException(status_code=400, detail=f"unknown worker '{w}'")
+        try:
+            out[w] = await workers[w](db)
+        except Exception as e:
+            out[w] = {"error": str(e)}
+    snap = await recalculate_dial(db)
+    await dial_sse.publish(snap)
+    return {"workers": out, "dial": snap}
 
 
 # ── Phase 3 V2: source map (§4.1) ──
@@ -980,6 +1076,10 @@ async def _seed_phase3():
         await feed_ensure_indexes(db)
     except Exception:
         logger.exception("Failed to create feed_items indexes")
+    try:
+        await layer2_ensure_indexes(db)
+    except Exception:
+        logger.exception("Failed to create Layer 2 indexes")
     # Kick off background signal pipeline + dial recalc loop.
     if os.environ.get("PUTKI_HQ_DISABLE_WORKERS", "0") != "1":
         import asyncio as _aio
@@ -989,6 +1089,11 @@ async def _seed_phase3():
         if os.environ.get("PUTKI_HQ_DISABLE_YT_LEASE_WORKER", "0") != "1":
             from youtube_lease_worker import lease_worker_loop as _yt_lease_loop
             _aio.create_task(_yt_lease_loop(db))
+        # Phase 4 Week 1: Layer 2 signal pollers (Twitch/Reddit/NHL/RSS) +
+        # dial recalc + SSE fan-out. Each worker tick triggers a dial
+        # recompute through the `on_tick` callback so connected SSE clients
+        # see updates instantly instead of on the legacy 90s cycle.
+        await start_layer2_workers(db, on_tick=_layer2_on_tick)
     # Kick off editorial seed scheduler + variant filler.
     if os.environ.get("PUTKI_HQ_DISABLE_SCHEDULER", "0") != "1":
         import asyncio as _aio
@@ -996,18 +1101,28 @@ async def _seed_phase3():
         _aio.create_task(variant_filler_worker_loop(db))
 
 
+async def _layer2_on_tick(worker_name: str, result: Any) -> None:
+    """Layer 2 worker hook — recompute dial + broadcast to SSE subscribers."""
+    try:
+        snap = await recalculate_dial(db)
+        await dial_sse.publish(snap)
+    except Exception:
+        logger.exception("Dial recompute after layer2.%s tick failed", worker_name)
+
+
 async def _signal_dial_worker():
-    """Background loop: poll all signal sources, recompute dial, sleep.
+    """Legacy 6-signal poller — retained for back-compat with `signals`
+    collection (admin /api/admin/signals/poll, regression tests). The new
+    Layer 2 workers drive the dial; this loop now only refreshes the legacy
+    signals collection without overwriting dial snapshots.
     Disabled by setting PUTKI_HQ_DISABLE_WORKERS=1 (used in unit tests)."""
     import asyncio as _aio
-    # Wait a beat so the app finishes booting before the first poll.
     await _aio.sleep(5)
     while True:
         try:
             await poll_all_sources(db)
-            await recalculate_dial(db)
         except Exception:
-            logger.exception("Signal/dial worker tick failed")
+            logger.exception("Legacy signal worker tick failed")
         await _aio.sleep(POLL_INTERVAL_SECONDS)
 
 
