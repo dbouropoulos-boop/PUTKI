@@ -11,6 +11,7 @@
 - **Phase 3 V2 — Source Map + Editorial Seed Scheduler** (2026-05-16) — §4.1 named source map (28 sources) + foundational_research store + cadence-driven scheduler + LLM-502-tolerant variant filler
 - **Phase 3 V2 — UI Honesty Pass** (2026-05-16) — Killed all fake-live-data UI manufacturing per V2 brief
 - **Phase 3 V2 — Final Architecture Step 1: Mock Purge** (2026-05-17) — Repo now mock-free. Operators + streamers as real backend collections with admin CRUD.
+- **Phase 3 V2 — Final Architecture Step 2: Webhook signal handlers** (2026-05-17) — Twitch EventSub / Kick / YouTube PubSubHubbub webhook receivers shipped, dormant-503 when secrets unset, full HMAC verification + replay dedup, 16 pytest cases green.
 
 ## Phase 3 V2 — Architecture-only Track (this session)
 
@@ -53,7 +54,28 @@
 - Native Finnish editorial syntax + idiom, not translated English
 - Seed function now refreshes the voice prompt text on boot **only** if `updated_by == 'seed'` (preserves admin edits)
 
-## Final Architecture — Step 1 Mock Purge (this session)
+## Final Architecture — Step 2 Webhook Signal Handlers (this session)
+
+Per `mittari-fi-FINAL-ARCHITECTURE.md` §6.1 / §8 Step 2.
+
+### Backend
+- New module `webhooks.py` (~350 lines) — three webhook receivers normalising into the existing `signals` collection with `ingress="webhook"`, `mocked=false`
+  - `POST /api/webhooks/twitch` — Twitch EventSub HMAC-SHA256 over (msg_id+ts+raw_body), ±600s timestamp skew enforcement, supports `webhook_callback_verification` (challenge handshake), `notification`, and `revocation` message types
+  - `POST /api/webhooks/kick` — HMAC-SHA256 over raw_body (canonical pattern; KICK_SIGNATURE_HEADER + KICK_WEBHOOK_SECRET env-configurable so we can flip to public-key when Kick docs finalise)
+  - `GET|POST /api/webhooks/youtube/pubsub` — PubSubHubbub: GET handles hub.mode subscribe/unsubscribe challenge; POST verifies HMAC-SHA1 over body and parses atom xml for video_id/channel_id
+  - `GET /api/webhooks/status` — back-office surface: per-source configured flag + last webhook signal + callback URLs
+- Replay protection: new `webhook_message_ids` collection with TTL index `ttl_first_seen` (expireAfterSeconds=600); duplicate message_ids silently acknowledged with 200
+- Dormant 503 contract: when `TWITCH_EVENTSUB_SECRET` / `KICK_WEBHOOK_SECRET` / `YOUTUBE_PUBSUB_SECRET` env vars are unset, endpoints return 503 instead of throwing or fabricating accepts — honest editorial empty state
+- Router mounted under `/api/webhooks` via `api_router.include_router(build_webhook_router(db))` in server.py
+- TTL index creation hooked into existing `_seed_phase3` startup event
+
+### Test coverage
+- New `tests/test_phase3_v2_step2_webhooks.py` — 16 pytest cases using FastAPI TestClient with secrets injected via env: Twitch challenge handshake, valid notification → DB write, signature mismatch (403), missing headers (403), replay dedup; Kick valid/mismatch/missing-sig; YouTube GET challenge + invalid GET (400); YouTube notification write; YouTube bad signature → 202 silent (per WebSub spec); 503-when-secrets-unset for all three sources
+- All 16 pass · Full backend regression: 98/98 green (LLM-gated test_phase3a_v2_content.py skipped per handoff)
+- Lint clean (`ruff check`)
+- Live supervised backend verified: dormant 503 on all webhook POSTs (no secrets in prod env), status endpoint serves correctly under `/api/webhooks/status`, 6 regression public endpoints all 200
+
+## Final Architecture — Step 1 Mock Purge (prior session)
 
 Per `mittari-fi-FINAL-ARCHITECTURE.md` §8 Step 1.
 
