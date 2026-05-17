@@ -19,8 +19,8 @@ import pytest
 # Disable background workers before importing server (they would conflict
 # with the supervised uvicorn already running on 8001 by touching the same
 # MongoDB collections).
-os.environ.setdefault("MITTARI_DISABLE_WORKERS", "1")
-os.environ.setdefault("MITTARI_DISABLE_SCHEDULER", "1")
+os.environ.setdefault("PUTKI_HQ_DISABLE_WORKERS", "1")
+os.environ.setdefault("PUTKI_HQ_DISABLE_SCHEDULER", "1")
 
 # Set webhook secrets before app import so the lazy env readers see them.
 TWITCH_SECRET = "twitch_test_secret_phase3v2_step2"

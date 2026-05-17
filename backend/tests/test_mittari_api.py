@@ -1,4 +1,4 @@
-"""Backend tests for Mittari.fi Phase 1 API."""
+"""Backend tests for PUTKI HQ Phase 1 API."""
 import os
 import pytest
 import requests
@@ -31,7 +31,7 @@ class TestRoot:
         assert r.status_code == 200
         data = r.json()
         assert data.get("status") == "ok"
-        assert data.get("service") == "Mittari.fi API"
+        assert data.get("service") == "PUTKI HQ API"
         assert data.get("phase") == 1
 
 
@@ -131,7 +131,7 @@ class TestPredictions:
 
 
 # ---------- Phase 2.0: Site settings / back-office ----------
-ADMIN_TOKEN = "mittari-admin"
+ADMIN_TOKEN = "putki-hq-admin"
 
 
 class TestSiteSettings:

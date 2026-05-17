@@ -4,7 +4,7 @@ Mittari Phase 3 Batch 3A V2 — content-type registry + new V2 content types end
 Covers:
 - GET /api/admin/content-types returns 19 types incl 13 new V2 types
 - GET /api/admin/guidelines exposes 20 rows with new V2 prompt keys
-- mittari_voice_system_prompt references Complex/GQ/Bloomberg
+- putki_hq_voice_system_prompt references Complex/GQ/Bloomberg
 - End-to-end generate→approve→publish for cultural_feature (surface=kulttuuri)
 - End-to-end generate→approve→publish for lifestyle_gambler_profile (surface=profiilit, full fanout)
 - End-to-end generate→approve→publish for money_commentary (surface=raha)
@@ -24,7 +24,7 @@ if not BASE_URL:
                 BASE_URL = line.split("=", 1)[1].strip()
                 break
 BASE_URL = BASE_URL.rstrip("/")
-ADMIN_HEADERS = {"X-Admin-Token": "mittari-admin", "Content-Type": "application/json"}
+ADMIN_HEADERS = {"X-Admin-Token": "putki-hq-admin", "Content-Type": "application/json"}
 
 EXPECTED_19 = {
     "moment_commentary", "sports_take", "streamer_observation",
@@ -90,7 +90,7 @@ class TestGuidelines:
         rows = body.get("guidelines") or body
         assert isinstance(rows, list)
         keys = {row.get("key") for row in rows}
-        assert "mittari_voice_system_prompt" in keys
+        assert "putki_hq_voice_system_prompt" in keys
         for prompt_key in V2_NEW_PROMPT_KEYS:
             assert prompt_key in keys, f"missing guideline {prompt_key}"
         assert len(keys) >= 20, f"expected >=20 guideline rows got {len(keys)}"
@@ -98,7 +98,7 @@ class TestGuidelines:
     def test_system_prompt_references_v2_register(self):
         r = requests.get(f"{BASE_URL}/api/admin/guidelines", headers=ADMIN_HEADERS, timeout=30)
         rows = r.json().get("guidelines") or r.json()
-        sys_row = next(r for r in rows if r.get("key") == "mittari_voice_system_prompt")
+        sys_row = next(r for r in rows if r.get("key") == "putki_hq_voice_system_prompt")
         text = (sys_row.get("text") or "").lower()
         # V2 voice register markers — Complex/GQ/Bloomberg-Crypto explicitly named
         assert "complex" in text and "gq" in text and "bloomberg" in text

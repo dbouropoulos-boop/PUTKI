@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 — Dial recalc engine (Batch 3B).
+PUTKI HQ Phase 3 — Dial recalc engine (Batch 3B).
 
 Reads recent signals from `signals` collection, computes a weighted composite
 score 0-100, maps it to one of five dial states, and persists a snapshot to

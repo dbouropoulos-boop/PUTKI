@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 V2 — Final Architecture Step 4: Live-feed aggregation layer.
+PUTKI HQ Phase 3 V2 — Final Architecture Step 4: Live-feed aggregation layer.
 
 Aggregates `signals` (poller + webhook ingress) + `published_content`
 (editorial pipeline output) into a single normalised `feed_items` view that
@@ -427,7 +427,7 @@ async def ensure_indexes(db) -> None:
 
 # ── background worker ──────────────────────────────────────────────────────
 async def feed_worker_loop(db) -> None:
-    """Background rebuild loop. Disable via MITTARI_DISABLE_FEED_WORKER=1."""
+    """Background rebuild loop. Disable via PUTKI_HQ_DISABLE_FEED_WORKER=1."""
     await asyncio.sleep(8)  # let signals/dial worker run first
     while True:
         try:

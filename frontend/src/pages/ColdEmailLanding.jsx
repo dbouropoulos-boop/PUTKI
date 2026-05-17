@@ -5,13 +5,13 @@ import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
 const FAQS_FI = [
-  { q: 'Onko palvelu ilmainen?',         a: 'Kyllä. Mittari-ilmoitukset ovat täysin ilmaisia. Emme veloita käyttäjältä — affiliaatti rahoittaa toiminnan.' },
+  { q: 'Onko palvelu ilmainen?',         a: 'Kyllä. PUTKI HQ -ilmoitukset ovat täysin ilmaisia. Emme veloita käyttäjältä — affiliaatti rahoittaa toiminnan.' },
   { q: 'Tarvitseeko luoda tili?',        a: 'Voit aloittaa pelkällä sähköpostilla. Tiliä ei tarvitse rekisteröidä erikseen.' },
   { q: 'Kuinka usein ilmoituksia tulee?', a: 'Vain silloin kun valitsemasi striimaaja menee liveen. Keskimäärin 3–10 viestiä viikossa per seurattava.' },
   { q: 'Voiko ilmoitukset peruuttaa?',    a: 'Yhdellä klikkauksella. Jokainen viesti sisältää suoran perumislinkin.' },
 ];
 const FAQS_EN = [
-  { q: 'Is the service free?',          a: 'Yes. Mittari notifications are completely free. We don\u2019t charge users — affiliates fund the operation.' },
+  { q: 'Is the service free?',          a: 'Yes. PUTKI HQ notifications are completely free. We don\u2019t charge users — affiliates fund the operation.' },
   { q: 'Do I need to create an account?', a: 'Email is enough to start. No separate registration required.' },
   { q: 'How often will I get alerts?',   a: 'Only when a streamer you\u2019ve picked goes live. Typically 3–10 messages per week per streamer.' },
   { q: 'Can I unsubscribe?',             a: 'One click. Every message includes a direct unsubscribe link.' },
@@ -36,7 +36,7 @@ const ColdEmailLanding = () => {
       <header className="py-6">
         <div className="container-wide">
           <Link to="/" className="flex items-baseline gap-2">
-            <span className="font-display font-black text-xl tracking-tighter" style={{ color: 'var(--ink)' }}>Mittari</span>
+            <span className="font-display font-black text-xl tracking-tighter" style={{ color: 'var(--ink)' }}>PUTKI HQ</span>
             <span className="mono text-[10px] tracking-[0.2em] uppercase" style={{ color: 'var(--muted)' }}>.fi</span>
           </Link>
         </div>
@@ -126,7 +126,7 @@ const ColdEmailLanding = () => {
 
       <footer className="py-8" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide flex flex-col sm:flex-row gap-3 justify-between mono" style={{ fontSize: 11, letterSpacing: '0.12em', color: 'var(--muted)' }}>
-          <span>© MITTARI.FI · {t('common.18plus')}</span>
+          <span>© PUTKIHQ.FI · {t('common.18plus')}</span>
           <div className="flex gap-4">
             <span>{t('footer.privacy')}</span>
             <span>GDPR</span>

@@ -28,8 +28,8 @@ export const Korjaukset = () => {
       headline={lang === 'en' ? 'Corrections register' : 'Korjausten rekisteri'}>
       <p>
         {lang === 'en'
-          ? 'Mittari publishes corrections to every editorial piece when a material fact changes or an error is identified. Each correction names the piece, the change, and the date. We do not silently rewrite published content.'
-          : 'Mittari julkaisee korjauksen jokaiseen toimitukselliseen juttuun kun olennainen seikka muuttuu tai virhe havaitaan. Jokainen korjaus nimeää jutun, muutoksen ja päivämäärän. Emme hiljaisesti kirjoita julkaistua sisältöä uudelleen.'}
+          ? 'PUTKI HQ publishes corrections to every editorial piece when a material fact changes or an error is identified. Each correction names the piece, the change, and the date. We do not silently rewrite published content.'
+          : 'PUTKI HQ julkaisee korjauksen jokaiseen toimitukselliseen juttuun kun olennainen seikka muuttuu tai virhe havaitaan. Jokainen korjaus nimeää jutun, muutoksen ja päivämäärän. Emme hiljaisesti kirjoita julkaistua sisältöä uudelleen.'}
       </p>
       <p data-testid="korjaukset-empty-note">
         {lang === 'en'
@@ -38,8 +38,8 @@ export const Korjaukset = () => {
       </p>
       <p>
         {lang === 'en'
-          ? 'Spot an error? Email toimitus@mittari.fi with the piece URL and what should be corrected.'
-          : 'Huomasitko virheen? Lähetä sähköpostia toimitus@mittari.fi — kerro jutun osoite ja mikä pitäisi korjata.'}
+          ? 'Spot an error? Email toimitus@putkihq.fi with the piece URL and what should be corrected.'
+          : 'Huomasitko virheen? Lähetä sähköpostia toimitus@putkihq.fi — kerro jutun osoite ja mikä pitäisi korjata.'}
       </p>
     </StaticPage>
   );
@@ -52,8 +52,8 @@ export const Affiliaatti = () => {
       headline={lang === 'en' ? 'Affiliate relationships' : 'Affiliate-suhteet'}>
       <p>
         {lang === 'en'
-          ? 'Mittari operates as a comparison site / publication under the Finnish Gambling Act (2025, in force July 2027). Operators are evaluated by a transparent P*rkele score whose methodology is published at /menetelma. Commercial relationships are capped at 5–15 points of total score impact and are always disclosed.'
-          : 'Mittari toimii vertailusivustona / julkaisuna Suomen rahapelilain (2025, voimaan heinäkuussa 2027) puitteissa. Operaattoreita arvioidaan läpinäkyvällä P*rkele-pisteytyksellä, jonka menetelmä on julkaistu osoitteessa /menetelma. Kaupalliset suhteet on rajoitettu 5–15 pisteen vaikutukseen kokonaispisteistä ja ne ilmoitetaan aina.'}
+          ? 'PUTKI HQ operates as a comparison site / publication under the Finnish Gambling Act (2025, in force July 2027). Operators are evaluated by a transparent P*rkele score whose methodology is published at /menetelma. Commercial relationships are capped at 5–15 points of total score impact and are always disclosed.'
+          : 'PUTKI HQ toimii vertailusivustona / julkaisuna Suomen rahapelilain (2025, voimaan heinäkuussa 2027) puitteissa. Operaattoreita arvioidaan läpinäkyvällä P*rkele-pisteytyksellä, jonka menetelmä on julkaistu osoitteessa /menetelma. Kaupalliset suhteet on rajoitettu 5–15 pisteen vaikutukseen kokonaispisteistä ja ne ilmoitetaan aina.'}
       </p>
       <table className="w-full font-display text-[14px]" data-testid="affiliaatti-table">
         <thead>
@@ -79,8 +79,8 @@ export const Affiliaatti = () => {
       </table>
       <p>
         {lang === 'en'
-          ? 'No other operator currently has a commercial relationship with Mittari. All other operator reviews on this site are unsponsored editorial assessments with no affiliate links.'
-          : 'Muilla operaattoreilla ei tällä hetkellä ole kaupallista suhdetta Mittariin. Kaikki muut operaattoriarviot sivustolla ovat sponsoroimattomia toimituksellisia arvioita ilman affiliate-linkkejä.'}
+          ? 'No other operator currently has a commercial relationship with PUTKI HQ. All other operator reviews on this site are unsponsored editorial assessments with no affiliate links.'
+          : 'Muilla operaattoreilla ei tällä hetkellä ole kaupallista suhdetta PUTKI HQ:hon. Kaikki muut operaattoriarviot sivustolla ovat sponsoroimattomia toimituksellisia arvioita ilman affiliate-linkkejä.'}
       </p>
     </StaticPage>
   );
@@ -90,23 +90,23 @@ export const Avoimuus = () => {
   const { lang } = useLang();
   return (
     <StaticPage testId="avoimuus-page" eyebrow={lang === 'en' ? 'TRANSPARENCY · 2026' : 'AVOIMUUS · 2026'}
-      headline={lang === 'en' ? 'Mittari 2026 transparency report' : 'Mittarin 2026 avoimuusraportti'}>
+      headline={lang === 'en' ? 'PUTKI HQ 2026 transparency report' : 'PUTKI HQ:n 2026 avoimuusraportti'}>
       <p>
         {lang === 'en'
-          ? 'Mittari publishes an annual transparency report covering revenue sources, operator relationships, editorial pipeline volume, AI-generated content volume + approval rates, corrections issued, and methodology changes.'
-          : 'Mittari julkaisee vuosittaisen avoimuusraportin joka kattaa tulolähteet, operaattorisuhteet, toimituksellisen putken volyymin, AI-tuotetun sisällön volyymin + hyväksymisasteet, julkaistut korjaukset ja menetelmämuutokset.'}
+          ? 'PUTKI HQ publishes an annual transparency report covering revenue sources, operator relationships, editorial pipeline volume, AI-generated content volume + approval rates, corrections issued, and methodology changes.'
+          : 'PUTKI HQ julkaisee vuosittaisen avoimuusraportin joka kattaa tulolähteet, operaattorisuhteet, toimituksellisen putken volyymin, AI-tuotetun sisällön volyymin + hyväksymisasteet, julkaistut korjaukset ja menetelmämuutokset.'}
       </p>
       <p data-testid="avoimuus-coming-soon">
         {lang === 'en'
-          ? 'The 2026 report publishes in January 2027. The 2025 partial-year report covering Mittari\u2019s launch quarter publishes January 2026.'
-          : 'Vuoden 2026 raportti julkaistaan tammikuussa 2027. Vuoden 2025 osavuosiraportti, joka kattaa Mittarin lanseerausneljänneksen, julkaistaan tammikuussa 2026.'}
+          ? 'The 2026 report publishes in January 2027. The 2025 partial-year report covering PUTKI HQ\u2019s launch quarter publishes January 2026.'
+          : 'Vuoden 2026 raportti julkaistaan tammikuussa 2027. Vuoden 2025 osavuosiraportti, joka kattaa PUTKI HQ:n lanseerausneljänneksen, julkaistaan tammikuussa 2026.'}
       </p>
       <ul className="list-disc pl-5 space-y-2 font-serif">
         <li>{lang === 'en' ? 'Revenue source breakdown (affiliate, banner, partnership, other)' : 'Tulolähteiden erittely (affiliate, banneri, kumppanuus, muu)'}</li>
         <li>{lang === 'en' ? 'AI-generated content volume + human approval rate' : 'AI-tuotetun sisällön volyymi + ihmisen hyväksymisaste'}</li>
         <li>{lang === 'en' ? 'Corrections issued' : 'Julkaistut korjaukset'}</li>
         <li>{lang === 'en' ? 'Methodology changes' : 'Menetelmämuutokset'}</li>
-        <li>{lang === 'en' ? 'Editorial roster (when journalists are hired beyond MITTARIN TOIMITUS placeholder)' : 'Toimituksen kokoonpano (kun journalisteja palkataan MITTARIN TOIMITUS -placeholderin sijaan)'}</li>
+        <li>{lang === 'en' ? 'Editorial roster (when journalists are hired beyond PUTKI HQ placeholder)' : 'Toimituksen kokoonpano (kun journalisteja palkataan PUTKI HQ -placeholderin sijaan)'}</li>
       </ul>
     </StaticPage>
   );
@@ -140,8 +140,8 @@ export const Lehdisto = () => {
       headline={lang === 'en' ? 'Press kit and media contact' : 'Lehdistöpaketti ja mediayhteydet'}>
       <p>
         {lang === 'en'
-          ? 'Mittari is a Finnish gambling culture publication. We provide commentary on the Finnish gambling reform (Rahapelilaki 2025/2027), operator landscape, slot-streaming scene, sports betting culture, and adjacent cultural territory.'
-          : 'Mittari on suomalainen rahapelikulttuurin julkaisu. Kommentoimme Suomen rahapeliuudistusta (Rahapelilaki 2025/2027), operaattorimaisemaa, slot-striimausskeneä, urheiluvedonlyöntikulttuuria ja viereistä kulttuuriterritoriota.'}
+          ? 'PUTKI HQ is a Finnish gambling culture publication. We provide commentary on the Finnish gambling reform (Rahapelilaki 2025/2027), operator landscape, slot-streaming scene, sports betting culture, and adjacent cultural territory.'
+          : 'PUTKI HQ on suomalainen rahapelikulttuurin julkaisu. Kommentoimme Suomen rahapeliuudistusta (Rahapelilaki 2025/2027), operaattorimaisemaa, slot-striimausskeneä, urheiluvedonlyöntikulttuuria ja viereistä kulttuuriterritoriota.'}
       </p>
       <p>
         {lang === 'en'
@@ -149,9 +149,9 @@ export const Lehdisto = () => {
           : 'Haastattelut, asiantuntijakommentit, datapyynnöt tai yhteistyökyselyt:'}
       </p>
       <ul className="list-disc pl-5 space-y-2 font-serif">
-        <li>{lang === 'en' ? 'Editorial' : 'Toimitus'}: <strong>toimitus@mittari.fi</strong></li>
-        <li>{lang === 'en' ? 'Press' : 'Lehdistö'}: <strong>press@mittari.fi</strong></li>
-        <li>{lang === 'en' ? 'Partnerships' : 'Kumppanuudet'}: <strong>partner@mittari.fi</strong></li>
+        <li>{lang === 'en' ? 'Editorial' : 'Toimitus'}: <strong>toimitus@putkihq.fi</strong></li>
+        <li>{lang === 'en' ? 'Press' : 'Lehdistö'}: <strong>press@putkihq.fi</strong></li>
+        <li>{lang === 'en' ? 'Partnerships' : 'Kumppanuudet'}: <strong>partner@putkihq.fi</strong></li>
       </ul>
       <p>
         <Link to="/menetelma" data-testid="lehdisto-link-method" className="mono" style={{ fontSize: 12, letterSpacing: '0.16em', color: 'var(--brand-blue, #5A7BB8)', fontWeight: 700 }}>
@@ -163,12 +163,12 @@ export const Lehdisto = () => {
       <div className="mt-10" data-testid="lehdisto-sources">
         <div className="eyebrow mb-2">{lang === 'en' ? `EDITORIAL SOURCE MAP · ${total}` : `TOIMITUKSELLINEN LÄHDEKARTTA · ${total}`}</div>
         <h2 className="display text-2xl mb-3" data-testid="lehdisto-sources-headline">
-          {lang === 'en' ? 'Named sources Mittari monitors' : 'Mittarin seuraamat nimetyt lähteet'}
+          {lang === 'en' ? 'Named sources PUTKI HQ monitors' : 'PUTKI HQ:n seuraamat nimetyt lähteet'}
         </h2>
         <p style={{ marginBottom: 20 }}>
           {lang === 'en'
-            ? 'Mittari\u2019s editorial pipeline monitors a curated set of named Finnish-language and international sources for regulatory, sponsorship, scene, and cultural context. Tier 1 sources feed primary editorial coverage; Tier 2–3 sources provide secondary context and cross-reference. We publish this map so readers can audit who informs our coverage.'
-            : 'Mittarin toimituksellinen putki seuraa kuratoitua joukkoa nimettyjä suomenkielisiä ja kansainvälisiä lähteitä sääntelyn, sponsoroinnin, skenen ja kulttuurin konteksteihin. Tier 1 -lähteet syöttävät pääosin toimituksellista kattavuutta; Tier 2–3 antaa toissijaista kontekstia ja ristireferenssejä. Julkaisemme tämän kartan jotta lukijat voivat tarkistaa kuka kattavuuttamme informoi.'}
+            ? 'PUTKI HQ\u2019s editorial pipeline monitors a curated set of named Finnish-language and international sources for regulatory, sponsorship, scene, and cultural context. Tier 1 sources feed primary editorial coverage; Tier 2–3 sources provide secondary context and cross-reference. We publish this map so readers can audit who informs our coverage.'
+            : 'PUTKI HQ:n toimituksellinen putki seuraa kuratoitua joukkoa nimettyjä suomenkielisiä ja kansainvälisiä lähteitä sääntelyn, sponsoroinnin, skenen ja kulttuurin konteksteihin. Tier 1 -lähteet syöttävät pääosin toimituksellista kattavuutta; Tier 2–3 antaa toissijaista kontekstia ja ristireferenssejä. Julkaisemme tämän kartan jotta lukijat voivat tarkistaa kuka kattavuuttamme informoi.'}
         </p>
 
         {CATEGORY_ORDER.map((cat) => {
@@ -213,8 +213,8 @@ export const Paivityslog = () => {
       headline={lang === 'en' ? 'Site changes, methodology updates, new tracked streamers' : 'Sivustomuutokset, menetelmäpäivitykset, uudet seurattavat striimaajat'}>
       <p>
         {lang === 'en'
-          ? 'Mittari publishes every methodology change, every new streamer added to the tracked roster, and every editorial system change. Auto-generated from the system\u2019s change history. Compounding evidence of editorial discipline.'
-          : 'Mittari julkaisee jokaisen menetelmämuutoksen, jokaisen uuden seurattavaksi lisätyn striimaajan ja jokaisen toimituksellisen järjestelmämuutoksen. Auto-generoitu järjestelmän muutoshistoriasta. Kasautuvaa todistusaineistoa toimituksellisesta kurinalaisuudesta.'}
+          ? 'PUTKI HQ publishes every methodology change, every new streamer added to the tracked roster, and every editorial system change. Auto-generated from the system\u2019s change history. Compounding evidence of editorial discipline.'
+          : 'PUTKI HQ julkaisee jokaisen menetelmämuutoksen, jokaisen uuden seurattavaksi lisätyn striimaajan ja jokaisen toimituksellisen järjestelmämuutoksen. Auto-generoitu järjestelmän muutoshistoriasta. Kasautuvaa todistusaineistoa toimituksellisesta kurinalaisuudesta.'}
       </p>
       <p data-testid="paivityslog-empty-note">
         {lang === 'en'

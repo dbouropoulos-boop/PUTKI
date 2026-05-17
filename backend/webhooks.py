@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 V2 — Step 2 webhook signal handlers.
+PUTKI HQ Phase 3 V2 — Step 2 webhook signal handlers.
 
 Three webhook receivers per FINAL ARCHITECTURE §6.1:
   • POST /api/webhooks/twitch         — Twitch EventSub (HMAC-SHA256)

@@ -1,7 +1,7 @@
 """
-Mittari V2 Master Brief §4.1 — Named Finnish source map.
+PUTKI HQ V2 Master Brief §4.1 — Named Finnish source map.
 
-Curated registry of authoritative sources Mittari's editorial pipeline monitors
+Curated registry of authoritative sources PUTKI HQ's editorial pipeline monitors
 manually or via RSS. Seeded into Mongo collection `tracked_sources` on startup
 (idempotent). Back-office can edit. Public list surfaces on /lehdisto and
 internally drives editor seed material + citation patterns.

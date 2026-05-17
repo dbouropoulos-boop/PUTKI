@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 V2 — Editorial seed scheduler.
+PUTKI HQ Phase 3 V2 — Editorial seed scheduler.
 
 A cadence-driven worker that emits editorial seeds into the approval queue at
 defined rhythms per content type. Seeds are NOT auto-generated content — they
@@ -26,7 +26,7 @@ LLM-502 tolerance:
 Environment:
     SEED_SCHEDULER_INTERVAL_SECONDS  default 3600 (1h)
     SEED_VARIANT_FILLER_INTERVAL_SECONDS  default 900 (15m)
-    MITTARI_DISABLE_SCHEDULER  set to "1" to disable in tests
+    PUTKI_HQ_DISABLE_SCHEDULER  set to "1" to disable in tests
 """
 from __future__ import annotations
 
@@ -446,7 +446,7 @@ async def run_variant_filler(db, *, max_per_tick: int = 5) -> Dict[str, Any]:
 
 # ─── Background workers ─────────────────────────────────────────────────────
 async def scheduler_worker_loop(db) -> None:
-    """Hourly: tick scheduler. Disabled by MITTARI_DISABLE_SCHEDULER=1."""
+    """Hourly: tick scheduler. Disabled by PUTKI_HQ_DISABLE_SCHEDULER=1."""
     await asyncio.sleep(10)
     while True:
         try:

@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Lock, Save, Check, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Mittari.fi simple back-office page — token-protected.
-// Token must match BACK_OFFICE_TOKEN env var on backend (default: "mittari-admin").
-// Single setting: telegram_channel (URL like https://t.me/mittarifi)
+// PUTKI HQ simple back-office page — token-protected.
+// Token must match BACK_OFFICE_TOKEN env var on backend (default: "putki-hq-admin").
+// Single setting: telegram_channel (URL like https://t.me/putkihq)
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const BackOffice = () => {
   const [token, setToken] = useState(() => {
-    try { return localStorage.getItem('mittari-admin-token') || ''; } catch { return ''; }
+    try { return localStorage.getItem('putki-hq-admin-token') || ''; } catch { return ''; }
   });
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -48,7 +48,7 @@ const BackOffice = () => {
       setSmarticoLoaderUrl(d.smartico_loader_url || '');
       setSmarticoBrandKey(d.smartico_brand_key || '');
       setAuthed(true);
-      try { localStorage.setItem('mittari-admin-token', tk); } catch {}
+      try { localStorage.setItem('putki-hq-admin-token', tk); } catch {}
     } catch (e) {
       setAuthError(e.message || 'Error');
     } finally {
@@ -94,7 +94,7 @@ const BackOffice = () => {
           <div className="flex items-center gap-3 mb-6">
             <Lock strokeWidth={1.5} size={20} style={{ color: 'var(--muted)' }} />
             <div>
-              <div className="eyebrow">MITTARI · BACK OFFICE</div>
+              <div className="eyebrow">PUTKI HQ · BACK OFFICE</div>
               <h1 className="display text-2xl mt-1" style={{ color: 'var(--ink)' }}>Admin authentication</h1>
             </div>
           </div>
@@ -122,7 +122,7 @@ const BackOffice = () => {
           <div className="mono mt-5 text-center" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
             ENV · BACK_OFFICE_TOKEN
           </div>
-          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to Mittari</Link>
+          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to PUTKI HQ</Link>
         </form>
       </div>
     );
@@ -132,7 +132,7 @@ const BackOffice = () => {
     <div className="min-h-screen px-5 py-12" style={{ background: 'var(--bg)' }}>
       <div className="container-narrow">
         <div className="flex items-baseline justify-between mb-2">
-          <div className="eyebrow">MITTARI · BACK OFFICE</div>
+          <div className="eyebrow">PUTKI HQ · BACK OFFICE</div>
           <div className="flex items-center gap-2 flex-wrap">
             <Link to="/back-office/queue" className="btn-ghost" data-testid="back-office-link-queue">QUEUE →</Link>
             <Link to="/back-office/operators" className="btn-ghost" data-testid="back-office-link-operators">OPERATORS →</Link>
@@ -154,7 +154,7 @@ const BackOffice = () => {
               value={telegram}
               onChange={(e) => setTelegram(e.target.value)}
               data-testid="back-office-telegram-input"
-              placeholder="https://t.me/mittarifi"
+              placeholder="https://t.me/putkihq"
               className="mono w-full mt-2"
               style={{ padding: '14px 16px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 13, letterSpacing: '0.04em' }}
             />
@@ -250,7 +250,7 @@ const BackOffice = () => {
         </form>
 
         <div className="mono mt-8" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
-          P*RKELE-PISTE 100 / 100 · MITTARI 2026
+          P*RKELE-PISTE 100 / 100 · PUTKI HQ 2026
         </div>
       </div>
     </div>

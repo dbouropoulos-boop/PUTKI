@@ -55,8 +55,8 @@ export const Pelit = () => {
       headline={lang === 'en' ? 'Understand the math before you play' : 'Ymmärrä matematiikka ennen kuin pelaat'}
       intro={
         lang === 'en'
-          ? 'Mittari teaches how casino games actually work. Skill-based games (blackjack, poker, video poker) get optimal strategy. Slots get mechanics only — no picks, no hot/cold, ever. House edge is the constant. Wealth-building is not the frame.'
-          : 'Mittari opettaa miten kasinopelit oikeasti toimivat. Taitopohjaisille peleille (blackjack, poker, video poker) optimaalistrategia. Slotit: vain mekaniikka — ei pelipikkejä, ei "kuumaa/kylmää" koskaan. House edge on vakio. Varallisuuden rakentaminen ei ole se kehys.'
+          ? 'PUTKI HQ teaches how casino games actually work. Skill-based games (blackjack, poker, video poker) get optimal strategy. Slots get mechanics only — no picks, no hot/cold, ever. House edge is the constant. Wealth-building is not the frame.'
+          : 'PUTKI HQ opettaa miten kasinopelit oikeasti toimivat. Taitopohjaisille peleille (blackjack, poker, video poker) optimaalistrategia. Slotit: vain mekaniikka — ei pelipikkejä, ei "kuumaa/kylmää" koskaan. House edge on vakio. Varallisuuden rakentaminen ei ole se kehys.'
       }
       comingSoonHeadline={lang === 'en' ? 'Blackjack basic strategy reference, RTP demystified, bonus EV calculator.' : 'Blackjackin perusstrategian referenssikortti, RTP avattuna, bonusten odotusarvolaskin.'}
       comingSoonBody={
@@ -80,8 +80,8 @@ const makeSub = (slug, eyebrowFi, eyebrowEn, headlineFi, headlineEn, introFi, in
       comingSoonHeadline={lang === 'en' ? comingEn : comingFi}
       comingSoonBody={
         lang === 'en'
-          ? 'Mittari is sourcing this category from Wizard of Odds, Casino.guru, academic gambling research and applying it to the Finnish context. Three pieces will land in the first publication wave.'
-          : 'Mittarin toimitus hakee tämän kategorian lähteet Wizard of Oddsista, Casino.gurusta ja akateemisesta uhkapelitutkimuksesta ja soveltaa ne suomalaiseen kontekstiin. Kolme juttua ensimmäisessä julkaisuaaltoon.'
+          ? 'PUTKI HQ is sourcing this category from Wizard of Odds, Casino.guru, academic gambling research and applying it to the Finnish context. Three pieces will land in the first publication wave.'
+          : 'PUTKI HQ -toimitus hakee tämän kategorian lähteet Wizard of Oddsista, Casino.gurusta ja akateemisesta uhkapelitutkimuksesta ja soveltaa ne suomalaiseen kontekstiin. Kolme juttua ensimmäisessä julkaisuaaltoon.'
       }
     />
   );
@@ -90,8 +90,8 @@ const makeSub = (slug, eyebrowFi, eyebrowEn, headlineFi, headlineEn, introFi, in
 export const PelitBlackjack = makeSub('blackjack',
   'BLACKJACK · OPTIMAL STRATEGY', 'BLACKJACK · OPTIMAL STRATEGY',
   'Blackjack — yhden sivun referenssi', 'Blackjack — one-page reference',
-  'Mittarin perusstrategian referenssi, sivupanosten matematiikka, korttilaskennan nykytila Suomessa 2026.',
-  'Mittari basic-strategy reference, side-bet mathematics, card counting state of play in Finland 2026.',
+  'PUTKI HQ -perusstrategian referenssi, sivupanosten matematiikka, korttilaskennan nykytila Suomessa 2026.',
+  'PUTKI HQ basic-strategy reference, side-bet mathematics, card counting state of play in Finland 2026.',
   'Perusstrategia, sivupanokset, korttilaskenta käytännössä.', 'Basic strategy, side bets, card counting in practice.');
 
 export const PelitPoker = makeSub('poker',
@@ -104,8 +104,8 @@ export const PelitPoker = makeSub('poker',
 export const PelitSlotit = makeSub('slotit',
   'SLOTS · LITERACY ONLY', 'SLOTS · LITERACY ONLY',
   'Slotit — mekaniikka, ei pikkejä', 'Slots — mechanics only, no picks',
-  'Mittari ei suosittele yksittäisiä slot-pelejä. Selitämme RTP:n, volatiliteetin, bonus buy -matematiikan. "Kuuma" tai "kylmä" eivät ole olemassa varianssin ulkopuolella.',
-  'Mittari does not recommend specific slot games. We explain RTP, volatility, bonus-buy mathematics. "Hot" or "cold" do not exist outside variance.',
+  'PUTKI HQ ei suosittele yksittäisiä slot-pelejä. Selitämme RTP:n, volatiliteetin, bonus buy -matematiikan. "Kuuma" tai "kylmä" eivät ole olemassa varianssin ulkopuolella.',
+  'PUTKI HQ does not recommend specific slot games. We explain RTP, volatility, bonus-buy mathematics. "Hot" or "cold" do not exist outside variance.',
   'RTP, volatiliteetti, bonus buy -matematiikka.', 'RTP, volatility, bonus-buy mathematics.');
 
 export const PelitCraps = makeSub('craps',

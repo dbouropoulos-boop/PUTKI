@@ -1,4 +1,4 @@
-# Mittari.fi — PRD
+# PUTKI HQ — PRD
 
 ## Phase History
 - **Phase 1** (2026-02) — 9-page editorial site
@@ -15,6 +15,7 @@
 - **Phase 3 V2 — Final Architecture Step 4: Live-feed aggregation** (2026-05-17) — `feed_items` collection + aggregation worker (60s rebuild) + public `GET /api/feed` (mocked filtered) + admin `/api/admin/feed{,/rebuild}` + 14 pytest cases green.
 - **Phase 3 V2 — Final Architecture Step 5: Hub homepage rewrite** (2026-05-17) — Compact top strip (dial top-left, Voyager top-right), 5-card live mosaic (Streamerit live, Urheilu nyt, Tuoreet hetket, Foorumit kuumana, Mittari live) with 30s poll, Zone 3 publication-depth (8 pillars), Pulssi + Operaattoritapahtumat HIDDEN, accountability footer. `/back-office/webhooks` operational console (per-source state, PubSub lease indicator, force-resubscribe button) shipped.
 - **Phase 3 V2 — Operational button: Force-rebuild** (2026-05-17) — `Pakota syötteen uudelleenrakennus` added to `/back-office/webhooks` between the lease panel and source rows; in-flight spinner, candidate/upsert/prune/signals/published stat grid, last-rebuild stamp persisted to localStorage, honest 5xx error surface. Bundled lint cleanup: removed unused `cfg` binding in `seed_scheduler.py:261` (F841).
+- **Phase 3 V2 — Brand rename: Mittari.fi → PUTKI HQ** (2026-05-17) — domain live at putkihq.fi. Full codebase rename across ~50 files via 8 audited Python passes. Publication identity (header / footer / EditorialFooter byline / editorial pages / voice prompts / Resend from-address / admin headers) flipped to PUTKI HQ. Dial component name and dial-internal references preserved as "Mittari" per editorial spec. Internals also renamed: testids (`mittari-admin-*` → `putki-hq-admin-*`), localStorage keys, env vars (`MITTARI_DISABLE_*` → `PUTKI_HQ_DISABLE_*`), admin token value (`mittari-admin` → `putki-hq-admin`), cookie + UTM source names, MittariBot → PutkiHQBot, mittari_voice_system_prompt → putki_hq_voice_system_prompt. Methodology placeholder tagline: "PUTKI HQ — Suomen skenen lämpötila". `<title>`, meta description, SVG favicon shipped. 112/112 backend pytest green.
 
 ## Phase 3 V2 — Architecture-only Track (this session)
 
@@ -41,7 +42,7 @@
 - Hourly background worker (configurable via `SEED_SCHEDULER_INTERVAL_SECONDS`)
 - Honesty guard: **refuses to fire** when `foundational_research` pool is empty for the beat → returns `skipped` with reason `no_foundational_research`
 - LLM-502 tolerance: on Claude failure, parks a `status=awaiting_variants` row with topic frozen. Variant filler retries every 15min (`SEED_VARIANT_FILLER_INTERVAL_SECONDS`)
-- Disable via `MITTARI_DISABLE_SCHEDULER=1`
+- Disable via `PUTKI_HQ_DISABLE_SCHEDULER=1`
 - Endpoints: `GET|PUT /api/admin/scheduler/cadences`, `GET /api/admin/scheduler/status`, `POST /api/admin/scheduler/tick`, `POST /api/admin/scheduler/fill-variants`
 - Hard 45s timeout on Claude calls (prevents event-loop hang during gateway flake)
 
@@ -51,7 +52,7 @@
 - Existing Signal Pipeline Status widget retained
 - Cross-links to /back-office/foundational-research and /back-office/queue from /back-office
 
-### Mittari voice prompt — Finnish-language source directive added
+### PUTKI HQ voice prompt — Finnish-language source directive added
 - Voice prompt extended with explicit "Bloomberg-in-Finnish, not Bloomberg-translated" directive
 - Prefers Finnish-language foundational_research sources
 - Native Finnish editorial syntax + idiom, not translated English
@@ -150,7 +151,7 @@ Per V2 brief: empty surfaces ok, lying surfaces not. Killed every component that
 - Backend: FastAPI + Motor (async MongoDB) + httpx (signal adapters) + emergentintegrations (Claude)
 - DB: MongoDB collections — `signups`, `predictions`, `settings`, `game_scores`, `signals`, `dial_snapshots`, `generated_content`, `published_content`, `editorial_guidelines`, `distribution_log`, `tracked_sources`, `foundational_research`
 - Auth: Public site has none; /back-office + /back-office/queue + /back-office/foundational-research gated by `BACK_OFFICE_TOKEN`
-- Workers: signal_dial_worker (90s), scheduler_worker_loop (3600s), variant_filler_worker_loop (900s). Disable via `MITTARI_DISABLE_WORKERS=1` / `MITTARI_DISABLE_SCHEDULER=1`
+- Workers: signal_dial_worker (90s), scheduler_worker_loop (3600s), variant_filler_worker_loop (900s). Disable via `PUTKI_HQ_DISABLE_WORKERS=1` / `PUTKI_HQ_DISABLE_SCHEDULER=1`
 
 ## Prioritized backlog
 
@@ -160,7 +161,7 @@ Per V2 brief: empty surfaces ok, lying surfaces not. Killed every component that
   - `TWITCH_CLIENT_ID/SECRET` (Twitch Helix)
   - `YOUTUBE_API_KEY` (YouTube Data v3)
   - `SPORTS_API_KEY` (API-Football)
-  - `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHANNEL_ID` (@MittariBot)
+  - `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHANNEL_ID` (@PutkiHQBot)
   - `RESEND_API_KEY` + `RESEND_FROM` (digest email)
   - X API v2 Basic tier credentials (for Pulssi layers)
   - Smartico Voyager loader URL + brand key (admin UI)

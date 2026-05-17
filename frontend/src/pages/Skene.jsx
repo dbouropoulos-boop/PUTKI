@@ -21,14 +21,14 @@ export const Skene = () => {
         headline={lang === 'en' ? 'What just happened in the scene' : 'Mitä skenessä juuri tapahtui'}
         intro={
           lang === 'en'
-            ? 'Mittari covers lifestyle moments, drama, and business shifts in the slot streaming and gambling scene. Cultural reporting on the moments the audience already engages with — without aspirational framing.'
-            : 'Mittari kattaa slot-striimauksen ja uhkapeliskenen lifestyle-hetkiä, draamaa ja liiketoimintamuutoksia. Kulttuuriraportointia niistä hetkistä joita yleisö jo seuraa — ilman aspiraationaalista kehystä.'
+            ? 'PUTKI HQ covers lifestyle moments, drama, and business shifts in the slot streaming and gambling scene. Cultural reporting on the moments the audience already engages with — without aspirational framing.'
+            : 'PUTKI HQ kattaa slot-striimauksen ja uhkapeliskenen lifestyle-hetkiä, draamaa ja liiketoimintamuutoksia. Kulttuuriraportointia niistä hetkistä joita yleisö jo seuraa — ilman aspiraationaalista kehystä.'
         }
         comingSoonHeadline={lang === 'en' ? 'Stake VIP system, Trainwreck Lamborghini buy, Adin Ross–Rainbet switch.' : 'Stake VIP-järjestelmä, Trainwreckin Lamborghini, Adin Ross–Rainbet-siirto.'}
         comingSoonBody={
           lang === 'en'
-            ? 'Mittari opens the scene news pipeline with 5–10 pieces per week. Each 400–900 words. Cultural and business reporting on the moments that define the scene right now — drama, deals, beef, and the economics behind them.'
-            : 'Mittarin toimitus aukaisee skene-uutisputken 5–10 jutulla viikossa. Jokainen 400–900 sanaa. Kulttuuri- ja liiketoimintaraportointia skenen tämänhetkisistä määrittävistä hetkistä — draama, sopimukset, beef ja näiden takana oleva talous.'
+            ? 'PUTKI HQ opens the scene news pipeline with 5–10 pieces per week. Each 400–900 words. Cultural and business reporting on the moments that define the scene right now — drama, deals, beef, and the economics behind them.'
+            : 'PUTKI HQ -toimitus aukaisee skene-uutisputken 5–10 jutulla viikossa. Jokainen 400–900 sanaa. Kulttuuri- ja liiketoimintaraportointia skenen tämänhetkisistä määrittävistä hetkistä — draama, sopimukset, beef ja näiden takana oleva talous.'
         }
       />
     </div>
@@ -51,8 +51,8 @@ export const SkeneTalous = () => {
       comingSoonHeadline={lang === 'en' ? 'Stake $360M, GGR mechanics, affiliate revenues 2026, VIP lifetime values.' : 'Stake $360M, GGR-mekaniikka, affiliate-tulot 2026, VIP-elinkaariarvot.'}
       comingSoonBody={
         lang === 'en'
-          ? 'Mittari is preparing 1–2 analytical pieces per week on the real numbers behind the gambling industry — what the operators, streamers, and affiliates actually make, where the money flows, and what that means for the post-2027 Finnish licensed market.'
-          : 'Mittarin toimitus valmistelee 1–2 analyysijuttua viikossa uhkapelialan oikeista luvuista — paljonko operaattorit, striimaajat ja affiliatet tienaavat, mistä raha virtaa ja mitä tämä tarkoittaa Suomen 2027 jälkeisille lisensoiduille markkinoille.'
+          ? 'PUTKI HQ is preparing 1–2 analytical pieces per week on the real numbers behind the gambling industry — what the operators, streamers, and affiliates actually make, where the money flows, and what that means for the post-2027 Finnish licensed market.'
+          : 'PUTKI HQ -toimitus valmistelee 1–2 analyysijuttua viikossa uhkapelialan oikeista luvuista — paljonko operaattorit, striimaajat ja affiliatet tienaavat, mistä raha virtaa ja mitä tämä tarkoittaa Suomen 2027 jälkeisille lisensoiduille markkinoille.'
       }
     />
   );

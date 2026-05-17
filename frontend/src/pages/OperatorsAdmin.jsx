@@ -9,9 +9,9 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const useToken = () => {
   const [token, setToken] = useState(() => {
-    try { return localStorage.getItem('mittari-admin-token') || ''; } catch { return ''; }
+    try { return localStorage.getItem('putki-hq-admin-token') || ''; } catch { return ''; }
   });
-  return [token, (v) => { setToken(v); try { localStorage.setItem('mittari-admin-token', v); } catch {} }];
+  return [token, (v) => { setToken(v); try { localStorage.setItem('putki-hq-admin-token', v); } catch {} }];
 };
 
 const emptyOp = () => ({
@@ -251,14 +251,14 @@ const OperatorsAdmin = () => {
           <div className="flex items-center gap-3 mb-6">
             <Lock strokeWidth={1.5} size={20} style={{ color: 'var(--muted)' }} />
             <div>
-              <div className="eyebrow">MITTARI · OPERATORS REGISTRY</div>
+              <div className="eyebrow">PUTKI HQ · OPERATORS REGISTRY</div>
               <h1 className="display text-2xl mt-1">Admin authentication</h1>
             </div>
           </div>
           <input type="password" value={token} onChange={(e) => setToken(e.target.value)} data-testid="op-auth-token" placeholder="Admin token" className="mono w-full" style={{ padding: '14px 16px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 13 }} required />
           {error && <div className="mono mt-3" style={{ fontSize: 11, color: '#C8423C' }}>{error}</div>}
           <button type="submit" className="btn-primary w-full mt-5" data-testid="op-auth-submit">CONTINUE →</button>
-          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to Mittari</Link>
+          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to PUTKI HQ</Link>
         </form>
       </div>
     );
@@ -269,7 +269,7 @@ const OperatorsAdmin = () => {
       <div className="container-wide">
         <div className="flex items-baseline justify-between mb-5 flex-wrap gap-3">
           <div>
-            <div className="eyebrow">MITTARI · OPERATORS REGISTRY · {operators.length}</div>
+            <div className="eyebrow">PUTKI HQ · OPERATORS REGISTRY · {operators.length}</div>
             <h1 className="display text-3xl mt-1">Operators</h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

@@ -8,9 +8,9 @@ const SCENES = ['finnish', 'intl_global', 'intl_swedish', 'intl_dutch', 'intl_no
 
 const useToken = () => {
   const [token, setToken] = useState(() => {
-    try { return localStorage.getItem('mittari-admin-token') || ''; } catch { return ''; }
+    try { return localStorage.getItem('putki-hq-admin-token') || ''; } catch { return ''; }
   });
-  return [token, (v) => { setToken(v); try { localStorage.setItem('mittari-admin-token', v); } catch {} }];
+  return [token, (v) => { setToken(v); try { localStorage.setItem('putki-hq-admin-token', v); } catch {} }];
 };
 
 const emptyStr = () => ({
@@ -77,14 +77,14 @@ const StreamersAdmin = () => {
           <div className="flex items-center gap-3 mb-6">
             <Lock strokeWidth={1.5} size={20} style={{ color: 'var(--muted)' }} />
             <div>
-              <div className="eyebrow">MITTARI · STREAMERS REGISTRY</div>
+              <div className="eyebrow">PUTKI HQ · STREAMERS REGISTRY</div>
               <h1 className="display text-2xl mt-1">Admin authentication</h1>
             </div>
           </div>
           <input type="password" value={token} onChange={(e) => setToken(e.target.value)} data-testid="str-auth-token" placeholder="Admin token" className="mono w-full" style={{ padding: '14px 16px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 13 }} required />
           {error && <div className="mono mt-3" style={{ fontSize: 11, color: '#C8423C' }}>{error}</div>}
           <button type="submit" className="btn-primary w-full mt-5" data-testid="str-auth-submit">CONTINUE →</button>
-          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to Mittari</Link>
+          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to PUTKI HQ</Link>
         </form>
       </div>
     );
@@ -95,7 +95,7 @@ const StreamersAdmin = () => {
       <div className="container-wide">
         <div className="flex items-baseline justify-between mb-5 flex-wrap gap-3">
           <div>
-            <div className="eyebrow">MITTARI · STREAMERS REGISTRY · {filtered.length}{sceneFilter ? ' / ' + streamers.length : ''}</div>
+            <div className="eyebrow">PUTKI HQ · STREAMERS REGISTRY · {filtered.length}{sceneFilter ? ' / ' + streamers.length : ''}</div>
             <h1 className="display text-3xl mt-1">Streamers</h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

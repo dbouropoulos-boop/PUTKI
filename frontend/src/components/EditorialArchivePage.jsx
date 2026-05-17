@@ -8,7 +8,7 @@ import { EditorialFooter } from './EditorialFooter';
 // pulls latest approved items from /api/published?surface=<surface>&limit=N.
 //
 // While empty (Phase 3A V2 — content types exist but no items approved yet),
-// the shell renders a "MITTARIN TOIMITUS VALMISTELEE — KOLME ENSIMMÄISTÄ JUTTUA
+// the shell renders a "PUTKI HQ VALMISTELEE — KOLME ENSIMMÄISTÄ JUTTUA
 // JULKAISTAAN VKOLLA X" panel. Once items exist, they replace that block.
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -59,7 +59,7 @@ export const EditorialArchivePage = ({
         {items !== null && items.length === 0 && (
           <div className="panel p-6 sm:p-8 max-w-3xl" data-testid={`${testId}-coming-soon`} style={{ borderLeft: '3px solid #E8924A' }}>
             <div className="eyebrow mb-3" style={{ color: '#E8924A' }}>
-              {lang === 'en' ? 'EDITORIAL IN PREPARATION' : 'MITTARIN TOIMITUS VALMISTELEE'}
+              {lang === 'en' ? 'EDITORIAL IN PREPARATION' : 'PUTKI HQ VALMISTELEE'}
             </div>
             <h2 className="display text-2xl sm:text-3xl mb-3" data-testid={`${testId}-coming-soon-headline`}>
               {comingSoonHeadline}

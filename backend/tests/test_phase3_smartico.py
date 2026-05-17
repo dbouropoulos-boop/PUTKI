@@ -13,7 +13,7 @@ if not BASE_URL:
                 break
 BASE_URL = BASE_URL.rstrip("/")
 API = f"{BASE_URL}/api"
-ADMIN_TOKEN = "mittari-admin"
+ADMIN_TOKEN = "putki-hq-admin"
 H = {"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"}
 
 

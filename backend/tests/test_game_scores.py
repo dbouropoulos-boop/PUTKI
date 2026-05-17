@@ -1,4 +1,4 @@
-"""Backend tests for Mittari.fi Phase 2.5 — Game Scores (Weezy Rally)."""
+"""Backend tests for PUTKI HQ Phase 2.5 — Game Scores (Weezy Rally)."""
 import os
 import uuid
 import pytest

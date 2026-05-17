@@ -6,8 +6,8 @@ import ShareButton from '../components/ShareButton';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-const COOKIE_KEY = 'mittari_cookie_id';
-const NAME_KEY = 'mittari_player_name';
+const COOKIE_KEY = 'putki_hq_cookie_id';
+const NAME_KEY = 'putki_hq_player_name';
 
 const ensureCookieId = () => {
   try {
@@ -177,8 +177,8 @@ const MiniGame = () => {
                       label: `${fmt(lastResult.score)} pts`,
                       intensity: 'KUUMA',
                       headline: lang === 'en'
-                        ? `${name || 'I'} scored ${fmt(lastResult.score)} on Mittari Weezy Rally — beat me?`
-                        : `${name || 'Sain'} ${fmt(lastResult.score)} pistettä Mittarin Weezy Rallyssa — voitatko sen?`,
+                        ? `${name || 'I'} scored ${fmt(lastResult.score)} on PUTKI HQ Rally — beat me?`
+                        : `${name || 'Sain'} ${fmt(lastResult.score)} pistettä PUTKI HQ Rallyssa — voitatko sen?`,
                       color: '#E8924A',
                     }}
                     label={lang === 'en' ? 'SHARE THIS RUN' : 'JAA TÄMÄ AJO'}
@@ -186,7 +186,7 @@ const MiniGame = () => {
                     dataTestId="rally-share"
                   />
                   <a
-                    href={`mailto:?subject=${encodeURIComponent(lang === 'en' ? 'Beat my time on Mittari Weezy Rally' : 'Päihitä aikani Mittarin Weezy Rallyssa')}&body=${encodeURIComponent(`${BACKEND.replace(/\/$/, '')}/peli`)}`}
+                    href={`mailto:?subject=${encodeURIComponent(lang === 'en' ? 'Beat my time on PUTKI HQ Rally' : 'Päihitä aikani PUTKI HQ Rallyssa')}&body=${encodeURIComponent(`${BACKEND.replace(/\/$/, '')}/peli`)}`}
                     className="btn-ghost inline-flex items-center gap-2"
                     data-testid="rally-challenge"
                   >

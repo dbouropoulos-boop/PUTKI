@@ -35,7 +35,7 @@ const Template = React.forwardRef(({ variant, payload, lang }, ref) => {
             boxShadow: `0 0 20px ${stateColor}99`,
           }} />
           <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>
-            mittari.fi
+            putkihq.fi
           </div>
         </div>
         <div style={{
@@ -125,7 +125,7 @@ const Template = React.forwardRef(({ variant, payload, lang }, ref) => {
           fontFamily: 'JetBrains Mono, monospace', fontSize: 24, fontWeight: 700,
           letterSpacing: '0.04em', color: '#F5F3EE',
         }}>
-          mittari.fi →
+          putkihq.fi →
         </div>
       </div>
     </div>
@@ -179,8 +179,8 @@ export const ShareButton = ({ variant = 'moment', payload, label, className, dat
         if (navigator.canShare({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: 'Mittari.fi',
-            text: lang === 'en' ? 'Spotted on Mittari.fi' : 'Mittari.fi havaitsi tämän',
+            title: 'PUTKI HQ',
+            text: lang === 'en' ? 'Spotted on PUTKI HQ' : 'PUTKI HQ havaitsi tämän',
           });
           return;
         }

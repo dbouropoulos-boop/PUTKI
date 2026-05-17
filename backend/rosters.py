@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 V2 — Operators + Streamers editorial roster registry.
+PUTKI HQ Phase 3 V2 — Operators + Streamers editorial roster registry.
 
 Replaces /app/frontend/src/data/mock.js OPERATORS / STREAMERS / INTL_STREAMERS
 imports per Final Architecture §8 Step 1 (mock purge).
@@ -7,7 +7,7 @@ imports per Final Architecture §8 Step 1 (mock purge).
 The rosters themselves are editorial fact built over multiple research sessions.
 Dynamic fields that lied about live state (viewers, live, avgWin, streak) were
 removed during the V2 honesty pass — what's left is the static editorial roster
-of operators and streamers Mittari covers.
+of operators and streamers PUTKI HQ covers.
 
 Both collections are seeded once on boot (idempotent) and editable via
 back-office CRUD. All entries carry `market_id="FI"` by default for

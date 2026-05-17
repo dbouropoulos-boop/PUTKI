@@ -10,9 +10,9 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const useToken = () => {
   const [token, setToken] = useState(() => {
-    try { return localStorage.getItem('mittari-admin-token') || ''; } catch { return ''; }
+    try { return localStorage.getItem('putki-hq-admin-token') || ''; } catch { return ''; }
   });
-  return [token, (v) => { setToken(v); try { localStorage.setItem('mittari-admin-token', v); } catch {} }];
+  return [token, (v) => { setToken(v); try { localStorage.setItem('putki-hq-admin-token', v); } catch {} }];
 };
 
 const emptyEntry = () => ({
@@ -140,7 +140,7 @@ const FoundationalResearch = () => {
           <div className="flex items-center gap-3 mb-6">
             <Lock strokeWidth={1.5} size={20} style={{ color: 'var(--muted)' }} />
             <div>
-              <div className="eyebrow">MITTARI · FOUNDATIONAL RESEARCH</div>
+              <div className="eyebrow">PUTKI HQ · FOUNDATIONAL RESEARCH</div>
               <h1 className="display text-2xl mt-1">Admin authentication</h1>
             </div>
           </div>
@@ -156,7 +156,7 @@ const FoundationalResearch = () => {
           />
           {authError && <div className="mono mt-3" style={{ fontSize: 11, color: '#C8423C' }}>{authError}</div>}
           <button type="submit" className="btn-primary w-full mt-5" data-testid="research-auth-submit">CONTINUE →</button>
-          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to Mittari</Link>
+          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to PUTKI HQ</Link>
         </form>
       </div>
     );
@@ -167,7 +167,7 @@ const FoundationalResearch = () => {
       <div className="container-wide">
         <div className="flex items-baseline justify-between mb-2 flex-wrap gap-3">
           <div>
-            <div className="eyebrow">MITTARI · FOUNDATIONAL RESEARCH STORE</div>
+            <div className="eyebrow">PUTKI HQ · FOUNDATIONAL RESEARCH STORE</div>
             <h1 className="display text-3xl sm:text-4xl mt-1">Editorial knowledge base</h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

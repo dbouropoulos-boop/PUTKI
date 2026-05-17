@@ -96,12 +96,12 @@ const ZonePublicationDepth = () => {
               {lang === 'en' ? 'HUB · ZONE 3 · PUBLICATION DEPTH' : 'HUB · ZONE 3 · JULKAISUN SYVYYS'}
             </div>
             <h2 className="display text-2xl sm:text-3xl" data-testid="zone-depth-heading">
-              {lang === 'en' ? 'Eight ways into Mittari\u2019s archive' : 'Kahdeksan reittiä Mittarin arkistoon'}
+              {lang === 'en' ? 'Eight ways into PUTKI HQ\u2019s archive' : 'Kahdeksan reittiä PUTKI HQ:n arkistoon'}
             </h2>
             <p className="font-serif mt-3 max-w-2xl" style={{ fontSize: 14.5, color: 'var(--muted)', lineHeight: 1.55 }}>
               {lang === 'en'
-                ? 'Mittari is not a live ticker pretending to be a paper. It is a paper that happens to know what is live. Start anywhere.'
-                : 'Mittari ei ole livetikkeri joka teeskentelee lehteä. Se on lehti joka sattuu tietämään mikä on live. Aloita mistä haluat.'}
+                ? 'PUTKI HQ is not a live ticker pretending to be a paper. It is a paper that happens to know what is live. Start anywhere.'
+                : 'PUTKI HQ ei ole livetikkeri joka teeskentelee lehteä. Se on lehti joka sattuu tietämään mikä on live. Aloita mistä haluat.'}
             </p>
           </div>
         </div>

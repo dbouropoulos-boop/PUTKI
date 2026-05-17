@@ -36,7 +36,7 @@ const Signup = () => {
       <header className="py-6 border-b border-subtle-border">
         <div className="container-wide flex items-baseline justify-between">
           <Link to="/" className="flex items-baseline gap-2">
-            <span className="font-display font-black text-xl tracking-tighter text-ink">Mittari</span>
+            <span className="font-display font-black text-xl tracking-tighter text-ink">PUTKI HQ</span>
             <span className="font-display text-[10px] tracking-widest uppercase text-muted-text">.fi</span>
           </Link>
           <div className="font-display text-[12px] uppercase tracking-widest text-muted-text tabular">Vaihe {step} / 4</div>
@@ -166,12 +166,12 @@ const Signup = () => {
             <div className="flex justify-center mb-8">
               <Dial size="medium" state={dialState.key} />
             </div>
-            <h1 className="display text-4xl sm:text-5xl mb-4">Valmis. Mittari valvoo.</h1>
+            <h1 className="display text-4xl sm:text-5xl mb-4">Valmis. PUTKI HQ valvoo.</h1>
             <p className="prose-mittari text-muted-text mb-10 max-w-md mx-auto">
               Olet seuraamassa {selected.length || 0} striimaajaa. Saat ilmoituksen heti kun joku heistä menee liveen.
             </p>
             <div className="editorial-card p-6 mb-8 text-left max-w-md mx-auto">
-              <div className="eyebrow mb-3">Mittari juuri nyt</div>
+              <div className="eyebrow mb-3">PUTKI HQ juuri nyt</div>
               <div className="font-display text-2xl font-bold text-ink mb-1" style={{ color: dialState.color }}>
                 {dialState.label}
               </div>

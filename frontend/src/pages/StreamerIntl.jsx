@@ -70,15 +70,15 @@ const StreamerIntl = () => {
         <div className="max-w-3xl">
           <div className="eyebrow mb-3 inline-flex items-center gap-2">
             <Globe strokeWidth={1.5} size={13} />
-            {lang === 'en' ? 'INTERNATIONAL SCENE · MITTARI COVERAGE' : 'KANSAINVÄLINEN SKENE · MITTARI-KATTAUS'}
+            {lang === 'en' ? 'INTERNATIONAL SCENE · PUTKI HQ COVERAGE' : 'KANSAINVÄLINEN SKENE · PUTKI HQ -KATTAUS'}
           </div>
           <h1 className="display text-4xl sm:text-6xl mb-5" data-testid="intl-page-title">
             {lang === 'en' ? 'The slot scene beyond Finland' : 'Slot-skene Suomen rajojen ulkopuolella'}
           </h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
             {lang === 'en'
-              ? <>Mittari covers the global slot-streaming scene — from Stake-era superstars to the Swedish, Dutch and Norwegian scenes — without losing its Finnish identity. <strong style={{ color: 'var(--ink)' }}>The dial stays Finnish-only.</strong> International activity surfaces here, never feeds the P*rkele-mittari.</>
-              : <>Mittari kattaa myös globaalin slot-skenen — Stake-aikakauden supertähdet, ruotsalaiset, hollantilaiset ja norjalaiset — kadottamatta suomalaista identiteettiään. <strong style={{ color: 'var(--ink)' }}>Mittari pysyy suomi-lähtöisenä.</strong> Kansainvälinen aktiviteetti näkyy täällä, mutta ei syötä P*rkele-mittaria.</>}
+              ? <>PUTKI HQ covers the global slot-streaming scene — from Stake-era superstars to the Swedish, Dutch and Norwegian scenes — without losing its Finnish identity. <strong style={{ color: 'var(--ink)' }}>The dial stays Finnish-only.</strong> International activity surfaces here, never feeds the P*rkele-mittari.</>
+              : <>PUTKI HQ kattaa myös globaalin slot-skenen — Stake-aikakauden supertähdet, ruotsalaiset, hollantilaiset ja norjalaiset — kadottamatta suomalaista identiteettiään. <strong style={{ color: 'var(--ink)' }}>PUTKI HQ pysyy suomi-lähtöisenä.</strong> Kansainvälinen aktiviteetti näkyy täällä, mutta ei syötä P*rkele-mittaria.</>}
           </p>
           <div className="mt-5">
             <Link to="/striimaajat" className="btn-ghost" data-testid="intl-back-link">
@@ -138,8 +138,8 @@ const StreamerIntl = () => {
           </div>
           <p className="font-serif" style={{ fontSize: 14.5, color: 'var(--ink)', lineHeight: 1.55 }}>
             {lang === 'en'
-              ? 'Mittari surfaces this scene editorially; activity here does not feed the dial.'
-              : 'Mittari nostaa tämän skenen toimituksellisesti; aktiviteetti täällä ei syötä mittaria.'}
+              ? 'PUTKI HQ surfaces this scene editorially; activity here does not feed the dial.'
+              : 'PUTKI HQ nostaa tämän skenen toimituksellisesti; aktiviteetti täällä ei syötä mittaria.'}
           </p>
         </div>
       </section>

@@ -288,15 +288,15 @@ const StreamerProfile = () => {
 
   const fmt = (n) => n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ');
 
-  // Editorial commentary (institutional Mittarin toimitus voice) — name-localized
+  // Editorial commentary (institutional PUTKI HQ -toimitus voice) — name-localized
   const commentary = lang === 'en'
     ? [
         `${streamer.name} has been around long enough to know what slot streaming actually is — and it isn\u2019t shouting at every spin.`,
-        `Mittari\u2019s read: stake size restrained, schedule consistent, audience engaged. The kind of streamer you can leave on in the background and trust the commentary.`,
+        `PUTKI HQ\u2019s read: stake size restrained, schedule consistent, audience engaged. The kind of streamer you can leave on in the background and trust the commentary.`,
       ]
     : [
         `${streamer.name} ei kuulu siihen joukkoon, joka huutaa kameralle joka spinnillä. Tyyli on hallittu, panostus malttava.`,
-        `Mittarin huomio: viime kuukauden striimitiheys on tasainen — viisi sessiota viikossa, kestot kahdesta kuuteen tuntiin. Bonuksen metsästäminen ei näy aikatauluissa, ja se on hyvä asia.`,
+        `PUTKI HQ:n huomio: viime kuukauden striimitiheys on tasainen — viisi sessiota viikossa, kestot kahdesta kuuteen tuntiin. Bonuksen metsästäminen ei näy aikatauluissa, ja se on hyvä asia.`,
       ];
 
   return (
@@ -416,7 +416,7 @@ const StreamerProfile = () => {
       {/* MITTARI COMMENTARY */}
       <section className="container-wide py-12 sm:py-16">
         <div className="container-narrow !px-0">
-          <div className="eyebrow mb-3">{lang === 'en' ? `MITTARI · ${streamer.name.toUpperCase()}` : `MITTARI · ${streamer.name.toUpperCase()}`}</div>
+          <div className="eyebrow mb-3">{lang === 'en' ? `PUTKI HQ · ${streamer.name.toUpperCase()}` : `PUTKI HQ · ${streamer.name.toUpperCase()}`}</div>
           <h2 className="display text-3xl sm:text-4xl mb-6">
             {lang === 'en' ? 'Steady work, no circus.' : 'Tasaista työtä, ei sirkusta.'}
           </h2>

@@ -13,13 +13,13 @@ import { useOperators } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
 const ARTICLES_FI = [
-  { title: 'Miten Suomen rahapelilainsäädäntö muuttuu heinäkuussa 2027', excerpt: 'Mittarin selitys uudesta lisenssijärjestelmästä ja siitä, mitä se merkitsee pelaajalle.' },
+  { title: 'Miten Suomen rahapelilainsäädäntö muuttuu heinäkuussa 2027', excerpt: 'PUTKI HQ:n selitys uudesta lisenssijärjestelmästä ja siitä, mitä se merkitsee pelaajalle.' },
   { title: 'Pay N Play pelaajan näkökulmasta — toimiiko se aina?', excerpt: 'Vertaamme kolmen suurimman PNP-operaattorin toimintaa kuukauden seurannan jälkeen.' },
   { title: 'Mittari-pisteet selitettynä: mikä laskee, mikä nostaa?', excerpt: 'Avoin metodologia. Ei mainos. Ei myyntiä — kerromme miten oikeasti pisteytämme.' },
   { title: 'Suomalaiset slot-striimaajat — keiden seuraamisesta voi oppia?', excerpt: 'Toimituksellinen katsaus 18 seuratuimpaan suomalaiseen pelistriimaajaan.' },
 ];
 const ARTICLES_EN = [
-  { title: 'How Finland\u2019s gambling regulation changes in July 2027', excerpt: 'Mittari\u2019s breakdown of the new license regime and what it means for players.' },
+  { title: 'How Finland\u2019s gambling regulation changes in July 2027', excerpt: 'PUTKI HQ\u2019s breakdown of the new license regime and what it means for players.' },
   { title: 'Pay N Play from a player\u2019s perspective — does it always work?', excerpt: 'We compared the three biggest PNP operators across a month of tracking.' },
   { title: 'P*rkele Score explained: what lowers it, what raises it', excerpt: 'Open methodology. Not advertising. Not sales — how we actually score.' },
   { title: 'Finnish slot streamers — who can you actually learn from?', excerpt: 'An editorial look at the 18 most-followed Finnish streamers.' },

@@ -11,7 +11,7 @@ import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://pelisignaali-fi.preview.emergentagent.com").rstrip("/")
 API = f"{BASE_URL}/api"
-TOK = "mittari-admin"
+TOK = "putki-hq-admin"
 HDR = {"X-Admin-Token": TOK}
 
 

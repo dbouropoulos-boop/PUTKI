@@ -71,7 +71,7 @@ export const ActivityFeedInline = () => {
               {lang === 'en' ? 'EDITORIAL FEED · RECENTLY PUBLISHED' : 'TOIMITUKSEN VIRTA · UUSIMMAT JULKAISUT'}
             </div>
             <h2 className="display text-2xl sm:text-3xl">
-              {lang === 'en' ? 'What Mittari has shipped' : 'Mitä Mittari on julkaissut'}
+              {lang === 'en' ? 'What PUTKI HQ has shipped' : 'Mitä PUTKI HQ on julkaissut'}
             </h2>
           </div>
           <div className="mono hidden sm:block" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>

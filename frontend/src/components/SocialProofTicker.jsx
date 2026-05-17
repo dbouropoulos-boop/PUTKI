@@ -84,7 +84,7 @@ export const SocialProofTicker = () => {
         <div className="flex items-baseline justify-between mb-4">
           <div className="eyebrow inline-flex items-center gap-2">
             <span className="led" style={{ background: '#5A7BB8' }} />
-            {lang === 'en' ? 'MITTARI · OPERATIONAL STATUS' : 'MITTARI · OPERATIIVINEN TILA'}
+            {lang === 'en' ? 'PUTKI HQ · OPERATIONAL STATUS' : 'PUTKI HQ · OPERATIIVINEN TILA'}
           </div>
           <div className="mono hidden sm:block" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
             {lang === 'en' ? 'AUDITABLE COUNTS · NO FABRICATION' : 'TARKISTETTAVAT LUVUT · EI KEKSITTYÄ DATAA'}

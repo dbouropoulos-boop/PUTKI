@@ -107,7 +107,7 @@ const OperatorReview = () => {
       <section className="container-wide pt-10 sm:pt-16 pb-10 sm:pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
           <div className="lg:col-span-7">
-            <div className="eyebrow mb-4">Mittari-arvio · {operator.year}</div>
+            <div className="eyebrow mb-4">PUTKI HQ -arvio · {operator.year}</div>
             <div className="flex items-center gap-4 mb-6">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-[4px] bg-ink text-paper flex items-center justify-center font-display font-black text-5xl flex-shrink-0">
                 {operator.logo}
@@ -115,7 +115,7 @@ const OperatorReview = () => {
               <h1 className="display text-5xl sm:text-7xl">{operator.name}</h1>
             </div>
             <p className="prose-mittari mb-8 max-w-xl">
-              {operator.oneLiner}{isPartner ? ' Mittarin näkemys: paketti on kerralla suomalaiselle pelaajalle suunniteltu — Brite, suomenkielinen chat, Pragmatic-kirjasto ja oikeasti nopeat maksut.' : ''}
+              {operator.oneLiner}{isPartner ? ' PUTKI HQ:n näkemys: paketti on kerralla suomalaiselle pelaajalle suunniteltu — Brite, suomenkielinen chat, Pragmatic-kirjasto ja oikeasti nopeat maksut.' : ''}
             </p>
 
             {isPartner ? (
@@ -137,8 +137,8 @@ const OperatorReview = () => {
                 <div className="eyebrow mb-2">{lang === 'en' ? 'EDITORIAL ASSESSMENT ONLY' : 'VAIN TOIMITUKSELLINEN ARVIO'}</div>
                 <div className="font-serif text-[14px] text-ink leading-relaxed">
                   {lang === 'en'
-                    ? `Mittari has no partnership with ${operator.name}. No affiliate links, no bonus offers, no real-time tracking — only the P*rkele score and license metadata above.`
-                    : `Mittarilla ei ole kumppanuutta operaattorin ${operator.name} kanssa. Ei affiliate-linkkejä, ei bonustarjouksia, ei reaaliaikaista seurantaa — vain yllä oleva P*rkele-pisteytys ja lisenssitieto.`}
+                    ? `PUTKI HQ has no partnership with ${operator.name}. No affiliate links, no bonus offers, no real-time tracking — only the P*rkele score and license metadata above.`
+                    : `PUTKI HQ:lla ei ole kumppanuutta operaattorin ${operator.name} kanssa. Ei affiliate-linkkejä, ei bonustarjouksia, ei reaaliaikaista seurantaa — vain yllä oleva P*rkele-pisteytys ja lisenssitieto.`}
                 </div>
               </div>
             )}
@@ -224,8 +224,8 @@ const OperatorReview = () => {
             </div>
             <p className="font-serif" style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink)', maxWidth: 640 }}>
               {lang === 'en'
-                ? 'Mittari does not track this operator\u2019s real-time data. Only the editorial assessment above applies.'
-                : 'Mittari ei seuraa tämän operaattorin reaaliaikaista dataa. Vain yllä oleva toimituksellinen arvio pätee.'}
+                ? 'PUTKI HQ does not track this operator\u2019s real-time data. Only the editorial assessment above applies.'
+                : 'PUTKI HQ ei seuraa tämän operaattorin reaaliaikaista dataa. Vain yllä oleva toimituksellinen arvio pätee.'}
             </p>
           </div>
         </section>
@@ -236,7 +236,7 @@ const OperatorReview = () => {
       <section className="container-wide py-12 sm:py-16" data-testid="deeper-quickfacts">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-16">
           <div className="lg:col-span-7">
-            <div className="eyebrow mb-3">Mittarin näkemys</div>
+            <div className="eyebrow mb-3">PUTKI HQ:n näkemys</div>
             <h2 className="display text-3xl sm:text-4xl mb-6">Maksunopeus kuin Veikkauksella, kirjasto kuin Pinnacle.</h2>
             <div className="prose-mittari">
               <p>

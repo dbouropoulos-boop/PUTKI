@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 V2 — Voyager rotation calendar (Step 3 folded into Step 1 surface).
+PUTKI HQ Phase 3 V2 — Voyager rotation calendar (Step 3 folded into Step 1 surface).
 
 Stores one row per ISO week per market for the rotating-operator Voyager mechanic.
 Per FINAL ARCHITECTURE §5: each ISO week, one partnered operator becomes the

@@ -26,8 +26,8 @@ export const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 sm:gap-12">
           <div>
             <div className="flex items-baseline gap-2 mb-4">
-              <span className="font-display font-black text-xl tracking-tighter" style={{ color: 'var(--ink)' }}>Mittari</span>
-              <span className="mono text-[10px] tracking-[0.2em] uppercase" style={{ color: 'var(--muted)' }}>.fi</span>
+              <span className="font-display font-black text-xl tracking-tighter" style={{ color: 'var(--ink)' }}>PUTKI</span>
+              <span className="mono text-[10px] tracking-[0.22em] uppercase" style={{ color: 'var(--muted)' }}>HQ</span>
             </div>
             <p className="font-serif text-[13px] leading-relaxed" style={{ color: 'var(--muted)' }}>{t('footer.lede')}</p>
           </div>
@@ -60,7 +60,7 @@ export const Footer = () => {
         </div>
 
         <div className="section-rule mt-10 pt-6 flex flex-col sm:flex-row justify-between gap-3 mono text-[10.5px]" style={{ letterSpacing: '0.12em', color: 'var(--muted)' }}>
-          <span>© {new Date().getFullYear()} MITTARI.FI · {t('footer.indep')}</span>
+          <span>© {new Date().getFullYear()} PUTKIHQ.FI · {t('footer.indep')}</span>
           <span>{t('footer.warning')} · {t('common.responsible')}</span>
         </div>
       </div>

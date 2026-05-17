@@ -1,8 +1,8 @@
 """
-Mittari Phase 3 — Content automation engine.
+PUTKI HQ Phase 3 — Content automation engine.
 
 Pipeline:
-  signal (mock-seeded for now) -> Claude generates Mittari-voice variants
+  signal (mock-seeded for now) -> Claude generates PUTKI HQ -voice variants
   -> generated_content row in 'queued' status
   -> editorial approval (back-office) flips to 'approved' + selects variant
   -> distribute_content() writes to published_content (site surface)
@@ -26,7 +26,7 @@ from emergentintegrations.llm.chat import LlmChat, UserMessage
 
 CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
     "moment_commentary": {
-        "description": "Mittari-voice take on a streamer big-win or notable clip",
+        "description": "PUTKI HQ -voice take on a streamer big-win or notable clip",
         "prompt_key": "moment_commentary_prompt",
         "target_surface": "missasit_eilen",
         "approval_required": True,
@@ -35,7 +35,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "max_words": 80,
     },
     "sports_take": {
-        "description": "Mittari-voice take on a sports event (Liiga / NHL / F1 / EPL)",
+        "description": "PUTKI HQ -voice take on a sports event (Liiga / NHL / F1 / EPL)",
         "prompt_key": "sports_take_prompt",
         "target_surface": "weekly_card",
         "approval_required": True,
@@ -162,7 +162,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "max_words": 900,
     },
     "tracked_x_post": {
-        "description": "Republication of a tracked X account post with Mittari framing — Pulssi Layer 1",
+        "description": "Republication of a tracked X account post with PUTKI HQ framing — Pulssi Layer 1",
         "prompt_key": "tracked_x_post_prompt",
         "target_surface": "pulssi_layer_1",
         "approval_required": True,
@@ -180,7 +180,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "max_words": 60,
     },
     "editor_x_pull": {
-        "description": "Editor-curated notable Finnish X post with Mittari analysis — Pulssi Layer 3",
+        "description": "Editor-curated notable Finnish X post with PUTKI HQ analysis — Pulssi Layer 3",
         "prompt_key": "editor_x_pull_prompt",
         "target_surface": "pulssi_layer_3",
         "approval_required": True,
@@ -202,7 +202,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
 
 # ─────────────────────── default editorial guidelines ───────────────────────
 DEFAULT_GUIDELINES: Dict[str, str] = {
-    "mittari_voice_system_prompt": """Kirjoitat Mittarille — suomalaiselle rahapelikulttuurin julkaisulle.
+    "putki_hq_voice_system_prompt": """Kirjoitat Mittarille — suomalaiselle rahapelikulttuurin julkaisulle.
 
 REFERENSSIKEHYS:
 Ääni: Complex (kulttuurijournalismissa), GQ (miesten kulttuurissa), Bloomberg Crypto (toimialaanalyysissä). Itsevarma, rahatietoinen, statustietoinen, kulttuurisesti sisällä — mutta toimituksellisilla standardeilla.
@@ -221,7 +221,7 @@ EI KOSKAAN affiliate-sivuston rekisteri (transaktionaalinen, matala uskottavuus)
 - Kohtelee yleisöä kykenevinä aikuisina jotka rakentavat jotain
 
 HYVIÄ ESIMERKKEJÄ:
-- "Tappara on tulessa, mutta TPS:n maalivahti pelaa 4. peliä peräkkäin. Mittari sanoo: arvoa kotijoukkueessa."
+- "Tappara on tulessa, mutta TPS:n maalivahti pelaa 4. peliä peräkkäin. PUTKI HQ sanoo: arvoa kotijoukkueessa."
 - "Trainwreckstv osti Lamborghinin — kuudes vuosi peräkkäin näkyvää statuskulutusta. Stake-talouden mekaniikka näkyy ulospäin."
 - "AndyPyron €42K hit on tilastollisesti epätodennäköinen yhdistelmä. Älä yritä toistaa."
 - "Drake-Stake-yhteistyö maksaa muka 100M$. Kulttuurin osto on harvoin näin avointa."
@@ -302,9 +302,9 @@ LÄHTÖTIEDOT:
 - Lähde: {source_url}
 
 TEHTÄVÄ:
-Kirjoita 3 vaihtoehtoista takea tästä hetkestä, jokainen 40-80 sanaa Mittarin äänellä. Kunkin tulee:
+Kirjoita 3 vaihtoehtoista takea tästä hetkestä, jokainen 40-80 sanaa PUTKI HQ:n äänellä. Kunkin tulee:
 1. Todeta tosiasiat selkeästi
-2. Lisätä Mittarin tulkinta (tilastollinen konteksti, kuviontunnistus, skenekonteksti)
+2. Lisätä PUTKI HQ:n tulkinta (tilastollinen konteksti, kuviontunnistus, skenekonteksti)
 3. Päättää mahdollisesti toimitukselliseen näkemykseen
 
 Palauta tarkalleen tämä JSON-rakenne:
@@ -320,9 +320,9 @@ LÄHTÖTIEDOT:
 - Suomalaisten osallistuminen: {finnish_involvement}
 
 TEHTÄVÄ:
-Kirjoita 3 vaihtoehtoista takea, jokainen 50-100 sanaa Mittarin äänellä. Kunkin tulee:
+Kirjoita 3 vaihtoehtoista takea, jokainen 50-100 sanaa PUTKI HQ:n äänellä. Kunkin tulee:
 1. Todeta tapahtuma suomalaisesta näkökulmasta
-2. Lisätä Mittarin tulkinta — vedonlyöntinäkökulma kun relevantti
+2. Lisätä PUTKI HQ:n tulkinta — vedonlyöntinäkökulma kun relevantti
 3. Käyttää suomalaisia tunneankkureita (Tappara-fani, Bottas, HJK)
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}, {{"text": "..."}}]}}""",
@@ -335,7 +335,7 @@ LÄHTÖTIEDOT:
 - Konteksti: {context}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoista havaintoa, kumpikin 60-100 sanaa Mittarin äänellä.
+Kirjoita 2 vaihtoehtoista havaintoa, kumpikin 60-100 sanaa PUTKI HQ:n äänellä.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
@@ -347,9 +347,9 @@ LÄHTÖTIEDOT:
 - Yksityiskohdat: {details}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoista päivitystä, kumpikin 80-150 sanaa Mittarin äänellä. Sisällytä:
+Kirjoita 2 vaihtoehtoista päivitystä, kumpikin 80-150 sanaa PUTKI HQ:n äänellä. Sisällytä:
 1. Mikä muuttui
-2. Mittarin tulkinta — onko kyseessä parannus, heikennys vai sivuttaisliike
+2. PUTKI HQ:n tulkinta — onko kyseessä parannus, heikennys vai sivuttaisliike
 3. Mahdollinen pisteen muutosperuste
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
@@ -373,10 +373,10 @@ LÄHTÖTIEDOT:
 - Tutkimusmateriaali: {research_notes}
 
 TEHTÄVÄ:
-Kirjoita 1 piirre, 1500-2500 sanaa, Mittarin äänellä (Complex/GQ-rekisteri). Sisällytä:
+Kirjoita 1 piirre, 1500-2500 sanaa, PUTKI HQ:n äänellä (Complex/GQ-rekisteri). Sisällytä:
 1. Vahva avaus joka ankkuroi lukijan kulttuuriseen hetkeen
 2. Ekspositio kulttuurisesta ilmiöstä
-3. Mittarin näkemys — miksi tämä on noteerattava juuri nyt
+3. PUTKI HQ:n näkemys — miksi tämä on noteerattava juuri nyt
 4. Konkreettiset suomalaiset kulttuuriviitteet luontevasti
 5. Lopetus joka jättää lukijalle painokkaan ajatuksen
 
@@ -397,7 +397,7 @@ Kirjoita 1 profiilijuttu, 2000-3000 sanaa, GQ/Complex/Bloomberg-tasoisella tarkk
 2. Uran kaari ja persoonan kehittyminen
 3. Talous ja liiketoimintarakenne (palkat, sopimukset, tulovirrat)
 4. Statuskulutus ja sen merkityskerros
-5. Mittarin kriittinen näkemys — agree/disagree -kantoja
+5. PUTKI HQ:n kriittinen näkemys — agree/disagree -kantoja
 6. Päätös joka kontekstualisoi kohteen Suomen yleisölle
 
 ÄLÄ KOSKAAN: kehystä aspiraationaalisena uhkapelimallina.
@@ -412,10 +412,10 @@ LÄHTÖTIEDOT:
 - Lähde: {source_url}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa Mittarin äänellä. Sisällytä:
+Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa PUTKI HQ:n äänellä. Sisällytä:
 1. Mitä tapahtui (faktat)
 2. Mitä tämä tarkoittaa skenelle
-3. Mittarin analyysi — kulttuurinen merkitys, liiketoimintamekanismi tai konteksti
+3. PUTKI HQ:n analyysi — kulttuurinen merkitys, liiketoimintamekanismi tai konteksti
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
@@ -427,9 +427,9 @@ LÄHTÖTIEDOT:
 - Konteksti: {context}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoa, kumpikin 800-1500 sanaa Mittarin äänellä. Sisällytä:
+Kirjoita 2 vaihtoehtoa, kumpikin 800-1500 sanaa PUTKI HQ:n äänellä. Sisällytä:
 1. Selkeä taloudellinen kehys (luvut, mekaniikka, toimijat)
-2. Mittarin analyyttinen näkemys
+2. PUTKI HQ:n analyyttinen näkemys
 3. Mitä tämä tarkoittaa suomalaiselle yleisölle käytännössä
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
@@ -441,7 +441,7 @@ LÄHTÖTIEDOT:
 - Kulma: {angle}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoa, kumpikin 600-1200 sanaa Mittarin äänellä. Itsevarma, rahatietoinen rekisteri. Käsittele yleisöä aikuisina rakentamassa varallisuutta. Sisällytä konkreettiset suomalaiset luvut ja tilanteet. Kryptoa kohtaan skeptinen ääni kun aihepiirissä.
+Kirjoita 2 vaihtoehtoa, kumpikin 600-1200 sanaa PUTKI HQ:n äänellä. Itsevarma, rahatietoinen rekisteri. Käsittele yleisöä aikuisina rakentamassa varallisuutta. Sisällytä konkreettiset suomalaiset luvut ja tilanteet. Kryptoa kohtaan skeptinen ääni kun aihepiirissä.
 
 ÄLÄ KOSKAAN: kehystä uhkapeliä varallisuuden rakentamisena.
 
@@ -454,7 +454,7 @@ LÄHTÖTIEDOT:
 - Painopiste: {focus_area}
 
 TEHTÄVÄ:
-Kirjoita 1 versio, 600-1500 sanaa Mittarin äänellä. Matemaattista, tarkka, älä koskaan lupaa voittoja.
+Kirjoita 1 versio, 600-1500 sanaa PUTKI HQ:n äänellä. Matemaattista, tarkka, älä koskaan lupaa voittoja.
 
 EHDOTTOMAT SÄÄNNÖT:
 - Taitopohjaisille peleille (blackjack, poker, video poker): optimaalistrategia sallittu missä se on olemassa
@@ -471,7 +471,7 @@ LÄHTÖTIEDOT:
 - Mekaniikka: {mechanics}
 
 TEHTÄVÄ:
-Kirjoita 1 versio, 600-1500 sanaa, matemaattisesti tarkkaa Mittarin äänellä. Laske odotusarvot, kierrätysvaatimukset, "real money value". Älä kehystä bonusta voitollisena yli matemaattisen odotusarvon.
+Kirjoita 1 versio, 600-1500 sanaa, matemaattisesti tarkkaa PUTKI HQ:n äänellä. Laske odotusarvot, kierrätysvaatimukset, "real money value". Älä kehystä bonusta voitollisena yli matemaattisen odotusarvon.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
@@ -483,10 +483,10 @@ LÄHTÖTIEDOT:
 - Arvioitu arvo: {value}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoa, kumpikin 300-700 sanaa Mittarin äänellä. Sisällytä:
+Kirjoita 2 vaihtoehtoa, kumpikin 300-700 sanaa PUTKI HQ:n äänellä. Sisällytä:
 1. Faktat sopimuksesta
 2. Strategisen sijoittumisen analyysi
-3. Mittarin näkemys mitä tämä tarkoittaa suomalaiselle uhkapelimaisemalle
+3. PUTKI HQ:n näkemys mitä tämä tarkoittaa suomalaiselle uhkapelimaisemalle
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
@@ -498,11 +498,11 @@ LÄHTÖTIEDOT:
 - Lähde: {source_url}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa Mittarin äänellä. Selitä mitä muuttuu, mitä se tarkoittaa pelaajalle, mitä se tarkoittaa operaattoreille — Suomen rahapelilaki 2025/2027 kehyksessä.
+Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa PUTKI HQ:n äänellä. Selitä mitä muuttuu, mitä se tarkoittaa pelaajalle, mitä se tarkoittaa operaattoreille — Suomen rahapelilaki 2025/2027 kehyksessä.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
-    "tracked_x_post_prompt": """Kirjoitat Mittarin toimituksellisen kehyksen seuratusta X-postauksesta Pulssi-virtaan.
+    "tracked_x_post_prompt": """Kirjoitat PUTKI HQ:n toimituksellisen kehyksen seuratusta X-postauksesta Pulssi-virtaan.
 
 LÄHTÖTIEDOT:
 - Kirjoittaja: {author_name} (@{author_handle})
@@ -511,7 +511,7 @@ LÄHTÖTIEDOT:
 - Kulttuurinen konteksti: {context}
 
 TEHTÄVÄ:
-Kirjoita "Miksi tämä on noteerattava" -framing, 60-100 sanaa Mittarin äänellä. ÄLÄ TOISTA postauksen sisältöä — selitä kulttuurinen merkitys.
+Kirjoita "Miksi tämä on noteerattava" -framing, 60-100 sanaa PUTKI HQ:n äänellä. ÄLÄ TOISTA postauksen sisältöä — selitä kulttuurinen merkitys.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
@@ -523,11 +523,11 @@ LÄHTÖTIEDOT:
 - Kategoria: {category}
 
 TEHTÄVÄ:
-Kirjoita yksi 25-50 sanan annotaatio Mittarin äänellä — mistä tämä trendi kertoo Suomen yleisölle.
+Kirjoita yksi 25-50 sanan annotaatio PUTKI HQ:n äänellä — mistä tämä trendi kertoo Suomen yleisölle.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
-    "editor_x_pull_prompt": """Kirjoitat Mittarin nostot -kehyksen toimittajan manuaalisesti valitulle X-postaukselle.
+    "editor_x_pull_prompt": """Kirjoitat PUTKI HQ:n nostot -kehyksen toimittajan manuaalisesti valitulle X-postaukselle.
 
 LÄHTÖTIEDOT:
 - Kirjoittaja: {author_name} (@{author_handle})
@@ -535,7 +535,7 @@ LÄHTÖTIEDOT:
 - Toimittajan kulma: {editor_note}
 
 TEHTÄVÄ:
-Kirjoita 100-180 sanan Mittari-näkemys — laajempi kulttuurinen viite kuin Layer 1 -republikaatioilla. Mittarin paras yhden postauksen ympärille kirjoitettu mini-analyysi.
+Kirjoita 100-180 sanan PUTKI HQ -näkemys — laajempi kulttuurinen viite kuin Layer 1 -republikaatioilla. PUTKI HQ:n paras yhden postauksen ympärille kirjoitettu mini-analyysi.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
@@ -547,7 +547,7 @@ LÄHTÖTIEDOT:
 - Suomeen sovellettava kulma: {finnish_angle}
 
 TEHTÄVÄ:
-Kirjoita 1 versio, 800-1500 sanaa Mittarin äänellä. Tämä on journalismia joka käyttää globaalia osaamista (Wizard of Odds, Casino.guru, akateeminen tutkimus, sääntelyanalyysit) ja soveltaa sitä suomalaiseen kontekstiin — EI sisällön tuontia influencer-lähteistä.
+Kirjoita 1 versio, 800-1500 sanaa PUTKI HQ:n äänellä. Tämä on journalismia joka käyttää globaalia osaamista (Wizard of Odds, Casino.guru, akateeminen tutkimus, sääntelyanalyysit) ja soveltaa sitä suomalaiseen kontekstiin — EI sisällön tuontia influencer-lähteistä.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 }
@@ -619,7 +619,7 @@ async def generate_content_for_signal(
 
     cfg = CONTENT_TYPES[content_type]
 
-    system_prompt = await get_guideline(db, "mittari_voice_system_prompt")
+    system_prompt = await get_guideline(db, "putki_hq_voice_system_prompt")
     user_prompt_template = await get_guideline(db, cfg["prompt_key"])
 
     try:
@@ -631,7 +631,7 @@ async def generate_content_for_signal(
             safe_payload.setdefault(k, "—")
         user_prompt = user_prompt_template.format(**safe_payload)
 
-    session_id = f"mittari-gen-{uuid.uuid4()}"
+    session_id = f"putki-hq-gen-{uuid.uuid4()}"
     raw_text = await call_claude(system_prompt, user_prompt, session_id)
     variants = parse_variants(raw_text, cfg["variant_count"])
 

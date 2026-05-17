@@ -1,9 +1,9 @@
 """
-Mittari Phase 3 V2 — Foundational research store.
+PUTKI HQ Phase 3 V2 — Foundational research store.
 
 A structured knowledge base that backs the editorial_seed_scheduler. Topic
 generation reads from this collection (filtered by beat / content_type / freshness)
-to surface relevance-current research that Claude then turns into Mittari-voice
+to surface relevance-current research that Claude then turns into PUTKI HQ -voice
 editorial seeds.
 
 Schema (Mongo collection: `foundational_research`):

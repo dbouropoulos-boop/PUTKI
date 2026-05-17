@@ -14,17 +14,17 @@ const Toimitus = () => {
             {lang === 'en' ? 'EDITORIAL TEAM' : 'TOIMITUS'}
           </div>
           <h1 className="display text-4xl sm:text-6xl mb-5">
-            {lang === 'en' ? 'Mittarin toimitus' : 'Mittarin toimitus'}
+            {lang === 'en' ? 'PUTKI HQ -toimitus' : 'PUTKI HQ -toimitus'}
           </h1>
           <p className="prose-mittari max-w-2xl">
             {lang === 'en'
-              ? <>Mittari is an independent Finnish slot-streaming and casino review publication.
+              ? <>PUTKI HQ is an independent Finnish slot-streaming and casino review publication.
                 The voice you hear in our reviews, weekly card and editorial commentary is the
-                <strong style={{ color: 'var(--ink)' }}> Mittarin toimitus</strong> — an institutional editorial team, not a fictional persona.
+                <strong style={{ color: 'var(--ink)' }}> PUTKI HQ -toimitus</strong> — an institutional editorial team, not a fictional persona.
                 When we hire named contributors, their bylines and track records will appear on this page.</>
-              : <>Mittari on riippumaton suomalainen slot-striimausta ja kasinoita käsittelevä julkaisu.
+              : <>PUTKI HQ on riippumaton suomalainen slot-striimausta ja kasinoita käsittelevä julkaisu.
                 Arvioidemme, viikon kortin ja toimituksellisen kommentaarin ääni on
-                <strong style={{ color: 'var(--ink)' }}> Mittarin toimitus</strong> — toimituksellinen tiimi, ei fiktiivinen hahmo.
+                <strong style={{ color: 'var(--ink)' }}> PUTKI HQ -toimitus</strong> — toimituksellinen tiimi, ei fiktiivinen hahmo.
                 Kun palkkaamme nimettyjä avustajia, heidän nimensä ja jälkensä ilmestyvät tälle sivulle.</>}
           </p>
         </div>
@@ -73,8 +73,8 @@ const Toimitus = () => {
             </h3>
             <p className="font-serif" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.55 }}>
               {lang === 'en'
-                ? 'Reach the editorial team at toimitus@mittari.fi. We read every message — but the dial does not move on whims.'
-                : 'Tavoita toimitus osoitteesta toimitus@mittari.fi. Luemme jokaisen viestin — Mittari ei kuitenkaan liiku oikuilla.'}
+                ? 'Reach the editorial team at toimitus@putkihq.fi. We read every message — but the dial does not move on whims.'
+                : 'Tavoita toimitus osoitteesta toimitus@putkihq.fi. Luemme jokaisen viestin — PUTKI HQ ei kuitenkaan liiku oikuilla.'}
             </p>
           </article>
         </div>
@@ -89,11 +89,11 @@ const Toimitus = () => {
           </h2>
           <p className="font-serif" style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.6 }}>
             {lang === 'en'
-              ? <>Mittari is hiring its first named editors — a Finnish sports analyst for the weekly card, and an industry editor for operator reviews.
-                When they join, their bylines, photos and personal track records replace the institutional <em>Mittarin toimitus</em> placeholder on those surfaces.
+              ? <>PUTKI HQ is hiring its first named editors — a Finnish sports analyst for the weekly card, and an industry editor for operator reviews.
+                When they join, their bylines, photos and personal track records replace the institutional <em>PUTKI HQ -toimitus</em> placeholder on those surfaces.
                 Real human accountability, not a fictional persona.</>
-              : <>Mittari etsii ensimmäisiä nimettyjä toimittajiaan — urheiluanalyytikkoa viikon korttiin ja kasinotoimittajaa operaattoriarvioihin.
-                Kun he aloittavat, heidän nimensä, kuvansa ja henkilökohtaiset jälkensä korvaavat institutionaalisen <em>Mittarin toimitus</em> -pohjan kyseisillä pinnoilla.
+              : <>PUTKI HQ etsii ensimmäisiä nimettyjä toimittajiaan — urheiluanalyytikkoa viikon korttiin ja kasinotoimittajaa operaattoriarvioihin.
+                Kun he aloittavat, heidän nimensä, kuvansa ja henkilökohtaiset jälkensä korvaavat institutionaalisen <em>PUTKI HQ -toimitus</em> -pohjan kyseisillä pinnoilla.
                 Todellinen vastuullisuus, ei fiktiivinen hahmo.</>}
           </p>
           <Link to="/menetelma" className="btn-secondary mt-6 inline-flex" data-testid="toimitus-method-link">

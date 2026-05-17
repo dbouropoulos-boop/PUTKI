@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 
 
 async def require_admin(x_admin_token: Optional[str] = Header(None, alias='X-Admin-Token')):
-    expected = os.environ.get('BACK_OFFICE_TOKEN', 'mittari-admin')
+    expected = os.environ.get('BACK_OFFICE_TOKEN', 'putki-hq-admin')
     if not x_admin_token or x_admin_token != expected:
         raise HTTPException(status_code=401, detail='Invalid admin token')
     return True
@@ -25,7 +25,7 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-app = FastAPI(title="Mittari.fi API — Phase 1")
+app = FastAPI(title="PUTKI HQ API — Phase 1")
 api_router = APIRouter(prefix="/api")
 
 
@@ -46,7 +46,7 @@ CURRENT_STATE_KEY = "KYLMA"  # Honest default: no signal yet on first boot. Real
 
 @api_router.get("/")
 async def root():
-    return {"service": "Mittari.fi API", "phase": 1, "status": "ok"}
+    return {"service": "PUTKI HQ API", "phase": 1, "status": "ok"}
 
 
 @api_router.get("/dial")
@@ -76,7 +76,7 @@ async def get_dial():
         "any_real": False,
         "context": {
             "active_signals": [],
-            "note": "Ei signaalia vielä — Mittarin pollerit eivät ole vielä keränneet dataa.",
+            "note": "Ei signaalia vielä — PUTKI HQ:n pollerit eivät ole vielä keränneet dataa.",
         },
     }
 
@@ -981,13 +981,13 @@ async def _seed_phase3():
     except Exception:
         logger.exception("Failed to create feed_items indexes")
     # Kick off background signal pipeline + dial recalc loop.
-    if os.environ.get("MITTARI_DISABLE_WORKERS", "0") != "1":
+    if os.environ.get("PUTKI_HQ_DISABLE_WORKERS", "0") != "1":
         import asyncio as _aio
         _aio.create_task(_signal_dial_worker())
-        if os.environ.get("MITTARI_DISABLE_FEED_WORKER", "0") != "1":
+        if os.environ.get("PUTKI_HQ_DISABLE_FEED_WORKER", "0") != "1":
             _aio.create_task(feed_worker_loop(db))
     # Kick off editorial seed scheduler + variant filler.
-    if os.environ.get("MITTARI_DISABLE_SCHEDULER", "0") != "1":
+    if os.environ.get("PUTKI_HQ_DISABLE_SCHEDULER", "0") != "1":
         import asyncio as _aio
         _aio.create_task(scheduler_worker_loop(db))
         _aio.create_task(variant_filler_worker_loop(db))
@@ -995,7 +995,7 @@ async def _seed_phase3():
 
 async def _signal_dial_worker():
     """Background loop: poll all signal sources, recompute dial, sleep.
-    Disabled by setting MITTARI_DISABLE_WORKERS=1 (used in unit tests)."""
+    Disabled by setting PUTKI_HQ_DISABLE_WORKERS=1 (used in unit tests)."""
     import asyncio as _aio
     # Wait a beat so the app finishes booting before the first poll.
     await _aio.sleep(5)

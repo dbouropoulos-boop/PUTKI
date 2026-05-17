@@ -18,7 +18,7 @@ import { Link } from 'react-router-dom';
 import { Lock, RefreshCw, Webhook, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Hammer, Loader2 } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-const FEED_REBUILD_TIMESTAMP_KEY = 'mittari-admin-last-feed-rebuild';
+const FEED_REBUILD_TIMESTAMP_KEY = 'putki-hq-admin-last-feed-rebuild';
 
 const fmtUtcStamp = (iso) => {
   if (!iso) return '—';
@@ -28,9 +28,9 @@ const POLL_MS = 30_000;
 
 const useToken = () => {
   const [token, setToken] = useState(() => {
-    try { return localStorage.getItem('mittari-admin-token') || ''; } catch { return ''; }
+    try { return localStorage.getItem('putki-hq-admin-token') || ''; } catch { return ''; }
   });
-  return [token, (v) => { setToken(v); try { localStorage.setItem('mittari-admin-token', v); } catch {} }];
+  return [token, (v) => { setToken(v); try { localStorage.setItem('putki-hq-admin-token', v); } catch {} }];
 };
 
 const fmtAge = (seconds) => {

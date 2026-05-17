@@ -4,7 +4,7 @@ import { Gift, Sparkles, ArrowRight, KeyRound, Check, Clock } from 'lucide-react
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-const VISITOR_COOKIE = 'mittari_weezy_visitor_uuid';
+const VISITOR_COOKIE = 'putki_hq_visitor_uuid';
 const COOKIE_DAYS = 90;
 
 // ── Cookie helpers ──
@@ -26,7 +26,7 @@ const getCookie = (name) => {
 };
 
 // ── Mocked Smartico-style spin-the-wheel placeholder ──
-// Stays in Mittari aesthetic; gets swapped for real Smartico script when smartico_template_id is set.
+// Stays in PUTKI HQ aesthetic; gets swapped for real Smartico script when smartico_template_id is set.
 const PLACEHOLDER_PRIZES = [
   { label: '50 € + 25 FS', kind: 'BIG', color: '#E8924A' },
   { label: '20 FS',         kind: 'OK',  color: '#5A7BB8' },
@@ -185,11 +185,11 @@ const VoitaPalkinto = () => {
   // The Smartico SDK auto-discovers the #smartico-visitor-mode div via data-template-id.
   useEffect(() => {
     if (!templateId || !loaderUrl) return;
-    if (document.querySelector(`script[data-mittari-smartico="1"]`)) return;
+    if (document.querySelector(`script[data-putki-hq-smartico="1"]`)) return;
     const s = document.createElement('script');
     s.src = loaderUrl;
     s.async = true;
-    s.dataset.mittariSmartico = '1';
+    s.dataset.putkiHqSmartico = '1';
     if (brandKey) s.dataset.smarticoBrandKey = brandKey;
     document.body.appendChild(s);
     return () => {
@@ -210,7 +210,7 @@ const VoitaPalkinto = () => {
   };
 
   const claimUrl = winRecord
-    ? `https://weezybet.fi/register?visitor_win_uuid=${encodeURIComponent(winRecord.visitor_win_uuid)}&utm_source=mittari&utm_medium=visitor_mode&utm_campaign=voita_palkinto`
+    ? `https://weezybet.fi/register?visitor_win_uuid=${encodeURIComponent(winRecord.visitor_win_uuid)}&utm_source=putki_hq&utm_medium=visitor_mode&utm_campaign=voita_palkinto`
     : 'https://weezybet.fi/register';
 
   return (
@@ -328,7 +328,7 @@ const VoitaPalkinto = () => {
       <section className="container-wide py-10">
         <div className="panel p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap" style={{ borderLeft: '3px solid var(--brand-blue)' }}>
           <div>
-            <div className="eyebrow mb-1.5">{lang === 'en' ? 'ALSO ON MITTARI' : 'MITTARILLA MYÖS'}</div>
+            <div className="eyebrow mb-1.5">{lang === 'en' ? 'ALSO ON PUTKI HQ' : 'PUTKI HQ:LLA MYÖS'}</div>
             <h3 className="font-display font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>
               {lang === 'en' ? 'Weezy Rally · weekly leaderboard, weekly prizes' : 'Weezy Rally · viikoittainen leaderboard, viikoittaiset palkinnot'}
             </h3>

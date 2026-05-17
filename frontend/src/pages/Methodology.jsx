@@ -95,7 +95,7 @@ const Methodology = () => {
             <section id="floor" className="mb-16" data-testid="section-4">
               <h2 className="display text-3xl sm:text-4xl mb-5">Floor: minimivaatimukset</h2>
               <p>
-                Mittarin listauksessa olevien operaattoreiden täytyy täyttää nämä ehdot:
+                PUTKI HQ:n listauksessa olevien operaattoreiden täytyy täyttää nämä ehdot:
               </p>
               <ul className="list-disc pl-6 space-y-2 mt-4">
                 <li>Voimassa oleva eurooppalainen lisenssi (tai vastaava).</li>
@@ -116,7 +116,7 @@ const Methodology = () => {
             <section id="affiliaatti" className="mb-4" data-testid="section-6">
               <h2 className="display text-3xl sm:text-4xl mb-5">Affiliaatiosuhteet</h2>
               <p>
-                Mittari saa affiliaattipalkkion osasta operaattoreita, kun pelaaja avaa tilin sivumme kautta. Tämä on ainoa ansaintamallimme. Se on listattu jokaisen operaattorin arvio-sivulla erikseen.
+                PUTKI HQ saa affiliaattipalkkion osasta operaattoreita, kun pelaaja avaa tilin sivumme kautta. Tämä on ainoa ansaintamallimme. Se on listattu jokaisen operaattorin arvio-sivulla erikseen.
               </p>
               <p>
                 Vuonna 2027, kun Suomen oma lisenssijärjestelmä avautuu, päivitämme tämän sivun täysin uudelleen ja kerromme uudet suhteet ennen niiden voimaantuloa.

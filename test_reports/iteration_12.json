@@ -1,0 +1,48 @@
+{
+  "summary": "Iteration 12 — Brand rename Mittari → PUTKI HQ verified end-to-end. Backend: 112/112 pytest PASS under PUTKI_HQ_DISABLE_WORKERS=1 PUTKI_HQ_DISABLE_SCHEDULER=1 --ignore=tests/test_phase3a_v2_content.py (46.5s, 5 deprecation warnings only). Auth rename: GET /api/admin/settings → 200 with X-Admin-Token: putki-hq-admin, 401 with old mittari-admin. POST /api/admin/feed/rebuild → 200 with new token returning the locked envelope {rebuilt_at, candidates:219, upserted:219, pruned:0, signals_scanned:200, published_scanned:40}. POST /api/webhooks/resubscribe/twitch → 503 twitch_secret_missing with new token (dormant correctly surfaced), 401 with old token. GET /api/feed?limit=3 → 200, items mocked=false. distribution.py inspected: RESEND_FROM defaults to 'PUTKI HQ <hello@putkihq.fi>' (line 68), subject prefix 'PUTKI HQ · ...' (line 91). Frontend (Playwright @1920×4000, EN + FI locales): document.title='PUTKI HQ — Suomen skenen lämpötila', meta description starts with same, favicon link points to /favicon.svg (rendered via %PUBLIC_URL%/favicon.svg). Header logo-link inner_text='PUTKI\\nHQ' (no 'Mittari'/'.fi'). Footer contains '© 2026 PUTKIHQ.FI · INDEPENDENT EDITORIAL' + wordmark 'PUTKI'+'HQ'. EditorialFooter on home (hub-accountability-section) default byline rendered = exactly 'PUTKI HQ' (not 'MITTARIN TOIMITUS') in both EN ('UPDATED 2026-05-17 14:19') and FI ('PÄIVITETTY 17.05.2026 klo 14:20'). DIAL preserved: P*RKELE-MITTARI brand text present, FI state headline 'Mittari on KUUMA' rendered (one of 5 expected), dial-history-mini-chart contains 'MITTARI · 48 POLL'. /menetelma renders H1='Miten Mittari-pisteet syntyvät' and includes 'Mittari-pisteet' content (correct — dial methodology). /toimitus FI body starts 'PUTKI HQ on riippumaton'. /avoimuus/2026 FI contains 'PUTKI HQ:n 2026 avoimuusraportti'. /peli renders (Weezy Rally — Imatran etappi); MiniGame.jsx source confirms NAME_KEY='putki_hq_player_name' (line 10) and share/email copy 'PUTKI HQ Rally' (lines 180-189); no 'Mittari Weezy Rally' string anywhere. HubMosaic 5th card title 'PUTKI HQ live' rendered with eyebrow 'PUTKI HQ · LIVE' (no 'Mittari live' in HTML). Visual smoke: no orphan 'Mittari.fi'/'mittari.fi' publication-brand string in visible UI on home. /back-office/webhooks auth gate: typing 'mittari-admin' keeps gate locked (401 in console), typing 'putki-hq-admin' unlocks panel showing 'PAKOTA SYÖTTEEN UUDELLEENRAKENNUS'. localStorage keys post-auth: 'putki-hq-admin-token'='putki-hq-admin' present, 'mittari-admin-token' = null. webhooks-force-rebuild-panel + button rendered.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "verified_checks": {
+    "backend_pytest_new_env_vars": "PASS — 112/112 with PUTKI_HQ_DISABLE_WORKERS=1 PUTKI_HQ_DISABLE_SCHEDULER=1",
+    "admin_auth_new_token_200": "PASS — GET /api/admin/settings 200 with X-Admin-Token: putki-hq-admin",
+    "admin_auth_old_token_401": "PASS — GET /api/admin/settings 401 with old mittari-admin",
+    "feed_rebuild_envelope": "PASS — {rebuilt_at, candidates:219, upserted:219, pruned:0, signals_scanned:200, published_scanned:40}",
+    "webhook_resubscribe_503_dormant": "PASS — 503 twitch_secret_missing with new token",
+    "webhook_resubscribe_old_token_401": "PASS — 401 with mittari-admin",
+    "feed_unmocked": "PASS — items mocked=false",
+    "distribution_resend_from": "PASS (source) — 'PUTKI HQ <hello@putkihq.fi>' default + 'PUTKI HQ · ...' subject prefix",
+    "html_title_meta_favicon": "PASS — title/desc 'PUTKI HQ — Suomen skenen lämpötila', favicon link present",
+    "header_logo": "PASS — contains 'PUTKI'+'HQ', no 'Mittari' or '.fi'",
+    "footer_copyright_and_wordmark": "PASS — '© 2026 PUTKIHQ.FI · INDEPENDENT EDITORIAL' + 'PUTKI'+'HQ' spans",
+    "editorial_footer_byline_default": "PASS — 'PUTKI HQ' (not MITTARIN TOIMITUS) on hub-accountability-section",
+    "dial_preserved": "PASS — P*RKELE-MITTARI brand + 'Mittari on KUUMA' state headline (FI) + 'MITTARI · 48 POLL' chart label",
+    "menetelma_page": "PASS — H1 'Miten Mittari-pisteet syntyvät', dial methodology content intact",
+    "toimitus_page": "PASS — FI body 'PUTKI HQ on riippumaton...'",
+    "avoimuus_2026_page": "PASS — FI 'PUTKI HQ:n 2026 avoimuusraportti'",
+    "peli_page_and_keys": "PASS — page renders; MiniGame.jsx source: NAME_KEY='putki_hq_player_name', share 'PUTKI HQ Rally'; no 'Mittari Weezy Rally' anywhere",
+    "hubmosaic_5th_card": "PASS — 'PUTKI HQ live' title + 'PUTKI HQ · LIVE' eyebrow rendered; no 'Mittari live'",
+    "visual_smoke_no_orphan_mittari_fi": "PASS — no 'Mittari.fi'/'mittari.fi' brand string in visible home body",
+    "back_office_webhooks_auth": "PASS — old token stays locked, new token unlocks; localStorage 'putki-hq-admin-token' written, 'mittari-admin-token' absent"
+  },
+  "test_report_links": [
+    "/app/test_reports/pytest/pytest_iter12.xml",
+    "/app/backend/tests/test_phase3_v2_step4_feed.py",
+    "/app/backend/tests/test_phase3_v2_step2_webhooks.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "content_engine.py line 205 still reads `Kirjoitat Mittarille — suomalaiselle rahapelikulttuurin julkaisulle.` in putki_hq_voice_system_prompt. This is publication-context (describing the publication to Claude as 'Mittari'), not dial-context. Per the rename rules ('Mittari publication name → PUTKI HQ; only DIAL feature keeps Mittari'), this string should arguably be 'Kirjoitat PUTKI HQ:lle — suomalaiselle rahapelikulttuurin julkaisulle.' to match the rest of the file (all other prompt occurrences correctly say 'PUTKI HQ:n äänellä'). Low priority — this is a system prompt fed to the LLM, not surfaced in UI, and 'Mittari' is also the dial feature inside PUTKI HQ so a reader-facing artifact would still be consistent. Flag for main agent confirmation.",
+    "content_engine.py line 363 dial_state_change_prompt says `Mittarin tilan noususta {from_state}:sta {to_state}:aan` — this IS dial-context (dial state change) so correctly preserved per spec.",
+    "Footer FI tagline 'Mittari mittaa. Toimitus tulkitsee. Sinä päätät.' / EN 'Mittari measures. The editors interpret. You decide.' rendered at bottom of every page — acceptable per spec (dial feature is named Mittari and this tagline reads as 'the dial measures'), but worth confirming with product since it's adjacent to publication-context copy ('© 2026 PUTKIHQ.FI · INDEPENDENT EDITORIAL').",
+    "Subscribe section copy 'Mittarin signaali heti kun jotain tapahtuu.' / 'Mittari signals the moment something happens.' — same nuance, reads as dial-feature signals; acceptable per spec.",
+    "favicon.href returned empty string via document.querySelector('link[rel=icon]').href in one eval pass even though index.html declares <link rel='icon' type='image/svg+xml' href='%PUBLIC_URL%/favicon.svg'>. Likely a Playwright eval quirk (relative URL collapsed) — file exists at /app/frontend/public/favicon.svg and tag is in markup, so this is not a real bug, just a test artefact.",
+    "No PUTKI_HQ_* env vars are leaked into frontend bundle; cleanup of MITTARI_DISABLE_* is complete (grep across backend confirms only PUTKI_HQ_DISABLE_* references remain)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (112/112 pytest + 6/6 curl checks)", "frontend": "100% (20/20 brand checks across home, /menetelma, /toimitus, /avoimuus/2026, /peli, /back-office/webhooks)"},
+  "test_credentials": "X-Admin-Token: putki-hq-admin (new BACK_OFFICE_TOKEN). Old value 'mittari-admin' confirmed rejected with 401 across all admin + webhook resubscribe endpoints.",
+  "seed_data_creation": "One POST /api/admin/feed/rebuild via curl rebuilt 219 candidates (200 signals + 40 published, dedup) — endpoint contract identical to iteration 11.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Brand rename complete and stable. New env var names: PUTKI_HQ_DISABLE_WORKERS / PUTKI_HQ_DISABLE_SCHEDULER / PUTKI_HQ_DISABLE_FEED_WORKER / PUTKI_HQ_DISABLE_KICK_LIVE. New admin token: putki-hq-admin (BACK_OFFICE_TOKEN). New localStorage keys: putki-hq-admin-token, putki-hq-admin-last-feed-rebuild, putki_hq_player_name, putki_hq_visitor_uuid, putki_hq_cookie_id. DIAL component intentionally keeps 'Mittari' (P*RKELE-MITTARI brand, STATE_HEADLINES 'Mittari on KUUMA/...', 'MITTARI · n POLL' chart label, common.score_label='MITTARI', dial methodology page H1) — do NOT flag these. Only flagged residual: content_engine.py line 205 `Kirjoitat Mittarille — suomalaiselle rahapelikulttuurin julkaisulle.` is publication-context; main agent to confirm whether to rename to PUTKI HQ:lle or keep as-is (system prompt fed to Claude only)."
+}

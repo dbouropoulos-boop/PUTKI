@@ -1,5 +1,5 @@
 /**
- * Mittari Hub — Phase 3 V2 Final Architecture Step 5.
+ * PUTKI HQ Hub — Phase 3 V2 Final Architecture Step 5.
  *
  * Layout (top → bottom, anchored against final architecture):
  *   Zone 1  · Compact top strip: dial cockpit top-left, Voyager corner top-right.
@@ -162,7 +162,7 @@ const CaptureSection = () => {
                   data-testid="hero-capture-input"
                 />
                 <button type="submit" className="btn-primary w-full" data-testid="hero-capture-submit" style={{ padding: '18px 24px', minHeight: 56 }}>
-                  {lang === 'en' ? 'Subscribe to Mittari alerts →' : 'Tilaa Mittari-ilmoitukset →'}
+                  {lang === 'en' ? 'Subscribe to PUTKI HQ alerts →' : 'Tilaa PUTKI HQ -ilmoitukset →'}
                 </button>
                 <TelegramSubscribeButton dataTestId="hero-capture-telegram" />
               </form>
@@ -366,7 +366,7 @@ const Home = () => {
       <section className="py-10" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
                data-testid="hub-accountability-section">
         <div className="container-wide">
-          <EditorialFooter byline="MITTARIN TOIMITUS" readMinutes={2} />
+          <EditorialFooter byline="PUTKI HQ" readMinutes={2} />
         </div>
       </section>
     </div>

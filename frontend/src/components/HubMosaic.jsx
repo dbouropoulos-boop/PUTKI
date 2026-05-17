@@ -60,8 +60,8 @@ const CARDS = [
     query: 'source=editorial',
     icon: Newspaper,
     accent: '#3B5BA5',
-    fi: { eyebrow: 'MITTARI · LIVE', title: 'Mittari live', empty: 'TOIMITUS EI OLE JULKAISSUT VIIMEISTEN TUNTIEN AIKANA' },
-    en: { eyebrow: 'MITTARI · LIVE', title: 'Mittari live', empty: 'EDITORIAL HAS NOT PUBLISHED IN THE LAST FEW HOURS' },
+    fi: { eyebrow: 'PUTKI HQ · LIVE', title: 'PUTKI HQ live', empty: 'TOIMITUS EI OLE JULKAISSUT VIIMEISTEN TUNTIEN AIKANA' },
+    en: { eyebrow: 'PUTKI HQ · LIVE', title: 'PUTKI HQ live', empty: 'EDITORIAL HAS NOT PUBLISHED IN THE LAST FEW HOURS' },
   },
 ];
 

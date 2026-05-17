@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 — Distribution pipeline (Batch 3C).
+PUTKI HQ Phase 3 — Distribution pipeline (Batch 3C).
 
 When a piece of generated_content is approved (or auto-published), we fan it
 out to multiple channels. Each channel is a small async function that takes
@@ -65,7 +65,7 @@ async def deliver_telegram(text: str, payload: Dict[str, Any]) -> Dict[str, Any]
 # ── email (Resend) ──────────────────────────────────────────────────────────
 async def deliver_email(db, text: str, payload: Dict[str, Any], content_type: str) -> Dict[str, Any]:
     api_key = os.environ.get("RESEND_API_KEY")
-    from_addr = os.environ.get("RESEND_FROM", "Mittari <hello@mittari.fi>")
+    from_addr = os.environ.get("RESEND_FROM", "PUTKI HQ <hello@putkihq.fi>")
     if not api_key:
         return _result("email", "mocked", "RESEND_API_KEY not configured", mocked=True)
 
@@ -88,7 +88,7 @@ async def deliver_email(db, text: str, payload: Dict[str, Any], content_type: st
                     "from": from_addr,
                     "to": recipients[:50],  # rate-limit-safe batch
                     "bcc": recipients[50:],
-                    "subject": f"Mittari · {content_type.replace('_', ' ').title()}",
+                    "subject": f"PUTKI HQ · {content_type.replace('_', ' ').title()}",
                     "text": text,
                 },
             )

@@ -23,11 +23,11 @@ const WeeklyCard = () => {
         <div className="max-w-3xl">
           <div className="eyebrow mb-4 flex items-center gap-2">
             <Calendar strokeWidth={1.5} size={14} />
-            Mittarin viikon kortti · Vk 21 · {new Date().toLocaleDateString('fi-FI')}
+            PUTKI HQ · viikon kortti · Vk 21 · {new Date().toLocaleDateString('fi-FI')}
           </div>
           <h1 className="display text-4xl sm:text-6xl lg:text-7xl mb-5">5 fixturea, 5 takea</h1>
           <p className="prose-mittari text-muted-text max-w-2xl">
-            Mittarin toimitus vetää viikon kortin. Veikkaa lopputuloksia ja kerää pisteitä — kuukauden voittaja saa 200 € palkinnon. Ei talletusta, ei panostusta.
+            PUTKI HQ -toimitus vetää viikon kortin. Veikkaa lopputuloksia ja kerää pisteitä — kuukauden voittaja saa 200 € palkinnon. Ei talletusta, ei panostusta.
           </p>
         </div>
       </section>
@@ -52,7 +52,7 @@ const WeeklyCard = () => {
                 <div className="eyebrow mb-2">{f.league} · {f.kickoff}</div>
                 <h2 className="display text-3xl sm:text-4xl mb-3">{f.home} <span className="text-muted-text">—</span> {f.away}</h2>
                 <p className="font-serif text-[15px] text-ink leading-relaxed">{f.take}</p>
-                <p className="mt-3 font-display text-[11px] uppercase tracking-widest text-muted-text">— Mittarin toimitus</p>
+                <p className="mt-3 font-display text-[11px] uppercase tracking-widest text-muted-text">— PUTKI HQ -toimitus</p>
               </div>
 
               <div className="lg:col-span-3">

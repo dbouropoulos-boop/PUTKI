@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 — Signal pipeline foundation (Batch 3A).
+PUTKI HQ Phase 3 — Signal pipeline foundation (Batch 3A).
 
 Pulls raw signals from 6 sources (Twitch, Kick, YouTube, Forums, Sports,
 internal activity), normalises them into a single `Signal` shape, and writes
@@ -124,11 +124,11 @@ async def adapter_twitch() -> List[Dict[str, Any]]:
 async def adapter_kick() -> List[Dict[str, Any]]:
     """Kick public channel API: https://kick.com/api/v2/channels/{slug}.
     No auth needed, but rate-limited. We try real first, fall back to mock."""
-    if os.environ.get("MITTARI_DISABLE_KICK_LIVE", "0") == "1":
+    if os.environ.get("PUTKI_HQ_DISABLE_KICK_LIVE", "0") == "1":
         return _mock_streamer_signals("kick", TRACKED_KICK_LOGINS)
     out: List[Dict[str, Any]] = []
     try:
-        async with httpx.AsyncClient(timeout=6, headers={"User-Agent": "MittariBot/1.0"}) as cx:
+        async with httpx.AsyncClient(timeout=6, headers={"User-Agent": "PutkiHQBot/1.0"}) as cx:
             for login in TRACKED_KICK_LOGINS:
                 try:
                     r = await cx.get(f"https://kick.com/api/v2/channels/{login}")

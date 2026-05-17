@@ -7,7 +7,7 @@ import requests
 
 
 API = os.environ.get("BACKEND_BASE", "http://localhost:8001/api")
-TOK = os.environ.get("BACK_OFFICE_TOKEN", "mittari-admin")
+TOK = os.environ.get("BACK_OFFICE_TOKEN", "putki-hq-admin")
 HDR = {"X-Admin-Token": TOK}
 
 

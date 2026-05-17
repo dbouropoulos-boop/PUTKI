@@ -26,8 +26,8 @@ export const Header = () => {
     >
       <div className="container-wide flex items-center justify-between h-16">
         <Link to="/" className="flex items-baseline gap-2" data-testid="logo-link">
-          <span className="font-display font-black text-2xl tracking-tighter" style={{ color: 'var(--ink)' }}>Mittari</span>
-          <span className="mono text-[10px] tracking-[0.2em] uppercase" style={{ color: 'var(--muted)' }}>.fi</span>
+          <span className="font-display font-black text-2xl tracking-tighter" style={{ color: 'var(--ink)' }}>PUTKI</span>
+          <span className="mono text-[11px] tracking-[0.22em] uppercase" style={{ color: 'var(--muted)' }}>HQ</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-6">

@@ -9,9 +9,9 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const useToken = () => {
   const [token, setToken] = useState(() => {
-    try { return localStorage.getItem('mittari-admin-token') || ''; } catch { return ''; }
+    try { return localStorage.getItem('putki-hq-admin-token') || ''; } catch { return ''; }
   });
-  return [token, (v) => { setToken(v); try { localStorage.setItem('mittari-admin-token', v); } catch {} }];
+  return [token, (v) => { setToken(v); try { localStorage.setItem('putki-hq-admin-token', v); } catch {} }];
 };
 
 const TimeAgo = ({ iso }) => {
@@ -261,7 +261,7 @@ const GuidelinesPanel = ({ token, onClose }) => {
               <div className="eyebrow inline-flex items-center gap-2">
                 <FileText strokeWidth={1.5} size={12} /> EDITORIAL GUIDELINES
               </div>
-              <h2 className="display text-2xl mt-1">Mittari voice + per-type prompts</h2>
+              <h2 className="display text-2xl mt-1">PUTKI HQ voice + per-type prompts</h2>
             </div>
             <button onClick={onClose} className="btn-ghost" data-testid="guidelines-close">CLOSE</button>
           </div>
@@ -524,7 +524,7 @@ const BackOfficeQueue = () => {
           <div className="flex items-center gap-3 mb-6">
             <Lock strokeWidth={1.5} size={20} style={{ color: 'var(--muted)' }} />
             <div>
-              <div className="eyebrow">MITTARI · BACK OFFICE · APPROVAL QUEUE</div>
+              <div className="eyebrow">PUTKI HQ · BACK OFFICE · APPROVAL QUEUE</div>
               <h1 className="display text-2xl mt-1">Admin authentication</h1>
             </div>
           </div>
@@ -540,7 +540,7 @@ const BackOfficeQueue = () => {
           />
           {authError && <div className="mono mt-3" style={{ fontSize: 11, color: '#C8423C' }}>{authError}</div>}
           <button type="submit" className="btn-primary w-full mt-5" data-testid="queue-auth-submit">CONTINUE →</button>
-          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to Mittari</Link>
+          <Link to="/" className="btn-ghost mt-4 w-full justify-center">← Back to PUTKI HQ</Link>
         </form>
       </div>
     );
@@ -551,7 +551,7 @@ const BackOfficeQueue = () => {
       <div className="container-wide">
         <div className="flex items-baseline justify-between mb-2 flex-wrap gap-3">
           <div>
-            <div className="eyebrow">MITTARI · APPROVAL QUEUE</div>
+            <div className="eyebrow">PUTKI HQ · APPROVAL QUEUE</div>
             <h1 className="display text-3xl sm:text-4xl mt-1">Editorial pipeline</h1>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
@@ -559,7 +559,7 @@ const BackOfficeQueue = () => {
               <FileText strokeWidth={1.5} size={13} className="mr-2" /> GUIDELINES
             </button>
             <Link to="/back-office" className="btn-ghost">← SETTINGS</Link>
-            <Link to="/" className="btn-ghost">← MITTARI</Link>
+            <Link to="/" className="btn-ghost">← PUTKI HQ</Link>
           </div>
         </div>
 
