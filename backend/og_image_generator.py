@@ -34,6 +34,11 @@ OG_DIR = STATIC_ROOT / "og"
 PUBLIC_PREFIX = os.environ.get("OG_IMAGE_PUBLIC_PREFIX", "/api/static/og")
 NANO_BANANA_MODEL = os.environ.get("OG_IMAGE_MODEL", "gemini-3.1-flash-image-preview")
 
+# Concurrency cap — Nano Banana calls take 15-25s each and the live preview
+# pod runs uvicorn with --workers 1. Without this cap, a few concurrent
+# publishes stall every other API request (404 lookups, drafts list, etc.).
+_GENERATION_SEMAPHORE = asyncio.Semaphore(int(os.environ.get("OG_IMAGE_CONCURRENCY", "1")))
+
 # Single-shot generation lock so a hot publish burst doesn't spawn 5
 # parallel Nano Banana calls for the same slug.
 _inflight: dict[str, asyncio.Task] = {}
@@ -106,7 +111,8 @@ async def _generate_once(slug: str, headline: str, category: Optional[str]) -> O
         )
         chat.with_model("gemini", NANO_BANANA_MODEL).with_params(modalities=["image", "text"])
         msg = UserMessage(text=prompt)
-        _text, images = await chat.send_message_multimodal_response(msg)
+        async with _GENERATION_SEMAPHORE:
+            _text, images = await chat.send_message_multimodal_response(msg)
     except Exception as e:
         logger.warning("Nano Banana call failed for %s: %s", slug, e)
         return None

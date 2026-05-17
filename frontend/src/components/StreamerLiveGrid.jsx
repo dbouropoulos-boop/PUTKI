@@ -1,18 +1,23 @@
 /**
- * StreamerLiveGrid — Phase 4 Pre-Launch Polish.
+ * StreamerLiveGrid — Multi-platform live Twitch/Kick/YouTube carousel +
+ * "ASETA HÄLYTYS" conversion funnel.
  *
- * Renders the top live Finnish Twitch streamers from /api/streamers/live
- * (real Helix data, 60s backend cache). Premium dashboard card layout:
- * thumbnail, LIVE pulse pill, viewer count, game name, follower count,
- * direct twitch.tv link. Honest empty state if no streamers are live.
- *
- * Used on Home as "Mitä tapahtuu nyt".
+ * Tabs swap between platforms. Each card opens StreamerAlertModal on
+ * Follow Alert click — that's the actual signup path (email + phone +
+ * Telegram). No more "open Twitch in new tab" link.
  */
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { ExternalLink, Eye, Users, Bell } from 'lucide-react';
+import StreamerAlertModal from './StreamerAlertModal';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 60_000;
+
+const PLATFORMS = [
+  { key: 'twitch',  label: 'TWITCH',  accent: '#9146FF' },
+  { key: 'kick',    label: 'KICK',    accent: '#53FC18' },
+  { key: 'youtube', label: 'YOUTUBE', accent: '#FF0033' },
+];
 
 const fmtNumber = (n) => {
   if (n == null) return '—';
@@ -31,31 +36,25 @@ const fmtAgo = (iso) => {
   } catch { return ''; }
 };
 
-// Twitch "follow" page opens directly on the channel with the follow CTA
-// inline. Cleaner than asking the user for a separate Telegram bot opt-in
-// here; the homepage capture form still handles email + Telegram alerts.
-const followUrl = (login) => login ? `https://www.twitch.tv/${login}/follow` : '#';
-
-const StreamerCard = ({ s }) => (
-  <a
-    href={s.profile_url}
-    target="_blank"
-    rel="noopener noreferrer"
+const StreamerCard = ({ s, onAlert }) => (
+  <div
     data-testid={`streamer-card-${s.user_login}`}
-    className="group block panel panel-hover overflow-hidden"
-    style={{ textDecoration: 'none', color: 'inherit', borderRadius: 4 }}
+    className="panel panel-hover overflow-hidden flex flex-col"
+    style={{ borderRadius: 4 }}
   >
-    {/* Thumbnail — Twitch returns a 640x360 preview URL */}
-    <div
-      className="relative overflow-hidden"
+    <a
+      href={s.profile_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="relative overflow-hidden block"
       style={{ aspectRatio: '16/9', background: '#0A0A0A' }}
     >
       {s.thumbnail_url ? (
         <img
           src={s.thumbnail_url}
-          alt={`${s.user_name} · ${s.game_name || ''}`}
+          alt={`${s.user_name || s.user_login}`}
           loading="lazy"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           style={{ display: 'block' }}
         />
       ) : (
@@ -64,66 +63,51 @@ const StreamerCard = ({ s }) => (
           NO PREVIEW
         </div>
       )}
-      {/* LIVE pill — top-left */}
       <div
         className="absolute top-2 left-2 mono inline-flex items-center gap-1.5"
         style={{
-          fontSize: 9.5,
-          letterSpacing: '0.22em',
-          fontWeight: 700,
-          color: '#fff',
-          background: '#C8423C',
-          padding: '4px 8px',
-          borderRadius: 2,
+          fontSize: 9.5, letterSpacing: '0.22em', fontWeight: 700,
+          color: '#fff', background: '#C8423C',
+          padding: '4px 8px', borderRadius: 2,
         }}
       >
-        <span
-          className="inline-block"
-          style={{
-            width: 6, height: 6, borderRadius: 999, background: '#fff',
-            animation: 'pulse 1.8s ease-in-out infinite',
-          }}
-        />
+        <span style={{
+          width: 6, height: 6, borderRadius: 999, background: '#fff',
+          animation: 'pulse 1.8s ease-in-out infinite',
+        }} />
         LIVE
       </div>
-      {/* Viewer pill — top-right */}
-      <div
-        className="absolute top-2 right-2 mono inline-flex items-center gap-1.5"
-        style={{
-          fontSize: 10,
-          letterSpacing: '0.14em',
-          fontWeight: 700,
-          color: '#fff',
-          background: 'rgba(10,10,10,0.78)',
-          backdropFilter: 'blur(4px)',
-          padding: '4px 8px',
-          borderRadius: 2,
-        }}
-      >
-        <Eye strokeWidth={1.8} size={11} />
-        {fmtNumber(s.viewer_count)}
-      </div>
-    </div>
+      {s.viewer_count != null && (
+        <div
+          className="absolute top-2 right-2 mono inline-flex items-center gap-1.5"
+          style={{
+            fontSize: 10, letterSpacing: '0.14em', fontWeight: 700,
+            color: '#fff', background: 'rgba(10,10,10,0.78)',
+            backdropFilter: 'blur(4px)', padding: '4px 8px', borderRadius: 2,
+          }}
+        >
+          <Eye strokeWidth={1.8} size={11} />
+          {fmtNumber(s.viewer_count)}
+        </div>
+      )}
+    </a>
 
-    {/* Body */}
-    <div className="p-4 flex flex-col gap-2" style={{ background: 'var(--bg)' }}>
+    <div className="p-4 flex flex-col gap-2 flex-1" style={{ background: 'var(--bg)' }}>
       <div className="flex items-start justify-between gap-2">
         <div className="display" style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}>
-          {s.user_name}
+          {s.user_name || s.user_login}
         </div>
-        <ExternalLink strokeWidth={1.4} size={13} style={{ color: 'var(--muted)', flexShrink: 0, marginTop: 3 }} />
+        <a href={s.profile_url} target="_blank" rel="noopener noreferrer">
+          <ExternalLink strokeWidth={1.4} size={13} style={{ color: 'var(--muted)' }} />
+        </a>
       </div>
       {s.title && (
         <div
           className="font-serif"
           style={{
-            fontSize: 12.5,
-            color: 'var(--muted)',
-            lineHeight: 1.35,
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
+            fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.35,
+            display: '-webkit-box', WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical', overflow: 'hidden',
           }}
           title={s.title}
         >
@@ -145,136 +129,165 @@ const StreamerCard = ({ s }) => (
           {fmtAgo(s.started_at).toUpperCase()}
         </div>
       )}
-      {/* Follow CTA — opens twitch.tv/<login>/follow in a new tab. Stops the
-          click from bubbling up so we don't double-fire the card link. */}
       <button
         type="button"
-        data-testid={`streamer-follow-${s.user_login}`}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          window.open(followUrl(s.user_login), '_blank', 'noopener,noreferrer');
-        }}
-        className="mono mt-2 inline-flex items-center justify-center gap-1.5 transition-colors"
+        data-testid={`streamer-alert-cta-${s.user_login}`}
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAlert(s); }}
+        className="mono mt-auto inline-flex items-center justify-center gap-1.5"
         style={{
-          padding: '8px 12px',
-          fontSize: 10.5,
-          letterSpacing: '0.16em',
-          fontWeight: 700,
-          background: 'var(--ink)',
-          color: 'var(--bg)',
-          border: 'none',
-          borderRadius: 2,
-          cursor: 'pointer',
+          padding: '10px 14px', fontSize: 11, letterSpacing: '0.22em', fontWeight: 700,
+          background: 'var(--ink)', color: 'var(--bg)',
+          border: 'none', borderRadius: 2, cursor: 'pointer',
         }}
       >
-        <Bell strokeWidth={1.8} size={11} />
-        FOLLOW ALERT
+        <Bell strokeWidth={1.9} size={12} />
+        ASETA HÄLYTYS
       </button>
     </div>
-  </a>
+  </div>
 );
 
 const StreamerLiveGrid = () => {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+  const [platform, setPlatform] = useState('twitch');
+  const [data, setData] = useState({});  // { twitch: {...}, kick: {...}, youtube: {...} }
+  const [alertTarget, setAlertTarget] = useState(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (p) => {
     try {
-      const r = await fetch(`${BACKEND}/api/streamers/live`);
+      const r = await fetch(`${BACKEND}/api/streamers/live${p === 'twitch' ? '' : `?platform=${p}`}`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
-      setData(d);
-      setError(null);
-    } catch (e) {
-      setError(String(e.message || e));
+      setData((prev) => ({ ...prev, [p]: d }));
+    } catch {
+      // silent — show empty state
     }
   }, []);
 
   useEffect(() => {
-    load();
-    const id = setInterval(load, POLL_MS);
+    PLATFORMS.forEach((p) => load(p.key));
+    const id = setInterval(() => PLATFORMS.forEach((p) => load(p.key)), POLL_MS);
     return () => clearInterval(id);
   }, [load]);
 
-  const streamers = data?.streamers || [];
-  const dormant = data?.dormant;
+  const active = data[platform] || {};
+  const streamers = active.streamers || [];
+  const dormant = active.dormant;
+
+  const counts = useMemo(() => {
+    const out = {};
+    PLATFORMS.forEach((p) => {
+      const d = data[p.key];
+      out[p.key] = d ? (d.streamers?.length || 0) : null;
+    });
+    return out;
+  }, [data]);
 
   return (
     <section className="container-wide" data-testid="streamer-live-grid">
-      <div className="flex items-baseline justify-between flex-wrap gap-3 mb-6">
+      <div className="flex items-baseline justify-between flex-wrap gap-3 mb-5">
         <div>
           <div className="mono mb-1.5" style={{ fontSize: 10.5, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 700 }}>
-            MITÄ TAPAHTUU NYT · TWITCH SUOMI
+            MITÄ TAPAHTUU NYT · ASETA HÄLYTYS
           </div>
-          <h2 className="display" style={{ fontSize: 30, fontWeight: 700, lineHeight: 1.1 }}>
-            Suorat lähetykset livenä
+          <h2 className="display" style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>
+            Striimit livenä
           </h2>
-        </div>
-        <div className="mono inline-flex items-center gap-2"
-             style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}
-             data-testid="streamer-live-status">
-          <span
-            style={{
-              width: 6, height: 6, borderRadius: 999,
-              background: streamers.length ? '#2c7a4b' : '#7A7E83',
-              boxShadow: streamers.length ? '0 0 6px #2c7a4b' : 'none',
-            }}
-          />
-          {streamers.length ? `${streamers.length} LIVENÄ` : 'EI LIVELÄHETYKSIÄ'}
         </div>
       </div>
 
-      {error ? (
-        <div className="mono" style={{ fontSize: 11, color: '#C8423C', letterSpacing: '0.14em' }}
-             data-testid="streamer-live-error">
-          VIRHE · {error}
-        </div>
-      ) : null}
+      {/* Platform tabs */}
+      <div className="flex items-center gap-1 mb-5 flex-wrap" data-testid="streamer-platform-tabs">
+        {PLATFORMS.map((p) => {
+          const isActive = p.key === platform;
+          const c = counts[p.key];
+          return (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => setPlatform(p.key)}
+              data-testid={`streamer-tab-${p.key}`}
+              className="mono inline-flex items-center gap-2 transition-colors"
+              style={{
+                padding: '8px 14px',
+                fontSize: 11,
+                letterSpacing: '0.22em',
+                fontWeight: 700,
+                background: isActive ? 'var(--ink)' : 'transparent',
+                color: isActive ? 'var(--bg)' : 'var(--muted)',
+                border: `1px solid ${isActive ? 'var(--ink)' : 'var(--border-strong)'}`,
+                borderRadius: 2,
+                cursor: 'pointer',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: 999, background: p.accent }} />
+              {p.label}
+              {c != null && (
+                <span style={{ opacity: 0.7, fontWeight: 500 }}>· {c}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
 
       {dormant ? (
         <div className="panel p-8 text-center mono"
              style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
              data-testid="streamer-live-dormant">
-          TWITCH-INTEGRAATIO ODOTTAA KONFIGURAATIOTA · {data?.reason?.toUpperCase()}
+          {(active.reason || '').includes('not_configured')
+            ? `${platform.toUpperCase()}-INTEGRAATIO ODOTTAA AVAINTA`
+            : `EI LIVELÄHETYKSIÄ JUURI NYT · ${platform.toUpperCase()}`}
         </div>
-      ) : streamers.length === 0 && data ? (
+      ) : streamers.length === 0 ? (
         <div className="panel p-8 text-center mono"
              style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
              data-testid="streamer-live-empty">
-          KUKAAN SUOMENKIELINEN STRIIMAAJA EI OLE LIVENÄ JUURI NYT
+          EI LIVELÄHETYKSIÄ NYT · {platform.toUpperCase()}
         </div>
       ) : (
         <>
-          {/* Mobile-only horizontal swipe lane — premium card swiper with
-              scroll-snap. Hidden ≥sm where the responsive grid kicks in. */}
+          {/* Mobile swipe lane */}
           <div
             className="sm:hidden flex gap-4 overflow-x-auto pb-3 -mx-4 px-4"
             style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
             data-testid="streamer-live-swipe"
           >
             {streamers.slice(0, 8).map((s) => (
-              <div
-                key={s.user_login}
-                style={{ scrollSnapAlign: 'start', flex: '0 0 80%', minWidth: 280 }}
-              >
-                <StreamerCard s={s} />
+              <div key={s.user_login}
+                   style={{ scrollSnapAlign: 'start', flex: '0 0 80%', minWidth: 280 }}>
+                <StreamerCard s={s} onAlert={setAlertTarget} />
               </div>
             ))}
           </div>
-
-          {/* Desktop/tablet grid (≥sm). */}
+          {/* Desktop grid (carousel-feel: cap at 4 visible) */}
           <div
             className="hidden sm:grid gap-5"
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
             data-testid="streamer-live-list"
           >
-            {streamers.slice(0, 8).map((s) => (
-              <StreamerCard key={s.user_login} s={s} />
+            {streamers.slice(0, 4).map((s) => (
+              <StreamerCard key={s.user_login} s={s} onAlert={setAlertTarget} />
             ))}
           </div>
+          {streamers.length > 4 && (
+            <div className="mt-4">
+              <a
+                href="/striimaajat"
+                className="mono inline-flex items-center gap-2"
+                style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, textDecoration: 'none' }}
+                data-testid="streamer-live-view-all"
+              >
+                KAIKKI STRIIMIT · {(active.count ?? streamers.length)} LIVENÄ →
+              </a>
+            </div>
+          )}
         </>
       )}
+
+      <StreamerAlertModal
+        streamer={alertTarget}
+        platform={platform}
+        onClose={() => setAlertTarget(null)}
+      />
     </section>
   );
 };

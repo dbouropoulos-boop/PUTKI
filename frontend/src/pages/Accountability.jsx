@@ -52,8 +52,8 @@ export const Affiliaatti = () => {
       headline={lang === 'en' ? 'Affiliate relationships' : 'Affiliate-suhteet'}>
       <p>
         {lang === 'en'
-          ? 'PUTKI HQ operates as a comparison site / publication under the Finnish Gambling Act (2025, in force July 2027). Operators are evaluated by a transparent P*rkele score whose methodology is published at /menetelma. Commercial relationships are capped at 5–15 points of total score impact and are always disclosed.'
-          : 'PUTKI HQ toimii vertailusivustona / julkaisuna Suomen rahapelilain (2025, voimaan heinäkuussa 2027) puitteissa. Operaattoreita arvioidaan läpinäkyvällä P*rkele-pisteytyksellä, jonka menetelmä on julkaistu osoitteessa /menetelma. Kaupalliset suhteet on rajoitettu 5–15 pisteen vaikutukseen kokonaispisteistä ja ne ilmoitetaan aina.'}
+          ? 'PUTKI HQ has no active commercial relationships at this time. All operator reviews currently on the site are unsponsored editorial assessments with no affiliate links. This table will be updated the moment any commercial relationship begins, with the score-impact disclosure visible before launch.'
+          : 'PUTKI HQ:lla ei ole tällä hetkellä aktiivisia kaupallisia suhteita. Kaikki sivuston operaattoriarviot ovat sponsoroimattomia toimituksellisia arvioita ilman affiliate-linkkejä. Tämä taulukko päivittyy heti, kun kaupallinen suhde alkaa — pistevaikutus on aina näkyvillä ennen lanseerausta.'}
       </p>
       <table className="w-full font-display text-[14px]" data-testid="affiliaatti-table">
         <thead>
@@ -70,17 +70,20 @@ export const Affiliaatti = () => {
           </tr>
         </thead>
         <tbody>
-          <tr style={{ borderBottom: '1px solid var(--border)' }}>
-            <td className="py-3 font-semibold text-ink">Weezybet</td>
-            <td className="py-3 text-ink">{lang === 'en' ? 'CPA affiliate partner · data feed integration' : 'CPA affiliate -kumppani · datafeed-integraatio'}</td>
-            <td className="py-3 text-right tabular text-ink">+8 / 100</td>
+          <tr style={{ borderBottom: '1px solid var(--border)' }} data-testid="affiliaatti-empty">
+            <td colSpan={3} className="py-6 text-center mono"
+                style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>
+              {lang === 'en'
+                ? 'NO COMMERCIAL RELATIONSHIPS · UPDATED THE MOMENT ONE OPENS'
+                : 'EI KAUPALLISIA SUHTEITA · PÄIVITETÄÄN HETI KUN AVAUTUU'}
+            </td>
           </tr>
         </tbody>
       </table>
       <p>
         {lang === 'en'
-          ? 'No other operator currently has a commercial relationship with PUTKI HQ. All other operator reviews on this site are unsponsored editorial assessments with no affiliate links.'
-          : 'Muilla operaattoreilla ei tällä hetkellä ole kaupallista suhdetta PUTKI HQ:hon. Kaikki muut operaattoriarviot sivustolla ovat sponsoroimattomia toimituksellisia arvioita ilman affiliate-linkkejä.'}
+          ? 'When commercial partnerships open, every score impact will be capped at +5 / 100 and disclosed both here and on each affected operator review page.'
+          : 'Kun kaupalliset kumppanuudet avautuvat, jokainen pistevaikutus rajataan +5 / 100 ja ilmoitetaan sekä tässä että jokaisella vaikutuspiiriin kuuluvalla operaattoriarviolla.'}
       </p>
     </StaticPage>
   );

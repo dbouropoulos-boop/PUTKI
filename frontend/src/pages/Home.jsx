@@ -19,9 +19,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucide-react';
+import LiveDataTicker from '../components/LiveDataTicker';
 import DialCockpit from '../components/DialCockpit';
 import LiveActivityFeed from '../components/LiveActivityFeed';
-import ZonePublicationDepth from '../components/ZonePublicationDepth';
 import StreamerLiveGrid from '../components/StreamerLiveGrid';
 import PaivaVitoset from '../components/PaivaVitoset';
 import ActivityStats from '../components/ActivityStats';
@@ -285,6 +285,7 @@ const Home = () => {
 
   return (
     <div data-testid="home-page">
+      <LiveDataTicker />
       <UTMBanner />
 
       {/* ZONE 1 — compact top strip: dial top-left, Voyager top-right */}
@@ -347,33 +348,36 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Pre-Launch Polish — new order:
-          1. Hero (above)
-          2. Streamer live grid · "Mitä tapahtuu nyt"
-          3. Live activity feed · auto-published articles
-          4. Päivän Vitoset · real betting consensus
-          5. Archive · 8 publication-depth entries
-          6. Games (Rally / Visitor / Weekly card)
-          7. Capture form
-          Vertical rhythm tightened to py-10 between zones (~40 px each side). */}
+      {/* Pre-Launch Polish — Dioni's compressed homepage flow:
+          1. Live data ticker (top)
+          2. Hero (Dial + ActivityStats)
+          3. Streamer live · "Mitä tapahtuu nyt" (carousel 4 cards)
+          4. Päivän Vitoset · betting consensus + Telegram CTA
+          5. Live Activity Feed excerpt → /uutiset
+          6. Capture form
+          Vertical rhythm: 40px (py-10) between zones. */}
 
-      <div className="py-10" data-testid="zone-streamer-live">
+      <div className="py-10" style={{ borderTop: '1px solid var(--border)' }} data-testid="zone-streamer-live">
         <StreamerLiveGrid />
-      </div>
-
-      <div style={{ borderTop: '1px solid var(--border)' }}>
-        <LiveActivityFeed />
       </div>
 
       <div className="py-10" style={{ borderTop: '1px solid var(--border)' }} data-testid="zone-paivan-vitoset">
         <PaivaVitoset />
       </div>
 
-      {/* ZONE 3 — publication depth: 8 archive entry points */}
-      <ZonePublicationDepth />
-
-      {/* ZONE 4 — dial-state-aware games strip */}
-      <GamesSection state={state} t={t} lang={lang} />
+      <div style={{ borderTop: '1px solid var(--border)' }}>
+        <LiveActivityFeed />
+        <div className="container-wide pb-10">
+          <Link
+            to="/uutiset"
+            data-testid="home-uutiset-link"
+            className="mono inline-flex items-center gap-2"
+            style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, textDecoration: 'none' }}
+          >
+            KATSO KAIKKI UUTISET →
+          </Link>
+        </div>
+      </div>
 
       {/* ZONE 5 — capture form */}
       <CaptureSection />

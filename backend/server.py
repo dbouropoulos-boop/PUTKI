@@ -644,12 +644,68 @@ async def public_live_signals(limit: int = 12):
 
 
 @api_router.get("/streamers/live")
-async def public_streamers_live():
-    """Pre-launch polish — REAL live Twitch streamers in Finnish, top by viewer
-    count. 60s in-process cache. Returns dormant=true if Twitch creds missing
-    so the frontend can render an honest empty state instead of fake data."""
-    from streamer_live import get_live_streamers
-    return await get_live_streamers()
+async def public_streamers_live(platform: Optional[str] = None):
+    """Pre-launch polish — REAL live streamers across Twitch + Kick + YouTube.
+
+    `platform` query param: omit for Twitch (default Helix `language=fi`),
+    or pass `kick` / `youtube` to hit the multi-platform aggregator.
+    60s in-process cache per platform. Returns `dormant:true` if creds for
+    the requested platform are missing so the frontend can render an
+    honest empty state instead of fake data."""
+    p = (platform or "twitch").lower()
+    if p == "twitch":
+        from streamer_live import get_live_streamers
+        d = await get_live_streamers()
+        d["platform"] = "twitch"
+        return d
+    if p == "kick":
+        from multi_platform_live import fetch_kick_live
+        return await fetch_kick_live(db)
+    if p == "youtube":
+        from multi_platform_live import fetch_youtube_live
+        return await fetch_youtube_live(db)
+    raise HTTPException(status_code=400, detail="unknown platform")
+
+
+# ── Phase 4 Pre-Launch Polish · Streamer Alert subscriptions ──
+
+class StreamerAlertIn(BaseModel):
+    email: EmailStr
+    streamer_login: str
+    streamer_name: Optional[str] = None
+    platform: str = "twitch"
+    phone: Optional[str] = None
+    telegram_username: Optional[str] = None
+    channels: Optional[List[str]] = None
+
+
+@api_router.post("/alerts/streamer")
+async def public_streamer_alert(payload: StreamerAlertIn):
+    """Capture an opt-in for live-going notifications for a specific streamer
+    on a specific platform. Idempotent: same (email, streamer, platform)
+    re-submission updates the existing row instead of duplicating."""
+    from streamer_alerts import create_alert
+    result = await create_alert(
+        db,
+        email=payload.email,
+        streamer_login=payload.streamer_login,
+        streamer_name=payload.streamer_name,
+        platform=payload.platform,
+        phone=payload.phone,
+        telegram_username=payload.telegram_username,
+        channels=payload.channels,
+    )
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result.get("reason"))
+    return result
+
+
+@api_router.get("/data/live-stats")
+async def public_data_live_stats():
+    """Homepage ticker — REAL aggregated counters across Layer 2 collections.
+    10s cache. Never fabricated; counters that haven't fired yet return 0."""
+    from public_stats import get_live_stats
+    return await get_live_stats(db)
 
 
 @api_router.get("/odds/featured")
@@ -1360,6 +1416,11 @@ async def _seed_phase3():
         await content_ensure_indexes(db)
     except Exception:
         logger.exception("Failed to create content_drafts indexes")
+    try:
+        from streamer_alerts import ensure_indexes as alerts_ensure_indexes
+        await alerts_ensure_indexes(db)
+    except Exception:
+        logger.exception("Failed to create streamer_alerts indexes")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)

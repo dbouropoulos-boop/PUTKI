@@ -13,6 +13,7 @@ export const Header = () => {
   // per user spec. Routes remain so deep-links still resolve. CasinoRanking
   // also carries a robots:noindex meta tag during this window.
   const navLinks = [
+    { to: '/uutiset',         label: 'UUTISET' },
     { to: '/striimaajat',     label: t('nav.streamers') },
     { to: '/viikon-kortti',   label: t('nav.weekly') },
     { to: '/peli',            label: t('nav.game') },

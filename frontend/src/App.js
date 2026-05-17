@@ -24,6 +24,7 @@ import Toimitus from "@/pages/Toimitus";
 import VoitaPalkinto from "@/pages/VoitaPalkinto";
 import Profiilit from "@/pages/Profiilit";
 import MittariHistoria from "@/pages/MittariHistoria";
+import Uutiset from "@/pages/Uutiset";
 import { Skene, SkeneTalous } from "@/pages/Skene";
 import { Raha, Kulttuuri, Sponsoroinnit, Saantely } from "@/pages/EditorialArchives";
 import { Pelit, PelitBlackjack, PelitPoker, PelitSlotit, PelitCraps, PelitRuletti, PelitLive, PelitBonusmatematiikka } from "@/pages/Pelit";
@@ -61,6 +62,7 @@ function App() {
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
             <Route path="viikon-kortti" element={<WeeklyCard />} />
             <Route path="mittari/historia" element={<MittariHistoria />} />
+            <Route path="uutiset" element={<Uutiset />} />
 
             {/* V2 Master Brief: new editorial surfaces */}
             <Route path="profiilit" element={<Profiilit />} />

@@ -11,10 +11,13 @@
  * Honest empty state when out-of-season / no events / dormant API.
  */
 import React, { useEffect, useState, useCallback } from 'react';
-import { TrendingUp, Clock, AlertCircle } from 'lucide-react';
+import { TrendingUp, Clock, AlertCircle, Send, X, CheckCircle2 } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 5 * 60_000;  // 5 min refresh on the client
+
+const TIPS_TELEGRAM_HANDLE = 'putkihq_vinkit';
+const TIPS_TELEGRAM_URL = `https://t.me/${TIPS_TELEGRAM_HANDLE}`;
 
 const confidenceColor = (pct) => {
   if (pct >= 80) return '#2c7a4b';
@@ -127,6 +130,8 @@ const PickRow = ({ p, idx }) => {
 const PaivaVitoset = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState(null);
 
   const load = useCallback(async () => {
     try {
@@ -143,8 +148,19 @@ const PaivaVitoset = () => {
   useEffect(() => {
     load();
     const id = setInterval(load, POLL_MS);
+    fetch(`${BACKEND}/api/signup/count`)
+      .then((r) => r.ok ? r.json() : { count: null })
+      .then((d) => setSubscriberCount(d.count))
+      .catch(() => {});
     return () => clearInterval(id);
   }, [load]);
+
+  useEffect(() => {
+    if (!showModal) return;
+    const onKey = (e) => { if (e.key === 'Escape') setShowModal(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showModal]);
 
   const picks = data?.picks || [];
   const dormant = data?.dormant;
@@ -222,6 +238,40 @@ const PaivaVitoset = () => {
           </ul>
         )}
 
+        {/* CONVERSION FUNNEL — daily tips Telegram CTA */}
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          data-testid="paivan-vitoset-cta"
+          className="w-full mono"
+          style={{
+            display: 'block',
+            background: '#E8924A',
+            color: '#0A0A0A',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '18px 20px',
+            textAlign: 'left',
+          }}
+        >
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <div style={{ fontSize: 10.5, letterSpacing: '0.28em', fontWeight: 700, opacity: 0.75 }}>
+                🔥 SAA NÄMÄ VINKIT PÄIVITTÄIN
+              </div>
+              <div className="display mt-1" style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.01em' }}>
+                Tilaa Telegram-kanavaan →
+              </div>
+            </div>
+            <div className="text-right" style={{ fontSize: 10, letterSpacing: '0.18em', fontWeight: 600, opacity: 0.7 }}>
+              ILMAINEN · EI SPÄMMIÄ
+              {subscriberCount != null && (
+                <div style={{ marginTop: 2 }}>{subscriberCount} TILAAJAA</div>
+              )}
+            </div>
+          </div>
+        </button>
+
         {/* Disclaimer footer */}
         <div
           className="px-4 sm:px-5 py-3 mono"
@@ -237,6 +287,81 @@ const PaivaVitoset = () => {
           KAUPALLINEN AGGREGAATTI · 18+ · PELAA VASTUULLISESTI · DATA: THE ODDS API
         </div>
       </div>
+
+      {showModal && (
+        <div
+          data-testid="paivan-vitoset-modal"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--bg)',
+              border: '1px solid var(--border-strong)',
+              borderRadius: 4,
+              maxWidth: 460, width: '100%', maxHeight: '92vh', overflowY: 'auto',
+            }}
+          >
+            <div className="flex items-center justify-between px-5 py-4"
+                 style={{ borderBottom: '1px solid var(--border)' }}>
+              <div className="mono inline-flex items-center gap-2"
+                   style={{ fontSize: 10, letterSpacing: '0.24em', fontWeight: 700, color: 'var(--ink)' }}>
+                <Send strokeWidth={1.9} size={12} />
+                TILAA TELEGRAM-VINKIT
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', opacity: 0.7 }}
+                data-testid="paivan-vitoset-modal-close"
+              >
+                <X strokeWidth={1.6} size={18} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <h3 className="display" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>
+                Päivittäiset vedonlyöntivinkit
+              </h3>
+              <p className="font-serif" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>
+                Saat 5 valintaa päivässä suoraan Telegramiin. Alaviivassa kerroin,
+                luottamus % ja paras kirjanpitäjä.
+              </p>
+              <ul className="space-y-2" style={{ fontSize: 13.5, color: 'var(--ink)' }}>
+                {['NHL · Valioliiga · Veikkausliiga · Mestarien liiga',
+                  'Kertoimet ja avaintoiminnan analyysi',
+                  'Luottamusprosentit eri kirjanpitäjien välillä',
+                  'Ilmainen · ei spämmiä · perukaa milloin vain'].map((b) => (
+                  <li key={b} className="flex items-start gap-2 font-serif">
+                    <CheckCircle2 strokeWidth={1.7} size={14} style={{ color: '#2c7a4b', marginTop: 3, flexShrink: 0 }} />
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href={TIPS_TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="paivan-vitoset-telegram-link"
+                className="mono w-full inline-flex items-center justify-center gap-2"
+                style={{
+                  padding: '14px 18px',
+                  fontSize: 12, letterSpacing: '0.22em', fontWeight: 700,
+                  background: 'var(--ink)', color: 'var(--bg)',
+                  textDecoration: 'none', borderRadius: 2,
+                }}
+              >
+                <Send strokeWidth={1.9} size={13} />
+                LIITY @{TIPS_TELEGRAM_HANDLE} →
+              </a>
+              <div className="mono text-center" style={{ fontSize: 9.5, letterSpacing: '0.18em', color: 'var(--muted)', opacity: 0.7 }}>
+                TULOSSA PIAN · SMS- JA WHATSAPP-VINKIT
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
