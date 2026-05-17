@@ -891,6 +891,17 @@ def build_webhook_router(db) -> APIRouter:
         leases = await db.youtube_pubsub_leases.find({"market_id": "FI"}, {"_id": 0}).to_list(length=200)
         return {"ok": True, "leases": leases, "count": len(leases)}
 
+    @r.post("/youtube/renew-leases")
+    async def youtube_renew_leases(x_admin_token: Optional[str] = Header(default=None)):
+        """Force-run the YouTube lease auto-renewal pass. Useful when on-call
+        wants to refresh leases ahead of the next 6 h worker tick (e.g. before
+        a planned redeploy)."""
+        expected = os.environ.get("BACK_OFFICE_TOKEN")
+        if not expected or x_admin_token != expected:
+            raise HTTPException(status_code=401, detail="admin_token_required")
+        from youtube_lease_worker import renew_due_leases
+        return await renew_due_leases(db)
+
     return r
 
 

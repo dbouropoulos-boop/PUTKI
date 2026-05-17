@@ -986,6 +986,9 @@ async def _seed_phase3():
         _aio.create_task(_signal_dial_worker())
         if os.environ.get("PUTKI_HQ_DISABLE_FEED_WORKER", "0") != "1":
             _aio.create_task(feed_worker_loop(db))
+        if os.environ.get("PUTKI_HQ_DISABLE_YT_LEASE_WORKER", "0") != "1":
+            from youtube_lease_worker import lease_worker_loop as _yt_lease_loop
+            _aio.create_task(_yt_lease_loop(db))
     # Kick off editorial seed scheduler + variant filler.
     if os.environ.get("PUTKI_HQ_DISABLE_SCHEDULER", "0") != "1":
         import asyncio as _aio

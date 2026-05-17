@@ -47,6 +47,7 @@ logger = logging.getLogger(__name__)
 FEED_TTL_MINUTES = int(os.environ.get("FEED_TTL_MINUTES", "180"))
 FEED_REBUILD_INTERVAL_SECONDS = int(os.environ.get("FEED_REBUILD_INTERVAL_SECONDS", "60"))
 FEED_DEFAULT_MARKET = os.environ.get("FEED_DEFAULT_MARKET", "FI")
+WAS_LIVE_GRACE_SECONDS = int(os.environ.get("FEED_WAS_LIVE_GRACE_SECONDS", "30"))
 
 
 # ── tiny in-memory cache (per-process) ──────────────────────────────────────
@@ -126,7 +127,9 @@ def _feed_item(
 
 def _signal_to_feed_item(sig: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Map a signals collection row → feed_item shape. Returns None if the
-    signal is not hub-card-worthy (e.g. internal heartbeats)."""
+    signal is not hub-card-worthy (e.g. internal heartbeats). For stream-end
+    events returns a sentinel `{"__offline_dedup_key": "..."}` so rebuild_feed
+    can demote the live tile to `stream_was_live`."""
     src = sig.get("source")
     stype = sig.get("signal_type") or sig.get("event_type")
     payload = sig.get("payload") or {}
@@ -137,6 +140,8 @@ def _signal_to_feed_item(sig: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         login = payload.get("login") or payload.get("broadcaster_user_login")
         if not login:
             return None
+        if stype in ("stream.offline", "stream_offline"):
+            return {"__offline_dedup_key": f"twitch:{login}"}
         viewers = payload.get("viewers")
         game = payload.get("game_name") or payload.get("category_name")
         title = payload.get("title") or f"{login} live"
@@ -159,6 +164,8 @@ def _signal_to_feed_item(sig: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         login = payload.get("slug") or payload.get("channel") or payload.get("login")
         if not login:
             return None
+        if stype in ("livestream.ended", "stream.offline", "stream_offline"):
+            return {"__offline_dedup_key": f"kick:{login}"}
         viewers = payload.get("viewers") or payload.get("viewer_count")
         title = payload.get("session_title") or payload.get("title") or f"{login} live"
         body = f"{viewers:,} katsojaa" if viewers else None
@@ -293,11 +300,20 @@ async def rebuild_feed(db, *, market_id: str = FEED_DEFAULT_MARKET, signal_limit
     pubs = await pub_cur.to_list(length=pub_limit)
 
     upserts: List[Dict[str, Any]] = []
+    offline_keys: set[str] = set()
     for s in signals:
         item = _signal_to_feed_item(s)
-        if item:
-            item["market_id"] = market_id
-            upserts.append(item)
+        if not item:
+            continue
+        if "__offline_dedup_key" in item:
+            offline_keys.add(item["__offline_dedup_key"])
+            continue
+        item["market_id"] = market_id
+        upserts.append(item)
+    # Strip offline keys from the upsert list — if a streamer signaled live
+    # AND offline in the same window we trust the offline (latest wins).
+    upserts = [u for u in upserts if u.get("dedup_key") not in offline_keys]
+
     for p in pubs:
         item = _published_to_feed_item(p)
         if item:
@@ -335,16 +351,44 @@ async def rebuild_feed(db, *, market_id: str = FEED_DEFAULT_MARKET, signal_limit
         await db.feed_items.update_one(filt, update, upsert=True)
         written += 1
 
-    # 4) prune expired feed items
+    # 4) Apply WAS LIVE demotion for any streamer that just went offline.
+    #    The matching `stream_live` tile gets its kind flipped to `stream_was_live`,
+    #    title prefixed with "Juuri päättyi · ", expires_at clamped to now + grace.
+    demoted = 0
+    if offline_keys:
+        grace_iso = _iso(now + timedelta(seconds=WAS_LIVE_GRACE_SECONDS))
+        for key in offline_keys:
+            existing = await db.feed_items.find_one(
+                {"dedup_key": key, "market_id": market_id, "kind": "stream_live"},
+                {"_id": 0},
+            )
+            if existing:
+                new_title = existing.get("title") or ""
+                if not new_title.startswith("Juuri päättyi · "):
+                    new_title = f"Juuri päättyi · {new_title}"
+                await db.feed_items.update_one(
+                    {"dedup_key": key, "market_id": market_id},
+                    {"$set": {
+                        "kind": "stream_was_live",
+                        "title": new_title,
+                        "expires_at": grace_iso,
+                        "weight": max(0, int(existing.get("weight") or 0) - 30),
+                        "source_ref": {**(existing.get("source_ref") or {}), "offline_observed_at": now_iso},
+                    }},
+                )
+                demoted += 1
+
+    # 5) prune expired feed items
     pruned = await db.feed_items.delete_many({"expires_at": {"$lt": now_iso}})
 
-    # 5) invalidate cache
+    # 6) invalidate cache
     _cache_clear()
 
     return {
         "rebuilt_at": now_iso,
         "candidates": len(upserts),
         "upserted": written,
+        "demoted": demoted,
         "pruned": pruned.deleted_count,
         "signals_scanned": len(signals),
         "published_scanned": len(pubs),
