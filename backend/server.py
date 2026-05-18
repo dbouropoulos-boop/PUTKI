@@ -800,6 +800,137 @@ async def public_news_ticker(limit: int = 40):
     }
 
 
+# ── Phase 1 FINAL · Chunk A — News Portal (homepage rebuild) ──
+
+def _news_doc_projection() -> Dict[str, int]:
+    return {
+        "_id": 0, "source": 1, "source_tier": 1, "title": 1, "url": 1,
+        "category": 1, "severity": 1, "relevance": 1, "verified": 1,
+        "captured_at": 1, "published": 1, "entity_tags": 1,
+    }
+
+
+SEVERITY_WEIGHT = {"high": 30, "med": 18, "medium": 18, "low": 6}
+
+
+def _featured_score(doc: Dict[str, Any]) -> int:
+    """Deterministic AI-rank score for the top-2 featured stories.
+    Combines relevance (0-100), severity weight, verification bonus,
+    and source-tier bonus. Recency tiebreaker via captured_at."""
+    rel = int(doc.get("relevance") or 0)
+    sev = SEVERITY_WEIGHT.get((doc.get("severity") or "").lower(), 0)
+    verified_bonus = 12 if doc.get("verified") else 0
+    tier_bonus = 6 if int(doc.get("source_tier") or 0) == 1 else 0
+    return rel + sev + verified_bonus + tier_bonus
+
+
+@api_router.get("/news/featured")
+async def public_news_featured(limit: int = 2):
+    """Top-N AI-ranked stories for the homepage featured row.
+
+    Pulls the latest `news_ticker_items` (default 60 candidates from the
+    past 12h), scores them deterministically by relevance + severity +
+    verification + tier, returns the top-N enriched with hero_image_url
+    and photo_credit (sourced from og:image of the cited URL, validated
+    ≥1200×630, cached for 7 days).
+
+    When og:image is unavailable / invalid / blocklisted, the response
+    sets `hero_image_url: null` and the frontend renders the designed
+    category-treatment fallback. The mandatory `Photo: {source}` credit
+    is set whenever a hero image is returned.
+    """
+    limit = max(1, min(4, int(limit or 2)))
+    candidate_window = 60
+    cur = db.news_ticker_items.find(
+        {}, _news_doc_projection(),
+    ).sort([("captured_at", -1)]).limit(candidate_window)
+    candidates = [doc async for doc in cur]
+    if not candidates:
+        return {"items": [], "as_of": datetime.now(timezone.utc).isoformat()}
+
+    ranked = sorted(
+        candidates,
+        key=lambda d: (_featured_score(d), d.get("captured_at") or ""),
+        reverse=True,
+    )[:limit]
+
+    # Best-effort og:image enrichment. Each fetch is short-timeout; total
+    # additional latency is bounded by limit × FETCH_TIMEOUT_SECONDS.
+    from og_image_fetcher import fetch_and_cache as _og_fetch
+    enriched: List[Dict[str, Any]] = []
+    for doc in ranked:
+        url = doc.get("url") or ""
+        source_name = doc.get("source") or ""
+        hero = None
+        if url and source_name:
+            try:
+                hero = await _og_fetch(db, article_url=url, source_name=source_name)
+            except Exception:
+                logger.exception("og fetch failed for %s", url)
+                hero = None
+        enriched.append({
+            **doc,
+            "hero_image_url": (hero or {}).get("hero_image_url"),
+            "photo_credit": (hero or {}).get("photo_credit"),
+        })
+    return {
+        "items": enriched,
+        "as_of": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+@api_router.get("/news/chronological")
+async def public_news_chronological(limit: int = 12):
+    """Chronological news list for the homepage left column.
+
+    Returns the most recent `news_ticker_items` sorted by capture time.
+    No og:image enrichment — that runs only on the featured row to keep
+    this endpoint fast (the chronological list shows source + headline +
+    timestamp, no hero images).
+    """
+    limit = max(1, min(40, int(limit or 12)))
+    cur = db.news_ticker_items.find(
+        {}, _news_doc_projection(),
+    ).sort([("captured_at", -1)]).limit(limit)
+    items = [doc async for doc in cur]
+    return {
+        "items": items,
+        "as_of": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+# ── og:image blocklist admin (back-office removal-request handling) ──
+
+class _OgBlocklistAdd(BaseModel):
+    domain: str
+    reason: Optional[str] = ""
+
+
+@api_router.get("/admin/og-blocklist")
+async def admin_og_blocklist_list(_: bool = Depends(require_admin)):
+    from og_image_fetcher import list_blocklist
+    return {"items": await list_blocklist(db)}
+
+
+@api_router.post("/admin/og-blocklist")
+async def admin_og_blocklist_add(payload: _OgBlocklistAdd, _: bool = Depends(require_admin)):
+    from og_image_fetcher import add_to_blocklist
+    try:
+        doc = await add_to_blocklist(db, payload.domain, payload.reason or "")
+        return {"added": doc}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.delete("/admin/og-blocklist/{domain}")
+async def admin_og_blocklist_remove(domain: str, _: bool = Depends(require_admin)):
+    from og_image_fetcher import remove_from_blocklist
+    ok = await remove_from_blocklist(db, domain)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"removed": domain}
+
+
 @api_router.get("/odds/upcoming")
 async def public_odds_upcoming(days: int = 7, top_per_day: int = 5):
     """Betting Tips hub — picks grouped by calendar day for the next N days."""
@@ -1596,6 +1727,11 @@ async def _seed_phase3():
         await alerts_ensure_indexes(db)
     except Exception:
         logger.exception("Failed to create streamer_alerts indexes")
+    try:
+        from og_image_fetcher import ensure_indexes as og_ensure_indexes
+        await og_ensure_indexes(db)
+    except Exception:
+        logger.exception("Failed to create og_image_fetcher indexes")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)

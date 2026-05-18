@@ -1,0 +1,28 @@
+{
+  "summary": "Iteration 25 — Phase 1 Final Restructure · Chunk A (Homepage rebuild as news portal). Backend pytest test_chunk_a_news_portal.py: 11/11 PASS in 1.07s. Verified: GET /api/news/chronological?limit=N returns shape {source,title,url,category,captured_at}, sorted desc by captured_at, limit clamped to 40. GET /api/news/featured?limit=2 returns max 2 enriched items each carrying hero_image_url + photo_credit keys; when hero is present photo_credit starts with 'Photo: ' and hero_image_url is rooted at /api/static/news_hero/ (locally cached, not hot-linked). /api/admin/og-blocklist full CRUD: 401 without X-Admin-Token, 400 on invalid domain, www. stripped + lowercased on add, add/list/delete cycle works. Frontend on https://pelisignaali-fi.preview.emergentagent.com/ verified visually: (a) 2-column main grid with NewsPortal LEFT (2 featured cards with og:image heroes from Helsingin Sanomat, category SPORTS badges, photo credit overlays bottom-right, serif titles, 'HELSINGIN SANOMAT · 1 min' meta) + 12 chrono rows. (b) StreamersRail RIGHT: 3 platform groups (TWITCH purple chip '0 LIVE · 12 OFFLINE', KICK green 'API DORMANT', YOUTUBE red 'NO STREAMERS'); shows top-2 offline per group by design (StreamersRail.jsx:141 slice(0,2)); 'ALL 12 STREAMERS →' link routes to /striimaajat. (c) ExploreBlocks 2×2 grid with all 4 blocks (mittari, pelisignaalit, voita, peli), each with explore-cta arrow. Voita placeholder reads 'Coming soon' (EN mode); mittari state shows 'ROLLING'. (d) Routes /menetelma, /ehdot, /peli, /voita-palkinto, /vihjeet, /viikon-kortti, /m/perkele-2099-12-31 all return 200 and render. /back-office shows admin token gate as expected. (e) PersistentCapture + StateContextualFloat fully removed from Layout — zero fixed-position floating widgets near bottom of viewport on /. No DialCockpit, GamesSection, CaptureSection, LiveActivityFeed, WinnersCorner, HubMosaic, SocialProofBar, MostReadRail, PaivaVitoset on homepage. Zero console errors on home load.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_chunk_a_news_portal.py",
+    "/app/test_reports/pytest/iter25_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "og_image_fetcher.py is well-structured: blocklist guard + 7d positive cache + 24h negative cache + httpx async + Pillow size validation ≥1200×630 + JPEG re-encode for stable serving. Mandatory 'Photo: {source_name}' credit is always set on success. Solid editorial implementation.",
+    "server.py _featured_score is deterministic (relevance + severity weight + verified bonus + tier bonus) — good. Candidate window is 60 latest items, which is a reasonable bounded scan; consider adding a captured_at >= now-12h filter to keep featured strictly fresh (spec mentions 'past 12h' candidates in docstring but no time filter exists in code → currently any of the latest 60 by captured_at desc, which is effectively equivalent but worth tightening to be explicit).",
+    "StreamersRail.jsx:141 hard-codes slice(0,2) for offline streamers per platform group. With only 2 of 12 Twitch streamers visible the rail looks empty when nobody is live. Consider showing 4-5 offline per group, or all when live count is 0, so the rail has more visual density (currently rail height << news portal height on desktop, leaving large blank right column).",
+    "ExploreBlocks Voita placeholder text 'Coming soon' is correct EN; spec mentions 'Pian saatavilla' for FI mode — verified language toggle works (EN active). Acceptable.",
+    "Home.jsx rewrite cleanly removes 9 legacy sections without leaving orphan imports or dead state (verified via testid count = 0 for all removed components)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (11/11)", "frontend": "100% — all 28 expected testids present, 11 removed-component testids absent, all secondary routes 200, no console errors"},
+  "test_credentials": "BACK_OFFICE_TOKEN=putki-hq-admin (default; works against /api/admin/og-blocklist).",
+  "seed_data_creation": "None this iteration. news_ticker_items + Twitch streamers already seeded from prior iterations.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Chunk A (homepage news-portal rebuild) is fully verified and clean. Backend test file: /app/backend/tests/test_chunk_a_news_portal.py (11 tests). All other prior tests remain in /app/backend/tests/. Next chunks (B: landing pages /pelisignaalit + 301 redirects from /vihjeet & /viikon-kortti; C: email pipeline) are NOT in scope here. Mittari OG image fetcher remains disabled in this preview env via PUTKI_HQ_DISABLE_OG_IMAGES=1 — news_hero og fetcher is ACTIVE and successfully pulled Helsingin Sanomat heroes (visible in screenshot). StreamersRail shows top-2 offline per platform by design (StreamersRail.jsx:141) — flagged as a density suggestion, not a bug."
+}

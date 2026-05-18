@@ -3,12 +3,13 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import NewsTicker from './NewsTicker';
-import PersistentCapture from './PersistentCapture';
-import StateContextualFloat from './StateContextualFloat';
 
-// Phase 1: LiveTicker replaced by NewsTicker. LiveTicker still exists in
-// /app/frontend/src/components/LiveTicker.jsx but is no longer rendered.
-// V2 honesty pass: SignupToast + PushNotificationToast removed.
+// Phase 1 Final Restructure (Chunk A):
+// - PersistentCapture removed — site-wide duplicate subscription surface.
+//   ProgressiveOptIn lives on landing pages only (Chunk B).
+// - StateContextualFloat removed — homepage now hints at /mittari via the
+//   compact ExploreBlocks grid, no need for a floating contextual CTA.
+// - NewsTicker replaced LiveTicker in Sprint 3.
 
 export const Layout = () => {
   return (
@@ -19,8 +20,6 @@ export const Layout = () => {
         <Outlet />
       </main>
       <Footer />
-      <PersistentCapture />
-      <StateContextualFloat />
       <div className="grain-overlay" aria-hidden="true" />
     </div>
   );
