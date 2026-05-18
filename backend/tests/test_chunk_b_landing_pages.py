@@ -131,9 +131,11 @@ class TestOptin:
         assert r.status_code == 400
 
     def test_idempotent_resubmit_does_not_duplicate(self, api, admin_api):
-        # Submit twice with same identifier
-        body = {"channel": "email", "surface": "voita",
-                "email": "idempotency-test@putkihq.example"}
+        # Submit twice with same identifier. Use a unique per-run email so
+        # repeated test iterations don't collide with the previous insert.
+        import uuid
+        email = f"idempotency-{uuid.uuid4().hex[:10]}@putkihq.example"
+        body = {"channel": "email", "surface": "voita", "email": email}
         r1 = api.post(f"{BASE_URL}/api/optin", json=body, timeout=10)
         assert r1.status_code == 200
         first_new = r1.json()["new_record"]

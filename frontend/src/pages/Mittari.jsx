@@ -95,9 +95,10 @@ const Mittari = () => {
             }}>MITTARI · NYT</span>
             <h1 data-testid="mittari-state-name" style={{
               fontFamily: 'Georgia, serif', fontWeight: 700,
-              fontSize: 'clamp(64px, 10vw, 132px)', lineHeight: 0.9,
+              fontSize: 'clamp(56px, 7.5vw, 104px)', lineHeight: 0.9,
               letterSpacing: '-0.03em', margin: '10px 0 22px',
               color: color,
+              wordBreak: 'break-word',
             }}>{stateName}</h1>
             <p style={{
               color: 'var(--ink, #ECE6D8)', fontSize: 17, lineHeight: 1.55,
