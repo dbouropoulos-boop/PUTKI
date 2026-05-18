@@ -3,7 +3,7 @@
 ## Phase History
 - **Phase 1** (2026-02) — 9-page editorial site
 - **Phase 1.5 / 1.6 / 1.7** (2026-02) — cockpit-instrument elevation, bilingual FI/EN, visual energy
-- **Phase 2.0** (2026-05) — Liveness layer (activity feed, breathing dial, social-proof)
+- **Phase 4 Pre-Launch — Bilingual completion** (2026-05-18) — Wired `t()` through every previously-hardcoded Finnish page: `/peli`, `/tietoa-meista`, `/menetelma`, `/viikon-kortti`. Wired `LiveActivityFeed`, `PersistentCapture`, `Footer` page links, `DialCockpit` last-update ticker, `Layer2StatusPanel` admin times. Added centralized `formatTimeAgo()` / `formatLiveDuration()` / `formatKickoff()` helpers in `/app/frontend/src/utils/formatTime.js`. testing_agent_v3_fork iteration 16: 95 % frontend translation pass — all FI→EN and EN→FI screenshots clean across the 8 audited routes.
 - **Phase 2.5** (2026-05) — Page-by-page completion (autoplay previews, Streamer profile, Weezy Rally)
 - **Phase 2.6 Batch A** (2026-05) — Topi removal, intl streamer expansion, Smartico Visitor Mode shell
 - **Phase 3 Foundation Slice + Batches 3A / 3B / 3C / 3D** (2026-05) — Signal pipeline, dial recalc engine, distribution fanout, Smartico Voyager loader, signal status widget

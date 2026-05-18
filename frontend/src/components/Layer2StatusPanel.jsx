@@ -9,19 +9,16 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Loader2, AlertTriangle, CheckCircle2, Play } from 'lucide-react';
+import { useLang } from '../context/LanguageContext';
+import { formatTimeAgo } from '../utils/formatTime';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 20_000;
 
-const fmtAge = (iso) => {
+const fmtAge = (iso, lang) => {
   if (!iso || iso === 'None') return '—';
   try {
-    const t = new Date(iso.replace(' ', 'T'));
-    const secs = Math.max(0, Math.floor((Date.now() - t.getTime()) / 1000));
-    if (secs < 60) return `${secs}s sitten`;
-    if (secs < 3600) return `${Math.floor(secs / 60)}min sitten`;
-    if (secs < 86400) return `${Math.floor(secs / 3600)}h sitten`;
-    return `${Math.floor(secs / 86400)}d sitten`;
+    return formatTimeAgo(iso.replace(' ', 'T'), lang);
   } catch { return '—'; }
 };
 
@@ -52,6 +49,7 @@ const stateForWorker = (key, coll) => {
 };
 
 const Layer2StatusPanel = ({ token }) => {
+  const { lang } = useLang();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [busyWorker, setBusyWorker] = useState(null);
@@ -149,7 +147,7 @@ const Layer2StatusPanel = ({ token }) => {
                   {summary}
                 </div>
                 <div className="mono" style={{ fontSize: 9.5, color: 'var(--muted)', letterSpacing: '0.06em', marginTop: 2 }}>
-                  {coll?.doc_count ?? 0} dok · {fmtAge(coll?.latest_captured_at)} · {fmtStamp(coll?.latest_captured_at)}
+                  {coll?.doc_count ?? 0} dok · {fmtAge(coll?.latest_captured_at, lang)} · {fmtStamp(coll?.latest_captured_at)}
                 </div>
               </div>
               <button

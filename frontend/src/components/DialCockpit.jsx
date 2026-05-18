@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Dial from './Dial';
 import CountUp from './CountUp';
 import { useLang } from '../context/LanguageContext';
+import { formatTimeAgo } from '../utils/formatTime';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -169,11 +170,8 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
     void tickerNow;
     if (!cockpit?.computed_at) return null;
     try {
-      const t = new Date(String(cockpit.computed_at).replace(' ', 'T'));
-      const secs = Math.max(0, Math.floor((Date.now() - t.getTime()) / 1000));
-      if (secs < 60) return `${secs}s sitten`;
-      if (secs < 3600) return `${Math.floor(secs / 60)}min sitten`;
-      return `${Math.floor(secs / 3600)}h sitten`;
+      const iso = String(cockpit.computed_at).replace(' ', 'T');
+      return formatTimeAgo(iso, lang);
     } catch { return null; }
   })();
 
@@ -186,7 +184,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         style={{ fontSize: 9.5, letterSpacing: '0.32em', color: 'var(--muted)', fontWeight: 500, opacity: 0.55 }}
         data-testid="cockpit-last-update"
       >
-        LAST UPDATE · {lastUpdateLabel || '— SITTEN'}
+        {lang === 'en' ? 'LAST UPDATE' : 'VIIMEISIN PÄIVITYS'} · {lastUpdateLabel || (lang === 'en' ? '— AGO' : '— SITTEN')}
       </div>
       {/* Premium trading-dashboard eyebrow — date/time on the left, live SSE
           indicator on the right. "Perkele-mittari" reads as a faint maker's
