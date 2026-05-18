@@ -58,6 +58,17 @@ export const Footer = () => {
               <li><span style={{ color: 'var(--muted)' }}>{t('footer.privacy')}</span></li>
               <li><span style={{ color: 'var(--muted)' }}>{t('footer.terms')}</span></li>
               <li><span style={{ color: 'var(--muted)' }}>{t('footer.affiliate')}</span></li>
+              <li>
+                <Link
+                  to="/back-office"
+                  style={{ color: 'var(--ink)' }}
+                  className="hover:opacity-70 inline-flex items-center gap-1.5"
+                  data-testid="footer-admin-link"
+                >
+                  <Settings strokeWidth={1.6} size={12} />
+                  ADMIN
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

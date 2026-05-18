@@ -28,14 +28,19 @@ from typing import Any, Dict, List, Optional
 logger = logging.getLogger(__name__)
 
 # Templates available — the 6 from content_generator.py.
+# Default backfill uses the 5 LLM-driven templates (each produces unique
+# headlines per fixture via Claude). streamer_alert is deterministic
+# ("X aloitti striimin · N katsojaa · Y") so we exclude it from the default
+# rotation to avoid topic-monoculture — callers can still opt in via
+# `templates=["streamer_alert"]`.
 DEFAULT_TEMPLATES = [
     "nhl_recap",
     "f1_recap",
     "football_recap",
-    "streamer_alert",
     "regulatory_analysis",
     "operator_news",
 ]
+ALL_TEMPLATES = DEFAULT_TEMPLATES + ["streamer_alert"]
 
 # Real / synthetic signal scaffolding per template. Editor can swap to
 # editorial_subjects-driven lookups later if richer context is desired.
@@ -47,45 +52,104 @@ NHL_TEAMS = [
     ("Edmonton Oilers", "Vancouver Canucks"),
     ("Carolina Hurricanes", "New Jersey Devils"),
     ("Vegas Golden Knights", "Los Angeles Kings"),
-    ("Rangers", "Islanders"),
+    ("New York Rangers", "New York Islanders"),
     ("Pittsburgh Penguins", "Washington Capitals"),
+    ("Winnipeg Jets", "Minnesota Wild"),
+    ("Nashville Predators", "St. Louis Blues"),
+    ("Detroit Red Wings", "Buffalo Sabres"),
+    ("Calgary Flames", "Seattle Kraken"),
+    ("Ottawa Senators", "Montréal Canadiens"),
+    ("Philadelphia Flyers", "Columbus Blue Jackets"),
+    ("Anaheim Ducks", "San Jose Sharks"),
+]
+NHL_FI_PLAYERS = [
+    ("Mikko Rantanen", "Colorado Avalanche"),
+    ("Aleksander Barkov", "Florida Panthers"),
+    ("Patrik Laine", "Montréal Canadiens"),
+    ("Sebastian Aho", "Carolina Hurricanes"),
+    ("Mikael Granlund", "Dallas Stars"),
+    ("Esa Lindell", "Dallas Stars"),
+    ("Roope Hintz", "Dallas Stars"),
+    ("Juuse Saros", "Nashville Predators"),
+    ("Kaapo Kakko", "Seattle Kraken"),
 ]
 FOOTBALL_FIXTURES = [
-    ("Manchester City", "Arsenal"),
-    ("Real Madrid", "Barcelona"),
-    ("Liverpool", "Manchester United"),
-    ("Bayern Munich", "Borussia Dortmund"),
-    ("Inter", "Juventus"),
-    ("PSG", "Marseille"),
-    ("HJK", "KuPS"),
-    ("Inter Turku", "SJK"),
+    ("Manchester City", "Arsenal", "Premier League"),
+    ("Real Madrid", "Barcelona", "La Liga"),
+    ("Liverpool", "Manchester United", "Premier League"),
+    ("Bayern Munich", "Borussia Dortmund", "Bundesliga"),
+    ("Inter", "Juventus", "Serie A"),
+    ("PSG", "Marseille", "Ligue 1"),
+    ("HJK", "KuPS", "Veikkausliiga"),
+    ("Inter Turku", "SJK", "Veikkausliiga"),
+    ("Ilves", "Haka", "Veikkausliiga"),
+    ("Chelsea", "Tottenham", "Premier League"),
+    ("Atlético Madrid", "Sevilla", "La Liga"),
+    ("Napoli", "AC Milan", "Serie A"),
+    ("Ajax", "PSV Eindhoven", "Eredivisie"),
+    ("Porto", "Benfica", "Primeira Liga"),
+    ("VPS", "FC Honka", "Veikkausliiga"),
 ]
-F1_RACES = ["Monaco GP", "Silverstone GP", "Monza GP", "Spa GP", "Suzuka GP", "Imola GP"]
-F1_DRIVERS = ["Verstappen", "Hamilton", "Leclerc", "Norris", "Russell", "Sainz"]
+F1_RACES = [
+    "Monaco GP", "Silverstone GP", "Monza GP", "Spa GP", "Suzuka GP",
+    "Imola GP", "Bahrain GP", "Miami GP", "Austrian GP", "Hungarian GP",
+    "Dutch GP", "Singapore GP", "Las Vegas GP", "Abu Dhabi GP", "Mexico GP",
+    "Brazilian GP", "Australian GP", "Canadian GP", "British GP",
+]
+F1_DRIVERS = [
+    "Verstappen", "Hamilton", "Leclerc", "Norris", "Russell", "Sainz",
+    "Piastri", "Alonso", "Pérez", "Stroll", "Hülkenberg", "Albon",
+]
 FI_STREAMERS = [
     ("jarttu84", "Jarttu84"), ("aikapoika", "Aikapoika"), ("pact_", "PACT"),
     ("slotsbyander", "SlotsByAnder"), ("vippikingi", "Vippikingi"),
     ("slottimanu", "SlottiManu"), ("herraherrasmies", "HerraHerrasmies"),
+    ("kaaposlots", "KaapoSlots"), ("topisstream", "TopiStream"),
+    ("juuskasino", "JuusKasino"), ("ninjaslots", "NinjaSlots"),
 ]
-SLOT_GAMES = ["Sweet Bonanza", "Gates of Olympus", "Sugar Rush", "The Dog House",
-              "Wanted Dead or Alive", "Big Bass Bonanza", "Money Train 3"]
+SLOT_GAMES = [
+    "Sweet Bonanza", "Gates of Olympus", "Sugar Rush", "The Dog House",
+    "Wanted Dead or Alive", "Big Bass Bonanza", "Money Train 3",
+    "Reactoonz", "Fire in the Hole", "Book of Dead", "Bonanza Megaways",
+    "San Quentin xWays", "Madame Destiny Megaways", "Starburst",
+]
 REG_TOPICS = [
-    ("Veikkaus monopoli päivittyy 2027", "yle.fi"),
-    ("Suomen rahapelilaki uudistuu — mitä se tarkoittaa pelaajille", "hs.fi"),
-    ("EU komissio puuttuu Suomen monopoliin", "iltalehti.fi"),
+    ("Veikkaus monopoli päivittyy 2027 — uusi lisenssimallin runko julkaistu", "yle.fi"),
+    ("Suomen rahapelilaki uudistuu — mitä se tarkoittaa pelaajille käytännössä", "hs.fi"),
+    ("EU komissio puuttuu Suomen monopoliin uudella valitusprosessilla", "iltalehti.fi"),
     ("Sisäministeriö julkaisi uudet lisenssimallin yksityiskohdat", "yle.fi"),
-    ("Peluuri raportoi kasvavasta ongelmapelaamisesta", "hs.fi"),
+    ("Peluuri raportoi kasvavasta ongelmapelaamisesta nuorten keskuudessa", "hs.fi"),
+    ("Veikkaus laskee jackpot-pottien rajaa uuden lainsäädännön mukaan", "yle.fi"),
+    ("Ulkomaiset operaattorit saavat kahden vuoden siirtymäajan Suomeen", "iltalehti.fi"),
+    ("Slot-pelien panostusrajat tiukkenevat — uudet säännöt 2027 alkaen", "hs.fi"),
+    ("Mainonnan rajat Suomen rahapelimarkkinoilla — uusi linjaus", "yle.fi"),
+    ("AML-direktiivin vaikutus suomalaisiin kasinopelaajiin", "iltalehti.fi"),
+    ("Veikkauksen liikevoitto laskee historiallisen alas — syyt avattu", "hs.fi"),
+    ("Suomi vetoaa CJEU:hun monopolin pysyvyyden puolesta", "yle.fi"),
+    ("Liikenne- ja viestintävirasto valvoo verkkokasinoita uudella tavalla", "iltalehti.fi"),
 ]
 OPERATORS = [
     "Casinia", "Mr Vegas", "Wildz", "Casinoly", "PlayOJO",
-    "Nitro Casino", "Spinz", "LeoVegas", "Hajper",
+    "Nitro Casino", "Spinz", "LeoVegas", "Hajper", "BitStarz",
+    "Casino Days", "FortuneJack", "Mr Green", "Caxino", "Slotsmagic",
+    "Boomerang Casino", "N1 Casino", "Cobra Casino",
 ]
 OPERATOR_NEWS = [
     "lanseeraa uuden bonustuotteen Suomeen",
-    "ilmoittaa nopeammat kotiutukset",
+    "ilmoittaa nopeammat kotiutukset — alle 2 tuntia",
     "lisää uuden pelivalmistajan kirjastoonsa",
     "saa MGA-lisenssin päivityksen",
-    "ottaa käyttöön suomenkielisen asiakaspalvelun",
+    "ottaa käyttöön suomenkielisen asiakaspalvelun 24/7",
+    "lopettaa toimintansa Suomen markkinalla",
+    "siirtyy Pay-N-Play-malliin koko valikoimassaan",
+    "julkaisee transparenttisuusraportin pelivolyymista",
+    "ottaa käyttöön Trustlyn pikamaksun",
+    "menettää MGA-lisenssin compliance-rikkomuksen vuoksi",
+    "avaa Live Casino -studion Riikaan",
+    "saa uuden CEO:n — strategiaa muutetaan",
+    "lopettaa bonusten markkinoinnin Suomeen",
+    "yhdistyy isompaan eurooppalaiseen kasino-operaattoriin",
+    "lanseeraa cashback-ohjelman ilman kierrätysvaatimuksia",
 ]
 
 
@@ -94,6 +158,8 @@ def _synth_signal(template_id: str) -> Dict[str, Any]:
     for the given content type."""
     if template_id == "nhl_recap":
         home, away = random.choice(NHL_TEAMS)
+        # Inject a Finnish player so the LLM has a Finland angle to work with
+        fi_player, fi_team = random.choice(NHL_FI_PLAYERS)
         return {
             "home": home,
             "away": away,
@@ -102,26 +168,33 @@ def _synth_signal(template_id: str) -> Dict[str, Any]:
             "start_time_utc": datetime.now(timezone.utc).isoformat(),
             "game_state": "FINAL",
             "game_id": f"backfill-{uuid.uuid4().hex[:10]}",
+            "finnish_players": [{"name": fi_player, "team": fi_team,
+                                  "points": random.randint(1, 3),
+                                  "toi_minutes": random.randint(15, 24)}],
+            "context": f"{fi_player} ({fi_team}) merkityksellisellä roolilla",
         }
     if template_id == "f1_recap":
         race = random.choice(F1_RACES)
         winner = random.choice(F1_DRIVERS)
+        podium = random.sample(F1_DRIVERS, 3)
+        if winner not in podium:
+            podium[0] = winner
         return {
             "race": race,
             "winner": winner,
-            "podium": random.sample(F1_DRIVERS, 3),
+            "podium": podium,
             "round": random.randint(1, 24),
             "year": 2026,
             "race_id": f"backfill-{uuid.uuid4().hex[:10]}",
         }
     if template_id == "football_recap":
-        home, away = random.choice(FOOTBALL_FIXTURES)
+        home, away, comp = random.choice(FOOTBALL_FIXTURES)
         return {
             "home": home,
             "away": away,
             "home_score": random.randint(0, 4),
             "away_score": random.randint(0, 4),
-            "competition": "Premier League",
+            "competition": comp,
             "kickoff_utc": datetime.now(timezone.utc).isoformat(),
             "match_id": f"backfill-{uuid.uuid4().hex[:10]}",
         }
@@ -175,59 +248,65 @@ async def run_backfill(
     count: int,
     days: int = 60,
     templates: Optional[List[str]] = None,
+    concurrency: int = 4,
 ) -> Dict[str, Any]:
     """Generate `count` articles across the given templates, back-dating each
-    published_at. Returns per-template stats."""
+    published_at. Returns per-template stats. Articles run with bounded
+    concurrency so LLM templates (NHL/F1/Football/Regulatory/Operator news)
+    don't sit idle waiting on each other."""
     if count <= 0:
         return {"generated": 0, "stats": {}}
     count = min(int(count), 50)  # hard cap per call
 
-    tmpls = [t for t in (templates or DEFAULT_TEMPLATES) if t in DEFAULT_TEMPLATES]
+    tmpls = [t for t in (templates or DEFAULT_TEMPLATES) if t in ALL_TEMPLATES]
     if not tmpls:
         tmpls = list(DEFAULT_TEMPLATES)
 
     stats: Dict[str, Dict[str, int]] = {t: {"ok": 0, "skip": 0, "err": 0} for t in tmpls}
     generated_ids: List[str] = []
 
-    for i in range(count):
+    import asyncio as _aio
+    sem = _aio.Semaphore(max(1, int(concurrency)))
+
+    async def _one(i: int) -> None:
         template_id = tmpls[i % len(tmpls)]
         signal = _synth_signal(template_id)
-        try:
-            res = await generator.generate_from_signal(template_id, signal, force=True)
-            status = res.get("status")
-            if status in ("generated", "rate_limited_to_draft"):
-                stats[template_id]["ok"] += 1
-                draft_id = res.get("draft_id")
-                if draft_id:
-                    # Auto-publish draft if not already auto-published
-                    pub = res.get("published") or {}
-                    published_id = pub.get("published_id")
-                    if not published_id and status == "rate_limited_to_draft":
-                        # Promote rate-limited draft to published
-                        try:
-                            pub2 = await generator.publish_draft(draft_id, reviewed_by="backfill")
-                            published_id = pub2.get("published_id")
-                        except Exception:
-                            pass
-                    if published_id:
-                        # Backdate the published article
-                        backdated = _random_past_iso(days)
-                        await db.published_content.update_one(
-                            {"id": published_id},
-                            {"$set": {"published_at": backdated, "backfilled": True}},
-                        )
-                        await db.content_drafts.update_one(
-                            {"id": draft_id},
-                            {"$set": {"published_at": backdated, "backfilled": True}},
-                        )
-                        generated_ids.append(published_id)
-            elif status == "skipped":
-                stats[template_id]["skip"] += 1
-            else:
+        async with sem:
+            try:
+                res = await generator.generate_from_signal(template_id, signal, force=True)
+                status = res.get("status")
+                if status in ("generated", "rate_limited_to_draft"):
+                    stats[template_id]["ok"] += 1
+                    draft_id = res.get("draft_id")
+                    if draft_id:
+                        pub = res.get("published") or {}
+                        published_id = pub.get("published_id")
+                        if not published_id and status == "rate_limited_to_draft":
+                            try:
+                                pub2 = await generator.publish_draft(draft_id, reviewed_by="backfill")
+                                published_id = pub2.get("published_id")
+                            except Exception:
+                                pass
+                        if published_id:
+                            backdated = _random_past_iso(days)
+                            await db.published_content.update_one(
+                                {"id": published_id},
+                                {"$set": {"published_at": backdated, "backfilled": True}},
+                            )
+                            await db.content_drafts.update_one(
+                                {"id": draft_id},
+                                {"$set": {"published_at": backdated, "backfilled": True}},
+                            )
+                            generated_ids.append(published_id)
+                elif status == "skipped":
+                    stats[template_id]["skip"] += 1
+                else:
+                    stats[template_id]["err"] += 1
+            except Exception as e:
+                logger.exception("backfill iter failed: %s", e)
                 stats[template_id]["err"] += 1
-        except Exception as e:
-            logger.exception("backfill iter failed: %s", e)
-            stats[template_id]["err"] += 1
+
+    await _aio.gather(*[_one(i) for i in range(count)])
 
     return {
         "generated": len(generated_ids),
