@@ -62,8 +62,8 @@
   .controls { display: flex; gap: 8px; }
   .controls .btn { border: 1px solid var(--border-strong); padding: 8px 14px; border-radius: 999px; font-size: 10.5px; letter-spacing: 0.18em; font-weight: 600; font-family: ui-monospace, monospace; color: var(--ink); }
 
-  /* === MAIN GRID — 2 column === */
-  .main { display: grid; grid-template-columns: 1fr 320px; gap: 48px; padding: 32px 0 24px; }
+  /* === MAIN GRID — news dominant, streamers as quieter rail === */
+  .main { display: grid; grid-template-columns: 1fr 260px; gap: 56px; padding: 32px 0 24px; }
 
   /* === FEATURED — og:image hero strategy === */
   .featured-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 36px; }
@@ -154,78 +154,105 @@
   .row.old .time, .row.old .src { opacity: 0.6; }
   .row.old .badge { opacity: 0.7; }
 
-  /* === STREAMER COLUMN === */
+  /* === STREAMER COLUMN — quieter, platform-aware === */
   .streamers { padding-top: 4px; }
-  .streamers .col-head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid var(--hairline); margin-bottom: 14px; }
+  .streamers .col-head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 12px; border-bottom: 1px solid var(--hairline); margin-bottom: 10px; }
   .streamers .col-head .count { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.14em; }
-  .streamer { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 10px 0; align-items: center; border-bottom: 1px solid var(--hairline); transition: padding 160ms ease; }
-  .streamer:hover { padding-left: 6px; }
+
+  /* Platform group header — Twitch / Kick / YouTube clearly marked */
+  .plat-group { padding: 14px 0 6px; }
+  .plat-group:first-of-type { padding-top: 4px; }
+  .plat-head { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; }
+  .plat-mark { width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; font-family: ui-monospace, monospace; font-size: 9px; font-weight: 800; color: #fff; }
+  .plat-mark.twitch { background: #9146FF; }
+  .plat-mark.kick   { background: #53FC18; color: #0B0A09; }
+  .plat-mark.youtube{ background: #FF0000; }
+  .plat-name { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.18em; font-weight: 700; }
+  .plat-live-count { color: var(--ink-faint); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.10em; margin-left: auto; }
+
+  .streamer { display: grid; grid-template-columns: 32px 1fr; gap: 10px; padding: 7px 0; align-items: center; transition: padding 160ms ease; }
+  .streamer:hover { padding-left: 4px; }
   .streamer .avatar {
-    width: 40px; height: 40px; border-radius: 999px;
-    background: #2A2622; /* single muted slate for fallbacks */
-    color: var(--ink); font-family: ui-monospace, monospace; font-size: 13px; font-weight: 700;
+    width: 32px; height: 32px; border-radius: 999px;
+    background: #2A2622;
+    color: var(--ink); font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     position: relative;
     transition: width 200ms ease, height 200ms ease, transform 200ms ease;
-    box-shadow: 0 0 0 2px transparent;
+    box-shadow: 0 0 0 1.5px transparent;
   }
-  /* LIVE = green ring around avatar (no pulse animation; one-time pulse only on offline→live transition) */
-  .streamer.live .avatar { box-shadow: 0 0 0 2px var(--green); }
+  /* tiny platform chip on avatar */
+  .streamer .avatar::after {
+    content: attr(data-plat);
+    position: absolute; bottom: -2px; right: -3px;
+    width: 12px; height: 12px; border-radius: 999px;
+    font-family: ui-monospace, monospace; font-size: 7px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    border: 2px solid var(--bg);
+  }
+  .streamer.tw .avatar::after { background: #9146FF; }
+  .streamer.kk .avatar::after { background: #53FC18; color: #0B0A09; }
+  .streamer.yt .avatar::after { background: #FF0000; }
+  .streamer.live .avatar { box-shadow: 0 0 0 1.5px var(--green); }
   .streamer.live.just-arrived .avatar { animation: arrivePulse 1400ms ease-out 1; }
   @keyframes arrivePulse {
-    0%   { box-shadow: 0 0 0 2px var(--green), 0 0 0 0 rgba(111,163,125,0.45); }
-    60%  { box-shadow: 0 0 0 2px var(--green), 0 0 0 12px rgba(111,163,125,0); }
-    100% { box-shadow: 0 0 0 2px var(--green), 0 0 0 0 rgba(111,163,125,0); }
+    0%   { box-shadow: 0 0 0 1.5px var(--green), 0 0 0 0 rgba(111,163,125,0.45); }
+    60%  { box-shadow: 0 0 0 1.5px var(--green), 0 0 0 10px rgba(111,163,125,0); }
+    100% { box-shadow: 0 0 0 1.5px var(--green), 0 0 0 0 rgba(111,163,125,0); }
   }
-  .streamer:hover .avatar { width: 56px; height: 56px; transform: translateY(-2px); }
-  .streamer .handle { color: var(--ink-pure); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
-  .streamer .meta { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.06em; margin-top: 3px; opacity: 0.85; }
+  .streamer:hover .avatar { width: 44px; height: 44px; transform: translateY(-1px); }
+  .streamer .handle { color: var(--ink-pure); font-size: 13px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  .streamer .meta { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.04em; margin-top: 2px; opacity: 0.85; }
   .streamer .meta .dim { opacity: 0.6; }
-  .streamer.offline .handle { color: var(--ink); }
-  .streamer.offline .avatar { opacity: 0.72; }
+  .streamer.offline .handle { color: var(--ink); opacity: 0.78; }
+  .streamer.offline .avatar { opacity: 0.6; }
 
-  /* === EXPLORE — 2×2 preview block grid === */
-  .explore { border-top: 1px solid var(--hairline); margin-top: 36px; padding: 32px 0 16px; }
-  .explore .head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 18px; }
+  /* === EXPLORE — compact 2×2 preview block grid === */
+  .explore { border-top: 1px solid var(--hairline); margin-top: 28px; padding: 22px 0 12px; }
+  .explore .head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; }
   .explore .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--hairline); }
   .block {
     position: relative;
-    min-height: 320px;
+    min-height: 168px;
     background: var(--surface);
     overflow: hidden;
-    display: flex; flex-direction: column; justify-content: flex-end;
-    padding: 28px 30px;
+    display: grid; grid-template-columns: 96px 1fr auto;
+    column-gap: 20px;
+    align-items: center;
+    padding: 18px 22px;
     isolation: isolate;
   }
   .block .bg {
     position: absolute; inset: 0; z-index: 0;
     background-size: cover; background-position: center;
-    opacity: 0.55;
+    opacity: 0.45;
   }
   .block::before {
     content: ""; position: absolute; inset: 0; z-index: 1;
-    background: linear-gradient(180deg, rgba(11,10,9,0.35) 0%, rgba(11,10,9,0.86) 70%, rgba(11,10,9,0.96) 100%);
+    background: linear-gradient(90deg, rgba(11,10,9,0.86) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.92) 100%);
   }
   .block > * { position: relative; z-index: 2; }
 
   /* Mittari block — vintage instrument dial aesthetic, amber glow for current MEININKI state */
   .block.mittari .bg {
-    background-image: radial-gradient(circle at 30% 40%, rgba(201,122,58,0.42) 0%, rgba(201,122,58,0.0) 55%),
+    background-image: radial-gradient(circle at 30% 50%, rgba(201,122,58,0.42) 0%, rgba(201,122,58,0.0) 55%),
       conic-gradient(from 220deg, #1f1b18 0deg, #3a2e23 70deg, #5a3e22 90deg, #c97a3a 140deg, #5a3e22 200deg, #1f1b18 360deg);
     filter: contrast(1.05);
   }
-  .block .anchor-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
-  .block .state-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--amber); }
+  .block .visual { width: 96px; display: flex; align-items: center; justify-content: center; }
+  .block .anchor-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .block .state-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--amber); }
   .block.mittari .label { color: var(--amber); }
-  .block .label { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; }
-  .block .state-name { font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 56px; line-height: 1; color: var(--ink-pure); letter-spacing: -0.02em; margin: 0 0 8px; }
-  .block .reading { color: var(--ink); font-size: 14px; max-width: 360px; line-height: 1.5; opacity: 0.88; margin: 0 0 22px; }
-  .block .cta { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-pure); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.18em; font-weight: 700; }
+  .block .label { font-family: ui-monospace, monospace; font-size: 9.5px; letter-spacing: 0.22em; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; }
+  .block .state-name { font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 30px; line-height: 1; color: var(--ink-pure); letter-spacing: -0.02em; margin: 0 0 6px; }
+  .block .reading { color: var(--ink); font-size: 12.5px; max-width: 380px; line-height: 1.45; opacity: 0.84; margin: 0; }
+  .block .cta { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-pure); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.18em; font-weight: 700; white-space: nowrap; }
   .block .cta::after { content: "→"; transition: transform 180ms ease; }
   .block:hover .cta::after { transform: translateX(4px); }
 
   /* mini dial visual */
-  .mini-dial { position: absolute; top: 24px; right: 28px; width: 80px; height: 80px; z-index: 2; }
+  .mini-dial { width: 72px; height: 72px; }
   .mini-dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 
   /* Pelisignaalit block — typographic / sparkline cascade */
@@ -235,65 +262,57 @@
       linear-gradient(135deg, #161310 0%, #1a1612 100%);
   }
   .block.signaalit .label { color: var(--yellow); }
-  .signal-card { background: rgba(0,0,0,0.42); border: 1px solid var(--hairline); padding: 14px 16px; margin-bottom: 16px; backdrop-filter: blur(8px); }
-  .signal-card .match { color: var(--ink-pure); font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-  .signal-card .row2 { display: flex; gap: 14px; color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.08em; }
-  .signal-card .sharp { color: var(--yellow); font-weight: 700; }
-  .signal-card .snippet { color: var(--ink); font-size: 12.5px; line-height: 1.5; margin-top: 10px; opacity: 0.84; }
-  .sparkline { position: absolute; top: 24px; right: 24px; opacity: 0.6; z-index: 2; }
+  .signal-mini { color: var(--ink); }
+  .signal-mini .match { color: var(--ink-pure); font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.25; }
+  .signal-mini .row2 { display: flex; gap: 10px; color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.06em; }
+  .signal-mini .sharp { color: var(--yellow); font-weight: 700; }
+  .sparkline-mini { width: 96px; height: 40px; }
 
   /* Voita block — inactive state (Sako pending) */
   .block.voita .bg {
     background:
-      radial-gradient(circle at 70% 30%, rgba(193,59,44,0.18) 0%, rgba(193,59,44,0) 60%),
+      radial-gradient(circle at 70% 50%, rgba(193,59,44,0.16) 0%, rgba(193,59,44,0) 60%),
       linear-gradient(135deg, #1a1310 0%, #14100e 100%);
   }
   .block.voita .voita-word {
     position: absolute; inset: 0; z-index: 1;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: flex-end; padding-right: 30px;
     font-family: "GT Sectra", Georgia, serif; font-weight: 900;
-    font-size: 220px; letter-spacing: -0.04em; color: rgba(255,255,255,0.025);
+    font-size: 120px; letter-spacing: -0.04em; color: rgba(255,255,255,0.025);
     pointer-events: none; user-select: none; line-height: 1;
   }
   .block.voita .label { color: var(--perkele); }
-  .block.voita .placeholder { color: var(--ink-pure); font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 34px; line-height: 1.1; margin: 0 0 10px; }
-  .block.voita .preview-text { color: var(--ink); font-size: 13.5px; line-height: 1.5; opacity: 0.82; max-width: 320px; margin: 0 0 18px; }
-  .block.voita .cta-disabled { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.18em; }
+  .block.voita .placeholder { color: var(--ink-pure); font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 22px; line-height: 1.1; margin: 0 0 6px; }
+  .block.voita .preview-text { color: var(--ink); font-size: 12px; line-height: 1.45; opacity: 0.8; max-width: 360px; margin: 0; }
+  .block.voita .cta-disabled { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.18em; white-space: nowrap; }
 
   /* Peli block — slot reel macro */
   .block.peli .bg {
     background:
-      radial-gradient(circle at 80% 60%, rgba(212,180,69,0.18) 0%, rgba(212,180,69,0) 50%),
-      conic-gradient(from 0deg at 80% 60%, #1a1612 0deg, #2a221a 30deg, #1a1612 60deg, #2a221a 90deg, #1a1612 360deg);
+      radial-gradient(circle at 30% 50%, rgba(212,180,69,0.18) 0%, rgba(212,180,69,0) 50%),
+      conic-gradient(from 0deg at 30% 50%, #1a1612 0deg, #2a221a 30deg, #1a1612 60deg, #2a221a 90deg, #1a1612 360deg);
     filter: blur(0.4px);
   }
   .block.peli .label { color: var(--green); }
-  .block.peli .campaign { color: var(--ink-pure); font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 28px; line-height: 1.1; margin: 0 0 8px; }
-  .block.peli .reward { color: var(--ink); font-size: 14px; line-height: 1.5; margin: 0 0 22px; opacity: 0.86; max-width: 320px; }
+  .block.peli .campaign { color: var(--ink-pure); font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 20px; line-height: 1.1; margin: 0 0 4px; }
+  .block.peli .reward { color: var(--ink); font-size: 12px; line-height: 1.45; margin: 0; opacity: 0.84; max-width: 360px; }
 
-  /* === ProgressiveOptIn sample === */
-  .optin-section { border-top: 1px solid var(--hairline); margin-top: 48px; padding: 36px 0 48px; }
-  .optin-section .head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 18px; }
-  .optin-section .head h3 { font-family: "GT Sectra", Georgia, serif; font-weight: 700; color: var(--ink-pure); font-size: 22px; margin: 0; }
-  .optin-steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
-  .step {
-    background: var(--surface);
-    border: 1px solid var(--hairline);
-    padding: 24px 22px;
-    position: relative;
-  }
-  .step .num { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; color: var(--ink-muted); margin-bottom: 14px; display: block; }
-  .step h4 { color: var(--ink-pure); font-size: 16px; margin: 0 0 6px; font-weight: 600; letter-spacing: -0.005em; }
-  .step .prop { color: var(--ink); font-size: 13px; line-height: 1.5; opacity: 0.86; margin: 0 0 18px; min-height: 60px; }
-  .step .field { display: flex; gap: 8px; margin-bottom: 12px; }
-  .step .field input { flex: 1; background: var(--bg); border: 1px solid var(--border-strong); color: var(--ink); padding: 10px 12px; font-family: inherit; font-size: 13px; outline: none; }
-  .step .field button { background: var(--ink-pure); color: var(--bg); border: 0; padding: 10px 16px; font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.18em; font-weight: 700; cursor: pointer; }
-  .step .skip { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.12em; }
-  .step.confirmed { border-left: 2px solid var(--green); }
-  .step .confirm-pill { color: var(--green); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.14em; margin-bottom: 14px; display: block; }
-  .step .tel-btn { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--ink); border: 1px solid var(--border-strong); padding: 10px 16px; font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.14em; }
+  /* === ProgressiveOptIn — RESTRAINED component preview === */
+  .optin-section { border-top: 1px solid var(--hairline); margin-top: 36px; padding: 28px 0 36px; }
+  .optin-section .head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; }
+  .optin-section .head h3 { font-family: "GT Sectra", Georgia, serif; font-weight: 700; color: var(--ink-pure); margin: 0; letter-spacing: -0.005em; }
 
-  .consent-note { margin-top: 18px; color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; line-height: 1.7; }
+  .channel-table { border-top: 1px solid var(--hairline); margin-bottom: 22px; }
+  .ch-row { display: grid; grid-template-columns: 130px 1fr; gap: 24px; padding: 11px 0; border-bottom: 1px solid var(--hairline); align-items: baseline; }
+  .ch-name { color: var(--ink-pure); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.20em; font-weight: 700; }
+  .ch-purpose { color: var(--ink); font-size: 13px; line-height: 1.5; opacity: 0.88; }
+
+  .step-preview { max-width: 460px; }
+  .step-preview .num { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; display: block; margin-bottom: 10px; }
+  .step-preview .field { display: flex; gap: 8px; margin-bottom: 10px; }
+  .step-preview .field input { flex: 1; background: var(--bg); border: 1px solid var(--border-strong); color: var(--ink); padding: 10px 12px; font-family: inherit; font-size: 13px; outline: none; }
+  .step-preview .field button { background: var(--ink-pure); color: var(--bg); border: 0; padding: 10px 16px; font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.18em; font-weight: 700; cursor: pointer; }
+  .step-preview .reveal-note { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.04em; line-height: 1.6; margin: 0; }
 
   /* footer */
   .footer-note { color: var(--ink-faint); font-size: 11px; padding: 32px 0 48px; border-top: 1px solid var(--hairline); margin-top: 32px; font-family: ui-monospace, monospace; letter-spacing: 0.08em; }
@@ -409,60 +428,113 @@
           <div><span class="badge scene">SKENE</span><span class="title">Twitchin Suomi-kategoriat hiljaiset aamulla — ainoastaan kolme kanavaa yli 100 katsojan</span></div>
           <span class="src">MTV</span>
         </div>
+        <div class="row old">
+          <span class="time mono">04:55</span>
+          <div><span class="badge reg">SÄÄNTELY</span><span class="title">EU-komissio julkaisi vertailu­raportin pohjois­maiden rahapeli­markkinoista — Suomi keski­tasoa</span></div>
+          <span class="src">KL</span>
+        </div>
+        <div class="row old">
+          <span class="time mono">04:12</span>
+          <div><span class="badge sport">URHEILU</span><span class="title">NHL-yön tulokset: Aho ja Laine pisteille, Suomalais­kapteenit johdossa</span></div>
+          <span class="src">IS</span>
+        </div>
+        <div class="row old">
+          <span class="time mono">03:20</span>
+          <div><span class="badge news">UUTISET</span><span class="title">Kaupallinen radio uutisoi yöllä uudet vedonlyönti­säännöt — täyskielto markkinointiin ennen klo 21</span></div>
+          <span class="src">YLE</span>
+        </div>
       </div>
     </div>
 
-    <!-- RIGHT: streamer column -->
+    <!-- RIGHT: streamer column — platform-grouped -->
     <aside class="streamers">
       <div class="col-head">
-        <span class="anchor">LIVE · NYT <span class="ann">REFINEMENT #4 · #6</span></span>
-        <span class="count">3 / 12</span>
+        <span class="anchor">LIVE · NYT <span class="ann">v2.1 · PLATFORM-AWARE</span></span>
+        <span class="count">5 / 18</span>
       </div>
 
-      <div class="streamer live just-arrived">
-        <div class="avatar">SK</div>
-        <div>
-          <div class="handle">streamerikari</div>
-          <div class="meta">2.1k <span class="dim">·</span> CS2 <span class="dim">·</span> 2h 14m</div>
+      <div class="plat-group">
+        <div class="plat-head">
+          <span class="plat-mark twitch">tw</span>
+          <span class="plat-name">TWITCH</span>
+          <span class="plat-live-count">3 LIVE · 9 OFFLINE</span>
+        </div>
+        <div class="streamer tw live just-arrived">
+          <div class="avatar" data-plat="t">SK</div>
+          <div>
+            <div class="handle">streamerikari</div>
+            <div class="meta">2.1k <span class="dim">·</span> CS2 <span class="dim">·</span> 2h 14m</div>
+          </div>
+        </div>
+        <div class="streamer tw live">
+          <div class="avatar" data-plat="t">EL</div>
+          <div>
+            <div class="handle">eemelilive</div>
+            <div class="meta">847 <span class="dim">·</span> Hearthstone <span class="dim">·</span> 1h 02m</div>
+          </div>
+        </div>
+        <div class="streamer tw live">
+          <div class="avatar" data-plat="t">RY</div>
+          <div>
+            <div class="handle">ryyti_</div>
+            <div class="meta">312 <span class="dim">·</span> Just Chatting <span class="dim">·</span> 38m</div>
+          </div>
+        </div>
+        <div class="streamer tw offline">
+          <div class="avatar" data-plat="t">AL</div>
+          <div>
+            <div class="handle">alaslyöty</div>
+            <div class="meta">offline <span class="dim">·</span> 12h</div>
+          </div>
         </div>
       </div>
-      <div class="streamer live">
-        <div class="avatar">EL</div>
-        <div>
-          <div class="handle">eemelilive</div>
-          <div class="meta">847 <span class="dim">·</span> Hearthstone <span class="dim">·</span> 1h 02m</div>
+
+      <div class="plat-group">
+        <div class="plat-head">
+          <span class="plat-mark kick">k</span>
+          <span class="plat-name">KICK</span>
+          <span class="plat-live-count">1 LIVE · 4 OFFLINE</span>
+        </div>
+        <div class="streamer kk live">
+          <div class="avatar" data-plat="k">MS</div>
+          <div>
+            <div class="handle">mustasusi</div>
+            <div class="meta">524 <span class="dim">·</span> Slots <span class="dim">·</span> 3h 41m</div>
+          </div>
+        </div>
+        <div class="streamer kk offline">
+          <div class="avatar" data-plat="k">JK</div>
+          <div>
+            <div class="handle">jaakari</div>
+            <div class="meta">offline <span class="dim">·</span> 2d</div>
+          </div>
         </div>
       </div>
-      <div class="streamer live">
-        <div class="avatar">RY</div>
-        <div>
-          <div class="handle">ryyti_</div>
-          <div class="meta">312 <span class="dim">·</span> Just Chatting <span class="dim">·</span> 38m</div>
+
+      <div class="plat-group">
+        <div class="plat-head">
+          <span class="plat-mark youtube">▶</span>
+          <span class="plat-name">YOUTUBE</span>
+          <span class="plat-live-count">1 LIVE · 4 OFFLINE</span>
+        </div>
+        <div class="streamer yt live">
+          <div class="avatar" data-plat="y">PT</div>
+          <div>
+            <div class="handle">putki_tv</div>
+            <div class="meta">198 <span class="dim">·</span> Liiga recap <span class="dim">·</span> 22m</div>
+          </div>
+        </div>
+        <div class="streamer yt offline">
+          <div class="avatar" data-plat="y">VK</div>
+          <div>
+            <div class="handle">vakionetti</div>
+            <div class="meta">offline <span class="dim">·</span> 4d</div>
+          </div>
         </div>
       </div>
-      <div class="streamer offline">
-        <div class="avatar">AL</div>
-        <div>
-          <div class="handle">alaslyöty</div>
-          <div class="meta">offline <span class="dim">·</span> last 12h</div>
-        </div>
-      </div>
-      <div class="streamer offline">
-        <div class="avatar">MS</div>
-        <div>
-          <div class="handle">mustasusi</div>
-          <div class="meta">offline <span class="dim">·</span> last 18h</div>
-        </div>
-      </div>
-      <div class="streamer offline">
-        <div class="avatar">JK</div>
-        <div>
-          <div class="handle">jaakari</div>
-          <div class="meta">offline <span class="dim">·</span> last 2d</div>
-        </div>
-      </div>
-      <div style="padding-top: 14px;">
-        <a class="anchor" style="color: var(--ink); text-decoration: underline; text-underline-offset: 4px;">KAIKKI 12 STREAMARIA →</a>
+
+      <div style="padding-top: 14px; border-top: 1px solid var(--hairline); margin-top: 10px;">
+        <a class="anchor" style="color: var(--ink); text-decoration: underline; text-underline-offset: 4px;">KAIKKI 18 STREAMARIA →</a>
       </div>
     </aside>
   </div>
@@ -478,122 +550,104 @@
       <!-- MITTARI -->
       <a class="block mittari" href="/mittari">
         <div class="bg"></div>
-        <div class="mini-dial">
-          <svg viewBox="0 0 100 100">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="#2A2522" stroke-width="6"/>
-            <circle cx="50" cy="50" r="42" fill="none" stroke="#C97A3A" stroke-width="6"
-              stroke-dasharray="198 264" stroke-linecap="round"/>
-          </svg>
+        <div class="visual">
+          <div class="mini-dial">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#2A2522" stroke-width="6"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#C97A3A" stroke-width="6"
+                stroke-dasharray="198 264" stroke-linecap="round"/>
+            </svg>
+          </div>
         </div>
-        <div class="anchor-row">
-          <span class="state-dot"></span>
-          <span class="label">MITTARI · NYT</span>
+        <div>
+          <div class="anchor-row"><span class="state-dot"></span><span class="label">MITTARI · NYT</span></div>
+          <h3 class="state-name">MEININKI</h3>
+          <p class="reading">12 kanavaa lähettää, kerroin­jäykkyys nousi 24 h aikana. Ei vielä myrsky.</p>
         </div>
-        <h3 class="state-name">MEININKI</h3>
-        <p class="reading">Suomen skene on lämmin: 12 kanavaa lähettää, kerroin­jäykkyys nousi 24 h aikana. Ei vielä myrsky, mutta pelataan.</p>
         <span class="cta">AVAA · OPEN</span>
       </a>
 
       <!-- PELISIGNAALIT -->
       <a class="block signaalit" href="/pelisignaalit">
         <div class="bg"></div>
-        <svg class="sparkline" width="120" height="40" viewBox="0 0 120 40">
-          <polyline points="0,28 15,24 30,30 45,18 60,22 75,12 90,16 105,8 120,10"
-            fill="none" stroke="#D4B445" stroke-width="1.5" opacity="0.6"/>
-        </svg>
-        <div class="anchor-row">
-          <span class="state-dot" style="background: var(--yellow)"></span>
-          <span class="label">PELISIGNAALIT · TÄNÄÄN</span>
+        <div class="visual">
+          <svg class="sparkline-mini" viewBox="0 0 120 40">
+            <polyline points="0,28 15,24 30,30 45,18 60,22 75,12 90,16 105,8 120,10"
+              fill="none" stroke="#D4B445" stroke-width="1.5" opacity="0.85"/>
+            <circle cx="120" cy="10" r="2.5" fill="#D4B445"/>
+          </svg>
         </div>
-        <div class="signal-card">
-          <div class="match">HIFK – Tappara · Liiga</div>
-          <div class="row2">
-            <span>HIFK 2.10</span>
-            <span class="dim">Veikkaus</span>
-            <span class="sharp">SHARPNESS 87</span>
+        <div>
+          <div class="anchor-row"><span class="state-dot" style="background: var(--yellow)"></span><span class="label">PELISIGNAALIT · TÄNÄÄN</span></div>
+          <div class="signal-mini">
+            <div class="match">HIFK – Tappara · Liiga</div>
+            <div class="row2"><span>HIFK 2.10</span><span class="dim">Veikkaus</span><span class="sharp">SHARPNESS 87</span></div>
           </div>
-          <p class="snippet">Konsensus kireä yli kuudessa kirjassa. 24 h aikana kerroin liikkunut yhden askeleen kotijoukkueeseen päin.</p>
         </div>
-        <span class="cta">LUE KAIKKI 5 SIGNAALIA · SEE ALL 5</span>
+        <span class="cta">5 SIGNAALIA</span>
       </a>
 
       <!-- VOITA — inactive (Sako pending) -->
       <a class="block voita" href="/voita">
         <div class="bg"></div>
         <span class="voita-word">VOITA</span>
-        <div class="anchor-row">
-          <span class="state-dot" style="background: var(--perkele)"></span>
-          <span class="label">VOITA · TULOSSA</span>
+        <div class="visual"></div>
+        <div>
+          <div class="anchor-row"><span class="state-dot" style="background: var(--perkele)"></span><span class="label">VOITA · TULOSSA</span></div>
+          <h3 class="placeholder">Pian saatavilla</h3>
+          <p class="preview-text">Tulossa: Liiga-finaalien voitto­ennustus­arvonta. Avautuu lain­opillisen tarkistuksen jälkeen.</p>
         </div>
-        <h3 class="placeholder">Pian saatavilla</h3>
-        <p class="preview-text">Tulossa tällä viikolla: Liiga-finaalien voitto­ennustus­arvonta. Avautuu lain­opillisen tarkistuksen jälkeen.</p>
-        <span class="cta-disabled">ODOTTAA HYVÄKSYNTÄÄ</span>
+        <span class="cta-disabled">ODOTTAA HYV.</span>
       </a>
 
       <!-- PELI -->
       <a class="block peli" href="/peli">
         <div class="bg"></div>
-        <div class="anchor-row">
-          <span class="state-dot" style="background: var(--green)"></span>
-          <span class="label">PELI · VOYAGER</span>
+        <div class="visual"></div>
+        <div>
+          <div class="anchor-row"><span class="state-dot" style="background: var(--green)"></span><span class="label">PELI · VOYAGER</span></div>
+          <h3 class="campaign">Helmikuun Voyager-kierros</h3>
+          <p class="reward">Pelaa 30 s, voita 25 ilmais­kierrosta. 800+ osallistujaa.</p>
         </div>
-        <h3 class="campaign">Helmikuun Voyager-kierros</h3>
-        <p class="reward">Pelaa 30 sekuntia, voita 25 ilmais­kierrosta. Auki sunnuntaihin asti, yli 800 osallistujaa.</p>
         <span class="cta">PELAA · PLAY</span>
       </a>
 
     </div>
   </section>
 
-  <!-- ProgressiveOptIn sample (Pelisignaalit surface) -->
+  <!-- ProgressiveOptIn — restrained component preview (lives on landing pages, not homepage) -->
   <section class="optin-section">
     <div class="head">
       <div>
-        <span class="anchor">PROGRESSIVE OPT-IN · PELISIGNAALIT-ESIMERKKI <span class="ann">NEW · PROGRESSIVE FUNNEL</span></span>
-        <h3 style="margin-top: 10px;">Saa huomisen 5 signaalia sähköpostiisi klo 10.00</h3>
+        <span class="anchor">KOMPONENTTI · LANDING-SIVUILLA <span class="ann">v2.2 · QUIET</span></span>
+        <h3 style="margin-top: 8px; font-size: 18px;">Kanava ↔ tarkoitus</h3>
       </div>
-      <span class="anchor" style="opacity:0.7">3 STEPS · 3 CONSENT TAGS</span>
+      <span class="anchor" style="opacity:0.6; white-space:nowrap;">EI KOTISIVULLA</span>
     </div>
 
-    <div class="optin-steps">
-      <!-- STEP 1 — Email gate -->
-      <div class="step">
-        <span class="num">STEP 1 · EMAIL</span>
-        <h4>Saa huomisen signaalit klo 10.00</h4>
-        <p class="prop">Yksi sähköposti aamulla — viisi tärpiä, Sharpness-pisteet, vedonlyöntiyhtiön nimi.</p>
-        <div class="field">
-          <input type="email" placeholder="sinun@email.fi" />
-          <button>TILAA</button>
-        </div>
-        <div class="skip">Tag: email_pelisignaalit</div>
+    <div class="channel-table">
+      <div class="ch-row">
+        <span class="ch-name">SÄHKÖPOSTI</span>
+        <span class="ch-purpose">Päivän skene-tunnelma · Mittarin tila · hidas kanava</span>
       </div>
-
-      <!-- STEP 2 — confirmed + SMS upsell -->
-      <div class="step confirmed">
-        <span class="num">STEP 2 · SMS</span>
-        <span class="confirm-pill">VAHVISTETTU ✓</span>
-        <h4>Haluatko nopeammin?</h4>
-        <p class="prop">SMS niistä signaaleista, joiden Sharpness on 90+ — tulee suoraan puhelimeesi, ei aamua odoteta.</p>
-        <div class="field">
-          <input type="tel" placeholder="+358 40 123 4567" />
-          <button>LISÄÄ</button>
-        </div>
-        <span class="skip">JATKA PELKÄLLÄ SÄHKÖPOSTILLA →</span>
+      <div class="ch-row">
+        <span class="ch-name">SMS</span>
+        <span class="ch-purpose">Päivän vedot klo 10.00 · Sharpness 75+ · nopea kanava</span>
       </div>
-
-      <!-- STEP 3 — Telegram upsell -->
-      <div class="step">
-        <span class="num">STEP 3 · TELEGRAM</span>
-        <h4>Suosit Telegramia?</h4>
-        <p class="prop">Liity Pelisignaalit-kanavalle — samat hälytykset, heti puhelimeen. Ei sähköposti­jonoja.</p>
-        <a class="tel-btn">LIITY KANAVALLE →</a>
-        <div style="margin-top: 14px;"><span class="skip">OLEN VALMIS →</span></div>
+      <div class="ch-row">
+        <span class="ch-name">TELEGRAM</span>
+        <span class="ch-purpose">Sama vedot Telegramissa · vaihtoehto SMS:lle</span>
       </div>
     </div>
 
-    <p class="consent-note">
-      Each step records a distinct consent tag (email_pelisignaalit · sms_pelisignaalit · telegram_pelisignaalit). Skip at any step. Per-surface value props on /mittari, /voita, /peli.
-    </p>
+    <div class="step-preview">
+      <span class="num">STEP 1 · SÄHKÖPOSTI</span>
+      <div class="field">
+        <input type="email" placeholder="sinun@email.fi" />
+        <button>TILAA</button>
+      </div>
+      <p class="reveal-note">Onnistuneen tilauksen jälkeen paljastuu Step 2 (SMS · vedot) ja Step 3 (Telegram). Käyttäjä voi ohittaa kummankin.</p>
+    </div>
   </section>
 
   <p class="footer-note">
