@@ -37,7 +37,8 @@ export const Footer = () => {
             <ul className="space-y-2 mono text-[12px]" style={{ letterSpacing: '0.08em' }}>
               <li><Link to="/uutiset" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.news').toUpperCase()}</Link></li>
               <li><Link to="/striimaajat" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.streamers').toUpperCase()}</Link></li>
-              <li><Link to="/viikon-kortti" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.weekly').toUpperCase()}</Link></li>
+              <li><Link to="/mittari" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-mittari-link">MITTARI</Link></li>
+              <li><Link to="/pelisignaalit" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-pelisignaalit-link">PELISIGNAALIT</Link></li>
               <li><Link to="/peli" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.game_prize').toUpperCase()}</Link></li>
               <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.about').toUpperCase()}</Link></li>
               <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.methodology').toUpperCase()}</Link></li>

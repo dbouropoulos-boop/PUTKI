@@ -174,10 +174,9 @@ const PelisignaalitBlock = ({ lang }) => {
   }, []);
 
   const sharpness = topPick?.sharpness?.sharpness;
-  // Sentry: /pelisignaalit doesn't exist yet (Chunk B). Until then route to /vihjeet.
   return (
     <BlockShell
-      to="/vihjeet"
+      to="/pelisignaalit"
       dataTestId="explore-block-pelisignaalit"
       accentColor="#D4B445"
     >
@@ -237,12 +236,20 @@ const PelisignaalitBlock = ({ lang }) => {
 
 // ── VOITA — gated by VOITA_FEATURE_ENABLED (Sako legal sign-off pending) ──
 const VoitaBlock = ({ lang }) => {
-  // For Chunk A the feature is hard-gated as "Pian saatavilla" / coming soon.
-  // Chunk B will read this flag from /api/settings/public and switch state.
-  const enabled = false;
+  // Mirrors the public flag from /api/settings/public so the homepage block
+  // can switch its CTA copy. The /voita page itself reads the same flag.
+  const [enabled, setEnabled] = useState(false);
+  useEffect(() => {
+    let stop = false;
+    fetch(`${BACKEND}/api/settings/public`)
+      .then((r) => r.ok ? r.json() : {})
+      .then((d) => { if (!stop) setEnabled(!!d.voita_feature_enabled); })
+      .catch(() => {});
+    return () => { stop = true; };
+  }, []);
   return (
     <BlockShell
-      to="/voita-palkinto"
+      to="/voita"
       dataTestId="explore-block-voita"
       accentColor="#C13B2C"
     >

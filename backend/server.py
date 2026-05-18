@@ -160,6 +160,7 @@ class SettingsPayload(BaseModel):
     smartico_template_id: Optional[str] = None
     smartico_loader_url: Optional[str] = None
     smartico_brand_key: Optional[str] = None
+    voita_feature_enabled: Optional[bool] = None
 
 
 SETTINGS_KEY = "site"
@@ -172,6 +173,7 @@ async def _get_settings_doc():
         "smartico_template_id": doc.get("smartico_template_id"),
         "smartico_loader_url": doc.get("smartico_loader_url"),
         "smartico_brand_key": doc.get("smartico_brand_key"),
+        "voita_feature_enabled": bool(doc.get("voita_feature_enabled", False)),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -185,6 +187,7 @@ async def get_public_settings():
         "smartico_template_id": s.get("smartico_template_id"),
         "smartico_loader_url": s.get("smartico_loader_url"),
         "smartico_brand_key": s.get("smartico_brand_key"),
+        "voita_feature_enabled": s.get("voita_feature_enabled", False),
     }
 
 
@@ -195,19 +198,124 @@ async def admin_get_settings(_: bool = Depends(require_admin)):
 
 @api_router.put("/admin/settings")
 async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require_admin)):
-    update = {
+    update: Dict[str, Any] = {
         "telegram_channel": data.telegram_channel,
         "smartico_template_id": data.smartico_template_id,
         "smartico_loader_url": data.smartico_loader_url,
         "smartico_brand_key": data.smartico_brand_key,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
+    # voita_feature_enabled is opt-in: only set when explicitly passed.
+    if data.voita_feature_enabled is not None:
+        update["voita_feature_enabled"] = bool(data.voita_feature_enabled)
     await db.settings.update_one(
         {"_id": SETTINGS_KEY},
         {"$set": update},
         upsert=True,
     )
     return await _get_settings_doc()
+
+
+# ── Phase 1 Final · Chunk B — ProgressiveOptIn capture endpoint ──
+
+OPTIN_CHANNELS = {"email", "sms", "telegram"}
+OPTIN_SURFACES = {"mittari", "pelisignaalit", "voita", "peli", "homepage"}
+
+
+class OptinPayload(BaseModel):
+    """ProgressiveOptIn 3-step funnel capture.
+
+    Channel ↔ purpose split (per user spec):
+      - email    = sentiment digest (slow channel — Mittari + skene tunnelma)
+      - sms      = daily bets       (fast channel — Sharpness 75+ signals)
+      - telegram = daily bets       (fast channel — same content, different inbox)
+
+    Each captured row records a distinct consent tag like `email_sentiment`,
+    `sms_bets`, `telegram_bets`. Idempotent per (channel, surface, identifier):
+    re-submitting the same row updates `last_seen_at` instead of duplicating.
+    """
+    channel: str = Field(..., description="email | sms | telegram")
+    surface: str = Field(..., description="mittari | pelisignaalit | voita | peli | homepage")
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(default=None, max_length=32)
+    telegram_username: Optional[str] = Field(default=None, max_length=64)
+    consent_tag: Optional[str] = Field(default=None, max_length=64)
+
+
+@api_router.post("/optin")
+async def public_optin(payload: OptinPayload):
+    ch = (payload.channel or "").strip().lower()
+    sf = (payload.surface or "").strip().lower()
+    if ch not in OPTIN_CHANNELS:
+        raise HTTPException(status_code=400, detail=f"unknown channel '{ch}'")
+    if sf not in OPTIN_SURFACES:
+        raise HTTPException(status_code=400, detail=f"unknown surface '{sf}'")
+
+    # identifier per channel
+    if ch == "email":
+        if not payload.email:
+            raise HTTPException(status_code=400, detail="email required for email channel")
+        identifier = str(payload.email).lower()
+    elif ch == "sms":
+        if not payload.phone:
+            raise HTTPException(status_code=400, detail="phone required for sms channel")
+        identifier = (payload.phone or "").strip()
+    else:  # telegram
+        if not payload.telegram_username:
+            raise HTTPException(status_code=400, detail="telegram_username required for telegram channel")
+        identifier = (payload.telegram_username or "").strip().lstrip("@").lower()
+
+    if not identifier:
+        raise HTTPException(status_code=400, detail="identifier missing")
+
+    # Consent tag default: {channel}_{purpose} where purpose is bets for sms+telegram,
+    # sentiment for email. Caller may override (e.g. surface-specific tags).
+    default_tag = "email_sentiment" if ch == "email" else f"{ch}_bets"
+    tag = (payload.consent_tag or default_tag).strip().lower()[:64]
+
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "channel": ch,
+        "surface": sf,
+        "identifier": identifier,
+        "consent_tag": tag,
+        "email": str(payload.email).lower() if payload.email else None,
+        "phone": payload.phone,
+        "telegram_username": payload.telegram_username,
+        "last_seen_at": now,
+    }
+    res = await db.optin_consents.update_one(
+        {"channel": ch, "surface": sf, "identifier": identifier},
+        {"$set": doc, "$setOnInsert": {"created_at": now}},
+        upsert=True,
+    )
+    return {
+        "ok": True,
+        "channel": ch,
+        "surface": sf,
+        "consent_tag": tag,
+        "new_record": bool(res.upserted_id),
+    }
+
+
+@api_router.get("/admin/optin/stats")
+async def admin_optin_stats(_: bool = Depends(require_admin)):
+    """Per channel × surface counts. Useful for the back-office overview."""
+    pipeline = [
+        {"$group": {
+            "_id": {"channel": "$channel", "surface": "$surface", "tag": "$consent_tag"},
+            "count": {"$sum": 1},
+        }},
+        {"$sort": {"count": -1}},
+    ]
+    rows = []
+    async for r in db.optin_consents.aggregate(pipeline):
+        rows.append({
+            "channel": r["_id"]["channel"], "surface": r["_id"]["surface"],
+            "consent_tag": r["_id"]["tag"], "count": r["count"],
+        })
+    total = await db.optin_consents.count_documents({})
+    return {"by_segment": rows, "total": total}
 
 
 # ---------- Game scores (Phase 2.5 — Weezy Rally) ----------

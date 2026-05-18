@@ -25,6 +25,10 @@ import BackOfficeWebhooks from "@/pages/BackOfficeWebhooks";
 import BackOfficeDrafts from "@/pages/BackOfficeDrafts";
 import BackOfficeWeekly from "@/pages/BackOfficeWeekly";
 import BackOfficePeli from "@/pages/BackOfficePeli";
+import Mittari from "@/pages/Mittari";
+import Pelisignaalit from "@/pages/Pelisignaalit";
+import Voita from "@/pages/Voita";
+import RedirectWithQuery from "@/components/RedirectWithQuery";
 import TopicHubPage from "@/pages/TopicHubPage";
 import Article from "@/pages/Article";
 import StreamerIntl from "@/pages/StreamerIntl";
@@ -77,8 +81,15 @@ function App() {
             <Route path="peli/legacy" element={<MiniGame />} />
             <Route path="tietoa-meista" element={<TietoaMeista />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
-            <Route path="viikon-kortti" element={<WeeklyCard />} />
-            <Route path="vihjeet" element={<BettingTipsHub />} />
+
+            {/* Phase 1 Final Restructure · Chunk B — dedicated landing pages */}
+            <Route path="mittari" element={<Mittari />} />
+            <Route path="pelisignaalit" element={<Pelisignaalit />} />
+            <Route path="voita" element={<Voita />} />
+
+            {/* Legacy routes — 301 redirect, preserving ?ref / ?invite / ?pick query params */}
+            <Route path="viikon-kortti" element={<RedirectWithQuery to="/pelisignaalit" />} />
+            <Route path="vihjeet" element={<RedirectWithQuery to="/pelisignaalit" />} />
             <Route path="mittari/historia" element={<MittariHistoria />} />
             <Route path="uutiset" element={<Uutiset />} />
 

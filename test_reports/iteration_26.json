@@ -1,0 +1,37 @@
+{
+  "summary": "Phase 1 Final Restructure · Chunk B end-to-end verification. Backend: 12/13 pytest tests pass; the single failure is benign data leftover (record from a prior iter run; idempotent semantics themselves verified). Frontend: all 5 new/restyled routes (/mittari, /pelisignaalit, /voita, /peli, /) render with every required data-testid present. ProgressiveOptIn sequential funnel works end-to-end (step1 → step2 → step3 → done, never simultaneous). Client-side redirects /vihjeet → /pelisignaalit and /viikon-kortti → /pelisignaalit preserve ?ref / ?pick / ?invite query strings. /voita gated by default, switches to active hero when voita_feature_enabled=true (admin-toggled and reset to false after test). Existing pages (/menetelma, /ehdot, /tietoa-meista, /striimaajat, /back-office, /uutiset) still load with no regression. No app-level console errors.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/optin", "issue": "test_idempotent_resubmit_does_not_duplicate fails on repeat runs because the seeded email 'idempotency-test@putkihq.example' was inserted in an earlier iteration and persists in optin_consents. The endpoint itself works correctly (resubmit returns new_record=false). Fix is test-side: randomise the email per run or pre-delete the row."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/mittari hero", "issues": ["The large serif state-name (e.g. ROLLING, 700px wide × 119px tall, x=818) sits to the right of the dial and visually overlays the right-hand info column on viewport widths >= 1920. No DOM overlap detected (state-name x=818 starts after dial-slot ends at 762), but the composite/signals labels on the dial card sit underneath the giant serif glyphs visually. Consider z-index isolation or a smaller serif size on narrow desktops."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_chunk_b_landing_pages.py",
+    "/app/test_reports/pytest/iter26_results.xml"
+  ],
+  "action_items": [
+    "(Minor, optional) Make test_idempotent_resubmit_does_not_duplicate use a random email per run so it stays green across iterations.",
+    "(Minor, optional) Tighten the /mittari hero layout so the giant serif state-name does not visually crowd the dial labels at >=1920px."
+  ],
+  "critical_code_review_comments": [
+    "ProgressiveOptIn.jsx fires the telegram POST inside joinTelegram() but swallows all errors with `catch {}` — failure to record consent is silent. Consider surfacing at least a console.warn so analytics gaps are debuggable.",
+    "RedirectWithQuery uses React Router <Navigate replace> — that is a client-side redirect, NOT an HTTP 301. Search engines crawling the legacy URLs will still hit the React shell first. If SEO equivalence matters, add a 301 at the proxy/CDN layer as well.",
+    "ProgressiveOptIn re-fetches /api/settings/public on every mount to resolve telegramUrl. Multiple surfaces on the same page (homepage, mittari, etc.) will each issue a request. Consider lifting that into a shared context or memoised hook."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "92%", "frontend": "100%"},
+  "test_credentials": "BACK_OFFICE_TOKEN=putki-hq-admin (read from /app/memory/test_credentials.md not required — provided in problem statement).",
+  "seed_data_creation": "Created one unique email opt-in record per UI run (chunkb-ui-<ts>@example.com) on /mittari surface. Toggled voita_feature_enabled true→false; restored to false at end. No destructive data changes.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Chunk B is shipped. If you run the backend suite, expect the idempotency test to fail until either the email is randomised or the seeded row is purged. All ProgressiveOptIn testid prefixes follow the pattern '{surface}-optin-component-stepN'. Voita active state requires PUT /api/admin/settings {voita_feature_enabled:true} and MUST be reset to false afterwards (default gated state is intentional, per agent-to-agent note).",
+  "rca of the issue": "Backend idempotency assertion failure root cause: optin_consents collection retains records across pytest iterations (correct for an idempotency feature, but breaks the assertion `first_new is True`). The runtime endpoint is functioning exactly as specified — duplicate (channel, surface, identifier) returns new_record=false. Mitigation: parameterise the email with a uuid in the test, or add a teardown fixture that deletes TEST_/idempotency-* documents."
+}

@@ -33,6 +33,8 @@ import React from 'react';
 import NewsPortal from '../components/NewsPortal';
 import StreamersRail from '../components/StreamersRail';
 import ExploreBlocks from '../components/ExploreBlocks';
+import AboutStrip from '../components/AboutStrip';
+import TrustPills from '../components/TrustPills';
 import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
 
@@ -77,7 +79,21 @@ const Home = () => {
         <ExploreBlocks />
       </section>
 
-      {/* Zone 4 — Accountability footer */}
+      {/* Zone 4 — About strip ("Who we are") + Trust pills */}
+      <section
+        data-testid="home-about-section"
+        style={{
+          maxWidth: 1380, margin: '32px auto 0',
+          paddingLeft: 32, paddingRight: 32, width: '100%',
+        }}
+      >
+        <AboutStrip />
+        <div style={{ paddingTop: 4, paddingBottom: 24 }}>
+          <TrustPills dataTestId="home-trust-pills" />
+        </div>
+      </section>
+
+      {/* Zone 5 — Accountability footer */}
       <section
         data-testid="home-accountability-section"
         style={{

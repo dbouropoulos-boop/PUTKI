@@ -226,45 +226,84 @@ const Peli = () => {
 
   return (
     <div data-testid="peli-page">
-      {/* HERO */}
-      <section className="container-wide pt-12 sm:pt-20 pb-10">
-        <div className="max-w-3xl">
-          <div className="eyebrow mb-4 inline-flex items-center gap-2" data-testid="peli-eyebrow">
-            <Gift strokeWidth={1.5} size={13} />
-            {t('peli.raffle_eyebrow').toUpperCase()}
-          </div>
-          <h1 className="display text-4xl sm:text-6xl lg:text-7xl mb-5" style={{ lineHeight: 1.04 }}
-              data-testid="peli-title">
-            {prizeText}
-          </h1>
-          <p className="display text-xl sm:text-2xl mb-4" style={{ color: 'var(--muted)', lineHeight: 1.25 }}>
-            {t('peli.raffle_subline')}
-          </p>
-          <p className="mono inline-block px-3 py-1.5 mt-2"
-             data-testid="peli-disclaimer-hero"
-             style={{
-               fontSize: 10.5, letterSpacing: '0.22em', fontWeight: 700,
-               color: 'var(--ink)', background: 'var(--surface)',
-               border: '1px solid var(--border-strong)', borderRadius: 2,
-             }}>
-            {t('peli.raffle_disclaimer')}
-          </p>
-          <div className="mt-6">
-            <button
-              type="button"
-              onClick={scrollToForm}
-              data-testid="peli-hero-cta"
-              className="mono inline-flex items-center gap-2"
-              style={{
-                padding: '14px 22px',
-                background: 'var(--ink)', color: 'var(--bg)',
-                fontSize: 12, letterSpacing: '0.22em', fontWeight: 700,
-                border: 'none', cursor: 'pointer', borderRadius: 2,
-              }}
-            >
-              {t('peli.raffle_submit').toUpperCase()}
-              <ArrowDown strokeWidth={2} size={13} />
-            </button>
+      {/* HERO — Phase 1 Final · Voyager-restyled */}
+      <section data-testid="peli-hero" style={{
+        position: 'relative', overflow: 'hidden',
+        borderBottom: '1px solid var(--hairline, #221E1B)',
+      }}>
+        {/* slot-reel macro background */}
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, zIndex: 0,
+          background: 'radial-gradient(circle at 75% 50%, rgba(212,180,69,0.18) 0%, rgba(212,180,69,0) 50%), conic-gradient(from 0deg at 75% 50%, #1a1612 0deg, #2a221a 30deg, #1a1612 60deg, #2a221a 90deg, #1a1612 360deg)',
+          opacity: 0.55, filter: 'blur(0.5px)',
+        }} />
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: 'linear-gradient(90deg, rgba(11,10,9,0.92) 0%, rgba(11,10,9,0.78) 60%, rgba(11,10,9,0.94) 100%)',
+        }} />
+
+        <div style={{
+          position: 'relative', zIndex: 2,
+          maxWidth: 1180, margin: '0 auto', padding: '64px 32px 56px',
+        }}>
+          <div style={{ maxWidth: 760 }}>
+            <span data-testid="peli-eyebrow" style={{
+              color: '#6FA37D',
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
+              letterSpacing: '0.24em', fontWeight: 700,
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+            }}>
+              <Gift strokeWidth={1.5} size={12} />
+              PELI · VOYAGER
+            </span>
+            <h1 data-testid="peli-title" style={{
+              fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 700,
+              fontSize: 'clamp(40px, 6vw, 72px)', lineHeight: 1.04,
+              letterSpacing: '-0.025em', color: '#FFFFFF',
+              margin: '14px 0 14px',
+            }}>{prizeText}</h1>
+            <p style={{
+              color: 'var(--ink, #ECE6D8)', fontSize: 16, lineHeight: 1.55,
+              maxWidth: 620, margin: '0 0 22px', opacity: 0.92,
+            }}>{t('peli.raffle_subline')}</p>
+
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginBottom: 22 }}>
+              <button
+                type="button"
+                onClick={scrollToForm}
+                data-testid="peli-hero-cta"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 10,
+                  padding: '13px 22px',
+                  background: '#FFFFFF', color: '#0B0A09',
+                  fontFamily: 'ui-monospace, monospace',
+                  fontSize: 11.5, letterSpacing: '0.22em', fontWeight: 700,
+                  border: 'none', cursor: 'pointer', borderRadius: 2,
+                }}
+              >
+                {t('peli.raffle_submit').toUpperCase()}
+                <ArrowDown strokeWidth={2} size={13} />
+              </button>
+              <span data-testid="peli-entry-count" style={{
+                color: 'var(--muted, #9C9587)',
+                fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+                letterSpacing: '0.16em',
+              }}>
+                {entryCount > 0
+                  ? (lang === 'en' ? `${entryCount} ENTRIES` : `${entryCount} OSALLISTUJAA`)
+                  : (lang === 'en' ? 'OPEN NOW' : 'AUKI NYT')}
+              </span>
+            </div>
+
+            <p data-testid="peli-disclaimer-hero" style={{
+              display: 'inline-block', padding: '7px 12px',
+              fontFamily: 'ui-monospace, monospace',
+              fontSize: 10.5, letterSpacing: '0.20em', fontWeight: 700,
+              color: 'var(--ink, #ECE6D8)',
+              background: 'var(--surface, #141210)',
+              border: '1px solid var(--border-strong, #3A3530)',
+              borderRadius: 2, margin: 0,
+            }}>{t('peli.raffle_disclaimer')}</p>
           </div>
         </div>
       </section>
