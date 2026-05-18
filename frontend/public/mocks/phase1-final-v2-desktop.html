@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PUTKI HQ — Phase 1 Final mock v2 (desktop)</title>
+<style>
+  :root {
+    /* Canvas — warm near-black, FT-grade contrast discipline */
+    --bg: #0B0A09;
+    --surface: #141210;
+    --surface-2: #1B1816;
+    --ink-pure: #FFFFFF;       /* headlines */
+    --ink: #ECE6D8;            /* body */
+    --ink-muted: #9C9587;      /* metadata */
+    --ink-faint: #5E5A52;      /* archive / oldest */
+    --border: #2A2522;
+    --border-strong: #3A3530;
+    --hairline: #221E1B;
+
+    /* MITTARI states */
+    --teal: #5C8A8A;
+    --green: #6FA37D;
+    --yellow: #D4B445;
+    --amber: #C97A3A;
+    --perkele: #C13B2C;
+
+    /* Category badges (used at low opacity / restraint) */
+    --news: #6B7280;
+    --sport: #4A8B5E;
+    --gambling: #7C5BA8;
+    --scene: #C0568D;
+    --regulation: #4A7BA8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Söhne", -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .serif { font-family: "GT Sectra", Georgia, "Times New Roman", serif; }
+  .container { max-width: 1380px; margin: 0 auto; padding: 0 32px; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Section anchor — universal small caps marker */
+  .anchor {
+    color: var(--ink-muted);
+    letter-spacing: 0.24em;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: ui-monospace, monospace;
+    text-transform: uppercase;
+  }
+
+  /* === TICKER === */
+  .ticker { background: var(--surface); border-bottom: 1px solid var(--hairline); padding: 9px 32px; font-size: 12px; white-space: nowrap; overflow: hidden; }
+  .ticker .anchor { display: inline-block; margin-right: 14px; padding-right: 12px; border-right: 1px solid var(--border); }
+  .ticker .dot { display: inline-block; width: 5px; height: 5px; border-radius: 999px; vertical-align: middle; margin-right: 7px; }
+  .ticker .src { color: var(--ink-muted); font-size: 10px; letter-spacing: 0.10em; margin-left: 8px; font-family: ui-monospace, monospace; }
+  .ticker .pill { display: inline-block; margin-right: 28px; color: var(--ink); }
+
+  /* === HEADER === */
+  .header { border-bottom: 1px solid var(--hairline); padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .logo .name { font-weight: 900; font-size: 26px; letter-spacing: -0.02em; color: var(--ink-pure); }
+  .logo .tag { color: var(--ink-muted); letter-spacing: 0.22em; font-size: 10px; font-weight: 700; margin-left: 10px; font-family: ui-monospace, monospace; }
+  .controls { display: flex; gap: 8px; }
+  .controls .btn { border: 1px solid var(--border-strong); padding: 8px 14px; border-radius: 999px; font-size: 10.5px; letter-spacing: 0.18em; font-weight: 600; font-family: ui-monospace, monospace; color: var(--ink); }
+
+  /* === MAIN GRID — 2 column === */
+  .main { display: grid; grid-template-columns: 1fr 320px; gap: 48px; padding: 32px 0 24px; }
+
+  /* === FEATURED — og:image hero strategy === */
+  .featured-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 36px; }
+  .featured {
+    position: relative;
+    border: 1px solid var(--hairline);
+    overflow: hidden;
+    background: var(--surface);
+    display: flex; flex-direction: column;
+  }
+  .featured .hero {
+    aspect-ratio: 16/9;
+    position: relative;
+    overflow: hidden;
+    background-size: cover; background-position: center;
+  }
+  .featured .hero.fallback-news { background: linear-gradient(135deg, #1B2530 0%, #0F1820 60%); }
+  .featured .hero.fallback-sport { background: linear-gradient(135deg, #1A2D22 0%, #0E1A14 60%); }
+  /* Mandatory photo credit overlay — bottom-right, on image */
+  .featured .credit {
+    position: absolute;
+    bottom: 8px; right: 10px;
+    background: rgba(0,0,0,0.55);
+    color: rgba(255,255,255,0.9);
+    font-family: ui-monospace, monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.12em;
+    padding: 4px 8px;
+    border-radius: 2px;
+    backdrop-filter: blur(4px);
+  }
+  /* Category badge — small, restrained */
+  .featured .cat {
+    position: absolute;
+    top: 12px; left: 12px;
+    background: rgba(11,10,9,0.78);
+    color: var(--ink-pure);
+    font-family: ui-monospace, monospace;
+    font-size: 9px;
+    letter-spacing: 0.20em;
+    padding: 4px 8px;
+    border-left: 2px solid var(--sport);
+  }
+  .featured .cat.news { border-left-color: var(--news); }
+  .featured .cat.scene { border-left-color: var(--scene); }
+  .featured .body { padding: 20px 22px 22px; }
+  .featured .title {
+    font-family: "GT Sectra", Georgia, serif;
+    font-weight: 700;
+    color: var(--ink-pure);
+    font-size: 22px;
+    line-height: 1.18;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+  }
+  .featured .dek { color: var(--ink); font-size: 14px; line-height: 1.55; margin: 0 0 14px; opacity: 0.86; }
+  .featured .meta { color: var(--ink-muted); font-size: 11px; font-family: ui-monospace, monospace; letter-spacing: 0.08em; }
+  .featured .meta .sep { opacity: 0.4; margin: 0 8px; }
+
+  /* === CHRONOLOGICAL LIST — typography hierarchy === */
+  .chrono { border-top: 1px solid var(--hairline); }
+  .row { display: grid; grid-template-columns: 64px 1fr 110px; gap: 18px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid var(--hairline); }
+  .row .time { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; padding-top: 3px; }
+  .row .title { color: var(--ink-pure); font-size: 16px; line-height: 1.32; letter-spacing: -0.005em; }
+  .row .src { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.14em; text-align: right; padding-top: 3px; opacity: 0.78; }
+  .row .badge {
+    display: inline-block;
+    font-family: ui-monospace, monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    padding: 2px 6px;
+    margin-right: 10px;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+    vertical-align: 2px;
+  }
+  .row .badge.sport { color: var(--sport); border-color: rgba(74,139,94,0.45); }
+  .row .badge.news { color: var(--news); }
+  .row .badge.reg  { color: var(--regulation); border-color: rgba(74,123,168,0.45); }
+  .row .badge.scene { color: var(--scene); border-color: rgba(192,86,141,0.4); }
+
+  /* LEAD row — largest weight */
+  .row.lead .title { font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 21px; line-height: 1.22; }
+  .row.lead { padding-top: 24px; padding-bottom: 22px; }
+  /* MID rows: default. */
+  /* OLD rows: faded */
+  .row.old .title { color: #B5AFA1; }
+  .row.old .time, .row.old .src { opacity: 0.6; }
+  .row.old .badge { opacity: 0.7; }
+
+  /* === STREAMER COLUMN === */
+  .streamers { padding-top: 4px; }
+  .streamers .col-head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid var(--hairline); margin-bottom: 14px; }
+  .streamers .col-head .count { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.14em; }
+  .streamer { display: grid; grid-template-columns: 40px 1fr; gap: 12px; padding: 10px 0; align-items: center; border-bottom: 1px solid var(--hairline); transition: padding 160ms ease; }
+  .streamer:hover { padding-left: 6px; }
+  .streamer .avatar {
+    width: 40px; height: 40px; border-radius: 999px;
+    background: #2A2622; /* single muted slate for fallbacks */
+    color: var(--ink); font-family: ui-monospace, monospace; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    transition: width 200ms ease, height 200ms ease, transform 200ms ease;
+    box-shadow: 0 0 0 2px transparent;
+  }
+  /* LIVE = green ring around avatar (no pulse animation; one-time pulse only on offline→live transition) */
+  .streamer.live .avatar { box-shadow: 0 0 0 2px var(--green); }
+  .streamer.live.just-arrived .avatar { animation: arrivePulse 1400ms ease-out 1; }
+  @keyframes arrivePulse {
+    0%   { box-shadow: 0 0 0 2px var(--green), 0 0 0 0 rgba(111,163,125,0.45); }
+    60%  { box-shadow: 0 0 0 2px var(--green), 0 0 0 12px rgba(111,163,125,0); }
+    100% { box-shadow: 0 0 0 2px var(--green), 0 0 0 0 rgba(111,163,125,0); }
+  }
+  .streamer:hover .avatar { width: 56px; height: 56px; transform: translateY(-2px); }
+  .streamer .handle { color: var(--ink-pure); font-size: 14px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.2; }
+  .streamer .meta { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.06em; margin-top: 3px; opacity: 0.85; }
+  .streamer .meta .dim { opacity: 0.6; }
+  .streamer.offline .handle { color: var(--ink); }
+  .streamer.offline .avatar { opacity: 0.72; }
+
+  /* === EXPLORE — 2×2 preview block grid === */
+  .explore { border-top: 1px solid var(--hairline); margin-top: 36px; padding: 32px 0 16px; }
+  .explore .head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 18px; }
+  .explore .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--hairline); }
+  .block {
+    position: relative;
+    min-height: 320px;
+    background: var(--surface);
+    overflow: hidden;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 28px 30px;
+    isolation: isolate;
+  }
+  .block .bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-size: cover; background-position: center;
+    opacity: 0.55;
+  }
+  .block::before {
+    content: ""; position: absolute; inset: 0; z-index: 1;
+    background: linear-gradient(180deg, rgba(11,10,9,0.35) 0%, rgba(11,10,9,0.86) 70%, rgba(11,10,9,0.96) 100%);
+  }
+  .block > * { position: relative; z-index: 2; }
+
+  /* Mittari block — vintage instrument dial aesthetic, amber glow for current MEININKI state */
+  .block.mittari .bg {
+    background-image: radial-gradient(circle at 30% 40%, rgba(201,122,58,0.42) 0%, rgba(201,122,58,0.0) 55%),
+      conic-gradient(from 220deg, #1f1b18 0deg, #3a2e23 70deg, #5a3e22 90deg, #c97a3a 140deg, #5a3e22 200deg, #1f1b18 360deg);
+    filter: contrast(1.05);
+  }
+  .block .anchor-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .block .state-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--amber); }
+  .block.mittari .label { color: var(--amber); }
+  .block .label { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; }
+  .block .state-name { font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 56px; line-height: 1; color: var(--ink-pure); letter-spacing: -0.02em; margin: 0 0 8px; }
+  .block .reading { color: var(--ink); font-size: 14px; max-width: 360px; line-height: 1.5; opacity: 0.88; margin: 0 0 22px; }
+  .block .cta { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-pure); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.18em; font-weight: 700; }
+  .block .cta::after { content: "→"; transition: transform 180ms ease; }
+  .block:hover .cta::after { transform: translateX(4px); }
+
+  /* mini dial visual */
+  .mini-dial { position: absolute; top: 24px; right: 28px; width: 80px; height: 80px; z-index: 2; }
+  .mini-dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+
+  /* Pelisignaalit block — typographic / sparkline cascade */
+  .block.signaalit .bg {
+    background:
+      repeating-linear-gradient(180deg, rgba(212,180,69,0.06) 0px, rgba(212,180,69,0.06) 1px, transparent 1px, transparent 24px),
+      linear-gradient(135deg, #161310 0%, #1a1612 100%);
+  }
+  .block.signaalit .label { color: var(--yellow); }
+  .signal-card { background: rgba(0,0,0,0.42); border: 1px solid var(--hairline); padding: 14px 16px; margin-bottom: 16px; backdrop-filter: blur(8px); }
+  .signal-card .match { color: var(--ink-pure); font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .signal-card .row2 { display: flex; gap: 14px; color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.08em; }
+  .signal-card .sharp { color: var(--yellow); font-weight: 700; }
+  .signal-card .snippet { color: var(--ink); font-size: 12.5px; line-height: 1.5; margin-top: 10px; opacity: 0.84; }
+  .sparkline { position: absolute; top: 24px; right: 24px; opacity: 0.6; z-index: 2; }
+
+  /* Voita block — inactive state (Sako pending) */
+  .block.voita .bg {
+    background:
+      radial-gradient(circle at 70% 30%, rgba(193,59,44,0.18) 0%, rgba(193,59,44,0) 60%),
+      linear-gradient(135deg, #1a1310 0%, #14100e 100%);
+  }
+  .block.voita .voita-word {
+    position: absolute; inset: 0; z-index: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "GT Sectra", Georgia, serif; font-weight: 900;
+    font-size: 220px; letter-spacing: -0.04em; color: rgba(255,255,255,0.025);
+    pointer-events: none; user-select: none; line-height: 1;
+  }
+  .block.voita .label { color: var(--perkele); }
+  .block.voita .placeholder { color: var(--ink-pure); font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 34px; line-height: 1.1; margin: 0 0 10px; }
+  .block.voita .preview-text { color: var(--ink); font-size: 13.5px; line-height: 1.5; opacity: 0.82; max-width: 320px; margin: 0 0 18px; }
+  .block.voita .cta-disabled { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.18em; }
+
+  /* Peli block — slot reel macro */
+  .block.peli .bg {
+    background:
+      radial-gradient(circle at 80% 60%, rgba(212,180,69,0.18) 0%, rgba(212,180,69,0) 50%),
+      conic-gradient(from 0deg at 80% 60%, #1a1612 0deg, #2a221a 30deg, #1a1612 60deg, #2a221a 90deg, #1a1612 360deg);
+    filter: blur(0.4px);
+  }
+  .block.peli .label { color: var(--green); }
+  .block.peli .campaign { color: var(--ink-pure); font-family: "GT Sectra", Georgia, serif; font-weight: 700; font-size: 28px; line-height: 1.1; margin: 0 0 8px; }
+  .block.peli .reward { color: var(--ink); font-size: 14px; line-height: 1.5; margin: 0 0 22px; opacity: 0.86; max-width: 320px; }
+
+  /* === ProgressiveOptIn sample === */
+  .optin-section { border-top: 1px solid var(--hairline); margin-top: 48px; padding: 36px 0 48px; }
+  .optin-section .head { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 18px; }
+  .optin-section .head h3 { font-family: "GT Sectra", Georgia, serif; font-weight: 700; color: var(--ink-pure); font-size: 22px; margin: 0; }
+  .optin-steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--hairline);
+    padding: 24px 22px;
+    position: relative;
+  }
+  .step .num { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.22em; color: var(--ink-muted); margin-bottom: 14px; display: block; }
+  .step h4 { color: var(--ink-pure); font-size: 16px; margin: 0 0 6px; font-weight: 600; letter-spacing: -0.005em; }
+  .step .prop { color: var(--ink); font-size: 13px; line-height: 1.5; opacity: 0.86; margin: 0 0 18px; min-height: 60px; }
+  .step .field { display: flex; gap: 8px; margin-bottom: 12px; }
+  .step .field input { flex: 1; background: var(--bg); border: 1px solid var(--border-strong); color: var(--ink); padding: 10px 12px; font-family: inherit; font-size: 13px; outline: none; }
+  .step .field button { background: var(--ink-pure); color: var(--bg); border: 0; padding: 10px 16px; font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.18em; font-weight: 700; cursor: pointer; }
+  .step .skip { color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.12em; }
+  .step.confirmed { border-left: 2px solid var(--green); }
+  .step .confirm-pill { color: var(--green); font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.14em; margin-bottom: 14px; display: block; }
+  .step .tel-btn { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--ink); border: 1px solid var(--border-strong); padding: 10px 16px; font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.14em; }
+
+  .consent-note { margin-top: 18px; color: var(--ink-muted); font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; line-height: 1.7; }
+
+  /* footer */
+  .footer-note { color: var(--ink-faint); font-size: 11px; padding: 32px 0 48px; border-top: 1px solid var(--hairline); margin-top: 32px; font-family: ui-monospace, monospace; letter-spacing: 0.08em; }
+
+  /* mock annotation chips */
+  .ann { display:inline-block; background: rgba(212,180,69,0.12); color: var(--yellow); border: 1px solid rgba(212,180,69,0.35); padding: 2px 8px; font-family: ui-monospace, monospace; font-size: 9.5px; letter-spacing: 0.18em; margin-left: 10px; vertical-align: 2px; }
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <span class="anchor">UUTISVIRTA · LIVE</span>
+  <span class="pill"><span class="dot" style="background: var(--regulation)"></span>Veikkaus reagoi lakimuutokseen<span class="src">YLE UUTISET · 4M</span></span>
+  <span class="pill"><span class="dot" style="background: var(--sport)"></span>HIFK avasi maaliriihen Tapparaa vastaan<span class="src">IL · 12M</span></span>
+  <span class="pill"><span class="dot" style="background: var(--scene)"></span>Hiipuva katsoja­määrä Twitchillä<span class="src">HS · 28M</span></span>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo"><span class="name">PUTKI HQ</span><span class="tag">PHASE 1 · V2 MOCK</span></div>
+  <div class="controls">
+    <span class="btn">FI · EN</span>
+    <span class="btn">THEME</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- MAIN 2-col -->
+  <div class="main">
+    <!-- LEFT: news portal -->
+    <div>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; padding: 4px 0 14px;">
+        <span class="anchor">SKENE · TÄNÄÄN <span class="ann">REFINEMENT #2 · #5</span></span>
+        <span class="anchor" style="opacity:0.7">PÄIVITETTY 09:42</span>
+      </div>
+
+      <!-- FEATURED — og:image strategy -->
+      <div class="featured-row">
+        <article class="featured">
+          <div class="hero" style="background-image: url('https://images.unsplash.com/photo-1551958219-acbc608c6377?w=1200&q=80')">
+            <span class="cat sport">URHEILU</span>
+            <span class="credit">Photo: Yle Urheilu</span>
+          </div>
+          <div class="body">
+            <h2 class="title">HIFK kaatoi Tapparan jatkoajalla — voittoputki venyi neljään</h2>
+            <p class="dek">Yle Urheilun mukaan ottelu ratkesi 62. minuutilla, kun Anttilan laukaus kimposi maaliin tolpasta. Veto­markkinoilla HIFK avasi 2.10:n kerto­imella.</p>
+            <div class="meta">YLE URHEILU<span class="sep">·</span>22 MIN<span class="sep">·</span>VAHVISTETTU 2 LÄHDETTÄ</div>
+          </div>
+        </article>
+
+        <article class="featured">
+          <!-- og:image FAILED fallback example: designed category treatment -->
+          <div class="hero fallback-news">
+            <span class="cat news">UUTISET</span>
+            <span class="credit" style="background: rgba(0,0,0,0.35)">Designed treatment · og:image unavailable</span>
+            <div style="position:absolute; left:24px; bottom:28px; right: 24px;">
+              <div class="mono" style="color: rgba(255,255,255,0.7); font-size: 10.5px; letter-spacing: 0.18em;">UUTISET · REGULATION</div>
+              <div style="color: #fff; font-family:'GT Sectra',Georgia,serif; font-size:46px; line-height: 1; opacity:0.16; font-weight: 900; margin-top: 6px;">PUTKI</div>
+            </div>
+          </div>
+          <div class="body">
+            <h2 class="title">Veikkaus julkaisi vastine­ehdotuksen kilpailu­avauksesta — "ei vielä riittävä"</h2>
+            <p class="dek">Helsingin Sanomien mukaan ministeriö pitää ehdotuksen yksityiskohtia liian väljinä. Lopullinen luonnos odotetaan helmikuun puolessa välissä.</p>
+            <div class="meta">HELSINGIN SANOMAT<span class="sep">·</span>48 MIN<span class="sep">·</span>VAHVISTETTU 3 LÄHDETTÄ</div>
+          </div>
+        </article>
+      </div>
+
+      <!-- CHRONO LIST — typography hierarchy -->
+      <div class="chrono">
+        <div class="row lead">
+          <span class="time mono">08:55</span>
+          <div>
+            <span class="badge sport">URHEILU</span>
+            <span class="title">Liiga ilmoitti: TPS:n peliaika siirretty kahdella tunnilla — tekninen vika valaistuksessa</span>
+          </div>
+          <span class="src">IS</span>
+        </div>
+        <div class="row">
+          <span class="time mono">08:40</span>
+          <div><span class="badge news">UUTISET</span><span class="title">Eduskunnan talous­valio­kunta käsittelee uhka­peli­lain päivitystä torstaina</span></div>
+          <span class="src">MTV</span>
+        </div>
+        <div class="row">
+          <span class="time mono">08:22</span>
+          <div><span class="badge scene">SKENE</span><span class="title">Streamer-kollektiivi PUTKI³ ilmoitti seuraavasta yhteislähetyksestä — neljä kanavaa, yksi peli</span></div>
+          <span class="src">YLE</span>
+        </div>
+        <div class="row">
+          <span class="time mono">07:58</span>
+          <div><span class="badge reg">SÄÄNTELY</span><span class="title">Kuluttaja-asiamies pyytää Veikkausta täsmentämään uusien rajoituk­sien ilmoitus­käytäntöjä</span></div>
+          <span class="src">KL</span>
+        </div>
+        <div class="row">
+          <span class="time mono">07:34</span>
+          <div><span class="badge sport">URHEILU</span><span class="title">Jukurit haki vierasvoiton Saipalta — kausi­tilasto kääntyi positiiviseksi</span></div>
+          <span class="src">IL</span>
+        </div>
+        <div class="row old">
+          <span class="time mono">06:50</span>
+          <div><span class="badge sport">URHEILU</span><span class="title">Pekka Rinteen kommentti edellis­illan ottelusta levisi sosiaalisessa mediassa</span></div>
+          <span class="src">HS</span>
+        </div>
+        <div class="row old">
+          <span class="time mono">06:18</span>
+          <div><span class="badge news">UUTISET</span><span class="title">Suomalais­studio julkaisi indie-pelin yli­yön — Steam-listan kärkeen</span></div>
+          <span class="src">YLE</span>
+        </div>
+        <div class="row old">
+          <span class="time mono">05:42</span>
+          <div><span class="badge scene">SKENE</span><span class="title">Twitchin Suomi-kategoriat hiljaiset aamulla — ainoastaan kolme kanavaa yli 100 katsojan</span></div>
+          <span class="src">MTV</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: streamer column -->
+    <aside class="streamers">
+      <div class="col-head">
+        <span class="anchor">LIVE · NYT <span class="ann">REFINEMENT #4 · #6</span></span>
+        <span class="count">3 / 12</span>
+      </div>
+
+      <div class="streamer live just-arrived">
+        <div class="avatar">SK</div>
+        <div>
+          <div class="handle">streamerikari</div>
+          <div class="meta">2.1k <span class="dim">·</span> CS2 <span class="dim">·</span> 2h 14m</div>
+        </div>
+      </div>
+      <div class="streamer live">
+        <div class="avatar">EL</div>
+        <div>
+          <div class="handle">eemelilive</div>
+          <div class="meta">847 <span class="dim">·</span> Hearthstone <span class="dim">·</span> 1h 02m</div>
+        </div>
+      </div>
+      <div class="streamer live">
+        <div class="avatar">RY</div>
+        <div>
+          <div class="handle">ryyti_</div>
+          <div class="meta">312 <span class="dim">·</span> Just Chatting <span class="dim">·</span> 38m</div>
+        </div>
+      </div>
+      <div class="streamer offline">
+        <div class="avatar">AL</div>
+        <div>
+          <div class="handle">alaslyöty</div>
+          <div class="meta">offline <span class="dim">·</span> last 12h</div>
+        </div>
+      </div>
+      <div class="streamer offline">
+        <div class="avatar">MS</div>
+        <div>
+          <div class="handle">mustasusi</div>
+          <div class="meta">offline <span class="dim">·</span> last 18h</div>
+        </div>
+      </div>
+      <div class="streamer offline">
+        <div class="avatar">JK</div>
+        <div>
+          <div class="handle">jaakari</div>
+          <div class="meta">offline <span class="dim">·</span> last 2d</div>
+        </div>
+      </div>
+      <div style="padding-top: 14px;">
+        <a class="anchor" style="color: var(--ink); text-decoration: underline; text-underline-offset: 4px;">KAIKKI 12 STREAMARIA →</a>
+      </div>
+    </aside>
+  </div>
+
+  <!-- EXPLORE — 2×2 preview blocks -->
+  <section class="explore">
+    <div class="head">
+      <span class="anchor">LISÄÄ PUTKILTA · EXPLORE <span class="ann">REFINEMENT #3</span></span>
+      <span class="anchor" style="opacity: 0.7">4 PRODUCTS</span>
+    </div>
+    <div class="grid">
+
+      <!-- MITTARI -->
+      <a class="block mittari" href="/mittari">
+        <div class="bg"></div>
+        <div class="mini-dial">
+          <svg viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#2A2522" stroke-width="6"/>
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#C97A3A" stroke-width="6"
+              stroke-dasharray="198 264" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="anchor-row">
+          <span class="state-dot"></span>
+          <span class="label">MITTARI · NYT</span>
+        </div>
+        <h3 class="state-name">MEININKI</h3>
+        <p class="reading">Suomen skene on lämmin: 12 kanavaa lähettää, kerroin­jäykkyys nousi 24 h aikana. Ei vielä myrsky, mutta pelataan.</p>
+        <span class="cta">AVAA · OPEN</span>
+      </a>
+
+      <!-- PELISIGNAALIT -->
+      <a class="block signaalit" href="/pelisignaalit">
+        <div class="bg"></div>
+        <svg class="sparkline" width="120" height="40" viewBox="0 0 120 40">
+          <polyline points="0,28 15,24 30,30 45,18 60,22 75,12 90,16 105,8 120,10"
+            fill="none" stroke="#D4B445" stroke-width="1.5" opacity="0.6"/>
+        </svg>
+        <div class="anchor-row">
+          <span class="state-dot" style="background: var(--yellow)"></span>
+          <span class="label">PELISIGNAALIT · TÄNÄÄN</span>
+        </div>
+        <div class="signal-card">
+          <div class="match">HIFK – Tappara · Liiga</div>
+          <div class="row2">
+            <span>HIFK 2.10</span>
+            <span class="dim">Veikkaus</span>
+            <span class="sharp">SHARPNESS 87</span>
+          </div>
+          <p class="snippet">Konsensus kireä yli kuudessa kirjassa. 24 h aikana kerroin liikkunut yhden askeleen kotijoukkueeseen päin.</p>
+        </div>
+        <span class="cta">LUE KAIKKI 5 SIGNAALIA · SEE ALL 5</span>
+      </a>
+
+      <!-- VOITA — inactive (Sako pending) -->
+      <a class="block voita" href="/voita">
+        <div class="bg"></div>
+        <span class="voita-word">VOITA</span>
+        <div class="anchor-row">
+          <span class="state-dot" style="background: var(--perkele)"></span>
+          <span class="label">VOITA · TULOSSA</span>
+        </div>
+        <h3 class="placeholder">Pian saatavilla</h3>
+        <p class="preview-text">Tulossa tällä viikolla: Liiga-finaalien voitto­ennustus­arvonta. Avautuu lain­opillisen tarkistuksen jälkeen.</p>
+        <span class="cta-disabled">ODOTTAA HYVÄKSYNTÄÄ</span>
+      </a>
+
+      <!-- PELI -->
+      <a class="block peli" href="/peli">
+        <div class="bg"></div>
+        <div class="anchor-row">
+          <span class="state-dot" style="background: var(--green)"></span>
+          <span class="label">PELI · VOYAGER</span>
+        </div>
+        <h3 class="campaign">Helmikuun Voyager-kierros</h3>
+        <p class="reward">Pelaa 30 sekuntia, voita 25 ilmais­kierrosta. Auki sunnuntaihin asti, yli 800 osallistujaa.</p>
+        <span class="cta">PELAA · PLAY</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ProgressiveOptIn sample (Pelisignaalit surface) -->
+  <section class="optin-section">
+    <div class="head">
+      <div>
+        <span class="anchor">PROGRESSIVE OPT-IN · PELISIGNAALIT-ESIMERKKI <span class="ann">NEW · PROGRESSIVE FUNNEL</span></span>
+        <h3 style="margin-top: 10px;">Saa huomisen 5 signaalia sähköpostiisi klo 10.00</h3>
+      </div>
+      <span class="anchor" style="opacity:0.7">3 STEPS · 3 CONSENT TAGS</span>
+    </div>
+
+    <div class="optin-steps">
+      <!-- STEP 1 — Email gate -->
+      <div class="step">
+        <span class="num">STEP 1 · EMAIL</span>
+        <h4>Saa huomisen signaalit klo 10.00</h4>
+        <p class="prop">Yksi sähköposti aamulla — viisi tärpiä, Sharpness-pisteet, vedonlyöntiyhtiön nimi.</p>
+        <div class="field">
+          <input type="email" placeholder="sinun@email.fi" />
+          <button>TILAA</button>
+        </div>
+        <div class="skip">Tag: email_pelisignaalit</div>
+      </div>
+
+      <!-- STEP 2 — confirmed + SMS upsell -->
+      <div class="step confirmed">
+        <span class="num">STEP 2 · SMS</span>
+        <span class="confirm-pill">VAHVISTETTU ✓</span>
+        <h4>Haluatko nopeammin?</h4>
+        <p class="prop">SMS niistä signaaleista, joiden Sharpness on 90+ — tulee suoraan puhelimeesi, ei aamua odoteta.</p>
+        <div class="field">
+          <input type="tel" placeholder="+358 40 123 4567" />
+          <button>LISÄÄ</button>
+        </div>
+        <span class="skip">JATKA PELKÄLLÄ SÄHKÖPOSTILLA →</span>
+      </div>
+
+      <!-- STEP 3 — Telegram upsell -->
+      <div class="step">
+        <span class="num">STEP 3 · TELEGRAM</span>
+        <h4>Suosit Telegramia?</h4>
+        <p class="prop">Liity Pelisignaalit-kanavalle — samat hälytykset, heti puhelimeen. Ei sähköposti­jonoja.</p>
+        <a class="tel-btn">LIITY KANAVALLE →</a>
+        <div style="margin-top: 14px;"><span class="skip">OLEN VALMIS →</span></div>
+      </div>
+    </div>
+
+    <p class="consent-note">
+      Each step records a distinct consent tag (email_pelisignaalit · sms_pelisignaalit · telegram_pelisignaalit). Skip at any step. Per-surface value props on /mittari, /voita, /peli.
+    </p>
+  </section>
+
+  <p class="footer-note">
+    REFINEMENTS APPLIED · 1 og:image hero + photo credit overlay · 2 typography hierarchy (lead/mid/old) · 3 2×2 preview blocks (no hint strips) · 4 streamer column (40px, single muted slate, green-ring live, one-time arrival pulse) · 5 contrast register (pure-white headlines vs muted slate meta) · 6 single dialReading() source-of-truth (state name consistent across all surfaces)
+  </p>
+
+</div>
+</body>
+</html>
