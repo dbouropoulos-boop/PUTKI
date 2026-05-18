@@ -105,6 +105,13 @@ def build_views_router(db) -> APIRouter:
             out[d["article_id"]] = int(d.get("views", 0))
         return {"stats": out}
 
+    @router.get("/most-read")
+    async def get_most_read(hours: int = 1, limit: int = 5) -> Dict[str, Any]:
+        hours = max(1, min(int(hours or 1), 168))   # cap 1h..7d
+        limit = max(1, min(int(limit or 5), 20))
+        items = await most_read(db, hours=hours, limit=limit)
+        return {"hours": hours, "items": items, "count": len(items)}
+
     return router
 
 
@@ -119,3 +126,70 @@ async def total_views(db) -> int:
         return 0
     except Exception:
         return 0
+
+
+async def most_read(db, *, hours: int = 1, limit: int = 5) -> List[Dict[str, Any]]:
+    """Top N most-read articles in the last `hours` hours.
+
+    Strategy:
+      • Pull article_view_dedup entries with ts > now - hours
+      • Aggregate counts per article_id, sort desc, top `limit`
+      • Join against published_content to surface headline + url_slug + ago
+      • If we don't have enough recent activity yet (cold start), fall back
+        to all-time top by `article_views.views` so the rail never reads
+        empty on a fresh deployment.
+    """
+    from datetime import datetime, timezone, timedelta
+    since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+    rows: Dict[str, int] = {}
+    cur = db.article_view_dedup.find({"ts": {"$gte": since}}, {"_id": 0, "article_id": 1})
+    async for d in cur:
+        aid = d.get("article_id")
+        if aid:
+            rows[aid] = rows.get(aid, 0) + 1
+
+    items: List[Dict[str, Any]] = []
+    if rows:
+        ranked = sorted(rows.items(), key=lambda kv: -kv[1])[:limit]
+        ids = [aid for aid, _ in ranked]
+        articles = {}
+        cur2 = db.published_content.find(
+            {"id": {"$in": ids}},
+            {"_id": 0, "id": 1, "headline": 1, "url_slug": 1,
+             "published_at": 1, "category": 1, "type": 1},
+        )
+        async for a in cur2:
+            articles[a["id"]] = a
+        for aid, reads in ranked:
+            art = articles.get(aid)
+            if art:
+                items.append({**art, "views_window": reads})
+
+    # Cold-start fallback: fill remaining slots with all-time top
+    if len(items) < limit:
+        need = limit - len(items)
+        already = {it["id"] for it in items}
+        cur3 = db.article_views.find({}, {"_id": 0, "article_id": 1, "views": 1}).sort(
+            [("views", -1)]
+        ).limit(need * 3 + 5)
+        candidates: List[Dict[str, Any]] = []
+        async for d in cur3:
+            aid = d.get("article_id")
+            if aid and aid not in already:
+                candidates.append({"id": aid, "views": int(d.get("views", 0))})
+        if candidates:
+            ids = [c["id"] for c in candidates]
+            cur4 = db.published_content.find(
+                {"id": {"$in": ids}},
+                {"_id": 0, "id": 1, "headline": 1, "url_slug": 1,
+                 "published_at": 1, "category": 1, "type": 1},
+            )
+            arts = {a["id"]: a async for a in cur4}
+            for c in candidates:
+                if len(items) >= limit:
+                    break
+                art = arts.get(c["id"])
+                if art:
+                    items.append({**art, "views_window": c["views"], "fallback": True})
+
+    return items

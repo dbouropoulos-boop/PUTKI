@@ -22,6 +22,7 @@ import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucid
 import LiveDataTicker from '../components/LiveDataTicker';
 import TrustStrip from '../components/TrustStrip';
 import DialCockpit from '../components/DialCockpit';
+import MostReadRail from '../components/MostReadRail';
 import LiveActivityFeed from '../components/LiveActivityFeed';
 import StreamerLiveGrid from '../components/StreamerLiveGrid';
 import PaivaVitoset from '../components/PaivaVitoset';
@@ -373,6 +374,7 @@ const Home = () => {
         </div>
       </section>
 
+      <MostReadRail />
       <SocialProofBar />
       <WinnersCorner />
 

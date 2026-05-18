@@ -1,0 +1,38 @@
+{
+  "summary": "Iteration 21 — PUTKI HQ Most-Read Rail (backend endpoint + frontend rotating rail). Backend: 10/10 pytest passed for GET /api/content/most-read. Frontend: rail renders, rotates every ~6s, pager works, link navigates to /uutiset/{slug}, FI/EN translations correct with pluralisation.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/content/most-read?limit=0", "issue": "limit=0 is treated as default (5) due to `int(limit or 5)` falsy-check, not clamped to 1 as the documented '1<=limit<=20' contract implies. hours=0 correctly clamps to 1 (`int(hours or 1)`). Inconsistent edge-case handling — works because FastAPI defaults supply 5/1 when omitted, but explicit '?limit=0' yields 5 instead of 1. Low priority."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter21_most_read.py",
+    "/app/test_reports/pytest/iter21_results.xml"
+  ],
+  "action_items": [
+    "Optional: align limit=0 / hours=0 edge behavior — either clamp both to 1 (max(1, min(int(limit or 0), 20))) or document that '0 = use default'.",
+    "Consider: most_read() helper currently counts dedup entries — each unique fingerprint counts once per article, which is correct for hourly trending. Good design."
+  ],
+  "critical_code_review_comments": [
+    "article_views.py:109 — `int(limit or 5)` masks an explicit `0` and replaces with 5. Use `max(1, min(int(limit), 20))` after a separate `if limit is None` default. Same for hours.",
+    "MostReadRail.jsx:37 — REFRESH_MS = 60000 will refetch every minute; combined with 6s rotation this means after a refetch the `active` index may exceed new `items.length`. Safe-guarded by `items[active] || items[0]` fallback (good). Minor: consider resetting active=0 on refetch if items list changed.",
+    "MostReadRail.jsx:64 — Only the currently active item is rendered as a `<Link>` (data-testid=`most-read-link-${active}`). Tests requiring data-testid='most-read-link-2' must first click the pager dot to make idx=2 active. Verified to work in tests.",
+    "article_views.py:144 — `since` is built as ISO string but `ts` is stored as ISO string — string comparison works only because of zulu/offset format consistency. Acceptable but fragile if ts format ever drifts."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter21_most_read.py (NEW)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "n/a",
+  "seed_data_creation": "None — relied on existing seeded view counts (98 articles, dedup table populated per agent context).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend endpoint /api/content/most-read tested with hours={1,24,999,0}, limit={1,3,5,50,0}. Top item by views_window=133 is the 'renttuofficial' streamer alert. Frontend rail data-testid='most-read-rail' is placed in Home.jsx after dial section and before SocialProofBar. Pager dots are span elements inside data-testid='most-read-pager' (desktop only, hidden on mobile via `hidden sm:flex`). Rotation interval is 6s, refresh interval is 60s. FI labels: 'Luetuin nyt', 'lukukertaa'/'lukukerta'. EN labels: 'Hot right now', 'reads'/'read'. App default language is EN — to test FI, click FI in the EN/FI lang toggle.",
+  "rca_of_the_issue": "No issues found — feature works end-to-end."
+}
