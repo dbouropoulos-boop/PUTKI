@@ -1,33 +1,19 @@
 /**
- * PUTKI HQ — StreamersRail (Phase 1 Final · Chunk B refinement).
+ * PUTKI HQ — StreamersRail (Phase 1 Final · Chunk B refinement v3).
  *
- * Editorial tile redesign — no more circular avatars.
+ * Compact tabs + slim rows.
  *
- * LIVE tiles
- * ----------
- *   Real Twitch stream thumbnail (16:9, full rail width) with platform
- *   hairline on the left edge, viewer count as a stat, game name as a
- *   mono eyebrow, uptime overlaid bottom-right of the thumbnail.
- *   Sorted by viewer_count descending across all platforms.
+ * Header: three tabs — TWITCH · KICK · YOUTUBE — each with a (n / m) count.
+ * Active tab indicated by a colored underline (platform color).
  *
- * OFFLINE
- * -------
- *   Collapsed below the live tiles into a single "N offline" toggle.
- *   Each row is a slim handle + "offline · 2d" line, no avatar circles.
+ * Per-row layout (~64px tall):
+ *   [96×54 thumbnail] · handle + game · viewer count
+ *   Compact, scannable, no oversized hero tiles.
  *
- * Honest empty states
- * -------------------
- *   When a platform has no data (Kick API dormant, YouTube quiet) we
- *   render a single-line note instead of pretending. No fake streamers.
+ * Offline streamers in the active platform fold below into a slim toggle,
+ * each as a single line (handle + "offline · 2d").
  *
- * Data
- * ----
- *   GET /api/streamers/live              (twitch default)
- *   GET /api/streamers/live?platform=kick
- *   GET /api/streamers/live?platform=youtube
- *
- *   Each item: {user_login, user_name, title, viewer_count, game_name,
- *               thumbnail_url, profile_url, started_at, follower_count}
+ * Honest empty states for dormant platforms (Kick API 403 · YouTube quiet).
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -35,14 +21,12 @@ import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
+const PLATFORMS = ['twitch', 'kick', 'youtube'];
 const PLATFORM_META = {
   twitch:  { label: 'TWITCH',  color: '#9146FF', baseUrl: 'https://twitch.tv/' },
   kick:    { label: 'KICK',    color: '#53FC18', baseUrl: 'https://kick.com/' },
   youtube: { label: 'YOUTUBE', color: '#FF0000', baseUrl: 'https://youtube.com/' },
 };
-
-const initials = (name) =>
-  (name || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase() || '??';
 
 const fmtViewers = (n) => {
   if (n == null) return '—';
@@ -54,48 +38,30 @@ const fmtViewers = (n) => {
 const uptime = (startedAt) => {
   if (!startedAt) return '';
   try {
-    const start = new Date(startedAt);
-    const mins = Math.max(0, Math.floor((Date.now() - start.getTime()) / 60000));
+    const mins = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 60000));
     if (mins < 60) return `${mins}m`;
     const hrs = Math.floor(mins / 60);
-    const rem = mins % 60;
-    return `${hrs}h ${String(rem).padStart(2, '0')}m`;
-  } catch {
-    return '';
-  }
+    return `${hrs}h ${String(mins % 60).padStart(2, '0')}m`;
+  } catch { return ''; }
 };
 
-const offlineSince = (lastSeenIso, lang) => {
-  if (!lastSeenIso) return lang === 'en' ? 'offline' : 'offline';
-  try {
-    const t = new Date(lastSeenIso);
-    const hrs = Math.floor((Date.now() - t.getTime()) / 3600000);
-    if (hrs < 24) return `offline · ${hrs}h`;
-    return `offline · ${Math.floor(hrs / 24)}d`;
-  } catch {
-    return 'offline';
-  }
-};
-
-const buildThumb = (url, login) => {
+const buildThumb = (url) => {
   if (!url) return null;
-  // Twitch template substitution + cache-bust per minute so a paused
-  // stream's thumbnail doesn't go stale for the user's session.
   const minute = Math.floor(Date.now() / 60000);
   if (url.includes('{width}') && url.includes('{height}')) {
-    return `${url.replace('{width}', '480').replace('{height}', '270')}?t=${minute}`;
+    return `${url.replace('{width}', '192').replace('{height}', '108')}?t=${minute}`;
   }
   return `${url}${url.includes('?') ? '&' : '?'}t=${minute}`;
 };
 
-// ── LIVE tile ─────────────────────────────────────────────────────────────
-const LiveTile = ({ streamer, platform, justArrived }) => {
+// ── LIVE row ──────────────────────────────────────────────────────────────
+const LiveRow = ({ streamer, platform, justArrived }) => {
   const meta = PLATFORM_META[platform];
   const handle = streamer.user_login || streamer.user_name || streamer.channel || '?';
   const displayName = streamer.user_name || handle;
   const game = streamer.game_name || streamer.category || '';
   const viewers = streamer.viewer_count;
-  const thumb = buildThumb(streamer.thumbnail_url, handle);
+  const thumb = buildThumb(streamer.thumbnail_url);
   const up = uptime(streamer.started_at);
   const href = streamer.profile_url || `${meta.baseUrl}${handle}`;
 
@@ -104,130 +70,83 @@ const LiveTile = ({ streamer, platform, justArrived }) => {
       href={href}
       target="_blank"
       rel="noreferrer noopener"
-      data-testid="streamer-tile"
+      data-testid="streamer-row"
       data-platform={platform}
       data-live="1"
       style={{
-        display: 'block', position: 'relative',
-        background: 'var(--surface, #141210)',
-        border: '1px solid var(--hairline, #221E1B)',
-        borderLeft: `2px solid ${meta.color}`,
+        display: 'grid', gridTemplateColumns: '72px 1fr auto',
+        gap: 12, alignItems: 'center',
+        padding: '10px 0', borderBottom: '1px solid var(--hairline, #221E1B)',
         textDecoration: 'none', color: 'inherit',
-        overflow: 'hidden',
-        transition: 'transform 200ms ease, border-color 200ms ease',
-        animation: justArrived ? 'tileArrive 1800ms ease-out 1' : undefined,
+        transition: 'padding-left 160ms ease',
+        animation: justArrived ? 'rowArrive 1600ms ease-out 1' : undefined,
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+      onMouseEnter={(e) => { e.currentTarget.style.paddingLeft = '4px'; }}
+      onMouseLeave={(e) => { e.currentTarget.style.paddingLeft = '0'; }}
     >
-      {/* Thumbnail */}
+      {/* Thumbnail 72×40 (16:9) */}
       <div style={{
-        position: 'relative',
-        aspectRatio: '16 / 9',
+        position: 'relative', width: 72, height: 40,
         background: thumb
           ? `#0B0A09 url(${thumb}) center/cover no-repeat`
-          : `linear-gradient(135deg, #1B1816, #0F0D0B)`,
+          : 'linear-gradient(135deg, #1B1816, #0F0D0B)',
+        borderLeft: `2px solid ${meta.color}`,
         overflow: 'hidden',
       }}>
-        {/* Bottom gradient for legibility */}
-        <div aria-hidden style={{
-          position: 'absolute', inset: 0,
-          background: 'linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(0,0,0,0.85) 100%)',
-          pointerEvents: 'none',
+        {/* tiny LIVE dot bottom-left */}
+        <span aria-hidden style={{
+          position: 'absolute', bottom: 3, left: 4,
+          width: 5, height: 5, borderRadius: 999,
+          background: '#C13B2C',
+          boxShadow: justArrived ? '0 0 0 3px rgba(193,59,44,0.35)' : 'none',
         }} />
-        {/* LIVE dot (top-left, on thumb) */}
-        <div style={{
-          position: 'absolute', top: 8, left: 8,
-          display: 'flex', alignItems: 'center', gap: 6,
-          background: 'rgba(11,10,9,0.75)', padding: '3px 7px',
-          backdropFilter: 'blur(4px)',
-        }}>
-          <span style={{
-            width: 6, height: 6, borderRadius: 999,
-            background: '#C13B2C',
-            animation: justArrived ? 'liveDotPulse 1800ms ease-out 1' : undefined,
-          }} />
-          <span style={{
-            color: '#FFFFFF',
-            fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
-            letterSpacing: '0.20em', fontWeight: 700,
-          }}>LIVE</span>
-        </div>
-        {/* Platform mark — top-right */}
-        <div style={{
-          position: 'absolute', top: 8, right: 8,
-          background: 'rgba(11,10,9,0.75)', padding: '3px 7px',
-          color: meta.color,
-          fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
-          letterSpacing: '0.18em', fontWeight: 700,
-          backdropFilter: 'blur(4px)',
-        }}>{meta.label}</div>
-        {/* Uptime — bottom-right */}
+        {/* uptime micro */}
         {up && (
-          <div style={{
-            position: 'absolute', bottom: 8, right: 10,
-            color: 'rgba(255,255,255,0.9)',
-            fontFamily: 'ui-monospace, monospace', fontSize: 10,
-            letterSpacing: '0.10em',
-          }}>{up}</div>
+          <span style={{
+            position: 'absolute', top: 2, right: 3,
+            background: 'rgba(0,0,0,0.55)',
+            color: 'rgba(255,255,255,0.92)',
+            fontFamily: 'ui-monospace, monospace', fontSize: 8,
+            letterSpacing: '0.06em', padding: '1px 3px',
+          }}>{up}</span>
         )}
-        {/* Game name — bottom-left */}
+      </div>
+
+      {/* Handle + game */}
+      <div style={{ minWidth: 0 }}>
+        <div data-testid="streamer-handle" style={{
+          color: '#FFFFFF', fontSize: 13, fontWeight: 600,
+          letterSpacing: '-0.01em', lineHeight: 1.2,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>{displayName}</div>
         {game && (
           <div style={{
-            position: 'absolute', bottom: 8, left: 10,
-            color: 'rgba(255,255,255,0.9)',
+            color: 'var(--muted, #9C9587)',
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
-            letterSpacing: '0.14em', textTransform: 'uppercase',
-            maxWidth: '60%', overflow: 'hidden',
-            textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            letterSpacing: '0.04em', marginTop: 2,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{game}</div>
         )}
       </div>
 
-      {/* Below-thumb metadata */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr auto',
-        alignItems: 'baseline', gap: 10,
-        padding: '12px 14px 13px',
-      }}>
-        <div style={{ minWidth: 0 }}>
-          <div data-testid="streamer-handle" style={{
-            color: '#FFFFFF', fontSize: 15, fontWeight: 700,
-            letterSpacing: '-0.01em', lineHeight: 1.2,
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>{displayName}</div>
-          {streamer.follower_count > 0 && (
-            <div style={{
-              color: 'var(--muted, #9C9587)',
-              fontFamily: 'ui-monospace, monospace', fontSize: 10,
-              letterSpacing: '0.06em', marginTop: 2,
-            }}>{fmtViewers(streamer.follower_count)} {streamer.follower_count === 1 ? 'follower' : 'followers'}</div>
-          )}
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div data-testid="streamer-viewers" style={{
-            color: '#FFFFFF',
-            fontFamily: 'Georgia, "Times New Roman", serif',
-            fontWeight: 700, fontSize: 22, lineHeight: 1,
-            letterSpacing: '-0.02em',
-          }}>{fmtViewers(viewers)}</div>
-          <div style={{
-            color: 'var(--muted, #9C9587)',
-            fontFamily: 'ui-monospace, monospace', fontSize: 9,
-            letterSpacing: '0.18em', marginTop: 3,
-          }}>{(viewers || 0) === 1 ? 'VIEWER' : 'VIEWERS'}</div>
-        </div>
+      {/* Viewer count */}
+      <div style={{ textAlign: 'right' }}>
+        <div data-testid="streamer-viewers" style={{
+          color: '#FFFFFF',
+          fontFamily: 'Georgia, "Times New Roman", serif',
+          fontWeight: 700, fontSize: 15, lineHeight: 1,
+          letterSpacing: '-0.01em',
+        }}>{fmtViewers(viewers)}</div>
       </div>
     </a>
   );
 };
 
-// ── OFFLINE row (slim) ────────────────────────────────────────────────────
+// ── OFFLINE row ───────────────────────────────────────────────────────────
 const OfflineRow = ({ streamer, platform, lang }) => {
   const meta = PLATFORM_META[platform];
   const handle = streamer.user_login || streamer.user_name || streamer.channel || '?';
   const displayName = streamer.user_name || handle;
-  const since = offlineSince(streamer.last_seen_at || streamer.last_offline_at, lang);
   const href = streamer.profile_url || `${meta.baseUrl}${handle}`;
   return (
     <a
@@ -237,42 +156,73 @@ const OfflineRow = ({ streamer, platform, lang }) => {
       data-testid="streamer-offline-row"
       data-platform={platform}
       style={{
-        display: 'grid', gridTemplateColumns: '10px 1fr auto',
-        alignItems: 'baseline', gap: 10,
-        padding: '7px 12px', borderTop: '1px solid var(--hairline, #221E1B)',
-        textDecoration: 'none', color: 'inherit',
-        transition: 'background 160ms ease',
+        display: 'grid', gridTemplateColumns: '8px 1fr auto',
+        gap: 10, alignItems: 'baseline',
+        padding: '5px 0', textDecoration: 'none', color: 'inherit',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
     >
       <span style={{
-        display: 'inline-block', width: 4, height: 4, borderRadius: 999,
-        background: meta.color, opacity: 0.5,
+        display: 'inline-block', width: 3, height: 3, borderRadius: 999,
+        background: meta.color, opacity: 0.45,
       }} />
       <span style={{
-        color: 'var(--ink, #ECE6D8)', fontSize: 12.5,
-        letterSpacing: '-0.005em', lineHeight: 1.3,
-        opacity: 0.72, overflow: 'hidden',
-        textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        color: 'var(--ink, #ECE6D8)', fontSize: 11.5, opacity: 0.65,
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
       }}>{displayName}</span>
       <span style={{
         color: 'var(--muted, #9C9587)',
-        fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
-        letterSpacing: '0.08em',
-      }}>{since}</span>
+        fontFamily: 'ui-monospace, monospace', fontSize: 9,
+        letterSpacing: '0.06em',
+      }}>offline</span>
     </a>
+  );
+};
+
+// ── Tab button ────────────────────────────────────────────────────────────
+const Tab = ({ platform, active, liveCount, totalCount, onClick }) => {
+  const meta = PLATFORM_META[platform];
+  const dim = totalCount === 0;
+  return (
+    <button
+      type="button"
+      data-testid={`streamers-tab-${platform}`}
+      data-active={active ? '1' : '0'}
+      onClick={onClick}
+      style={{
+        flex: '1 1 0', background: 'transparent',
+        border: 0, borderBottom: active ? `2px solid ${meta.color}` : '2px solid transparent',
+        padding: '8px 4px 9px', cursor: 'pointer',
+        color: active ? '#FFFFFF' : 'var(--muted, #9C9587)',
+        opacity: dim && !active ? 0.55 : 1,
+        textAlign: 'center',
+        transition: 'color 160ms ease, border-color 160ms ease',
+      }}
+    >
+      <div style={{
+        fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+        letterSpacing: '0.20em', fontWeight: 700,
+      }}>{meta.label}</div>
+      <div style={{
+        color: active ? meta.color : 'var(--muted, #9C9587)',
+        fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+        letterSpacing: '0.08em', marginTop: 3,
+      }}>{liveCount} / {totalCount}</div>
+    </button>
   );
 };
 
 const StreamersRail = () => {
   const { lang } = useLang();
-  const [twitch, setTwitch] = useState([]);
-  const [kick, setKick] = useState([]);
-  const [youtube, setYoutube] = useState([]);
+  const [data, setData] = useState({ twitch: [], kick: [], youtube: [] });
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('twitch');
   const [showOffline, setShowOffline] = useState(false);
+  const [showAllLive, setShowAllLive] = useState(false);
   const prevLiveRef = useRef(new Set());
+
+  // Visible cap so the rail stays balanced with the news column on the left.
+  // 6 ≈ matches the height of 2 featured cards + the top of the chrono list.
+  const LIVE_VISIBLE_CAP = 6;
 
   useEffect(() => {
     let cancelled = false;
@@ -285,16 +235,14 @@ const StreamersRail = () => {
         if (!r.ok) return [];
         const d = await r.json();
         return d.streamers || d.items || [];
-      } catch {
-        return [];
-      }
+      } catch { return []; }
     };
     const load = async () => {
       const [t, k, y] = await Promise.all([
         loadOne('twitch'), loadOne('kick'), loadOne('youtube'),
       ]);
       if (cancelled) return;
-      setTwitch(t); setKick(k); setYoutube(y);
+      setData({ twitch: t, kick: k, youtube: y });
       setLoading(false);
     };
     load();
@@ -302,53 +250,56 @@ const StreamersRail = () => {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  // Cross-platform sort
-  const tag = (arr, platform) => arr.map((s) => ({ ...s, _platform: platform }));
-  const all = [...tag(twitch, 'twitch'), ...tag(kick, 'kick'), ...tag(youtube, 'youtube')];
-  // Live = items with thumbnail or viewer_count > 0 or explicit is_live flag
   const isLive = (s) => (s.is_live ?? (s.viewer_count != null && s.viewer_count >= 0 && !!s.thumbnail_url));
-  const live = all.filter(isLive)
-    .sort((a, b) => (b.viewer_count || 0) - (a.viewer_count || 0));
-  const offline = all.filter((s) => !isLive(s));
+  const counts = Object.fromEntries(
+    PLATFORMS.map((p) => {
+      const arr = data[p] || [];
+      return [p, { live: arr.filter(isLive).length, total: arr.length }];
+    }),
+  );
 
-  // Build the just-arrived set: anyone in `live` whose key was NOT in prev
-  const liveKey = (s) => `${s._platform}:${s.user_login || s.user_name || s.channel || 'x'}`;
+  const activeList = (data[activeTab] || []);
+  const live = activeList.filter(isLive)
+    .sort((a, b) => (b.viewer_count || 0) - (a.viewer_count || 0));
+  const offline = activeList.filter((s) => !isLive(s));
+
+  // arrival tracking
+  const liveKey = (s) => `${activeTab}:${s.user_login || s.user_name || s.channel || 'x'}`;
   const currentLiveKeys = new Set(live.map(liveKey));
   const justArrivedSet = new Set();
-  if (!loading && prevLiveRef.current.size > 0) {
+  if (!loading) {
     currentLiveKeys.forEach((k) => {
       if (!prevLiveRef.current.has(k)) justArrivedSet.add(k);
     });
   }
-  // Defer ref update so first paint shows pulse, subsequent paints don't
   useEffect(() => {
-    const t = setTimeout(() => {
-      prevLiveRef.current = currentLiveKeys;
-    }, 2000);
-    return () => clearTimeout(t);
+    const id = setTimeout(() => { prevLiveRef.current = currentLiveKeys; }, 1800);
+    return () => clearTimeout(id);
   });
+
+  // tab-switch effect: reset offline expansion + live expansion
+  useEffect(() => {
+    setShowOffline(false);
+    setShowAllLive(false);
+  }, [activeTab]);
+
+  const liveToRender = showAllLive ? live : live.slice(0, LIVE_VISIBLE_CAP);
+  const hiddenLiveCount = Math.max(0, live.length - LIVE_VISIBLE_CAP);
 
   return (
     <aside data-testid="streamers-rail" style={{ paddingTop: 4 }}>
       <style>{`
-        @keyframes tileArrive {
-          0%   { box-shadow: 0 0 0 0 rgba(111,163,125,0.0); }
-          25%  { box-shadow: 0 0 0 2px rgba(111,163,125,0.45), 0 0 0 6px rgba(111,163,125,0.15); }
-          100% { box-shadow: 0 0 0 0 rgba(111,163,125,0); }
-        }
-        @keyframes liveDotPulse {
-          0%   { box-shadow: 0 0 0 0 rgba(193,59,44,0.55); }
-          70%  { box-shadow: 0 0 0 8px rgba(193,59,44,0); }
-          100% { box-shadow: 0 0 0 0 rgba(193,59,44,0); }
+        @keyframes rowArrive {
+          0%   { background-color: rgba(111,163,125,0.0); }
+          25%  { background-color: rgba(111,163,125,0.10); }
+          100% { background-color: rgba(111,163,125,0); }
         }
       `}</style>
 
-      {/* HEADER */}
+      {/* Header eyebrow */}
       <div style={{
         display: 'flex', alignItems: 'baseline',
-        justifyContent: 'space-between',
-        paddingBottom: 12, borderBottom: '1px solid var(--hairline, #221E1B)',
-        marginBottom: 14,
+        justifyContent: 'space-between', paddingBottom: 8,
       }}>
         <span
           data-testid="streamers-rail-anchor"
@@ -358,50 +309,98 @@ const StreamersRail = () => {
             fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase',
           }}
         >{lang === 'en' ? 'LIVE · NOW' : 'LIVE · NYT'}</span>
-        <span data-testid="streamers-rail-counts" style={{
+      </div>
+
+      {/* Tabs */}
+      <div
+        data-testid="streamers-tabs"
+        role="tablist"
+        style={{
+          display: 'flex', gap: 0,
+          borderBottom: '1px solid var(--hairline, #221E1B)',
+          marginBottom: 4,
+        }}
+      >
+        {PLATFORMS.map((p) => (
+          <Tab
+            key={p}
+            platform={p}
+            active={activeTab === p}
+            liveCount={counts[p].live}
+            totalCount={counts[p].total}
+            onClick={() => setActiveTab(p)}
+          />
+        ))}
+      </div>
+
+      {/* Body */}
+      {loading && (
+        <div data-testid="streamers-loading" style={{
+          color: 'var(--muted, #9C9587)',
+          fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+          letterSpacing: '0.14em', padding: '14px 0',
+        }}>LOADING…</div>
+      )}
+
+      {!loading && activeList.length === 0 && (
+        <div data-testid={`streamers-empty-${activeTab}`} style={{
           color: 'var(--muted, #9C9587)',
           fontFamily: 'ui-monospace, monospace', fontSize: 10,
-          letterSpacing: '0.14em',
-        }}>{loading ? '…' : `${live.length} / ${all.length}`}</span>
-      </div>
+          letterSpacing: '0.10em', padding: '14px 0', lineHeight: 1.7,
+        }}>{activeTab === 'kick'
+          ? 'KICK API DORMANT.\nFollow @putki on Kick to see live tiles here.'
+          : activeTab === 'youtube'
+            ? (lang === 'en' ? 'NO YOUTUBE STREAMERS YET.\nDirectory expanding.' : 'EI YOUTUBE-STREAMAAJIA VIELÄ.\nLuettelo laajenee.')
+            : (lang === 'en' ? 'NO STREAMERS TRACKED HERE.' : 'EI SEURATTUJA STREAMAAJIA.')}</div>
+      )}
 
-      {/* LIVE TILES */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {loading && (
-          <div data-testid="streamers-loading" style={{
-            color: 'var(--muted, #9C9587)',
-            fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
-            letterSpacing: '0.14em', padding: 14,
-          }}>LOADING…</div>
-        )}
-        {!loading && live.length === 0 && (
-          <div data-testid="streamers-no-live" style={{
-            color: 'var(--muted, #9C9587)',
-            fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
-            letterSpacing: '0.10em', padding: '14px 4px',
-            lineHeight: 1.6,
-          }}>{lang === 'en'
-            ? 'NO ONE LIVE RIGHT NOW.\nCheck back at evening peak.'
-            : 'KUKAAN EI OLE LIVENÄ JUURI NYT.\nKurkkaa ilta-aikaan.'}</div>
-        )}
-        {live.map((s) => {
-          const k = liveKey(s);
-          return (
-            <LiveTile
-              key={k}
-              streamer={s}
-              platform={s._platform}
-              justArrived={justArrivedSet.has(k)}
-            />
-          );
-        })}
-      </div>
+      {!loading && liveToRender.map((s) => {
+        const k = liveKey(s);
+        return (
+          <LiveRow
+            key={k}
+            streamer={s}
+            platform={activeTab}
+            justArrived={justArrivedSet.has(k)}
+          />
+        );
+      })}
 
-      {/* OFFLINE TOGGLE */}
+      {/* "+N more live" toggle when capped */}
+      {!loading && hiddenLiveCount > 0 && (
+        <button
+          type="button"
+          data-testid="streamers-show-more-live"
+          onClick={() => setShowAllLive((v) => !v)}
+          style={{
+            width: '100%', textAlign: 'left',
+            background: 'transparent', border: 0, padding: '8px 0',
+            color: 'var(--muted, #9C9587)',
+            fontFamily: 'ui-monospace, monospace', fontSize: 10,
+            letterSpacing: '0.18em', fontWeight: 700, cursor: 'pointer',
+            borderTop: '1px solid var(--hairline, #221E1B)',
+            marginTop: 4,
+          }}
+        >
+          {showAllLive
+            ? (lang === 'en' ? '▾ SHOW LESS' : '▾ NÄYTÄ VÄHEMMÄN')
+            : (lang === 'en' ? `▸ +${hiddenLiveCount} MORE LIVE` : `▸ +${hiddenLiveCount} LISÄÄ LIVENÄ`)}
+        </button>
+      )}
+
+      {!loading && live.length === 0 && activeList.length > 0 && (
+        <div data-testid={`streamers-no-live-${activeTab}`} style={{
+          color: 'var(--muted, #9C9587)',
+          fontFamily: 'ui-monospace, monospace', fontSize: 10,
+          letterSpacing: '0.10em', padding: '14px 0',
+        }}>{lang === 'en' ? 'NO ONE LIVE ON THIS PLATFORM RIGHT NOW.' : 'KUKAAN EI OLE LIVENÄ TÄLLÄ ALUSTALLA JUURI NYT.'}</div>
+      )}
+
+      {/* Offline toggle */}
       {!loading && offline.length > 0 && (
         <div data-testid="streamers-offline-block" style={{
-          marginTop: 18, borderTop: '1px solid var(--hairline, #221E1B)',
-          paddingTop: 10,
+          marginTop: 10, paddingTop: 8,
+          borderTop: '1px solid var(--hairline, #221E1B)',
         }}>
           <button
             type="button"
@@ -409,15 +408,15 @@ const StreamersRail = () => {
             onClick={() => setShowOffline((v) => !v)}
             style={{
               width: '100%', textAlign: 'left',
-              background: 'transparent', border: 0, padding: '6px 0',
+              background: 'transparent', border: 0, padding: '4px 0',
               color: 'var(--muted, #9C9587)',
-              fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
               letterSpacing: '0.18em', fontWeight: 700, cursor: 'pointer',
             }}
           >
             {showOffline
               ? (lang === 'en' ? `▾ HIDE ${offline.length} OFFLINE` : `▾ PIILOTA ${offline.length} OFFLINE`)
-              : (lang === 'en' ? `▸ ${offline.length} OFFLINE` : `▸ ${offline.length} OFFLINE`)}
+              : `▸ ${offline.length} OFFLINE`}
           </button>
           {showOffline && (
             <div style={{ marginTop: 4 }}>
@@ -425,7 +424,7 @@ const StreamersRail = () => {
                 <OfflineRow
                   key={liveKey(s)}
                   streamer={s}
-                  platform={s._platform}
+                  platform={activeTab}
                   lang={lang}
                 />
               ))}
@@ -434,9 +433,9 @@ const StreamersRail = () => {
         </div>
       )}
 
-      {/* DIRECTORY LINK */}
+      {/* Directory link */}
       <div style={{
-        paddingTop: 16, marginTop: 16,
+        paddingTop: 14, marginTop: 14,
         borderTop: '1px solid var(--hairline, #221E1B)',
       }}>
         <Link
@@ -448,9 +447,7 @@ const StreamersRail = () => {
             fontSize: 10, fontWeight: 700, letterSpacing: '0.18em',
           }}
         >
-          {lang === 'en'
-            ? `ALL ${all.length || ''} STREAMERS →`
-            : `KAIKKI ${all.length || ''} STREAMARIA →`}
+          {lang === 'en' ? 'ALL STREAMERS →' : 'KAIKKI STREAMARIT →'}
         </Link>
       </div>
     </aside>
