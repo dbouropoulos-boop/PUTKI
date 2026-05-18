@@ -28,6 +28,7 @@ import PaivaVitoset from '../components/PaivaVitoset';
 import ActivityStats from '../components/ActivityStats';
 import SocialProofBar from '../components/SocialProofBar';
 import StickyTelegramCTA from '../components/StickyTelegramCTA';
+import WinnersCorner from '../components/WinnersCorner';
 import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
@@ -46,11 +47,11 @@ const STATE_HEADLINES_FI = {
   KIIRASTULI: 'Mittari on KIIRASTULI. Älä katso pois.',
 };
 const STATE_HEADLINES_EN = {
-  KYLMA:      'The dial is KYLMÄ. The scene is asleep.',
-  HAALEA:     'The dial is HAALEA. Steady background hum.',
-  KUUMA:      'The dial is KUUMA. The slot scene is warming up for tonight.',
-  MYRSKY:     'The dial is MYRSKY. Streams packed, clips spawning.',
-  KIIRASTULI: 'The dial is KIIRASTULI. Don\u2019t look away.',
+  KYLMA:      'The meter is COLD. The scene is asleep.',
+  HAALEA:     'The meter is LUKEWARM. Steady background hum.',
+  KUUMA:      'The meter is HOT. The slot scene is warming up for tonight.',
+  MYRSKY:     'The meter is STORM. Streams packed, clips spawning.',
+  KIIRASTULI: 'The meter is FRENZY. Don\u2019t look away.',
 };
 
 // CockpitContext — primary driver + last spike under the dial. 30 s poll.
@@ -373,6 +374,7 @@ const Home = () => {
       </section>
 
       <SocialProofBar />
+      <WinnersCorner />
 
       {/* Pre-Launch Polish — Dioni's compressed homepage flow:
           1. Live data ticker (top)

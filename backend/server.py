@@ -397,8 +397,12 @@ from rotation import (  # noqa: E402
 )
 
 from webhooks import build_webhook_router  # noqa: E402
+from weekly_card import build_weekly_router  # noqa: E402
+from winners import build_winners_router  # noqa: E402
 
 api_router.include_router(build_webhook_router(db))
+api_router.include_router(build_weekly_router(db, require_admin))
+api_router.include_router(build_winners_router(db, require_admin))
 
 from feed import (  # noqa: E402
     rebuild_feed,
@@ -715,6 +719,15 @@ async def public_odds_featured():
     15 min cache. Dormant=true when ODDS_API_KEY is unset."""
     from odds_api import get_featured_picks
     return await get_featured_picks()
+
+
+@api_router.get("/odds/upcoming")
+async def public_odds_upcoming(days: int = 7, top_per_day: int = 5):
+    """Betting Tips hub — picks grouped by calendar day for the next N days."""
+    from odds_api import get_upcoming_picks
+    days = max(1, min(14, days))
+    top_per_day = max(1, min(10, top_per_day))
+    return await get_upcoming_picks(days=days, top_per_day=top_per_day)
 
 
 @api_router.get("/dial/history")

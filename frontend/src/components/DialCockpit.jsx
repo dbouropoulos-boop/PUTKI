@@ -268,9 +268,9 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
             transition: 'background 400ms ease, box-shadow 400ms ease',
           }}
         />
-        SKENEN LÄMPÖTILA
+        {lang === 'en' ? 'SCENE TEMPERATURE' : 'SKENEN LÄMPÖTILA'}
         <span style={{ color: 'var(--border-strong)' }}>·</span>
-        PUTKI HQ MITTARI
+        {lang === 'en' ? 'PUTKI HQ METER' : 'PUTKI HQ MITTARI'}
         <DialHelp />
         <span style={{ color: 'var(--border-strong)' }}>·</span>
         <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{weekday.toUpperCase()} {t('time.month_day', { day })} · {t(todKey)}</span>
@@ -416,7 +416,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         }}
         data-testid="cockpit-history-link"
       >
-        MITTARIN HISTORIA →
+        {lang === 'en' ? 'METER HISTORY →' : 'MITTARIN HISTORIA →'}
       </a>
     </div>
   );

@@ -15,6 +15,7 @@ export const Header = () => {
   const navLinks = [
     { to: '/uutiset',         label: t('nav.news') },
     { to: '/striimaajat',     label: t('nav.streamers') },
+    { to: '/vihjeet',         label: t('nav.tips') },
     { to: '/viikon-kortti',   label: t('nav.weekly') },
     { to: '/peli',            label: t('nav.game_prize') },
     { to: '/menetelma',       label: t('nav.methodology') },

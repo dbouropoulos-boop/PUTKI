@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
+import { dialLabel } from '../constants/dial';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -28,7 +29,9 @@ export const LiveTicker = () => {
   }, []);
 
   const state = data?.state;
-  const stateLabel = state?.label || 'EI SIGNAALIA';
+  const stateLabel = state?.key
+    ? dialLabel(state.key, lang)
+    : (lang === 'en' ? 'NO SIGNAL' : 'EI SIGNAALIA');
   const stateColor = state?.color || 'var(--muted)';
   const composite = typeof data?.composite_score === 'number' ? Math.round(data.composite_score) : null;
   const drivers = data?.primary_driver_label
@@ -36,12 +39,13 @@ export const LiveTicker = () => {
     : [];
   const lastSpike = data?.last_spike;
   const anyReal = !!data?.any_real;
+  const meterWord = lang === 'en' ? 'METER' : 'MITTARI';
 
   // Honest item list. Each chip carries a real value or is omitted.
   const items = [];
   items.push({
     color: stateColor,
-    label: `MITTARI · ${stateLabel}${composite != null ? ` ${composite}` : ''}`,
+    label: `${meterWord} · ${stateLabel}${composite != null ? ` ${composite}` : ''}`,
   });
   if (drivers.length) {
     items.push({ color: 'var(--brand-blue)', label: `${lang === 'en' ? 'DRIVER' : 'PÄÄSYY'} · ${drivers[0]}` });

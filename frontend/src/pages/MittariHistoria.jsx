@@ -11,8 +11,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { DIAL_STATES } from '../constants/dial';
+import { DIAL_STATES, dialLabel } from '../constants/dial';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -37,13 +38,15 @@ const fmtClock = (iso) => {
   } catch { return '—'; }
 };
 
-const Chart = ({ data, width = 980, height = 320 }) => {
+const Chart = ({ data, width = 980, height = 320, lang = 'fi' }) => {
   if (data.length < 2) {
     return (
       <div className="panel p-8 text-center mono"
            style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
            data-testid="mittari-historia-chart-empty">
-        EI VIELÄ TARPEEKSI DATAA · KESKIVÄYLÄ KERTYY POLLAUSTEN MYÖTÄ
+        {lang === 'en'
+          ? 'NOT ENOUGH DATA YET · BUFFER FILLS WITH EACH POLL'
+          : 'EI VIELÄ TARPEEKSI DATAA · KESKIVÄYLÄ KERTYY POLLAUSTEN MYÖTÄ'}
       </div>
     );
   }
@@ -104,7 +107,7 @@ const Chart = ({ data, width = 980, height = 320 }) => {
   );
 };
 
-const Distribution = ({ history }) => {
+const Distribution = ({ history, lang }) => {
   const dist = useMemo(() => {
     const out = STATE_ORDER.map((k) => ({ key: k, count: 0 }));
     history.forEach((h) => {
@@ -128,7 +131,7 @@ const Distribution = ({ history }) => {
             data-testid={`mittari-historia-dist-${d.key}`}
           >
             <div className="mono mb-2" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-              {meta?.label}
+              {dialLabel(d.key, lang)}
             </div>
             <div className="mono" style={{ fontSize: 26, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
               {Math.round(d.pct)}%
@@ -137,7 +140,7 @@ const Distribution = ({ history }) => {
               <div style={{ width: `${d.pct}%`, height: '100%', background: meta?.color, transition: 'width 600ms ease' }} />
             </div>
             <div className="mono mt-2" style={{ fontSize: 9.5, letterSpacing: '0.16em', color: 'var(--muted)' }}>
-              {d.count} POLL
+              {d.count} {lang === 'en' ? 'POLLS' : 'POLL'}
             </div>
           </div>
         );
@@ -147,12 +150,15 @@ const Distribution = ({ history }) => {
 };
 
 const MittariHistoria = () => {
+  const { lang } = useLang();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useDocumentMeta({
-    title: 'Mittari · Historia — PUTKI HQ',
-    description: 'PUTKI HQ:n perkele-mittarin lukemat ja tilajakauma viime polleilta.',
+    title: lang === 'en' ? 'Meter · History — PUTKI HQ' : 'Mittari · Historia — PUTKI HQ',
+    description: lang === 'en'
+      ? 'Recent PUTKI HQ meter readings and state distribution.'
+      : 'PUTKI HQ:n perkele-mittarin lukemat ja tilajakauma viime polleilta.',
     canonical: `${BACKEND}/mittari/historia`,
   });
 
@@ -189,43 +195,46 @@ const MittariHistoria = () => {
         <Link to="/" className="mono inline-flex items-center gap-2 mb-6"
               style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>
           <ArrowLeft strokeWidth={1.7} size={12} />
-          PALAA ETUSIVULLE
+          {lang === 'en' ? 'BACK TO HOME' : 'PALAA ETUSIVULLE'}
         </Link>
-        <div className="eyebrow mb-3">PUTKI HQ · ARKISTO</div>
+        <div className="eyebrow mb-3">{lang === 'en' ? 'PUTKI HQ · ARCHIVE' : 'PUTKI HQ · ARKISTO'}</div>
         <h1 className="display text-4xl sm:text-5xl" style={{ lineHeight: 1.05 }}>
-          Mittarin historia
+          {lang === 'en' ? 'Meter history' : 'Mittarin historia'}
         </h1>
         <p className="font-serif mt-4 max-w-2xl" style={{ fontSize: 16, color: 'var(--muted)', lineHeight: 1.55 }}>
-          Perkele-mittarin kokonaislukeman aikajana. Jokainen piste on yksi pollauskierros — Layer 2
-          -työntekijät kirjoittavat keskimäärin 3–5 snapshotia tunnissa.
+          {lang === 'en'
+            ? 'Composite score timeline of the PUTKI HQ meter. Each dot is a single polling round — Layer 2 workers ship 3–5 snapshots per hour on average.'
+            : 'Perkele-mittarin kokonaislukeman aikajana. Jokainen piste on yksi pollauskierros — Layer 2 -työntekijät kirjoittavat keskimäärin 3–5 snapshotia tunnissa.'}
         </p>
       </section>
 
       <section className="container-wide py-8">
         <div className="mono mb-3" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-          KOMPOSIITTI · VIIMEISET {chartData.length} POLL
+          {lang === 'en'
+            ? `COMPOSITE · LAST ${chartData.length} POLLS`
+            : `KOMPOSIITTI · VIIMEISET ${chartData.length} POLL`}
         </div>
         {loading ? (
           <div className="panel p-8 text-center mono"
                style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
                data-testid="mittari-historia-loading">
-            LADATAAN HISTORIAA…
+            {lang === 'en' ? 'LOADING HISTORY…' : 'LADATAAN HISTORIAA…'}
           </div>
         ) : (
-          <Chart data={chartData} />
+          <Chart data={chartData} lang={lang} />
         )}
       </section>
 
       <section className="container-wide py-8" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="mono mb-4" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-          TILAJAKAUMA · % AJASTA
+          {lang === 'en' ? 'STATE DISTRIBUTION · % OF TIME' : 'TILAJAKAUMA · % AJASTA'}
         </div>
-        <Distribution history={history} />
+        <Distribution history={history} lang={lang} />
       </section>
 
       <section className="container-wide py-8 pb-16" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="mono mb-4" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-          VIIMEISIMMÄT POLLAUKSET
+          {lang === 'en' ? 'RECENT POLLS' : 'VIIMEISIMMÄT POLLAUKSET'}
         </div>
         <div className="panel" style={{ background: 'var(--bg)', borderRadius: 4, overflow: 'hidden' }}>
           <ul data-testid="mittari-historia-table">
@@ -244,7 +253,7 @@ const MittariHistoria = () => {
                     {fmtClock(row.iso)}
                   </span>
                   <span className="mono" style={{ fontSize: 11, letterSpacing: '0.18em', color: meta?.color || 'var(--ink)', fontWeight: 700 }}>
-                    {meta?.label || row.state}
+                    {dialLabel(row.state, lang)}
                   </span>
                   <span className="mono" style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>
                     {row.value}
@@ -255,7 +264,7 @@ const MittariHistoria = () => {
             {chartData.length === 0 && (
               <li className="px-5 py-8 text-center mono"
                   style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}>
-                EI HISTORIATIETOJA
+                {lang === 'en' ? 'NO HISTORY DATA' : 'EI HISTORIATIETOJA'}
               </li>
             )}
           </ul>

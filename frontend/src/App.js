@@ -13,6 +13,7 @@ import MiniGame from "@/pages/MiniGame";
 import Peli from "@/pages/Peli";
 import TietoaMeista from "@/pages/TietoaMeista";
 import WeeklyCard from "@/pages/WeeklyCard";
+import BettingTipsHub from "@/pages/BettingTipsHub";
 import BackOffice from "@/pages/BackOffice";
 import BackOfficeQueue from "@/pages/BackOfficeQueue";
 import FoundationalResearch from "@/pages/FoundationalResearch";
@@ -20,6 +21,7 @@ import OperatorsAdmin from "@/pages/OperatorsAdmin";
 import StreamersAdmin from "@/pages/StreamersAdmin";
 import BackOfficeWebhooks from "@/pages/BackOfficeWebhooks";
 import BackOfficeDrafts from "@/pages/BackOfficeDrafts";
+import BackOfficeWeekly from "@/pages/BackOfficeWeekly";
 import Article from "@/pages/Article";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
@@ -49,6 +51,7 @@ function App() {
           <Route path="/back-office/streamers" element={<StreamersAdmin />} />
           <Route path="/back-office/webhooks" element={<BackOfficeWebhooks />} />
           <Route path="/back-office/drafts" element={<BackOfficeDrafts />} />
+          <Route path="/back-office/weekly" element={<BackOfficeWeekly />} />
 
           {/* Main site */}
           <Route element={<Layout />}>
@@ -65,6 +68,7 @@ function App() {
             <Route path="tietoa-meista" element={<TietoaMeista />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
             <Route path="viikon-kortti" element={<WeeklyCard />} />
+            <Route path="vihjeet" element={<BettingTipsHub />} />
             <Route path="mittari/historia" element={<MittariHistoria />} />
             <Route path="uutiset" element={<Uutiset />} />
 

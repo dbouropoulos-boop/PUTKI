@@ -1,0 +1,60 @@
+{
+  "summary": "Iteration 18 — Weekly Card gamification, Betting Tips hub (/vihjeet), Winners Corner, and full brand-chrome bilingual rollout. Backend: 15/15 pytest pass. Frontend: every listed acceptance criterion verified live in EN + FI at desktop. Production state restored after admin draw test (3 test entries deleted, winner pointer cleared).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_evidence": {
+    "backend_pytest": "15 passed in 4.33s — /app/test_reports/pytest/iter18_results.xml",
+    "weekly_meta_defaults": "prize_amount=100, prize_currency='EUR', prize_label='Weekly Card cash prize', locked=false, results=[], entry_count, winner=null",
+    "weekly_submit_telegram_handle_validation": "Rejected 'no' with 422 (regex ^[A-Za-z0-9_]{3,32}$); rejected 5-digit SMS handle with 422",
+    "weekly_submit_upsert_same_email": "entry_count unchanged across 2 submits; entry_id stable",
+    "weekly_leaderboard_unsettled": "{settled:false, rows:[], winner:null}",
+    "admin_prize_update": "PUT /api/admin/weekly/2099-W52/prize {200, EUR, Custom} persisted & visible via public meta",
+    "admin_results_settle": "PUT results auto-locks the week and re-scores all entries (correct_count + settled=true)",
+    "admin_draw_winner": "POST /api/admin/weekly/{wk}/draw returned winner.email_hash + winner_email from highest correct_count cohort",
+    "odds_upcoming_7d": "GET /api/odds/upcoming?days=7 → days[] length=7 with date + picks[] each (calendar grouped)",
+    "winners_recent_shape": "{winners:[], total} returned; admin create computed profit = (odds-1)*units (2.50→3.0 for 2 units)",
+    "vihjeet_eyebrow": "PUTKI HQ · BETTING TIPS",
+    "vihjeet_h1": "Tips · next 7 days",
+    "vihjeet_tabs": "Today / Tomorrow / This week (3 tabs visible)",
+    "vihjeet_calendar_tiles": "7 day tiles rendered (Mon 18 May → Sun 24 May) with pick counts per day (3,2,2,1,1,5,5)",
+    "vihjeet_pick_card_first": "Arsenal vs Burnley — Odds 1.11 · 90% — editorial take + 5 share icons + COPY LINK button rendered",
+    "header_tips_nav": "Header now has 'TIPS' link → /vihjeet (visible in screenshot, 1 anchor counted)",
+    "weekly_card_prize_banner": "€100 cash prize banner rendered with trophy + 'Weekly Card cash prize' subtitle + 3 ENTRIES THIS WEEK counter",
+    "weekly_card_entry_form": "ENTER THE PRIZE DRAW sidebar: email field + Telegram/SMS channel toggle (Telegram active) + handle field; submit disabled until all 5 picks set (verified via is_disabled())",
+    "winners_corner_homepage": "WinnersCorner section renders below SocialProofBar with empty state: 'PUTKI HQ · RECENT HITS / Track record begins this week — follow on Telegram.'",
+    "back_office_weekly_admin": "Token 'putki-hq-admin' authenticates → Weekly Card admin shows PRIZE editor (100/EUR/Weekly Card cash prize) + Save prize + Lock entries + SETTLE RESULTS · 5 FIXTURES with 1/X/2 per fixture + Save results & settle entries + ENTRIES list (3 test entries seen) + Draw Winner",
+    "brand_chrome_en": "/ shows METER · LUKEWARM 30, SCENE TEMPERATURE / PUTKI HQ METER / METER HISTORY, dial badge 'LUKEWARM', state distribution table headers COLD/LUKEWARM/HOT/STORM/FRENZY (/mittari/historia)",
+    "brand_chrome_fi": "After FI toggle on homepage: SKENEN LÄMPÖTILA, PUTKI HQ MITTARI, MITTARIN HISTORIA, MITTARI · HAALEA/KUUMA/KYLMÄ/MYRSKY/KIIRASTULI all present",
+    "mittari_historia_headline_en": "'Meter history' H1 rendered + EN chart axis times (klo HH.MM still localized to FI clock — minor cosmetic, see below) + EN state distribution labels"
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter18_weekly_tips_winners.py",
+    "/app/test_reports/pytest/iter18_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL polish: /mittari/historia chart x-axis still reads '18.5. klo 12.45' regardless of language (Finnish time formatter). EN locale should produce 'May 18 · 12:45' or similar. Non-blocking.",
+    "OPTIONAL polish: Backend exposes no admin DELETE for weekly_picks entries; testing agents have to clean up via direct Mongo. Consider DELETE /api/admin/weekly/{week}/entries/{id} for hygiene."
+  ],
+  "critical_code_review_comments": [
+    "weekly_card.py: handle field-validator pulls channel from info.data — this only works if pydantic v2 preserves field order (channel before handle). Current model defines channel first so OK, but a comment + an explicit pre-validator-on-model would be more robust.",
+    "weekly_card.py POST /weekly/submit ignores the week query parameter and always uses iso_week_key() — by design, but means the admin sandbox week (2099-W52) cannot accept submissions, so the end-to-end draw test had to run on the live current week (cleaned up after).",
+    "winners.py admin_create_winner inserts via dict copy then returns the original doc; fine, but the response doesn't include any _id check — minor.",
+    "BettingTipsHub share buttons render without data-testid='share-{platform}'; selectors `[data-testid*=\"share-telegram\"]` returned 0 (still 3 telegram icons present via fallback selector). Adding share-{platform} testids would harden future automation.",
+    "Carry-over from iter 17: DialCockpit '... sitten' relative-time still hardcoded FI (unrelated to this iteration but still open).",
+    "Carry-over from iter 17: StreamerAlertModal wildcard title copy still uses generic template (unrelated to this iteration)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter18_weekly_tips_winners.py (new)"
+  ],
+  "success_rate": { "backend": "100% (15/15)", "frontend": "100% on listed acceptance criteria" },
+  "test_credentials": "X-Admin-Token: putki-hq-admin — same token unlocks /back-office/weekly UI",
+  "seed_data_creation": "Test entries created during admin draw test: 3 weekly_picks rows (emails prefixed test_iter18_*) and 1 winner pointer on the live current week. ALL cleaned up post-run via direct Mongo delete + meta reset. Sandbox week 2099-W52 meta left in default state (results=[], locked=false).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend regression suite for iter 18 lives at /app/backend/tests/test_iter18_weekly_tips_winners.py and uses a 2099-W52 sandbox week for prize/results writes; only the draw test touches the live week and restores state in a finally block. POST /api/weekly/submit always writes to the current ISO week — there's no admin-side way to backfill a different week. /vihjeet renders real Odds API data; on a low-fixture day picks_count per day may drop to 0 — empty-state copy still verified. Share buttons on /vihjeet do NOT carry per-platform data-testids; future testing should rely on icon SVGs or anchor href patterns (telegram.me, twitter.com/intent/tweet, facebook.com/sharer, wa.me, etc.). EN locale times on /mittari/historia chart axis remain in FI format.",
+  "rca of the issue": "n/a — no failures."
+}

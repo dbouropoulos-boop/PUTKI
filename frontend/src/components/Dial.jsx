@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { DIAL_STATES } from '../constants/dial';
+import { DIAL_STATES, dialLabel } from '../constants/dial';
+import { useLang } from '../context/LanguageContext';
 
 // Helper: state hot check (re-used in breathing amplitude)
 const isHotState = (s) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(s);
@@ -100,7 +101,9 @@ export const Dial = ({
   showLabel = true,
   pulseTick = 0,
 }) => {
+  const { lang } = useLang();
   const stateObj = DIAL_STATES[state] || DIAL_STATES.KUUMA;
+  const displayLabel = dialLabel(state, lang);
   const px = size === 'large' ? 480 : size === 'medium' ? 280 : 64;
   const isSmall = size === 'small';
   const isMedium = size === 'medium';
@@ -387,7 +390,7 @@ export const Dial = ({
             }}
             data-testid={`dial-state-label-${stateObj.key}`}
           >
-            {stateObj.label}
+            {displayLabel}
           </div>
         </div>
       )}

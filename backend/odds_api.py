@@ -189,6 +189,7 @@ async def _build_payload() -> Dict[str, Any]:
 
     return {
         "picks": top,
+        "all_picks": all_picks,
         "dormant": False,
         "total_events_scanned": sum(s["events"] for s in sport_summaries),
         "sport_summaries": sport_summaries,
@@ -212,3 +213,39 @@ async def get_featured_picks() -> Dict[str, Any]:
         _cache["payload"] = payload
         _cache["expires_at"] = now + ODDS_CACHE_TTL
         return payload
+
+
+async def get_upcoming_picks(days: int = 7, top_per_day: int = 5) -> Dict[str, Any]:
+    """Return picks grouped by calendar day (Helsinki) for the betting-tips hub.
+
+    Re-uses the same cached payload as get_featured_picks so we don't burn
+    extra Odds API quota.
+    """
+    from datetime import datetime, timezone, timedelta
+    cached = await get_featured_picks()
+    all_picks = cached.get("all_picks") or cached.get("picks") or []
+    out: Dict[str, List[Dict[str, Any]]] = {}
+    today = datetime.now(timezone.utc).date()
+    horizon = today + timedelta(days=days)
+    for p in all_picks:
+        ct = p.get("commence_time")
+        if not ct:
+            continue
+        try:
+            day = datetime.fromisoformat(ct.replace("Z", "+00:00")).date()
+        except Exception:
+            continue
+        if day < today or day > horizon:
+            continue
+        out.setdefault(day.isoformat(), []).append(p)
+    # Trim per-day and sort each bucket strongest-first.
+    grouped = []
+    for day, picks in sorted(out.items()):
+        picks.sort(key=lambda p: -p["implied_probability"])
+        grouped.append({"date": day, "picks": picks[:top_per_day]})
+    return {
+        "dormant": cached.get("dormant", False),
+        "reason": cached.get("reason"),
+        "days": grouped,
+        "fetched_at": cached.get("fetched_at"),
+    }

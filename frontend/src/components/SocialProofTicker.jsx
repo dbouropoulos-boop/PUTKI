@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Users, BookOpen, Radio, Newspaper } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
+import { dialLabel as fmtDialLabel } from '../constants/dial';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -72,7 +73,8 @@ export const SocialProofTicker = () => {
   }, []);
 
   const fmt = (n) => (n == null ? '—' : n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' '));
-  const dialLabel = data.dial?.label || (lang === 'en' ? 'NO SIGNAL' : 'EI SIGNAALIA');
+  const stateKey = data.dial?.key;
+  const dialLabelStr = stateKey ? fmtDialLabel(stateKey, lang) : (lang === 'en' ? 'NO SIGNAL' : 'EI SIGNAALIA');
 
   return (
     <section
@@ -119,7 +121,7 @@ export const SocialProofTicker = () => {
           <Cell
             icon={Radio}
             label={lang === 'en' ? 'DIAL STATE' : 'MITTARIN TILA'}
-            value={dialLabel}
+            value={dialLabelStr}
             sub={lang === 'en' ? 'COMPUTED LIVE' : 'LASKETTU LIVE'}
             color={data.dial?.color || 'var(--muted)'}
             testId="status-dial"

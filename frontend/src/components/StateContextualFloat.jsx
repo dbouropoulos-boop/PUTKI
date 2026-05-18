@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
+import { dialLabel } from '../constants/dial';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -35,18 +36,19 @@ const StateContextualFloat = () => {
   // KYLMA fallback. Only surface if we have a real recomputed snapshot.
   if (!anyReal && stateKey === 'KYLMA') return null;
 
+  const meterWord = lang === 'en' ? 'METER' : 'MITTARI';
   const config = hot
     ? {
         href: '/kasinot',
-        label: 'MITTARI ' + dial.state.label,
+        label: `${meterWord} ${dialLabel(stateKey, lang)}`,
         body: lang === 'en'
-          ? 'Mittari is hot — see operator ranking →'
+          ? 'The meter is hot — see the operator ranking →'
           : 'Mittari on kuuma — katso operaattorisijoitus →',
         accent: dial.state.color,
       }
     : {
         href: '/viikon-kortti',
-        label: 'MITTARI ' + dial.state.label,
+        label: `${meterWord} ${dialLabel(stateKey, lang)}`,
         body: lang === 'en'
           ? 'Read this week\u2019s card →'
           : 'Lue viikon kortti →',
