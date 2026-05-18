@@ -58,7 +58,11 @@ const Row = ({ item, t }) => {
           {item.headline}
         </span>
         <span className="mono" style={{ fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--muted)', opacity: 0.7 }}>
-          {item.views || 0} {t('uutiset.reads').toUpperCase()}
+          {(() => {
+            const v = item.views || 0;
+            const label = v === 1 ? t('uutiset.read_one') : t('uutiset.reads');
+            return `${v} ${label.toUpperCase()}`;
+          })()}
         </span>
       </Link>
     </li>

@@ -6,7 +6,7 @@
  * `social` object stored at publish time. Falls back to 404-like state when the
  * slug is unknown or the category in the URL doesn't match what we stored.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Calendar, Tag, ArrowUpRight } from 'lucide-react';
 import useDocumentMeta from '../hooks/useDocumentMeta';
@@ -49,6 +49,7 @@ const Article = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const viewBumpedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -61,9 +62,12 @@ const Article = () => {
       .then((d) => { if (!cancelled) setArticle(d); })
       .catch((e) => { if (!cancelled) setError(String(e.message || e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
-    // Bump view count (dedup'd server-side by UA+IP+UTC-day)
-    fetch(`${BACKEND}/api/content/${encodeURIComponent(slug)}/view`, { method: 'POST' })
-      .catch(() => { /* views are best-effort, never break the read */ });
+    // Bump view count once per slug per mount (StrictMode-safe via ref)
+    if (!viewBumpedRef.current) {
+      viewBumpedRef.current = true;
+      fetch(`${BACKEND}/api/content/${encodeURIComponent(slug)}/view`, { method: 'POST' })
+        .catch(() => { /* views are best-effort, never break the read */ });
+    }
     return () => { cancelled = true; };
   }, [slug]);
 
