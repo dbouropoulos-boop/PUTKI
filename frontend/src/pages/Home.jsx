@@ -23,6 +23,7 @@ import LiveDataTicker from '../components/LiveDataTicker';
 import TrustStrip from '../components/TrustStrip';
 import DialCockpit from '../components/DialCockpit';
 import MostReadRail from '../components/MostReadRail';
+import DialSubscriptionCTA from '../components/DialSubscriptionCTA';
 import LiveActivityFeed from '../components/LiveActivityFeed';
 import StreamerLiveGrid from '../components/StreamerLiveGrid';
 import PaivaVitoset from '../components/PaivaVitoset';
@@ -274,6 +275,7 @@ const GamesSection = ({ state, t, lang }) => {
 const Home = () => {
   const { lang, t } = useLang();
   const [dial, setDial] = useState(null);
+  const [liveStats, setLiveStats] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -281,7 +283,13 @@ const Home = () => {
       .then((r) => r.json())
       .then((d) => { if (!cancelled) setDial(d); })
       .catch(() => {});
-    return () => { cancelled = true; };
+    const loadStats = () => fetch(`${BACKEND}/api/data/live-stats`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (!cancelled && d) setLiveStats(d); })
+      .catch(() => {});
+    loadStats();
+    const id = setInterval(loadStats, 30_000);
+    return () => { cancelled = true; clearInterval(id); };
   }, []);
 
   const state = dial?.state?.key || 'KYLMA';
@@ -374,6 +382,14 @@ const Home = () => {
         </div>
       </section>
 
+      <div id="dial-cta">
+        <DialSubscriptionCTA
+          dialState={state}
+          streamCount={liveStats?.twitch_live || 0}
+          viewerCount={liveStats?.twitch_viewers || 0}
+          sportsCount={liveStats?.sports_events || 0}
+        />
+      </div>
       <MostReadRail />
       <SocialProofBar />
       <WinnersCorner />

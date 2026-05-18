@@ -401,6 +401,7 @@ from weekly_card import build_weekly_router  # noqa: E402
 from winners import build_winners_router  # noqa: E402
 from peli_raffle import build_peli_router, build_peli_admin_router  # noqa: E402
 from article_views import build_views_router  # noqa: E402
+from newsroom_router import build_newsroom_router  # noqa: E402
 
 api_router.include_router(build_webhook_router(db))
 api_router.include_router(build_weekly_router(db, require_admin))
@@ -408,6 +409,7 @@ api_router.include_router(build_winners_router(db, require_admin))
 api_router.include_router(build_peli_router(db))
 api_router.include_router(build_peli_admin_router(db))
 api_router.include_router(build_views_router(db))
+api_router.include_router(build_newsroom_router(db))
 
 from feed import (  # noqa: E402
     rebuild_feed,

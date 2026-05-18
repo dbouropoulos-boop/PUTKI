@@ -1,0 +1,48 @@
+{
+  "summary": "Iteration 22 — Phase 5.4 PizzINT-style newsroom overhaul. Backend 13/13 pytest passed for the 5 new endpoints (/content/stats, /content/top-entities, /content/feed with severity+entity filters, /entities/streamers/{id}, /subscribe/dial-alerts incl. create→update idempotency + invalid-email rejection). Frontend verified: LiveDeskHeader, FilterChips, NewsCards render correctly on /uutiset; TopicHubPage works at /topic/veikkaus; DialSubscriptionCTA sits BELOW the dial (cta_y=1045 vs dial_y_end=332), title changes per state ('Scene is rushing' for RUSH), three channel buttons present, email submit succeeds and shows success panel. DIAL UNCHANGED — cockpit-makers-mark='win-pulse', cockpit-mode-label='WIN PULSE', RUSH state label preserved, composite+signals+primary driver panels intact.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/subscribe/dial-alerts", "issue": "min_state pattern allows VOITTOPUTKI/RYÖSTÖPUTKI/TULOSSA (FI labels) plus EN labels WARM/RUSH/JACKPOT, but does NOT include SLOW/DRY/KYLMA/HAALEA/KUUMA/MYRSKY/KIIRASTULI. CTA panel description says 5 dial states exist (KIIRASTULI/MYRSKY/KUUMA/HAALEA/KYLMA ↔ JACKPOT/RUSH/WARM/SLOW/DRY) but min_state regex rejects 3 of them. Currently moot because the UI only POSTs min_state=RUSH (hardcoded), but inconsistent with the contract."},
+      {"endpoint": "/api/content/feed", "issue": "When entity= or severity= filter is set, server fetches limit*4 candidates and stops at first `limit` matches. If matching items are sparse, results may be truncated even though more matching items exist further down the timeline. Pagination via skip works but post-filter truncation is silent."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "FilterChips", "issue": "Clicking the 'Hot' category chip does NOT update URL searchParams to ?severity=HOT. Visible filtering still happens via in-component state, but deep-linking (copy URL after click) is broken. Root cause: onCat('hot') calls update('severity','HOT') then immediately update('category',null) — both closures read the same stale `params` snapshot, so the second setParams() overwrites the first and the URL ends up with neither key. Direct deep link /uutiset?severity=HOT works correctly (19 HOT cards rendered).", "selector": "[data-testid='filter-cat-hot']", "priority": "HIGH"},
+      {"component": "DialSubscriptionCTA modal", "issue": "ESC key does NOT close the modal. Requirement explicitly says 'ESC or backdrop click closes modal'. Close-X button works. Backdrop click not verified but likely also missing.", "selector": "[data-testid='dial-cta-modal']", "priority": "MEDIUM"},
+      {"component": "DialSubscriptionCTA modal error", "issue": "When backend rejects an invalid email, the modal shows raw 'HTTP 400' text instead of a friendly message like 'Invalid email address'. The backend returns {detail: 'invalid_email'} but the frontend appears to surface only the HTTP status. Bad UX.", "selector": "[data-testid='dial-cta-error']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/uutiset live desk header", "issues": ["Pill 'WARM' count shows 6 while /content/stats returns warm=7 on a separate fetch — counts can disagree by 1-2 between page-load and chip-fetch because stats endpoint and feed endpoint sample article views at slightly different times. Acceptable for live data but worth noting."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter22_phase54_newsroom.py",
+    "/app/test_reports/pytest/iter22_results.xml"
+  ],
+  "action_items": [
+    "FilterChips.onCat: refactor the 'hot' branch to a single setParams call. Build one URLSearchParams, mutate severity AND clear category in the same object, then call setParams once. Same pattern needed for 'all'.",
+    "DialSubscriptionCTA: add Escape key handler + backdrop click handler that call onClose. Currently only the X button closes.",
+    "DialSubscriptionCTA: surface backend detail message instead of raw 'HTTP 400'. Map known detail codes (invalid_email, invalid_phone, invalid_telegram_handle) to i18n strings.",
+    "Optional: extend min_state regex in DialAlertSubscription to include all 5 EN+FI dial states (DRY/SLOW/WARM/RUSH/JACKPOT and KYLMA/HAALEA/KUUMA/MYRSKY/KIIRASTULI)."
+  ],
+  "critical_code_review_comments": [
+    "FilterChips.jsx:71-81 — Sequential update() calls inside onCat each read the same stale `params` closure. Second setParams overwrites first. Fix by building one next URLSearchParams and calling setParams once.",
+    "DialSubscriptionCTA.jsx — No useEffect listening for keydown 'Escape'; no backdrop onClick handler that closes. Modal close currently only via X button.",
+    "newsroom_router.py:34 — min_state Field regex (WARM|RUSH|JACKPOT|TULOSSA|VOITTOPUTKI|RYÖSTÖPUTKI) is inconsistent with documented 5-state matrix in the iteration brief. Either widen the regex or remove min_state from contract.",
+    "newsroom_router.py:67-88 — Post-fetch filtering with limit*4 candidate window can silently truncate results when filter has low hit rate. Consider paginated cursor or count-then-fetch pattern.",
+    "newsroom.py:131 — `sources_total = max(len(sources), streamer_count)` conflates 'sources cited in articles' with 'streamers we monitor'. This inflates the visible 'sources' count (81) even when articles cited far fewer. Acceptable as a marketing/credibility metric but the field name is misleading."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter22_phase54_newsroom.py (NEW)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "85%"},
+  "test_credentials": "n/a — no auth involved",
+  "seed_data_creation": "None — used existing seeded articles (35 in 24h: 10 scorching / 19 hot / 6-7 warm), 81 sources, 117 cards on /uutiset (counting via direct news-card-sev- testids: 30 article rows). Created two test dial subscriptions (test_phase54_dial@example.com and test_iter22_uifinal@example.com) — both stored in db.dial_subscriptions.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 5.4 endpoints all working; tests in /app/backend/tests/test_iter22_phase54_newsroom.py. The known frontend bugs to verify after main-agent fix: (1) Click [data-testid='filter-cat-hot'] on /uutiset and assert page.url contains '?severity=HOT'. (2) Open dial-cta modal via [data-testid='dial-cta-email'], press Escape, assert [data-testid='dial-cta-modal'] is gone. (3) Invalid email submit should show a friendly localized error message, not 'HTTP 400'. The dial subscription endpoint accepts only WARM/RUSH/JACKPOT/TULOSSA/VOITTOPUTKI/RYÖSTÖPUTKI for min_state — if main agent widens this, update test_iter22 line 'min_state':'JACKPOT' coverage accordingly. Topic hub /topic/{slug} works for any slug returned in /content/top-entities (verified veikkaus, 7 articles).",
+  "rca_of_the_issue": "FilterChips Hot-chip URL bug: React `useSearchParams()` returns a [params, setParams] tuple. Calling setParams twice synchronously inside the same event handler does NOT compose — each call constructs a new URLSearchParams from the SAME stale `params` snapshot captured in the closure. The first setParams's effect on URL is overwritten by the second. Fix: collect all mutations into one URLSearchParams, then call setParams once. Reproduce: open /uutiset, click 'Hot' chip, observe URL stays '/uutiset' instead of '/uutiset?severity=HOT'. Cards still appear filtered because the in-component `onFilterChange` callback fires twice and the React-state of Uutiset is updated by one of those calls — but URL is the source of truth for deep-links and is wrong."
+}
