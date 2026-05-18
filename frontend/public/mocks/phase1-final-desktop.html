@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PUTKI HQ — Phase 1 Final mock (desktop)</title>
+<style>
+  :root {
+    --bg: #0D0C0A;            /* warm near-black canvas */
+    --surface: #161412;
+    --ink: #F2EDE3;
+    --muted: #8a8275;
+    --border: #2a2522;
+    --border-strong: #3a3530;
+    --teal: #5C8A8A;          /* TYYNI */
+    --green: #6FA37D;         /* VIRE */
+    --yellow: #D4B445;        /* VIPINÄ */
+    --amber: #C97A3A;         /* MEININKI / current */
+    --perkele: #C13B2C;       /* PERKELE */
+    --slate: #6B7280;         /* NEWS */
+    --sport: #4A8B5E;         /* SPORTS */
+    --gambling: #7C5BA8;      /* GAMBLING */
+    --scene: #C0568D;         /* SCENE */
+    --regulation: #4A7BA8;    /* REGULATION */
+    --coral: #E07A5F;         /* ACTION */
+    --data: #4FB3A5;          /* DATA accent */
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+  .serif { font-family: Georgia, "Times New Roman", serif; }
+  .container { max-width: 1380px; margin: 0 auto; padding: 0 32px; }
+
+  /* TICKER */
+  .ticker {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 8px 32px;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+  .ticker .anchor {
+    display: inline-block;
+    color: var(--muted);
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    font-size: 10px;
+    margin-right: 14px;
+    padding-right: 12px;
+    border-right: 1px solid var(--border);
+  }
+  .ticker .dot { display: inline-block; width: 6px; height: 6px; border-radius: 999px; vertical-align: middle; margin-right: 7px; }
+  .ticker .src { color: var(--muted); font-size: 10px; letter-spacing: 0.10em; margin-left: 8px; }
+  .ticker .pill { display: inline-block; margin-right: 28px; }
+
+  /* HEADER */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo { display: inline-flex; align-items: baseline; gap: 8px; }
+  .logo .name { font-weight: 900; font-size: 26px; letter-spacing: -0.02em; }
+  .logo .tag { color: var(--muted); letter-spacing: 0.22em; font-size: 10px; font-weight: 700; }
+  .header .controls { display: flex; gap: 8px; }
+  .header .controls .btn {
+    border: 1px solid var(--border-strong);
+    color: var(--ink);
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    font-weight: 600;
+    font-family: ui-monospace, monospace;
+  }
+  .header .controls .icon { width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--border-strong); display: inline-flex; align-items: center; justify-content: center; }
+
+  /* MAIN LAYOUT */
+  main { padding: 64px 0; }
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 56px;
+  }
+
+  /* NEWS PORTAL — LEFT */
+  .anchor {
+    color: var(--muted);
+    letter-spacing: 0.28em;
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-bottom: 24px;
+  }
+  .featured-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 48px;
+  }
+  .featured {
+    cursor: pointer;
+  }
+  .featured .img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #2a2522 0%, #1a1a18 100%);
+    border-radius: 4px;
+    margin-bottom: 16px;
+    border-top: 3px solid var(--regulation);
+    position: relative;
+    overflow: hidden;
+  }
+  .featured .img::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(at top right, rgba(74,123,168,0.18), transparent 60%);
+  }
+  .featured.sports .img { border-top-color: var(--sport); }
+  .featured.sports .img::after { background: radial-gradient(at top right, rgba(74,139,94,0.18), transparent 60%); }
+  .badge {
+    display: inline-block;
+    font-family: ui-monospace, monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.16em;
+    font-weight: 700;
+    background: var(--regulation);
+    color: #fff;
+    padding: 3px 9px;
+    border-radius: 2px;
+    margin-bottom: 10px;
+  }
+  .badge.sports { background: var(--sport); }
+  .badge.gambling { background: var(--gambling); }
+  .badge.scene { background: var(--scene); }
+  .badge.news { background: var(--slate); }
+  .featured h2 {
+    font-family: Georgia, serif;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.18;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+  .featured .lede {
+    font-family: Georgia, serif;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .citation {
+    font-family: ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.10em;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* CHRONO LIST */
+  .chrono { border-top: 1px solid var(--border); }
+  .chrono .row {
+    display: grid;
+    grid-template-columns: 90px 1fr 200px;
+    gap: 18px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: baseline;
+    font-size: 14px;
+  }
+  .chrono .row.high { border-left: 2px solid var(--perkele); padding-left: 12px; }
+  .chrono .row .cat {
+    font-family: ui-monospace, monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
+  .chrono .row .head { color: var(--ink); font-weight: 500; }
+  .chrono .row .src { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.10em; color: var(--muted); text-align: right; }
+
+  .chrono-actions {
+    padding: 18px 0;
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .chrono-actions a {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .chrono-actions a.muted { color: var(--muted); }
+
+  /* STREAMERS RIGHT */
+  .live-anchor {
+    color: var(--muted);
+    letter-spacing: 0.28em;
+    font-size: 10.5px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .live-anchor .count { color: var(--green); }
+  .streamer-row { display: grid; grid-template-columns: 56px 1fr; gap: 14px; padding: 12px 0; align-items: center; }
+  .avatar {
+    width: 56px; height: 56px; border-radius: 999px; background: var(--surface);
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px;
+    color: var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .avatar.has-img { background: linear-gradient(135deg, var(--scene), var(--amber)); }
+  .avatar.live::after {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    border-radius: 999px;
+    border: 2px solid var(--green);
+    animation: pulse 2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .streamer-row .handle { font-weight: 700; font-size: 14px; color: var(--ink); display: block; }
+  .streamer-row .meta { font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.08em; color: var(--muted); margin-top: 3px; }
+  .live-more {
+    margin-top: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-family: ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* HINT STRIPS */
+  .strips { padding: 96px 0 32px; border-top: 1px solid var(--border); margin-top: 96px; }
+  .strips-anchor { color: var(--muted); letter-spacing: 0.28em; font-size: 10.5px; font-weight: 700; margin-bottom: 28px; }
+  .strip {
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    padding: 20px 24px;
+    margin-bottom: 14px;
+    display: grid;
+    grid-template-columns: 36px 180px 1fr auto;
+    align-items: center;
+    gap: 24px;
+    cursor: pointer;
+    transition: background 200ms ease;
+  }
+  .strip:hover { background: #1c1916; }
+  .strip-icon {
+    width: 36px; height: 36px; border-radius: 999px; background: var(--bg);
+    border: 1px solid var(--border-strong);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .strip-anchor {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .strip-anchor .score { color: var(--amber); margin-left: 12px; }
+  .strip-pelisig .strip-anchor .score { color: var(--data); }
+  .strip-body {
+    font-family: Georgia, serif;
+    font-size: 14.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .strip-body strong { color: var(--ink); font-weight: 600; }
+  .strip-cta {
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--coral);
+    font-weight: 700;
+  }
+  .strip-cta.disabled { color: var(--muted); }
+  .strip-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 0;
+  }
+  .strip-pair .strip {
+    grid-template-columns: 36px 140px 1fr auto;
+    margin-bottom: 0;
+  }
+
+  /* DISCOVERY ROW + FOOTER */
+  .discovery {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+    margin-top: 96px;
+  }
+  .discovery .row { display: flex; gap: 20px; align-items: center; }
+  .discovery .label { color: var(--muted); letter-spacing: 0.18em; font-size: 11px; font-weight: 600; }
+  .discovery a { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.18em; color: var(--ink); font-weight: 700; opacity: 0.75; text-decoration: none; }
+  .discovery .sep { color: var(--border-strong); }
+
+  footer { padding: 56px 0; }
+  footer .disc { color: var(--muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.12em; line-height: 1.6; }
+  footer .copy { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 0.12em; }
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div class="ticker">
+  <span class="anchor">NEWS · LAST 24H</span>
+  <span class="pill"><span class="dot" style="background:var(--perkele)"></span>Veikkaus kiristää nettikasinoiden mainontaa eduskunnan käsittelyssä<span class="src">YLE UUTISET · 4m</span></span>
+  <span class="pill">Liigan ottelukierros käynnistyy ennätyskatsojaluvuilla<span class="src">YLE URHEILU · 22m</span></span>
+  <span class="pill">Bottas vahvisti uransa jatkon Sauberilla<span class="src">HELSINGIN SANOMAT · 1h</span></span>
+  <span class="pill"><span class="dot" style="background:var(--amber)"></span>HJK voitti vierasottelun KuPSista 2-1<span class="src">ILTALEHTI · 2h</span></span>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <span class="name">PUTKI</span>
+    <span class="tag">HQ</span>
+  </div>
+  <div class="controls">
+    <span class="btn">EN / FI</span>
+    <span class="icon">☾</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main>
+  <div class="container">
+    <div class="layout">
+
+      <!-- LEFT: NEWS PORTAL -->
+      <section>
+        <div class="anchor">UUTISET · LIVE</div>
+
+        <!-- 2 featured -->
+        <div class="featured-row">
+          <article class="featured">
+            <div class="img"></div>
+            <span class="badge">REGULATION</span>
+            <h2>Veikkaus kiristää nettikasinoiden mainontasääntöjä — uudet rajat astuvat voimaan kesäkuussa</h2>
+            <p class="lede">Ylen mukaan rahapelilakia uudistetaan voimassaolevien EU-direktiivien mukaisesti. Lakimuutos koskee kaikkia operaattoreita tasapuolisesti.</p>
+            <div class="citation">YLE UUTISET · 4M AGO</div>
+          </article>
+          <article class="featured sports">
+            <div class="img"></div>
+            <span class="badge sports">SPORTS</span>
+            <h2>Bottas vahvisti uransa jatkon Sauberilla — kolmen vuoden sopimus julki Imolan viikonloppuna</h2>
+            <p class="lede">Helsingin Sanomat raportoi sopimuksen kattavan vuodet 2026-2028 ja sisältävän option neljännestä kaudesta.</p>
+            <div class="citation">HELSINGIN SANOMAT · 1H AGO</div>
+          </article>
+        </div>
+
+        <!-- CHRONO LIST -->
+        <div class="chrono">
+          <div class="row high">
+            <span class="cat" style="color: var(--perkele)">REGULATION</span>
+            <span class="head">Eduskunnan valiokunta hyväksyi Veikkaus-uudistuksen ensimmäisen käsittelyn äänin 142-58</span>
+            <span class="src">YLE UUTISET · 8M</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--sport)">SPORTS</span>
+            <span class="head">Leijonat valmistautuu MM-kisoihin — Kapteeniksi nimettiin Mikael Granlund</span>
+            <span class="src">YLE URHEILU · 28M</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--gambling)">GAMBLING</span>
+            <span class="head">Kindred Group nosti Suomen markkinaosuuden ennätyslukemiin Q1-raportissa</span>
+            <span class="src">KAUPPALEHTI · 42M</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--scene)">SCENE</span>
+            <span class="head">Suomalainen striimaaja siirtyi Twitchistä Kickiin — 38 000 seuraajaa vaihtoi alustaa</span>
+            <span class="src">ILTALEHTI · 1H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--sport)">SPORTS</span>
+            <span class="head">HJK voitti vierasottelun KuPSista 2-1 — Huuhkajien karsintaa kohti</span>
+            <span class="src">ILTA-SANOMAT · 1H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--regulation)">REGULATION</span>
+            <span class="head">EU-tuomioistuin ratkaisee Veikkauksen monopoliaseman tämän kuukauden aikana</span>
+            <span class="src">HELSINGIN SANOMAT · 2H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--slate)">NEWS</span>
+            <span class="head">Suomalaisyrittäjä hakee kasvua Ukrainan rintamalta — Hihnakuljetin voi taipua Tervolassa maatrooniksi</span>
+            <span class="src">KAUPPALEHTI · 2H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--gambling)">GAMBLING</span>
+            <span class="head">PAF avaa ensimmäisen fyysisen pelitilan Helsinkiin kesäkuussa</span>
+            <span class="src">MTV UUTISET · 3H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--scene)">SCENE</span>
+            <span class="head">Twitch-yhteisö järjesti hyväntekeväisyyskeräyksen — kerätyt 28 000 € menivät SPR:lle</span>
+            <span class="src">YLE UUTISET · 4H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--sport)">SPORTS</span>
+            <span class="head">Veikkausliiga julkisti uudet TV-sopimukset Yle Areenan kanssa</span>
+            <span class="src">YLE URHEILU · 5H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--slate)">NEWS</span>
+            <span class="head">Helsingin pörssi avautui myönteisesti Q1-tulosten julkistuksen jälkeen</span>
+            <span class="src">KAUPPALEHTI · 6H</span>
+          </div>
+          <div class="row">
+            <span class="cat" style="color: var(--gambling)">GAMBLING</span>
+            <span class="head">Operaattorit reagoivat rahapelivirastoiltaan — pelilisenssin hakijat ilmoitettiin</span>
+            <span class="src">HELSINGIN SANOMAT · 7H</span>
+          </div>
+        </div>
+        <div class="chrono-actions">
+          <a href="#">LATAA LISÄÄ → / LOAD MORE →</a>
+          <a href="#" class="muted">KAIKKI UUTISET → / SEE ALL NEWS →</a>
+        </div>
+      </section>
+
+      <!-- RIGHT: STREAMERS LIVE -->
+      <aside>
+        <div class="live-anchor">
+          <span>LIVE NYT · <span class="count">7</span></span>
+          <span style="font-size: 9.5px; letter-spacing: 0.14em;">LIVE NOW</span>
+        </div>
+        <div class="streamer-row">
+          <div class="avatar live has-img">LH</div>
+          <div>
+            <span class="handle">LikainenHarriTV</span>
+            <span class="meta">14 184 katsojaa · IRL · 13h LIVE</span>
+          </div>
+        </div>
+        <div class="streamer-row">
+          <div class="avatar live" style="background: var(--gambling)">PB</div>
+          <div>
+            <span class="handle">PetraBaltik</span>
+            <span class="meta">3 421 katsojaa · SLOTS · 2h LIVE</span>
+          </div>
+        </div>
+        <div class="streamer-row">
+          <div class="avatar live" style="background: var(--scene)">AR</div>
+          <div>
+            <span class="handle">aurastry</span>
+            <span class="meta">1 974 katsojaa · JUST CHATTING · 5h LIVE</span>
+          </div>
+        </div>
+        <div class="streamer-row">
+          <div class="avatar live" style="background: var(--green)">TP</div>
+          <div>
+            <span class="handle">TuomasParikka</span>
+            <span class="meta">887 katsojaa · CS2 · 1h LIVE</span>
+          </div>
+        </div>
+        <div class="streamer-row">
+          <div class="avatar live" style="background: var(--amber)">JK</div>
+          <div>
+            <span class="handle">JankoKLM</span>
+            <span class="meta">612 katsojaa · POKER · 4h LIVE</span>
+          </div>
+        </div>
+        <div class="streamer-row">
+          <div class="avatar live has-img">SL</div>
+          <div>
+            <span class="handle">slamzzz_fi</span>
+            <span class="meta">510 katsojaa · SLOTS · 30m LIVE</span>
+          </div>
+        </div>
+        <div class="streamer-row">
+          <div class="avatar live" style="background: var(--regulation)">VK</div>
+          <div>
+            <span class="handle">VetokoneVille</span>
+            <span class="meta">412 katsojaa · IRL · 6h LIVE</span>
+          </div>
+        </div>
+        <div class="live-more">NÄYTÄ KAIKKI 7 → / SHOW ALL 7 →</div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- HINT STRIPS -->
+  <section class="strips">
+    <div class="container">
+      <div class="strips-anchor">LISÄÄ PUTKILTA · EXPLORE</div>
+
+      <div class="strip">
+        <div class="strip-icon">◐</div>
+        <div class="strip-anchor">MITTARI · LIVE <span class="score">75/100</span></div>
+        <div class="strip-body"><strong>Skene on MEININKI.</strong> 97 striimiä, 2 313 katsojaa, uutiskello kiihtynyt.</div>
+        <div class="strip-cta">AVAA MITTARI → / OPEN MITTARI →</div>
+      </div>
+
+      <div class="strip strip-pelisig">
+        <div class="strip-icon">▰</div>
+        <div class="strip-anchor">PELISIGNAALIT · TÄNÄÄN <span class="score">SHARPNESS 65/100</span></div>
+        <div class="strip-body">Markets are mixed · Huomisen 5 tiukinta lukemaa — sähköpostiin klo 10:00.</div>
+        <div class="strip-cta">LUE PELISIGNAALIT → / SEE TODAY'S SIGNALS →</div>
+      </div>
+
+      <div class="strip-pair">
+        <div class="strip">
+          <div class="strip-icon">◉</div>
+          <div class="strip-anchor">VOITA · GUESS</div>
+          <div class="strip-body">Pian saatavilla.</div>
+          <div class="strip-cta disabled">COMING SOON →</div>
+        </div>
+        <div class="strip">
+          <div class="strip-icon">◈</div>
+          <div class="strip-anchor">PELI · VOYAGER</div>
+          <div class="strip-body"><strong>Spring Slot Sprint</strong> · Pelaa ja voita operaattoribonuksia.</div>
+          <div class="strip-cta">PELAA → / PLAY →</div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- DISCOVERY -->
+<div class="discovery">
+  <div class="container">
+    <div class="row">
+      <span class="label">LUE LISÄÄ:</span>
+      <a href="#">UUTISET</a><span class="sep">·</span>
+      <a href="#">MITTARI</a><span class="sep">·</span>
+      <a href="#">PELISIGNAALIT</a><span class="sep">·</span>
+      <a href="#">PELI</a><span class="sep">·</span>
+      <a href="#">TIETOA MEISTÄ</a><span class="sep">·</span>
+      <a href="#">MENETELMÄ</a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="disc">PUTKI HQ koostaa lähteistä: Yle, Helsingin Sanomat, Iltalehti, Ilta-Sanomat, MTV Uutiset, Kauppalehti, Google News Suomi.</div>
+    <div class="disc" style="margin-top: 8px;">Riippumaton toimitus · Viihdetarkoitukseen · Ei vedonlyöntiä PUTKI HQ:ssa · putkihq.fi/menetelma</div>
+    <div class="copy">© 2026 PUTKIHQ.FI · INDEPENDENT EDITORIAL</div>
+  </div>
+</footer>
+
+</body>
+</html>
