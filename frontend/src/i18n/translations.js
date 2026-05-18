@@ -127,7 +127,7 @@ export const translations = {
     // Uutiset blog page
     'uutiset.eyebrow':       'Putki HQ · uutiset',
     'uutiset.title':         'Uutisvirta',
-    'uutiset.subtitle':      'Automaattisesti tuotettu, toimituksen valvoma uutisvirta — uhkapeli, striimaajat, urheilu, sääntely. Päivittyy jatkuvasti.',
+    'uutiset.subtitle':      'Rehellinen näkökulma uutisiin — uhkapeli, striimaajat, urheilu, sääntely. Päivittyy jatkuvasti.',
     'uutiset.back':          'Palaa etusivulle',
     'uutiset.cat_all':       'Kaikki',
     'uutiset.cat_sports':    'Urheilu',
@@ -148,7 +148,7 @@ export const translations = {
 
     // Live activity feed
     'feed.title':            'Live Activity Feed',
-    'feed.lede':             'Layer 2 -signaaleista syntyneitä artikkeleita. Jokainen rivi on automaattisesti tuotettu, mutta toimitus valvoo TIER 2 -sisällöt erikseen.',
+    'feed.lede':             'Layer 2 -signaaleista syntyneitä artikkeleita. Rehellinen näkökulma uutisiin — toimitus valvoo jokaisen julkaisun.',
     'feed.empty':            'Ei vielä artikkeleita — pollerit kärsivällistyttävät',
     'feed.cat_sports':       'Urheilu',
     'feed.cat_stream':       'Stream',
@@ -158,7 +158,7 @@ export const translations = {
     // Trust strip (homepage)
     'trust.responsible':     'Vain viihteeksi · Ei vedonlyöntiä',
     'trust.editorial':       'Toimituksellinen · ei mainontaa',
-    'trust.open_method':     'Avoin menetelmä · /menetelmä',
+    'trust.open_method':     'Näin toimimme · /menetelmä',
     'trust.layer2':          'Layer 2 · reaaliaikainen data',
 
     // Persistent capture sidebar
@@ -626,6 +626,10 @@ export const translations = {
     'footer.lede':           'Suomen rehellisin kasino- ja striimaajalähde. Toimituksellinen, ei mainos.',
     'footer.col_pages':      'Sivut',
     'footer.col_responsible': 'Tiedote',
+    'footer.col_contact':    'Yhteystiedot',
+    'footer.editorial_mail': 'TOIMITUS@PUTKIHQ.FI',
+    'footer.press_mail':     'PRESS@PUTKIHQ.FI',
+    'footer.press_kit':      'LEHDISTÖ',
     'footer.col_editorial':  'Toimitus',
     'footer.peluuri':        'PELUURI',
     'footer.peli_poikki':    'PELI POIKKI',
@@ -761,7 +765,7 @@ export const translations = {
     // Uutiset
     'uutiset.eyebrow':       'Putki HQ · news',
     'uutiset.title':         'News stream',
-    'uutiset.subtitle':      'Auto-generated, editorially supervised news on gambling, streamers, sports and regulation. Continuously updated.',
+    'uutiset.subtitle':      'An honest take on the news — gambling, streamers, sports, regulation. Continuously updated.',
     'uutiset.back':          'Back to homepage',
     'uutiset.cat_all':       'All',
     'uutiset.cat_sports':    'Sports',
@@ -782,7 +786,7 @@ export const translations = {
 
     // Live activity feed
     'feed.title':            'Live Activity Feed',
-    'feed.lede':             'Articles generated from Layer 2 signals. Every row is auto-produced; the editorial team supervises TIER 2 content separately.',
+    'feed.lede':             'Articles produced from Layer 2 signals. An honest take on the news — the editorial team supervises every publish.',
     'feed.empty':            'No articles yet — pollers are warming up',
     'feed.cat_sports':       'Sports',
     'feed.cat_stream':       'Stream',
@@ -792,7 +796,7 @@ export const translations = {
     // Trust strip
     'trust.responsible':     'For entertainment only · No betting',
     'trust.editorial':       'Editorial · no advertising',
-    'trust.open_method':     'Open method · /menetelma',
+    'trust.open_method':     'How we work · /menetelma',
     'trust.layer2':          'Layer 2 · real-time data',
 
     // Persistent capture sidebar
@@ -1247,6 +1251,10 @@ export const translations = {
     'footer.lede':           'Finland\u2019s most honest casino & streamer source. Editorial — not advertising.',
     'footer.col_pages':      'Pages',
     'footer.col_responsible': 'Disclosure',
+    'footer.col_contact':    'Contact',
+    'footer.editorial_mail': 'TOIMITUS@PUTKIHQ.FI',
+    'footer.press_mail':     'PRESS@PUTKIHQ.FI',
+    'footer.press_kit':      'PRESS KIT',
     'footer.col_editorial':  'Editorial',
     'footer.peluuri':        'PELUURI',
     'footer.peli_poikki':    'PELI POIKKI',

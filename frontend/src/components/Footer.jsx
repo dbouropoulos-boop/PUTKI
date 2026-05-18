@@ -44,11 +44,12 @@ export const Footer = () => {
             </ul>
           </div>
           <div>
-            <div className="eyebrow mb-3">{t('footer.col_responsible')}</div>
+            <div className="eyebrow mb-3">{t('footer.col_contact')}</div>
             <ul className="space-y-2 mono text-[12px]" style={{ letterSpacing: '0.08em' }}>
-              <li><a href="https://www.peluuri.fi" target="_blank" rel="noreferrer" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('footer.peluuri')}</a></li>
-              <li><a href="https://www.peli-poikki.fi" target="_blank" rel="noreferrer" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('footer.peli_poikki')}</a></li>
-              <li><span style={{ color: 'var(--muted)' }}>{t('common.18plus')}</span></li>
+              <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-about-link">{t('nav.about').toUpperCase()}</Link></li>
+              <li><a href="mailto:toimitus@putkihq.fi" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-editorial-mail">{t('footer.editorial_mail')}</a></li>
+              <li><a href="mailto:press@putkihq.fi" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-press-mail">{t('footer.press_mail')}</a></li>
+              <li><Link to="/lehdisto" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-press-link">{t('footer.press_kit')}</Link></li>
             </ul>
           </div>
           <div>
@@ -76,7 +77,7 @@ export const Footer = () => {
         <div className="section-rule mt-10 pt-6 flex flex-col sm:flex-row justify-between gap-3 mono text-[10.5px]" style={{ letterSpacing: '0.12em', color: 'var(--muted)' }}>
           <span>© {new Date().getFullYear()} PUTKIHQ.FI · {t('footer.indep')}</span>
           <span className="inline-flex items-center gap-3">
-            {t('footer.warning')} · {t('common.responsible')}
+            {t('footer.warning')}
             <Link
               to="/back-office"
               aria-label={t('footer.admin_gear')}
