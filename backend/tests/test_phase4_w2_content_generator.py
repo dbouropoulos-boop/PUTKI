@@ -446,7 +446,10 @@ class TestContentAPIs:
             assert t in ids
 
     def test_streamer_alert_via_api_full_cycle(self):
-        unique_login = f"testapi_{os.urandom(4).hex()}"
+        # Use non-TESTAPI prefix — the production publisher guard blocks
+        # any draft whose slug/headline contains "testapi" so dev fixtures
+        # cannot leak into /api/content/published.
+        unique_login = f"e2efixt_{os.urandom(4).hex()}"
         sig = {
             "template_id": "streamer_alert",
             "signal_data": {"user_login": unique_login, "user_name": unique_login.upper(),

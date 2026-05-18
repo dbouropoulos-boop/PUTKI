@@ -566,6 +566,21 @@ class ContentGenerator:
         if draft.get("status") == "published":
             return {"status": "already_published", "id": draft["id"]}
 
+        # Permanent guard — never publish drafts whose source data leaked
+        # development fixture markers ("TESTAPI*"). The dev pytest fixtures
+        # populate stream_signals with synthetic TESTAPI_<hex> usernames; if
+        # the content scheduler picks one up it must NOT make it to the public
+        # /api/content/published feed.
+        _slug_or_head = f"{draft.get('url_slug','')} {draft.get('headline','')}".lower()
+        if "testapi" in _slug_or_head:
+            logger.info("publish_draft: blocking TESTAPI leak draft_id=%s slug=%s",
+                        draft_id, draft.get("url_slug"))
+            await self.db.content_drafts.update_one(
+                {"id": draft["id"]},
+                {"$set": {"status": "rejected", "rejection_reason": "testapi_fixture_leak"}},
+            )
+            return {"status": "rejected", "reason": "testapi_fixture_leak"}
+
         # Phase 4 Pre-Launch Polish: social meta carries forward from draft.
         # Nano Banana OG image is generated in the BACKGROUND (after insert)
         # so a 5-30s Gemini call doesn't block the publish response. The
@@ -1003,6 +1018,9 @@ async def list_published(db, *, category: Optional[str] = None, limit: int = 50)
         q["category"] = category
     # Only docs created by the new generator (have draft_id back-link)
     q["draft_id"] = {"$exists": True}
+    # Defensive — never surface dev TESTAPI fixtures even if one slips
+    # through the publisher-side guard.
+    q["url_slug"] = {"$not": {"$regex": "^testapi", "$options": "i"}}
     cur = db.published_content.find(q, {"_id": 0}).sort("published_at", -1).limit(max(1, min(200, limit)))
     return await cur.to_list(length=limit)
 
