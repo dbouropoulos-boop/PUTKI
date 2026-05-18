@@ -145,10 +145,14 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
         ) : (
           <form onSubmit={submit} className="p-5 space-y-4">
             <h3 className="display" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>
-              {t('alert_modal.title').replace('{name}', streamer.user_name || streamer.user_login)}
+              {streamer.user_login === '*'
+                ? t('alert_modal.title_wildcard')
+                : t('alert_modal.title').replace('{name}', streamer.user_name || streamer.user_login)}
             </h3>
             <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5 }}>
-              {t('alert_modal.body').replaceAll('{name}', streamer.user_name || streamer.user_login)}
+              {streamer.user_login === '*'
+                ? t('alert_modal.body_wildcard')
+                : t('alert_modal.body').replaceAll('{name}', streamer.user_name || streamer.user_login)}
             </p>
 
             <label className="block">

@@ -78,7 +78,9 @@ export const translations = {
     // Streamer alert modal
     'alert_modal.eyebrow':          'Aseta hälytys',
     'alert_modal.title':            'Ilmoita kun {name} menee livenä',
+    'alert_modal.title_wildcard':   'Hälytä mistä tahansa suomalaisesta striimaajasta',
     'alert_modal.body':             'Lähetämme sinulle viestin heti kun striimi alkaa. Ei spämmiä — vain kun {name} striimaa.',
+    'alert_modal.body_wildcard':    'Lähetämme viestin heti kun joku seurannassa oleva striimaaja menee livenä. Ei spämmiä — voit valita kanavan.',
     'alert_modal.email_label':      'Sähköposti · pakollinen',
     'alert_modal.email_placeholder':'sinun@email.fi',
     'alert_modal.phone_label':      'Puhelin · valinnainen (SMS / WhatsApp)',
@@ -607,7 +609,9 @@ export const translations = {
     // Streamer alert modal
     'alert_modal.eyebrow':          'Set alert',
     'alert_modal.title':            'Notify me when {name} goes live',
+    'alert_modal.title_wildcard':   'Alert me on any Finnish streamer going live',
     'alert_modal.body':             'We will message you the moment the stream starts. No spam — only when {name} streams.',
+    'alert_modal.body_wildcard':    'We\u2019ll ping you the moment any tracked streamer goes live. No spam — pick your channel.',
     'alert_modal.email_label':      'Email · required',
     'alert_modal.email_placeholder':'you@email.com',
     'alert_modal.phone_label':      'Phone · optional (SMS / WhatsApp)',
