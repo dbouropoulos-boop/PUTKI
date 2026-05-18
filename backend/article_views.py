@@ -107,8 +107,8 @@ def build_views_router(db) -> APIRouter:
 
     @router.get("/most-read")
     async def get_most_read(hours: int = 1, limit: int = 5) -> Dict[str, Any]:
-        hours = max(1, min(int(hours or 1), 168))   # cap 1h..7d
-        limit = max(1, min(int(limit or 5), 20))
+        hours = max(1, min(int(hours) if hours else 1, 168))   # cap 1h..7d
+        limit = max(1, min(int(limit) if limit else 5, 20))
         items = await most_read(db, hours=hours, limit=limit)
         return {"hours": hours, "items": items, "count": len(items)}
 
