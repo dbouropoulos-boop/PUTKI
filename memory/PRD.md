@@ -2,6 +2,17 @@
 
 ## Phase History (latest first — see CHANGELOG for full list pre-Phase 5)
 
+- **Phase 1 — Share OG mini-sprint COMPLETE** (2026-05-19) — Phase 1 now 100% closed.
+  - `og_image_generator.ensure_mittari_state_og(state_key, date_iso, reading_fi)` — Mittari-specific Nano Banana generator with `MITTARI_STATE_DIRECTIVES` for all 5 states (label, mood, hex color). Idempotent: returns cached URL if `mittari-{state}-{date}.png` already exists; coalesces concurrent calls via `_inflight` map; semaphore (concurrency=1) preserved; kill switch `PUTKI_HQ_DISABLE_OG_IMAGES=1` respected.
+  - **State-change hook**: `dial_engine.compute_and_store` fires-and-forgets `ensure_mittari_state_og()` whenever it writes a `dial_state_events` doc (prev state != new state). The dial loop NEVER blocks on Nano Banana — `asyncio.create_task` + try/except.
+  - **`GET /api/og/mittari/{state}/{date}`** endpoint — read-only lookup. Returns `{found:true, url}` when cached, otherwise `{found:false, reason}` where reason is `unknown_state | og_images_disabled | not_yet_generated`.
+  - **Frontend** `MittariPermalink.jsx` fetches the OG URL in parallel with the event lookup; emits `og:image` meta tag via `useDocumentMeta({ogImage})` when found. Graceful fallback to no `og:image` when not yet generated (preserves title/description scraping on Telegram/iMessage/X).
+  - **Storage**: PNG bytes written to `/app/backend/static/og/mittari-{state}-{date}.png`. Public URL: `/api/static/og/mittari-{state}-{date}.png`.
+  - **Tests**: 10/10 unit tests for slug stability, cache presence, kill-switch behaviour, unknown-state guard, EMERGENT_LLM_KEY-missing graceful failure, state directive coverage.
+  - **Production status**: Kill switch ON in this preview environment (per the LLM budget guard). When the user tops up the Universal Key and flips `PUTKI_HQ_DISABLE_OG_IMAGES=0`, state changes auto-generate images with NO further code action required.
+  - **Content backfill** remains paused until user confirms top-up.
+
+
 - **Phase 1 Homepage Restructure — FULLY CLOSED** (2026-05-19) — Source-citation validator + Verify-the-math worksheet + Sprint 4 partial + Sprint 3.b + Sprint 5 finalize.
   - **Source-citation validator** (Section 10): `content_generator.validate_content` rejects with `source_citation_missing:no_citation_phrase` or `:no_named_source` when an article body lacks BOTH a citation phrase (mukaan/raportoi/according to/reports that) AND a named outlet (Yle/HS/IL/IS/MTV/KL/Google News) within the first 400 chars. Sports recaps may cite `data: Ergast/NHL Stats/football-data/Opta/Transfermarkt` in lieu of named outlet. `streamer_alert` template exempt via explicit `SOURCE_CITATION_EXEMPT_TEMPLATES` set. 8/8 unit tests.
   - **Verify-the-math worksheet** — MATEMATIIKKA/MATH pill on each pick card opens an editorial-layout worksheet. Plain-language labels (Markkinakerroin/Konsensuksen tiukkuus/Suunta 24 h FI · Market odds/Consensus tightness/24h direction EN), 4-col table (label/Score/Weight/Weighted), TOTAL row, closing line "Sharpness on deterministinen. Sama data tuottaa aina saman pistemäärän." / "Sharpness is deterministic. The same data always produces the same score."

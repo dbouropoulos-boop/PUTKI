@@ -27,6 +27,7 @@ Output shape unchanged so existing /api/dial + /api/cockpit consumers
 from __future__ import annotations
 
 import logging
+import asyncio
 import math
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
@@ -244,6 +245,42 @@ async def recalculate_dial(db) -> Dict[str, Any]:
             "twitch_live":      (snapshot.get("sub_scores") or {}).get("twitch_live"),
             "twitch_viewers":   (snapshot.get("sub_scores") or {}).get("twitch_viewers"),
         })
+
+        # Phase 1 Sprint 4 — fire-and-forget Mittari OG image generation
+        # for this state-change event. Idempotent on the og side (cached
+        # by {state}-{date}), so re-entrancy is safe; errors are swallowed
+        # inside the generator. The dial loop must NEVER block on this.
+        try:
+            from og_image_generator import ensure_mittari_state_og
+            # Build a Finnish reading line synchronously so the prompt has
+            # context even if the dial state recurs later in the day.
+            sub = snapshot.get("sub_scores") or {}
+            streams = sub.get("twitch_live")
+            viewers = sub.get("twitch_viewers")
+            counts = ""
+            if streams is not None and viewers is not None:
+                counts = f" {streams} striimiä, {viewers} katsojaa."
+            cycle = {
+                "KYLMA": "", "HAALEA": "",
+                "KUUMA": " Uutiskello aktiivinen.",
+                "MYRSKY": " Uutiskello kiihtynyt.",
+                "KIIRASTULI": " Uutiskello tulinen.",
+            }.get(snapshot["state"]["key"], "")
+            base = {
+                "KYLMA":      f"Skene on hiljainen.{counts}",
+                "HAALEA":     f"Skene käy.{counts}",
+                "KUUMA":      f"Skenessä on vipinää.{counts}{cycle}",
+                "MYRSKY":     f"Skenessä on meininkiä.{counts}{cycle}",
+                "KIIRASTULI": f"Skene on perkele-tasolla.{counts}{cycle}",
+            }.get(snapshot["state"]["key"], "")
+            date_iso = snapshot["computed_at"].date().isoformat() \
+                if hasattr(snapshot["computed_at"], "date") \
+                else datetime.now(timezone.utc).date().isoformat()
+            asyncio.create_task(
+                ensure_mittari_state_og(snapshot["state"]["key"], date_iso, base)
+            )
+        except Exception as e:
+            logger.debug("Mittari OG dispatch skipped: %s", e)
 
     # Retention: keep last 500 raw snapshots (the live UI only needs recent history).
     count = await db.dial_snapshots.count_documents({})

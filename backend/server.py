@@ -848,6 +848,29 @@ async def public_dial_permalink(state_key: str, date_iso: str):
     return {"found": True, **event}
 
 
+@api_router.get("/og/mittari/{state_key}/{date_iso}")
+async def public_mittari_og(state_key: str, date_iso: str):
+    """Phase 1 Sprint 4 — Mittari OG image lookup.
+
+    Returns `{found:true,url}` when the Nano Banana cache has produced
+    an image for this state+date, otherwise `{found:false,reason}`.
+    Generation is fire-and-forget from `dial_engine.compute_and_store`
+    on state-change; this endpoint is read-only.
+    """
+    from og_image_generator import (
+        is_enabled as og_is_enabled, mittari_og_exists, mittari_og_url,
+        MITTARI_STATE_DIRECTIVES,
+    )
+    key = state_key.upper()
+    if key not in MITTARI_STATE_DIRECTIVES:
+        return {"found": False, "reason": "unknown_state"}
+    if not og_is_enabled():
+        return {"found": False, "reason": "og_images_disabled"}
+    if not mittari_og_exists(key, date_iso):
+        return {"found": False, "reason": "not_yet_generated"}
+    return {"found": True, "url": mittari_og_url(key, date_iso)}
+
+
 @api_router.get("/admin/dial/history")
 async def admin_dial_history(limit: int = 60, _: bool = Depends(require_admin)):
     return {"history": await dial_history(db, limit=limit)}

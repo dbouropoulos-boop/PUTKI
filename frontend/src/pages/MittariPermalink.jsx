@@ -54,6 +54,7 @@ const MittariPermalink = () => {
   const { slug } = useParams();
   const parsed = parseSlug(slug);
   const [event, setEvent] = useState(null);
+  const [ogImageUrl, setOgImageUrl] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,6 +71,19 @@ const MittariPermalink = () => {
       } finally {
         if (!cancelled) setLoading(false);
       }
+      // OG image lookup runs in parallel with event lookup. Falls back
+      // silently if not yet generated (kill switch / first run / disabled).
+      try {
+        const r = await fetch(`${BACKEND}/api/og/mittari/${parsed.key}/${parsed.date}`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled && d?.found && d.url) {
+          // The og endpoint returns a `/api/static/og/...` relative URL.
+          // Resolve against BACKEND so social scrapers see an absolute path.
+          const abs = d.url.startsWith('http') ? d.url : `${BACKEND}${d.url}`;
+          setOgImageUrl(abs);
+        }
+      } catch { /* silent — share preview will fall back to no og:image */ }
     })();
     return () => { cancelled = true; };
   }, [parsed]);
@@ -98,6 +112,7 @@ const MittariPermalink = () => {
     ogTitle: parsed ? `${label} · ${formatFinnishDate(parsed.date, 'fi')}` : 'Mittari',
     ogDescription: reading || '',
     ogUrl: `${BACKEND}/m/${slug}`,
+    ogImage: ogImageUrl || '',
   });
 
   if (!parsed) {

@@ -52,6 +52,17 @@ CATEGORY_DIRECTIVES = {
     "raha":        "Editorial money-feature cover. Burnt orange accent on cream, single coin-stack motif, Bloomberg/Monocle typographic register.",
 }
 
+# Phase 1 Sprint 4 share-OG: Mittari state-card directives. The state name
+# is the centrepiece, color must match the dial palette, no marketing chrome.
+MITTARI_STATE_DIRECTIVES = {
+    "KYLMA":      ("TYYNI",    "muted teal sauna-evening calm",        "#5C8A8A"),
+    "HAALEA":     ("VIRE",     "soft green-teal early-morning stir",   "#6FA37D"),
+    "KUUMA":      ("VIPINÄ",   "warm yellow late-afternoon buzz",      "#D4B445"),
+    "MYRSKY":     ("MEININKI", "amber/dark-orange evening intensity",  "#C97A3A"),
+    "KIIRASTULI": ("PERKELE",  "saturated red full-perkele top state", "#C13B2C"),
+}
+
+
 DEFAULT_DIRECTIVE = (
     "Editorial Finnish gambling-news cover image. Minimalist, premium magazine style. "
     "No real faces, no real logos, no slot symbols. 1200x630 social-card composition."
@@ -156,3 +167,114 @@ async def ensure_og_image(slug: str, headline: str, category: Optional[str] = No
         return await task
     finally:
         _inflight.pop(safe, None)
+
+
+# ─────────────────────── Phase 1 Sprint 4 — Mittari state cards ───────────────────────
+
+def mittari_og_slug(state_key: str, date_iso: str) -> str:
+    """Stable filename slug for the state-card image."""
+    return f"mittari-{state_key.lower()}-{date_iso}"
+
+
+def mittari_og_url(state_key: str, date_iso: str) -> str:
+    """Public URL for the cached Mittari state-card."""
+    return public_url(mittari_og_slug(state_key, date_iso))
+
+
+def mittari_og_exists(state_key: str, date_iso: str) -> bool:
+    p = _output_path(mittari_og_slug(state_key, date_iso))
+    return p.exists() and p.stat().st_size > 0
+
+
+async def _generate_mittari_card(state_key: str,
+                                 date_iso: str,
+                                 reading_fi: str) -> Optional[str]:
+    """Internal — single Nano Banana call for one Mittari state card.
+    Idempotent: returns the cached URL if the file already exists."""
+    if mittari_og_exists(state_key, date_iso):
+        return mittari_og_url(state_key, date_iso)
+
+    label, mood, hex_color = MITTARI_STATE_DIRECTIVES.get(state_key, MITTARI_STATE_DIRECTIVES["KYLMA"])
+    api_key = os.environ.get("EMERGENT_LLM_KEY")
+    if not api_key:
+        logger.info("Mittari OG skipped: EMERGENT_LLM_KEY unset")
+        return None
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+    except Exception:
+        logger.warning("emergentintegrations not installed; Mittari OG disabled")
+        return None
+
+    OG_DIR.mkdir(parents=True, exist_ok=True)
+    prompt = (
+        f"Editorial Mittari state-card for PUTKI HQ — Finnish independent media outlet. "
+        f"1200x630 social-card composition.\n"
+        f"State name: \"{label}\" — render as massive bold display typography, "
+        f"top-left, dominating 60% of the canvas.\n"
+        f"Color palette anchored on {hex_color} ({mood}). Warm near-black background (#0D0C0A) "
+        f"or cream (#F7F2EA) if light mode would feel right — your call as art director. "
+        f"Subtle grain texture. No gradients on dark; layered solids only.\n"
+        f"Subtitle line, monospace, lower-third: \"{reading_fi[:120]}\".\n"
+        f"URL stamp at very bottom-right in tiny monospace: \"putkihq.fi/m/{label.lower()}-{date_iso}\".\n"
+        f"NO real faces, NO real logos, NO slot symbols, NO casino imagery, NO emojis, NO 18+ stamps. "
+        f"Bloomberg/Monocle restraint. Treat this like a magazine cover, not a banner ad."
+    )
+
+    try:
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=f"og-mittari-{state_key}-{date_iso}",
+            system_message="You are an editorial art director generating Mittari state-card images for PUTKI HQ.",
+        )
+        chat.with_model("gemini", NANO_BANANA_MODEL).with_params(modalities=["image", "text"])
+        msg = UserMessage(text=prompt)
+        async with _GENERATION_SEMAPHORE:
+            _text, images = await chat.send_message_multimodal_response(msg)
+    except Exception as e:
+        logger.warning("Mittari OG Nano Banana call failed for %s/%s: %s", state_key, date_iso, e)
+        return None
+
+    if not images:
+        logger.info("Mittari OG Nano Banana returned no images for %s/%s", state_key, date_iso)
+        return None
+
+    try:
+        img_bytes = base64.b64decode(images[0]["data"])
+        path = _output_path(mittari_og_slug(state_key, date_iso))
+        path.write_bytes(img_bytes)
+        return public_url(mittari_og_slug(state_key, date_iso))
+    except Exception as e:
+        logger.warning("Failed to persist Mittari OG for %s/%s: %s", state_key, date_iso, e)
+        return None
+
+
+async def ensure_mittari_state_og(state_key: str,
+                                  date_iso: str,
+                                  reading_fi: str) -> Optional[str]:
+    """Cache-or-generate the Mittari state-card image.
+
+    Idempotent. Returns the public URL on success, None on failure (kill
+    switch active, LLM unavailable, persistence failed). Concurrent calls
+    for the same (state, date) coalesce into a single Nano Banana request.
+    """
+    if not is_enabled() or not state_key or not date_iso:
+        return None
+    if state_key not in MITTARI_STATE_DIRECTIVES:
+        return None
+
+    slug = mittari_og_slug(state_key, date_iso)
+    if mittari_og_exists(state_key, date_iso):
+        return public_url(slug)
+
+    if slug in _inflight:
+        try:
+            return await _inflight[slug]
+        except Exception:
+            return None
+
+    task = asyncio.create_task(_generate_mittari_card(state_key, date_iso, reading_fi))
+    _inflight[slug] = task
+    try:
+        return await task
+    finally:
+        _inflight.pop(slug, None)
