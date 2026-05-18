@@ -757,6 +757,49 @@ async def public_odds_featured():
     return await get_featured_picks()
 
 
+@api_router.get("/odds/market-watch")
+async def public_odds_market_watch():
+    """Phase 1 (Section 7c) — Daily Market Watch Card payload.
+    Computes today's average Sharpness across published picks and returns
+    a 30-day sparkline of daily averages. Persists today's score to
+    `sharpness_daily` so the sparkline accumulates over time."""
+    from odds_api import get_featured_picks
+    from sharpness import daily_market_watch
+    cached = await get_featured_picks()
+    picks = cached.get("picks") or []
+    # Strip out internal-only keys from picks for the market watch.
+    sharpness_picks = [
+        {"sharpness": (p.get("sharpness") or {}).get("sharpness", 0)}
+        for p in picks
+    ]
+    return await daily_market_watch(db, sharpness_picks)
+
+
+@api_router.get("/news/ticker")
+async def public_news_ticker(limit: int = 40):
+    """Phase 1 (Section 2) — rolling news ticker feed.
+
+    Returns the latest classified items above the relevance threshold,
+    sorted by capture time descending. Used by the full-width ticker
+    under the top bar.
+    """
+    limit = max(1, min(100, int(limit or 40)))
+    cur = db.news_ticker_items.find(
+        {},
+        {"_id": 0, "source": 1, "title": 1, "url": 1, "category": 1,
+         "severity": 1, "relevance": 1, "verified": 1, "captured_at": 1,
+         "published": 1, "entity_tags": 1},
+    ).sort([("captured_at", -1)]).limit(limit)
+    items: List[Dict[str, Any]] = []
+    async for doc in cur:
+        items.append(doc)
+    return {
+        "items": items,
+        "count": len(items),
+        "as_of": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 @api_router.get("/odds/upcoming")
 async def public_odds_upcoming(days: int = 7, top_per_day: int = 5):
     """Betting Tips hub — picks grouped by calendar day for the next N days."""

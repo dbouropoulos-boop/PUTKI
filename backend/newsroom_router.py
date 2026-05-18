@@ -31,7 +31,13 @@ from newsroom import (
 class DialAlertSubscription(BaseModel):
     channel: str = Field(..., pattern=r"^(telegram|sms|email)$")
     contact: str = Field(..., min_length=2, max_length=120)
-    min_state: str = Field("RUSH", pattern=r"^(WARM|RUSH|JACKPOT|TULOSSA|VOITTOPUTKI|RYÖSTÖPUTKI)$")
+    # Accepts new state names (VIPINÄ/MEININKI/PERKELE) and legacy
+    # labels (WARM/RUSH/JACKPOT/TULOSSA/VOITTOPUTKI/RYÖSTÖPUTKI) for
+    # backward compat with existing subscriptions.
+    min_state: str = Field(
+        "MEININKI",
+        pattern=r"^(WARM|RUSH|JACKPOT|TULOSSA|VOITTOPUTKI|RYÖSTÖPUTKI|VIPINÄ|MEININKI|PERKELE|ACTIVE|ROLLING)$",
+    )
 
     @validator("contact")
     def _strip(cls, v):

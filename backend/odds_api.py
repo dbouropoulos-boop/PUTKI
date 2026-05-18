@@ -23,6 +23,10 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from sharpness import (
+    avg_implied_for_fav, compute_sharpness, extract_book_implied_probs,
+)
+
 logger = logging.getLogger(__name__)
 
 ODDS_API_BASE = "https://api.the-odds-api.com/v4"
@@ -121,7 +125,7 @@ def _best_pick_from_event(event: Dict[str, Any], sport_meta: Dict[str, Any]) -> 
     else:
         side = "draw"
 
-    return {
+    pick = {
         "sport_key": event.get("sport_key"),
         "sport_label": sport_meta.get("label_fi"),
         "sport_icon": sport_meta.get("icon"),
@@ -136,6 +140,22 @@ def _best_pick_from_event(event: Dict[str, Any], sport_meta: Dict[str, Any]) -> 
         "bookmaker": fav_data["bookmaker"],
         "bookmaker_count": bookmaker_count,
     }
+
+    # Sharpness — deterministic 0-100 score over bookmaker market behaviour.
+    # Phase 1: implied_prob (50%) + consensus_tightness (30%) computed
+    # from this event's bookmaker dispersion. recency_momentum (20%)
+    # defaults to 50 unless a 24h snapshot is later joined in via
+    # enrich_picks_with_momentum(db, ...).
+    book_probs = extract_book_implied_probs(event, fav_name)
+    avg_now = avg_implied_for_fav(event, fav_name)
+    pick["sharpness"] = compute_sharpness(
+        best_decimal_odds=price,
+        book_implied_probs=book_probs,
+        avg_implied_now=avg_now,
+        avg_implied_24h_ago=None,
+    )
+    pick["_avg_implied_now"] = avg_now  # internal, used by momentum enricher
+    return pick
 
 
 async def _build_payload() -> Dict[str, Any]:
@@ -186,6 +206,10 @@ async def _build_payload() -> Dict[str, Any]:
     # Then secondary sort by soonest kickoff so the top 5 feels fresh.
     all_picks.sort(key=lambda p: (-p["implied_probability"], p.get("commence_time") or ""))
     top = all_picks[:TOP_PICKS]
+
+    # Strip internal-only fields before returning.
+    for p in all_picks:
+        p.pop("_avg_implied_now", None)
 
     return {
         "picks": top,

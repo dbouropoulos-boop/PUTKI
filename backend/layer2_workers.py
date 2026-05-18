@@ -59,23 +59,68 @@ REDDIT_KEYWORDS = ["kasino", "slotti", "vedonlyönti", "pelaaminen", "weezybet"]
 
 # RSS feeds + keywords per user spec
 # RSS feeds + keywords per user spec
+# RSS feeds — Phase 1 brief (Section 2) lockdown.
+# Direct Finnish news sources + 5 Google News category queries.
+# Per-source circuit breaker handled by `_should_skip_source` below.
 RSS_FEEDS = [
-    # Direct Finnish news feeds — primary signal sources
-    {"source": "YLE Uutiset",       "url": "https://yle.fi/rss/uutiset/tuoreimmat"},
-    {"source": "Helsingin Sanomat", "url": "https://www.hs.fi/rss/tuoreimmat.xml"},
-    {"source": "Iltalehti",         "url": "https://www.iltalehti.fi/rss.xml"},
-    # Google News aggregation — volume + breadth (Dioni's launch spec).
-    # URL dedup downstream collapses cross-source repeats.
-    {"source": "Google News · uhkapeli",      "url": "https://news.google.com/rss/search?q=uhkapeli+finland&hl=fi&gl=FI&ceid=FI:fi"},
-    {"source": "Google News · veikkaus",      "url": "https://news.google.com/rss/search?q=veikkaus&hl=fi&gl=FI&ceid=FI:fi"},
-    {"source": "Google News · rahapeli",      "url": "https://news.google.com/rss/search?q=rahapeli+suomi&hl=fi&gl=FI&ceid=FI:fi"},
-    {"source": "Google News · NHL suomi",     "url": "https://news.google.com/rss/search?q=NHL+suomi&hl=fi&gl=FI&ceid=FI:fi"},
-    {"source": "Google News · veikkausliiga", "url": "https://news.google.com/rss/search?q=veikkausliiga&hl=fi&gl=FI&ceid=FI:fi"},
-    {"source": "Google News · Liiga",         "url": "https://news.google.com/rss/search?q=liiga+jääkiekko&hl=fi&gl=FI&ceid=FI:fi"},
-    {"source": "Google News · kasino",        "url": "https://news.google.com/rss/search?q=kasino+suomi&hl=fi&gl=FI&ceid=FI:fi"},
-    {"source": "Google News · nettikasinot",  "url": "https://news.google.com/rss/search?q=nettikasinot&hl=fi&gl=FI&ceid=FI:fi"},
+    # Direct Finnish news feeds — primary signal sources (high trust).
+    {"source": "Yle Uutiset",        "url": "https://yle.fi/rss/uutiset/tuoreimmat",                                         "tier": 1, "category": "news"},
+    {"source": "Yle Urheilu",        "url": "https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET&concepts=18-35138", "tier": 1, "category": "sports"},
+    {"source": "Helsingin Sanomat",  "url": "https://www.hs.fi/rss/tuoreimmat.xml",                                          "tier": 1, "category": "news"},
+    {"source": "Iltalehti",          "url": "https://www.iltalehti.fi/rss/rss.xml",                                          "tier": 2, "category": "news"},
+    {"source": "Ilta-Sanomat",       "url": "https://www.is.fi/rss/tuoreimmat.xml",                                          "tier": 2, "category": "news"},
+    {"source": "MTV Uutiset",        "url": "https://www.mtvuutiset.fi/api/feed/rss/uutiset",                                "tier": 2, "category": "news"},
+    {"source": "Kauppalehti",        "url": "https://feeds.kauppalehti.fi/rss/main",                                         "tier": 2, "category": "news"},
+    # Google News aggregation — 5 category queries (Phase 1 brief Section 3,
+    # refined per user feedback: Sports uses jalkapallo/jääkiekko, not "joukkue").
+    {"source": "Google News · News",       "url": "https://news.google.com/rss/search?q=uhkapeli+OR+rahapeli+OR+Veikkaus+OR+kasino&hl=fi&gl=FI&ceid=FI:fi",                                                  "tier": 3, "category": "news"},
+    {"source": "Google News · Sports",     "url": "https://news.google.com/rss/search?q=Liiga+OR+Veikkausliiga+OR+Huuhkajat+OR+Leijonat+OR+%22Suomen+jalkapallo%22+OR+%22Suomen+j%C3%A4%C3%A4kiekko%22&hl=fi&gl=FI&ceid=FI:fi", "tier": 3, "category": "sports"},
+    {"source": "Google News · Gambling",   "url": "https://news.google.com/rss/search?q=Veikkaus+OR+rahapelilains%C3%A4%C3%A4d%C3%A4nt%C3%B6+OR+rahapeliuudistus+OR+pelilisenssi+OR+rahapelimonopoli&hl=fi&gl=FI&ceid=FI:fi",     "tier": 3, "category": "gambling"},
+    {"source": "Google News · Scene",      "url": "https://news.google.com/rss/search?q=streamaaja+OR+%22Twitch+Suomi%22+OR+%22Kick+Suomi%22+OR+%22suomalainen+striimaaja%22&hl=fi&gl=FI&ceid=FI:fi",                          "tier": 3, "category": "scene"},
+    {"source": "Google News · Regulation", "url": "https://news.google.com/rss/search?q=rahapelilaki+OR+pelilisenssi+OR+%22Veikkaus+monopoli%22+OR+rahapelivirasto+OR+pelis%C3%A4%C3%A4ntely&hl=fi&gl=FI&ceid=FI:fi",            "tier": 3, "category": "regulation"},
 ]
 NEWS_KEYWORDS = ["uhkapeli", "rahapeli", "veikkaus", "kasino", "pelaaminen", "vedonlyönti"]
+
+
+# Per-source circuit breaker — Phase 1 brief addendum:
+# 5 consecutive 429s/timeouts → 30 min pause before retrying.
+# State is in-process; reset on backend restart (acceptable for an aggregation
+# pipeline where the worker tick is 60s).
+_RSS_FAILURES: Dict[str, Dict[str, Any]] = {}
+_CIRCUIT_TRIP_THRESHOLD = 5
+_CIRCUIT_PAUSE_SECONDS = 30 * 60
+
+
+def _should_skip_source(source: str) -> bool:
+    state = _RSS_FAILURES.get(source)
+    if not state:
+        return False
+    if state.get("paused_until"):
+        if datetime.now(timezone.utc) < state["paused_until"]:
+            return True
+        # Pause expired — reset and let the next fetch try again.
+        state["fails"] = 0
+        state["paused_until"] = None
+    return False
+
+
+def _record_rss_outcome(source: str, ok: bool, *, status: Optional[int] = None) -> None:
+    state = _RSS_FAILURES.setdefault(source, {"fails": 0, "paused_until": None})
+    if ok:
+        state["fails"] = 0
+        state["paused_until"] = None
+        return
+    # Only count timeouts (status=None) and 429s toward the breaker.
+    transient = status is None or status == 429 or status >= 500
+    if not transient:
+        return
+    state["fails"] += 1
+    if state["fails"] >= _CIRCUIT_TRIP_THRESHOLD:
+        state["paused_until"] = datetime.now(timezone.utc) + timedelta(seconds=_CIRCUIT_PAUSE_SECONDS)
+        logger.warning(
+            "RSS circuit breaker tripped for %s after %d consecutive failures — pausing 30 min",
+            source, state["fails"],
+        )
 
 
 # ─────────────────────── Retention helpers ───────────────────────
@@ -346,46 +391,102 @@ def _parse_rss(xml_text: str) -> List[Dict[str, Any]]:
 
 
 async def rss_tick(db) -> Dict[str, Any]:
-    """One RSS poll tick. Counts gambling-keyword matches across feeds.
+    """One RSS poll tick.
 
-    With Google News aggregation enabled, the same article appears across
-    multiple searches — we dedupe by URL inside the tick so the matched
-    count and downstream content generation see each story once.
+    Phase 1 (brief Section 2-3):
+      • Polls all sources except those tripped by the circuit breaker.
+      • Classifies every item via news_classifier (deterministic rules).
+      • Writes classified items above the relevance threshold to
+        `news_ticker_items` (TTL 7 days). Below-threshold but non-trivial
+        items go to `news_ticker_archive` for editorial promotion.
+      • Cross-source corroboration: items sharing a normalised title token
+        set across ≥2 sources get a `verified=True` flag.
+
+    Legacy `news_signals` summary doc preserved for the existing
+    layer 2 dial/signal-engine pipeline.
     """
+    from news_classifier import classify_item, relevance_threshold, archive_min  # local import to avoid cycles
+
     matched_articles: List[Dict[str, Any]] = []
+    ticker_buffer: List[Dict[str, Any]] = []
+    archive_buffer: List[Dict[str, Any]] = []
     seen_urls: set = set()
 
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS,
                                  headers={"User-Agent": REDDIT_USER_AGENT}) as http:
         for feed in RSS_FEEDS:
+            if _should_skip_source(feed["source"]):
+                continue
+            status_code: Optional[int] = None
             try:
                 r = await http.get(feed["url"])
+                status_code = r.status_code
                 r.raise_for_status()
                 xml_text = r.text
+                _record_rss_outcome(feed["source"], ok=True)
+            except httpx.HTTPStatusError as e:
+                _record_rss_outcome(feed["source"], ok=False, status=e.response.status_code)
+                logger.warning("RSS fetch failed for %s: HTTP %s", feed["source"], e.response.status_code)
+                continue
             except Exception as e:
+                _record_rss_outcome(feed["source"], ok=False, status=status_code)
                 logger.warning("RSS fetch failed for %s: %s", feed["source"], e)
                 continue
 
             items = _parse_rss(xml_text)
             for it in items:
-                title_l = (it.get("title") or "").lower()
-                kw_hits = [kw for kw in NEWS_KEYWORDS if kw.lower() in title_l]
-                if not kw_hits:
-                    continue
-                # Strip Google News URL wrapping so dedup hits real article
-                # URLs (Google wraps as /url?... but their RSS uses direct
-                # publisher links — we still normalize to be safe).
                 url = (it.get("url") or "").strip()
                 if not url or url in seen_urls:
                     continue
                 seen_urls.add(url)
-                matched_articles.append({
-                    "source": feed["source"],
-                    "title": it["title"],
-                    "url": url,
-                    "published": it["published"],
-                    "keywords_matched": kw_hits,
-                })
+                title_l = (it.get("title") or "").lower()
+
+                # Classify everything — feed.category is a hint, classifier
+                # may override based on title content.
+                classified = classify_item(
+                    title=it.get("title") or "",
+                    source=feed["source"],
+                    source_tier=feed.get("tier", 3),
+                    feed_category=feed.get("category"),
+                )
+
+                doc = {
+                    "source":       feed["source"],
+                    "source_tier":  feed.get("tier", 3),
+                    "title":        it.get("title") or "",
+                    "url":          url,
+                    "published":    it.get("published"),
+                    "captured_at":  datetime.now(timezone.utc).isoformat(),
+                    "category":     classified["category"],
+                    "severity":     classified["severity"],
+                    "relevance":    classified["relevance"],
+                    "entity_tags":  classified["entity_tags"],
+                    "verified":     False,
+                }
+
+                if classified["relevance"] >= relevance_threshold():
+                    ticker_buffer.append(doc)
+                elif classified["relevance"] >= archive_min():
+                    archive_buffer.append(doc)
+
+                # Legacy gambling-keyword match kept for back-compat.
+                kw_hits = [kw for kw in NEWS_KEYWORDS if kw.lower() in title_l]
+                if kw_hits:
+                    matched_articles.append({
+                        "source": feed["source"],
+                        "title": it.get("title") or "",
+                        "url": url,
+                        "published": it.get("published"),
+                        "keywords_matched": kw_hits,
+                    })
+
+    # Cross-source corroboration — items sharing first-6-words across 2+
+    # sources are flagged verified.
+    if ticker_buffer:
+        await _mark_cross_source_verified(ticker_buffer)
+        await _upsert_ticker_items(db, ticker_buffer)
+    if archive_buffer:
+        await _upsert_archive_items(db, archive_buffer)
 
     doc = {
         "captured_at": datetime.now(timezone.utc),
@@ -396,7 +497,79 @@ async def rss_tick(db) -> Dict[str, Any]:
         "matched_articles": matched_articles,
     }
     await db.news_signals.insert_one(dict(doc))
-    return {"matched_count": len(matched_articles)}
+    return {
+        "matched_count":  len(matched_articles),
+        "ticker_count":   len(ticker_buffer),
+        "archive_count":  len(archive_buffer),
+        "tripped_sources": [s for s, st in _RSS_FAILURES.items() if st.get("paused_until")],
+    }
+
+
+# Cross-source corroboration + ticker collection helpers ------------------------
+
+def _title_signature(title: str) -> str:
+    """First 6 normalised tokens used as a coarse signature for dedup/verify."""
+    import re
+    norm = re.sub(r"[^\w\s]", " ", (title or "").lower())
+    parts = [p for p in norm.split() if p]
+    return " ".join(parts[:6])
+
+
+async def _mark_cross_source_verified(items: List[Dict[str, Any]]) -> None:
+    """Items whose 6-token signature appears across 2+ distinct sources
+    within this batch get verified=True."""
+    sig_sources: Dict[str, set] = {}
+    for it in items:
+        sig = _title_signature(it.get("title") or "")
+        if not sig:
+            continue
+        sig_sources.setdefault(sig, set()).add(it.get("source"))
+    verified_sigs = {s for s, src in sig_sources.items() if len(src) >= 2}
+    for it in items:
+        if _title_signature(it.get("title") or "") in verified_sigs:
+            it["verified"] = True
+
+
+async def _upsert_ticker_items(db, items: List[Dict[str, Any]]) -> None:
+    coll = db.news_ticker_items
+    try:
+        await coll.create_index("url", unique=True)
+        await coll.create_index("captured_at")
+        # 7-day TTL on captured_at.
+        await coll.create_index("expires_at", expireAfterSeconds=0)
+    except Exception:
+        pass
+    now = datetime.now(timezone.utc)
+    expiry = now + timedelta(days=7)
+    for it in items:
+        try:
+            await coll.update_one(
+                {"url": it["url"]},
+                {"$set": {**it, "expires_at": expiry}},
+                upsert=True,
+            )
+        except Exception as e:
+            logger.debug("ticker upsert skip %s: %s", it.get("url"), e)
+
+
+async def _upsert_archive_items(db, items: List[Dict[str, Any]]) -> None:
+    coll = db.news_ticker_archive
+    try:
+        await coll.create_index("url", unique=True)
+        await coll.create_index("captured_at")
+        await coll.create_index("expires_at", expireAfterSeconds=0)
+    except Exception:
+        pass
+    expiry = datetime.now(timezone.utc) + timedelta(days=30)
+    for it in items:
+        try:
+            await coll.update_one(
+                {"url": it["url"]},
+                {"$set": {**it, "expires_at": expiry}},
+                upsert=True,
+            )
+        except Exception:
+            pass
 
 
 # ─────────────────────── F1 poller (Ergast public API) ───────────────────────

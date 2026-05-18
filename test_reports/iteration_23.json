@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 23 — Phase 1 PUTKI HQ homepage restructure end-to-end. Backend 17/17 pytest passed (test_iter23_phase1.py): /api/news/ticker shape + relevance gate, /api/odds/featured nested sharpness object + _avg_implied_now stripped, /api/odds/market-watch shape, /api/subscribe/dial-alerts accepts all 11 min_state values (VIPINÄ/MEININKI/PERKELE/ACTIVE/ROLLING + legacy WARM/RUSH/JACKPOT/TULOSSA/VOITTOPUTKI/RYÖSTÖPUTKI) and rejects unknown. Frontend verified live on https://pelisignaali-fi.preview.emergentagent.com: header has 0 nav-link-* test-ids, only logo + lang-toggle + theme-toggle. NewsTicker renders 80 ticker items (40 unique x 2 duplicated for marquee loop) inside .news-ticker-track. Hero shows 'MITTARI IS ROLLING.' (EN) and 'Scene is rolling. 90 streams, 2,736 viewers. News cycle elevated.' Language toggle flips to FI: 'Skenessä on meininkiä. 90 striimiä, 2 736 katsojaa. Uutiskello kiihtynyt.' Page contains no 'WIN PULSE' / 'RUSH' / 'DRY' anywhere; cockpit-context/cockpit-paasyy/activity-stats/live-data-ticker test-ids all absent. Picks section renders paivan-vitoset + daily-market-watch (Sharpness 72/100 — Markets are mixed) + market-watch-sparkline SVG + 5 sharpness-bar rows + 5 pick cards + track-record line. Expanding pick-card-0 reveals disclosure with the exact text 'PUTKI HQ does not place bets. This is editorial analysis of market consensus.' Footer source + editorial disclosures present with verbatim required text. PhaseOneDiscoveryRow with all 4 links pointing at the correct routes. /menetelma renders both new sections (Käytetty teknologia + Sharpness — kaava / formula) with the verbatim Sharpness formula in a <pre> block and all four band thresholds (90/75/60/40). /ehdot renders ehdot-section-editorial + ehdot-section-technology + ehdot-menetelma-link; technology card mentions 'uses artificial intelligence' (EN).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter23_phase1.py",
+    "/app/test_reports/pytest/iter23_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "newsroom_router.py:39 — min_state regex now accepts 11 values (5 new + 6 legacy). Consider documenting which are deprecated to avoid drift; current set is internally consistent but mixes brand-name states (PERKELE) with verb-style legacy (RYÖSTÖPUTKI).",
+    "NewsTicker — track duplicates items for seamless marquee loop (80 rendered for 40 unique). data-testid='news-ticker-item-{i}' will collide on duplicates. Acceptable for display but breaks if tests assume unique testids per article.",
+    "Sharpness components.recency_momentum currently defaults to 50.0 for all picks (has_momentum_history=false for every pick) because there is no 24h snapshot history yet. Once sharpness_daily back-fills, momentum will start moving — expected behavior, just flagging that the field is effectively inert at launch."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter23_phase1.py (NEW)",
+    "/app/test_reports/pytest/iter23_results.xml (NEW)",
+    "/app/test_reports/iteration_23.json (NEW)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "BACK_OFFICE_TOKEN=putki-hq-admin (not needed — all tested endpoints are public).",
+  "seed_data_creation": "Created 11 TEST_iter23_* dial subscriptions in db.dial_subscriptions (one per min_state value) via /api/subscribe/dial-alerts. Idempotency-safe (status='created' first run, 'updated' on rerun).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 1 work is fully verified — header simplification, MITTARI brand + 5 new state names + colors, NewsTicker with 12 RSS sources + circuit breaker, Picks rebuilt with Sharpness, market-watch endpoint + sparkline, footer disclosures, PhaseOneDiscoveryRow, /menetelma teknologia+formula sections, /ehdot page, lang toggle, _avg_implied_now stripped. Backend test file at /app/backend/tests/test_iter23_phase1.py. NOT YET SHIPPED (do not test): Sprint 4 Mittari polish (cached share OG image at state-change, streak counter, /m/{state-slug}-{date} permalink), Sprint 3.b news carousel beside dial. Pre-existing unrelated failures in test_phase4_w1_layer2 and test_phase4_w2_content_generator are NOT phase-1 related. The dial state at test time was ROLLING (composite 76); the 5 plain-language readings are state-dependent so future runs may show CALM/BUZZ/ACTIVE/MEININKI/PERKELE — assertions on the dial-reading text should be tolerant to any of the 5 keys."
+}

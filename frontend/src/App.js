@@ -7,6 +7,7 @@ import CasinoRanking from "@/pages/CasinoRanking";
 import StreamerProfile from "@/pages/StreamerProfile";
 import StreamerIndex from "@/pages/StreamerIndex";
 import Methodology from "@/pages/Methodology";
+import Ehdot from "@/pages/Ehdot";
 import ColdEmailLanding from "@/pages/ColdEmailLanding";
 import Signup from "@/pages/Signup";
 import MiniGame from "@/pages/MiniGame";
@@ -68,6 +69,7 @@ function App() {
             <Route path="striimaajat/kansainvaliset" element={<StreamerIntl />} />
             <Route path="striimaajat/:slug" element={<StreamerProfile />} />
             <Route path="menetelma" element={<Methodology />} />
+            <Route path="ehdot" element={<Ehdot />} />
             <Route path="toimitus" element={<Toimitus />} />
             <Route path="peli" element={<Peli />} />
             <Route path="peli/legacy" element={<MiniGame />} />

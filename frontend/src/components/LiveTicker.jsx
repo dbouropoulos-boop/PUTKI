@@ -32,7 +32,9 @@ export const LiveTicker = () => {
   const stateLabel = state?.key
     ? dialLabel(state.key, lang)
     : (lang === 'en' ? 'NO SIGNAL' : 'EI SIGNAALIA');
-  const stateColor = state?.color || 'var(--muted)';
+  // Phase 1 (Section 3b): top ticker uses muted slate dots, not state colors.
+  // The full Phase 2 news ticker will replace this strip entirely.
+  const stateColor = 'var(--muted)';
   const composite = typeof data?.composite_score === 'number' ? Math.round(data.composite_score) : null;
   const drivers = data?.primary_driver_label
     ? [data.primary_driver_label[lang] || data.primary_driver_label.fi]
@@ -48,11 +50,11 @@ export const LiveTicker = () => {
     label: `${meterWord} · ${stateLabel}${composite != null ? ` ${composite}` : ''}`,
   });
   if (drivers.length) {
-    items.push({ color: 'var(--brand-blue)', label: `${lang === 'en' ? 'DRIVER' : 'PÄÄSYY'} · ${drivers[0]}` });
+    items.push({ color: 'var(--muted)', label: `${lang === 'en' ? 'DRIVER' : 'PÄÄSYY'} · ${drivers[0]}` });
   }
   if (lastSpike?.text) {
     const snippet = String(lastSpike.text).slice(0, 80).replace(/\s+\S*$/, '');
-    items.push({ color: '#E8924A', label: `${lang === 'en' ? 'LATEST' : 'VIIMEISIN'} · ${snippet}…` });
+    items.push({ color: 'var(--muted)', label: `${lang === 'en' ? 'LATEST' : 'VIIMEISIN'} · ${snippet}…` });
   }
   if (!anyReal) {
     items.push({

@@ -250,7 +250,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         style={{ fontSize: 9.5, letterSpacing: '0.32em', color: 'var(--muted)', fontWeight: 500, opacity: 0.55, marginBottom: 6 }}
         data-testid="cockpit-makers-mark"
       >
-        <span style={{ fontStyle: 'italic' }}>{lang === 'en' ? 'win-pulse' : 'perkele-mittari'}</span>
+        <span style={{ fontStyle: 'italic' }}>{lang === 'en' ? 'mittari' : 'perkele-mittari'}</span>
       </div>
       <div className="mono mb-8 inline-flex items-center gap-3 flex-wrap justify-center"
         style={{ fontSize: compact ? 13 : 15, letterSpacing: '0.18em', color: 'var(--ink)', fontWeight: 800, marginBottom: compact ? 14 : 26 }}
@@ -266,7 +266,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
             transition: 'background 400ms ease, box-shadow 400ms ease',
           }}
         />
-        {lang === 'en' ? 'WIN PULSE' : 'P*RKELE-MITTARI'}
+        {lang === 'en' ? 'MITTARI' : 'PERKELE-MITTARI'}
         <DialHelp />
         <span style={{ color: 'var(--border-strong)' }}>·</span>
         <span style={{ color: 'var(--muted)', fontWeight: 500, letterSpacing: '0.28em', fontSize: 11 }}>{weekday.toUpperCase()} {t('time.month_day', { day })} · {t(todKey)}</span>

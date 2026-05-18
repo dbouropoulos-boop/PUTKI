@@ -19,15 +19,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Mail, MessageCircle, Smartphone, Trophy, Gift } from 'lucide-react';
-import LiveDataTicker from '../components/LiveDataTicker';
-import TrustStrip from '../components/TrustStrip';
 import DialCockpit from '../components/DialCockpit';
 import MostReadRail from '../components/MostReadRail';
 import DialSubscriptionCTA from '../components/DialSubscriptionCTA';
 import LiveActivityFeed from '../components/LiveActivityFeed';
 import StreamerLiveGrid from '../components/StreamerLiveGrid';
 import PaivaVitoset from '../components/PaivaVitoset';
-import ActivityStats from '../components/ActivityStats';
 import SocialProofBar from '../components/SocialProofBar';
 import StickyTelegramCTA from '../components/StickyTelegramCTA';
 import WinnersCorner from '../components/WinnersCorner';
@@ -35,70 +32,35 @@ import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
 import ShareButton from '../components/ShareButton';
+import PhaseOneDiscoveryRow from '../components/PhaseOneDiscoveryRow';
+import { dialReading } from '../constants/dial';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const isHotState = (state) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(state);
 
+// State headlines — short Bloomberg-rhythm reading for the dial section.
+// Per Section 13c of the Phase 1 brief. Plain-language explanations live
+// in dialReading() in constants/dial.js (consumes live streams + viewers).
 const STATE_HEADLINES_FI = {
-  KYLMA:      'Mittari on TYPÖTYHJÄ. Voittoja ei nyt rapise.',
-  HAALEA:     'Mittari on NIHKEÄ. Pieniä osumia, ei isoja.',
-  KUUMA:      'Mittari on TULOSSA. Voittoja alkaa tippua.',
-  MYRSKY:     'Mittari on VOITTOPUTKI. Klippejä syntyy joka kierroksella.',
-  KIIRASTULI: 'Mittari on RYÖSTÖPUTKI. Älä katso pois.',
+  KYLMA:      'Mittari on TYYNI.',
+  HAALEA:     'Mittari on VIRE.',
+  KUUMA:      'Mittari on VIPINÄ.',
+  MYRSKY:     'Mittari on MEININKI.',
+  KIIRASTULI: 'Mittari on PERKELE.',
 };
 const STATE_HEADLINES_EN = {
-  KYLMA:      'WIN PULSE: DRY. No payouts dripping right now.',
-  HAALEA:     'WIN PULSE: SLOW. Small hits only, nothing big.',
-  KUUMA:      'WIN PULSE: WARM. Wins starting to drop.',
-  MYRSKY:     'WIN PULSE: RUSH. Clips spawning every spin.',
-  KIIRASTULI: 'WIN PULSE: JACKPOT. Don\u2019t look away.',
+  KYLMA:      'Mittari is CALM.',
+  HAALEA:     'Mittari is BUZZ.',
+  KUUMA:      'Mittari is ACTIVE.',
+  MYRSKY:     'Mittari is ROLLING.',
+  KIIRASTULI: 'Mittari is PERKELE.',
 };
 
-// CockpitContext — primary driver + last spike under the dial. 30 s poll.
-const CockpitContext = ({ lang }) => {
-  const [data, setData] = useState(null);
-  useEffect(() => {
-    let cancelled = false;
-    const fetchOnce = async () => {
-      try {
-        const r = await fetch(`${BACKEND}/api/cockpit`);
-        if (!r.ok) return;
-        const d = await r.json();
-        if (!cancelled) setData(d);
-      } catch {}
-    };
-    fetchOnce();
-    const id = setInterval(fetchOnce, 30000);
-    return () => { cancelled = true; clearInterval(id); };
-  }, []);
-
-  if (!data) return null;
-  const driverLabel = (data.primary_driver_label && data.primary_driver_label[lang]) || data.primary_driver_label?.fi || '';
-  const spike = data.last_spike;
-
-  return (
-    <div className="mt-4 flex flex-col gap-1.5" data-testid="cockpit-context">
-      {driverLabel && (
-        <div className="mono inline-flex items-center gap-2"
-             style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700 }}
-             data-testid="cockpit-paasyy">
-          <span style={{ color: 'var(--muted)' }}>{lang === 'en' ? 'PRIMARY DRIVER' : 'PÄÄSYY'} ·</span>
-          {driverLabel}
-        </div>
-      )}
-      {spike && spike.text && (
-        <div className="mono inline-flex items-baseline gap-2 max-w-md"
-             style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600, lineHeight: 1.5 }}
-             data-testid="cockpit-viimeisin-piikki">
-          <span style={{ color: '#E8924A' }}>{lang === 'en' ? 'LATEST SPIKE' : 'VIIMEISIN PIIKKI'} ·</span>
-          <span style={{ color: 'var(--ink)' }}>{spike.text.length > 90 ? spike.text.slice(0, 90) + '…' : spike.text}</span>
-        </div>
-      )}
-    </div>
-  );
-};
+// CockpitContext + LiveDataTicker + ActivityStats removed in Phase 1 cleanup
+// per brief Section 12c (single live-status surface; PRIMARY DRIVER strip
+// moves to Phase 2 Explore section if it returns at all).
 
 const SubscriberCount = ({ lang }) => {
   const [n, setN] = useState(null);
@@ -295,10 +257,13 @@ const Home = () => {
   const state = dial?.state?.key || 'KYLMA';
   const hot = isHotState(state);
   const headline = (lang === 'en' ? STATE_HEADLINES_EN : STATE_HEADLINES_FI)[state] || '';
+  const reading = dialReading(state, lang, {
+    streams: liveStats?.twitch_live,
+    viewers: liveStats?.twitch_viewers,
+  });
 
   return (
     <div data-testid="home-page">
-      <LiveDataTicker />
       <UTMBanner />
 
       {/* ZONE 1 — compact top strip: dial top-left, Voyager top-right */}
@@ -323,18 +288,22 @@ const Home = () => {
                 {t('hero.eyebrow').toUpperCase()}
               </div>
               <h1 className="display mb-3"
-                  style={{ fontSize: 'clamp(22px, 2.4vw, 32px)', lineHeight: 1.15, color: 'var(--ink)', maxWidth: 620 }}
+                  style={{ fontSize: 'clamp(22px, 2.4vw, 30px)', lineHeight: 1.15, color: 'var(--ink)', maxWidth: 620, fontWeight: 700 }}
                   data-testid="hero-value-prop">
-                {t('hero.value_prop')}
+                {lang === 'en' ? 'Finland\u2019s scene temperature' : 'Suomen skenen lämpötila'}
               </h1>
               <div className="flex items-center justify-center w-full lg:justify-start">
                 <DialCockpit state={state} compact />
               </div>
-              <CockpitContext lang={lang} />
-              <p className="mono mt-5"
-                 style={{ fontSize: 12, letterSpacing: '0.04em', color: 'var(--muted)', maxWidth: 560, lineHeight: 1.5 }}
+              <p className="font-serif mt-4"
+                 style={{ fontSize: 14.5, color: 'var(--ink)', maxWidth: 560, lineHeight: 1.55 }}
+                 data-testid="hero-dial-reading">
+                {reading}
+              </p>
+              <p className="mono mt-2"
+                 style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', maxWidth: 560, lineHeight: 1.4, fontWeight: 600 }}
                  data-testid="hero-headline">
-                {headline}
+                {headline.toUpperCase()}
               </p>
               <div className="mt-4 flex items-center gap-3 flex-wrap">
                 <a
@@ -372,12 +341,11 @@ const Home = () => {
               </div>
             </div>
 
-            {/* TOP-RIGHT — Phase 4 Pre-Launch Polish: Activity stats only.
-                VoyagerCorner / WIN A PRIZE removed from the homepage per
-                pre-launch spec (route stays, header link hidden). */}
-            <div data-testid="hero-activity-slot" className="flex flex-col gap-4">
-              <ActivityStats />
-            </div>
+            {/* TOP-RIGHT — Phase 1 (Section 3b): The "PUBLISHED CONTENT"
+                stats card is removed. The news carousel that replaces it
+                ships in Sprint 3.b — for now we leave the right column
+                empty so the dial dominates the section per the brief. */}
+            <div data-testid="hero-activity-slot" />
           </div>
         </div>
       </section>
@@ -436,7 +404,7 @@ const Home = () => {
       </div>
 
       <div className="py-10" style={{ borderTop: '1px solid var(--border)' }} data-testid="zone-paivan-vitoset">
-        <PaivaVitoset compact />
+        <PaivaVitoset />
       </div>
 
       <div style={{ borderTop: '1px solid var(--border)' }}>
@@ -454,7 +422,6 @@ const Home = () => {
       </div>
 
       {/* ZONE 5 — capture form */}
-      <TrustStrip />
       <CaptureSection />
 
       {/* Pulssi + Operaattoritapahtumat: HIDDEN until commercial decisions land
@@ -467,6 +434,8 @@ const Home = () => {
           <EditorialFooter byline="PUTKI HQ" readMinutes={2} />
         </div>
       </section>
+
+      <PhaseOneDiscoveryRow />
 
       <StickyTelegramCTA />
     </div>

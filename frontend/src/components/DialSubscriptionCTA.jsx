@@ -2,16 +2,15 @@
  * DialSubscriptionCTA — Editorial Nordic CTA placed UNDER (never inside) the dial.
  *
  * Dial design is untouched. This is a separate panel that rotates its
- * messaging based on the current Win Pulse state:
- *   • DRY / KYLMA      → "Set an alert for when the scene wakes up"
- *   • SLOW / HAALEA    → "Get a daily summary"
- *   • WARM / KUUMA     → "Pulse picking up — get pinged"
- *   • RUSH / MYRSKY    → "Scene rushing — alert me on next surge"
- *   • JACKPOT / KIIRA. → "Scene on fire — don't miss the next clip"
+ * messaging based on the current Mittari state:
+ *   • TYYNI / KYLMA       → "Set an alert for when the scene wakes up"
+ *   • VIRE / HAALEA       → "Get a daily summary"
+ *   • VIPINÄ / KUUMA      → "Scene active — get pinged"
+ *   • MEININKI / MYRSKY   → "Scene rolling — alert me on next surge"
+ *   • PERKELE / KIIRA.    → "Scene perkele — don't miss the next clip"
  *
  * Channels: Telegram (active), SMS (active), Email (active). All three POST
- * to /api/subscribe/dial-alerts. No neon. No gradients. Same panel/border
- * vocabulary as the rest of the homepage.
+ * to /api/subscribe/dial-alerts.
  */
 import React, { useState } from 'react';
 import { Bell, Send, Mail, MessageSquare, Loader2, Check, X, Flame, Zap, Lightbulb, Snowflake, Trophy } from 'lucide-react';
@@ -20,11 +19,11 @@ import { useLang } from '../context/LanguageContext';
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const STATE_CONFIG = {
-  KIIRASTULI: { icon: Trophy,    color: '#8B1E1A', tone: 'jackpot' },
-  MYRSKY:     { icon: Flame,     color: '#C8423C', tone: 'rush' },
-  KUUMA:      { icon: Zap,       color: '#E8924A', tone: 'warm' },
-  HAALEA:     { icon: Lightbulb, color: '#7A7E83', tone: 'slow' },
-  KYLMA:      { icon: Snowflake, color: '#2C5F8D', tone: 'dry' },
+  KIIRASTULI: { icon: Trophy,    color: '#C13B2C', tone: 'jackpot' },
+  MYRSKY:     { icon: Flame,     color: '#C97A3A', tone: 'rush' },
+  KUUMA:      { icon: Zap,       color: '#D4B445', tone: 'warm' },
+  HAALEA:     { icon: Lightbulb, color: '#6FA37D', tone: 'slow' },
+  KYLMA:      { icon: Snowflake, color: '#5C8A8A', tone: 'dry' },
 };
 
 const ChannelButton = ({ icon: Icon, label, color, onClick, testid }) => (
@@ -61,7 +60,7 @@ const SubscribeModal = ({ channel, lang, t, onClose }) => {
       const r = await fetch(`${BACKEND}/api/subscribe/dial-alerts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channel, contact, min_state: 'RUSH' }),
+        body: JSON.stringify({ channel, contact, min_state: 'MEININKI' }),
       });
       if (!r.ok) {
         const d = await r.json().catch(() => ({}));

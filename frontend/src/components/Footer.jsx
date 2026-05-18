@@ -74,20 +74,27 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="section-rule mt-10 pt-6 flex flex-col sm:flex-row justify-between gap-3 mono text-[10.5px]" style={{ letterSpacing: '0.12em', color: 'var(--muted)' }}>
-          <span>© {new Date().getFullYear()} PUTKIHQ.FI · {t('footer.indep')}</span>
-          <span className="inline-flex items-center gap-3">
-            {t('footer.warning')}
+        <div className="section-rule mt-10 pt-6 flex flex-col gap-3 mono text-[10.5px]"
+             style={{ letterSpacing: '0.12em', color: 'var(--muted)' }}>
+          <span data-testid="footer-source-disclosure">
+            {t('footer.source_disclosure')}
+          </span>
+          <span data-testid="footer-editorial-disclosure">
+            {t('footer.editorial_disclosure')}
+          </span>
+          <div className="flex flex-col sm:flex-row justify-between gap-3 pt-3"
+               style={{ borderTop: '1px solid var(--border)' }}>
+            <span>© {new Date().getFullYear()} PUTKIHQ.FI · {t('footer.indep')}</span>
             <Link
               to="/back-office"
               aria-label={t('footer.admin_gear')}
               data-testid="footer-admin-gear"
-              className="hover:opacity-100 transition-opacity"
-              style={{ color: 'var(--muted)', opacity: 0.35, display: 'inline-flex' }}
+              className="hover:opacity-100 transition-opacity inline-flex"
+              style={{ color: 'var(--muted)', opacity: 0.35 }}
             >
               <Settings strokeWidth={1.4} size={13} />
             </Link>
-          </span>
+          </div>
         </div>
       </div>
     </footer>

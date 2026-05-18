@@ -16,11 +16,11 @@ const isHotState = (s) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(s);
 const STATE_ORDER = ['KYLMA', 'HAALEA', 'KUUMA', 'MYRSKY', 'KIIRASTULI'];
 
 const ARC_COLORS = {
-  KYLMA:      '#2C5F8D',
-  HAALEA:     '#7A7E83',
-  KUUMA:      '#E8924A',
-  MYRSKY:     '#C8423C',
-  KIIRASTULI: '#8B1E1A',
+  KYLMA:      '#5C8A8A',
+  HAALEA:     '#6FA37D',
+  KUUMA:      '#D4B445',
+  MYRSKY:     '#C97A3A',
+  KIIRASTULI: '#C13B2C',
 };
 
 // Arc geometry: 240° sweep, starting at -210° (lower-left) to 30° (lower-right)
