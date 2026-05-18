@@ -674,6 +674,35 @@ async def public_streamers_live(platform: Optional[str] = None):
     raise HTTPException(status_code=400, detail="unknown platform")
 
 
+@api_router.get("/streamers/roster_summary")
+async def public_streamers_roster_summary():
+    """Lightweight summary of the streamer roster for the SocialProofBar.
+
+    Returns the TOTAL number of streamers we track (across all platforms) +
+    how many are currently live + per-platform breakdown. This is what
+    visitors should see — "tracked" is the meaningful number, not just
+    "live right now."""
+    # tracked = whole registry, not roster_size of currently-live snapshot
+    tracked_total = await db.streamers.count_documents({})
+    by_platform: Dict[str, int] = {}
+    cursor = db.streamers.find({}, {"_id": 0, "platform": 1})
+    async for s in cursor:
+        p = (s.get("platform") or "twitch").lower()
+        by_platform[p] = by_platform.get(p, 0) + 1
+    # live count — best-effort from public_stats cache (Twitch FI scene)
+    try:
+        from public_stats import get_live_stats
+        stats = await get_live_stats(db)
+        live = int(stats.get("twitch_live", 0) or 0)
+    except Exception:
+        live = 0
+    return {
+        "tracked_total": tracked_total,
+        "by_platform": by_platform,
+        "live": live,
+    }
+
+
 # ── Phase 4 Pre-Launch Polish · Streamer Alert subscriptions ──
 
 class StreamerAlertIn(BaseModel):

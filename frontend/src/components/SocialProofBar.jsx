@@ -22,7 +22,7 @@ const SocialProofBar = () => {
   const [subs, setSubs]     = useState(null);
   const [stats, setStats]   = useState(null);
   const [picks, setPicks]   = useState(null);
-  const [streamers, setStreamers] = useState(null);
+  const [roster, setRoster] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,21 +31,27 @@ const SocialProofBar = () => {
       J(`${BACKEND}/api/signup/count`),
       J(`${BACKEND}/api/data/live-stats`),
       J(`${BACKEND}/api/odds/featured`),
-      J(`${BACKEND}/api/streamers/live`),
+      J(`${BACKEND}/api/streamers/roster_summary`),
     ]).then(([sg, st, pk, sm]) => {
       if (cancelled) return;
       setSubs(sg?.count);
       setStats(st);
       setPicks((pk?.picks || []).length);
-      setStreamers((sm?.streamers || []).length);
+      setRoster(sm);
     });
     return () => { cancelled = true; };
   }, []);
 
+  const trackedCount = roster?.tracked_total ?? 0;
+  const liveCount = roster?.live ?? 0;
+  const streamerValue = liveCount > 0
+    ? `${trackedCount} · ${liveCount} ${lang === 'en' ? 'live' : 'live'}`
+    : `${trackedCount}`;
+
   const items = [
     { icon: Send,       value: fmt(subs ?? 0, lang),                                label: t('social.subscribers'),       color: '#229ED9' },
     { icon: FileText,   value: fmt(stats?.articles_published_today ?? 0, lang),     label: t('social.articles_today'),    color: '#E8924A' },
-    { icon: Tv,         value: fmt(streamers ?? 0, lang),                           label: t('social.streamers_tracked'), color: '#9146FF' },
+    { icon: Tv,         value: streamerValue,                                       label: t('social.streamers_tracked'), color: '#9146FF' },
     { icon: TrendingUp, value: fmt(picks ?? 0, lang),                               label: t('social.picks_live'),        color: '#2c7a4b' },
   ];
 

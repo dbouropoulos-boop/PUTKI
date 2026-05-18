@@ -53,15 +53,23 @@ def _store(platform: str, payload: Dict[str, Any]) -> None:
 
 async def _fetch_kick_channel(login: str) -> Optional[Dict[str, Any]]:
     """Hit kick.com/api/v2/channels/{login} and return normalised live entry
-    if the channel is currently live, else None.
-    Public endpoint, no auth needed. Some Kick channels return 403 if rate
-    limited — we swallow and skip."""
+    if the channel is currently live, else None. Returns the string
+    "blocked" when Kick's Cloudflare layer rejects the request — caller
+    uses this to flag the whole platform as dormant rather than silently
+    returning empty.
+    Public endpoint, no auth needed.
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://kick.com/",
+    }
     try:
-        async with httpx.AsyncClient(timeout=8.0) as http:
-            r = await http.get(
-                f"https://kick.com/api/v2/channels/{login}",
-                headers={"User-Agent": "PutkiHQ/1.0"},
-            )
+        async with httpx.AsyncClient(timeout=8.0, follow_redirects=True) as http:
+            r = await http.get(f"https://kick.com/api/v2/channels/{login}", headers=headers)
+            if r.status_code == 403 or r.status_code == 429:
+                return "blocked"
             if r.status_code != 200:
                 return None
             data = r.json()
@@ -121,10 +129,19 @@ async def fetch_kick_live(db) -> Dict[str, Any]:
             *[_fetch_kick_channel(login) for login in logins],
             return_exceptions=True,
         )
+        # If all probes came back as "blocked", surface that as dormant so
+        # the UI can show an honest "Kick API unavailable" message instead
+        # of a silently empty grid.
+        all_blocked = bool(results) and all(r == "blocked" for r in results)
         live = [r for r in results if isinstance(r, dict)]
         live.sort(key=lambda r: -(r.get("viewer_count") or 0))
-        payload = {"streamers": live, "platform": "kick", "count": len(live),
-                   "dormant": False, "fetched_at": _now()}
+        if all_blocked and not live:
+            payload = {"streamers": [], "platform": "kick", "count": 0,
+                       "dormant": True, "reason": "kick_api_blocked",
+                       "fetched_at": _now()}
+        else:
+            payload = {"streamers": live, "platform": "kick", "count": len(live),
+                       "dormant": False, "fetched_at": _now()}
         _store("kick", payload)
         return payload
 

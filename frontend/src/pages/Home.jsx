@@ -40,18 +40,18 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const isHotState = (state) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(state);
 
 const STATE_HEADLINES_FI = {
-  KYLMA:      'Mittari on KYLMÄ. Skene nukkuu.',
-  HAALEA:     'Mittari on HAALEA. Tasaista taustakohinaa.',
-  KUUMA:      'Mittari on KUUMA. Slot-skene lämpenee illaksi.',
-  MYRSKY:     'Mittari on MYRSKY. Striimit täynnä, klippejä syntyy.',
-  KIIRASTULI: 'Mittari on KIIRASTULI. Älä katso pois.',
+  KYLMA:      'Mittari on TYPÖTYHJÄ. Voittoja ei nyt rapise.',
+  HAALEA:     'Mittari on NIHKEÄ. Pieniä osumia, ei isoja.',
+  KUUMA:      'Mittari on TULOSSA. Voittoja alkaa tippua.',
+  MYRSKY:     'Mittari on VOITTOPUTKI. Klippejä syntyy joka kierroksella.',
+  KIIRASTULI: 'Mittari on RYÖSTÖPUTKI. Älä katso pois.',
 };
 const STATE_HEADLINES_EN = {
-  KYLMA:      'The meter is COLD. The scene is asleep.',
-  HAALEA:     'The meter is LUKEWARM. Steady background hum.',
-  KUUMA:      'The meter is HOT. The slot scene is warming up for tonight.',
-  MYRSKY:     'The meter is STORM. Streams packed, clips spawning.',
-  KIIRASTULI: 'The meter is FRENZY. Don\u2019t look away.',
+  KYLMA:      'WIN PULSE: DRY. No payouts dripping right now.',
+  HAALEA:     'WIN PULSE: SLOW. Small hits only, nothing big.',
+  KUUMA:      'WIN PULSE: WARM. Wins starting to drop.',
+  MYRSKY:     'WIN PULSE: RUSH. Clips spawning every spin.',
+  KIIRASTULI: 'WIN PULSE: JACKPOT. Don\u2019t look away.',
 };
 
 // CockpitContext — primary driver + last spike under the dial. 30 s poll.

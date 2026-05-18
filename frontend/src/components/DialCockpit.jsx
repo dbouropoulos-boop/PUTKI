@@ -244,18 +244,16 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         {lang === 'en' ? 'LAST UPDATE' : 'VIIMEISIN PÄIVITYS'} · {lastUpdateLabel || (lang === 'en' ? '— AGO' : '— SITTEN')}
       </div>
       {/* Premium trading-dashboard eyebrow — date/time on the left, live SSE
-          indicator on the right. "Perkele-mittari" reads as a faint maker's
-          mark above the primary label rather than the main brand line. */}
+          indicator on the right. The brand stays as a faint maker's mark above
+          the primary mode label so it doesn't compete with the active state. */}
       <div className="mono mb-3 inline-flex items-center gap-3"
         style={{ fontSize: 9.5, letterSpacing: '0.32em', color: 'var(--muted)', fontWeight: 500, opacity: 0.55, marginBottom: 6 }}
         data-testid="cockpit-makers-mark"
       >
-        <span style={{ fontStyle: 'italic' }}>{lang === 'en' ? 'scene-heat' : 'perkele-mittari'}</span>
-        <span style={{ color: 'var(--border-strong)' }}>·</span>
-        <span>v4</span>
+        <span style={{ fontStyle: 'italic' }}>{lang === 'en' ? 'win-pulse' : 'perkele-mittari'}</span>
       </div>
       <div className="mono mb-8 inline-flex items-center gap-3 flex-wrap justify-center"
-        style={{ fontSize: 11, letterSpacing: '0.28em', color: 'var(--ink)', fontWeight: 700, marginBottom: compact ? 14 : 26 }}
+        style={{ fontSize: compact ? 13 : 15, letterSpacing: '0.18em', color: 'var(--ink)', fontWeight: 800, marginBottom: compact ? 14 : 26 }}
         data-testid="cockpit-mode-label"
       >
         <span
@@ -268,12 +266,10 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
             transition: 'background 400ms ease, box-shadow 400ms ease',
           }}
         />
-        {lang === 'en' ? 'SCENE TEMPERATURE' : 'SKENEN LÄMPÖTILA'}
-        <span style={{ color: 'var(--border-strong)' }}>·</span>
-        {lang === 'en' ? 'PUTKI HQ METER' : 'PUTKI HQ MITTARI'}
+        {lang === 'en' ? 'WIN PULSE' : 'P*RKELE-MITTARI'}
         <DialHelp />
         <span style={{ color: 'var(--border-strong)' }}>·</span>
-        <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{weekday.toUpperCase()} {t('time.month_day', { day })} · {t(todKey)}</span>
+        <span style={{ color: 'var(--muted)', fontWeight: 500, letterSpacing: '0.28em', fontSize: 11 }}>{weekday.toUpperCase()} {t('time.month_day', { day })} · {t(todKey)}</span>
       </div>
 
       <div className="hidden md:grid w-full" style={{ gridTemplateColumns: '1fr auto 1fr', gap: compact ? 20 : 32, alignItems: 'center' }}>

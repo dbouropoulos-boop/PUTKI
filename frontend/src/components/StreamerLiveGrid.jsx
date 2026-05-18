@@ -287,12 +287,20 @@ const StreamerLiveGrid = () => {
       </div>
 
       {dormant ? (
-        <div className="panel p-8 text-center mono"
-             style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
+        <div className="panel p-8 text-center"
              data-testid="streamer-live-dormant">
-          {(active.reason || '').includes('not_configured')
-            ? `${platform.toUpperCase()} · ${t('streamer_live.dormant_key').toUpperCase()}`
-            : `${t('streamer_live.empty').toUpperCase()} · ${platform.toUpperCase()}`}
+          <div className="mono mb-2" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+            {platform.toUpperCase()} · {(active.reason || '').includes('blocked')
+              ? (t('streamer_live.dormant_blocked') || 'API TEMPORARILY UNAVAILABLE').toUpperCase()
+              : (active.reason || '').includes('not_configured')
+                ? t('streamer_live.dormant_key').toUpperCase()
+                : t('streamer_live.empty').toUpperCase()}
+          </div>
+          <p className="font-serif" style={{ fontSize: 13, color: 'var(--muted)', maxWidth: 480, margin: '0 auto', lineHeight: 1.55 }}>
+            {(active.reason || '').includes('blocked')
+              ? (t('streamer_live.dormant_blocked_body') || 'Kick API is currently rate-limiting server-side requests. Our roster is intact — we\u2019ll reconnect once their endpoint reopens.')
+              : t('empty.no_streams_body')}
+          </p>
         </div>
       ) : streamers.length === 0 ? (
         <div className="panel p-8 text-center"

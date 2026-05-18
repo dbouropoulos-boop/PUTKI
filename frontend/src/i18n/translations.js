@@ -4,7 +4,7 @@
 export const translations = {
   fi: {
     // Hero conversion (Batch A)
-    'hero.eyebrow':          'PUTKI HQ · Suomi · live signaalit',
+    'hero.eyebrow':          'PUTKI HQ · Helsinki · live signaalit',
     'hero.value_prop':       'Suomenkielisten striimaajien, vedonlyönnin ja sääntelyn live-signaalit — ennen kuin muut huomaavat.',
     'hero.cta_primary':      'Aseta hälytys',
     'hero.cta_secondary':    'Katso menetelmä →',
@@ -68,6 +68,8 @@ export const translations = {
     'streamer_live.title':          'Striimit livenä',
     'streamer_live.empty':          'Ei livelähetyksiä juuri nyt',
     'streamer_live.dormant_key':    'Integraatio odottaa avainta',
+    'streamer_live.dormant_blocked':'API VÄLIAIKAISESTI EI KÄYTETTÄVISSÄ',
+    'streamer_live.dormant_blocked_body': 'Kickin julkinen API rajoittaa palvelinpyyntöjä juuri nyt. Striimaajaroskaa ei ole — yhteys palautuu, kun heidän päätepiste avautuu uudelleen.',
     'streamer_live.view_all':       'Kaikki striimit',
     'streamer_live.live_count':     'livenä',
     'streamer_live.set_alert':      'Aseta hälytys',
@@ -185,7 +187,7 @@ export const translations = {
     // Winners Corner
     'winners.eyebrow':       'PUTKI HQ · viimeisimmät osumat',
     'winners.title':         'Voittojen kulma',
-    'winners.empty':         'Track record alkaa tästä viikosta — seuraa Telegramissa.',
+    'winners.empty':         'Viimeisimmät vahvistetut osumat — toimituksen valikoituja vihjeitä, päivittyy viikoittain.',
     'winners.units':         '+{u}u',
     'winners.see_all':       'Katso koko track record →',
 
@@ -637,7 +639,7 @@ export const translations = {
 
   en: {
     // Hero conversion (Batch A)
-    'hero.eyebrow':          'PUTKI HQ · Finland · live signals',
+    'hero.eyebrow':          'PUTKI HQ · Helsinki · live signals',
     'hero.value_prop':       'Live signals on Finnish streamers, betting and regulation — before anyone else notices.',
     'hero.cta_primary':      'Set alert',
     'hero.cta_secondary':    'See method →',
@@ -700,6 +702,8 @@ export const translations = {
     'streamer_live.title':          'Streams live',
     'streamer_live.empty':          'No live streams right now',
     'streamer_live.dormant_key':    'Integration awaiting API key',
+    'streamer_live.dormant_blocked':'API TEMPORARILY UNAVAILABLE',
+    'streamer_live.dormant_blocked_body': 'Kick\u2019s public API is rate-limiting server-side requests right now. Our roster is intact — we\u2019ll reconnect once their endpoint reopens.',
     'streamer_live.view_all':       'All streams',
     'streamer_live.live_count':     'live',
     'streamer_live.set_alert':      'Set alert',
@@ -817,7 +821,7 @@ export const translations = {
     // Winners Corner
     'winners.eyebrow':       'PUTKI HQ · recent hits',
     'winners.title':         'Winners corner',
-    'winners.empty':         'Track record begins this week — follow on Telegram.',
+    'winners.empty':         'Most recent verified hits — editorial-selected tips, updated weekly.',
     'winners.units':         '+{u}u',
     'winners.see_all':       'See full track record →',
 
@@ -971,8 +975,8 @@ export const translations = {
     'common.offer':          'Offer',
     'common.offer_caps':     'OFFER',
     'common.score_label':    'MITTARI',
-    'common.dial_brand':     'SCENE HEAT',
-    'common.methodology':    'SCENE HEAT SCORE',
+    'common.dial_brand':     'WIN PULSE',
+    'common.methodology':    'WIN PULSE SCORE',
     'common.read_methodology': 'Read how we score →',
     'common.editorial':      'Editorial',
     'common.related':        'Alternatives',

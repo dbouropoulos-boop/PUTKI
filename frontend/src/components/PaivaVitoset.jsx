@@ -52,7 +52,7 @@ const PickRow = ({ p, idx, lang, t }) => {
   return (
     <li
       data-testid={`paivan-vitonen-${idx}`}
-      className="grid items-center gap-3 py-4 px-4 sm:px-5"
+      className="grid items-center gap-3 py-2.5 px-4 sm:px-5"
       style={{
         gridTemplateColumns: 'auto minmax(0, 1fr) auto',
         borderTop: idx === 0 ? 'none' : '1px solid var(--border)',
@@ -63,10 +63,10 @@ const PickRow = ({ p, idx, lang, t }) => {
       <div
         className="mono flex items-center justify-center"
         style={{
-          width: 28, height: 28, borderRadius: 999,
+          width: 22, height: 22, borderRadius: 999,
           background: 'var(--surface)',
           border: '1px solid var(--border-strong)',
-          fontSize: 11, fontWeight: 700,
+          fontSize: 10, fontWeight: 700,
           letterSpacing: 0, color: 'var(--ink)',
         }}
       >
@@ -75,40 +75,35 @@ const PickRow = ({ p, idx, lang, t }) => {
 
       {/* Team + meta */}
       <div className="min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-            {(p.sport_label || '').toUpperCase()}
-          </span>
-          <span style={{ color: 'var(--border-strong)' }}>·</span>
-          <span className="mono inline-flex items-center gap-1"
-                style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 500 }}>
-            <Clock strokeWidth={1.7} size={10} />
-            {fmtKickoff(p.commence_time, lang, t)}
-          </span>
-        </div>
         <div
-          className="display mt-1"
-          style={{ fontSize: 17, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}
+          className="display"
+          style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.2 }}
           data-testid={`paivan-vitonen-team-${idx}`}
         >
           {p.pick_team} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>vs</span> {opp}
         </div>
-        <div className="mono mt-1" style={{ fontSize: 10, letterSpacing: '0.12em', color: 'var(--muted)' }}>
-          {t('vitoset.best_price').toUpperCase()} · {p.bookmaker}
+        <div className="mono mt-0.5 inline-flex items-center gap-1.5 flex-wrap"
+             style={{ fontSize: 9.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
+          <span>{(p.sport_label || '').toUpperCase()}</span>
+          <span style={{ color: 'var(--border-strong)' }}>·</span>
+          <Clock strokeWidth={1.7} size={9} />
+          <span>{fmtKickoff(p.commence_time, lang, t)}</span>
+          <span style={{ color: 'var(--border-strong)' }}>·</span>
+          <span style={{ fontWeight: 500 }}>{p.bookmaker}</span>
         </div>
       </div>
 
       {/* Odds + confidence */}
-      <div className="flex flex-col items-end gap-1.5" style={{ minWidth: 90 }}>
+      <div className="flex flex-col items-end gap-1" style={{ minWidth: 70 }}>
         <div className="mono inline-flex items-baseline gap-1"
-             style={{ fontSize: 22, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--ink)', lineHeight: 1 }}
+             style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.02em', color: 'var(--ink)', lineHeight: 1 }}
              data-testid={`paivan-vitonen-odds-${idx}`}>
           {p.decimal_odds.toFixed(2)}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <div
             style={{
-              width: 56, height: 4, background: 'rgba(122,126,131,0.18)',
+              width: 36, height: 3, background: 'rgba(122,126,131,0.18)',
               borderRadius: 1, overflow: 'hidden',
             }}
           >
@@ -119,7 +114,7 @@ const PickRow = ({ p, idx, lang, t }) => {
               }}
             />
           </div>
-          <div className="mono" style={{ fontSize: 11, fontWeight: 700, color, letterSpacing: 0 }}
+          <div className="mono" style={{ fontSize: 10, fontWeight: 700, color, letterSpacing: 0 }}
                data-testid={`paivan-vitonen-conf-${idx}`}>
             {pctRounded}%
           </div>
@@ -166,7 +161,9 @@ const PaivaVitoset = ({ compact = false }) => {
   }, [showModal]);
 
   const picks = data?.picks || [];
-  const visible = compact ? picks.slice(0, 3) : picks;
+  // Show all 5 picks even in compact mode — denser row design (above)
+  // keeps the strip readable without truncation.
+  const visible = picks;
   const dormant = data?.dormant;
   const fetchedLabel = data?.fetched_at
     ? new Date(data.fetched_at * 1000).toLocaleTimeString('fi-FI', { hour: '2-digit', minute: '2-digit' })
@@ -270,16 +267,6 @@ const PaivaVitoset = ({ compact = false }) => {
         ) : (
           <ul data-testid="paivan-vitoset-list">
             {visible.map((p, i) => <PickRow key={p.event_id || i} p={p} idx={i} lang={lang} t={t} />)}
-            {compact && picks.length > visible.length && (
-              <li className="px-4 sm:px-5 py-3 mono"
-                  style={{ borderTop: '1px solid var(--border)', fontSize: 10.5,
-                           letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-                <a href="/viikon-kortti" data-testid="paivan-vitoset-view-all"
-                   style={{ color: 'var(--ink)', textDecoration: 'none' }}>
-                  {t('vitoset.view_all_5').toUpperCase()}
-                </a>
-              </li>
-            )}
           </ul>
         )}
 
