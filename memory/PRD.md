@@ -2,113 +2,87 @@
 
 ## Phase History (latest first — see CHANGELOG for full list pre-Phase 5)
 
+- **Phase 1 Final Restructure — Chunk A COMPLETE** (2026-05-19) — Homepage rebuilt as news portal.
+  - **New backend module** `og_image_fetcher.py` — fetches `og:image` / `twitter:image` from cited URLs, validates ≥1200×630, decodes via Pillow, saves JPEG to `/app/backend/static/news_hero/{sha1}.jpg`. Cache: 7d positive, 24h negative. Blocklist guard: `og_image_blocklist` Mongo collection checked before every fetch — outlets requesting removal added there honor the request immediately. Kill switch via `PUTKI_HQ_DISABLE_OG_FETCHER=1` env. `User-Agent` identifies as `PutkiHQBot/1.0 (+https://putkihq.fi/lehdisto)` — standard editorial preview-fetcher practice.
+  - **New endpoints**:
+    - `GET /api/news/featured?limit=2` — Top-N AI-ranked stories (deterministic score = relevance + severity weight + verification bonus + tier bonus). Enriched per item with `hero_image_url` (locally cached, never hot-linked) + `photo_credit` (`Photo: {source}`, mandatory overlay).
+    - `GET /api/news/chronological?limit=12` — Most recent `news_ticker_items` desc by capture time.
+    - `GET/POST/DELETE /api/admin/og-blocklist` — Back-office CRUD for removal-request handling. Normalises `www.` + lowercases on add.
+  - **New frontend components**:
+    - `NewsPortal.jsx` — left column. 2 featured cards (og:image hero + photo-credit overlay OR designed category-treatment fallback) + 12 chrono rows with lead/mid/old typography hierarchy.
+    - `StreamersRail.jsx` — right column. 3 platform groups (TWITCH purple chip, KICK green chip, YOUTUBE red chip). 32px avatars, green ring for LIVE, one-time `arrivePulse` animation only on offline→live session transition. Platform dot on every avatar corner. Honest empty states (`API DORMANT` for Kick, `NO STREAMERS` for empty YouTube).
+    - `ExploreBlocks.jsx` — compact 2×2 preview grid (168px min-height). Mittari (mini dial + state name in current state color), Pelisignaalit (top pick + Sharpness inline), Voita (gated as `Pian saatavilla` until Sako sign-off), Peli (current Voyager campaign).
+  - **`Home.jsx` complete rewrite** — composes the three new components + UTMBanner + EditorialFooter. Removed from homepage: DialCockpit hero, NewsCarousel, HubMosaic, ZonePublicationDepth, GamesSection, CaptureSection, LiveActivityFeed, WinnersCorner, SocialProofBar, MostReadRail, PaivaVitoset, StreamerLiveGrid, 'What is PUTKI HQ' pillars, PhaseOneDiscoveryRow.
+  - **`Layout.jsx` cleanup** — `PersistentCapture` and `StateContextualFloat` removed site-wide per brief's "complete removal of duplicate subscription surfaces" requirement. Single subscription mechanism = ProgressiveOptIn on landing pages (Chunk B).
+  - **Static mock v2.2** — `/mocks/phase1-final-v2-desktop.html` — visual source of truth approved by user.
+  - **Tests**: 11/11 pytest in `tests/test_chunk_a_news_portal.py`. testing_agent_v3_fork iter25: 100% backend + 100% frontend, zero issues, `retest_needed: false`.
+
 - **Phase 1 — Share OG mini-sprint COMPLETE** (2026-05-19) — Phase 1 now 100% closed.
   - `og_image_generator.ensure_mittari_state_og(state_key, date_iso, reading_fi)` — Mittari-specific Nano Banana generator with `MITTARI_STATE_DIRECTIVES` for all 5 states (label, mood, hex color). Idempotent: returns cached URL if `mittari-{state}-{date}.png` already exists; coalesces concurrent calls via `_inflight` map; semaphore (concurrency=1) preserved; kill switch `PUTKI_HQ_DISABLE_OG_IMAGES=1` respected.
   - **State-change hook**: `dial_engine.compute_and_store` fires-and-forgets `ensure_mittari_state_og()` whenever it writes a `dial_state_events` doc (prev state != new state). The dial loop NEVER blocks on Nano Banana — `asyncio.create_task` + try/except.
   - **`GET /api/og/mittari/{state}/{date}`** endpoint — read-only lookup. Returns `{found:true, url}` when cached, otherwise `{found:false, reason}` where reason is `unknown_state | og_images_disabled | not_yet_generated`.
-  - **Frontend** `MittariPermalink.jsx` fetches the OG URL in parallel with the event lookup; emits `og:image` meta tag via `useDocumentMeta({ogImage})` when found. Graceful fallback to no `og:image` when not yet generated (preserves title/description scraping on Telegram/iMessage/X).
-  - **Storage**: PNG bytes written to `/app/backend/static/og/mittari-{state}-{date}.png`. Public URL: `/api/static/og/mittari-{state}-{date}.png`.
-  - **Tests**: 10/10 unit tests for slug stability, cache presence, kill-switch behaviour, unknown-state guard, EMERGENT_LLM_KEY-missing graceful failure, state directive coverage.
+  - **Frontend** `MittariPermalink.jsx` fetches the OG URL in parallel with the event lookup; emits `og:image` meta tag via `useDocumentMeta({ogImage})` when found. Graceful fallback to no `og:image` when not yet generated.
   - **Production status**: Kill switch ON in this preview environment (per the LLM budget guard). When the user tops up the Universal Key and flips `PUTKI_HQ_DISABLE_OG_IMAGES=0`, state changes auto-generate images with NO further code action required.
-  - **Content backfill** remains paused until user confirms top-up.
 
+## Original problem statement
 
-- **Phase 1 Homepage Restructure — FULLY CLOSED** (2026-05-19) — Source-citation validator + Verify-the-math worksheet + Sprint 4 partial + Sprint 3.b + Sprint 5 finalize.
-  - **Source-citation validator** (Section 10): `content_generator.validate_content` rejects with `source_citation_missing:no_citation_phrase` or `:no_named_source` when an article body lacks BOTH a citation phrase (mukaan/raportoi/according to/reports that) AND a named outlet (Yle/HS/IL/IS/MTV/KL/Google News) within the first 400 chars. Sports recaps may cite `data: Ergast/NHL Stats/football-data/Opta/Transfermarkt` in lieu of named outlet. `streamer_alert` template exempt via explicit `SOURCE_CITATION_EXEMPT_TEMPLATES` set. 8/8 unit tests.
-  - **Verify-the-math worksheet** — MATEMATIIKKA/MATH pill on each pick card opens an editorial-layout worksheet. Plain-language labels (Markkinakerroin/Konsensuksen tiukkuus/Suunta 24 h FI · Market odds/Consensus tightness/24h direction EN), 4-col table (label/Score/Weight/Weighted), TOTAL row, closing line "Sharpness on deterministinen. Sama data tuottaa aina saman pistemäärän." / "Sharpness is deterministic. The same data always produces the same score."
-  - **Sprint 4 partial — Mittari state events**: `dial_state_events` collection (TTL 365d), `state_streak()` + `state_event_for_permalink()` helpers, `GET /api/dial/streak`, `GET /api/dial/permalink/{state}/{date}`, frontend `MittariStreak.jsx` (silent until first event) + `MittariPermalink.jsx` at `/m/:slug` (parses `{state-slug}-{YYYY-MM-DD}`, renders state name in matching state color at clamp(56px,12vw,140px)). **NOT YET SHIPPED**: cached share OG image at state-change event (Nano Banana wire-up — focused mini-sprint).
-  - **Sprint 3.b — News carousel beside dial**: `NewsCarousel.jsx` discrete 7s auto-rotate with category badges (semantic colors), dot indicators clickable, hover pauses. Max 4 info elements per slide.
-  - **Sprint 5 finalize**: Winners Corner +u unit notation removed (Section 12d). StickyTelegramCTA removed from home (Section 12g — DialSubscriptionCTA is the single primary subscription).
-  - **Testing**: testing_agent_v3_fork iter24 — 54/54 backend pytest (source-citation 8/8 + phase1 17/17 + sharpness 17/17 + classifier 12/12) + every frontend assertion verified. `retest_needed: False`.
+PUTKI HQ pivots from a multi-purpose homepage into a focused, high-tech editorial news portal with a live streamer presence on the side. Mittari dial, daily picks, Guess-the-Winner raffle, and Smartico Voyager game move off the homepage to dedicated landing pages (`/mittari`, `/pelisignaalit`, `/voita`, `/peli`), leaving only compact "hint" preview blocks on the homepage. Daily 10am email pipeline for `/pelisignaalit` opt-in. Channel ↔ purpose split: email = sentiment digest (slow), SMS/Telegram = daily bets (fast, time-critical).
 
+## Roadmap
 
-- **Phase 1 Homepage Restructure — Sprints 1+2+3+5 partial** (2026-05-19) — Massive bilingual redesign per user spec.
-  - **Sprint 1 — Foundation**:
-    - WIN PULSE → MITTARI rename across codebase (i18n, components, Cockpit maker's mark).
-    - Mittari state rename: TYPÖTYHJÄ/NIHKEÄ/TULOSSA/VOITTOPUTKI/RYÖSTÖPUTKI → TYYNI/VIRE/VIPINÄ/MEININKI/PERKELE (FI) / CALM/BUZZ/ACTIVE/ROLLING/PERKELE (EN). Internal state KEYS preserved (KYLMA/HAALEA/KUUMA/MYRSKY/KIIRASTULI).
-    - New state palette: TYYNI #5C8A8A · VIRE #6FA37D · VIPINÄ #D4B445 · MEININKI #C97A3A · PERKELE #C13B2C. Applied to dial.js + Dial.jsx ARC_COLORS + DialSubscriptionCTA STATE_CONFIG.
-    - `dialReading(state, lang, {streams, viewers})` helper — Bloomberg-rhythm plain-language reading with live counts per Section 13c.
-    - Top bar simplified: no nav menu. Only logo + EN/FI toggle + theme toggle.
-    - PhaseOneDiscoveryRow.jsx — temporary "Lue lisää: Uutiset · Vinkit · Tietoa meistä · Menetelmä" row above footer (removable when Phase 2 Explore ships).
-    - Footer disclosures: source disclosure + editorial disclosure per Sections 13m/13n.
-    - LiveTicker dimmed (slate dots, no state colors); will fully retire when Phase 2 news ticker takes over.
-  - **Sprint 2 — Picks section "Päivän tärpit · Today's market watch"**:
-    - New `backend/sharpness.py` — deterministic 0-100 score (50% implied_prob + 30% consensus_tightness + 20% recency_momentum). Formula published verbatim on /menetelma.
-    - `_best_pick_from_event` enriches every pick with nested `sharpness` object: components, weights, band, modifier, book_count, has_momentum_history.
-    - `_avg_implied_now` internal field stripped before response.
-    - `GET /api/odds/market-watch` endpoint — daily avg + 30-day sparkline from `sharpness_daily` collection.
-    - PaivaVitoset.jsx rebuilt: Daily Market Watch Card at top (with SVG sparkline + pulsing today dot), 5 pick cards with Sharpness bar + click-to-expand investigative analysis + bookmaker citation + disclosure, track record line at bottom.
-    - 20/20 sanity tests for sharpness (test_iter23_sharpness.py).
-  - **Sprint 3 — News & Ticker**:
-    - RSS_FEEDS expanded to 12 sources: 7 direct Finnish (Yle Uutiset, Yle Urheilu, HS, IL, IS, MTV, KL) + 5 Google News category queries (News/Sports/Gambling/Scene/Regulation) per brief Section 2 lockdown.
-    - Per-source circuit breaker: 5 consecutive 429s/timeouts → 30 min pause. State in-process; logged on trip.
-    - `backend/news_classifier.py` — deterministic Tier 1 classifier tagging category/severity/relevance/entities. Tier 2 Haiku fallback gated by env flag (default off).
-    - Cross-source corroboration: items sharing 6-token signature across ≥2 sources flagged `verified=True`.
-    - `rss_tick` now upserts classified items into `news_ticker_items` (TTL 7d) above threshold 45, archive 20-44 → `news_ticker_archive` (TTL 30d).
-    - `GET /api/news/ticker?limit=N` endpoint serves the ticker feed.
-    - NewsTicker.jsx — full-width continuous-scroll component under top bar, replaces LiveTicker in Layout.jsx. Severity dots, source attribution, relative timestamps, pause-on-hover, verified checkmark.
-    - 9/9 sanity tests for classifier (test_iter23_news_classifier.py).
-  - **Sprint 5 partial — Cleanups + T&C + Methodology**:
-    - Removed LiveDataTicker (Section 12c), ActivityStats/PUBLISHED CONTENT card (Section 3b), CockpitContext PRIMARY DRIVER strip (moves to Phase 2), long marketing headline (→ "Finland's scene temperature" / "Suomen skenen lämpötila").
-    - Methodology page extended with 2 new sections: "Käytetty teknologia / Technology used" (AI workflow disclosure per Section 9) + "Sharpness — kaava / formula" (verbatim formula + bands).
-    - New `/ehdot` Terms & conditions page — editorial position + KÄYTETTY TEKNOLOGIA clause linking to /menetelma.
-    - Newsroom `min_state` regex accepts new (VIPINÄ/MEININKI/PERKELE/ACTIVE/ROLLING) and legacy (WARM/RUSH/JACKPOT/TULOSSA/VOITTOPUTKI/RYÖSTÖPUTKI) values for backward compat.
-  - **Testing**: testing_agent_v3_fork iter23 — 17/17 backend pytest + 15/15 frontend test IDs verified. `retest_needed: False`.
-  - **Deferred to follow-up sprints**:
-    - **Sprint 3.b** — News carousel beside dial (right column replacing removed PUBLISHED CONTENT card).
-    - **Sprint 4** — Mittari polish (cached share OG image at state-change, streak counter, /m/{state-slug}-{date} permalink page).
-    - **Sprint 5 remaining** — Winners Corner +u unit notation removal, sticky Telegram duplicate consolidation.
+### P0 — Chunk B (Landing pages) — NEXT
+- `/mittari` — Permanent home for the dial, driver breakdown, methodology summary, alert subscriptions
+- `/pelisignaalit` — Daily 5 signals, Sharpness score, 30-day sparkline, track record, 10am email opt-in
+- `/voita` — Guess-the-winner raffle (GATED behind `VOITA_FEATURE_ENABLED` back-office toggle until Sako legal sign-off)
+- `/peli` — Voyager game restyled hero
+- `/tietoa-meista` — Move "What is PUTKI HQ" explainer cards here
+- 301 redirects: `/vihjeet` → `/pelisignaalit`, `/viikon-kortti` → `/pelisignaalit` (preserve `?ref=share` + `?invite=` query params)
+- ProgressiveOptIn component (3-step sequential: email gate → SMS upsell → Telegram CTA, per-step consent tags)
 
-- **Phase 5.4.1 — Code-review critical fixes** (2026-05-18) — Hardcoded test secrets via _test_env.py; webhook fixtures randomised; late-binding closures; useDocumentMeta deps collapsed; test_iter21_most_read fail-fast.
+### P0 — Chunk C (Email pipeline)
+- Resend integration (user-confirmed provider) for daily 10:00 AM email cron
+- DMARC/DKIM/SPF setup guide for putkihq.fi
+- `email_sentiment` / `sms_bets` / `telegram_bets` consent tag tracking
+- Worker: daily digest assembler (Mittari state + 4 top news + skene tunnelma)
 
-- **Phase 5.4 — Back-office /peli cleanup** (2026-05-18) — Editor's direct request from walkthrough.docx.
-  - Removed `prize_amount` input + `prize_currency` input from `/back-office/peli` admin form.
-  - Removed `youtube_id` input per video (kept title + caption).
-  - Backend: `peli_raffle.py` — `VideoConfig` no longer accepts `youtube_id`; `PeliConfigUpdate` no longer accepts `prize_amount`. Default seed cleaned.
-  - Tests updated: `tests/test_iter19_peli_raffle.py` — **18/18 pytest pass.**
+### P1 — Phase 2
+- `/uutiset` full news archive with filters + search
+- `/striimaajat` full directory with per-streamer alert subscriptions
+- `/quiz` weekly quiz module (score-then-email gate)
+- Explore section replacing PhaseOneDiscoveryRow
+- PUTKI Score user engagement metric
+- Full historical-snapshot pages for `/m/{state-slug}-{date}` (replace stubs)
 
-- **Phase 5.3.5 — PizzINT-Style News Presentation System** (2026-05-18) — Editorial conversion redesign.
-  - **DialSubscriptionCTA** (`components/DialSubscriptionCTA.jsx`) — contextual alert signup pill attached *below* the WIN PULSE dial (Dial design preserved verbatim per user order).
-  - **LiveDeskHeader** (`components/LiveDeskHeader.jsx`) — wire-service-style header on `/uutiset` with 24h stats (articles published, severity counts) from `GET /api/content/stats`.
-  - **NewsCard** (`components/NewsCard.jsx`) — 4-tier severity cards (Scorching · Hot · Warm · Cool) computed server-side by `newsroom.compute_severity()` (read_count, source_count, decay window).
-  - **FilterChips** (`components/FilterChips.jsx`) — Category + Entity filter pills wired to `GET /api/content/top-entities`.
-  - **TopicHubPage** (`pages/TopicHubPage.jsx`) — entity-specific feeds at `/striimaajat/:slug`, `/urheilijat/:slug`, etc. via `GET /api/entities/{type}/{id}`.
-  - **POST /api/subscribe/dial-alerts** — conversion endpoint capturing email + trigger preference for dial-state alerts.
-  - testing_agent_v3_fork iter22: 100% pass.
+### P2 — Backlog
+- Tier 2 Haiku classifier fallback for ambiguous ticker items
+- Kick + YouTube full integration (currently Kick API blocked by Cloudflare 403)
+- Refactoring: array index keys in StreamerProfile/OperatorReview, content_generator.py cyclomatic complexity, localStorage-for-sensitive-data in Admin panels
+- Content backfill (PAUSED — Universal Key budget exhausted; resume after top-up)
 
-- **Phase 5.2 — Walkthrough.docx remediation** (2026-05-18) — Weekly Card 4-step "How it works", Tips Telegram conversion modal, per-article view counts, streamer roster expanded 29→81, Winners Corner reseeded with real historical hits, footer cleanup.
+## Architecture invariants (do not break)
 
-- **Phase 5.1 — WIN PULSE rebrand** (2026-05-18) — Perkele-Mittari → WIN PULSE (EN); 5 dial states mapped to luck-vocabulary (DRY/SLOW/WARM/RUSH/JACKPOT). Hero eyebrow → "Helsinki". SocialProofBar streamer count live-wired. Most-Read Rail under the dial.
+- **Strict source citation** — every LLM article must cite a named outlet in first 400 chars (validator in `content_generator.validate_content`)
+- **og:image overlay caption** — every locally-cached news hero MUST carry `Photo: {source}` overlay (editorial guarantee, FT/Bloomberg/Apple News pattern)
+- **og_image_blocklist honoured** — back-office removal-requests immediately stop fetcher from caching that outlet
+- **Single dialReading() source-of-truth** — no hardcoded state names site-wide
+- **No fabricated streamers** — `is_live: true` only when API confirms, otherwise honest empty state
+- **Mittari OG kill switch** — `PUTKI_HQ_DISABLE_OG_IMAGES=1` in preview env, generation re-enables on user top-up
+- **Channel ↔ Purpose discipline** — Email = sentiment digest only; SMS/Telegram = daily bets only. No bundling.
 
-- **Phase 5 — Launch pivot: media-company positioning** (2026-05-18) — 28-point walkthrough.docx ship:
-  - Legal messaging pivot: all 18+ / responsible-play copy replaced with "FOR ENTERTAINMENT PURPOSES ONLY · NO BETTING ACTIVITY TAKES PLACE".
-  - /peli rebuilt as Weezybet raffle (no Smartico SDK).
-  - Dial 0-streams bug fixed (`language=fi` instead of global top 100).
-  - Homepage "What is PUTKI HQ?" 3-pillar section.
-  - Content backfill engine + Twitch auto-discovery.
+## Test status
 
-(See `/app/memory/CHANGELOG_pre_phase5.md` if needed — Phase 1 → Phase 4 history archived in earlier PRD versions in git.)
+- Backend pytest: `test_chunk_a_news_portal.py` 11/11, plus all prior iter23+iter24 suites still green
+- Last testing_agent_v3_fork run: iteration_25 — 100% pass, zero issues, `retest_needed: false`
 
-## Prioritized backlog
+## Project Health Check
 
-### P1 — Blocked on user
-- **Content backfill (100–150 articles)** — paused; Universal Key budget hit $18.40. User to top up balance, then run `POST /api/admin/content/backfill {count:50, days:60}` 2-3 times.
+- Broken: None
+- Mocked: None. Real og:image fetcher actively pulling + validating + caching real HS/Yle/IS/IL images.
 
-### P1 — Editorial-pending
-- **Winners Corner refresh** — replace placeholder entries via `/back-office/winners` when first real settled tip lands.
-- **Kick API Cloudflare block** — backend marks dormant; restore when API/proxy access works.
+## 3rd Party Integrations
 
-### P2 — Post-launch enhancements
-- SSE for real-time news updates (PizzINT polling currently @ 60s).
-- Saved filter preferences + article bookmarking.
-- Full Kick + YouTube streamer integration when API keys clear.
-- Refactoring sprint: split `content_generator.py` (high cyclomatic complexity), break `BackOfficeWebhooks.jsx` (600+ lines).
-
-## Architecture
-- Frontend: React 19 + Tailwind + shadcn/ui + Motion + i18n (FI/EN via `LanguageContext`)
-- Backend: FastAPI + Motor (async MongoDB) + httpx + emergentintegrations (Claude Opus 4)
-- Workers: layer2_workers (Twitch 60s · F1 · Football · NHL · Reddit · RSS), seed_scheduler (3600s), twitch_discovery (6h), youtube_lease_worker (6h)
-- Collections: `published_content`, `subscriptions`, `article_views`, `peli_entries`, `peli_meta`, `weekly_meta`, `weekly_picks`, `winners`, `streamers`, `operators`, `signals`, `dial_snapshots`, `foundational_research`
-
-## Test credentials
-- See `/app/memory/test_credentials.md`
+- Emergent LLM Key (Claude Haiku/Opus + Nano Banana) — OUT OF BUDGET until user tops up
+- Twitch API / EventSub — requires User API Key (configured)
+- YouTube PubSubHubbub — requires User API Key (configured)
+- The Odds API — requires User API Key (configured)
+- **PENDING (Chunk C)**: Resend (user confirmed provider for daily 10am email + DMARC/DKIM/SPF setup)
