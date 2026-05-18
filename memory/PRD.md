@@ -2,6 +2,15 @@
 
 ## Phase History (latest first — see CHANGELOG for full list pre-Phase 5)
 
+- **Phase 1 Homepage Restructure — FULLY CLOSED** (2026-05-19) — Source-citation validator + Verify-the-math worksheet + Sprint 4 partial + Sprint 3.b + Sprint 5 finalize.
+  - **Source-citation validator** (Section 10): `content_generator.validate_content` rejects with `source_citation_missing:no_citation_phrase` or `:no_named_source` when an article body lacks BOTH a citation phrase (mukaan/raportoi/according to/reports that) AND a named outlet (Yle/HS/IL/IS/MTV/KL/Google News) within the first 400 chars. Sports recaps may cite `data: Ergast/NHL Stats/football-data/Opta/Transfermarkt` in lieu of named outlet. `streamer_alert` template exempt via explicit `SOURCE_CITATION_EXEMPT_TEMPLATES` set. 8/8 unit tests.
+  - **Verify-the-math worksheet** — MATEMATIIKKA/MATH pill on each pick card opens an editorial-layout worksheet. Plain-language labels (Markkinakerroin/Konsensuksen tiukkuus/Suunta 24 h FI · Market odds/Consensus tightness/24h direction EN), 4-col table (label/Score/Weight/Weighted), TOTAL row, closing line "Sharpness on deterministinen. Sama data tuottaa aina saman pistemäärän." / "Sharpness is deterministic. The same data always produces the same score."
+  - **Sprint 4 partial — Mittari state events**: `dial_state_events` collection (TTL 365d), `state_streak()` + `state_event_for_permalink()` helpers, `GET /api/dial/streak`, `GET /api/dial/permalink/{state}/{date}`, frontend `MittariStreak.jsx` (silent until first event) + `MittariPermalink.jsx` at `/m/:slug` (parses `{state-slug}-{YYYY-MM-DD}`, renders state name in matching state color at clamp(56px,12vw,140px)). **NOT YET SHIPPED**: cached share OG image at state-change event (Nano Banana wire-up — focused mini-sprint).
+  - **Sprint 3.b — News carousel beside dial**: `NewsCarousel.jsx` discrete 7s auto-rotate with category badges (semantic colors), dot indicators clickable, hover pauses. Max 4 info elements per slide.
+  - **Sprint 5 finalize**: Winners Corner +u unit notation removed (Section 12d). StickyTelegramCTA removed from home (Section 12g — DialSubscriptionCTA is the single primary subscription).
+  - **Testing**: testing_agent_v3_fork iter24 — 54/54 backend pytest (source-citation 8/8 + phase1 17/17 + sharpness 17/17 + classifier 12/12) + every frontend assertion verified. `retest_needed: False`.
+
+
 - **Phase 1 Homepage Restructure — Sprints 1+2+3+5 partial** (2026-05-19) — Massive bilingual redesign per user spec.
   - **Sprint 1 — Foundation**:
     - WIN PULSE → MITTARI rename across codebase (i18n, components, Cockpit maker's mark).
