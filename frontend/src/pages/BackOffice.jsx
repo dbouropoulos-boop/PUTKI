@@ -136,6 +136,7 @@ const BackOffice = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <Link to="/back-office/queue" className="btn-ghost" data-testid="back-office-link-queue">QUEUE →</Link>
             <Link to="/back-office/weekly" className="btn-ghost" data-testid="back-office-link-weekly">WEEKLY CARD →</Link>
+            <Link to="/back-office/peli" className="btn-ghost" data-testid="back-office-link-peli">PELI →</Link>
             <Link to="/back-office/operators" className="btn-ghost" data-testid="back-office-link-operators">OPERATORS →</Link>
             <Link to="/back-office/streamers" className="btn-ghost" data-testid="back-office-link-streamers">STREAMERS →</Link>
             <Link to="/back-office/webhooks" className="btn-ghost" data-testid="back-office-link-webhooks">WEBHOOKS →</Link>

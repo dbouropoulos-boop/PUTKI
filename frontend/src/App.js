@@ -22,6 +22,7 @@ import StreamersAdmin from "@/pages/StreamersAdmin";
 import BackOfficeWebhooks from "@/pages/BackOfficeWebhooks";
 import BackOfficeDrafts from "@/pages/BackOfficeDrafts";
 import BackOfficeWeekly from "@/pages/BackOfficeWeekly";
+import BackOfficePeli from "@/pages/BackOfficePeli";
 import Article from "@/pages/Article";
 import StreamerIntl from "@/pages/StreamerIntl";
 import Toimitus from "@/pages/Toimitus";
@@ -52,6 +53,7 @@ function App() {
           <Route path="/back-office/webhooks" element={<BackOfficeWebhooks />} />
           <Route path="/back-office/drafts" element={<BackOfficeDrafts />} />
           <Route path="/back-office/weekly" element={<BackOfficeWeekly />} />
+          <Route path="/back-office/peli" element={<BackOfficePeli />} />
 
           {/* Main site */}
           <Route element={<Layout />}>

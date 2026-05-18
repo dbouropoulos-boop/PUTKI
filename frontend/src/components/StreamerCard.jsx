@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import StreamerVideoPreview from './StreamerVideoPreview';
 
 const formatViewers = (n) => {
@@ -7,13 +6,20 @@ const formatViewers = (n) => {
   return `${n}`;
 };
 
+/**
+ * Streamer card — non-clickable.
+ *
+ * Individual streamer profile pages (`/striimaajat/:slug`) are intentionally
+ * not exposed publicly. The card surfaces the live state + thumbnail but
+ * doesn't link anywhere — visitors discover streamers directly from the
+ * homepage StreamerLiveGrid (which deep-links to the actual platform).
+ */
 export const StreamerCard = ({ streamer }) => {
   const { slug, name, platform, live, viewers, playing } = streamer;
   return (
-    <Link
-      to={`/striimaajat/${slug}`}
+    <div
       data-testid={`streamer-card-${slug}`}
-      className="panel panel-hover block overflow-hidden flex-shrink-0"
+      className="panel block overflow-hidden flex-shrink-0"
       style={{ width: 260 }}
     >
       <div className="relative aspect-[5/4] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
@@ -50,7 +56,7 @@ export const StreamerCard = ({ streamer }) => {
           <div className="mt-1.5 mono" style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 500 }}>OFFLINE</div>
         )}
       </div>
-    </Link>
+    </div>
   );
 };
 

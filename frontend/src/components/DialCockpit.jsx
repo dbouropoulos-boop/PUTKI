@@ -250,7 +250,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         style={{ fontSize: 9.5, letterSpacing: '0.32em', color: 'var(--muted)', fontWeight: 500, opacity: 0.55, marginBottom: 6 }}
         data-testid="cockpit-makers-mark"
       >
-        <span style={{ fontStyle: 'italic' }}>perkele-mittari</span>
+        <span style={{ fontStyle: 'italic' }}>{lang === 'en' ? 'scene-heat' : 'perkele-mittari'}</span>
         <span style={{ color: 'var(--border-strong)' }}>·</span>
         <span>v4</span>
       </div>

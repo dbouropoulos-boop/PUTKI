@@ -223,7 +223,7 @@ const GamesSection = ({ state, t, lang }) => {
           {lang === 'en' ? 'Free spin. Claim at Weezybet.' : 'Ilmainen kierros. Lunasta Weezybetissä.'}
         </h3>
         <div className="mono mb-7" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'rgba(245,243,238,0.7)', fontWeight: 500 }}>
-          {lang === 'en' ? 'NO DEPOSIT · NO CARD · 18+' : 'EI TALLETUSTA · EI KORTTIA · 18+'}
+          {lang === 'en' ? 'FOR ENTERTAINMENT ONLY · NO BETTING' : 'VAIN VIIHTEEKSI · EI VEDONLYÖNTIÄ'}
         </div>
         <div className="mt-auto">
           <span className="inline-flex items-center gap-2 mono"
@@ -375,6 +375,34 @@ const Home = () => {
 
       <SocialProofBar />
       <WinnersCorner />
+
+      {/* WHAT IS PUTKI HQ — value proposition / "we are media, not a casino" */}
+      <section className="py-12" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}
+               data-testid="zone-whatis">
+        <div className="container-wide">
+          <div className="eyebrow mb-3" data-testid="whatis-eyebrow">{t('whatis.eyebrow').toUpperCase()}</div>
+          <h2 className="display text-3xl sm:text-4xl lg:text-5xl mb-4" style={{ lineHeight: 1.08, maxWidth: 880 }}
+              data-testid="whatis-title">
+            {t('whatis.title')}
+          </h2>
+          <p className="prose-mittari mb-8" style={{ maxWidth: 780, fontSize: 16 }} data-testid="whatis-lede">
+            {t('whatis.lede')}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-testid="whatis-pillars">
+            {['p1', 'p2', 'p3'].map((k) => (
+              <article key={k} className="panel p-5" style={{ background: 'var(--bg)' }}
+                       data-testid={`whatis-${k}`}>
+                <h3 className="display mb-2" style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink)' }}>
+                  {t(`whatis.${k}_t`)}
+                </h3>
+                <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.55 }}>
+                  {t(`whatis.${k}_b`)}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Pre-Launch Polish — Dioni's compressed homepage flow:
           1. Live data ticker (top)

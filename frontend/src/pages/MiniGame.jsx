@@ -257,7 +257,7 @@ const MiniGame = () => {
                 <li>· {lang === 'en' ? 'No deposit, no card.' : 'Ei talletusta, ei luottokorttia.'}</li>
                 <li>· {lang === 'en' ? 'Winners announced Sunday.' : 'Voittajat julkistetaan sunnuntaina.'}</li>
                 <li>· {lang === 'en' ? 'Prizes credited to Weezybet account.' : 'Palkinnot lähetetään Weezybet-tilille.'}</li>
-                <li>· 18+</li>
+                <li>· {lang === 'en' ? 'For entertainment only · no betting.' : 'Vain viihteeksi · ei vedonlyöntiä.'}</li>
               </ul>
             </div>
 

@@ -109,20 +109,19 @@ def _expires_at(days: int = LAYER2_TTL_DAYS) -> datetime:
 # ─────────────────────── Twitch poller ───────────────────────
 
 async def _fetch_twitch_streams(client_id: str, oauth_token: str) -> List[Dict[str, Any]]:
-    """Pull currently-live streams for the Twitch streamers we track.
+    """Pull currently-live streams from the entire Finnish Twitch scene.
 
-    Uses the existing twitch_eventsub.py credentials and Helix's
-    `/streams?game_id=...` is overkill — instead we pull each registered
-    Finnish streamer's live status. To keep this lightweight on this tick
-    we just call `/streams` with `first=100` no filter (works for top global)
-    and let the higher-level worker filter to our registry separately.
+    Uses Helix `/streams?language=fi&first=100` so the dial reflects the
+    actual size of the Finnish-language live audience — not just the
+    couple of streamers we've manually rostered. "Scene Heat" is a scene-
+    level metric, not a roster-level one.
     """
     headers = {"Client-Id": client_id, "Authorization": f"Bearer {oauth_token}"}
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS) as http:
-        # Pull top 100 live streams — cheap, covers any registered streamer
-        # currently live within the top 100, which is way more than enough
-        # for a Finnish editorial roster (<30 streamers).
-        r = await http.get("https://api.twitch.tv/helix/streams?first=100", headers=headers)
+        r = await http.get(
+            "https://api.twitch.tv/helix/streams?language=fi&first=100",
+            headers=headers,
+        )
         r.raise_for_status()
         return r.json().get("data", [])
 
@@ -170,13 +169,14 @@ async def twitch_tick(db) -> Dict[str, Any]:
         logger.warning("Twitch streams fetch failed: %s", e)
         return {"error": "fetch_failed"}
 
+    # "Scene Heat" reads the WHOLE Finnish-language live scene, not only the
+    # subset we've rostered. We still flag which entries are part of our
+    # editorial roster so individual UI surfaces (alert CTAs) can use that.
     matched = []
     total_viewers = 0
     for s in streams:
         login = (s.get("user_login") or "").lower()
         viewers = int(s.get("viewer_count", 0) or 0)
-        if tracked_logins and login not in tracked_logins:
-            continue
         matched.append({
             "user_login": login,
             "user_name": s.get("user_name"),
@@ -184,6 +184,7 @@ async def twitch_tick(db) -> Dict[str, Any]:
             "viewer_count": viewers,
             "game_name": s.get("game_name"),
             "started_at": s.get("started_at"),
+            "tracked": login in tracked_logins,
         })
         total_viewers += viewers
 

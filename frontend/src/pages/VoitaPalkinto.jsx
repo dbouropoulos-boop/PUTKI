@@ -230,8 +230,8 @@ const VoitaPalkinto = () => {
           </h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
             {lang === 'en'
-              ? 'One spin. You win something. Register at Weezybet and the prize lands on your account in five minutes. No deposit. No card. 18+.'
-              : 'Yksi kierros. Voitat palkinnon. Rekisteröidy Weezybetiin ja palkinto on tililläsi viidessä minuutissa. Ei talletusta, ei korttia. 18+.'}
+              ? 'One spin. You win something. Register at Weezybet and the prize lands on your account in five minutes. No deposit. No card. For entertainment only · no betting.'
+              : 'Yksi kierros. Voitat palkinnon. Rekisteröidy Weezybetiin ja palkinto on tililläsi viidessä minuutissa. Ei talletusta, ei korttia. Vain viihteeksi · ei vedonlyöntiä.'}
           </p>
         </div>
       </section>

@@ -118,7 +118,7 @@ const Template = React.forwardRef(({ variant, payload, lang }, ref) => {
             {lang === 'en' ? 'MITTARI MEASURES · YOU DECIDE' : 'MITTARI MITTAA · SINÄ PÄÄTÄT'}
           </div>
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, letterSpacing: '0.22em', color: '#5A5A5A', fontWeight: 600, marginTop: 6 }}>
-            18+ · {lang === 'en' ? 'PLAY RESPONSIBLY' : 'PELAA VASTUULLISESTI'}
+            {lang === 'en' ? 'FOR ENTERTAINMENT ONLY · NO BETTING' : 'VAIN VIIHTEEKSI · EI VEDONLYÖNTIÄ'}
           </div>
         </div>
         <div style={{

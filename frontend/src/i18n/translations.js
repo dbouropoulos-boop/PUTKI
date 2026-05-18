@@ -118,7 +118,7 @@ export const translations = {
     'vitoset.modal_b4':      'Ilmainen · ei spämmiä · perukaa milloin vain',
     'vitoset.modal_cta':     'Liity',
     'vitoset.modal_soon':    'Tulossa pian · SMS- ja WhatsApp-vinkit',
-    'vitoset.disclaimer':    'Kaupallinen aggregaatti · 18+ · pelaa vastuullisesti · data: The Odds API',
+    'vitoset.disclaimer':    'Toimituksellinen aggregaatti · Vain viihteeksi · Ei vedonlyöntiä · Data: The Odds API',
     'vitoset.kickoff_today': 'Tänään',
     'vitoset.kickoff_live':  'Käynnissä',
 
@@ -154,7 +154,7 @@ export const translations = {
     'feed.cat_casinos':      'Kasinot',
 
     // Trust strip (homepage)
-    'trust.responsible':     'Pelaa vastuullisesti · 18+',
+    'trust.responsible':     'Vain viihteeksi · Ei vedonlyöntiä',
     'trust.editorial':       'Toimituksellinen · ei mainontaa',
     'trust.open_method':     'Avoin menetelmä · /menetelmä',
     'trust.layer2':          'Layer 2 · reaaliaikainen data',
@@ -349,8 +349,8 @@ export const translations = {
     'common.theme_toggle':   'Vaihda teema',
     'common.menu_open':      'Avaa valikko',
     'common.menu_close':     'Sulje',
-    'common.responsible':    'PELAA VASTUULLISESTI',
-    'common.18plus':         '18+ VAIN',
+    'common.responsible':    'VAIN VIIHTEEKSI',
+    'common.18plus':         'EI VEDONLYÖNTIÄ',
     'common.helsinki_time':  'Helsinki',
 
     // Theme & timeofday strings
@@ -359,6 +359,44 @@ export const translations = {
     'time.evening':          'ILTA',
     'time.night':            'YÖ',
     'time.month_day':        'KUUKAUDEN {day}. PÄIVÄ',
+
+    // Home value proposition (what is PUTKI HQ)
+    'whatis.eyebrow':        'Mikä on PUTKI HQ?',
+    'whatis.title':          'Suomen riippumaton uhkapelikulttuurin julkaisu.',
+    'whatis.lede':           'PUTKI HQ on toimituksellinen mediayhtiö, joka seuraa suomalaista uhkapelikulttuuria — striimaajat, urheilu, sääntely, alan käänteet. Emme ole kasino, emme välitä vetoja, emme käsittele rahaa. Olemme journalismia.',
+    'whatis.p1_t':           'Mediayhtiö',
+    'whatis.p1_b':           'Toimitamme uutisia ja analyysiä. Emme pyörittä pelialustoja tai ota vetoja. Vain viihteeksi — ei vedonlyöntiä.',
+    'whatis.p2_t':           'Riippumaton',
+    'whatis.p2_b':           'Ei kaupallisia suhteita operaattoreihin tällä hetkellä. Jokainen affiliaatti-suhde merkitään päivämäärällä avoimesti.',
+    'whatis.p3_t':           'Reaaliaikainen',
+    'whatis.p3_b':           'Twitch, Kick, YouTube, NHL, jalkapallo, F1, 11 RSS-syötettä — 60 sekunnin sykleissä. Kaikki data on aitoa.',
+
+    // Home
+
+    // /peli rebuild (raffle)
+    'peli.raffle_eyebrow':   'Putki HQ · kuukauden arvonta',
+    'peli.raffle_subline':   'Toimituksen järjestämä ilmaisarvonta — ei vedonlyöntiä, ei talletusta.',
+    'peli.raffle_form_t':    'Osallistu arvontaan',
+    'peli.raffle_form_sub':  'Jätä yhteystiedot — ilmoitamme voittajalle henkilökohtaisesti viikon päätyttyä.',
+    'peli.raffle_name':      'Nimi',
+    'peli.raffle_name_ph':   'Etunimi Sukunimi',
+    'peli.raffle_phone':     'Puhelin',
+    'peli.raffle_phone_ph':  '+358 40 123 4567',
+    'peli.raffle_email':     'Sähköposti',
+    'peli.raffle_email_ph':  'sina@esimerkki.fi',
+    'peli.raffle_consent':   'Suostun siihen, että PUTKI HQ voi ottaa minuun yhteyttä arvonnan tuloksesta.',
+    'peli.raffle_submit':    'Osallistu arvontaan →',
+    'peli.raffle_submitting':'Tallennetaan…',
+    'peli.raffle_success_t': 'Olet mukana arvonnassa.',
+    'peli.raffle_success_b': 'Ilmoitamme voittajalle henkilökohtaisesti puhelimitse tai sähköpostitse.',
+    'peli.raffle_count':     '{n} osallistujaa',
+    'peli.raffle_zero':      'Ole ensimmäinen osallistuja.',
+    'peli.raffle_closed':    'Arvonta on tällä hetkellä suljettu. Tilaa hälytys uusista arvonnoista.',
+    'peli.raffle_partner':   'Kumppani',
+    'peli.raffle_videos_t':  'Aiemmat voittajat & arvonnat',
+    'peli.raffle_video_soon':'Video tulossa pian',
+    'peli.raffle_disclaimer':'VAIN VIIHTEELLISIIN TARKOITUKSIIN · EI VEDONLYÖNTIÄ · EI TALLETUSTA · EI PANOSTUSTA',
+    'peli.raffle_prize_label':'Tämän kuukauden palkinto',
 
     // Home
     'home.see_all_news':     'Katso kaikki uutiset →',
@@ -582,10 +620,10 @@ export const translations = {
     'weekly.past_title':     'Aikaisemmat kortit',
 
     // Footer
-    'footer.tagline':        'Mittari mittaa. Toimitus tulkitsee. Sinä päätät.',
+    'footer.tagline':        'Riippumaton journalismi. Läpinäkyvä data. Ei paskaa.',
     'footer.lede':           'Suomen rehellisin kasino- ja striimaajalähde. Toimituksellinen, ei mainos.',
     'footer.col_pages':      'Sivut',
-    'footer.col_responsible': 'Vastuullisuus',
+    'footer.col_responsible': 'Tiedote',
     'footer.col_editorial':  'Toimitus',
     'footer.peluuri':        'PELUURI',
     'footer.peli_poikki':    'PELI POIKKI',
@@ -594,7 +632,7 @@ export const translations = {
     'footer.affiliate':      'AFFILIAATTI-ILMOITUS',
     'footer.method':         'ARVIOINTIMENETELMÄ',
     'footer.indep':          'RIIPPUMATON TOIMITUS',
-    'footer.warning':        'RAHAPELAAMINEN VOI OLLA ADDIKTOIVAA',
+    'footer.warning':        'VAIN VIIHTEELLISIIN TARKOITUKSIIN · EI VEDONLYÖNTIÄ',
   },
 
   en: {
@@ -712,7 +750,7 @@ export const translations = {
     'vitoset.modal_b4':      'Free · no spam · cancel any time',
     'vitoset.modal_cta':     'Join',
     'vitoset.modal_soon':    'Coming soon · SMS + WhatsApp alerts',
-    'vitoset.disclaimer':    'Commercial aggregator · 18+ · play responsibly · data: The Odds API',
+    'vitoset.disclaimer':    'Editorial aggregator · For entertainment only · No betting · Data: The Odds API',
     'vitoset.kickoff_today': 'Today',
     'vitoset.kickoff_live':  'In play',
 
@@ -748,7 +786,7 @@ export const translations = {
     'feed.cat_casinos':      'Casinos',
 
     // Trust strip
-    'trust.responsible':     'Play responsibly · 18+',
+    'trust.responsible':     'For entertainment only · No betting',
     'trust.editorial':       'Editorial · no advertising',
     'trust.open_method':     'Open method · /menetelma',
     'trust.layer2':          'Layer 2 · real-time data',
@@ -933,8 +971,8 @@ export const translations = {
     'common.offer':          'Offer',
     'common.offer_caps':     'OFFER',
     'common.score_label':    'MITTARI',
-    'common.dial_brand':     'P*RKELE-MITTARI',
-    'common.methodology':    'P*RKELE SCORE',
+    'common.dial_brand':     'SCENE HEAT',
+    'common.methodology':    'SCENE HEAT SCORE',
     'common.read_methodology': 'Read how we score →',
     'common.editorial':      'Editorial',
     'common.related':        'Alternatives',
@@ -942,14 +980,50 @@ export const translations = {
     'common.theme_toggle':   'Toggle theme',
     'common.menu_open':      'Open menu',
     'common.menu_close':     'Close',
-    'common.responsible':    'PLAY RESPONSIBLY',
-    'common.18plus':         '18+ ONLY',
+    'common.responsible':    'FOR ENTERTAINMENT ONLY',
+    'common.18plus':         'NO BETTING',
 
     'time.morning':          'MORNING',
     'time.afternoon':        'AFTERNOON',
     'time.evening':          'EVENING',
     'time.night':            'NIGHT',
     'time.month_day':        'DAY {day} OF THE MONTH',
+
+    // Home value proposition (what is PUTKI HQ)
+    'whatis.eyebrow':        'What is PUTKI HQ?',
+    'whatis.title':          'Finland\u2019s independent gambling culture publication.',
+    'whatis.lede':           'PUTKI HQ is an editorial media company tracking Finland\u2019s gambling culture — streamers, sports, regulation, the moves of the industry. We are not a casino, we do not place bets, we do not handle money. We are journalism.',
+    'whatis.p1_t':           'Media company',
+    'whatis.p1_b':           'We publish news and analysis. We don\u2019t operate gambling platforms or accept bets. For entertainment only — no betting activity takes place.',
+    'whatis.p2_t':           'Independent',
+    'whatis.p2_b':           'No commercial relationships with operators today. Every affiliate relationship is disclosed openly with a date.',
+    'whatis.p3_t':           'Real-time',
+    'whatis.p3_b':           'Twitch, Kick, YouTube, NHL, football, F1, 11 RSS feeds — on a 60-second cycle. Every value shown is real.',
+
+    // /peli rebuild (raffle)
+    'peli.raffle_eyebrow':   'Putki HQ · monthly raffle',
+    'peli.raffle_subline':   'A free editorial raffle — no betting, no deposit.',
+    'peli.raffle_form_t':    'Enter the raffle',
+    'peli.raffle_form_sub':  'Drop your details — we\u2019ll contact the winner personally after the week ends.',
+    'peli.raffle_name':      'Name',
+    'peli.raffle_name_ph':   'First Last',
+    'peli.raffle_phone':     'Phone',
+    'peli.raffle_phone_ph':  '+358 40 123 4567',
+    'peli.raffle_email':     'Email',
+    'peli.raffle_email_ph':  'you@example.com',
+    'peli.raffle_consent':   'I agree that PUTKI HQ may contact me about the raffle result.',
+    'peli.raffle_submit':    'Enter the raffle →',
+    'peli.raffle_submitting':'Saving…',
+    'peli.raffle_success_t': 'You\u2019re in.',
+    'peli.raffle_success_b': 'We\u2019ll personally contact the winner by phone or email.',
+    'peli.raffle_count':     '{n} entries',
+    'peli.raffle_zero':      'Be the first to enter.',
+    'peli.raffle_closed':    'The raffle is currently closed. Subscribe for alerts on new draws.',
+    'peli.raffle_partner':   'Partner',
+    'peli.raffle_videos_t':  'Past winners & raffles',
+    'peli.raffle_video_soon':'Video coming soon',
+    'peli.raffle_disclaimer':'FOR ENTERTAINMENT PURPOSES ONLY · NO BETTING ACTIVITY TAKES PLACE · NO DEPOSIT · NO STAKES',
+    'peli.raffle_prize_label':'This month\u2019s prize',
 
     'home.see_all_news':     'See all news →',
     'home.update_label':     'TODAY\u2019S MOMENTS',
@@ -1168,7 +1242,7 @@ export const translations = {
     'footer.tagline':        'Mittari measures. The editors interpret. You decide.',
     'footer.lede':           'Finland\u2019s most honest casino & streamer source. Editorial — not advertising.',
     'footer.col_pages':      'Pages',
-    'footer.col_responsible': 'Responsibility',
+    'footer.col_responsible': 'Disclosure',
     'footer.col_editorial':  'Editorial',
     'footer.peluuri':        'PELUURI',
     'footer.peli_poikki':    'PELI POIKKI',
@@ -1177,7 +1251,7 @@ export const translations = {
     'footer.affiliate':      'AFFILIATE DISCLOSURE',
     'footer.method':         'METHODOLOGY',
     'footer.indep':          'INDEPENDENT EDITORIAL',
-    'footer.warning':        'GAMBLING CAN BE ADDICTIVE',
+    'footer.warning':        'FOR ENTERTAINMENT PURPOSES ONLY · NO BETTING ACTIVITY TAKES PLACE',
   },
 };
 

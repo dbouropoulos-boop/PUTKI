@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 19 — full backend + frontend acceptance of /peli raffle pivot, content backfill, twitch auto-discovery, dial bug fix, value-prop section, non-clickable streamer cards, EN brand rename to scene-heat. All 18 pytest tests pass. Frontend verified for /peli page, /back-office/peli admin, home zone-whatis, footer legal copy, streamer card non-clickable, dial brand scene-heat.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter19_peli_raffle.py",
+    "/app/test_reports/pytest/iter19_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "GET /api/admin/peli/entries returns {entries:[], count:int} (dict), not a bare array as stated in the request — both shapes are acceptable; admin BackOfficePeli.jsx must read .entries. Verified consistent with current FE.",
+    "POST /api/admin/content/backfill correctly hard-caps requested to 50 inside run_backfill() — confirmed by test (requested=200 → returns 50).",
+    "Auto-discovery returned status:'ok' with discovered=0 added=0 — expected behaviour because current FI Twitch top 100 doesn't include casino/slots categories at test time.",
+    "/api/data/live-stats returns twitch_live=97 (≥1) — language=fi fix in layer2_workers.py is confirmed live.",
+    "All admin endpoints properly enforce X-Admin-Token (return 401 without it)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter19_peli_raffle.py"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18)",
+    "frontend": "100% (all acceptance criteria met)"
+  },
+  "test_credentials": "Admin token: putki-hq-admin (X-Admin-Token header). No user auth on public site.",
+  "seed_data_creation": "Created ~5 TEST_-prefixed peli_entries (visible in back-office) and 1 test_iter19 prize_label edit on peli_meta. Backfill generated streamer_alert articles (count=3 + count=50). These can stay; safe to ignore.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend tests live at /app/backend/tests/test_iter19_peli_raffle.py — reusable as regression. All acceptance points for iteration 19 pass. /peli has testid 'peli-page'; back-office /peli uses bo-peli-* testids. Streamer cards are <div> with no href. zone-whatis section uses testids whatis-eyebrow/title/lede/p1/p2/p3. Footer warning copy is 'FOR ENTERTAINMENT PURPOSES ONLY · NO BETTING ACTIVITY TAKES PLACE'. Dial maker's mark in EN is 'scene-heat · v4'.",
+  "rca of the issue": "N/A — no failures. Twitch dial 0-streams bug RCA was already addressed by main agent: previous code fetched /streams?first=100 without language filter which returned global top streams (none on Finnish roster), now uses language=fi&first=100 returning ~97 FI live streams."
+}

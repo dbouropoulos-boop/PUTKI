@@ -399,10 +399,13 @@ from rotation import (  # noqa: E402
 from webhooks import build_webhook_router  # noqa: E402
 from weekly_card import build_weekly_router  # noqa: E402
 from winners import build_winners_router  # noqa: E402
+from peli_raffle import build_peli_router, build_peli_admin_router  # noqa: E402
 
 api_router.include_router(build_webhook_router(db))
 api_router.include_router(build_weekly_router(db, require_admin))
 api_router.include_router(build_winners_router(db, require_admin))
+api_router.include_router(build_peli_router(db))
+api_router.include_router(build_peli_admin_router(db))
 
 from feed import (  # noqa: E402
     rebuild_feed,
@@ -953,6 +956,34 @@ async def admin_manual_generate(payload: _ManualGenerateBody, _: bool = Depends(
     )
 
 
+class _BackfillBody(BaseModel):
+    count: int = 20
+    days: int = 60
+    templates: Optional[List[str]] = None
+
+
+@api_router.post("/admin/content/backfill")
+async def admin_content_backfill(payload: _BackfillBody, _: bool = Depends(require_admin)):
+    """Generate N historical articles across the 6 templates and back-date
+    their published_at across the last `days`. Call multiple times to reach
+    100–200 total. Hard-capped at 50 per call."""
+    if _content_generator is None:
+        raise HTTPException(status_code=503, detail="ContentGenerator not initialised")
+    from content_backfill import run_backfill
+    return await run_backfill(
+        db, _content_generator,
+        count=payload.count, days=payload.days, templates=payload.templates,
+    )
+
+
+@api_router.post("/admin/streamers/discover")
+async def admin_twitch_discover(_: bool = Depends(require_admin)):
+    """Manually trigger one Twitch auto-discovery pass. Adds new FI casino
+    streamers with ≥1000 followers to the registry."""
+    from twitch_discovery import discover_once
+    return await discover_once(db)
+
+
 class _PreviewBody(BaseModel):
     template_id: str
     signal_data: Dict[str, Any]
@@ -1451,6 +1482,9 @@ async def _seed_phase3():
         # recompute through the `on_tick` callback so connected SSE clients
         # see updates instantly instead of on the legacy 90s cycle.
         await start_layer2_workers(db, on_tick=_layer2_on_tick)
+        if os.environ.get("PUTKI_HQ_DISABLE_AUTO_DISCOVERY", "0") != "1":
+            from twitch_discovery import discovery_worker_loop as _disc_loop
+            _aio.create_task(_disc_loop(db))
     # Kick off editorial seed scheduler + variant filler.
     if os.environ.get("PUTKI_HQ_DISABLE_SCHEDULER", "0") != "1":
         import asyncio as _aio
