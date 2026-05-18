@@ -63,6 +63,7 @@ class WeeklySubmissionIn(BaseModel):
     channel:  Channel
     handle:   str = Field(..., min_length=3, max_length=64)
     picks:    List[PickIn] = Field(..., min_length=1, max_length=10)
+    invite_code: Optional[str] = Field(None, max_length=24)
 
     @field_validator("handle")
     @classmethod
@@ -70,7 +71,6 @@ class WeeklySubmissionIn(BaseModel):
         v = v.strip()
         channel = info.data.get("channel") if info and getattr(info, "data", None) else None
         if channel == "sms":
-            # Loose international phone — at least 7 digits, may include + / spaces
             digits = re.sub(r"\D", "", v)
             if len(digits) < 7:
                 raise ValueError("phone number too short")
@@ -94,6 +94,12 @@ class ResultsUpdateIn(BaseModel):
 
 
 # ---------- Helpers ----------
+
+def _gen_invite_code(email: str) -> str:
+    """Short, URL-safe invite code derived from email + random suffix."""
+    seed = hashlib.sha256(f"{email}-{uuid.uuid4()}".encode()).hexdigest()
+    return seed[:10].upper()
+
 
 async def _ensure_meta(db: AsyncIOMotorDatabase, week_key: str) -> Dict[str, Any]:
     coll = db.weekly_meta
@@ -178,8 +184,9 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
         # Upsert by (week, email) so a user editing their card replaces the old entry.
         entry_id = str(uuid.uuid4())
         existing = await db.weekly_picks.find_one(
-            {"week_key": wk, "email": data.email.lower()}, {"_id": 0, "id": 1},
+            {"week_key": wk, "email": data.email.lower()}, {"_id": 0},
         )
+        invite_code = existing.get("invite_code") if existing else _gen_invite_code(data.email)
         if existing:
             entry_id = existing["id"]
 
@@ -194,10 +201,44 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
             "correct_count": 0,
             "settled": False,
             "submitted_at": datetime.now(timezone.utc).isoformat(),
+            "invite_code": invite_code,
+            # Tickets in the random draw — 1 base + extras from successful invites
+            # (set on the inviter's entry by /weekly/invite/use).
+            "tickets": (existing.get("tickets") if existing else 1) or 1,
+            "invite_count": (existing.get("invite_count") if existing else 0) or 0,
+            "invited_by": data.invite_code.upper() if (not existing and data.invite_code) else (existing.get("invited_by") if existing else None),
         }
         await db.weekly_picks.update_one({"id": entry_id}, {"$set": entry}, upsert=True)
+
+        # First-time entry came in with an invite — credit the inviter (+1 ticket).
+        if not existing and data.invite_code:
+            code = data.invite_code.upper().strip()
+            if code and code != invite_code:
+                await db.weekly_picks.update_one(
+                    {"invite_code": code, "week_key": wk},
+                    {"$inc": {"tickets": 1, "invite_count": 1}},
+                )
+
         await _refresh_entry_count(db, wk)
-        return {"ok": True, "entry_id": entry_id, "week_key": wk}
+        return {
+            "ok": True,
+            "entry_id": entry_id,
+            "week_key": wk,
+            "invite_code": invite_code,
+            "tickets": entry["tickets"],
+            "invite_count": entry["invite_count"],
+        }
+
+    @r.get("/weekly/invite/{code}")
+    async def invite_lookup(code: str) -> Dict[str, Any]:
+        """Public lookup so the share-landing page can show whose invite it is."""
+        code = code.upper().strip()
+        entry = await db.weekly_picks.find_one(
+            {"invite_code": code}, {"_id": 0, "email_hash": 1, "week_key": 1, "tickets": 1, "invite_count": 1},
+        )
+        if not entry:
+            raise HTTPException(status_code=404, detail="Invite code not found")
+        return entry
 
     @r.get("/weekly/leaderboard")
     async def leaderboard(week: Optional[str] = None, limit: int = 20) -> Dict[str, Any]:
@@ -279,7 +320,9 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
 
     @r.post("/admin/weekly/{week}/draw")
     async def admin_draw(week: str, _: bool = Depends(require_admin)) -> Dict[str, Any]:
-        """Random-draw a single winner from the highest correct_count cohort."""
+        """Ticket-weighted random draw. Each entry gets `tickets` slots (1
+        base + 1 per successful invite). Winner is picked from the highest
+        correct_count cohort, weighted by tickets."""
         meta = await _ensure_meta(db, week)
         if not meta.get("results"):
             raise HTTPException(status_code=409, detail="Set results before drawing.")
@@ -289,12 +332,19 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
             raise HTTPException(status_code=409, detail="No entries to draw from.")
         top = max(entries, key=lambda e: e.get("correct_count", 0)).get("correct_count", 0)
         finalists = [e for e in entries if e.get("correct_count", 0) == top]
-        winner = random.choice(finalists)
+        # Build the weighted pool — repeat each finalist `tickets` times.
+        pool = []
+        for e in finalists:
+            t = max(1, int(e.get("tickets") or 1))
+            pool.extend([e] * t)
+        winner = random.choice(pool)
         winner_doc = {
             "email_hash":     winner["email_hash"],
             "correct_count":  top,
             "drawn_at":       datetime.now(timezone.utc).isoformat(),
             "finalist_count": len(finalists),
+            "tickets":        int(winner.get("tickets") or 1),
+            "pool_size":      len(pool),
         }
         await db.weekly_meta.update_one({"_id": week}, {"$set": {"winner": winner_doc}})
         return {"winner": winner_doc, "winner_email": winner["email"], "winner_handle": winner["handle"]}

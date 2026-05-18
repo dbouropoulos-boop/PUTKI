@@ -6,7 +6,7 @@
  * to /api/weekly/submit. Fully bilingual.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, Loader2, Trophy, Sparkles } from 'lucide-react';
+import { Calendar, Loader2, Trophy, Sparkles, Send, Link as LinkIcon, Check } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { formatKickoff, formatShortDate } from '../utils/formatTime';
 
@@ -64,6 +64,18 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
   const [busy, setBusy]       = useState(false);
   const [error, setError]     = useState(null);
   const [ok, setOk]           = useState(false);
+  const [success, setSuccess] = useState(null);  // { invite_code, tickets, invite_count }
+  const [inviteCode, setInviteCode] = useState('');
+  const [copied, setCopied]   = useState(false);
+
+  // Sniff ?invite=CODE from the URL so referred users auto-fill the field.
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const c = (sp.get('invite') || sp.get('ref') || '').toUpperCase().trim();
+      if (c && /^[A-Z0-9]{6,12}$/.test(c)) setInviteCode(c);
+    } catch {}
+  }, []);
 
   const ready = picks.length > 0 && Object.keys(predictions).length === picks.length;
 
@@ -79,6 +91,7 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
         handle: handle.trim(),
         picks: Object.entries(predictions).map(([event_id, pick]) => ({ event_id, pick })),
       };
+      if (inviteCode) payload.invite_code = inviteCode;
       const r = await fetch(`${BACKEND}/api/weekly/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -87,11 +100,38 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
       const d = await r.json();
       if (!r.ok) throw new Error(d.detail || `HTTP ${r.status}`);
       setOk(true);
+      setSuccess(d);
       onSubmit?.();
     } catch (err) {
       setError(String(err.message || err));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const inviteUrl = success?.invite_code
+    ? `${window.location.origin}/viikon-kortti?invite=${success.invite_code}`
+    : '';
+
+  const copyInvite = async () => {
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {}
+  };
+
+  const shareInvite = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'PUTKI HQ — Weekly Card',
+          text: t('weekly.invite_help'),
+          url: inviteUrl,
+        });
+      } catch {}
+    } else {
+      copyInvite();
     }
   };
 
@@ -105,29 +145,100 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
     );
   }
 
-  if (ok) {
+  if (ok && success) {
     return (
-      <div className="panel p-6" data-testid="weekly-entry-success" style={{ background: '#0A0A0A', color: '#F5F3EE', borderRadius: 4 }}>
-        <div className="mono mb-2 inline-flex items-center gap-2"
-             style={{ fontSize: 10, letterSpacing: '0.22em', color: '#2c7a4b', fontWeight: 700 }}>
-          <Sparkles strokeWidth={1.9} size={12} />
-          ✓ {t('weekly.submit_entry').toUpperCase()}
+      <div className="space-y-4" data-testid="weekly-entry-success">
+        <div className="panel p-6" style={{ background: '#0A0A0A', color: '#F5F3EE', borderRadius: 4 }}>
+          <div className="mono mb-2 inline-flex items-center gap-2"
+               style={{ fontSize: 10, letterSpacing: '0.22em', color: '#2c7a4b', fontWeight: 700 }}>
+            <Sparkles strokeWidth={1.9} size={12} />
+            ✓ {t('weekly.submit_entry').toUpperCase()}
+          </div>
+          <p className="font-serif mb-4" style={{ fontSize: 14.5, color: '#F5F3EE', lineHeight: 1.5 }}>
+            {t('weekly.submit_success')}
+          </p>
+          <div className="mono inline-flex items-center gap-2 mb-4"
+               style={{ fontSize: 11, letterSpacing: '0.18em', color: '#E8924A', fontWeight: 700 }}>
+            🎟 {t('weekly.tickets', { n: success.tickets }).toUpperCase()}
+            {success.invite_count > 0 && <span style={{ color: 'rgba(245,243,238,0.6)' }}>· {success.invite_count} kpl</span>}
+          </div>
+          <button
+            type="button"
+            onClick={() => { setOk(false); setSuccess(null); }}
+            data-testid="weekly-entry-edit"
+            className="mono"
+            style={{
+              padding: '8px 14px', fontSize: 10, letterSpacing: '0.22em', fontWeight: 700,
+              background: 'transparent', color: '#F5F3EE',
+              border: '1px solid rgba(245,243,238,0.3)', borderRadius: 2, cursor: 'pointer',
+            }}
+          >
+            {t('weekly.submit_again').toUpperCase()}
+          </button>
         </div>
-        <p className="font-serif mb-4" style={{ fontSize: 14.5, color: '#F5F3EE', lineHeight: 1.5 }}>
-          {t('weekly.submit_success')}
-        </p>
-        <button
-          type="button"
-          onClick={() => setOk(false)}
-          data-testid="weekly-entry-edit"
-          className="mono"
-          style={{
-            padding: '10px 16px', fontSize: 11, letterSpacing: '0.22em', fontWeight: 700,
-            background: '#E8924A', color: '#0A0A0A', border: 'none', borderRadius: 2, cursor: 'pointer',
-          }}
-        >
-          {t('weekly.submit_again').toUpperCase()}
-        </button>
+
+        {/* Invite share card — viral loop */}
+        <div className="panel p-5"
+             data-testid="weekly-invite-card"
+             style={{
+               background: 'linear-gradient(135deg, #fff 0%, #fffaf3 100%)',
+               border: '1px solid rgba(232,146,74,0.4)',
+               borderRadius: 4,
+             }}>
+          <div className="eyebrow mb-2 inline-flex items-center gap-2"
+               style={{ color: '#E8924A' }}>
+            🎟 {t('weekly.invite_eyebrow').toUpperCase()}
+          </div>
+          <p className="font-serif mb-4" style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.5 }}>
+            {t('weekly.invite_help')}
+          </p>
+          <div className="mono mb-2" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+            {t('weekly.invite_label').toUpperCase()}
+          </div>
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <input
+              type="text"
+              readOnly
+              value={inviteUrl}
+              data-testid="weekly-invite-url"
+              className="mono"
+              style={{
+                flex: 1, minWidth: 200, padding: '10px 12px', fontSize: 12,
+                background: 'var(--bg)', border: '1px solid var(--border-strong)',
+                color: 'var(--ink)', borderRadius: 2, outline: 'none',
+              }}
+              onFocus={(e) => e.target.select()}
+            />
+            <button
+              type="button"
+              onClick={copyInvite}
+              data-testid="weekly-invite-copy"
+              className="mono inline-flex items-center gap-1"
+              style={{
+                padding: '10px 14px', fontSize: 11, letterSpacing: '0.18em', fontWeight: 700,
+                background: copied ? '#2c7a4b' : 'var(--ink)', color: copied ? '#fff' : 'var(--bg)',
+                border: 'none', borderRadius: 2, cursor: 'pointer',
+              }}
+            >
+              {copied ? <Check size={11} /> : <LinkIcon size={11} />}
+              {(copied ? t('weekly.invite_copied') : t('weekly.invite_copy')).toUpperCase()}
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={shareInvite}
+            data-testid="weekly-invite-share"
+            className="mono w-full inline-flex items-center justify-center gap-2"
+            style={{
+              padding: '11px 14px', fontSize: 11, letterSpacing: '0.22em', fontWeight: 700,
+              background: '#E8924A', color: '#0A0A0A',
+              border: 'none', borderRadius: 2, cursor: 'pointer',
+            }}
+          >
+            <Send strokeWidth={1.9} size={12} />
+            {t('weekly.invite_share').toUpperCase()} →
+          </button>
+        </div>
       </div>
     );
   }
@@ -208,6 +319,25 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
           }}
         />
       </div>
+
+      <details data-testid="weekly-invite-details" style={{ cursor: 'pointer' }}>
+        <summary className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+          {t('weekly.have_invite').toUpperCase()}
+        </summary>
+        <input
+          type="text"
+          value={inviteCode}
+          onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+          placeholder={t('weekly.invite_placeholder')}
+          data-testid="weekly-invite-input"
+          className="mono mt-2"
+          style={{
+            width: '100%', padding: '10px 12px', fontSize: 12, letterSpacing: '0.18em',
+            background: 'var(--bg)', border: '1px solid var(--border-strong)',
+            color: 'var(--ink)', borderRadius: 2, outline: 'none',
+          }}
+        />
+      </details>
 
       {error && (
         <div className="mono" data-testid="weekly-entry-error"

@@ -307,7 +307,12 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "markkinasiirto). Skipa: pienet UI-muutokset, kampanjat, kv-uutiset ilman "
             "Suomi-relevanssia, promomateriaali. Palauta skip_reason.\n"
             "- Vedonlyöntikulma: vaikutus pelaajan valintoihin (uudet vetokohteet, "
-            "bonusehdot, kerroinmuutokset, kilpailutilanne)."
+            "bonusehdot, kerroinmuutokset, kilpailutilanne).\n"
+            "- ÄLÄ KOSKAAN käytä paikanpitäjä-nimiä kuten 'Test Casino', "
+            "'Example Casino', 'Sample Casino', 'Casino X', 'Operator X'. "
+            "Käytä AINA OPERAATTORI-kentässä annettua oikeaa nimeä. Jos OPERAATTORI "
+            "on tyhjä tai geneerinen, palauta skip_reason='missing_operator_name' "
+            "äläkä keksi nimeä."
         ),
         "user_prompt": (
             "OPERAATTORI: {operator}\n"
@@ -517,7 +522,9 @@ class ContentGenerator:
             "tier": tmpl["tier"] if not downgrade_to_draft else TIER_DRAFT,
             "status": "draft",
             "headline": content.get("headline", "")[:240],
+            "headline_en": (content.get("headline_en") or "")[:240] or None,
             "subhead": content.get("subhead", "")[:300],
+            "subhead_en": (content.get("subhead_en") or "")[:300] or None,
             "body": _resolve_body(template_id, content),
             "url_slug": slug,
             "category": category,
@@ -574,21 +581,42 @@ class ContentGenerator:
         #
         # The guard also catches any "*FIXT_<hex>" username pattern (e.g.
         # E2EFIXT_5775FC97) that newer testing agents have introduced.
+        #
+        # Additionally we block LLM hallucinations that use placeholder
+        # operator/brand names ("Test Casino", "Example Casino", "Casino X",
+        # "Sample Casino"). These slip through when Claude's prompt isn't
+        # grounded to a real operator — they look fine in isolation but are
+        # embarrassing on the public ticker.
         import re as _re
         _slug_or_head = f"{draft.get('url_slug','')} {draft.get('headline','')}".lower()
+        _full_text = " ".join([
+            draft.get("headline", "") or "",
+            draft.get("subhead", "") or "",
+            str(draft.get("body") or ""),
+        ])
         _looks_synthetic = (
             "testapi" in _slug_or_head
             or "e2efixt" in _slug_or_head
             or bool(_re.search(r"[a-z]{2,}fixt_[0-9a-f]{6,}", _slug_or_head))
         )
-        if _looks_synthetic:
-            logger.info("publish_draft: blocking synthetic-fixture leak draft_id=%s slug=%s",
-                        draft_id, draft.get("url_slug"))
+        _has_placeholder_brand = bool(_re.search(
+            r"\b(?:Test|Example|Sample|Demo|Placeholder)\s+Casino\b"
+            r"|\bCasino\s+X\b"
+            r"|\bCasino\s+ABC\b"
+            r"|\bOperator\s+X\b"
+            r"|\bTest[\-\s]?(?:Streamer|Operaattori|Operator|User|Kasino|Player)\b"
+            r"|\bLogTest\b|\bSampleStreamer\b|\bDemoStreamer\b",
+            _full_text, _re.IGNORECASE,
+        ))
+        if _looks_synthetic or _has_placeholder_brand:
+            reason = "synthetic_fixture_leak" if _looks_synthetic else "placeholder_brand_leak"
+            logger.info("publish_draft: blocking %s draft_id=%s slug=%s",
+                        reason, draft_id, draft.get("url_slug"))
             await self.db.content_drafts.update_one(
                 {"id": draft["id"]},
-                {"$set": {"status": "rejected", "rejection_reason": "synthetic_fixture_leak"}},
+                {"$set": {"status": "rejected", "rejection_reason": reason}},
             )
-            return {"status": "rejected", "reason": "synthetic_fixture_leak"}
+            return {"status": "rejected", "reason": reason}
 
         # Phase 4 Pre-Launch Polish: social meta carries forward from draft.
         # Nano Banana OG image is generated in the BACKGROUND (after insert)
@@ -800,7 +828,12 @@ class ContentGenerator:
                           "subhead": "", "body": text[:2000], "tags": []}
 
     def _generate_structured(self, template_id: str, sig: Dict[str, Any]) -> Dict[str, Any]:
-        """Non-LLM template path — currently just streamer_alert."""
+        """Non-LLM template path — currently just streamer_alert.
+
+        Stores BOTH a Finnish and English headline so the frontend can render
+        the right language at view time (since the article is auto-published
+        before we know the reader's locale).
+        """
         if template_id == "streamer_alert":
             login = sig.get("user_login") or sig.get("user_name") or "streamer"
             name = sig.get("user_name") or login
@@ -809,17 +842,18 @@ class ContentGenerator:
             title = sig.get("title") or ""
             external = sig.get("external_link") or f"https://twitch.tv/{login}"
             expires = (_now() + timedelta(hours=6)).isoformat()
-            # Friendly, scannable Finnish headline. Examples:
-            #   "Jarttu84 aloitti striimin · 1 240 katsojaa · Slots"
-            #   "Roshtein aloitti striimin · 12 300 katsojaa"
-            viewer_str = f"{viewers:,}".replace(",", " ")
-            parts = [f"{name} aloitti striimin", f"{viewer_str} katsojaa"]
+            viewer_fi = f"{viewers:,}".replace(",", " ")
+            viewer_en = f"{viewers:,}"
+            fi_parts = [f"{name} aloitti striimin", f"{viewer_fi} katsojaa"]
+            en_parts = [f"{name} is live", f"{viewer_en} viewers"]
             if game:
-                parts.append(game)
-            headline = " · ".join(parts)
+                fi_parts.append(game)
+                en_parts.append(game)
             return {
-                "headline": headline,
+                "headline":    " · ".join(fi_parts),
+                "headline_en": " · ".join(en_parts),
                 "subhead": (title or (f"Pelaa: {game}" if game else ""))[:300],
+                "subhead_en": (title or (f"Playing: {game}" if game else ""))[:300],
                 "body": None,
                 "external_link": external,
                 "tags": [_slugify(login), "twitch", "live"],
@@ -1035,12 +1069,24 @@ async def list_published(db, *, category: Optional[str] = None, limit: int = 50)
         q["category"] = category
     # Only docs created by the new generator (have draft_id back-link)
     q["draft_id"] = {"$exists": True}
-    # Defensive — never surface synthetic dev fixtures even if one slips
-    # through the publisher-side guard. Covers TESTAPI_*, E2EFIXT_*, and
-    # any "*FIXT_<hex>" username pattern used by automated test runs.
+    # Defensive — never surface synthetic dev fixtures or LLM placeholder
+    # brand hallucinations even if one slips through the publisher-side
+    # guard. Covers TESTAPI_*, E2EFIXT_*, "*FIXT_<hex>", placeholder operator
+    # names (Test/Example/Sample/Demo Casino, Casino X) AND any "Test*",
+    # "Log*", "Sample*", "Demo*" prefix on streamer/operator/user names that
+    # the LLM tends to invent when grounding fails (e.g. "LogTest",
+    # "TestStreamer", "Test-operaattori", "SampleStreamer").
+    _bad_regex = (
+        r"testapi|e2efixt|[a-z]{2,}fixt_[0-9a-f]{6,}"
+        r"|test\s*casino|example\s*casino|sample\s*casino|demo\s*casino"
+        r"|placeholder\s*casino|casino\s+x\b|operator\s+x\b"
+        r"|\btest[\-\s]?(?:streamer|operaattori|operator|user|kasino|player)\b"
+        r"|\blogtest\b|\bsamplestreamer\b|\bdemostreamer\b"
+    )
     q["$and"] = [
-        {"url_slug":  {"$not": {"$regex": r"testapi|e2efixt|[a-z]{2,}fixt_[0-9a-f]{6,}", "$options": "i"}}},
-        {"headline":  {"$not": {"$regex": r"testapi|e2efixt|[A-Z]{2,}FIXT_[0-9A-F]{6,}"}}},
+        {"url_slug":  {"$not": {"$regex": _bad_regex, "$options": "i"}}},
+        {"headline":  {"$not": {"$regex": _bad_regex, "$options": "i"}}},
+        {"subhead":   {"$not": {"$regex": _bad_regex, "$options": "i"}}},
     ]
     cur = db.published_content.find(q, {"_id": 0}).sort("published_at", -1).limit(max(1, min(200, limit)))
     return await cur.to_list(length=limit)

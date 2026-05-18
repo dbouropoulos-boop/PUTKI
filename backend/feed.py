@@ -423,6 +423,17 @@ async def list_feed(
         q["mocked"] = False
     # Hide expired in case the pruner is mid-tick.
     q["expires_at"] = {"$gte": _iso(_now())}
+    # Defensive — never surface LLM placeholder hallucinations or synthetic
+    # test fixtures on the live ticker even if they got into feed_items
+    # somehow (e.g. legacy doc, before the publish-time guard was added).
+    _bad_regex = (
+        r"testapi|e2efixt|[a-z]{2,}fixt_[0-9a-f]{6,}"
+        r"|test\s*casino|example\s*casino|sample\s*casino|demo\s*casino"
+        r"|placeholder\s*casino|casino\s+x\b|operator\s+x\b"
+        r"|\btest[\-\s]?(?:streamer|operaattori|operator|user|kasino|player)\b"
+        r"|\blogtest\b|\bsamplestreamer\b|\bdemostreamer\b"
+    )
+    q["title"] = {"$not": {"$regex": _bad_regex, "$options": "i"}}
 
     cur = (
         db.feed_items.find(q, {"_id": 0})

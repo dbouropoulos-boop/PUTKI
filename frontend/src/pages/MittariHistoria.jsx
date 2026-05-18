@@ -27,11 +27,11 @@ const STATE_BAND = (val) => {
   return 'KYLMA';
 };
 
-const fmtClock = (iso) => {
+const fmtClock = (iso, lang = 'fi') => {
   try {
     const t = new Date(iso);
-    return new Intl.DateTimeFormat('fi-FI', {
-      day: 'numeric', month: 'numeric',
+    return new Intl.DateTimeFormat(lang === 'en' ? 'en-GB' : 'fi-FI', {
+      day: 'numeric', month: 'short',
       hour: '2-digit', minute: '2-digit',
       timeZone: 'Europe/Helsinki',
     }).format(t);
@@ -99,9 +99,9 @@ const Chart = ({ data, width = 980, height = 320, lang = 'fi' }) => {
       </svg>
       <div className="mono mt-3 flex justify-between"
            style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
-        <span>{fmtClock(data[0].iso)}</span>
-        <span>{fmtClock(data[Math.floor(data.length / 2)].iso)}</span>
-        <span>{fmtClock(last.iso)}</span>
+        <span>{fmtClock(data[0].iso, lang)}</span>
+        <span>{fmtClock(data[Math.floor(data.length / 2)].iso, lang)}</span>
+        <span>{fmtClock(last.iso, lang)}</span>
       </div>
     </div>
   );
@@ -250,7 +250,7 @@ const MittariHistoria = () => {
                   }}
                 >
                   <span className="mono" style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }}>
-                    {fmtClock(row.iso)}
+                    {fmtClock(row.iso, lang)}
                   </span>
                   <span className="mono" style={{ fontSize: 11, letterSpacing: '0.18em', color: meta?.color || 'var(--ink)', fontWeight: 700 }}>
                     {dialLabel(row.state, lang)}

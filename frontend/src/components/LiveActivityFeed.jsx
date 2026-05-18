@@ -61,7 +61,7 @@ const FeedRow = ({ item, lang, t, categoryMeta, isNew }) => {
           style={{ fontSize: 17, lineHeight: 1.4, color: 'var(--ink)', minWidth: 0, transition: 'color 200ms ease' }}
           data-testid={`feed-headline-${item.id}`}
         >
-          {item.headline}
+          {(lang === 'en' && item.headline_en) ? item.headline_en : item.headline}
         </span>
         <span
           className="mono inline-flex items-center gap-1"
