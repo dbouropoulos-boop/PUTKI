@@ -1,0 +1,62 @@
+{
+  "summary": "Frontend-only UX upgrade audit (4 batches A-D). Verified hero value-prop block, SocialProofBar, dial help tooltip, bulk wildcard streamer card, Vitoset track-record strip, sticky Telegram CTA, and friendlier empty states across FI and EN at desktop 1440x900 and mobile 375x812. All 13 listed acceptance criteria pass. 0 console errors.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "StreamerAlertModal opened from bulk-alert wildcard card",
+        "issues": [
+          "Modal title injects the full bulk-card description verbatim into the existing template, producing slightly awkward grammar: 'Ilmoita kun Hälytä mistä tahansa suomalaisesta striimaajasta menee livenä' / 'Notify when Alert me on any Finnish streamer going live goes live'. Not a blocker — the modal opens, target=wildcard, capture form works — but recommend a dedicated 'wildcard' title string in the modal copy when platform=wildcard."
+        ]
+      }
+    ]
+  },
+  "test_evidence": {
+    "hero_eyebrow_fi": "PUTKI HQ · SUOMI · LIVE SIGNAALIT",
+    "hero_eyebrow_en": "PUTKI HQ · FINLAND · LIVE SIGNALS",
+    "hero_value_prop_fi": "Suomenkielisten striimaajien, vedonlyönnin ja sääntelyn live-signaalit — ennen kuin muut huomaavat.",
+    "hero_value_prop_en": "Live signals on Finnish streamers, betting and regulation — before anyone else notices.",
+    "hero_cta_primary_bg": "rgb(232,146,74) == #E8924A",
+    "hero_cta_primary_scrolls_to_zone_capture": true,
+    "hero_cta_secondary_href": "/menetelma",
+    "social_proof_bar_cells_fi": ["108 tilaajaa Telegramissa", "8 artikkelia tänään", "12 striimaajaa seurannassa", "5 vetoa päivän kortilla"],
+    "social_proof_bar_cells_en": ["108 Telegram subscribers", "8 articles today", "12 streamers tracked", "5 picks on today’s card"],
+    "dial_help_trigger_visible": true,
+    "dial_help_popover_opens": true,
+    "dial_help_popover_fi_text": "Mittari = suomalaisen uhkapeli-, striimi- ja urheiluskenen live-lämpötila. Päivittyy 60 s sykleissä.",
+    "dial_help_dismiss_closes_popover": true,
+    "streamer_bulk_alert_card_fi": "HÄLYTÄ KAIKISTA — Hälytä mistä tahansa suomalaisesta striimaajasta — ASETA YLEISHÄLYTYS",
+    "streamer_bulk_alert_card_en": "ALERT FOR ALL — Alert me on any Finnish streamer going live — SET WILDCARD ALERT",
+    "streamer_bulk_alert_opens_modal": true,
+    "vitoset_track_record_fi": "TRACK RECORD · VIIM. 7 PV / Tulokset alkavat tästä viikosta — seuraa Telegramissa.",
+    "vitoset_track_record_en": "TRACK RECORD · LAST 7 DAYS / Results begin this week — follow on Telegram.",
+    "sticky_telegram_appears_after_600px": true,
+    "sticky_telegram_href": "https://t.me/putkihq_vinkit",
+    "sticky_telegram_target": "_blank",
+    "sticky_telegram_dismiss_writes_localStorage": "putki_sticky_telegram_dismissed_at = 1779102955685",
+    "sticky_telegram_dismiss_persists_across_reload": true,
+    "fi_en_toggle_flips_all_new_strings": true,
+    "console_errors": 0,
+    "mobile_375_usable": true,
+    "mobile_persistent_capture_overlap_observed": false,
+    "empty_state_ctas_observed_in_dom": "streamer-live-empty-cta and paivan-vitoset-empty-cta exist in source; not rendered at test time because grids had live data (12 streamers, 5 picks). Code path verified in StreamerLiveGrid.jsx line 309 and PaivaVitoset.jsx line 259."
+  },
+  "action_items": [
+    "Optional polish: when StreamerAlertModal is opened from the wildcard bulk card, swap the title from the platform/streamer-name template to a dedicated 'wildcard' copy so the sentence reads naturally in FI and EN (currently slightly awkward but functional)."
+  ],
+  "critical_code_review_comments": [
+    "SocialProofBar fetches 4 endpoints in parallel and handles null gracefully (renders 0). Good.",
+    "StickyTelegramCTA TTL logic is sound (7d, localStorage); falls back silently if storage blocked.",
+    "DialHelp popover dismissal verified to fully unmount (not just hide).",
+    "Carrying forward iteration-16 medium: DialCockpit '... sitten' relative-time ticker still hardcoded FI (not in this iteration's scope but unresolved)."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a (not in scope)", "frontend": "100% on listed acceptance criteria" },
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All UX upgrade testids ship and work in FI+EN at desktop and mobile. Open follow-ups for main agent: (1) wildcard-modal title copy polish, (2) carry-over from iter 16 — DialCockpit 'LAST UPDATE · Xs sitten' still hardcoded FI. Empty-state CTAs could not be visually exercised because the live data isn't empty; they exist in source and are wired to keys 'empty.no_streamers_*' / 'empty.no_picks_*' in translations.js.",
+  "rca of the issue": "n/a — no blocking issue found."
+}

@@ -3,6 +3,45 @@
 
 export const translations = {
   fi: {
+    // Hero conversion (Batch A)
+    'hero.eyebrow':          'PUTKI HQ · Suomi · live signaalit',
+    'hero.value_prop':       'Suomenkielisten striimaajien, vedonlyönnin ja sääntelyn live-signaalit — ennen kuin muut huomaavat.',
+    'hero.cta_primary':      'Aseta hälytys',
+    'hero.cta_secondary':    'Katso menetelmä →',
+
+    // Social proof bar (Batch A)
+    'social.subscribers':    'tilaajaa Telegramissa',
+    'social.articles_today': 'artikkelia tänään',
+    'social.streamers_tracked': 'striimaajaa seurannassa',
+    'social.picks_live':     'vetoa päivän kortilla',
+
+    // Bulk alert (Batch B)
+    'streamer_live.bulk_eyebrow': 'Hälytä kaikista',
+    'streamer_live.bulk_title':   'Hälytä mistä tahansa suomalaisesta striimaajasta',
+    'streamer_live.bulk_body':    'Yksi sähköposti tai Telegram-tili — saat heti tiedon, kun mikä tahansa seurannassa oleva striimaaja menee livenä.',
+    'streamer_live.bulk_cta':     'Aseta yleishälytys',
+
+    // Vitoset track-record (Batch B)
+    'vitoset.track_label':   'Track record · viim. 7 pv',
+    'vitoset.track_empty':   'Tulokset alkavat tästä viikosta — seuraa Telegramissa.',
+    'vitoset.track_format':  '{won} / {total} osumaa · ROI {roi}',
+
+    // Sticky Telegram CTA (Batch C)
+    'sticky.telegram_label': 'Liity Telegram-kanavaan',
+    'sticky.telegram_sub':   'ilmainen · 5 vinkkiä päivässä',
+
+    // Friendly empty states (Batch C)
+    'empty.no_picks_title':  'Ei vahvoja suosikkeja juuri nyt',
+    'empty.no_picks_body':   'Aseta hälytys — pingaamme heti, kun ensimmäinen vahva veto saapuu.',
+    'empty.no_streams_title':'Ei livenä juuri nyt',
+    'empty.no_streams_body': 'Aseta hälytys ja olet ensimmäisten joukossa, kun joku menee livenä.',
+    'empty.no_articles_title':'Tauko julkaisuissa',
+    'empty.no_articles_body': 'Layer 2 -työntekijät keskittyvät juuri nyt — uutta sisältöä tulossa pian.',
+
+    // Dial tooltip (Batch D)
+    'dial.tooltip':          'Mittari = suomalaisen uhkapeli-, striimi- ja urheiluskenen live-lämpötila. Päivittyy 60 s sykleissä.',
+    'dial.tooltip_dismiss':  'Selvä',
+
     // Header
     'nav.news':        'Uutiset',
     'nav.casinos':     'Kasinot',
@@ -494,6 +533,45 @@ export const translations = {
   },
 
   en: {
+    // Hero conversion (Batch A)
+    'hero.eyebrow':          'PUTKI HQ · Finland · live signals',
+    'hero.value_prop':       'Live signals on Finnish streamers, betting and regulation — before anyone else notices.',
+    'hero.cta_primary':      'Set alert',
+    'hero.cta_secondary':    'See method →',
+
+    // Social proof bar (Batch A)
+    'social.subscribers':    'Telegram subscribers',
+    'social.articles_today': 'articles today',
+    'social.streamers_tracked': 'streamers tracked',
+    'social.picks_live':     'picks on today\u2019s card',
+
+    // Bulk alert (Batch B)
+    'streamer_live.bulk_eyebrow': 'Alert for all',
+    'streamer_live.bulk_title':   'Alert me on any Finnish streamer going live',
+    'streamer_live.bulk_body':    'One email or Telegram — you\u2019ll be pinged the moment any tracked streamer goes live.',
+    'streamer_live.bulk_cta':     'Set wildcard alert',
+
+    // Vitoset track-record (Batch B)
+    'vitoset.track_label':   'Track record · last 7 days',
+    'vitoset.track_empty':   'Results begin this week — follow on Telegram.',
+    'vitoset.track_format':  '{won} / {total} hit · ROI {roi}',
+
+    // Sticky Telegram CTA (Batch C)
+    'sticky.telegram_label': 'Join the Telegram channel',
+    'sticky.telegram_sub':   'free · 5 picks a day',
+
+    // Friendly empty states (Batch C)
+    'empty.no_picks_title':  'No strong favourites just yet',
+    'empty.no_picks_body':   'Set an alert — we\u2019ll ping you the moment the first strong pick lands.',
+    'empty.no_streams_title':'No streams live right now',
+    'empty.no_streams_body': 'Set an alert and you\u2019ll be first to know when someone goes live.',
+    'empty.no_articles_title':'Quiet news beat',
+    'empty.no_articles_body': 'Layer 2 workers are focused right now — fresh stories incoming.',
+
+    // Dial tooltip (Batch D)
+    'dial.tooltip':          'The Mittari = the live temperature of the Finnish gambling, streaming and sports scene. Updates every 60 s.',
+    'dial.tooltip_dismiss':  'Got it',
+
     'nav.news':        'News',
     'nav.casinos':     'Casinos',
     'nav.streamers':   'Streamers',

@@ -57,6 +57,63 @@ const SUBSCORE_LABEL = {
   internal:  { fi: 'TOIMITUS',    en: 'EDITORIAL' },
 };
 
+// Tooltip help icon next to the cockpit brand label — first-visit nudge so
+// brand-new visitors understand what the dial actually measures.
+const DialHelp = () => {
+  const { t } = useLang();
+  const [open, setOpen] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', marginLeft: 4 }}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="Mittari help"
+        data-testid="dial-help-trigger"
+        style={{
+          width: 16, height: 16, borderRadius: 999,
+          background: 'var(--surface)',
+          border: '1px solid var(--border-strong)',
+          color: 'var(--muted)',
+          fontSize: 10, fontWeight: 700, cursor: 'pointer',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          padding: 0, lineHeight: 1,
+        }}
+      >?</button>
+      {open && (
+        <div
+          data-testid="dial-help-popover"
+          style={{
+            position: 'absolute', top: 22, left: 0, zIndex: 10,
+            width: 280, padding: 14,
+            background: 'var(--bg)',
+            border: '1px solid var(--border-strong)',
+            borderRadius: 4,
+            boxShadow: '0 8px 24px -4px rgba(0,0,0,0.18)',
+          }}
+        >
+          <p className="font-serif" style={{ fontSize: 13, color: 'var(--ink)', lineHeight: 1.5, margin: 0 }}>
+            {t('dial.tooltip')}
+          </p>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            data-testid="dial-help-dismiss"
+            className="mono"
+            style={{
+              marginTop: 10, padding: '6px 12px',
+              background: 'var(--ink)', color: 'var(--bg)',
+              border: 'none', borderRadius: 2, cursor: 'pointer',
+              fontSize: 10, letterSpacing: '0.22em', fontWeight: 700,
+            }}
+          >
+            {t('dial.tooltip_dismiss').toUpperCase()}
+          </button>
+        </div>
+      )}
+    </span>
+  );
+};
+
 export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
   const { lang, t } = useLang();
   const [cockpit, setCockpit] = useState(null);
@@ -214,6 +271,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         SKENEN LÄMPÖTILA
         <span style={{ color: 'var(--border-strong)' }}>·</span>
         PUTKI HQ MITTARI
+        <DialHelp />
         <span style={{ color: 'var(--border-strong)' }}>·</span>
         <span style={{ color: 'var(--muted)', fontWeight: 500 }}>{weekday.toUpperCase()} {t('time.month_day', { day })} · {t(todKey)}</span>
       </div>

@@ -295,10 +295,27 @@ const StreamerLiveGrid = () => {
             : `${t('streamer_live.empty').toUpperCase()} · ${platform.toUpperCase()}`}
         </div>
       ) : streamers.length === 0 ? (
-        <div className="panel p-8 text-center mono"
-             style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
+        <div className="panel p-8 text-center"
              data-testid="streamer-live-empty">
-          {t('streamer_live.empty').toUpperCase()} · {platform.toUpperCase()}
+          <div className="display mb-2" style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>
+            {t('empty.no_streams_title')}
+          </div>
+          <p className="font-serif mb-5" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.55, maxWidth: 420, margin: '0 auto 16px' }}>
+            {t('empty.no_streams_body')}
+          </p>
+          <button
+            type="button"
+            onClick={() => setAlertTarget({ user_login: '*', user_name: t('streamer_live.bulk_title'), profile_url: '#' })}
+            data-testid="streamer-live-empty-cta"
+            className="mono inline-flex items-center justify-center gap-2"
+            style={{
+              padding: '10px 16px', fontSize: 11, letterSpacing: '0.22em', fontWeight: 700,
+              background: 'var(--ink)', color: 'var(--bg)', border: 'none', borderRadius: 2, cursor: 'pointer',
+            }}
+          >
+            <Bell strokeWidth={1.9} size={12} />
+            {t('streamer_live.set_alert').toUpperCase()}
+          </button>
         </div>
       ) : (
         <>
@@ -324,6 +341,43 @@ const StreamerLiveGrid = () => {
             {pageStreamers.map((s) => (
               <StreamerCard key={s.user_login} s={s} onAlert={setAlertTarget} t={t} />
             ))}
+            {/* Bulk wildcard alert card — last tile in the grid */}
+            <button
+              type="button"
+              onClick={() => setAlertTarget({ user_login: '*', user_name: t('streamer_live.bulk_title'), profile_url: '#' })}
+              data-testid="streamer-bulk-alert-card"
+              className="panel panel-hover flex flex-col text-left"
+              style={{
+                background: 'linear-gradient(135deg, #0A0A0A 0%, #1A1A1A 60%, #232020 100%)',
+                color: '#F5F3EE',
+                border: '1px solid rgba(232,146,74,0.35)',
+                borderRadius: 4, cursor: 'pointer',
+                padding: 20, minHeight: 220,
+                aspectRatio: 'auto',
+              }}
+            >
+              <div className="mono mb-3 inline-flex items-center gap-2"
+                   style={{ fontSize: 10, letterSpacing: '0.22em', color: '#E8924A', fontWeight: 700 }}>
+                <Bell strokeWidth={1.9} size={12} />
+                {t('streamer_live.bulk_eyebrow').toUpperCase()}
+              </div>
+              <h3 className="display mb-3" style={{ fontSize: 18, fontWeight: 700, color: '#F5F3EE', lineHeight: 1.2 }}>
+                {t('streamer_live.bulk_title')}
+              </h3>
+              <p className="font-serif mb-5" style={{ fontSize: 13, color: 'rgba(245,243,238,0.7)', lineHeight: 1.5 }}>
+                {t('streamer_live.bulk_body')}
+              </p>
+              <span
+                className="mono mt-auto inline-flex items-center justify-center gap-2"
+                style={{
+                  padding: '12px 14px', fontSize: 11, letterSpacing: '0.22em', fontWeight: 700,
+                  background: '#E8924A', color: '#0A0A0A', borderRadius: 2,
+                }}
+              >
+                <Bell strokeWidth={1.9} size={12} />
+                {t('streamer_live.bulk_cta').toUpperCase()}
+              </span>
+            </button>
           </div>
           {streamers.length > 4 && (
             <div className="mt-4">

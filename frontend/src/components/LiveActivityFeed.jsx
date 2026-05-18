@@ -13,13 +13,20 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 60_000;
 const PAGE_SIZE = 25;
 
-const FeedRow = ({ item, lang, t, categoryMeta }) => {
+const FeedRow = ({ item, lang, t, categoryMeta, isNew }) => {
   const meta = categoryMeta[item.category] || {
     label: (item.category || '').toUpperCase(),
     color: '#7A8A9C',
   };
   return (
-    <li data-testid={`feed-row-${item.id}`} className="py-5" style={{ borderTop: '1px solid #e8e4dc' }}>
+    <li
+      data-testid={`feed-row-${item.id}`}
+      className="py-5"
+      style={{
+        borderTop: '1px solid #e8e4dc',
+        animation: isNew ? 'putki-feed-pulse 1600ms ease-out' : 'none',
+      }}
+    >
       <Link
         to={`/uutiset/${item.url_slug}`}
         className="flex items-baseline gap-5 group"
@@ -68,6 +75,8 @@ const LiveActivityFeed = () => {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [newIds, setNewIds] = useState(new Set());
+  const seenRef = React.useRef(null);
 
   const categoryMeta = {
     urheilijat:  { label: t('feed.cat_sports'),  color: '#2C5F8D' },
@@ -83,7 +92,19 @@ const LiveActivityFeed = () => {
       const r = await fetch(`${BACKEND}/api/content/published?limit=${size}`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
-      setItems(d.items || []);
+      const next = d.items || [];
+      // Diff against last-seen IDs so only freshly-arrived rows pulse.
+      if (seenRef.current) {
+        const seen = seenRef.current;
+        const fresh = new Set(next.filter((it) => !seen.has(it.id)).map((it) => it.id));
+        if (fresh.size > 0) {
+          setNewIds(fresh);
+          // Clear the highlight after the animation finishes.
+          setTimeout(() => setNewIds(new Set()), 1700);
+        }
+      }
+      seenRef.current = new Set(next.map((it) => it.id));
+      setItems(next);
     } catch (e) {
       setError(String(e.message || e));
     } finally {
@@ -121,15 +142,30 @@ const LiveActivityFeed = () => {
       ) : null}
 
       <ul className="max-w-4xl" data-testid="feed-list" style={{ borderBottom: '1px solid #e8e4dc' }}>
-        {items.map((it) => <FeedRow key={it.id} item={it} lang={lang} t={t} categoryMeta={categoryMeta} />)}
+        {items.map((it) => (
+          <FeedRow key={it.id} item={it} lang={lang} t={t} categoryMeta={categoryMeta} isNew={newIds.has(it.id)} />
+        ))}
         {!items.length && !loading ? (
-          <li className="py-12 text-center mono"
-              style={{ borderTop: '1px solid #e8e4dc', fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)' }}
+          <li className="py-12 text-center"
+              style={{ borderTop: '1px solid #e8e4dc' }}
               data-testid="feed-empty">
-            {t('feed.empty').toUpperCase()}
+            <div className="display mb-2" style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>
+              {t('empty.no_articles_title')}
+            </div>
+            <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.55, maxWidth: 420, margin: '0 auto' }}>
+              {t('empty.no_articles_body')}
+            </p>
           </li>
         ) : null}
       </ul>
+
+      <style>{`
+        @keyframes putki-feed-pulse {
+          0%   { background: rgba(232,146,74,0.18); }
+          50%  { background: rgba(232,146,74,0.10); }
+          100% { background: transparent; }
+        }
+      `}</style>
 
       <div className="mt-6 max-w-4xl flex items-center justify-between gap-3 flex-wrap">
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>

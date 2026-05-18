@@ -217,6 +217,20 @@ const PaivaVitoset = ({ compact = false }) => {
           <span style={{ opacity: 0.55 }}>{picks.length}/5 · {t('vitoset.slip_todays').toUpperCase()}</span>
         </div>
 
+        {/* TRACK RECORD STRIP — honest empty state until results land */}
+        <div
+          data-testid="paivan-vitoset-track-record"
+          className="flex items-center justify-between gap-3 px-4 sm:px-5 py-2.5 mono"
+          style={{
+            background: 'var(--surface)',
+            borderBottom: '1px solid var(--border)',
+            fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600,
+          }}
+        >
+          <span style={{ color: 'var(--ink)', opacity: 0.75 }}>{t('vitoset.track_label').toUpperCase()}</span>
+          <span style={{ textAlign: 'right', fontWeight: 500 }}>{t('vitoset.track_empty')}</span>
+        </div>
+
         {error ? (
           <div className="px-5 py-6 mono inline-flex items-center gap-2"
                style={{ fontSize: 11, color: '#C8423C', letterSpacing: '0.14em' }}
@@ -231,10 +245,27 @@ const PaivaVitoset = ({ compact = false }) => {
             {t('vitoset.dormant').toUpperCase()} · {data?.reason?.toUpperCase()}
           </div>
         ) : picks.length === 0 ? (
-          <div className="px-5 py-8 text-center mono"
-               style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
+          <div className="px-5 py-10 text-center"
                data-testid="paivan-vitoset-empty">
-            {t('vitoset.empty').toUpperCase()}
+            <div className="display mb-2" style={{ fontSize: 18, fontWeight: 700, color: 'var(--ink)' }}>
+              {t('empty.no_picks_title')}
+            </div>
+            <p className="font-serif mb-5" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.55, maxWidth: 420, margin: '0 auto 20px' }}>
+              {t('empty.no_picks_body')}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
+              data-testid="paivan-vitoset-empty-cta"
+              className="mono inline-flex items-center justify-center gap-2"
+              style={{
+                padding: '10px 16px', fontSize: 11, letterSpacing: '0.22em', fontWeight: 700,
+                background: 'var(--ink)', color: 'var(--bg)', border: 'none', borderRadius: 2, cursor: 'pointer',
+              }}
+            >
+              <Send strokeWidth={1.9} size={12} />
+              {t('vitoset.modal_cta').toUpperCase()} →
+            </button>
           </div>
         ) : (
           <ul data-testid="paivan-vitoset-list">

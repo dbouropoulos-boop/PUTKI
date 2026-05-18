@@ -26,6 +26,8 @@ import LiveActivityFeed from '../components/LiveActivityFeed';
 import StreamerLiveGrid from '../components/StreamerLiveGrid';
 import PaivaVitoset from '../components/PaivaVitoset';
 import ActivityStats from '../components/ActivityStats';
+import SocialProofBar from '../components/SocialProofBar';
+import StickyTelegramCTA from '../components/StickyTelegramCTA';
 import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
@@ -307,25 +309,46 @@ const Home = () => {
                data-testid="hero-strip">
             {/* TOP-LEFT — dial cockpit (compact) */}
             <div className="flex flex-col items-start" data-testid="hero-dial-slot">
+              <div className="eyebrow mb-2" data-testid="hero-eyebrow">
+                {t('hero.eyebrow').toUpperCase()}
+              </div>
+              <h1 className="display mb-3"
+                  style={{ fontSize: 'clamp(22px, 2.4vw, 32px)', lineHeight: 1.15, color: 'var(--ink)', maxWidth: 620 }}
+                  data-testid="hero-value-prop">
+                {t('hero.value_prop')}
+              </h1>
               <div className="flex items-center justify-center w-full lg:justify-start">
                 <DialCockpit state={state} compact />
               </div>
               <CockpitContext lang={lang} />
-              <h1 className="display mt-5"
-                  style={{ fontSize: 'clamp(20px, 2vw, 26px)', lineHeight: 1.2, color: 'var(--ink)', maxWidth: 560 }}
-                  data-testid="hero-headline">
+              <p className="mono mt-5"
+                 style={{ fontSize: 12, letterSpacing: '0.04em', color: 'var(--muted)', maxWidth: 560, lineHeight: 1.5 }}
+                 data-testid="hero-headline">
                 {headline}
-              </h1>
+              </p>
               <div className="mt-4 flex items-center gap-3 flex-wrap">
-                {hot ? (
-                  <Link to="/kasinot" className="btn-ghost" data-testid="hero-cta-primary">
-                    {t('home.cta_play')} <ArrowRight strokeWidth={1.7} size={13} className="ml-1.5" />
-                  </Link>
-                ) : (
-                  <Link to="/viikon-kortti" className="btn-ghost" data-testid="hero-cta-primary">
-                    {t('btn.read_full_card')}
-                  </Link>
-                )}
+                <a
+                  href="#zone-capture"
+                  data-testid="hero-cta-primary"
+                  className="mono inline-flex items-center gap-2"
+                  style={{
+                    padding: '13px 22px',
+                    background: '#E8924A', color: '#0A0A0A',
+                    fontSize: 12, letterSpacing: '0.22em', fontWeight: 700,
+                    border: 'none', cursor: 'pointer', borderRadius: 2,
+                    textDecoration: 'none',
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.querySelector('[data-testid="zone-capture"]');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }}
+                >
+                  {t('hero.cta_primary').toUpperCase()} →
+                </a>
+                <Link to="/menetelma" className="btn-ghost" data-testid="hero-cta-secondary">
+                  {t('hero.cta_secondary')}
+                </Link>
                 <ShareButton
                   variant="dial"
                   payload={{
@@ -348,6 +371,8 @@ const Home = () => {
           </div>
         </div>
       </section>
+
+      <SocialProofBar />
 
       {/* Pre-Launch Polish — Dioni's compressed homepage flow:
           1. Live data ticker (top)
@@ -394,6 +419,8 @@ const Home = () => {
           <EditorialFooter byline="PUTKI HQ" readMinutes={2} />
         </div>
       </section>
+
+      <StickyTelegramCTA />
     </div>
   );
 };
