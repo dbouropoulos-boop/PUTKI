@@ -31,14 +31,14 @@ class TestPeliPublic:
         r = requests.get(f"{BASE_URL}/api/peli/config", timeout=15)
         assert r.status_code == 200, r.text
         cfg = r.json()
-        for key in ("prize_amount", "prize_currency", "prize_label",
+        for key in ("prize_currency", "prize_label",
                     "partner_name", "partner_url", "partner_disclosure",
                     "videos", "enabled", "entry_count"):
             assert key in cfg, f"missing key {key} in {cfg}"
         assert isinstance(cfg["videos"], list)
         assert len(cfg["videos"]) == 3
         for v in cfg["videos"]:
-            assert "id" in v and "title" in v and "youtube_id" in v and "caption" in v
+            assert "id" in v and "title" in v and "caption" in v
         assert isinstance(cfg["enabled"], bool)
         assert isinstance(cfg["entry_count"], int)
 
@@ -128,7 +128,6 @@ class TestPeliAdmin:
     def test_admin_update_config_and_persistence(self):
         new_label = f"TEST_Prize_{uuid.uuid4().hex[:6]}"
         payload = {
-            "prize_amount": 500,
             "prize_currency": "EUR",
             "prize_label": new_label,
             "partner_name": "Weezybet",
@@ -136,16 +135,15 @@ class TestPeliAdmin:
             "partner_disclosure": "Yhteistyössä",
             "enabled": True,
             "videos": [
-                {"id": "v1", "title": "T1", "youtube_id": "abc123", "caption": "c1"},
-                {"id": "v2", "title": "T2", "youtube_id": "def456", "caption": "c2"},
-                {"id": "v3", "title": "T3", "youtube_id": "ghi789", "caption": "c3"},
+                {"id": "v1", "title": "T1", "caption": "c1"},
+                {"id": "v2", "title": "T2", "caption": "c2"},
+                {"id": "v3", "title": "T3", "caption": "c3"},
             ],
         }
         r = requests.put(f"{BASE_URL}/api/admin/peli/config", json=payload, headers=ADMIN_HEADERS, timeout=15)
         assert r.status_code == 200, r.text
         merged = r.json()
         assert merged["prize_label"] == new_label
-        assert merged["prize_amount"] == 500
         assert len(merged["videos"]) == 3
 
         # Verify persistence via public endpoint

@@ -64,13 +64,13 @@ const BackOfficePeli = () => {
     setStatus('');
     try {
       const body = {
-        prize_amount: config.prize_amount === '' || config.prize_amount == null ? null : Number(config.prize_amount),
-        prize_currency: config.prize_currency || 'EUR',
         prize_label: config.prize_label || '',
         partner_name: config.partner_name || '',
         partner_url: config.partner_url || '',
         partner_disclosure: config.partner_disclosure || '',
-        videos: (config.videos || []).slice(0, 3),
+        videos: (config.videos || []).slice(0, 3).map((v) => ({
+          id: v.id, title: v.title || '', caption: v.caption || '',
+        })),
         enabled: !!config.enabled,
       };
       const r = await fetch(`${BACKEND}/api/admin/peli/config`, {
@@ -130,36 +130,12 @@ const BackOfficePeli = () => {
         <div className="space-y-6">
           <section className="panel p-5" style={{ background: 'var(--bg)' }}>
             <h2 className="display mb-3" style={{ fontSize: 18, fontWeight: 800 }}>Prize</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="mono block mb-1" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)' }}>AMOUNT</span>
-                <input
-                  type="number"
-                  min={0}
-                  value={config.prize_amount ?? ''}
-                  onChange={(e) => updateConfig({ prize_amount: e.target.value })}
-                  className="w-full px-3 py-2"
-                  style={{ border: '1px solid var(--border-strong)', background: 'var(--bg)' }}
-                  data-testid="bo-peli-prize-amount"
-                />
-              </label>
-              <label className="block">
-                <span className="mono block mb-1" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)' }}>CURRENCY</span>
-                <input
-                  value={config.prize_currency || ''}
-                  onChange={(e) => updateConfig({ prize_currency: e.target.value })}
-                  className="w-full px-3 py-2"
-                  style={{ border: '1px solid var(--border-strong)', background: 'var(--bg)' }}
-                  data-testid="bo-peli-prize-currency"
-                />
-              </label>
-            </div>
-            <label className="block mt-3">
+            <label className="block">
               <span className="mono block mb-1" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)' }}>LABEL</span>
               <input
                 value={config.prize_label || ''}
                 onChange={(e) => updateConfig({ prize_label: e.target.value })}
-                placeholder='e.g. "cash prize" or "Weezybet bonus"'
+                placeholder='e.g. "Weezybet bonus" or "Editorial prize pack"'
                 className="w-full px-3 py-2"
                 style={{ border: '1px solid var(--border-strong)', background: 'var(--bg)' }}
                 data-testid="bo-peli-prize-label"
@@ -192,7 +168,7 @@ const BackOfficePeli = () => {
           </section>
 
           <section className="panel p-5" style={{ background: 'var(--bg)' }}>
-            <h2 className="display mb-3" style={{ fontSize: 18, fontWeight: 800 }}>3 Videos (YouTube IDs)</h2>
+            <h2 className="display mb-3" style={{ fontSize: 18, fontWeight: 800 }}>3 Videos</h2>
             <div className="space-y-4">
               {(config.videos || []).slice(0, 3).map((v, i) => (
                 <div key={v.id || i} className="border-l-2 pl-3" style={{ borderColor: 'var(--border-strong)' }}>
@@ -202,11 +178,6 @@ const BackOfficePeli = () => {
                          className="w-full px-3 py-2 mb-2"
                          style={{ border: '1px solid var(--border-strong)', background: 'var(--bg)' }}
                          data-testid={`bo-peli-video-${i}-title`} />
-                  <input value={v.youtube_id || ''} placeholder="YouTube ID (e.g. dQw4w9WgXcQ)"
-                         onChange={(e) => updateVideo(i, { youtube_id: e.target.value })}
-                         className="w-full px-3 py-2 mb-2"
-                         style={{ border: '1px solid var(--border-strong)', background: 'var(--bg)' }}
-                         data-testid={`bo-peli-video-${i}-id`} />
                   <input value={v.caption || ''} placeholder="Caption (optional)"
                          onChange={(e) => updateVideo(i, { caption: e.target.value })}
                          className="w-full px-3 py-2"

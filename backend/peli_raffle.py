@@ -46,9 +46,9 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
     "partner_url": "https://weezybet.com",
     "partner_disclosure": "Yhteistyössä · julkistettu päivämäärällä",
     "videos": [
-        {"id": "v1", "title": "", "youtube_id": "", "caption": ""},
-        {"id": "v2", "title": "", "youtube_id": "", "caption": ""},
-        {"id": "v3", "title": "", "youtube_id": "", "caption": ""},
+        {"id": "v1", "title": "", "caption": ""},
+        {"id": "v2", "title": "", "caption": ""},
+        {"id": "v3", "title": "", "caption": ""},
     ],
     "enabled": True,
     "updated_at": None,
@@ -60,12 +60,10 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
 class VideoConfig(BaseModel):
     id: str = Field(..., max_length=16)
     title: str = Field("", max_length=120)
-    youtube_id: str = Field("", max_length=40)
     caption: str = Field("", max_length=240)
 
 
 class PeliConfigUpdate(BaseModel):
-    prize_amount: Optional[int] = Field(None, ge=0, le=1_000_000)
     prize_currency: Optional[str] = Field(None, max_length=8)
     prize_label: Optional[str] = Field(None, max_length=120)
     partner_name: Optional[str] = Field(None, max_length=80)
