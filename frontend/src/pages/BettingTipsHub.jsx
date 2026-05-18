@@ -6,8 +6,8 @@
  * Facebook, WhatsApp, Instagram) so the editorial picks become a
  * distribution surface, not a dead-end.
  */
-import React, { useEffect, useMemo, useState } from 'react';
-import { Calendar, Loader2, Send, Twitter, Facebook, MessageCircle, Instagram, Link as LinkIcon, Check } from 'lucide-react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { Calendar, Loader2, Send, Twitter, Facebook, MessageCircle, Instagram, Link as LinkIcon, Check, AlertCircle, X, CheckCircle2 } from 'lucide-react';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import { useLang } from '../context/LanguageContext';
 import { formatKickoff } from '../utils/formatTime';
@@ -244,12 +244,117 @@ const Calendar7Day = ({ days, activeIso, onPick, lang, t }) => {
   );
 };
 
+const TIPS_TELEGRAM_HANDLE = 'putkihq_vinkit';
+const TIPS_TELEGRAM_URL = `https://t.me/${TIPS_TELEGRAM_HANDLE}`;
+const MODAL_DISMISSED_KEY = 'putki-tips-modal-dismissed';
+
+const TelegramConversionModal = ({ lang, t, viewedPicks }) => {
+  const [open, setOpen] = useState(false);
+  const [subs, setSubs] = useState(null);
+
+  useEffect(() => {
+    let dismissed = false;
+    try { dismissed = localStorage.getItem(MODAL_DISMISSED_KEY) === '1'; } catch {}
+    if (dismissed) return;
+    if (viewedPicks >= 3 && !open) {
+      setOpen(true);
+      fetch(`${BACKEND}/api/signup/count`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => setSubs(d?.count ?? null))
+        .catch(() => {});
+    }
+  }, [viewedPicks, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e) => { if (e.key === 'Escape') close(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]); // eslint-disable-line
+
+  const close = () => {
+    setOpen(false);
+    try { localStorage.setItem(MODAL_DISMISSED_KEY, '1'); } catch {}
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      data-testid="tips-telegram-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)' }}
+      onClick={close}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ background: 'var(--bg)', border: '1px solid var(--border-strong)', borderRadius: 4, maxWidth: 480, width: '100%' }}
+      >
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="mono inline-flex items-center gap-2" style={{ fontSize: 10, letterSpacing: '0.24em', fontWeight: 700, color: 'var(--ink)' }}>
+            <Send strokeWidth={1.9} size={12} />
+            {t('tips.modal_eyebrow').toUpperCase()}
+          </div>
+          <button type="button" onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink)', opacity: 0.7 }} data-testid="tips-telegram-modal-close">
+            <X strokeWidth={1.6} size={18} />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <h3 className="display" style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.15 }}>{t('tips.modal_title')}</h3>
+          <p className="font-serif" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>{t('tips.modal_body')}</p>
+          <ul className="space-y-2" style={{ fontSize: 13.5, color: 'var(--ink)' }}>
+            {['tips.modal_b1', 'tips.modal_b2', 'tips.modal_b3', 'tips.modal_b4'].map((k) => (
+              <li key={k} className="flex items-start gap-2 font-serif">
+                <CheckCircle2 strokeWidth={1.7} size={14} style={{ color: '#2c7a4b', marginTop: 3, flexShrink: 0 }} />
+                <span>{t(k)}</span>
+              </li>
+            ))}
+          </ul>
+          <a
+            href={TIPS_TELEGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="tips-telegram-cta"
+            className="mono w-full inline-flex items-center justify-center gap-2"
+            style={{
+              padding: '14px 18px', fontSize: 12, letterSpacing: '0.22em', fontWeight: 700,
+              background: '#229ED9', color: '#FFFFFF', textDecoration: 'none', borderRadius: 2,
+            }}
+          >
+            <Send strokeWidth={1.9} size={13} />
+            {t('tips.modal_cta_telegram').toUpperCase()}
+            {subs != null && <span style={{ opacity: 0.85 }}>· {subs}</span>}
+          </a>
+          <button
+            type="button"
+            disabled
+            data-testid="tips-whatsapp-cta"
+            className="mono w-full inline-flex items-center justify-center gap-2"
+            style={{
+              padding: '12px 18px', fontSize: 12, letterSpacing: '0.22em', fontWeight: 700,
+              background: 'var(--surface)', color: 'var(--muted)', border: '1px solid var(--border-strong)', borderRadius: 2, cursor: 'not-allowed', opacity: 0.7,
+            }}
+          >
+            <MessageCircle strokeWidth={1.9} size={13} />
+            {t('tips.modal_cta_whatsapp').toUpperCase()}
+          </button>
+          <button type="button" onClick={close} className="mono w-full text-center" data-testid="tips-modal-skip" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+            {t('tips.modal_skip').toUpperCase()}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const BettingTipsHub = () => {
   const { lang, t } = useLang();
   const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('today'); // 'today' | 'tomorrow' | 'week'
   const [calendarIso, setCalendarIso] = useState(null);
+  const [viewedPicksCount, setViewedPicksCount] = useState(0);
+  const seenPicks = useRef(new Set());
 
   useDocumentMeta({
     title: lang === 'en' ? 'Tips · PUTKI HQ' : 'Vinkit · PUTKI HQ',
@@ -281,8 +386,23 @@ const BettingTipsHub = () => {
     return [];
   }, [days, activeTab, calendarIso, todayIso, tomorrowIso]);
 
+  // Track unique picks the user has scrolled through — drives the
+  // Telegram conversion modal threshold (opens after 3 unique picks).
+  useEffect(() => {
+    let changed = false;
+    activePicks.forEach((p) => {
+      const key = p.event_id || `${p.pick_team}-${p.commence_time}`;
+      if (key && !seenPicks.current.has(key)) {
+        seenPicks.current.add(key);
+        changed = true;
+      }
+    });
+    if (changed) setViewedPicksCount(seenPicks.current.size);
+  }, [activePicks]);
+
   return (
     <div data-testid="betting-tips-page">
+      <TelegramConversionModal lang={lang} t={t} viewedPicks={viewedPicksCount} />
       <section className="container-wide pt-12 sm:pt-20 pb-8 sm:pb-10">
         <div className="max-w-3xl">
           <div className="eyebrow mb-4 inline-flex items-center gap-2">
@@ -291,6 +411,21 @@ const BettingTipsHub = () => {
           </div>
           <h1 className="display text-4xl sm:text-6xl lg:text-7xl mb-5">{t('tips.title')}</h1>
           <p className="prose-mittari max-w-2xl">{t('tips.lede')}</p>
+        </div>
+        <div
+          data-testid="tips-editorial-disclaimer"
+          className="panel mt-7 px-5 py-4 inline-flex items-start gap-3"
+          style={{ background: 'rgba(232,146,74,0.08)', border: '1px solid rgba(232,146,74,0.35)', maxWidth: 760, borderRadius: 4 }}
+        >
+          <AlertCircle strokeWidth={1.8} size={18} style={{ color: '#E8924A', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <div className="mono mb-1" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#E8924A', fontWeight: 700 }}>
+              {t('tips.disclaimer_eyebrow').toUpperCase()}
+            </div>
+            <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.55 }}>
+              {t('tips.disclaimer_body')}
+            </p>
+          </div>
         </div>
       </section>
 

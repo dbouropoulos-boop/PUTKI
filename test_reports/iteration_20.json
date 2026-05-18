@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 20 — Phase 5.2 batch 2 acceptance: article views endpoints, 81-streamer roster, Weekly Card how-it-works, Tips disclaimer + Telegram conversion modal, Uutiset view-count hydration, Article view-bump, StreamerLiveGrid 30s refresh indicator, WinnersCorner historical archive (5 entries), Footer Contact column, trust strip 'How we work', and 'auto-produced' copy sweep. Backend 8/8 pytest pass + curl probes all green. Frontend acceptance verified in both FI and EN.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/uutiset row right slot", "issues": ["Pluralization shows '1 READS' / '2 READS' instead of '1 READ'. Cosmetic only, low priority."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter20_phase52_batch2.py",
+    "/app/test_reports/pytest/iter20_results.xml"
+  ],
+  "action_items": [
+    "(Optional polish) Fix '1 READS' pluralization on /uutiset rows in i18n (use READ vs READS).",
+    "(Optional) Article view-bump POST fires twice on initial mount due to React StrictMode useEffect re-invocation. Backend dedup makes this a no-op for counts, but consider guarding with a ref to avoid the extra network call."
+  ],
+  "critical_code_review_comments": [
+    "GET /api/streamers/roster_summary returns exactly {tracked_total:81, by_platform:{twitch:49,kick:20,youtube:12}, live:99} — matches the brief.",
+    "POST /api/content/:slug/view dedupe is by sha256(UA+IP+UTC-day). Same fingerprint returns the previous count, never re-increments. Test confirms two consecutive POSTs both return 1.",
+    "POST /api/content/stats/bulk hard-caps to 200 ids, returns {stats:{id:count}} (no _id leak). Empty ids → {stats:{}} (200).",
+    "GET /api/winners/recent returns 5 entries, all with editorial_placeholder=true, editorial_kind='historical_archive', note contains 'Editorial archive · ...' and original match date; settled_at within last 30 days. The 5 expected picks (Spain, Real Madrid, Florida Panthers, Manchester City, Inter) all present.",
+    "/viikon-kortti shows weekly-how-it-works grid with 4 testid'd steps in FI + EN. Scoring rule rendered in both languages.",
+    "/vihjeet shows tips-editorial-disclaimer at top; switching FI/EN swaps copy. Telegram modal opens when activePicks ≥ 3 (week tab). CTA href = https://t.me/putkihq_vinkit. 'No thanks' writes localStorage 'putki-tips-modal-dismissed=1' and modal stays gone on reload.",
+    "/uutiset feed subtitle uses 'An honest take on the news' / 'Rehellinen näkökulma uutisiin'. No 'auto-produced', 'AI-generated', or 'Automaattisesti tuotettu' anywhere in DOM. 30 uutiset-row-* present, each renders a numeric view count via bulk stats hydration.",
+    "/uutiset/:slug fires POST /api/content/:slug/view on open (twice due to StrictMode — harmless, dedup handles it) and renders '3 LUKUKERTAA' / 'reads' next to the headline meta.",
+    "Home StreamerLiveGrid shows data-testid='streamer-live-last-refresh' with '· REFRESHES EVERY 30S' (EN) / '· PÄIVITTYY 30 S VÄLEIN' (FI) next to the eyebrow. Confirmed via direct element lookup.",
+    "WinnersCorner rotates 5 historical picks (verified by viewing both Real Madrid and Inter on the home page across navigations).",
+    "Footer: 4 columns = brand · Pages · Contact · Editorial. Contact column contains About link + toimitus@putkihq.fi mailto + press@putkihq.fi mailto + Press kit. No 'Peluuri', 'Peli-Poikki', or '18+' anywhere on the home page.",
+    "TrustStrip 'How we work · /menetelma' (EN) / 'Näin toimimme · /menetelmä' (FI) rendered — legacy 'Open method' string is gone."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter20_phase52_batch2.py"],
+  "success_rate": {"backend": "100% (8/8 pytest + curl probes)", "frontend": "100% (all acceptance criteria met)"},
+  "test_credentials": "Admin token: putki-hq-admin. No user auth on public site for these flows.",
+  "seed_data_creation": "Added a few real article_views rows via test POSTs (one each for top 3 published items + the JoppeKoira article). All keyed by article_id, safe to leave.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend regression at /app/backend/tests/test_iter20_phase52_batch2.py — reuses /api/published?limit=N to pick a slug, then exercises view+stats+bulk+winners. Use the FE testids: weekly-how-it-works, weekly-step-{1..4}, tips-editorial-disclaimer, tips-telegram-modal, tips-telegram-cta, tips-modal-skip, streamer-live-last-refresh, uutiset-row-{id}. Tips modal only renders after activePicks ≥ 3 — switch to the 'This week' tab (not the default 'Today') so enough picks render. localStorage key for dismiss is 'putki-tips-modal-dismissed'.",
+  "rca of the issue": "N/A — no failures."
+}

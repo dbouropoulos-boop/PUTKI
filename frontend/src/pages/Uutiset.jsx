@@ -96,7 +96,24 @@ const Uutiset = () => {
       const r = await fetch(`${BACKEND}/api/content/published?${params.toString()}`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
-      setItems(d.items || []);
+      const list = d.items || [];
+      setItems(list);
+      // Hydrate per-article view counts in bulk (single request, no N+1)
+      const ids = list.map((x) => x.id).filter(Boolean);
+      if (ids.length) {
+        try {
+          const sr = await fetch(`${BACKEND}/api/content/stats/bulk`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids }),
+          });
+          if (sr.ok) {
+            const sd = await sr.json();
+            const stats = sd.stats || {};
+            setItems((prev) => prev.map((x) => ({ ...x, views: stats[x.id] ?? x.views ?? 0 })));
+          }
+        } catch { /* views hydration is best-effort */ }
+      }
     } catch (e) {
       setError(String(e.message || e));
     } finally {

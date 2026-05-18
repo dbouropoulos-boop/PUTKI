@@ -477,6 +477,41 @@ const WeeklyCard = () => {
       <section className="container-wide pb-12 sm:pb-16">
         <PrizeBanner meta={meta} lang={lang} t={t} />
 
+        {/* How-it-works · 4 numbered steps. Gamified, scannable, prize prominent above. */}
+        <div className="panel mb-8 sm:mb-10 p-6 sm:p-7" style={{ background: 'var(--bg)' }} data-testid="weekly-how-it-works">
+          <div className="eyebrow mb-4 inline-flex items-center gap-2" style={{ color: '#E8924A' }}>
+            <Sparkles strokeWidth={1.6} size={12} />
+            {t('weekly.how_it_works').toUpperCase()}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((n) => (
+              <div key={n} className="flex gap-3" data-testid={`weekly-step-${n}`}>
+                <span
+                  className="mono flex-shrink-0 flex items-center justify-center"
+                  style={{
+                    width: 30, height: 30, borderRadius: 999,
+                    background: '#E8924A', color: '#0A0A0A',
+                    fontSize: 13, fontWeight: 800,
+                  }}
+                >
+                  {n}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <div className="display" style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink)', lineHeight: 1.25 }}>
+                    {t(`weekly.step_${n}_title`)}
+                  </div>
+                  <div className="font-serif mt-1.5" style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
+                    {t(`weekly.step_${n}_body`)}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mono mt-5 pt-4" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600, borderTop: '1px solid var(--border)' }}>
+            {t('weekly.scoring_rule').toUpperCase()}
+          </div>
+        </div>
+
         {loading ? (
           <div className="panel p-7 text-center mono inline-flex items-center justify-center gap-2 w-full"
                style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}

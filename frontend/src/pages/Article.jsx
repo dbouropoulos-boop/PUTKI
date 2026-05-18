@@ -61,6 +61,9 @@ const Article = () => {
       .then((d) => { if (!cancelled) setArticle(d); })
       .catch((e) => { if (!cancelled) setError(String(e.message || e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
+    // Bump view count (dedup'd server-side by UA+IP+UTC-day)
+    fetch(`${BACKEND}/api/content/${encodeURIComponent(slug)}/view`, { method: 'POST' })
+      .catch(() => { /* views are best-effort, never break the read */ });
     return () => { cancelled = true; };
   }, [slug]);
 

@@ -12,7 +12,7 @@ import StreamerAlertModal from './StreamerAlertModal';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-const POLL_MS = 60_000;
+const POLL_MS = 30_000;
 
 const PLATFORMS = [
   { key: 'twitch',  label: 'TWITCH',  accent: '#9146FF' },
@@ -156,12 +156,15 @@ const StreamerLiveGrid = () => {
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 4;
 
+  const [lastRefresh, setLastRefresh] = useState(null);
+
   const load = useCallback(async (p) => {
     try {
       const r = await fetch(`${BACKEND}/api/streamers/live${p === 'twitch' ? '' : `?platform=${p}`}`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setData((prev) => ({ ...prev, [p]: d }));
+      setLastRefresh(Date.now());
     } catch {
       // silent — show empty state
     }
@@ -199,8 +202,14 @@ const StreamerLiveGrid = () => {
     <section className="container-wide" data-testid="streamer-live-grid">
       <div className="flex items-baseline justify-between flex-wrap gap-3 mb-5">
         <div>
-          <div className="mono mb-1.5" style={{ fontSize: 10.5, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 700 }}>
+          <div className="mono mb-1.5 inline-flex items-center gap-2" style={{ fontSize: 10.5, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 700 }}>
+            <span style={{ width: 6, height: 6, borderRadius: 999, background: '#2c7a4b', boxShadow: '0 0 6px #2c7a4b' }} />
             {t('streamer_live.eyebrow').toUpperCase()}
+            {lastRefresh && (
+              <span style={{ opacity: 0.55, fontWeight: 500 }} data-testid="streamer-live-last-refresh">
+                · {t('streamer_live.refresh_30s').toUpperCase()}
+              </span>
+            )}
           </div>
           <h2 className="display" style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>
             {t('streamer_live.title')}
