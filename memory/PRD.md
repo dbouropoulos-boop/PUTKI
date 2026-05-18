@@ -2,13 +2,27 @@
 
 ## Phase History (latest first — see CHANGELOG for full list pre-Phase 5)
 
+- **Phase 5.4.1 — Code-review critical fixes** (2026-05-18) — Address 🔴 items from automated code review.
+  - **Hardcoded test secrets removed**: New `backend/tests/_test_env.py` helper auto-loads `backend/.env` and exposes `admin_token()` / `backend_url()`. The 5 test files that previously hardcoded `ADMIN_TOKEN = "putki-hq-admin"` (test_iter18, test_iter19, test_mittari_api, test_phase3_smartico, test_iter13_kick_endpoints) now read from env. Tests fail fast if `BACK_OFFICE_TOKEN` is absent.
+  - **Webhook test fixtures randomised**: `test_phase3_v2_step2_webhooks.py` no longer contains literal `"twitch_test_secret_phase3v2_step2"` / `"yt_pubsub_test_secret_phase3v2_step2"` / Kick client placeholders — replaced with `secrets.token_hex()` generated per-test-run. Scanner-clean.
+  - **Late-binding closures fixed**: 2 `lambda r: r.get(key, "")` instances in `test_phase4_w2_content_generator.py` now bind `k=key` defaults to prevent loop-variable capture.
+  - **useDocumentMeta deps collapsed**: 10 dependencies → 1 `metaKey` JSON-stringified composite. Behavior identical; eliminates the "exceeds 5-dep recommendation" smell on the most-used hook.
+  - **test_iter21_most_read.py** fail-fast: removed brittle `os.environ.get(...).rstrip("/")` (None.rstrip crashed collection) — now uses `_test_env.backend_url()`.
+  - **Smoke test**: `/uutiset` page renders cleanly, document title + canonical applied via the collapsed-deps hook.
+  - **Deferred to P2 backlog** (per pre-launch safety policy):
+    - localStorage → httpOnly cookies for admin auth (whole auth-flow rewrite).
+    - Large component splits (BackOfficeWebhooks.jsx 600 lines, DialCockpit 303 lines, Dial 302 lines).
+    - `random` → `secrets` in `content_backfill.py` (synthetic data; not security-sensitive).
+    - `is "string"` → `== "string"` (cosmetic; concentrated in tests).
+    - Array-index keys in 21 components (cosmetic stability under reorder).
+    - Remaining 114 hook-dep warnings (case-by-case audit pass).
+    - 1000+ empty catch blocks (case-by-case; many are intentional clipboard/share API fallbacks).
+
 - **Phase 5.4 — Back-office /peli cleanup** (2026-05-18) — Editor's direct request from walkthrough.docx.
   - Removed `prize_amount` input + `prize_currency` input from `/back-office/peli` admin form.
-  - Removed `youtube_id` input per video from `/back-office/peli` admin form (kept title + caption).
-  - Backend: `peli_raffle.py` — `VideoConfig` model no longer accepts `youtube_id`; `PeliConfigUpdate` no longer accepts `prize_amount`. `_DEFAULT_CONFIG` seed cleaned (`youtube_id` dropped from videos array).
-  - Public `_public_view` retains `prize_amount` key (returns None) for backward compat; `Peli.jsx` falls back to `prize_label` when `prize_amount` is falsy.
-  - Tests updated: `tests/test_iter19_peli_raffle.py` no longer asserts `prize_amount` in PUT response nor `youtube_id` in video shape. **18/18 pytest pass.**
-  - Frontend smoke: admin form correctly shows only `prize-label`, partner fields, video title/caption, enabled toggle, save.
+  - Removed `youtube_id` input per video (kept title + caption).
+  - Backend: `peli_raffle.py` — `VideoConfig` no longer accepts `youtube_id`; `PeliConfigUpdate` no longer accepts `prize_amount`. Default seed cleaned.
+  - Tests updated: `tests/test_iter19_peli_raffle.py` — **18/18 pytest pass.**
 
 - **Phase 5.3.5 — PizzINT-Style News Presentation System** (2026-05-18) — Editorial conversion redesign.
   - **DialSubscriptionCTA** (`components/DialSubscriptionCTA.jsx`) — contextual alert signup pill attached *below* the WIN PULSE dial (Dial design preserved verbatim per user order).

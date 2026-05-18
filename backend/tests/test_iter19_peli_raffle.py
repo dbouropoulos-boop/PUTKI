@@ -6,8 +6,10 @@ import uuid
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://pelisignaali-fi.preview.emergentagent.com").rstrip("/")
-ADMIN_TOKEN = "putki-hq-admin"
+from _test_env import admin_token, backend_url
+
+BASE_URL = backend_url()
+ADMIN_TOKEN = admin_token()
 ADMIN_HEADERS = {"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"}
 
 

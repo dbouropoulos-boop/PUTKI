@@ -2,8 +2,10 @@
 import os
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://pelisignaali-fi.preview.emergentagent.com").rstrip("/")
-TOKEN = "putki-hq-admin"
+from _test_env import admin_token, backend_url
+
+BASE_URL = backend_url()
+TOKEN = admin_token()
 HEAD = {"X-Admin-Token": TOKEN}
 
 

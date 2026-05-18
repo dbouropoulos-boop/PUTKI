@@ -83,7 +83,7 @@ class _MemColl:
             rows = [r for r in rows if _match(r, query)]
         if sort:
             for key, direction in reversed(sort):
-                rows.sort(key=lambda r: r.get(key, ""), reverse=(direction == -1))
+                rows.sort(key=lambda r, k=key: r.get(k, ""), reverse=(direction == -1))
         return rows[0] if rows else None
 
     async def update_one(self, query, update):
@@ -119,7 +119,7 @@ class _MemCursor:
     def sort(self, *a):
         if a and isinstance(a[0], list):
             for key, direction in reversed(a[0]):
-                self._rows.sort(key=lambda r: r.get(key, ""), reverse=(direction == -1))
+                self._rows.sort(key=lambda r, k=key: r.get(k, ""), reverse=(direction == -1))
         elif len(a) == 2:
             self._rows.sort(key=lambda r: r.get(a[0], ""), reverse=(a[1] == -1))
         return self

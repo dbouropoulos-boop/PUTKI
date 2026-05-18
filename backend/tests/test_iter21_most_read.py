@@ -10,7 +10,9 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
+from _test_env import backend_url
+
+BASE_URL = backend_url()
 EP = f"{BASE_URL}/api/content/most-read"
 
 REQUIRED_ITEM_KEYS = {"id", "headline", "url_slug", "views_window",

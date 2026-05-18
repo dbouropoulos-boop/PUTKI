@@ -55,6 +55,14 @@ const useDocumentMeta = ({
   canonical,
   articleTags,
 } = {}) => {
+  // Collapse all meta values into a single stable key — the hook
+  // re-runs whenever any meta value changes, but the dep array stays small.
+  const metaKey = JSON.stringify({
+    title, description, ogTitle, ogDescription, ogImage, ogUrl,
+    twitterCard, twitterDescription, canonical,
+    articleTags: (articleTags || []).join('|'),
+  });
+
   useEffect(() => {
     const prevTitle = document.title;
     if (title) document.title = title;
@@ -90,7 +98,8 @@ const useDocumentMeta = ({
       articleTagEls.forEach((el) => el.parentNode && el.parentNode.removeChild(el));
       if (linkEl && linkEl.parentNode) linkEl.parentNode.removeChild(linkEl);
     };
-  }, [title, description, ogTitle, ogDescription, ogImage, ogUrl, twitterCard, twitterDescription, canonical, (articleTags || []).join('|')]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metaKey]);
 };
 
 export default useDocumentMeta;

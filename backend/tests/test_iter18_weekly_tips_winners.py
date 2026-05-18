@@ -17,23 +17,11 @@ from datetime import datetime, timezone
 import pytest
 import requests
 
-def _load_backend_url() -> str:
-    v = os.environ.get("REACT_APP_BACKEND_URL")
-    if v:
-        return v.rstrip("/")
-    try:
-        with open("/app/frontend/.env", "r") as fh:
-            for line in fh:
-                if line.startswith("REACT_APP_BACKEND_URL="):
-                    return line.split("=", 1)[1].strip().rstrip("/")
-    except FileNotFoundError:
-        pass
-    raise RuntimeError("REACT_APP_BACKEND_URL not configured")
+from _test_env import admin_token, backend_url
 
-
-BASE_URL = _load_backend_url()
+BASE_URL = backend_url()
 API = f"{BASE_URL}/api"
-ADMIN_TOKEN = "putki-hq-admin"
+ADMIN_TOKEN = admin_token()
 ADMIN_HEADERS = {"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"}
 
 

@@ -27,13 +27,15 @@ os.environ.setdefault("PUTKI_HQ_DISABLE_WORKERS", "1")
 os.environ.setdefault("PUTKI_HQ_DISABLE_SCHEDULER", "1")
 
 # Set webhook secrets before app import so the lazy env readers see them.
-TWITCH_SECRET = "twitch_test_secret_phase3v2_step2"
-YOUTUBE_SECRET = "yt_pubsub_test_secret_phase3v2_step2"
+# Use per-test-run random secrets so static analysers never see literal strings.
+import secrets as _pysecrets
+TWITCH_SECRET = _pysecrets.token_hex(24)
+YOUTUBE_SECRET = _pysecrets.token_hex(24)
 os.environ["TWITCH_EVENTSUB_SECRET"] = TWITCH_SECRET
 os.environ["YOUTUBE_PUBSUB_SECRET"] = YOUTUBE_SECRET
 # Kick now requires CLIENT_ID + CLIENT_SECRET (RSA verification, not HMAC).
-os.environ["KICK_CLIENT_ID"] = "test_kick_client_id"
-os.environ["KICK_CLIENT_SECRET"] = "test_kick_client_secret"
+os.environ["KICK_CLIENT_ID"] = _pysecrets.token_hex(8)
+os.environ["KICK_CLIENT_SECRET"] = _pysecrets.token_hex(16)
 
 # Generate an in-process RSA keypair for Kick test signing. Inject the public
 # key into the Kick api module's cache so the webhook handler verifies

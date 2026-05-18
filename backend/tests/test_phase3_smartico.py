@@ -13,7 +13,8 @@ if not BASE_URL:
                 break
 BASE_URL = BASE_URL.rstrip("/")
 API = f"{BASE_URL}/api"
-ADMIN_TOKEN = "putki-hq-admin"
+from _test_env import admin_token
+ADMIN_TOKEN = admin_token()
 H = {"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"}
 
 

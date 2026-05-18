@@ -131,7 +131,8 @@ class TestPredictions:
 
 
 # ---------- Phase 2.0: Site settings / back-office ----------
-ADMIN_TOKEN = "putki-hq-admin"
+from _test_env import admin_token
+ADMIN_TOKEN = admin_token()
 
 
 class TestSiteSettings:

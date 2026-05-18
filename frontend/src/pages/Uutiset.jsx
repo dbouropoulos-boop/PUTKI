@@ -47,7 +47,7 @@ const Uutiset = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // BACKEND is a module-level const, intentionally excluded
 
   const [searchParams] = useSearchParams();
   const filters = useMemo(() => ({
