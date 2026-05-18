@@ -1,27 +1,35 @@
 /**
- * Peli — Conversion-optimized prize game page.
+ * Peli — Conversion-optimized prize game page with live Smartico embed.
  *
- * Sections (in order, per Dioni's spec):
+ * Wires the official Smartico SDK (libs.smartico.ai/smartico.js) into the
+ * page, calls `_smartico.initVisitorMode` then `showVisitorGame` with the
+ * Weezy Rally template (3383), and redirects winners to weezybet.com on
+ * success.
+ *
+ * Sections (per Dioni's spec):
  *   1. HERO        — eyebrow, headline, prize amounts, CTA scroll
- *   2. IFRAME      — Smartico embed (placeholder URL until whitelist clears)
+ *   2. IFRAME      — Smartico Weezy Rally embed (#weezy-rally-frame)
  *   3. PRIZES      — 500€ / 250€ / 100€ structure cards
  *   4. HOW TO PLAY — 4 numbered steps
  *   5. LEADERBOARD — honest live count from API (no fabricated 247 players)
  *   6. ACTIVITY    — auto-published article excerpt strip (trust signal)
  *   7. TRUST       — MGA / 18+ / Pelaa vastuullisesti / Suomenkielinen
- *
- * Replaces previous MiniGame component on /peli route.
  */
 import React, { useEffect, useState } from 'react';
 import { Gift, Trophy, Shield, BadgeCheck, ArrowDown, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// PLACEHOLDER URL — flip to the real Smartico embed URL when the whitelist
-// clears. The shell, prize copy and CTA stay the same.
-const SMARTICO_IFRAME_URL = process.env.REACT_APP_SMARTICO_URL || '';
+// Smartico SDK config — keys provided by Dioni 2026-05-17.
+const SMARTICO_SDK_URL  = 'https://libs.smartico.ai/smartico.js';
+const SMARTICO_VISITOR  = '9250d6a7-1401-4205-a36b-14caba30b8d9-7';
+const SMARTICO_BRAND    = '7f2db034';
+const SMARTICO_TEMPLATE = 3383;
+const SMARTICO_FRAME_ID = 'weezy-rally-frame';
+const SMARTICO_WIN_REDIRECT = 'https://weezybet.com/register?source=weezy-rally';
 
 const PRIZES = [
   { rank: '1.', amount: '500 €', label: 'Päävoitto', color: '#E8924A' },
@@ -43,10 +51,40 @@ const TRUST_BADGES = [
   { icon: Gift,      label: 'SUOMENKIELINEN TOIMITUS' },
 ];
 
+/**
+ * Loads the Smartico SDK exactly once per page lifetime and resolves with
+ * the global `_smartico` object. Subsequent callers reuse the same promise.
+ */
+const loadSmartico = (() => {
+  let pending = null;
+  return () => {
+    if (typeof window === 'undefined') return Promise.reject(new Error('no_window'));
+    if (window._smartico) return Promise.resolve(window._smartico);
+    if (pending) return pending;
+    pending = new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[src="${SMARTICO_SDK_URL}"]`);
+      if (existing) {
+        existing.addEventListener('load', () => resolve(window._smartico));
+        existing.addEventListener('error', () => reject(new Error('smartico_sdk_load_failed')));
+        return;
+      }
+      const s = document.createElement('script');
+      s.src = SMARTICO_SDK_URL;
+      s.async = true;
+      s.onload = () => resolve(window._smartico);
+      s.onerror = () => reject(new Error('smartico_sdk_load_failed'));
+      document.head.appendChild(s);
+    });
+    return pending;
+  };
+})();
+
 const Peli = () => {
+  const { lang } = useLang();
   const [activity, setActivity] = useState([]);
   const [leaderCount, setLeaderCount] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [smarticoState, setSmarticoState] = useState('loading'); // 'loading' | 'ready' | 'failed'
 
   useDocumentMeta({
     title: 'Peli — voita 500 € · PUTKI HQ',
@@ -64,6 +102,37 @@ const Peli = () => {
       .then((d) => setLeaderCount(d.count))
       .catch(() => {});
   }, []);
+
+  // Smartico SDK lifecycle — load on mount, init visitor mode, mount the
+  // Weezy Rally template (3383) into the named iframe. On winning redirect
+  // to weezybet with the visitor_win_uuid so attribution survives.
+  useEffect(() => {
+    let cancelled = false;
+    loadSmartico()
+      .then((smartico) => {
+        if (cancelled || !smartico) return;
+        try {
+          smartico.initVisitorMode(SMARTICO_VISITOR, {
+            brand_key: SMARTICO_BRAND,
+            lang: (lang || 'fi').toUpperCase(),
+          });
+          smartico.showVisitorGame({
+            template_id: SMARTICO_TEMPLATE,
+            frame_id: SMARTICO_FRAME_ID,
+            onWin: (prize) => {
+              const uuid = (prize && prize.visitor_win_uuid) || '';
+              window.location.href = `${SMARTICO_WIN_REDIRECT}&_smartico_visitor_win_uuid=${encodeURIComponent(uuid)}`;
+            },
+          });
+          setSmarticoState('ready');
+        } catch (e) {
+          // SDK loaded but init blew up — surface honest failure state.
+          setSmarticoState('failed');
+        }
+      })
+      .catch(() => { if (!cancelled) setSmarticoState('failed'); });
+    return () => { cancelled = true; };
+  }, [lang]);
 
   const scrollToIframe = () => {
     const el = document.getElementById('peli-iframe');
@@ -108,7 +177,7 @@ const Peli = () => {
         </div>
       </section>
 
-      {/* IFRAME */}
+      {/* IFRAME — Smartico Weezy Rally embed */}
       <section id="peli-iframe" className="container-wide pb-12"
                data-testid="peli-iframe-section">
         <div className="panel" style={{ background: '#0A0A0A', borderRadius: 4, overflow: 'hidden',
@@ -117,30 +186,51 @@ const Peli = () => {
                style={{ background: 'rgba(255,255,255,0.04)', color: '#F5F3EE',
                         fontSize: 10, letterSpacing: '0.22em', fontWeight: 700,
                         borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <span>SMARTICO PELIALUSTA</span>
-            <span style={{ opacity: 0.6 }}>1200 × 800</span>
+            <span>SMARTICO · WEEZY RALLY</span>
+            <span style={{ opacity: 0.6 }}>
+              {smarticoState === 'ready'   && 'LIVE'}
+              {smarticoState === 'loading' && 'LADATAAN…'}
+              {smarticoState === 'failed'  && 'EI SAATAVILLA'}
+            </span>
           </div>
-          {SMARTICO_IFRAME_URL ? (
+          {/* Smartico fills this iframe via showVisitorGame() — frame_id MUST
+              match the SDK config exactly. We keep it mounted at all times so
+              the SDK has a stable target; the overlay below covers it while
+              loading and on failure. */}
+          <div className="relative" style={{ width: '100%', maxWidth: 800, margin: '0 auto' }}>
             <iframe
-              title="Smartico Peli"
-              src={SMARTICO_IFRAME_URL}
+              id={SMARTICO_FRAME_ID}
+              title="Smartico Weezy Rally"
               data-testid="peli-iframe"
               style={{
-                width: '100%', height: 720, border: 'none', display: 'block',
-                background: '#0A0A0A',
+                width: '100%', height: 700, border: 'none', display: 'block',
+                background: '#0A0A0A', borderRadius: 12,
               }}
             />
-          ) : (
-            <div className="text-center py-24 px-6 mono" data-testid="peli-iframe-placeholder"
-                 style={{ color: '#F5F3EE', fontSize: 12, letterSpacing: '0.22em',
-                          fontWeight: 600, lineHeight: 1.8 }}>
-              <Loader2 strokeWidth={1.5} size={24} className="animate-spin mx-auto mb-5" style={{ opacity: 0.4 }} />
-              PELIALUSTA ODOTTAA SMARTICO-WHITELISTAUSTA<br />
-              <span style={{ opacity: 0.5, fontSize: 10.5, letterSpacing: '0.18em' }}>
-                · OTA HÄLYTYS PÄÄLLE ALLE — ILMOITAMME KUN KISA AUKEAA ·
-              </span>
-            </div>
-          )}
+            {smarticoState !== 'ready' && (
+              <div
+                data-testid={smarticoState === 'failed' ? 'peli-iframe-failed' : 'peli-iframe-placeholder'}
+                className="absolute inset-0 flex flex-col items-center justify-center mono text-center px-6"
+                style={{ color: '#F5F3EE', fontSize: 12, letterSpacing: '0.22em',
+                         fontWeight: 600, lineHeight: 1.8, background: 'rgba(10,10,10,0.92)' }}
+              >
+                {smarticoState === 'loading' && (
+                  <>
+                    <Loader2 strokeWidth={1.5} size={24} className="animate-spin mb-5" style={{ opacity: 0.45 }} />
+                    LADATAAN PELIALUSTAA…
+                  </>
+                )}
+                {smarticoState === 'failed' && (
+                  <>
+                    PELIALUSTA EI VASTAA<br />
+                    <span style={{ opacity: 0.5, fontSize: 10.5, letterSpacing: '0.18em' }}>
+                      · KOKEILE PÄIVITTÄÄ SIVU TAI TARKISTA VERKKOYHTEYS ·
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

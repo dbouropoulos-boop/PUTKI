@@ -6,10 +6,12 @@
  */
 import React, { useEffect, useState } from 'react';
 import { X, Bell, CheckCircle2 } from 'lucide-react';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
+  const { t } = useLang();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [telegram, setTelegram] = useState('');
@@ -93,7 +95,7 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
           <div className="mono inline-flex items-center gap-2"
                style={{ fontSize: 10, letterSpacing: '0.24em', fontWeight: 700, color: 'var(--ink)' }}>
             <Bell strokeWidth={1.9} size={12} />
-            ASETA HÄLYTYS
+            {t('alert_modal.eyebrow').toUpperCase()}
           </div>
           <button
             type="button"
@@ -110,12 +112,16 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
           <div className="p-6 text-center" data-testid="streamer-alert-success">
             <CheckCircle2 strokeWidth={1.6} size={42} style={{ color: '#2c7a4b', margin: '8px auto 14px' }} />
             <h3 className="display" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.2, marginBottom: 8 }}>
-              Hälytys asetettu
+              {t('alert_modal.success_title')}
             </h3>
             <p className="font-serif" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 16 }}>
-              Saat ilmoituksen heti kun <strong style={{ color: 'var(--ink)' }}>
-                {streamer.user_name || streamer.user_login}
-              </strong> menee livenä.
+              {t('alert_modal.success_body').split('{name}').reduce((acc, part, i) =>
+                i === 0
+                  ? [part]
+                  : [...acc,
+                      <strong key="n" style={{ color: 'var(--ink)' }}>
+                        {streamer.user_name || streamer.user_login}
+                      </strong>, part], [])}
             </p>
             <button
               type="button"
@@ -133,29 +139,28 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
                 borderRadius: 2,
               }}
             >
-              SULJE
+              {t('alert_modal.close').toUpperCase()}
             </button>
           </div>
         ) : (
           <form onSubmit={submit} className="p-5 space-y-4">
             <h3 className="display" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>
-              Ilmoita kun {streamer.user_name || streamer.user_login} menee livenä
+              {t('alert_modal.title').replace('{name}', streamer.user_name || streamer.user_login)}
             </h3>
             <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5 }}>
-              Lähetämme sinulle viestin heti kun striimi alkaa. Ei spämmiä, vain
-              kun {streamer.user_name || streamer.user_login} striimaa.
+              {t('alert_modal.body').replaceAll('{name}', streamer.user_name || streamer.user_login)}
             </p>
 
             <label className="block">
               <span className="mono mb-2 block" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-                SÄHKÖPOSTI · PAKOLLINEN
+                {t('alert_modal.email_label').toUpperCase()}
               </span>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="sinun@email.fi"
+                placeholder={t('alert_modal.email_placeholder')}
                 data-testid="streamer-alert-email-input"
                 className="mono w-full"
                 style={{
@@ -169,13 +174,13 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
 
             <label className="block">
               <span className="mono mb-2 block" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-                PUHELIN · VALINNAINEN (SMS / WHATSAPP)
+                {t('alert_modal.phone_label').toUpperCase()}
               </span>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="+358 40 123 4567"
+                placeholder={t('alert_modal.phone_placeholder')}
                 data-testid="streamer-alert-phone-input"
                 className="mono w-full"
                 style={{
@@ -189,13 +194,13 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
 
             <label className="block">
               <span className="mono mb-2 block" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-                TELEGRAM · VALINNAINEN
+                {t('alert_modal.telegram_label').toUpperCase()}
               </span>
               <input
                 type="text"
                 value={telegram}
                 onChange={(e) => setTelegram(e.target.value)}
-                placeholder="@kayttajanimi"
+                placeholder={t('alert_modal.telegram_placeholder')}
                 data-testid="streamer-alert-telegram-input"
                 className="mono w-full"
                 style={{
@@ -210,7 +215,7 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
             {error && (
               <div className="mono" style={{ fontSize: 11, color: '#C8423C', letterSpacing: '0.14em' }}
                    data-testid="streamer-alert-error">
-                VIRHE · {error}
+                {t('alert_modal.error').toUpperCase()} · {error}
               </div>
             )}
 
@@ -232,11 +237,11 @@ const StreamerAlertModal = ({ streamer, platform = 'twitch', onClose }) => {
                 opacity: submitting ? 0.6 : 1,
               }}
             >
-              {submitting ? 'TALLENNETAAN…' : 'TILAA ILMOITUKSET →'}
+              {submitting ? t('alert_modal.submitting').toUpperCase() : t('alert_modal.submit').toUpperCase()}
             </button>
 
             <div className="mono text-center" style={{ fontSize: 9.5, letterSpacing: '0.18em', color: 'var(--muted)', opacity: 0.7 }}>
-              EI SPÄMMIÄ · VAIN LIVE-ILMOITUKSIA · VOIT PERUUTTAA MILLOIN VAIN
+              {t('alert_modal.disclaimer').toUpperCase()}
             </div>
           </form>
         )}

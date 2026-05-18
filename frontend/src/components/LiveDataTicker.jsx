@@ -4,18 +4,19 @@
  * every 10s. Honest counters: zeros render zeros, never fabricated.
  */
 import React, { useEffect, useState, useCallback } from 'react';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 10_000;
 
-const fmtAgo = (iso) => {
+const fmtAgo = (iso, t) => {
   if (!iso) return '—';
   try {
-    const t = new Date(iso);
-    const secs = Math.max(0, Math.floor((Date.now() - t.getTime()) / 1000));
-    if (secs < 60) return `${secs}s sitten`;
-    if (secs < 3600) return `${Math.floor(secs / 60)}min sitten`;
-    return `${Math.floor(secs / 3600)}h sitten`;
+    const dt = new Date(iso);
+    const secs = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 1000));
+    if (secs < 60) return t('uutiset.ago_s').replace('{n}', secs);
+    if (secs < 3600) return t('uutiset.ago_m').replace('{n}', Math.floor(secs / 60));
+    return t('uutiset.ago_h').replace('{n}', Math.floor(secs / 3600));
   } catch { return '—'; }
 };
 
@@ -28,6 +29,7 @@ const Cell = ({ label, value }) => (
 );
 
 const LiveDataTicker = () => {
+  const { t } = useLang();
   const [stats, setStats] = useState(null);
   const [tickerNow, setTickerNow] = useState(Date.now());
 
@@ -75,13 +77,13 @@ const LiveDataTicker = () => {
               animation: 'pulse 1.8s ease-in-out infinite',
             }}
           />
-          LIVE DATA STREAM
+          {t('ticker.live_data_stream').toUpperCase()}
         </div>
-        <Cell label="TWITCH" value={`${s.twitch_live ?? 0} LIVE`} />
-        <Cell label="URHEILU" value={s.f1_race_active ? `${s.football_matches ?? 0} + F1` : `${s.football_matches ?? 0}`} />
-        <Cell label="UUTISIA TÄNÄÄN" value={s.news_articles_today ?? 0} />
-        <Cell label="ARTIKKELIA" value={s.articles_published_today ?? 0} />
-        <Cell label="PÄIVITETTY" value={fmtAgo(s.latest_update_at)} />
+        <Cell label={t('ticker.twitch').toUpperCase()} value={`${s.twitch_live ?? 0} ${t('ticker.live').toUpperCase()}`} />
+        <Cell label={t('ticker.urheilu').toUpperCase()} value={s.f1_race_active ? `${s.football_matches ?? 0} + F1` : `${s.football_matches ?? 0}`} />
+        <Cell label={t('ticker.news_today').toUpperCase()} value={s.news_articles_today ?? 0} />
+        <Cell label={t('ticker.articles').toUpperCase()} value={s.articles_published_today ?? 0} />
+        <Cell label={t('ticker.updated').toUpperCase()} value={fmtAgo(s.latest_update_at, t)} />
       </div>
     </div>
   );

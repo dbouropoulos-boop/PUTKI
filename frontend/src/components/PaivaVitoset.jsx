@@ -12,6 +12,7 @@
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { TrendingUp, Clock, AlertCircle, Send, X, CheckCircle2 } from 'lucide-react';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 5 * 60_000;  // 5 min refresh on the client
@@ -25,25 +26,26 @@ const confidenceColor = (pct) => {
   return '#C8423C';
 };
 
-const fmtKickoff = (iso) => {
+const fmtKickoff = (iso, lang, t) => {
   if (!iso) return '';
   try {
-    const t = new Date(iso);
+    const dt = new Date(iso);
     const now = new Date();
-    const diffH = (t.getTime() - now.getTime()) / 3600_000;
-    const dateFmt = new Intl.DateTimeFormat('fi-FI', {
+    const diffH = (dt.getTime() - now.getTime()) / 3600_000;
+    const locale = lang === 'en' ? 'en-GB' : 'fi-FI';
+    const dateFmt = new Intl.DateTimeFormat(locale, {
       weekday: 'short', day: 'numeric', month: 'numeric', timeZone: 'Europe/Helsinki',
     });
-    const timeFmt = new Intl.DateTimeFormat('fi-FI', {
+    const timeFmt = new Intl.DateTimeFormat(locale, {
       hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Helsinki',
     });
-    if (diffH < 0) return 'KÄYNNISSÄ';
-    if (diffH < 24) return `Tänään · ${timeFmt.format(t)}`;
-    return `${dateFmt.format(t)} · ${timeFmt.format(t)}`;
+    if (diffH < 0) return t('vitoset.kickoff_live').toUpperCase();
+    if (diffH < 24) return `${t('vitoset.kickoff_today')} · ${timeFmt.format(dt)}`;
+    return `${dateFmt.format(dt)} · ${timeFmt.format(dt)}`;
   } catch { return ''; }
 };
 
-const PickRow = ({ p, idx }) => {
+const PickRow = ({ p, idx, lang, t }) => {
   const color = confidenceColor(p.implied_probability);
   const opp = p.pick_side === 'home' ? p.away_team : p.home_team;
   const pctRounded = Math.round(p.implied_probability);
@@ -81,7 +83,7 @@ const PickRow = ({ p, idx }) => {
           <span className="mono inline-flex items-center gap-1"
                 style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 500 }}>
             <Clock strokeWidth={1.7} size={10} />
-            {fmtKickoff(p.commence_time)}
+            {fmtKickoff(p.commence_time, lang, t)}
           </span>
         </div>
         <div
@@ -92,7 +94,7 @@ const PickRow = ({ p, idx }) => {
           {p.pick_team} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>vs</span> {opp}
         </div>
         <div className="mono mt-1" style={{ fontSize: 10, letterSpacing: '0.12em', color: 'var(--muted)' }}>
-          PARAS HINTA · {p.bookmaker}
+          {t('vitoset.best_price').toUpperCase()} · {p.bookmaker}
         </div>
       </div>
 
@@ -128,6 +130,7 @@ const PickRow = ({ p, idx }) => {
 };
 
 const PaivaVitoset = ({ compact = false }) => {
+  const { lang, t } = useLang();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -174,17 +177,17 @@ const PaivaVitoset = ({ compact = false }) => {
       <div className="flex items-baseline justify-between flex-wrap gap-3 mb-6">
         <div>
           <div className="mono mb-1.5" style={{ fontSize: 10.5, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 700 }}>
-            PÄIVÄN VITOSET · BOOKMAKER CONSENSUS
+            {t('vitoset.eyebrow').toUpperCase()}
           </div>
           <h2 className="display" style={{ fontSize: 30, fontWeight: 700, lineHeight: 1.1 }}>
-            Päivän viisi vahvinta valintaa
+            {t('vitoset.title')}
           </h2>
         </div>
         {fetchedLabel && (
           <div className="mono inline-flex items-center gap-2"
                style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}>
             <TrendingUp strokeWidth={1.7} size={12} />
-            PÄIVITETTY {fetchedLabel}
+            {t('vitoset.updated').toUpperCase()} {fetchedLabel}
           </div>
         )}
       </div>
@@ -210,8 +213,8 @@ const PaivaVitoset = ({ compact = false }) => {
             fontWeight: 700,
           }}
         >
-          <span>PUTKI HQ · BETTING TICKET</span>
-          <span style={{ opacity: 0.55 }}>{picks.length}/5 · TODAY'S TOP</span>
+          <span>{t('vitoset.slip_header').toUpperCase()}</span>
+          <span style={{ opacity: 0.55 }}>{picks.length}/5 · {t('vitoset.slip_todays').toUpperCase()}</span>
         </div>
 
         {error ? (
@@ -219,30 +222,30 @@ const PaivaVitoset = ({ compact = false }) => {
                style={{ fontSize: 11, color: '#C8423C', letterSpacing: '0.14em' }}
                data-testid="paivan-vitoset-error">
             <AlertCircle strokeWidth={1.8} size={13} />
-            VIRHE · {error}
+            {t('uutiset.error').toUpperCase()} · {error}
           </div>
         ) : dormant ? (
           <div className="px-5 py-8 text-center mono"
                style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
                data-testid="paivan-vitoset-dormant">
-            ODDS-INTEGRAATIO ODOTTAA KONFIGURAATIOTA · {data?.reason?.toUpperCase()}
+            {t('vitoset.dormant').toUpperCase()} · {data?.reason?.toUpperCase()}
           </div>
         ) : picks.length === 0 ? (
           <div className="px-5 py-8 text-center mono"
                style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
                data-testid="paivan-vitoset-empty">
-            EI VAHVOJA SUOSIKKEJA TÄNÄÄN · TARKISTA UUDESTAAN HUOMENNA
+            {t('vitoset.empty').toUpperCase()}
           </div>
         ) : (
           <ul data-testid="paivan-vitoset-list">
-            {visible.map((p, i) => <PickRow key={p.event_id || i} p={p} idx={i} />)}
+            {visible.map((p, i) => <PickRow key={p.event_id || i} p={p} idx={i} lang={lang} t={t} />)}
             {compact && picks.length > visible.length && (
               <li className="px-4 sm:px-5 py-3 mono"
                   style={{ borderTop: '1px solid var(--border)', fontSize: 10.5,
                            letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
                 <a href="/viikon-kortti" data-testid="paivan-vitoset-view-all"
                    style={{ color: 'var(--ink)', textDecoration: 'none' }}>
-                  KATSO KAIKKI 5 VINKKIÄ · VIIKON KORTTI →
+                  {t('vitoset.view_all_5').toUpperCase()}
                 </a>
               </li>
             )}
@@ -268,16 +271,16 @@ const PaivaVitoset = ({ compact = false }) => {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
               <div style={{ fontSize: 10.5, letterSpacing: '0.28em', fontWeight: 700, opacity: 0.75 }}>
-                🔥 SAA NÄMÄ VINKIT PÄIVITTÄIN
+                {t('vitoset.cta_eyebrow').toUpperCase()}
               </div>
               <div className="display mt-1" style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.01em' }}>
-                Tilaa Telegram-kanavaan →
+                {t('vitoset.cta_title')}
               </div>
             </div>
             <div className="text-right" style={{ fontSize: 10, letterSpacing: '0.18em', fontWeight: 600, opacity: 0.7 }}>
-              ILMAINEN · EI SPÄMMIÄ
+              {t('vitoset.cta_subline').toUpperCase()}
               {subscriberCount != null && (
-                <div style={{ marginTop: 2 }}>{subscriberCount} TILAAJAA</div>
+                <div style={{ marginTop: 2 }}>{subscriberCount} {t('vitoset.cta_subs').toUpperCase()}</div>
               )}
             </div>
           </div>
@@ -295,7 +298,7 @@ const PaivaVitoset = ({ compact = false }) => {
             fontWeight: 500,
           }}
         >
-          KAUPALLINEN AGGREGAATTI · 18+ · PELAA VASTUULLISESTI · DATA: THE ODDS API
+          {t('vitoset.disclaimer').toUpperCase()}
         </div>
       </div>
 
@@ -320,7 +323,7 @@ const PaivaVitoset = ({ compact = false }) => {
               <div className="mono inline-flex items-center gap-2"
                    style={{ fontSize: 10, letterSpacing: '0.24em', fontWeight: 700, color: 'var(--ink)' }}>
                 <Send strokeWidth={1.9} size={12} />
-                TILAA TELEGRAM-VINKIT
+                {t('vitoset.cta_title').toUpperCase()}
               </div>
               <button
                 type="button"
@@ -333,17 +336,14 @@ const PaivaVitoset = ({ compact = false }) => {
             </div>
             <div className="p-5 space-y-4">
               <h3 className="display" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1.15 }}>
-                Päivittäiset vedonlyöntivinkit
+                {t('vitoset.modal_title')}
               </h3>
               <p className="font-serif" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>
-                Saat 5 valintaa päivässä suoraan Telegramiin. Alaviivassa kerroin,
-                luottamus % ja paras kirjanpitäjä.
+                {t('vitoset.modal_body')}
               </p>
               <ul className="space-y-2" style={{ fontSize: 13.5, color: 'var(--ink)' }}>
-                {['NHL · Valioliiga · Veikkausliiga · Mestarien liiga',
-                  'Kertoimet ja avaintoiminnan analyysi',
-                  'Luottamusprosentit eri kirjanpitäjien välillä',
-                  'Ilmainen · ei spämmiä · perukaa milloin vain'].map((b) => (
+                {[t('vitoset.modal_b1'), t('vitoset.modal_b2'),
+                  t('vitoset.modal_b3'), t('vitoset.modal_b4')].map((b) => (
                   <li key={b} className="flex items-start gap-2 font-serif">
                     <CheckCircle2 strokeWidth={1.7} size={14} style={{ color: '#2c7a4b', marginTop: 3, flexShrink: 0 }} />
                     <span>{b}</span>
@@ -364,10 +364,10 @@ const PaivaVitoset = ({ compact = false }) => {
                 }}
               >
                 <Send strokeWidth={1.9} size={13} />
-                LIITY @{TIPS_TELEGRAM_HANDLE} →
+                {t('vitoset.modal_cta').toUpperCase()} @{TIPS_TELEGRAM_HANDLE} →
               </a>
               <div className="mono text-center" style={{ fontSize: 9.5, letterSpacing: '0.18em', color: 'var(--muted)', opacity: 0.7 }}>
-                TULOSSA PIAN · SMS- JA WHATSAPP-VINKIT
+                {t('vitoset.modal_soon').toUpperCase()}
               </div>
             </div>
           </div>

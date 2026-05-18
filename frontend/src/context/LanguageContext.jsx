@@ -4,10 +4,12 @@ import { translations, interpolate } from '../i18n/translations';
 const LanguageContext = createContext({ lang: 'fi', setLang: () => {}, t: (k) => k });
 
 const getInitial = () => {
-  // PUTKI HQ launches as a Finnish-only product. Force `fi` regardless of
-  // navigator language or stale localStorage from earlier EN sessions —
-  // English translation paths still exist for back-office tools but the
-  // public site renders Finnish only until Dioni reopens English.
+  if (typeof window === 'undefined') return 'fi';
+  const stored = window.localStorage.getItem('mittari-lang');
+  if (stored === 'fi' || stored === 'en') return stored;
+  // Default to Finnish; if browser is English-only, default English
+  const nav = (typeof navigator !== 'undefined' && navigator.language) || 'fi-FI';
+  if (nav.startsWith('en')) return 'en';
   return 'fi';
 };
 

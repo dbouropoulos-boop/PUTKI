@@ -9,6 +9,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { ExternalLink, Eye, Users, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import StreamerAlertModal from './StreamerAlertModal';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 60_000;
@@ -25,18 +26,18 @@ const fmtNumber = (n) => {
   return String(n);
 };
 
-const fmtAgo = (iso) => {
+const fmtAgo = (iso, t) => {
   if (!iso) return '';
   try {
-    const t = new Date(iso);
-    const mins = Math.max(0, Math.floor((Date.now() - t.getTime()) / 60000));
-    if (mins < 60) return `${mins}min livenä`;
+    const dt = new Date(iso);
+    const mins = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 60000));
+    if (mins < 60) return t('uutiset.ago_m').replace('{n}', mins);
     const hrs = Math.floor(mins / 60);
-    return `${hrs}h ${mins % 60}min livenä`;
+    return `${hrs}h ${mins % 60}m ${t('streamer_live.live_for')}`;
   } catch { return ''; }
 };
 
-const StreamerCard = ({ s, onAlert }) => (
+const StreamerCard = ({ s, onAlert, t }) => (
   <div
     data-testid={`streamer-card-${s.user_login}`}
     className="panel panel-hover overflow-hidden flex flex-col"
@@ -60,7 +61,7 @@ const StreamerCard = ({ s, onAlert }) => (
       ) : (
         <div className="w-full h-full grid place-items-center mono"
              style={{ color: 'rgba(245,243,238,0.4)', fontSize: 11, letterSpacing: '0.18em' }}>
-          NO PREVIEW
+          {t('streamer_live.no_preview').toUpperCase()}
         </div>
       )}
       <div
@@ -75,7 +76,7 @@ const StreamerCard = ({ s, onAlert }) => (
           width: 6, height: 6, borderRadius: 999, background: '#fff',
           animation: 'pulse 1.8s ease-in-out infinite',
         }} />
-        LIVE
+        {t('common.live')}
       </div>
       {s.viewer_count != null && (
         <div
@@ -116,7 +117,7 @@ const StreamerCard = ({ s, onAlert }) => (
       )}
       <div className="flex items-center justify-between gap-2 mono pt-1"
            style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }}>
-        <span>{(s.game_name || 'JUST CHATTING').toUpperCase()}</span>
+        <span>{(s.game_name || t('streamer_live.just_chatting')).toUpperCase()}</span>
         {typeof s.follower_count === 'number' && (
           <span className="inline-flex items-center gap-1">
             <Users strokeWidth={1.7} size={10} />
@@ -126,7 +127,7 @@ const StreamerCard = ({ s, onAlert }) => (
       </div>
       {s.started_at && (
         <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.16em', color: 'var(--muted)', opacity: 0.7 }}>
-          {fmtAgo(s.started_at).toUpperCase()}
+          {fmtAgo(s.started_at, t).toUpperCase()}
         </div>
       )}
       <button
@@ -141,13 +142,14 @@ const StreamerCard = ({ s, onAlert }) => (
         }}
       >
         <Bell strokeWidth={1.9} size={12} />
-        ASETA HÄLYTYS
+        {t('streamer_live.set_alert').toUpperCase()}
       </button>
     </div>
   </div>
 );
 
 const StreamerLiveGrid = () => {
+  const { t } = useLang();
   const [platform, setPlatform] = useState('twitch');
   const [data, setData] = useState({});  // { twitch: {...}, kick: {...}, youtube: {...} }
   const [alertTarget, setAlertTarget] = useState(null);
@@ -198,10 +200,10 @@ const StreamerLiveGrid = () => {
       <div className="flex items-baseline justify-between flex-wrap gap-3 mb-5">
         <div>
           <div className="mono mb-1.5" style={{ fontSize: 10.5, letterSpacing: '0.28em', color: 'var(--muted)', fontWeight: 700 }}>
-            MITÄ TAPAHTUU NYT · ASETA HÄLYTYS
+            {t('streamer_live.eyebrow').toUpperCase()}
           </div>
           <h2 className="display" style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.1 }}>
-            Striimit livenä
+            {t('streamer_live.title')}
           </h2>
         </div>
         {/* Carousel nav — desktop only; mobile uses native scroll-snap */}
@@ -289,14 +291,14 @@ const StreamerLiveGrid = () => {
              style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
              data-testid="streamer-live-dormant">
           {(active.reason || '').includes('not_configured')
-            ? `${platform.toUpperCase()}-INTEGRAATIO ODOTTAA AVAINTA`
-            : `EI LIVELÄHETYKSIÄ JUURI NYT · ${platform.toUpperCase()}`}
+            ? `${platform.toUpperCase()} · ${t('streamer_live.dormant_key').toUpperCase()}`
+            : `${t('streamer_live.empty').toUpperCase()} · ${platform.toUpperCase()}`}
         </div>
       ) : streamers.length === 0 ? (
         <div className="panel p-8 text-center mono"
              style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}
              data-testid="streamer-live-empty">
-          EI LIVELÄHETYKSIÄ NYT · {platform.toUpperCase()}
+          {t('streamer_live.empty').toUpperCase()} · {platform.toUpperCase()}
         </div>
       ) : (
         <>
@@ -309,7 +311,7 @@ const StreamerLiveGrid = () => {
             {streamers.slice(0, 8).map((s) => (
               <div key={s.user_login}
                    style={{ scrollSnapAlign: 'start', flex: '0 0 80%', minWidth: 280 }}>
-                <StreamerCard s={s} onAlert={setAlertTarget} />
+                <StreamerCard s={s} onAlert={setAlertTarget} t={t} />
               </div>
             ))}
           </div>
@@ -320,7 +322,7 @@ const StreamerLiveGrid = () => {
             data-testid="streamer-live-list"
           >
             {pageStreamers.map((s) => (
-              <StreamerCard key={s.user_login} s={s} onAlert={setAlertTarget} />
+              <StreamerCard key={s.user_login} s={s} onAlert={setAlertTarget} t={t} />
             ))}
           </div>
           {streamers.length > 4 && (
@@ -331,7 +333,7 @@ const StreamerLiveGrid = () => {
                 style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, textDecoration: 'none' }}
                 data-testid="streamer-live-view-all"
               >
-                KAIKKI STRIIMIT · {(active.count ?? streamers.length)} LIVENÄ →
+                {t('streamer_live.view_all').toUpperCase()} · {(active.count ?? streamers.length)} {t('streamer_live.live_count').toUpperCase()} →
               </a>
             </div>
           )}

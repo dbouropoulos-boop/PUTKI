@@ -9,23 +9,27 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight } from 'lucide-react';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 30_000;
 
-const fmtAgo = (iso) => {
+const fmtAgo = (iso, lang) => {
   if (!iso) return '—';
   try {
-    const t = new Date(iso);
-    const secs = Math.max(0, Math.floor((Date.now() - t.getTime()) / 1000));
-    if (secs < 60) return `${secs}s sitten`;
-    if (secs < 3600) return `${Math.floor(secs / 60)}min sitten`;
-    if (secs < 86400) return `${Math.floor(secs / 3600)}h sitten`;
-    return `${Math.floor(secs / 86400)}d sitten`;
+    const dt = new Date(iso);
+    const secs = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 1000));
+    const ago = lang === 'en' ? 'ago' : 'sitten';
+    const mUnit = lang === 'en' ? 'm' : 'min';
+    if (secs < 60) return `${secs}s ${ago}`;
+    if (secs < 3600) return `${Math.floor(secs / 60)}${mUnit} ${ago}`;
+    if (secs < 86400) return `${Math.floor(secs / 3600)}h ${ago}`;
+    return `${Math.floor(secs / 86400)}d ${ago}`;
   } catch { return '—'; }
 };
 
 const ActivityStats = () => {
+  const { lang } = useLang();
   const [data, setData] = useState(null);
   const [now, setNow] = useState(Date.now());
 
@@ -64,38 +68,38 @@ const ActivityStats = () => {
           PUTKI HQ · LIVE
         </div>
         <span className="mono" style={{ fontSize: 9.5, letterSpacing: '0.16em', color: 'var(--muted)', opacity: 0.7 }}>
-          JULKAISTU SISÄLTÖ
+          {lang === 'en' ? 'PUBLISHED CONTENT' : 'JULKAISTU SISÄLTÖ'}
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-5">
         <div data-testid="activity-stat-today">
           <div className="mono mb-1" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
-            TÄNÄÄN
+            {lang === 'en' ? 'TODAY' : 'TÄNÄÄN'}
           </div>
           <div className="mono" style={{ fontSize: 32, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
             {data?.articles_today ?? '—'}
           </div>
           <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--muted)', opacity: 0.7, marginTop: 4 }}>
-            ARTIKKELIA
+            {lang === 'en' ? 'ARTICLES' : 'ARTIKKELIA'}
           </div>
         </div>
         <div data-testid="activity-stat-week">
           <div className="mono mb-1" style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
-            VIIKKO
+            {lang === 'en' ? 'THIS WEEK' : 'VIIKKO'}
           </div>
           <div className="mono" style={{ fontSize: 32, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
             {data?.articles_this_week ?? '—'}
           </div>
           <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--muted)', opacity: 0.7, marginTop: 4 }}>
-            VIIM. 7 PV
+            {lang === 'en' ? 'LAST 7 DAYS' : 'VIIM. 7 PV'}
           </div>
         </div>
       </div>
 
       <div className="mono" style={{ fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600, lineHeight: 1.5 }}
            data-testid="activity-last-update">
-        VIIMEISIN PÄIVITYS · {data?.last_published_at ? fmtAgo(data.last_published_at) : 'EI VIELÄ JULKAISUJA'}
+        {lang === 'en' ? 'LAST UPDATE' : 'VIIMEISIN PÄIVITYS'} · {data?.last_published_at ? fmtAgo(data.last_published_at, lang) : (lang === 'en' ? 'NO PUBLICATIONS YET' : 'EI VIELÄ JULKAISUJA')}
       </div>
       {data?.last_url_slug ? (
         <Link
