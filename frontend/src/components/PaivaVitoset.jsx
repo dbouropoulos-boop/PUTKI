@@ -20,7 +20,7 @@
  *   - Confidence-band color noise (uses semantic data-accent + state colors only)
  */
 import React, { useEffect, useState, useCallback } from 'react';
-import { Clock, ChevronDown, ChevronUp, Zap, TrendingDown } from 'lucide-react';
+import { Clock, ChevronDown, ChevronUp, Zap, TrendingDown, Calculator } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -79,7 +79,7 @@ const Sparkline = ({ points }) => {
   );
 };
 
-const SharpnessBar = ({ value, modifier, lang }) => {
+const SharpnessBar = ({ value, modifier, lang, onVerify }) => {
   const pct = Math.max(0, Math.min(100, value || 0));
   const mod = modifier
     ? (modifier === 'tightened'
@@ -87,7 +87,7 @@ const SharpnessBar = ({ value, modifier, lang }) => {
         : { icon: TrendingDown,  label_fi: 'löystynyt tänään',   label_en: 'softened today'  })
     : null;
   return (
-    <div className="flex items-center gap-3" data-testid="sharpness-bar">
+    <div className="flex items-center gap-3 flex-wrap" data-testid="sharpness-bar">
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.10em', color: 'var(--ink)', fontWeight: 700 }}>
         Sharpness {value}/100
       </div>
@@ -107,12 +107,135 @@ const SharpnessBar = ({ value, modifier, lang }) => {
           {lang === 'en' ? mod.label_en : mod.label_fi}
         </span>
       )}
+      {onVerify && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onVerify(); }}
+          data-testid="verify-math-toggle"
+          className="mono inline-flex items-center gap-1"
+          style={{
+            fontSize: 10, letterSpacing: '0.16em', color: 'var(--data-accent, #4FB3A5)',
+            fontWeight: 700, background: 'transparent', border: '1px solid currentColor',
+            padding: '2px 8px', borderRadius: 2, cursor: 'pointer',
+          }}
+        >
+          <Calculator strokeWidth={1.8} size={11} />
+          {lang === 'en' ? 'MATH' : 'MATEMATIIKKA'}
+        </button>
+      )}
+    </div>
+  );
+};
+
+/**
+ * VerifyMathPanel — worksheet-style breakdown of the Sharpness components.
+ * Per Phase 1 user spec: plain-language labels, editorial layout, deterministic-
+ * note closing line. Replaces a code block with an inline math worksheet.
+ */
+const VerifyMathPanel = ({ sharpness, lang }) => {
+  if (!sharpness) return null;
+  const c = sharpness.components || {};
+  const w = sharpness.weights || {};
+  const L_FI = {
+    anchor: 'MATEMATIIKKA · MATH',
+    ip: 'Markkinakerroin',
+    ct: 'Konsensuksen tiukkuus',
+    rm: 'Suunta 24 h',
+    weight: 'Paino',
+    score: 'Pisteet',
+    weighted: 'Painotettu',
+    no_history: 'Ei vielä 24 h historiaa — oletus 50.',
+    closing: 'Sharpness on deterministinen. Sama data tuottaa aina saman pistemäärän.',
+  };
+  const L_EN = {
+    anchor: 'MATEMATIIKKA · MATH',
+    ip: 'Market odds',
+    ct: 'Consensus tightness',
+    rm: '24h direction',
+    weight: 'Weight',
+    score: 'Score',
+    weighted: 'Weighted',
+    no_history: 'No 24h history yet — defaults to 50.',
+    closing: 'Sharpness is deterministic. The same data always produces the same score.',
+  };
+  const L = lang === 'en' ? L_EN : L_FI;
+  const rows = [
+    { name: L.ip, value: c.implied_prob_score, weight: w.implied_prob || 0.5 },
+    { name: L.ct, value: c.consensus_tightness, weight: w.tightness || 0.3 },
+    { name: L.rm, value: c.recency_momentum,   weight: w.momentum || 0.2,
+      note: sharpness.has_momentum_history === false ? L.no_history : null },
+  ];
+  const fmt = (n) => (n == null ? '—' : Number(n).toFixed(1));
+
+  return (
+    <div data-testid="verify-math-panel"
+         style={{
+           marginTop: 12, padding: '14px 16px',
+           background: 'var(--bg)', border: '1px solid var(--border)',
+           borderLeft: '2px solid var(--data-accent, #4FB3A5)', borderRadius: 2,
+         }}>
+      <div className="mono mb-3"
+           style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+        {L.anchor}
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+        <thead>
+          <tr>
+            <th style={{ textAlign: 'left',  padding: '6px 8px 6px 0', fontWeight: 600, fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em' }}>
+              {/* component name */}
+            </th>
+            <th style={{ textAlign: 'right', padding: '6px 8px', fontWeight: 600, fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em', width: 70 }}>
+              {L.score}
+            </th>
+            <th style={{ textAlign: 'right', padding: '6px 8px', fontWeight: 600, fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em', width: 70 }}>
+              {L.weight}
+            </th>
+            <th style={{ textAlign: 'right', padding: '6px 0 6px 8px', fontWeight: 600, fontSize: 11, color: 'var(--muted)', letterSpacing: '0.08em', width: 80 }}>
+              {L.weighted}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.name} style={{ borderTop: '1px solid var(--border)' }}>
+              <td className="font-serif" style={{ padding: '8px 8px 8px 0', fontSize: 13, color: 'var(--ink)' }}>
+                {r.name}
+                {r.note && (
+                  <div className="mono" style={{ fontSize: 9.5, color: 'var(--muted)', letterSpacing: '0.08em', marginTop: 2, fontStyle: 'italic' }}>
+                    {r.note}
+                  </div>
+                )}
+              </td>
+              <td className="mono" style={{ padding: '8px', textAlign: 'right', fontSize: 13, color: 'var(--ink)' }}>{fmt(r.value)}</td>
+              <td className="mono" style={{ padding: '8px', textAlign: 'right', fontSize: 13, color: 'var(--muted)' }}>× {r.weight.toFixed(2)}</td>
+              <td className="mono" style={{ padding: '8px 0 8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--ink)', fontWeight: 700 }}>
+                {r.value != null ? (r.value * r.weight).toFixed(1) : '—'}
+              </td>
+            </tr>
+          ))}
+          <tr style={{ borderTop: '1px solid var(--border-strong)' }}>
+            <td colSpan={3}
+                className="mono"
+                style={{ padding: '8px 8px 4px 0', textAlign: 'right', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.14em', fontWeight: 600 }}>
+              {lang === 'en' ? 'TOTAL' : 'YHTEENSÄ'}
+            </td>
+            <td className="mono" style={{ padding: '8px 0 4px 8px', textAlign: 'right', fontSize: 16, color: 'var(--ink)', fontWeight: 800 }}>
+              {sharpness.sharpness}/100
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="font-serif"
+         style={{ fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.5, marginTop: 10, fontStyle: 'italic' }}>
+        {L.closing}
+      </p>
     </div>
   );
 };
 
 const PickCard = ({ pick, idx, lang }) => {
   const [open, setOpen] = useState(false);
+  const [mathOpen, setMathOpen] = useState(false);
   const opp = pick.pick_side === 'home' ? pick.away_team : pick.home_team;
   const sharpness = pick.sharpness || {};
   const kickoff = fmtKickoff(pick.commence_time, lang);
@@ -176,8 +299,16 @@ const PickCard = ({ pick, idx, lang }) => {
               {consensusLabel}
             </div>
             <div className="mt-3">
-              <SharpnessBar value={sharpness.sharpness} modifier={sharpness.modifier} lang={lang} />
+              <SharpnessBar
+                value={sharpness.sharpness}
+                modifier={sharpness.modifier}
+                lang={lang}
+                onVerify={() => setMathOpen((v) => !v)}
+              />
             </div>
+            {mathOpen && (
+              <VerifyMathPanel sharpness={sharpness} lang={lang} />
+            )}
           </div>
           <div className="mono shrink-0 flex items-center"
                style={{ fontSize: 10, letterSpacing: '0.16em', color: 'var(--muted)', gap: 4 }}>

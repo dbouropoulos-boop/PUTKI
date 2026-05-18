@@ -1,0 +1,35 @@
+{
+  "summary": "Iteration 24 — Phase 1 finalization (Sprint 4 partial + Sprint 3.b + Sprint 5 + source-citation validator). Backend pytest: 54/54 PASS across 4 suites (test_iter23_source_citation.py 8/8, test_iter23_phase1.py 17/17, test_iter23_sharpness.py 17/17, test_iter23_news_classifier.py 12/12). New endpoints verified live: GET /api/dial/streak → {kind:'no_history', days:null, last_event_at:null} (correct silent state on fresh deploy); GET /api/dial/permalink/KIIRASTULI/2099-12-31 → {found:false, state_key:'KIIRASTULI', date:'2099-12-31'}. /api/odds/featured still exposes nested sharpness {sharpness, components, weights, band, modifier, book_count, has_momentum_history} with _avg_implied_now stripped. Frontend verified on https://pelisignaali-fi.preview.emergentagent.com: (1) StickyTelegramCTA absent from home; (2) MittariStreak silent (mittari-streak test-id absent — no_history); (3) NewsCarousel present beside the dial with category badge 'SPORTS', 6 dot indicators, dot-2 click jumps to slide-2; (4) verify-math-toggle on pick-card-0 opens verify-math-panel containing anchor 'MATEMATIIKKA · MATH', EN labels Market odds / Consensus tightness / 24h direction, TOTAL row Sharpness 88/100, closing line 'Sharpness is deterministic. The same data always produces the same score.'; (5) winners-corner-row text 'Spain vs England @ 2.10 ✓ UEFA EURO 2024 · FINAL · 2d ago' — no +u unit notation; (6) iter23 regression: 0 header nav-links, 80 news-ticker items, daily-market-watch rendered, 5 sharpness-bar rows; (7) /m/perkele-2099-12-31 renders mittari-permalink-page with state 'PERKELE' at fontSize 140px color rgb(193,59,44) = #C13B2C, not-found block mentions '365 days'; (8) /m/garbage routes to mittari-permalink-invalid with FI/EN fallback copy.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "PaivaVitoset.SharpnessBar", "issue": "verify-math-toggle <button> is rendered inside the pick-card-{idx}-toggle <button>, producing 'In HTML, <button> cannot be a descendant of <button>' React hydration error in console on every home-page render. Function still works (e.stopPropagation prevents card expand) but invalid HTML and breaks SSR/hydration. Fix: change the inner verify-math-toggle to a <span role=\"button\" tabIndex={0}> with key handlers, OR lift it outside the outer button.", "selector": "[data-testid='verify-math-toggle'] inside [data-testid='pick-card-0-toggle']", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter23_source_citation.py",
+    "/app/backend/tests/test_iter23_phase1.py",
+    "/app/backend/tests/test_iter23_sharpness.py",
+    "/app/backend/tests/test_iter23_news_classifier.py",
+    "/app/test_reports/pytest/iter24_results.xml"
+  ],
+  "action_items": [
+    "FIX nested <button> hydration warning in PaivaVitoset.jsx — verify-math-toggle is a <button> nested inside the pick-card-toggle <button>. Replace inner element with <span role='button' tabIndex={0}> + onKeyDown, or restructure card so the math toggle is a sibling of the card button rather than a descendant. Currently logs a React hydration error on every home page load (visible in browser console)."
+  ],
+  "critical_code_review_comments": [
+    "PaivaVitoset.jsx:111 — verify-math-toggle button is a DOM descendant of pick-card-toggle button (line 258). Browser logs hydration error: 'In HTML, <button> cannot be a descendant of <button>'. Works functionally because of e.stopPropagation, but invalid HTML and risks future accessibility/screen-reader bugs.",
+    "MittariStreak.jsx — correctly silent when label_fi is missing (no_history kind). Good defensive coding.",
+    "NewsCarousel.jsx — solid implementation: 7s auto-rotate, pause on hover, dot indicators, semantic category colors, max 4 info elements per slide per spec. Note: outer <aside> has minHeight:180 but no maxHeight — long headlines could grow the carousel taller than the dial section on narrow viewports.",
+    "MittariPermalink.jsx — slug regex `^([a-zäö]+)-(\\d{4}-\\d{2}-\\d{2})$` is case-insensitive (the /i flag), correctly accepts both 'perkele' and 'PERKELE'. SLUG_TO_KEY includes both 'vipina' and 'vipinä' for robustness — good.",
+    "content_generator.py SOURCE_CITATION rules — citation must appear in first 400 chars of body. Test `test_late_citation_outside_window_still_rejected` confirms this. May be too strict for long-form analyses where citation legitimately falls later; consider widening to first paragraph (~600 chars) if false-positives surface."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (54/54)", "frontend": "100% (all spec checks pass; 1 console-warning issue flagged separately)"},
+  "test_credentials": "BACK_OFFICE_TOKEN=putki-hq-admin (not needed — all tested endpoints are public).",
+  "seed_data_creation": "None this iteration. /api/dial/streak intentionally tested in no_history state (fresh deploy).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter24 verifies Sprint 4 partial (MittariStreak + /m/{slug} permalink), Sprint 3.b (NewsCarousel), Sprint 5 (Winners +u removed + StickyTelegramCTA removed), and source-citation validator. The verify-math worksheet on pick cards works perfectly per the user spec (FI labels Markkinakerroin/Konsensuksen tiukkuus/Suunta 24 h + EN labels Market odds/Consensus tightness/24h direction, TOTAL N/100, deterministic closing line, bilingual anchor MATEMATIIKKA · MATH). ONE OUTSTANDING ISSUE: verify-math-toggle <button> is nested inside the pick-card-toggle <button> in PaivaVitoset.jsx — React logs a hydration error on every home load. Functionally fine due to e.stopPropagation, but invalid HTML. Easy fix: switch the inner element to a <span role='button' tabIndex={0}> with click + keydown handlers, or lift the math toggle outside the outer button element. All iter23 regression assertions still pass."
+}

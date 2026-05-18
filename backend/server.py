@@ -816,6 +816,38 @@ async def public_dial_history(limit: int = 48):
     return {"history": await dial_history(db, limit=limit)}
 
 
+# ── Phase 1 Sprint 4 — Mittari streak counter + state permalink ──
+
+@api_router.get("/dial/streak")
+async def public_dial_streak():
+    """Mittari streak counter.
+    Returns the days-since-last-PERKELE (or first-time-in-N-days if
+    we're currently at PERKELE). Shown as a small low-contrast line
+    under the dial section."""
+    from dial_engine import state_streak
+    snap = await latest_dial_snapshot(db)
+    current = (snap or {}).get("state", {}).get("key") or "KYLMA"
+    return await state_streak(db, current)
+
+
+@api_router.get("/dial/permalink/{state_key}/{date_iso}")
+async def public_dial_permalink(state_key: str, date_iso: str):
+    """Permalink lookup for /m/{state-slug}-{date} share pages.
+    Returns the recorded state event for the given state+date, or
+    `{found:false}` if nothing recorded on that day."""
+    from dial_engine import state_event_for_permalink
+    key = state_key.upper()
+    event = await state_event_for_permalink(db, key, date_iso)
+    if not event:
+        return {"found": False, "state_key": key, "date": date_iso}
+    # Normalise datetime fields to iso strings.
+    for k in ("captured_at", "expires_at"):
+        v = event.get(k)
+        if hasattr(v, "isoformat"):
+            event[k] = v.isoformat()
+    return {"found": True, **event}
+
+
 @api_router.get("/admin/dial/history")
 async def admin_dial_history(limit: int = 60, _: bool = Depends(require_admin)):
     return {"history": await dial_history(db, limit=limit)}

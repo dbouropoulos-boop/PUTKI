@@ -26,13 +26,14 @@ import LiveActivityFeed from '../components/LiveActivityFeed';
 import StreamerLiveGrid from '../components/StreamerLiveGrid';
 import PaivaVitoset from '../components/PaivaVitoset';
 import SocialProofBar from '../components/SocialProofBar';
-import StickyTelegramCTA from '../components/StickyTelegramCTA';
 import WinnersCorner from '../components/WinnersCorner';
 import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
 import TelegramSubscribeButton from '../components/TelegramSubscribeButton';
 import ShareButton from '../components/ShareButton';
 import PhaseOneDiscoveryRow from '../components/PhaseOneDiscoveryRow';
+import MittariStreak from '../components/MittariStreak';
+import NewsCarousel from '../components/NewsCarousel';
 import { dialReading } from '../constants/dial';
 import { useLang } from '../context/LanguageContext';
 
@@ -305,6 +306,7 @@ const Home = () => {
                  data-testid="hero-headline">
                 {headline.toUpperCase()}
               </p>
+              <MittariStreak />
               <div className="mt-4 flex items-center gap-3 flex-wrap">
                 <a
                   href="#zone-capture"
@@ -341,11 +343,12 @@ const Home = () => {
               </div>
             </div>
 
-            {/* TOP-RIGHT — Phase 1 (Section 3b): The "PUBLISHED CONTENT"
-                stats card is removed. The news carousel that replaces it
-                ships in Sprint 3.b — for now we leave the right column
-                empty so the dial dominates the section per the brief. */}
-            <div data-testid="hero-activity-slot" />
+            {/* TOP-RIGHT — Phase 1 Sprint 3.b: News carousel (Section 3d).
+                Auto-rotating AI-classified news items beside the dial.
+                Visually subordinate (~35% width on lg+). */}
+            <div data-testid="hero-activity-slot" className="flex flex-col">
+              <NewsCarousel />
+            </div>
           </div>
         </div>
       </section>
@@ -437,7 +440,9 @@ const Home = () => {
 
       <PhaseOneDiscoveryRow />
 
-      <StickyTelegramCTA />
+      {/* Phase 1 Section 12g: StickyTelegramCTA removed from homepage.
+          DialSubscriptionCTA inline is the single primary subscription
+          mechanism. Sticky returns in dedicated pages (Phase 2) if needed. */}
     </div>
   );
 };

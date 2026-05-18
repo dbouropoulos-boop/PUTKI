@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -214,7 +214,38 @@ async def recalculate_dial(db) -> Dict[str, Any]:
 
     await db.dial_snapshots.insert_one(dict(snapshot))
 
-    # Retention: keep last 500 snapshots.
+    # Phase 1 (Sprint 4) — record STATE CHANGE events to a separate collection
+    # with a 365-day TTL. Powers the Mittari streak counter on the homepage
+    # and the /m/{state-slug}-{date} permalink share pages.
+    prev = await db.dial_snapshots.find_one(
+        {"computed_at": {"$lt": snapshot["computed_at"]}},
+        {"_id": 0, "state": 1},
+        sort=[("computed_at", -1)],
+    )
+    prev_key = (prev or {}).get("state", {}).get("key")
+    if prev_key != snapshot["state"]["key"]:
+        try:
+            await db.dial_state_events.create_index("captured_at")
+            await db.dial_state_events.create_index("state_key")
+            await db.dial_state_events.create_index(
+                "expires_at", expireAfterSeconds=0,
+            )
+        except Exception:
+            pass
+        await db.dial_state_events.insert_one({
+            "captured_at":      snapshot["computed_at"],
+            "expires_at":       datetime.now(timezone.utc) + timedelta(days=365),
+            "state_key":        snapshot["state"]["key"],
+            "state_label":      snapshot["state"].get("label"),
+            "state_color":      snapshot["state"].get("color"),
+            "composite_score":  snapshot.get("composite_score"),
+            "primary_driver":   snapshot.get("primary_driver"),
+            "previous_state":   prev_key,
+            "twitch_live":      (snapshot.get("sub_scores") or {}).get("twitch_live"),
+            "twitch_viewers":   (snapshot.get("sub_scores") or {}).get("twitch_viewers"),
+        })
+
+    # Retention: keep last 500 raw snapshots (the live UI only needs recent history).
     count = await db.dial_snapshots.count_documents({})
     if count > 500:
         old = await db.dial_snapshots.find({}, {"_id": 1}).sort("computed_at", -1).skip(500).to_list(length=count)
@@ -232,3 +263,73 @@ async def latest_snapshot(db) -> Optional[Dict[str, Any]]:
 async def dial_history(db, limit: int = 60) -> List[Dict[str, Any]]:
     cur = db.dial_snapshots.find({}, {"_id": 0, "sub_scores": 0}).sort("computed_at", -1).limit(max(1, min(200, limit)))
     return await cur.to_list(length=limit)
+
+
+async def state_streak(db, current_state_key: str) -> Dict[str, Any]:
+    """Phase 1 Sprint 4 — Mittari streak counter.
+
+    Returns `{kind, days, last_event_at, label_fi, label_en}` for the
+    homepage streak line under the dial.
+
+    Behaviour:
+      • If current state is the highest (KIIRASTULI / PERKELE), shows
+        "first time in N days" since the previous PERKELE event.
+      • Otherwise, shows "days since the last PERKELE event".
+
+    Empty/silent fallback when no events recorded yet.
+    """
+    last_perkele = await db.dial_state_events.find_one(
+        {"state_key": "KIIRASTULI"},
+        {"_id": 0, "captured_at": 1},
+        sort=[("captured_at", -1)],
+    )
+    if not last_perkele:
+        return {"kind": "no_history", "days": None, "last_event_at": None}
+
+    last_at = last_perkele["captured_at"]
+    if isinstance(last_at, str):
+        try:
+            last_at = datetime.fromisoformat(last_at.replace("Z", "+00:00"))
+        except ValueError:
+            return {"kind": "no_history", "days": None, "last_event_at": str(last_at)}
+    if last_at.tzinfo is None:
+        last_at = last_at.replace(tzinfo=timezone.utc)
+
+    days = max(0, (datetime.now(timezone.utc) - last_at).days)
+
+    if current_state_key == "KIIRASTULI":
+        return {
+            "kind":            "during_perkele",
+            "days":            days,
+            "last_event_at":   last_at.isoformat(),
+            "label_fi":        f"PERKELE — ensimmäinen kerta {days} päivään",
+            "label_en":        f"PERKELE — first time in {days} days",
+        }
+    return {
+        "kind":            "between",
+        "days":            days,
+        "last_event_at":   last_at.isoformat(),
+        "label_fi":        f"Viimeisin PERKELE: {days} päivää sitten",
+        "label_en":        f"Last PERKELE: {days} days ago",
+    }
+
+
+async def state_event_for_permalink(db, state_key: str, date_iso: str) -> Optional[Dict[str, Any]]:
+    """Phase 1 Sprint 4 — /m/{state-slug}-{date} permalink lookup.
+
+    Returns the dial state event for `state_key` on `date_iso` (YYYY-MM-DD,
+    UTC), or None if nothing recorded that day.
+    """
+    try:
+        start = datetime.fromisoformat(date_iso).replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    end = start + timedelta(days=1)
+    return await db.dial_state_events.find_one(
+        {
+            "state_key":   state_key,
+            "captured_at": {"$gte": start, "$lt": end},
+        },
+        {"_id": 0},
+        sort=[("captured_at", 1)],
+    )

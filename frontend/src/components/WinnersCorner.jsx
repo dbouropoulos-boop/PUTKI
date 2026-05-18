@@ -87,9 +87,8 @@ const WinnersCorner = () => {
             <span className="mono" style={{ fontSize: 12, letterSpacing: '0.12em', color: '#2c7a4b', fontWeight: 700, marginLeft: 8 }}>
               @ {Number(w.odds).toFixed(2)} ✓
             </span>
-            <span className="mono ml-2" style={{ fontSize: 12, letterSpacing: '0.12em', color: '#E8924A', fontWeight: 700 }}>
-              {t('winners.units', { u: Number(w.profit ?? 0).toFixed(2) })}
-            </span>
+            {/* Phase 1 Section 12d: bettor "+u" unit notation removed —
+                contradicts the "we are media, not a tipster" position. */}
           </div>
           <div className="mono mt-1.5" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
             {(w.sport || '').toUpperCase()} · {formatTimeAgo(w.settled_at, lang)}{idx > 0 ? ` · #${idx + 1}/${items.length}` : ''}

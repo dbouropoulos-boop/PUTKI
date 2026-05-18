@@ -87,6 +87,36 @@ FORBIDDEN_PHRASES = (
     "huhujen mukaan",
 )
 
+# Phase 1 brief Section 3e + Section 10 — per-article source citation enforcement.
+# Every editorial article (except `streamer_alert` auto-live template) must
+# contain BOTH (a) a citation phrase ("mukaan", "raportoi", "according to",
+# "reports that"), AND (b) a named outlet from NAMED_SOURCES — within the
+# first 400 chars of the body. Or, for sports recaps, a `data: <provider>`
+# attribution is accepted in lieu of the named outlet.
+SOURCE_CITATION_PHRASES_RE = re.compile(
+    r"(?i)\b(mukaan|raportoi|raportoivat|kertoo|kertovat|kirjoittaa|kirjoittavat|"
+    r"vahvistaa|vahvistavat|according\s+to|reports?\s+that|writes?\s+that|"
+    r"confirms?\s+that)\b"
+)
+NAMED_SOURCES = (
+    "yle", "yle uutiset", "yle urheilu", "yleisradio",
+    "helsingin sanomat", "hs.fi", " hs ",
+    "iltalehti", "ilta-sanomat", "is.fi",
+    "mtv uutiset", "mtv3",
+    "kauppalehti", "kl.fi",
+    "google news",
+    "ergast",
+    "optajoe", "opta",
+    "transfermarkt",
+)
+SOURCE_DATA_PREFIX_RE = re.compile(r"(?i)\bdata\s*:\s*(ergast|nhl\s*stats|football-data|opta|transfermarkt)\b")
+
+# Templates exempt from the source-citation validator. Per user sign-off:
+# the exemption applies ONLY to the auto-generated streamer-live alert
+# (it's a signal, not journalism). Any editorial article ABOUT a streamer
+# (drama, coverage, profile) remains bound.
+SOURCE_CITATION_EXEMPT_TEMPLATES = frozenset({"streamer_alert"})
+
 OFF_LIMITS_TERMS = (
     "peliongelma",
     "peliriippuvu",
@@ -172,6 +202,18 @@ def validate_content(template_id: str, content: Dict[str, Any]) -> Dict[str, Any
     for term in OFF_LIMITS_TERMS:
         if term in haystack:
             errors.append(f"off_limits_term:{term}")
+
+    # Phase 1 Section 3e + Section 10 — per-article source-citation enforcement.
+    # streamer_alert is the only exempt template (auto-live signal, not journalism).
+    if template_id not in SOURCE_CITATION_EXEMPT_TEMPLATES:
+        citation_window = (str(body)[:400] or "").lower()
+        has_phrase = bool(SOURCE_CITATION_PHRASES_RE.search(citation_window))
+        has_named_source = any(src in citation_window for src in NAMED_SOURCES)
+        has_data_attr = bool(SOURCE_DATA_PREFIX_RE.search(citation_window))
+        if not has_phrase:
+            errors.append("source_citation_missing:no_citation_phrase")
+        elif not (has_named_source or has_data_attr):
+            errors.append("source_citation_missing:no_named_source")
 
     return {"passed": not errors, "skipped": False, "errors": errors, "warnings": warnings}
 
