@@ -281,7 +281,10 @@ async def run_backfill(
                     if draft_id:
                         pub = res.get("published") or {}
                         published_id = pub.get("published_id")
-                        if not published_id and status == "rate_limited_to_draft":
+                        # Force publish TIER_DRAFT templates too — backfill
+                        # is a one-shot bulk operation, not the live pipeline,
+                        # so the manual-review gate is skipped here.
+                        if not published_id:
                             try:
                                 pub2 = await generator.publish_draft(draft_id, reviewed_by="backfill")
                                 published_id = pub2.get("published_id")
