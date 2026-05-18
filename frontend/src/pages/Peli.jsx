@@ -1,19 +1,7 @@
 /**
  * Peli — Conversion-optimized prize game page with live Smartico embed.
  *
- * Wires the official Smartico SDK (libs.smartico.ai/smartico.js) into the
- * page, calls `_smartico.initVisitorMode` then `showVisitorGame` with the
- * Weezy Rally template (3383), and redirects winners to weezybet.com on
- * success.
- *
- * Sections (per Dioni's spec):
- *   1. HERO        — eyebrow, headline, prize amounts, CTA scroll
- *   2. IFRAME      — Smartico Weezy Rally embed (#weezy-rally-frame)
- *   3. PRIZES      — 500€ / 250€ / 100€ structure cards
- *   4. HOW TO PLAY — 4 numbered steps
- *   5. LEADERBOARD — honest live count from API (no fabricated 247 players)
- *   6. ACTIVITY    — auto-published article excerpt strip (trust signal)
- *   7. TRUST       — MGA / 18+ / Pelaa vastuullisesti / Suomenkielinen
+ * Fully bilingual (FI/EN). All user-facing strings flow through t().
  */
 import React, { useEffect, useState } from 'react';
 import { Gift, Trophy, Shield, BadgeCheck, ArrowDown, Loader2 } from 'lucide-react';
@@ -30,26 +18,6 @@ const SMARTICO_BRAND    = '7f2db034';
 const SMARTICO_TEMPLATE = 3383;
 const SMARTICO_FRAME_ID = 'weezy-rally-frame';
 const SMARTICO_WIN_REDIRECT = 'https://weezybet.com/register?source=weezy-rally';
-
-const PRIZES = [
-  { rank: '1.', amount: '500 €', label: 'Päävoitto', color: '#E8924A' },
-  { rank: '2.', amount: '250 €', label: 'Hopea',     color: '#9C9FA3' },
-  { rank: '3.', amount: '100 €', label: 'Pronssi',   color: '#A56D3A' },
-];
-
-const STEPS = [
-  { n: 1, title: 'Aseta hälytys', body: 'Anna sähköposti ja saat ilmoituksen kierroksen alkaessa. Ei rekisteröitymistä, ei talletusta.' },
-  { n: 2, title: 'Aloita peli',   body: 'Klikkaa "Aloita peli" -painiketta yllä. Smartico-pelialusta latautuu kehykseen.' },
-  { n: 3, title: 'Kerää pisteitä', body: 'Pelin sisällä jokainen kierros kerää pisteitä, jotka näkyvät leaderboardilla reaaliajassa.' },
-  { n: 4, title: 'Voita palkinto', body: 'Kuukauden top-3 saa palkinnon sähköpostitse. Voittajat julkistetaan kuun ensimmäisenä päivänä.' },
-];
-
-const TRUST_BADGES = [
-  { icon: Shield,    label: 'MGA · LISENSOITU PELIALUSTA' },
-  { icon: BadgeCheck,label: '18+ · IKÄRAJA TARKASTETAAN' },
-  { icon: Trophy,    label: 'EI TALLETUSTA · ILMAISKILPAILU' },
-  { icon: Gift,      label: 'SUOMENKIELINEN TOIMITUS' },
-];
 
 /**
  * Loads the Smartico SDK exactly once per page lifetime and resolves with
@@ -80,15 +48,19 @@ const loadSmartico = (() => {
 })();
 
 const Peli = () => {
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const [activity, setActivity] = useState([]);
   const [leaderCount, setLeaderCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const [smarticoState, setSmarticoState] = useState('loading'); // 'loading' | 'ready' | 'failed'
 
   useDocumentMeta({
-    title: 'Peli — voita 500 € · PUTKI HQ',
-    description: 'PUTKI HQ:n kuukausittainen palkintopeli — top-3 voittaa 500 € / 250 € / 100 €. Ei talletusta.',
+    title: lang === 'en'
+      ? 'Play — win 500 € · PUTKI HQ'
+      : 'Peli — voita 500 € · PUTKI HQ',
+    description: lang === 'en'
+      ? 'PUTKI HQ\u2019s monthly prize game — top 3 win 500 € / 250 € / 100 €. No deposit.'
+      : 'PUTKI HQ:n kuukausittainen palkintopeli — top-3 voittaa 500 € / 250 € / 100 €. Ei talletusta.',
     canonical: `${BACKEND}/peli`,
   });
 
@@ -139,6 +111,26 @@ const Peli = () => {
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
+  const PRIZES = [
+    { rank: '1.', amount: '500 €', label: t('peli.prize_top'),    color: '#E8924A' },
+    { rank: '2.', amount: '250 €', label: t('peli.prize_silver'), color: '#9C9FA3' },
+    { rank: '3.', amount: '100 €', label: t('peli.prize_bronze'), color: '#A56D3A' },
+  ];
+
+  const STEPS = [
+    { n: 1, title: t('peli.step1_t'), body: t('peli.step1_b') },
+    { n: 2, title: t('peli.step2_t'), body: t('peli.step2_b') },
+    { n: 3, title: t('peli.step3_t'), body: t('peli.step3_b') },
+    { n: 4, title: t('peli.step4_t'), body: t('peli.step4_b') },
+  ];
+
+  const TRUST_BADGES = [
+    { icon: Shield,     label: t('peli.trust1') },
+    { icon: BadgeCheck, label: t('peli.trust2') },
+    { icon: Trophy,     label: t('peli.trust3') },
+    { icon: Gift,       label: t('peli.trust4') },
+  ];
+
   return (
     <div data-testid="peli-page">
       {/* HERO */}
@@ -146,18 +138,16 @@ const Peli = () => {
         <div className="max-w-3xl">
           <div className="eyebrow mb-4 inline-flex items-center gap-2">
             <Gift strokeWidth={1.5} size={13} />
-            PUTKI HQ · KUUKAUDEN KISA
+            {t('peli.eyebrow').toUpperCase()}
           </div>
           <h1 className="display text-4xl sm:text-6xl lg:text-7xl mb-5" style={{ lineHeight: 1.04 }}>
-            Voita 500 €
+            {t('peli.title')}
           </h1>
           <p className="display text-2xl sm:text-3xl mb-4" style={{ color: 'var(--muted)', lineHeight: 1.25 }}>
-            Ei talletusta. Ei panostusta. Top-3 voittaa.
+            {t('peli.subtitle')}
           </p>
           <p className="prose-mittari max-w-2xl mb-6">
-            Kuukausittainen palkintopeli. Pelaa selaimessa, kerää pisteitä,
-            kärkikolmikko jakaa palkinnot kuun lopussa. Smartico-pelialusta vastaa
-            pelitoiminnallisuudesta, PUTKI HQ -toimitus järjestää kisaa.
+            {t('peli.body')}
           </p>
           <button
             type="button"
@@ -171,7 +161,7 @@ const Peli = () => {
               border: 'none', cursor: 'pointer', borderRadius: 2,
             }}
           >
-            ALOITA PELI
+            {t('peli.cta_start').toUpperCase()}
             <ArrowDown strokeWidth={2} size={13} />
           </button>
         </div>
@@ -186,17 +176,13 @@ const Peli = () => {
                style={{ background: 'rgba(255,255,255,0.04)', color: '#F5F3EE',
                         fontSize: 10, letterSpacing: '0.22em', fontWeight: 700,
                         borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-            <span>SMARTICO · WEEZY RALLY</span>
+            <span>{t('peli.iframe_header').toUpperCase()}</span>
             <span style={{ opacity: 0.6 }}>
-              {smarticoState === 'ready'   && 'LIVE'}
-              {smarticoState === 'loading' && 'LADATAAN…'}
-              {smarticoState === 'failed'  && 'EI SAATAVILLA'}
+              {smarticoState === 'ready'   && t('common.live')}
+              {smarticoState === 'loading' && (lang === 'en' ? 'LOADING…' : 'LADATAAN…')}
+              {smarticoState === 'failed'  && (lang === 'en' ? 'UNAVAILABLE' : 'EI SAATAVILLA')}
             </span>
           </div>
-          {/* Smartico fills this iframe via showVisitorGame() — frame_id MUST
-              match the SDK config exactly. We keep it mounted at all times so
-              the SDK has a stable target; the overlay below covers it while
-              loading and on failure. */}
           <div className="relative" style={{ width: '100%', maxWidth: 800, margin: '0 auto' }}>
             <iframe
               id={SMARTICO_FRAME_ID}
@@ -217,14 +203,16 @@ const Peli = () => {
                 {smarticoState === 'loading' && (
                   <>
                     <Loader2 strokeWidth={1.5} size={24} className="animate-spin mb-5" style={{ opacity: 0.45 }} />
-                    LADATAAN PELIALUSTAA…
+                    {(lang === 'en' ? 'LOADING GAME PLATFORM…' : 'LADATAAN PELIALUSTAA…')}
                   </>
                 )}
                 {smarticoState === 'failed' && (
                   <>
-                    PELIALUSTA EI VASTAA<br />
+                    {(lang === 'en' ? 'GAME PLATFORM NOT RESPONDING' : 'PELIALUSTA EI VASTAA')}<br />
                     <span style={{ opacity: 0.5, fontSize: 10.5, letterSpacing: '0.18em' }}>
-                      · KOKEILE PÄIVITTÄÄ SIVU TAI TARKISTA VERKKOYHTEYS ·
+                      {(lang === 'en'
+                        ? '· TRY REFRESHING THE PAGE OR CHECK YOUR CONNECTION ·'
+                        : '· KOKEILE PÄIVITTÄÄ SIVU TAI TARKISTA VERKKOYHTEYS ·')}
                     </span>
                   </>
                 )}
@@ -237,7 +225,7 @@ const Peli = () => {
       {/* PRIZES */}
       <section className="py-12" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
-          <div className="eyebrow mb-6">KUUKAUDEN PALKINNOT · ILMAISKILPAILU</div>
+          <div className="eyebrow mb-6">{t('peli.prizes_title').toUpperCase()}</div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" data-testid="peli-prizes">
             {PRIZES.map((p) => (
               <article
@@ -247,7 +235,7 @@ const Peli = () => {
                 data-testid={`peli-prize-${p.rank.replace('.','')}`}
               >
                 <div className="mono mb-3" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-                  SIJA {p.rank}
+                  {t('peli.prize_place').toUpperCase()} {p.rank}
                 </div>
                 <div className="display mb-1" style={{ fontSize: 40, fontWeight: 800, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1 }}>
                   {p.amount}
@@ -259,7 +247,7 @@ const Peli = () => {
             ))}
           </div>
           <p className="mono mt-5" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
-            * PALKINTOSUMMAT VAHVISTETAAN KUUKAUSITTAIN · MAKSU SÄHKÖPOSTIIN VOITTAJALLE
+            {t('peli.prize_note').toUpperCase()}
           </p>
         </div>
       </section>
@@ -267,7 +255,7 @@ const Peli = () => {
       {/* HOW TO PLAY */}
       <section className="py-12" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide">
-          <div className="eyebrow mb-6">MITEN PELATAAN · NELJÄ ASKELTA</div>
+          <div className="eyebrow mb-6">{t('peli.howto_title').toUpperCase()}</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="peli-steps">
             {STEPS.map((s) => (
               <article key={s.n} className="panel p-6" style={{ background: 'var(--bg)' }}
@@ -296,17 +284,19 @@ const Peli = () => {
           <div className="flex items-baseline justify-between flex-wrap gap-2 mb-6">
             <div className="eyebrow inline-flex items-center gap-2">
               <Trophy strokeWidth={1.5} size={12} />
-              LEADERBOARD
+              {t('peli.leaderboard').toUpperCase()}
             </div>
             <div className="mono" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600 }}
                  data-testid="peli-leader-count">
-              {leaderCount != null ? `${leaderCount} PELAAJAA REKISTERÖITYNYT` : 'PÄIVITTYY KISAN ALKAESSA'}
+              {leaderCount != null
+                ? t('peli.leader_count', { n: leaderCount }).toUpperCase()
+                : t('peli.leader_empty_count').toUpperCase()}
             </div>
           </div>
           <div className="panel p-8 text-center mono" data-testid="peli-leaderboard-empty"
                style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 600,
                         background: 'var(--bg)' }}>
-            LEADERBOARD AKTIVOITUU KUN ENSIMMÄINEN KIERROS PELATAAN
+            {t('peli.leader_empty').toUpperCase()}
           </div>
         </div>
       </section>
@@ -315,20 +305,20 @@ const Peli = () => {
       <section className="py-12" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide">
           <div className="flex items-baseline justify-between flex-wrap gap-2 mb-6">
-            <div className="eyebrow">VIIMEISIMMÄT UUTISET</div>
+            <div className="eyebrow">{t('peli.activity').toUpperCase()}</div>
             <Link to="/uutiset" className="mono" data-testid="peli-uutiset-link"
                   style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, textDecoration: 'none' }}>
-              KATSO KAIKKI →
+              {t('peli.activity_all').toUpperCase()}
             </Link>
           </div>
           {loading ? (
             <div className="mono text-center" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.18em' }}>
-              LADATAAN…
+              {t('peli.activity_loading').toUpperCase()}
             </div>
           ) : activity.length === 0 ? (
             <div className="panel p-7 text-center mono"
                  style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.18em', background: 'var(--bg)' }}>
-              UUSIA ARTIKKELEITA TULOSSA · LAYER 2 -TYÖNTEKIJÄT KESKITTYVÄT JUURI NYT
+              {t('peli.activity_empty').toUpperCase()}
             </div>
           ) : (
             <ul className="space-y-3" data-testid="peli-activity-list">
@@ -352,7 +342,7 @@ const Peli = () => {
       {/* TRUST */}
       <section className="py-12" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
-          <div className="eyebrow mb-6">LUOTETTAVUUS</div>
+          <div className="eyebrow mb-6">{t('peli.trust').toUpperCase()}</div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3" data-testid="peli-trust">
             {TRUST_BADGES.map((b, i) => {
               const Icon = b.icon;
@@ -366,16 +356,18 @@ const Peli = () => {
                   <Icon strokeWidth={1.5} size={20} style={{ color: 'var(--ink)', flexShrink: 0 }} />
                   <span className="mono"
                         style={{ fontSize: 9.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600, lineHeight: 1.4 }}>
-                    {b.label}
+                    {b.label.toUpperCase()}
                   </span>
                 </div>
               );
             })}
           </div>
           <p className="mono mt-6" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600, lineHeight: 1.7 }}>
-            PELAA VASTUULLISESTI · OTA YHTEYS{' '}
-            <a href="https://peluuri.fi" target="_blank" rel="noopener noreferrer" className="underline">PELUURIIN</a>{' '}
-            JOS PELAAMINEN HUOLESTUTTAA
+            {t('peli.responsible').toUpperCase()}{' '}
+            <a href="https://peluuri.fi" target="_blank" rel="noopener noreferrer" className="underline">
+              {t('peli.responsible_to').toUpperCase()}
+            </a>{' '}
+            {t('peli.responsible_if').toUpperCase()}
           </p>
         </div>
       </section>

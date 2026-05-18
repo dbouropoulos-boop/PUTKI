@@ -21,7 +21,7 @@ export const translations = {
     'ticker.news_today':       'Uutisia tänään',
     'ticker.articles':         'Artikkeleita',
     'ticker.updated':          'Päivitetty',
-    'ticker.live':             'Live',
+    'ticker.live':             'livenä',
 
     // Streamer live grid
     'streamer_live.eyebrow':        'Mitä tapahtuu nyt · aseta hälytys',
@@ -102,11 +102,27 @@ export const translations = {
     'uutiset.ago_h':         '{n}h sitten',
     'uutiset.ago_d':         '{n}d sitten',
 
+    // Live activity feed
+    'feed.title':            'Live Activity Feed',
+    'feed.lede':             'Layer 2 -signaaleista syntyneitä artikkeleita. Jokainen rivi on automaattisesti tuotettu, mutta toimitus valvoo TIER 2 -sisällöt erikseen.',
+    'feed.empty':            'Ei vielä artikkeleita — pollerit kärsivällistyttävät',
+    'feed.cat_sports':       'Urheilu',
+    'feed.cat_stream':       'Stream',
+    'feed.cat_rules':        'Säännöt',
+    'feed.cat_casinos':      'Kasinot',
+
     // Trust strip (homepage)
     'trust.responsible':     'Pelaa vastuullisesti · 18+',
     'trust.editorial':       'Toimituksellinen · ei mainontaa',
     'trust.open_method':     'Avoin menetelmä · /menetelmä',
     'trust.layer2':          'Layer 2 · reaaliaikainen data',
+
+    // Persistent capture sidebar
+    'capture.eyebrow':       'Aseta hälytys',
+    'capture.headline':      'Striimari liveen — sinä ekana',
+    'capture.sub':           'Mittarin signaali heti kun jotain tapahtuu.',
+    'capture.mobile_title':  'Saa ilmoitus livenä',
+    'capture.success':       'Olet listalla.',
 
     // Footer + admin
     'footer.admin_gear':     'Toimituksen takatila',
@@ -274,6 +290,7 @@ export const translations = {
     'time.month_day':        'KUUKAUDEN {day}. PÄIVÄ',
 
     // Home
+    'home.see_all_news':     'Katso kaikki uutiset →',
     'home.update_label':     'PÄIVÄN HETKIÄ',
     'home.moments_title':    'PUTKI HQ poimi nämä',
     'home.ranking_eyebrow':  'PUTKI HQ · VERTAILU',
@@ -368,8 +385,6 @@ export const translations = {
     'streamer.personal_mittari': 'Henkilökohtainen Mittari-tila',
 
     // Methodology
-    'method.eyebrow':        'Toimituksellinen menetelmä',
-    'method.title':          'Miten Mittari-pisteet syntyvät',
     'method.lede':           'Mittari-pisteet (0–100) muodostuvat kahdesta osasta: kovasta datasta ja toimituksellisesta painotuksesta. Tämä sivu on auki kaikille. Jos joku väittää meidän mainostaneen sijoituksia, lue tämä ja katso uudelleen.',
     'method.toc':            'Sisältö',
 
@@ -426,8 +441,32 @@ export const translations = {
 
     // Weekly card
     'weekly.eyebrow':        'PUTKI HQ · viikon kortti · Vk 21 · {date}',
+    'weekly.eyebrow_now':    'PUTKI HQ · viikon kortti · {date}',
     'weekly.title':          '5 fixturea, 5 takea',
     'weekly.lede':           'PUTKI HQ -toimitus vetää viikon kortin. Veikkaa lopputuloksia ja kerää pisteitä — kuukauden voittaja saa 200 € palkinnon. Ei talletusta, ei panostusta.',
+    'weekly.lede_real':      'PUTKI HQ -toimitus vetää viikon kortin viiden vahvimman vetokohteen pohjalta — todelliset kertoimet, todelliset kirjanpitäjät, ei sepitettyä dataa. Veikkaa lopputuloksia. Kuukauden voittajan palkinto julkistetaan käynnistyessä.',
+    'weekly.loading':        'Ladataan viikon korttia…',
+    'weekly.error':          'Virhe',
+    'weekly.empty':          'Ei vahvoja suosikkeja tänään · tarkista huomenna',
+    'weekly.odds_label':     'Kerroin',
+    'weekly.winner':         'Voittaja',
+    'weekly.prob_short':     '% TODENN.',
+    'weekly.pick_outcome':   'Veikkaa lopputulos',
+    'weekly.saved':          'Veikkaukset tallennettu laitteeseen',
+    'weekly.saving':         'Tallennetaan…',
+    'weekly.leader_coming':  'Leaderboard · tulossa',
+    'weekly.points_prizes':  'Pisteet & palkinnot',
+    'weekly.points_blurb':   'Veikkauspisteiden seuranta ja kuukausittainen palkinto avautuvat ensimmäisten julkaistujen tulosten jälkeen. Tallennetut veikkaukset siirtyvät tilillesi sähköpostiosoitteen kautta — ei rekisteröitymistä, ei panostuksia.',
+    'weekly.leader_empty':   'Leaderboard aktivoituu ensimmäisten pisteiden jälkeen',
+    'weekly.take_template':  '{team} {strength} {count} kirjanpitäjän mediaanikertoimella {odds} — {side} {pct} % implisiittisellä todennäköisyydellä.',
+    'weekly.side_home':      'kotijoukkue',
+    'weekly.side_away':      'vierasjoukkue',
+    'weekly.side_draw':      'tasapeli',
+    'weekly.strength_iron':  'rauta-vahva suosikki',
+    'weekly.strength_clear': 'selkeä suosikki',
+    'weekly.strength_slight':'lievä suosikki',
+    'weekly.strength_even':  'tasaväkinen kohtaaminen',
+    'weekly.byline':         '— PUTKI HQ -toimitus',
     'weekly.odds':           'Kerroin',
     'weekly.bet':            'Veikkaa',
     'weekly.submit':         'Lähetä veikkaukset →',
@@ -553,11 +592,27 @@ export const translations = {
     'uutiset.ago_h':         '{n}h ago',
     'uutiset.ago_d':         '{n}d ago',
 
+    // Live activity feed
+    'feed.title':            'Live Activity Feed',
+    'feed.lede':             'Articles generated from Layer 2 signals. Every row is auto-produced; the editorial team supervises TIER 2 content separately.',
+    'feed.empty':            'No articles yet — pollers are warming up',
+    'feed.cat_sports':       'Sports',
+    'feed.cat_stream':       'Stream',
+    'feed.cat_rules':        'Rules',
+    'feed.cat_casinos':      'Casinos',
+
     // Trust strip
     'trust.responsible':     'Play responsibly · 18+',
     'trust.editorial':       'Editorial · no advertising',
     'trust.open_method':     'Open method · /menetelma',
     'trust.layer2':          'Layer 2 · real-time data',
+
+    // Persistent capture sidebar
+    'capture.eyebrow':       'Set alert',
+    'capture.headline':      'Streamer goes live — you know first',
+    'capture.sub':           'The signal hits the moment something happens.',
+    'capture.mobile_title':  'Get notified live',
+    'capture.success':       'You\u2019re in.',
 
     // Footer admin
     'footer.admin_gear':     'Editorial back office',
@@ -721,6 +776,7 @@ export const translations = {
     'time.night':            'NIGHT',
     'time.month_day':        'DAY {day} OF THE MONTH',
 
+    'home.see_all_news':     'See all news →',
     'home.update_label':     'TODAY\u2019S MOMENTS',
     'home.moments_title':    'PUTKI HQ\u2019s picks',
     'home.ranking_eyebrow':  'PUTKI HQ COMPARISON',
@@ -811,8 +867,8 @@ export const translations = {
     'streamer.related_title': 'Others worth following',
     'streamer.personal_mittari': 'Personal Mittari state',
 
-    'method.eyebrow':        'Editorial methodology',
-    'method.title':          'How Mittari scores are made',
+    'method.eyebrow':        'Editorial method',
+    'method.title':          'How Mittari scores are built',
     'method.lede':           'Mittari scores (0–100) come from two parts: hard data and editorial weighting. This page is open to everyone. If anyone claims we advertised rankings, read this and look again.',
     'method.toc':            'Contents',
 
@@ -865,8 +921,32 @@ export const translations = {
     'game.top10_title':      'This week\u2019s leaders',
 
     'weekly.eyebrow':        'PUTKI HQ weekly card · Wk 21 · {date}',
+    'weekly.eyebrow_now':    'PUTKI HQ · weekly card · {date}',
     'weekly.title':          '5 fixtures, 5 takes',
     'weekly.lede':           'PUTKI HQ editorial runs the weekly card. Pick outcomes and earn points — the month\u2019s winner takes a €200 prize. No deposit, no stake.',
+    'weekly.lede_real':      'PUTKI HQ editorial runs the weekly card on the five strongest plays — real odds, real bookmakers, no fabricated data. Pick outcomes. The monthly winner\u2019s prize will be announced at launch.',
+    'weekly.loading':        'Loading the weekly card…',
+    'weekly.error':          'Error',
+    'weekly.empty':          'No strong favourites today · check back tomorrow',
+    'weekly.odds_label':     'Odds',
+    'weekly.winner':         'Winner',
+    'weekly.prob_short':     '% PROB.',
+    'weekly.pick_outcome':   'Pick the outcome',
+    'weekly.saved':          'Picks saved to this device',
+    'weekly.saving':         'Saving…',
+    'weekly.leader_coming':  'Leaderboard · coming',
+    'weekly.points_prizes':  'Points & prizes',
+    'weekly.points_blurb':   'Points tracking and the monthly prize unlock once the first results are published. Saved picks attach to your account via your email — no signup, no stakes.',
+    'weekly.leader_empty':   'Leaderboard activates once the first points settle',
+    'weekly.take_template':  '{team} {strength} at the median odds of {odds} from {count} bookmakers — {side} at {pct} % implied probability.',
+    'weekly.side_home':      'home',
+    'weekly.side_away':      'away',
+    'weekly.side_draw':      'draw',
+    'weekly.strength_iron':  'iron-strong favourite',
+    'weekly.strength_clear': 'clear favourite',
+    'weekly.strength_slight':'slight favourite',
+    'weekly.strength_even':  'even matchup',
+    'weekly.byline':         '— PUTKI HQ editorial',
     'weekly.odds':           'Odds',
     'weekly.bet':            'Pick',
     'weekly.submit':         'Submit picks →',

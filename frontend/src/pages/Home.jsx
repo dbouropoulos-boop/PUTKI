@@ -375,7 +375,7 @@ const Home = () => {
             className="mono inline-flex items-center gap-2"
             style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, textDecoration: 'none' }}
           >
-            KATSO KAIKKI UUTISET →
+            {t('home.see_all_news').toUpperCase()}
           </Link>
         </div>
       </div>

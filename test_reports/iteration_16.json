@@ -1,0 +1,46 @@
+{
+  "summary": "Frontend-only FI/EN translation audit verified across 8 routes by toggling localStorage 'mittari-lang' and by header EN/FI button. All four claimed-fix pages (/peli, /tietoa-meista, /menetelma, /viikon-kortti) now flip cleanly. Headlines confirmed: 'Voita 500 €' <-> 'Win 500 €', 'Suomen rehellisin...' <-> 'Finland's most honest...', 'Mittari-pisteet syntyvät' <-> 'How Mittari scores are built', '5 fixturea, 5 takea' <-> '5 fixtures, 5 takes'. Footer page list, LiveActivityFeed (Showing/All caught up/reads), PersistentCapture sidebar, and LiveDataTicker live suffix all translate. FI mode scan found 0 English UI leaks on any route. Only one leftover Finnish UI string surfaced in EN mode that is *not* listed in the original fix scope: the DialCockpit 'LAST UPDATE · Xs sitten' ticker on the homepage hero. All other 'katsojaa'/'live -' tokens picked up by the DOM grep originate from backend-generated auto-article titles (not part of frontend translation work).",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "DialCockpit (homepage hero)",
+        "issue": "Hardcoded Finnish relative-time suffix bleeds through in EN mode. Renders 'LAST UPDATE · 27s sitten' / '4s sitten' / 'Xmin sitten' / 'Xh sitten' even when language is EN. Local fmtAgo is hardcoded FI and does not consume useLang() / formatTimeAgo helper. Lines 168-178 of /app/frontend/src/components/DialCockpit.jsx. Element selector: [data-testid=\"cockpit-last-update\"]. Recommended fix: import { useLang } + { formatTimeAgo } and replace the local IIFE with formatTimeAgo(cockpit.computed_at, lang). Also localize the fallback '— SITTEN' string and the 'LAST UPDATE' label if a fully bilingual cockpit is desired.",
+        "selector": "[data-testid=\"cockpit-last-update\"]",
+        "priority": "MEDIUM"
+      },
+      {
+        "component": "Layer2StatusPanel.jsx (lines 21-24)",
+        "issue": "Also uses a local hardcoded FI 'sitten' formatter for relative timestamps. Not currently visible on the 8 audited routes but will leak on the back-office / status surfaces. Should be migrated to formatTimeAgo(when, lang).",
+        "selector": "n/a",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Homepage Live Activity Feed + StreamerLiveGrid in EN mode",
+        "issues": [
+          "Backend-generated article titles such as 'E2EFIXT_5775FC97 live – 9 001 katsojaa', 'Florida kaatoi Tampan tiukassa Floridan derbyssa', 'Antonelli voitti Miamin GP:n McLarenien edellä' remain in Finnish under the English UI. This is backend article content (Layer 2 + Claude Opus pipeline writes in FI) and is outside the frontend-only translation scope. Flagging for awareness; needs backend follow-up or a per-article translation column."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "MEDIUM: Wire DialCockpit homepage 'LAST UPDATE · Xs sitten' ticker through useLang() + formatTimeAgo so it flips to '... ago' in EN. File: /app/frontend/src/components/DialCockpit.jsx lines 168-189.",
+    "LOW: Same migration for Layer2StatusPanel.jsx lines 21-24 to keep all relative-time strings going through the central /app/frontend/src/utils/formatTime.js helper.",
+    "Out-of-scope follow-up (backend): auto-generated article titles render Finnish-only words ('katsojaa', verbs in Finnish, etc.) under EN UI. Decide whether to add EN article generation, or hide auto-FI titles when lang=='en'."
+  ],
+  "critical_code_review_comments": [
+    "Two components still implement their own local 'sitten' relative-time formatter (DialCockpit.jsx, Layer2StatusPanel.jsx). This defeats the purpose of the new /app/frontend/src/utils/formatTime.js single-source-of-truth — recommend grepping the repo for /sitten\\b/ in components/ and migrating every match to formatTimeAgo(when, lang).",
+    "translations.js has a duplicate 'method.eyebrow' / 'method.title' key block (lines 210-211 vs 700-701 and 870-871). The latter overrides the former silently which is fine in JS object literals but is fragile; consider de-duplicating keys to avoid future merge mistakes."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "n/a", "frontend": "95%" },
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Translation audit covered the 8 routes from the spec. FI->EN passes 0 Finnish leaks on /tietoa-meista, /menetelma, /viikon-kortti, /striimaajat, /uutiset; passes for /peli except backend-produced article titles. Homepage / has one frontend leak: DialCockpit '... sitten' ticker. EN->FI passes 0 English leaks on all 7 sampled routes. Language toggle (header EN/FI button) verified to flip localStorage and re-render. Console produces only an unrelated third-party 403 (likely smartico/favicon).",
+  "rca of the issue": "Root cause of remaining 'sitten' leak: DialCockpit.jsx defines its own inline relative-time formatter with hardcoded FI suffixes ('s sitten', 'min sitten', 'h sitten') instead of importing the new shared formatTimeAgo(when, lang) helper from /app/frontend/src/utils/formatTime.js. Reproduction: localStorage.setItem('mittari-lang','en'); reload /; observe top of dial cockpit. Mitigation: 1 line import + 1 line replacement in DialCockpit.jsx lines 168-178 + read lang from useLang()."
+}

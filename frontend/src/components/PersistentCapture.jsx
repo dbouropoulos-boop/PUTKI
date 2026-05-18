@@ -19,7 +19,7 @@ const useIsDesktop = () => {
 };
 
 const CaptureForm = ({ compact = false }) => {
-  const { t, lang } = useLang();
+  const { t } = useLang();
   const [email, setEmail] = useState('');
   const [done, setDone] = useState(false);
 
@@ -32,7 +32,7 @@ const CaptureForm = ({ compact = false }) => {
   if (done) {
     return (
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--ink)', fontWeight: 600 }}>
-        ✓ {lang === 'en' ? 'YOU\u2019RE IN.' : 'OLET LISTALLA.'}
+        ✓ {t('capture.success').toUpperCase()}
       </div>
     );
   }
@@ -63,7 +63,7 @@ const CaptureForm = ({ compact = false }) => {
 };
 
 export const PersistentCapture = () => {
-  const { lang, t } = useLang();
+  const { t } = useLang();
   const location = useLocation();
   const isDesktop = useIsDesktop();
   const [expanded, setExpanded] = useState(false);
@@ -85,12 +85,12 @@ export const PersistentCapture = () => {
         }}
         data-testid="persistent-capture-desktop"
       >
-        <div className="eyebrow mb-2">ASETA HÄLYTYS</div>
+        <div className="eyebrow mb-2">{t('capture.eyebrow').toUpperCase()}</div>
         <h3 className="display text-base mb-2" style={{ color: 'var(--ink)', lineHeight: 1.2 }}>
-          Striimari liveen — sinä ekana
+          {t('capture.headline')}
         </h3>
         <p className="font-serif mb-4" style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
-          Mittarin signaali heti kun jotain tapahtuu.
+          {t('capture.sub')}
         </p>
         <CaptureForm compact />
       </aside>
@@ -124,7 +124,7 @@ export const PersistentCapture = () => {
         <div className="px-5 py-4">
           <div className="flex items-start justify-between mb-3">
             <h4 className="display text-base" style={{ color: 'var(--ink)' }}>
-              Saa ilmoitus livenä
+              {t('capture.mobile_title')}
             </h4>
             <button onClick={() => setExpanded(false)} aria-label="Close" style={{ color: 'var(--muted)' }} data-testid="persistent-capture-collapse">
               <X strokeWidth={1.5} size={18} />

@@ -35,12 +35,12 @@ export const Footer = () => {
           <div>
             <div className="eyebrow mb-3">{t('footer.col_pages')}</div>
             <ul className="space-y-2 mono text-[12px]" style={{ letterSpacing: '0.08em' }}>
-              <li><Link to="/uutiset" style={{ color: 'var(--ink)' }} className="hover:opacity-70">UUTISET</Link></li>
-              <li><Link to="/striimaajat" style={{ color: 'var(--ink)' }} className="hover:opacity-70">STRIIMAAJAT</Link></li>
-              <li><Link to="/viikon-kortti" style={{ color: 'var(--ink)' }} className="hover:opacity-70">VIIKON KORTTI</Link></li>
-              <li><Link to="/peli" style={{ color: 'var(--ink)' }} className="hover:opacity-70">PELI · VOITA 500 €</Link></li>
-              <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70">TIETOA</Link></li>
-              <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">MENETELMÄ</Link></li>
+              <li><Link to="/uutiset" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.news').toUpperCase()}</Link></li>
+              <li><Link to="/striimaajat" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.streamers').toUpperCase()}</Link></li>
+              <li><Link to="/viikon-kortti" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.weekly').toUpperCase()}</Link></li>
+              <li><Link to="/peli" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.game_prize').toUpperCase()}</Link></li>
+              <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.about').toUpperCase()}</Link></li>
+              <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.methodology').toUpperCase()}</Link></li>
             </ul>
           </div>
           <div>
@@ -68,7 +68,7 @@ export const Footer = () => {
             {t('footer.warning')} · {t('common.responsible')}
             <Link
               to="/back-office"
-              aria-label="Toimituksen takatila"
+              aria-label={t('footer.admin_gear')}
               data-testid="footer-admin-gear"
               className="hover:opacity-100 transition-opacity"
               style={{ color: 'var(--muted)', opacity: 0.35, display: 'inline-flex' }}

@@ -1,116 +1,17 @@
 /**
  * Methodology (/menetelma) — boxed, scannable layout per Dioni's spec.
- * Replaces the previous wall-of-text rendering with 7 self-contained cards.
+ * Fully bilingual via t(). 7 self-contained cards.
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Compass, Database, Hand, Slash, BarChart3, Clock, FileCheck } from 'lucide-react';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import { EditorialFooter } from '../components/EditorialFooter';
+import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-const SECTIONS = [
-  {
-    id: 'mista',
-    icon: Compass,
-    title: 'Mistä Mittari-pisteet kertovat',
-    body: (
-      <>
-        <p>
-          Mittari-pisteet (0–100) kertovat yhdessä numerossa, kuinka hyvä operaattori on
-          suomalaiselle pelaajalle <em>juuri tänään</em>. Pisteet päivittyvät viikoittain
-          ja reagoivat siihen, mitä todella tapahtuu — maksunopeudet, valitukset, lisenssi.
-        </p>
-        <p>
-          Pisteet eivät kerro voitatko sinä. Ne kertovat, kuinka todennäköisesti
-          operaattori käyttäytyy reilusti kun jotain menee pieleen.
-        </p>
-      </>
-    ),
-  },
-  {
-    id: 'objektiivi',
-    icon: Database,
-    title: 'Objektiiviset tekijät · 70 %',
-    body: (
-      <ul className="list-disc pl-5 space-y-1.5">
-        <li><strong>Lisenssi ja turva · 20 %</strong></li>
-        <li><strong>Maksunopeus · 18 %</strong> — 50 testitalletuksen mediaani</li>
-        <li><strong>Pelivalikoima · 12 %</strong></li>
-        <li><strong>Suomenkieliset ominaisuudet · 10 %</strong></li>
-        <li><strong>Asiakaspalvelun reagointi · 5 %</strong></li>
-        <li><strong>Bonusten rehellisyys · 5 %</strong></li>
-      </ul>
-    ),
-  },
-  {
-    id: 'kaupallinen',
-    icon: Hand,
-    title: 'Toimituksellinen painotus · 30 %',
-    body: (
-      <p>
-        Yhteisön signaalit, valitusten käsittely, toimituksen näkemys siitä, miten
-        operaattori käyttäytyy poikkeuksissa. Kaupallinen yhteistyö <em>ei nosta</em>{' '}
-        pisteitä. Affiliaatti-suhteet listataan sivulla{' '}
-        <Link to="/affiliaatti" className="underline">affiliaatti</Link>.
-      </p>
-    ),
-  },
-  {
-    id: 'ei-vaikuta',
-    icon: Slash,
-    title: 'Mikä EI vaikuta pisteisiin',
-    body: (
-      <ul className="list-disc pl-5 space-y-1.5">
-        <li>Affiliaatti-CPA · paljonko meille maksetaan asiakkaasta</li>
-        <li>Mainossponsorit · ei mainoksia, ei sponsoreita</li>
-        <li>Striimaajien suhteet operaattoriin</li>
-        <li>Tervetuliaisbonuksen koko</li>
-      </ul>
-    ),
-  },
-  {
-    id: 'floor',
-    icon: BarChart3,
-    title: 'Floor · minimivaatimukset',
-    body: (
-      <ul className="list-disc pl-5 space-y-1.5">
-        <li>Voimassa oleva eurooppalainen lisenssi</li>
-        <li>Maksunopeus mediaani &lt; 48 h</li>
-        <li>Suomenkielinen asiakaspalvelu arkisin 09–21</li>
-        <li>Bonusehdot avoimesti suomeksi</li>
-        <li>Vähintään 60 / 100 — alemmat eivät listalla</li>
-      </ul>
-    ),
-  },
-  {
-    id: 'paivitykset',
-    icon: Clock,
-    title: 'Päivitysten taajuus',
-    body: (
-      <p>
-        Datapohjaiset tekijät päivitetään <strong>viikoittain</strong>. Toimitukselliset
-        arviot <strong>kuukausittain</strong>. Merkittävät muutokset (lisenssi katoaa,
-        valitukset kasvavat) → päivitämme heti.
-      </p>
-    ),
-  },
-  {
-    id: 'affiliaatti',
-    icon: FileCheck,
-    title: 'Affiliaatti-suhteet',
-    body: (
-      <p>
-        Kaupalliset suhteet on rajattu maksimissaan <strong>+5 / 100</strong> ja
-        ilmoitetaan jokaisen operaattorin arvio-sivulla. Vuonna 2027 (Suomen oma lisenssi)
-        päivitämme suhteet kokonaan ja kerromme uudet etukäteen.
-      </p>
-    ),
-  },
-];
-
-const SectionCard = ({ section, idx }) => {
+const SectionCard = ({ section, idx, t }) => {
   const Icon = section.icon;
   return (
     <article
@@ -132,7 +33,7 @@ const SectionCard = ({ section, idx }) => {
         </div>
         <div>
           <div className="mono mb-1" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-            {String(idx + 1).padStart(2,'0')} · MENETELMÄ
+            {String(idx + 1).padStart(2,'0')} · {t('method.section_n').toUpperCase()}
           </div>
           <h2 className="display" style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.15 }}>
             {section.title}
@@ -148,33 +49,117 @@ const SectionCard = ({ section, idx }) => {
 };
 
 const Methodology = () => {
+  const { lang, t } = useLang();
+
   useDocumentMeta({
-    title: 'Menetelmä — PUTKI HQ',
-    description: 'Miten Mittari-pisteet syntyvät — objektiiviset tekijät 70 %, toimituksellinen painotus 30 %, ja mikä ei vaikuta.',
+    title: lang === 'en' ? 'Method — PUTKI HQ' : 'Menetelmä — PUTKI HQ',
+    description: lang === 'en'
+      ? 'How Mittari scores are built — objective factors 70 %, editorial weighting 30 %, and what does not count.'
+      : 'Miten Mittari-pisteet syntyvät — objektiiviset tekijät 70 %, toimituksellinen painotus 30 %, ja mikä ei vaikuta.',
     canonical: `${BACKEND}/menetelma`,
   });
+
+  const SECTIONS = [
+    {
+      id: 'mista',
+      icon: Compass,
+      title: t('method.s1_t'),
+      body: (
+        <>
+          <p>{t('method.s1_p1')}</p>
+          <p>{t('method.s1_p2')}</p>
+        </>
+      ),
+    },
+    {
+      id: 'objektiivi',
+      icon: Database,
+      title: t('method.s2_t'),
+      body: (
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li><strong>{t('method.s2_l1')}</strong></li>
+          <li><strong>{t('method.s2_l2')}</strong></li>
+          <li><strong>{t('method.s2_l3')}</strong></li>
+          <li><strong>{t('method.s2_l4')}</strong></li>
+          <li><strong>{t('method.s2_l5')}</strong></li>
+          <li><strong>{t('method.s2_l6')}</strong></li>
+        </ul>
+      ),
+    },
+    {
+      id: 'kaupallinen',
+      icon: Hand,
+      title: t('method.s3_t'),
+      body: (
+        <p>
+          {t('method.s3_b')}{' '}
+          <Link to="/affiliaatti" className="underline">
+            {lang === 'en' ? 'affiliate' : 'affiliaatti'}
+          </Link>.
+        </p>
+      ),
+    },
+    {
+      id: 'ei-vaikuta',
+      icon: Slash,
+      title: t('method.s4_t'),
+      body: (
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li>{t('method.s4_l1')}</li>
+          <li>{t('method.s4_l2')}</li>
+          <li>{t('method.s4_l3')}</li>
+          <li>{t('method.s4_l4')}</li>
+        </ul>
+      ),
+    },
+    {
+      id: 'floor',
+      icon: BarChart3,
+      title: t('method.s5_t'),
+      body: (
+        <ul className="list-disc pl-5 space-y-1.5">
+          <li>{t('method.s5_l1')}</li>
+          <li>{t('method.s5_l2')}</li>
+          <li>{t('method.s5_l3')}</li>
+          <li>{t('method.s5_l4')}</li>
+          <li>{t('method.s5_l5')}</li>
+        </ul>
+      ),
+    },
+    {
+      id: 'paivitykset',
+      icon: Clock,
+      title: t('method.s6_t'),
+      body: <p>{t('method.s6_b')}</p>,
+    },
+    {
+      id: 'affiliaatti',
+      icon: FileCheck,
+      title: t('method.s7_t'),
+      body: <p>{t('method.s7_b')}</p>,
+    },
+  ];
 
   return (
     <div data-testid="methodology-page">
       <section className="container-wide pt-12 sm:pt-20 pb-10 sm:pb-12">
         <div className="max-w-3xl">
-          <div className="eyebrow mb-4">TOIMITUKSELLINEN MENETELMÄ</div>
-          <h1 className="display text-4xl sm:text-6xl mb-6">Miten Mittari-pisteet syntyvät</h1>
+          <div className="eyebrow mb-4">{t('method.eyebrow').toUpperCase()}</div>
+          <h1 className="display text-4xl sm:text-6xl mb-6">{t('method.title')}</h1>
           <p className="mono mb-5"
              style={{ fontSize: 13, letterSpacing: '0.12em', color: '#E8924A', fontWeight: 700 }}>
-            MITTARI EI MITTAA RAHAA. MITTARI MITTAA HUOMIOTA.
+            {t('method.tagline').toUpperCase()}
           </p>
           <p className="prose-mittari max-w-2xl">
-            Mittari-pisteet (0–100) muodostuvat <strong>objektiivisesta datasta (70 %)</strong> ja{' '}
-            <strong>toimituksellisesta painotuksesta (30 %)</strong>. Tämä sivu on auki
-            kaikille. Jos joku väittää meidän mainostaneen sijoituksia, lue tämä ja katso uudelleen.
+            {t('method.lead_1')} <strong>{t('method.lead_obj')}</strong> {t('method.lead_2')}{' '}
+            <strong>{t('method.lead_edit')}</strong>{t('method.lead_3')}
           </p>
         </div>
       </section>
 
       <section className="container-wide pb-20 sm:pb-32">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
-          {SECTIONS.map((s, i) => <SectionCard key={s.id} section={s} idx={i} />)}
+          {SECTIONS.map((s, i) => <SectionCard key={s.id} section={s} idx={i} t={t} />)}
         </div>
         <div className="max-w-3xl mt-8">
           <EditorialFooter />
