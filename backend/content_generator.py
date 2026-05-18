@@ -571,15 +571,24 @@ class ContentGenerator:
         # populate stream_signals with synthetic TESTAPI_<hex> usernames; if
         # the content scheduler picks one up it must NOT make it to the public
         # /api/content/published feed.
+        #
+        # The guard also catches any "*FIXT_<hex>" username pattern (e.g.
+        # E2EFIXT_5775FC97) that newer testing agents have introduced.
+        import re as _re
         _slug_or_head = f"{draft.get('url_slug','')} {draft.get('headline','')}".lower()
-        if "testapi" in _slug_or_head:
-            logger.info("publish_draft: blocking TESTAPI leak draft_id=%s slug=%s",
+        _looks_synthetic = (
+            "testapi" in _slug_or_head
+            or "e2efixt" in _slug_or_head
+            or bool(_re.search(r"[a-z]{2,}fixt_[0-9a-f]{6,}", _slug_or_head))
+        )
+        if _looks_synthetic:
+            logger.info("publish_draft: blocking synthetic-fixture leak draft_id=%s slug=%s",
                         draft_id, draft.get("url_slug"))
             await self.db.content_drafts.update_one(
                 {"id": draft["id"]},
-                {"$set": {"status": "rejected", "rejection_reason": "testapi_fixture_leak"}},
+                {"$set": {"status": "rejected", "rejection_reason": "synthetic_fixture_leak"}},
             )
-            return {"status": "rejected", "reason": "testapi_fixture_leak"}
+            return {"status": "rejected", "reason": "synthetic_fixture_leak"}
 
         # Phase 4 Pre-Launch Polish: social meta carries forward from draft.
         # Nano Banana OG image is generated in the BACKGROUND (after insert)
@@ -800,9 +809,17 @@ class ContentGenerator:
             title = sig.get("title") or ""
             external = sig.get("external_link") or f"https://twitch.tv/{login}"
             expires = (_now() + timedelta(hours=6)).isoformat()
+            # Friendly, scannable Finnish headline. Examples:
+            #   "Jarttu84 aloitti striimin · 1 240 katsojaa · Slots"
+            #   "Roshtein aloitti striimin · 12 300 katsojaa"
+            viewer_str = f"{viewers:,}".replace(",", " ")
+            parts = [f"{name} aloitti striimin", f"{viewer_str} katsojaa"]
+            if game:
+                parts.append(game)
+            headline = " · ".join(parts)
             return {
-                "headline": f"{name} live – {viewers:,} katsojaa".replace(",", " "),
-                "subhead": (f"Pelaa: {game}" if game else title)[:300],
+                "headline": headline,
+                "subhead": (title or (f"Pelaa: {game}" if game else ""))[:300],
                 "body": None,
                 "external_link": external,
                 "tags": [_slugify(login), "twitch", "live"],
@@ -1018,9 +1035,13 @@ async def list_published(db, *, category: Optional[str] = None, limit: int = 50)
         q["category"] = category
     # Only docs created by the new generator (have draft_id back-link)
     q["draft_id"] = {"$exists": True}
-    # Defensive — never surface dev TESTAPI fixtures even if one slips
-    # through the publisher-side guard.
-    q["url_slug"] = {"$not": {"$regex": "^testapi", "$options": "i"}}
+    # Defensive — never surface synthetic dev fixtures even if one slips
+    # through the publisher-side guard. Covers TESTAPI_*, E2EFIXT_*, and
+    # any "*FIXT_<hex>" username pattern used by automated test runs.
+    q["$and"] = [
+        {"url_slug":  {"$not": {"$regex": r"testapi|e2efixt|[a-z]{2,}fixt_[0-9a-f]{6,}", "$options": "i"}}},
+        {"headline":  {"$not": {"$regex": r"testapi|e2efixt|[A-Z]{2,}FIXT_[0-9A-F]{6,}"}}},
+    ]
     cur = db.published_content.find(q, {"_id": 0}).sort("published_at", -1).limit(max(1, min(200, limit)))
     return await cur.to_list(length=limit)
 

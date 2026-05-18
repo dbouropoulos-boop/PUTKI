@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { formatTimeAgo } from '../utils/formatTime';
 
@@ -18,6 +18,7 @@ const FeedRow = ({ item, lang, t, categoryMeta, isNew }) => {
     label: (item.category || '').toUpperCase(),
     color: '#7A8A9C',
   };
+  const isStreamer = item.category === 'striimaajat';
   return (
     <li
       data-testid={`feed-row-${item.id}`}
@@ -29,40 +30,46 @@ const FeedRow = ({ item, lang, t, categoryMeta, isNew }) => {
     >
       <Link
         to={`/uutiset/${item.url_slug}`}
-        className="flex items-baseline gap-5 group"
-        style={{ textDecoration: 'none', color: 'var(--ink)' }}
+        className="grid items-center group"
+        style={{
+          textDecoration: 'none',
+          color: 'var(--ink)',
+          gridTemplateColumns: '96px 88px 1fr auto',
+          columnGap: 20,
+        }}
       >
         <span
           className="mono"
-          style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600, minWidth: 96, flexShrink: 0 }}
+          style={{ fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600, flexShrink: 0 }}
           data-testid={`feed-time-${item.id}`}
         >
           {formatTimeAgo(item.published_at, lang)}
         </span>
         <span
-          className="mono"
+          className="mono inline-flex items-center justify-center gap-1"
           style={{
             fontSize: 10, letterSpacing: '0.16em', color: '#fff',
-            background: meta.color, padding: '2px 8px',
-            fontWeight: 700, flexShrink: 0, minWidth: 86, textAlign: 'center',
+            background: meta.color, padding: '3px 8px',
+            fontWeight: 700, flexShrink: 0, textAlign: 'center', borderRadius: 2,
           }}
           data-testid={`feed-category-${item.id}`}
         >
-          {meta.label.toUpperCase()}
+          {isStreamer ? '● ' : ''}{meta.label.toUpperCase()}
         </span>
         <span
           className="font-serif"
-          style={{ fontSize: 17, lineHeight: 1.4, color: 'var(--ink)', flex: 1, transition: 'color 200ms ease' }}
+          style={{ fontSize: 17, lineHeight: 1.4, color: 'var(--ink)', minWidth: 0, transition: 'color 200ms ease' }}
           data-testid={`feed-headline-${item.id}`}
         >
           {item.headline}
         </span>
         <span
-          className="mono"
-          style={{ fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--muted)', opacity: 0.7, flexShrink: 0 }}
+          className="mono inline-flex items-center gap-1"
+          style={{ fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--muted)', opacity: 0.75, flexShrink: 0, whiteSpace: 'nowrap' }}
           data-testid={`feed-views-${item.id}`}
         >
-          {item.views || 0} {t('uutiset.reads').toUpperCase()}
+          <Eye strokeWidth={1.6} size={10} />
+          {item.views || 0}
         </span>
       </Link>
     </li>
