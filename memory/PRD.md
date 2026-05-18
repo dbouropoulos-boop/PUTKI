@@ -2,21 +2,44 @@
 
 ## Phase History (latest first — see CHANGELOG for full list pre-Phase 5)
 
-- **Phase 5.4.1 — Code-review critical fixes** (2026-05-18) — Address 🔴 items from automated code review.
-  - **Hardcoded test secrets removed**: New `backend/tests/_test_env.py` helper auto-loads `backend/.env` and exposes `admin_token()` / `backend_url()`. The 5 test files that previously hardcoded `ADMIN_TOKEN = "putki-hq-admin"` (test_iter18, test_iter19, test_mittari_api, test_phase3_smartico, test_iter13_kick_endpoints) now read from env. Tests fail fast if `BACK_OFFICE_TOKEN` is absent.
-  - **Webhook test fixtures randomised**: `test_phase3_v2_step2_webhooks.py` no longer contains literal `"twitch_test_secret_phase3v2_step2"` / `"yt_pubsub_test_secret_phase3v2_step2"` / Kick client placeholders — replaced with `secrets.token_hex()` generated per-test-run. Scanner-clean.
-  - **Late-binding closures fixed**: 2 `lambda r: r.get(key, "")` instances in `test_phase4_w2_content_generator.py` now bind `k=key` defaults to prevent loop-variable capture.
-  - **useDocumentMeta deps collapsed**: 10 dependencies → 1 `metaKey` JSON-stringified composite. Behavior identical; eliminates the "exceeds 5-dep recommendation" smell on the most-used hook.
-  - **test_iter21_most_read.py** fail-fast: removed brittle `os.environ.get(...).rstrip("/")` (None.rstrip crashed collection) — now uses `_test_env.backend_url()`.
-  - **Smoke test**: `/uutiset` page renders cleanly, document title + canonical applied via the collapsed-deps hook.
-  - **Deferred to P2 backlog** (per pre-launch safety policy):
-    - localStorage → httpOnly cookies for admin auth (whole auth-flow rewrite).
-    - Large component splits (BackOfficeWebhooks.jsx 600 lines, DialCockpit 303 lines, Dial 302 lines).
-    - `random` → `secrets` in `content_backfill.py` (synthetic data; not security-sensitive).
-    - `is "string"` → `== "string"` (cosmetic; concentrated in tests).
-    - Array-index keys in 21 components (cosmetic stability under reorder).
-    - Remaining 114 hook-dep warnings (case-by-case audit pass).
-    - 1000+ empty catch blocks (case-by-case; many are intentional clipboard/share API fallbacks).
+- **Phase 1 Homepage Restructure — Sprints 1+2+3+5 partial** (2026-05-19) — Massive bilingual redesign per user spec.
+  - **Sprint 1 — Foundation**:
+    - WIN PULSE → MITTARI rename across codebase (i18n, components, Cockpit maker's mark).
+    - Mittari state rename: TYPÖTYHJÄ/NIHKEÄ/TULOSSA/VOITTOPUTKI/RYÖSTÖPUTKI → TYYNI/VIRE/VIPINÄ/MEININKI/PERKELE (FI) / CALM/BUZZ/ACTIVE/ROLLING/PERKELE (EN). Internal state KEYS preserved (KYLMA/HAALEA/KUUMA/MYRSKY/KIIRASTULI).
+    - New state palette: TYYNI #5C8A8A · VIRE #6FA37D · VIPINÄ #D4B445 · MEININKI #C97A3A · PERKELE #C13B2C. Applied to dial.js + Dial.jsx ARC_COLORS + DialSubscriptionCTA STATE_CONFIG.
+    - `dialReading(state, lang, {streams, viewers})` helper — Bloomberg-rhythm plain-language reading with live counts per Section 13c.
+    - Top bar simplified: no nav menu. Only logo + EN/FI toggle + theme toggle.
+    - PhaseOneDiscoveryRow.jsx — temporary "Lue lisää: Uutiset · Vinkit · Tietoa meistä · Menetelmä" row above footer (removable when Phase 2 Explore ships).
+    - Footer disclosures: source disclosure + editorial disclosure per Sections 13m/13n.
+    - LiveTicker dimmed (slate dots, no state colors); will fully retire when Phase 2 news ticker takes over.
+  - **Sprint 2 — Picks section "Päivän tärpit · Today's market watch"**:
+    - New `backend/sharpness.py` — deterministic 0-100 score (50% implied_prob + 30% consensus_tightness + 20% recency_momentum). Formula published verbatim on /menetelma.
+    - `_best_pick_from_event` enriches every pick with nested `sharpness` object: components, weights, band, modifier, book_count, has_momentum_history.
+    - `_avg_implied_now` internal field stripped before response.
+    - `GET /api/odds/market-watch` endpoint — daily avg + 30-day sparkline from `sharpness_daily` collection.
+    - PaivaVitoset.jsx rebuilt: Daily Market Watch Card at top (with SVG sparkline + pulsing today dot), 5 pick cards with Sharpness bar + click-to-expand investigative analysis + bookmaker citation + disclosure, track record line at bottom.
+    - 20/20 sanity tests for sharpness (test_iter23_sharpness.py).
+  - **Sprint 3 — News & Ticker**:
+    - RSS_FEEDS expanded to 12 sources: 7 direct Finnish (Yle Uutiset, Yle Urheilu, HS, IL, IS, MTV, KL) + 5 Google News category queries (News/Sports/Gambling/Scene/Regulation) per brief Section 2 lockdown.
+    - Per-source circuit breaker: 5 consecutive 429s/timeouts → 30 min pause. State in-process; logged on trip.
+    - `backend/news_classifier.py` — deterministic Tier 1 classifier tagging category/severity/relevance/entities. Tier 2 Haiku fallback gated by env flag (default off).
+    - Cross-source corroboration: items sharing 6-token signature across ≥2 sources flagged `verified=True`.
+    - `rss_tick` now upserts classified items into `news_ticker_items` (TTL 7d) above threshold 45, archive 20-44 → `news_ticker_archive` (TTL 30d).
+    - `GET /api/news/ticker?limit=N` endpoint serves the ticker feed.
+    - NewsTicker.jsx — full-width continuous-scroll component under top bar, replaces LiveTicker in Layout.jsx. Severity dots, source attribution, relative timestamps, pause-on-hover, verified checkmark.
+    - 9/9 sanity tests for classifier (test_iter23_news_classifier.py).
+  - **Sprint 5 partial — Cleanups + T&C + Methodology**:
+    - Removed LiveDataTicker (Section 12c), ActivityStats/PUBLISHED CONTENT card (Section 3b), CockpitContext PRIMARY DRIVER strip (moves to Phase 2), long marketing headline (→ "Finland's scene temperature" / "Suomen skenen lämpötila").
+    - Methodology page extended with 2 new sections: "Käytetty teknologia / Technology used" (AI workflow disclosure per Section 9) + "Sharpness — kaava / formula" (verbatim formula + bands).
+    - New `/ehdot` Terms & conditions page — editorial position + KÄYTETTY TEKNOLOGIA clause linking to /menetelma.
+    - Newsroom `min_state` regex accepts new (VIPINÄ/MEININKI/PERKELE/ACTIVE/ROLLING) and legacy (WARM/RUSH/JACKPOT/TULOSSA/VOITTOPUTKI/RYÖSTÖPUTKI) values for backward compat.
+  - **Testing**: testing_agent_v3_fork iter23 — 17/17 backend pytest + 15/15 frontend test IDs verified. `retest_needed: False`.
+  - **Deferred to follow-up sprints**:
+    - **Sprint 3.b** — News carousel beside dial (right column replacing removed PUBLISHED CONTENT card).
+    - **Sprint 4** — Mittari polish (cached share OG image at state-change, streak counter, /m/{state-slug}-{date} permalink page).
+    - **Sprint 5 remaining** — Winners Corner +u unit notation removal, sticky Telegram duplicate consolidation.
+
+- **Phase 5.4.1 — Code-review critical fixes** (2026-05-18) — Hardcoded test secrets via _test_env.py; webhook fixtures randomised; late-binding closures; useDocumentMeta deps collapsed; test_iter21_most_read fail-fast.
 
 - **Phase 5.4 — Back-office /peli cleanup** (2026-05-18) — Editor's direct request from walkthrough.docx.
   - Removed `prize_amount` input + `prize_currency` input from `/back-office/peli` admin form.
