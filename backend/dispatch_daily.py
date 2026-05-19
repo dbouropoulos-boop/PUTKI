@@ -62,6 +62,12 @@ TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID") or ""
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN") or ""
 TWILIO_FROM = os.environ.get("TWILIO_FROM") or ""
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or ""
+# Optional channel for broadcast mode. When set, the telegram channel
+# sends ONE message per cycle to this @handle / chat_id (no per-subscriber
+# DM fan-out). Recommended for editorial dispatches where there's no
+# need for personalised delivery and Telegram's bot-must-/start barrier
+# would otherwise leave most subscribers unreachable.
+TELEGRAM_CHANNEL_ID = os.environ.get("TELEGRAM_CHANNEL_ID") or ""
 
 # Worker kill switch — set to "1" in test/preview to keep the loop quiet.
 DISABLE_WORKER = os.environ.get("PUTKI_HQ_DISABLE_DISPATCH_WORKER", "0") == "1"
@@ -518,6 +524,67 @@ def _render_sms_text(payload: Dict[str, Any]) -> str:
 
 # ── Per-channel dispatch ─────────────────────────────────────────────────
 
+async def _dispatch_telegram_broadcast(
+    db, *, consent_tag: str, payload: Dict[str, Any], cycle_id: str,
+    force_dry_run: bool, override_mode: Optional[str],
+    subscriber_count: int,
+) -> Dict[str, Any]:
+    """Single-shot broadcast post to TELEGRAM_CHANNEL_ID.
+
+    Writes exactly one `dispatch_log` row with `recipient` set to the
+    channel handle and `broadcast=True`. The `subscriber_count` is logged
+    on the row + the result so the previewer can show "broadcast reach"
+    instead of pretending the segment was fanned out.
+    """
+    mode = override_mode or await get_segment_override(db, "telegram", consent_tag)
+    effective_live = mode in {"live_segment_only", "live_global"}
+    if force_dry_run:
+        effective_live = False
+
+    sent_at = datetime.now(timezone.utc).isoformat()
+    if effective_live:
+        try:
+            result = await _attempt_telegram_send(TELEGRAM_CHANNEL_ID, payload)
+        except Exception as exc:
+            result = {"mode": "live", "error": str(exc)[:300]}
+    else:
+        result = {"mode": "dry_run", "provider": _channel_live_mode("telegram")[1]}
+
+    doc = {
+        "id": uuid.uuid4().hex,
+        "kind": "send",
+        "cycle_id": cycle_id,
+        "channel": "telegram",
+        "segment": consent_tag,
+        "recipient": TELEGRAM_CHANNEL_ID,
+        "broadcast": True,
+        "subscriber_count": subscriber_count,
+        "payload": payload,
+        "mode": result.get("mode", "dry_run"),
+        "provider": result.get("provider"),
+        "provider_response": result.get("provider_response"),
+        "error": result.get("error"),
+        "sent_at": sent_at,
+        "test_send": False,
+    }
+    try:
+        await db.dispatch_log.insert_one(doc)
+    except Exception:
+        logger.exception("dispatch_log broadcast insert failed for %s", consent_tag)
+
+    err = bool(result.get("error"))
+    return {
+        "channel": "telegram", "segment": consent_tag,
+        "delivered": 0 if err or not effective_live else 1,
+        "dry_run": 0 if effective_live else 1,
+        "errors": 1 if err else 0,
+        "recipients_seen": 1,
+        "mode": "live" if effective_live else "dry_run",
+        "broadcast": True,
+        "subscriber_count": subscriber_count,
+    }
+
+
 async def _dispatch_segment(
     db, *, channel: str, consent_tag: str, payload: Dict[str, Any],
     cycle_id: str, force_dry_run: bool = False,
@@ -536,6 +603,25 @@ async def _dispatch_segment(
          → real provider call when creds present, dry_run fallback when not.
     """
     all_recipients = await _recipients_for_tag(db, consent_tag)
+
+    # ── Telegram broadcast short-circuit ────────────────────────────────
+    # When TELEGRAM_CHANNEL_ID is set, the telegram channel switches from
+    # per-subscriber DM fan-out to single-channel broadcast: one message
+    # per cycle posted to the @handle / chat_id. We still log subscriber
+    # count for audit so opt-in stats stay meaningful, but only ONE send
+    # row is written (recipient = the channel handle, broadcast=True).
+    # Skipped when `recipients_override` is set — targeted test-sends
+    # always go to individual recipients, never the broadcast channel.
+    if (
+        channel == "telegram"
+        and TELEGRAM_CHANNEL_ID
+        and recipients_override is None
+    ):
+        return await _dispatch_telegram_broadcast(
+            db, consent_tag=consent_tag, payload=payload, cycle_id=cycle_id,
+            force_dry_run=force_dry_run, override_mode=override_mode,
+            subscriber_count=len(all_recipients),
+        )
 
     if recipients_override is not None:
         allow = {r.strip().lower() for r in recipients_override if r and r.strip()}
