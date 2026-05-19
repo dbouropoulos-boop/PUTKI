@@ -1,21 +1,18 @@
 /**
- * PUTKI HQ — ExploreBlocks (Phase 1 Final Restructure · Chunk A).
+ * PUTKI HQ — ExploreBlocks (Phase 1 Final · Chunk B · post-review rebuild).
  *
- * Homepage 2×2 compact preview grid (replaces the old "hint strips").
+ * Four equal-weight preview blocks in a 2×2 grid:
+ *   MITTARI       · instrument-dial designed background + real dial visual
+ *   PELISIGNAALIT · stock-ticker line texture + top pick details (no truncation)
+ *   VOITA         · large editorial typographic treatment (gated state)
+ *   PELI          · restrained slot-reel macro
  *
- * Four blocks, each 168px tall, with a designed background image in
- * PUTKI HQ's visual style + the relevant live content overlaid:
- *
- *   - MITTARI       → current state + reading + mini dial visual
- *   - PELISIGNAALIT → today's #1 game signal (sharpness ≥ 75)
- *   - VOITA         → raffle (gated until Sako sign-off; renders inactive state)
- *   - PELI          → current Voyager campaign
- *
- * Routes:
- *   Mittari        → /mittari        (target for Chunk B)
- *   Pelisignaalit  → /pelisignaalit  (Chunk B) — falls back to /vihjeet until Chunk B ships
- *   Voita          → /voita          (Chunk B, gated) — falls back to /voita-palkinto
- *   Peli           → /peli
+ * Layout (per block, 220px min-height):
+ *   - Full-bleed designed background image (absolute)
+ *   - Content stack: anchor row → main content → CTA row at bottom
+ *   - All blocks equal-weight, single column inside each block
+ *   - Hard min-width:0 + ellipsis on every text node so long pick names
+ *     and bookmaker labels never break the layout
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -37,61 +34,52 @@ const STATE_NAME_EN = {
   MYRSKY: 'ROLLING', KIIRASTULI: 'PERKELE',
 };
 
-const BlockShell = ({ to, children, dataTestId, accentColor, mode = 'link' }) => {
-  const inner = (
-    <div
-      data-testid={dataTestId}
-      style={{
-        position: 'relative', minHeight: 168,
-        background: 'var(--surface, #141210)',
-        overflow: 'hidden',
-        display: 'grid',
-        gridTemplateColumns: '96px 1fr auto',
-        columnGap: 20, alignItems: 'center',
-        padding: '18px 22px',
-        isolation: 'isolate',
-      }}
-    >
-      {children}
-    </div>
-  );
-  if (mode === 'static') return inner;
-  return (
-    <Link
-      to={to}
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block', borderTop: '1px solid transparent' }}
-      onMouseEnter={(e) => { e.currentTarget.style.borderTop = `1px solid ${accentColor}55`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderTop = '1px solid transparent'; }}
-    >{inner}</Link>
-  );
-};
+// shared block shell — vertical content stack, equal weight
+const Block = ({ to, dataTestId, children }) => (
+  <Link
+    to={to}
+    data-testid={dataTestId}
+    style={{
+      position: 'relative', minHeight: 220,
+      background: 'var(--surface, #141210)',
+      overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
+      padding: '22px 24px 20px',
+      textDecoration: 'none', color: 'inherit',
+      isolation: 'isolate',
+    }}
+  >{children}</Link>
+);
 
-const AnchorRow = ({ color, label }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+const Anchor = ({ color, label }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, position: 'relative', zIndex: 2 }}>
     <span style={{ width: 6, height: 6, borderRadius: 999, background: color }} />
     <span style={{
-      fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+      fontFamily: 'ui-monospace, monospace', fontSize: 10,
       letterSpacing: '0.22em', fontWeight: 700, color,
       textTransform: 'uppercase',
     }}>{label}</span>
   </div>
 );
 
-const CtaArrow = ({ label, disabled }) => (
-  <span
-    data-testid="explore-cta"
-    style={{
-      display: 'inline-flex', alignItems: 'center', gap: 8,
+const Cta = ({ label, color, disabled }) => (
+  <div style={{
+    marginTop: 'auto', paddingTop: 18,
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    position: 'relative', zIndex: 2,
+  }}>
+    <span data-testid="explore-cta" style={{
       color: disabled ? 'var(--muted, #9C9587)' : '#FFFFFF',
-      fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
-      letterSpacing: '0.18em', fontWeight: 700, whiteSpace: 'nowrap',
-    }}
-  >
-    {label}{!disabled && ' →'}
-  </span>
+      fontFamily: 'ui-monospace, monospace', fontSize: 11,
+      letterSpacing: '0.20em', fontWeight: 700,
+    }}>{label}{!disabled && '  →'}</span>
+    <span style={{
+      width: 24, height: 1, background: color, opacity: disabled ? 0.4 : 0.7,
+    }} aria-hidden />
+  </div>
 );
 
-// ── MITTARI ────────────────────────────────────────────────────────────────
+// ── MITTARI — full mini-dial in left column, state name + reading right ──
 const MittariBlock = ({ lang }) => {
   const [dial, setDial] = useState(null);
   const [liveStats, setLiveStats] = useState(null);
@@ -117,56 +105,67 @@ const MittariBlock = ({ lang }) => {
   const dashLen = Math.max(0, Math.min(264, Math.round(score * 2.64)));
 
   return (
-    <BlockShell
-      to="/mittari"
-      dataTestId="explore-block-mittari"
-      accentColor={color}
-    >
-      {/* background */}
-      <div style={{
+    <Block to="/mittari" dataTestId="explore-block-mittari">
+      {/* designed background — instrument dial */}
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        backgroundImage: `radial-gradient(circle at 30% 50%, ${color}3D 0%, ${color}00 55%), conic-gradient(from 220deg, #1f1b18 0deg, #3a2e23 70deg, ${color}80 90deg, ${color} 140deg, #3a2e23 200deg, #1f1b18 360deg)`,
-        opacity: 0.45, filter: 'contrast(1.05)',
+        background:
+          `radial-gradient(circle at 22% 55%, ${color}33 0%, ${color}00 50%),
+           conic-gradient(from 220deg, #1f1b18 0deg, #3a2e23 70deg, ${color}66 95deg, ${color} 140deg, #3a2e23 200deg, #1f1b18 360deg)`,
+        opacity: 0.30, filter: 'contrast(1.05)',
       }} />
-      <div style={{
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(90deg, rgba(11,10,9,0.86) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.92) 100%)',
+        background: 'linear-gradient(135deg, rgba(11,10,9,0.78) 0%, rgba(11,10,9,0.84) 60%, rgba(11,10,9,0.96) 100%)',
       }} />
-      {/* visual */}
-      <div style={{ position: 'relative', zIndex: 2, width: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="72" height="72" viewBox="0 0 100 100" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="50" cy="50" r="42" fill="none" stroke="#2A2522" strokeWidth="6" />
-          <circle cx="50" cy="50" r="42" fill="none" stroke={color} strokeWidth="6"
-            strokeDasharray={`${dashLen} 264`} strokeLinecap="round" />
+
+      <Anchor color={color} label={lang === 'en' ? 'MITTARI · NOW' : 'MITTARI · NYT'} />
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: '88px minmax(0, 1fr)',
+        gap: 18, alignItems: 'center',
+        position: 'relative', zIndex: 2,
+      }}>
+        {/* Full mini-dial — proper size, not a sliver */}
+        <svg width="88" height="88" viewBox="0 0 100 100" style={{ display: 'block', overflow: 'visible' }}>
+          <circle cx="50" cy="50" r="40" fill="none" stroke="#2A2522" strokeWidth="6" />
+          <circle cx="50" cy="50" r="40" fill="none" stroke={color} strokeWidth="6"
+            strokeDasharray={`${(dashLen / 264) * 251.3} 251.3`}
+            strokeLinecap="round"
+            transform="rotate(-90 50 50)" />
+          <text x="50" y="56" textAnchor="middle"
+            fontFamily="ui-monospace, monospace" fontSize="14" fontWeight="700"
+            fill="#FFFFFF" letterSpacing="-0.02em">{Math.round(score)}</text>
         </svg>
+        <div style={{ minWidth: 0 }}>
+          <h3 data-testid="explore-mittari-state" style={{
+            fontFamily: 'Georgia, serif', fontWeight: 700,
+            fontSize: 28, lineHeight: 1.02, color: '#FFFFFF',
+            letterSpacing: '-0.02em', margin: '0 0 8px',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{name}</h3>
+          <p style={{
+            color: 'var(--ink, #ECE6D8)', fontSize: 12.5,
+            lineHeight: 1.5, opacity: 0.88, margin: 0,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>{reading}</p>
+        </div>
       </div>
-      <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
-        <AnchorRow color={color} label={lang === 'en' ? 'MITTARI · NOW' : 'MITTARI · NYT'} />
-        <h3 data-testid="explore-mittari-state" style={{
-          fontFamily: 'Georgia, serif', fontWeight: 700,
-          fontSize: 30, lineHeight: 1, color: '#FFFFFF',
-          letterSpacing: '-0.02em', margin: '0 0 6px',
-        }}>{name}</h3>
-        <p style={{
-          color: 'var(--ink, #ECE6D8)', fontSize: 12.5,
-          maxWidth: 420, lineHeight: 1.45, opacity: 0.84, margin: 0,
-        }}>{reading}</p>
-      </div>
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <CtaArrow label={lang === 'en' ? 'OPEN' : 'AVAA'} />
-      </div>
-    </BlockShell>
+
+      <Cta label={lang === 'en' ? 'OPEN' : 'AVAA'} color={color} />
+    </Block>
   );
 };
 
-// ── PELISIGNAALIT ─────────────────────────────────────────────────────────
+// ── PELISIGNAALIT — sparkline texture + top pick (no truncation) ──
 const PelisignaalitBlock = ({ lang }) => {
   const [topPick, setTopPick] = useState(null);
   useEffect(() => {
     let cancelled = false;
     fetch(`${BACKEND}/api/odds/featured`).then((r) => r.ok ? r.json() : null).then((d) => {
       if (cancelled || !d) return;
-      const picks = (d.picks || []).filter((p) => (p?.sharpness?.sharpness || 0) >= 50);
+      const picks = (d.picks || []).filter((p) => (p?.sharpness?.sharpness || 0) >= 40);
       const top = picks.sort((a, b) => (b?.sharpness?.sharpness || 0) - (a?.sharpness?.sharpness || 0))[0] || null;
       setTopPick(top);
     }).catch(() => {});
@@ -174,132 +173,169 @@ const PelisignaalitBlock = ({ lang }) => {
   }, []);
 
   const sharpness = topPick?.sharpness?.sharpness;
+  const eventName = topPick ? (topPick.event_name || topPick.label || `${topPick.home_team || ''} – ${topPick.away_team || ''}`.trim()) : '';
+  const yellow = '#D4B445';
+
   return (
-    <BlockShell
-      to="/pelisignaalit"
-      dataTestId="explore-block-pelisignaalit"
-      accentColor="#D4B445"
-    >
-      <div style={{
+    <Block to="/pelisignaalit" dataTestId="explore-block-pelisignaalit">
+      {/* designed background — sparkline ladder */}
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background: 'repeating-linear-gradient(180deg, rgba(212,180,69,0.06) 0px, rgba(212,180,69,0.06) 1px, transparent 1px, transparent 24px), linear-gradient(135deg, #161310 0%, #1a1612 100%)',
-        opacity: 0.45,
+        background: `
+          repeating-linear-gradient(180deg,
+            rgba(212,180,69,0.08) 0px,
+            rgba(212,180,69,0.08) 1px,
+            transparent 1px, transparent 22px),
+          linear-gradient(135deg, #181410 0%, #1a1612 100%)`,
+        opacity: 0.6,
       }} />
-      <div style={{
+      {/* hero sparkline as a real graphic, not just background */}
+      <svg viewBox="0 0 220 60" preserveAspectRatio="none" aria-hidden style={{
+        position: 'absolute', top: '50%', left: '40%', right: '6%',
+        height: 60, opacity: 0.35, zIndex: 1,
+        transform: 'translateY(-50%)',
+      }}>
+        <polyline
+          points="0,48 18,42 36,50 54,32 72,38 90,22 110,28 130,16 150,20 170,12 190,18 210,8 220,12"
+          fill="none" stroke={yellow} strokeWidth="1.4" />
+      </svg>
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(90deg, rgba(11,10,9,0.86) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.92) 100%)',
+        background: 'linear-gradient(90deg, rgba(11,10,9,0.92) 0%, rgba(11,10,9,0.72) 60%, rgba(11,10,9,0.95) 100%)',
       }} />
-      <div style={{ position: 'relative', zIndex: 2, width: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <svg width="96" height="40" viewBox="0 0 120 40" aria-hidden>
-          <polyline points="0,28 15,24 30,30 45,18 60,22 75,12 90,16 105,8 120,10"
-            fill="none" stroke="#D4B445" strokeWidth="1.5" opacity="0.85" />
-          <circle cx="120" cy="10" r="2.5" fill="#D4B445" />
-        </svg>
-      </div>
-      <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
-        <AnchorRow color="#D4B445" label={lang === 'en' ? 'PELISIGNAALIT · TODAY' : 'PELISIGNAALIT · TÄNÄÄN'} />
-        {topPick ? (
-          <>
-            <div data-testid="explore-pelisignaalit-match" style={{
-              color: '#FFFFFF', fontSize: 14, fontWeight: 600,
-              marginBottom: 4, lineHeight: 1.25,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>{topPick.event_name || topPick.label || `${topPick.home_team} – ${topPick.away_team}`}</div>
-            <div style={{
-              display: 'flex', gap: 10, alignItems: 'baseline',
-              color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
-              fontSize: 10, letterSpacing: '0.06em',
-            }}>
-              <span>{topPick.pick_team || topPick.pick || ''} {topPick.odds_decimal ? topPick.odds_decimal.toFixed(2) : ''}</span>
-              {topPick.bookmaker && <span style={{ opacity: 0.6 }}>{topPick.bookmaker}</span>}
-              {sharpness != null && (
-                <span style={{ color: '#D4B445', fontWeight: 700 }}>
-                  SHARPNESS {Math.round(sharpness)}
-                </span>
-              )}
-            </div>
-          </>
-        ) : (
+
+      <Anchor color={yellow} label={lang === 'en' ? 'PELISIGNAALIT · TODAY' : 'PELISIGNAALIT · TÄNÄÄN'} />
+
+      {topPick ? (
+        <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
+          <div data-testid="explore-pelisignaalit-match" style={{
+            color: '#FFFFFF', fontSize: 17, fontWeight: 700,
+            letterSpacing: '-0.01em', lineHeight: 1.25,
+            marginBottom: 10,
+            display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>{eventName || '—'}</div>
           <div style={{
+            display: 'flex', flexWrap: 'wrap', gap: '6px 12px',
             color: 'var(--muted, #9C9587)',
-            fontFamily: 'ui-monospace, monospace', fontSize: 11,
-            letterSpacing: '0.14em',
-          }}>{lang === 'en' ? 'NO SIGNALS YET TODAY' : 'EI SIGNAALEJA VIELÄ TÄNÄÄN'}</div>
-        )}
-      </div>
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <CtaArrow label={lang === 'en' ? 'SEE ALL' : 'KATSO'} />
-      </div>
-    </BlockShell>
+            fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+            letterSpacing: '0.06em',
+            marginBottom: 12,
+          }}>
+            {topPick.pick_team || topPick.pick ? (
+              <span style={{ color: 'var(--ink, #ECE6D8)' }}>
+                {topPick.pick_team || topPick.pick}
+                {topPick.odds_decimal ? ` ${topPick.odds_decimal.toFixed(2)}` : ''}
+              </span>
+            ) : null}
+            {topPick.bookmaker && (
+              <span style={{
+                maxWidth: 140, overflow: 'hidden',
+                textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{topPick.bookmaker}</span>
+            )}
+          </div>
+          {sharpness != null && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span data-testid="explore-pelisignaalit-sharpness" style={{
+                color: yellow,
+                fontFamily: 'Georgia, serif', fontWeight: 700,
+                fontSize: 28, lineHeight: 1, letterSpacing: '-0.02em',
+              }}>{Math.round(sharpness)}</span>
+              <span style={{
+                color: 'var(--muted, #9C9587)',
+                fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                letterSpacing: '0.22em', fontWeight: 700,
+              }}>SHARPNESS</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{
+          color: 'var(--muted, #9C9587)',
+          fontFamily: 'ui-monospace, monospace', fontSize: 11,
+          letterSpacing: '0.10em', position: 'relative', zIndex: 2,
+          lineHeight: 1.6,
+        }}>{lang === 'en' ? 'NO SIGNALS YET TODAY.' : 'EI SIGNAALEJA VIELÄ TÄNÄÄN.'}</div>
+      )}
+
+      <Cta label={lang === 'en' ? 'SEE ALL 5' : 'KAIKKI 5'} color={yellow} />
+    </Block>
   );
 };
 
-// ── VOITA — gated by VOITA_FEATURE_ENABLED (Sako legal sign-off pending) ──
+// ── VOITA — large editorial typographic treatment, gated state ──
 const VoitaBlock = ({ lang }) => {
-  // Mirrors the public flag from /api/settings/public so the homepage block
-  // can switch its CTA copy. The /voita page itself reads the same flag.
   const [enabled, setEnabled] = useState(false);
   useEffect(() => {
-    let stop = false;
+    let cancelled = false;
     fetch(`${BACKEND}/api/settings/public`)
       .then((r) => r.ok ? r.json() : {})
-      .then((d) => { if (!stop) setEnabled(!!d.voita_feature_enabled); })
+      .then((d) => { if (!cancelled) setEnabled(!!d.voita_feature_enabled); })
       .catch(() => {});
-    return () => { stop = true; };
+    return () => { cancelled = true; };
   }, []);
+
+  const red = '#C13B2C';
+
   return (
-    <BlockShell
-      to="/voita"
-      dataTestId="explore-block-voita"
-      accentColor="#C13B2C"
-    >
-      <div style={{
+    <Block to="/voita" dataTestId="explore-block-voita">
+      {/* designed background — editorial gradient with crimson glow */}
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background: 'radial-gradient(circle at 70% 50%, rgba(193,59,44,0.16) 0%, rgba(193,59,44,0) 60%), linear-gradient(135deg, #1a1310 0%, #14100e 100%)',
-        opacity: 0.45,
+        background: `
+          radial-gradient(circle at 80% 40%, rgba(193,59,44,0.18) 0%, rgba(193,59,44,0) 55%),
+          linear-gradient(135deg, #1a1310 0%, #14100e 100%)`,
+        opacity: 0.85,
       }} />
-      <div style={{
+      {/* Decorative serif "V" as a fixed background element, positioned cleanly */}
+      <span aria-hidden style={{
+        position: 'absolute', right: '-2%', bottom: '-10%',
+        fontFamily: 'Georgia, serif', fontWeight: 900,
+        fontSize: 240, lineHeight: 1,
+        letterSpacing: '-0.06em',
+        color: 'rgba(193,59,44,0.10)',
+        pointerEvents: 'none', userSelect: 'none', zIndex: 1,
+      }}>V</span>
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(90deg, rgba(11,10,9,0.86) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.92) 100%)',
+        background: 'linear-gradient(90deg, rgba(11,10,9,0.85) 0%, rgba(11,10,9,0.55) 60%, rgba(11,10,9,0.85) 100%)',
       }} />
-      <span style={{
-        position: 'absolute', inset: 0, zIndex: 1,
-        display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-        paddingRight: 30,
-        fontFamily: 'Georgia, serif', fontWeight: 900, fontSize: 120,
-        letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.025)',
-        pointerEvents: 'none', userSelect: 'none', lineHeight: 1,
-      }} aria-hidden>VOITA</span>
-      <div style={{ position: 'relative', zIndex: 2, width: 96 }} />
+
+      <Anchor color={red} label={enabled
+        ? (lang === 'en' ? 'VOITA · LIVE' : 'VOITA · KÄYNNISSÄ')
+        : (lang === 'en' ? 'VOITA · COMING SOON' : 'VOITA · TULOSSA')} />
+
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
-        <AnchorRow color="#C13B2C" label={lang === 'en' ? 'VOITA · COMING SOON' : 'VOITA · TULOSSA'} />
-        {enabled ? (
-          <div style={{ color: '#FFFFFF', fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 22 }}>
-            {/* Chunk B will render the active raffle */}
-          </div>
-        ) : (
-          <>
-            <h3 data-testid="explore-voita-placeholder" style={{
-              color: '#FFFFFF', fontFamily: 'Georgia, serif', fontWeight: 700,
-              fontSize: 22, lineHeight: 1.1, margin: '0 0 6px',
-            }}>{lang === 'en' ? 'Coming soon' : 'Pian saatavilla'}</h3>
-            <p style={{
-              color: 'var(--ink, #ECE6D8)', fontSize: 12, lineHeight: 1.45,
-              opacity: 0.8, maxWidth: 420, margin: 0,
-            }}>{lang === 'en'
-              ? 'Liiga finals winner-prediction raffle. Opens after legal review.'
-              : 'Liiga-finaalien voitto­ennustus­arvonta. Avautuu lain­opillisen tarkistuksen jälkeen.'}</p>
-          </>
-        )}
+        <h3 data-testid="explore-voita-placeholder" style={{
+          color: '#FFFFFF', fontFamily: 'Georgia, serif', fontWeight: 700,
+          fontSize: 26, lineHeight: 1.1, margin: '0 0 10px',
+          letterSpacing: '-0.015em',
+        }}>{enabled
+          ? (lang === 'en' ? 'Predict the winner.' : 'Arvaa voittaja.')
+          : (lang === 'en' ? 'Coming soon' : 'Pian saatavilla')}</h3>
+        <p style={{
+          color: 'var(--ink, #ECE6D8)', fontSize: 12.5, lineHeight: 1.5,
+          opacity: 0.82, maxWidth: 360, margin: 0,
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}>{enabled
+          ? (lang === 'en' ? 'This week\u2019s editorial raffle is live. Free to enter, no deposit, no betting.' : 'Tämän viikon toimituksellinen arvonta on käynnissä. Ilmainen, ei talletusta, ei vedonlyöntiä.')
+          : (lang === 'en' ? 'Editorial winner-prediction raffle. Opens after legal review.' : 'Toimituksellinen voitto­ennustus­arvonta. Avautuu lain­opillisen tarkistuksen jälkeen.')}</p>
       </div>
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <CtaArrow label={lang === 'en' ? 'WAITING' : 'ODOTTAA'} disabled />
-      </div>
-    </BlockShell>
+
+      <Cta
+        label={enabled
+          ? (lang === 'en' ? 'ENTER' : 'OSALLISTU')
+          : (lang === 'en' ? 'WAITING' : 'ODOTTAA')}
+        color={red}
+        disabled={!enabled}
+      />
+    </Block>
   );
 };
 
-// ── PELI ──────────────────────────────────────────────────────────────────
+// ── PELI — restrained slot-reel macro ──
 const PeliBlock = ({ lang }) => {
   const [week, setWeek] = useState(null);
   useEffect(() => {
@@ -312,41 +348,49 @@ const PeliBlock = ({ lang }) => {
 
   const campaign = week?.theme || (lang === 'en' ? 'February Voyager round' : 'Helmikuun Voyager-kierros');
   const reward = week?.prize_summary
-    || (lang === 'en'
-        ? 'Play 30 seconds, win 25 free spins.'
-        : 'Pelaa 30 sekuntia, voita 25 ilmais­kierrosta.');
+    || (lang === 'en' ? 'Play 30 seconds, win 25 free spins.' : 'Pelaa 30 sekuntia, voita 25 ilmais­kierrosta.');
+  const green = '#6FA37D';
 
   return (
-    <BlockShell
-      to="/peli"
-      dataTestId="explore-block-peli"
-      accentColor="#6FA37D"
-    >
-      <div style={{
+    <Block to="/peli" dataTestId="explore-block-peli">
+      {/* designed background — restrained slot reel macro */}
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background: 'radial-gradient(circle at 30% 50%, rgba(212,180,69,0.18) 0%, rgba(212,180,69,0) 50%), conic-gradient(from 0deg at 30% 50%, #1a1612 0deg, #2a221a 30deg, #1a1612 60deg, #2a221a 90deg, #1a1612 360deg)',
-        opacity: 0.45, filter: 'blur(0.4px)',
+        background: `
+          radial-gradient(circle at 80% 50%, rgba(212,180,69,0.16) 0%, rgba(212,180,69,0) 50%),
+          repeating-linear-gradient(90deg,
+            #1a1612 0%, #1a1612 28%,
+            #221d18 28%, #221d18 33%,
+            #1a1612 33%, #1a1612 66%,
+            #221d18 66%, #221d18 71%,
+            #1a1612 71%, #1a1612 100%)`,
+        opacity: 0.55, filter: 'blur(0.4px)',
       }} />
-      <div style={{
+      <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(90deg, rgba(11,10,9,0.86) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.92) 100%)',
+        background: 'linear-gradient(135deg, rgba(11,10,9,0.88) 0%, rgba(11,10,9,0.78) 60%, rgba(11,10,9,0.94) 100%)',
       }} />
-      <div style={{ position: 'relative', zIndex: 2, width: 96 }} />
+
+      <Anchor color={green} label="PELI · VOYAGER" />
+
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
-        <AnchorRow color="#6FA37D" label="PELI · VOYAGER" />
         <h3 data-testid="explore-peli-campaign" style={{
           color: '#FFFFFF', fontFamily: 'Georgia, serif', fontWeight: 700,
-          fontSize: 20, lineHeight: 1.1, margin: '0 0 4px',
+          fontSize: 22, lineHeight: 1.15, margin: '0 0 10px',
+          letterSpacing: '-0.015em',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
         }}>{campaign}</h3>
         <p style={{
-          color: 'var(--ink, #ECE6D8)', fontSize: 12, lineHeight: 1.45,
-          opacity: 0.84, maxWidth: 420, margin: 0,
+          color: 'var(--ink, #ECE6D8)', fontSize: 12.5, lineHeight: 1.5,
+          opacity: 0.86, maxWidth: 360, margin: 0,
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
         }}>{reward}</p>
       </div>
-      <div style={{ position: 'relative', zIndex: 2 }}>
-        <CtaArrow label={lang === 'en' ? 'PLAY' : 'PELAA'} />
-      </div>
-    </BlockShell>
+
+      <Cta label={lang === 'en' ? 'PLAY' : 'PELAA'} color={green} />
+    </Block>
   );
 };
 
@@ -377,8 +421,11 @@ const ExploreBlocks = () => {
           fontSize: 10, fontFamily: 'ui-monospace, monospace', opacity: 0.7,
         }}>4 PRODUCTS</span>
       </div>
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1,
+      <div className="explore-grid" style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gridAutoRows: '1fr',
+        gap: 1,
         background: 'var(--hairline, #221E1B)',
       }}>
         <MittariBlock lang={lang} />
@@ -386,6 +433,11 @@ const ExploreBlocks = () => {
         <VoitaBlock lang={lang} />
         <PeliBlock lang={lang} />
       </div>
+      <style>{`
+        @media (max-width: 720px) {
+          .explore-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </section>
   );
 };

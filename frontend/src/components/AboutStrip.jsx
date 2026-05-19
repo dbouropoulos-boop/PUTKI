@@ -47,11 +47,11 @@ const AboutStrip = () => {
         </div>
         <div>
           <p data-testid="about-strip-body" style={{
-            color: 'var(--ink, #ECE6D8)', fontSize: 15.5, lineHeight: 1.6,
+            color: 'var(--ink, #ECE6D8)', fontSize: 15.5, lineHeight: 1.65,
             margin: '0 0 18px', maxWidth: 720,
           }}>{lang === 'en'
-            ? "PUTKI HQ is an independent newsroom that covers Finland\u2019s casino, streamer, and sports-betting scene. We aggregate from twelve named sources, classify every story with a deterministic algorithm, and require a cited outlet inside the first 400 characters of every article. We do not take operator deposits. We do not advertise gambling. Affiliate links — when used — are labelled, and the editorial team draws every prize. Mittari is the gauge. The journalism is the work."
-            : "PUTKI HQ on itsenäinen toimitus, joka seuraa Suomen kasino-, striimaaja- ja vedonlyönti­skeneä. Aggregoimme kahdestatoista nimetystä lähteestä, luokittelemme jokaisen jutun deterministisellä algoritmilla ja vaadimme nimeltä mainitun lähteen jokaisen artikkelin ensimmäisten 400 merkin sisällä. Emme ota operaattori­talletuksia. Emme mainosta rahapelejä. Affiliaatti­linkit — kun niitä käytetään — on merkitty, ja toimitus arpoo kaikki palkinnot. Mittari on mittari. Journalismi on työ."}</p>
+            ? "PUTKI HQ is an independent newsroom covering Finland\u2019s casino, streamer and sports-betting scene. We aggregate from twelve named sources, classify every story with a deterministic algorithm, and require a cited outlet inside the first 400 characters of every article. We do not take operator deposits. We do not advertise gambling. Editorial \u2014 not advertising."
+            : "PUTKI HQ on itsenäinen toimitus, joka seuraa Suomen kasino-, striimaaja- ja vedonlyönti­skeneä. Aggregoimme kahdestatoista nimetystä lähteestä, luokittelemme jokaisen jutun deterministisellä algoritmilla ja vaadimme nimeltä mainitun lähteen jokaisen artikkelin ensimmäisten 400 merkin sisällä. Emme ota operaattori­talletuksia. Emme mainosta rahapelejä. Toimitus \u2014 ei mainontaa."}</p>
           <Link
             to="/tietoa-meista"
             data-testid="about-strip-cta"

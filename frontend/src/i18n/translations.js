@@ -723,7 +723,7 @@ export const translations = {
 
     // Footer
     'footer.tagline':        'Riippumaton journalismi. Läpinäkyvä data. Ei paskaa.',
-    'footer.lede':           'Suomen rehellisin kasino- ja striimaajalähde. Toimituksellinen, ei mainos.',
+    'footer.lede':           'Suomalainen riippumaton uhkapelikulttuurin julkaisu.',
     'footer.col_pages':      'Sivut',
     'footer.col_responsible': 'Tiedote',
     'footer.col_contact':    'Yhteystiedot',
@@ -1450,7 +1450,7 @@ export const translations = {
     'weekly.past_title':     'Earlier cards',
 
     'footer.tagline':        'Mittari measures. The editors interpret. You decide.',
-    'footer.lede':           'Finland\u2019s most honest casino & streamer source. Editorial — not advertising.',
+    'footer.lede':           'Finland\u2019s independent gambling-culture publication.',
     'footer.col_pages':      'Pages',
     'footer.col_responsible': 'Disclosure',
     'footer.col_contact':    'Contact',

@@ -74,7 +74,7 @@ class TestOptin:
         # default consent tag for email = sentiment
         assert d["consent_tag"] == "email_sentiment"
 
-    def test_sms_capture_with_default_bets_tag(self, api):
+    def test_sms_capture_with_default_alerts_tag(self, api):
         r = api.post(
             f"{BASE_URL}/api/optin",
             json={"channel": "sms", "surface": "mittari",
@@ -83,8 +83,8 @@ class TestOptin:
         )
         assert r.status_code == 200
         d = r.json()
-        # default consent tag for sms = bets
-        assert d["consent_tag"] == "sms_bets"
+        # default consent tag for sms = alerts (fast channel)
+        assert d["consent_tag"] == "sms_alerts"
 
     def test_telegram_capture_strips_at_and_lowercases(self, api):
         r = api.post(
@@ -95,7 +95,7 @@ class TestOptin:
         )
         assert r.status_code == 200
         d = r.json()
-        assert d["consent_tag"] == "telegram_bets"
+        assert d["consent_tag"] == "telegram_alerts"
 
     def test_email_required_for_email_channel(self, api):
         r = api.post(

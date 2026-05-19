@@ -13,7 +13,6 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import TrustPills from '../components/TrustPills';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 
@@ -167,14 +166,13 @@ const Voita = () => {
         </div>
       </section>
 
-      {/* TRUST */}
-      <section data-testid="voita-trust" style={{
+      {/* Editorial position pointer */}
+      <section data-testid="voita-position" style={{
         borderTop: '1px solid var(--hairline, #221E1B)',
         padding: '24px 0 48px',
       }}>
-        <TrustPills dataTestId="voita-trust-pills" />
         <p style={{
-          color: 'var(--muted, #9C9587)', fontSize: 12.5, marginTop: 18,
+          color: 'var(--muted, #9C9587)', fontSize: 12.5, margin: 0,
           fontFamily: 'ui-monospace, monospace', letterSpacing: '0.06em',
           lineHeight: 1.7,
         }}>{lang === 'en'

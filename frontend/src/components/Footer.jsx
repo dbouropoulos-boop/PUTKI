@@ -1,36 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Settings } from 'lucide-react';
-import Dial from './Dial';
 import { useLang } from '../context/LanguageContext';
 
 export const Footer = () => {
   const { t } = useLang();
   return (
     <footer className="border-t mt-24 sm:mt-32" style={{ borderColor: 'var(--border)' }} data-testid="site-footer">
-      <div className="container-wide pt-14 sm:pt-20 pb-10 flex flex-col items-center text-center">
-        <div className="cockpit-divider w-32 mb-10" />
-        <div className="opacity-90 mb-5">
-          <Dial size="small" state="KUUMA" showLabel={false} />
-        </div>
-        <p
-          className="display"
-          style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--muted)', maxWidth: 520 }}
-          data-testid="footer-tagline"
-        >
-          {t('footer.tagline')}
-        </p>
-        <div className="cockpit-divider w-32 mt-10" />
-      </div>
-
-      <div className="container-wide pb-12">
+      <div className="container-wide pb-12 pt-14">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 sm:gap-12">
           <div>
             <div className="flex items-baseline gap-2 mb-4">
               <span className="font-display font-black text-xl tracking-tighter" style={{ color: 'var(--ink)' }}>PUTKI</span>
               <span className="mono text-[10px] tracking-[0.22em] uppercase" style={{ color: 'var(--muted)' }}>HQ</span>
             </div>
-            <p className="font-serif text-[13px] leading-relaxed" style={{ color: 'var(--muted)' }}>{t('footer.lede')}</p>
+            <p className="font-serif text-[13px] leading-relaxed" data-testid="footer-lede" style={{ color: 'var(--muted)' }}>{t('footer.lede')}</p>
           </div>
           <div>
             <div className="eyebrow mb-3">{t('footer.col_pages')}</div>
@@ -39,7 +23,6 @@ export const Footer = () => {
               <li><Link to="/striimaajat" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.streamers').toUpperCase()}</Link></li>
               <li><Link to="/mittari" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-mittari-link">MITTARI</Link></li>
               <li><Link to="/pelisignaalit" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-pelisignaalit-link">PELISIGNAALIT</Link></li>
-              <li><Link to="/peli" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.game_prize').toUpperCase()}</Link></li>
               <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.about').toUpperCase()}</Link></li>
               <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.methodology').toUpperCase()}</Link></li>
             </ul>

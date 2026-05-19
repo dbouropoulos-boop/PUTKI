@@ -150,7 +150,7 @@ const ProgressiveOptIn = ({
         if (handle) {
           await post({
             channel: 'telegram', surface,
-            telegram_username: handle, consent_tag: 'telegram_bets',
+            telegram_username: handle, consent_tag: 'telegram_alerts',
           });
         }
       } catch {/* non-blocking */}

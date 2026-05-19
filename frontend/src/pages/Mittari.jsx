@@ -12,7 +12,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DialCockpit from '../components/DialCockpit';
 import ProgressiveOptIn from '../components/ProgressiveOptIn';
-import TrustPills from '../components/TrustPills';
 import MittariStreak from '../components/MittariStreak';
 import { dialReading } from '../constants/dial';
 import { useLang } from '../context/LanguageContext';
@@ -188,7 +187,7 @@ const Mittari = () => {
       {/* PROGRESSIVE OPT-IN */}
       <section data-testid="mittari-optin" style={{
         borderTop: '1px solid var(--hairline, #221E1B)',
-        padding: '32px 0',
+        padding: '32px 0 48px',
       }}>
         <span style={{
           color: 'var(--muted, #9C9587)',
@@ -213,14 +212,6 @@ const Mittari = () => {
             }}
           />
         </div>
-      </section>
-
-      {/* TRUST */}
-      <section data-testid="mittari-trust" style={{
-        borderTop: '1px solid var(--hairline, #221E1B)',
-        padding: '24px 0 48px',
-      }}>
-        <TrustPills dataTestId="mittari-trust-pills" />
       </section>
 
       <style>{`

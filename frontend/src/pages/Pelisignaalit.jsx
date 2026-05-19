@@ -11,7 +11,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ProgressiveOptIn from '../components/ProgressiveOptIn';
-import TrustPills from '../components/TrustPills';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 
@@ -253,14 +252,6 @@ const Pelisignaalit = () => {
             }}
           />
         </div>
-      </section>
-
-      {/* TRUST */}
-      <section data-testid="pelisignaalit-trust" style={{
-        borderTop: '1px solid var(--hairline, #221E1B)',
-        padding: '24px 0 48px',
-      }}>
-        <TrustPills dataTestId="pelisignaalit-trust-pills" />
       </section>
     </div>
   );

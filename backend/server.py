@@ -231,7 +231,7 @@ class OptinPayload(BaseModel):
       - telegram = daily bets       (fast channel — same content, different inbox)
 
     Each captured row records a distinct consent tag like `email_sentiment`,
-    `sms_bets`, `telegram_bets`. Idempotent per (channel, surface, identifier):
+    `sms_alerts`, `telegram_alerts`. Idempotent per (channel, surface, identifier):
     re-submitting the same row updates `last_seen_at` instead of duplicating.
     """
     channel: str = Field(..., description="email | sms | telegram")
@@ -268,9 +268,10 @@ async def public_optin(payload: OptinPayload):
     if not identifier:
         raise HTTPException(status_code=400, detail="identifier missing")
 
-    # Consent tag default: {channel}_{purpose} where purpose is bets for sms+telegram,
-    # sentiment for email. Caller may override (e.g. surface-specific tags).
-    default_tag = "email_sentiment" if ch == "email" else f"{ch}_bets"
+    # Consent tag default: {channel}_{purpose} where purpose is `alerts` for
+    # sms+telegram (fast time-critical channels), `sentiment` for email (slow
+    # context channel). Caller may override (e.g. surface-specific tags).
+    default_tag = "email_sentiment" if ch == "email" else f"{ch}_alerts"
     tag = (payload.consent_tag or default_tag).strip().lower()[:64]
 
     now = datetime.now(timezone.utc).isoformat()

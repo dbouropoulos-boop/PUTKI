@@ -208,10 +208,17 @@ const ChronoRow = ({ item, lang, weight }) => {
           data-testid="news-chrono-badge"
           style={{
             display: 'inline-block', fontFamily: 'ui-monospace, monospace',
-            fontSize: 9, letterSpacing: '0.18em', padding: '2px 6px',
+            fontSize: 9, lineHeight: 1.4, fontWeight: 700,
+            letterSpacing: '0.18em',
+            padding: '2px 6px',
             marginRight: 10, color: catColor,
             border: `1px solid ${catColor}55`,
-            verticalAlign: 2, opacity: isOld ? 0.7 : 1,
+            verticalAlign: 2,
+            background: 'transparent',
+            textTransform: 'uppercase',
+            // Identical visual treatment across every row — never dim
+            // the badge itself even on "old" rows; opacity is reserved
+            // for the time / source meta only.
           }}
         >{catLabel}</span>
         <span
@@ -275,7 +282,7 @@ const NewsPortal = () => {
             fontSize: 10, fontWeight: 700,
             fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase',
           }}
-        >{lang === 'en' ? 'SCENE · TODAY' : 'SKENE · TÄNÄÄN'}</span>
+        >{lang === 'en' ? 'NEWS · LIVE' : 'UUTISET · LIVE'}</span>
         <span style={{
           color: 'var(--muted, #9C9587)', letterSpacing: '0.18em',
           fontSize: 10, fontFamily: 'ui-monospace, monospace', opacity: 0.7,
