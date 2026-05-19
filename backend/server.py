@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Header, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, Header, Depends, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -2260,6 +2260,168 @@ async def admin_dispatch_summary(
     return await cycle_summary(db, days=days)
 
 
+# ── Voita raffle (gated until Sako sign-off + 3 gating flags clear) ──
+
+async def _voita_feature_enabled() -> bool:
+    """Public surface gate. Reads the same settings doc the UI checks."""
+    doc = await db.settings.find_one({}, {"_id": 0})
+    if not doc:
+        return False
+    return bool(doc.get("voita_feature_enabled", False))
+
+
+@api_router.get("/voita/raffles")
+async def public_voita_raffles_list():
+    """Public list — only returns raffles where all 3 gates AND the
+    global feature flag are true. Empty list = silent gating, exactly as
+    intended for a soft launch."""
+    if not await _voita_feature_enabled():
+        return {"items": [], "feature_enabled": False}
+    from voita_engine import list_raffles_public
+    items = await list_raffles_public(db)
+    return {"items": items, "feature_enabled": True}
+
+
+@api_router.get("/voita/raffles/{slug}")
+async def public_voita_raffle_detail(slug: str):
+    if not await _voita_feature_enabled():
+        raise HTTPException(status_code=404, detail="raffle not found")
+    from voita_engine import get_raffle_public
+    d = await get_raffle_public(db, slug.lower().strip())
+    if not d:
+        raise HTTPException(status_code=404, detail="raffle not found")
+    return d
+
+
+class _VoitaEntryPayload(BaseModel):
+    email: EmailStr
+    prediction_one_x_two: str = Field(..., description="'1' | 'X' | '2'")
+    predicted_home_goals: int = Field(..., ge=0, le=50)
+    predicted_away_goals: int = Field(..., ge=0, le=50)
+    rules_accepted: bool
+
+
+@api_router.post("/voita/raffles/{slug}/enter")
+async def public_voita_enter(slug: str, payload: _VoitaEntryPayload, request: Request):
+    if not await _voita_feature_enabled():
+        raise HTTPException(status_code=404, detail="raffle not found")
+    from voita_engine import submit_entry
+    try:
+        ip = request.client.host if request.client else ""
+        ua = request.headers.get("user-agent", "")[:240]
+        return await submit_entry(
+            db, slug=slug.lower().strip(),
+            email=str(payload.email),
+            prediction_one_x_two=payload.prediction_one_x_two,
+            predicted_home_goals=payload.predicted_home_goals,
+            predicted_away_goals=payload.predicted_away_goals,
+            rules_accepted=bool(payload.rules_accepted),
+            ip=ip, ua=ua,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+# ── Admin (full CRUD + draw) ──
+
+class _VoitaCreatePayload(BaseModel):
+    slug: str
+    title_fi: Optional[str] = ""
+    title_en: Optional[str] = ""
+    summary_fi: Optional[str] = ""
+    summary_en: Optional[str] = ""
+    sport: Optional[str] = ""
+    league: Optional[str] = ""
+    home_team: Optional[str] = ""
+    away_team: Optional[str] = ""
+    kickoff_at: Optional[str] = None
+    entries_close_at: Optional[str] = None
+    prize_cap_eur: Optional[int] = 500
+    prize_distribution: Optional[Dict[str, Any]] = None
+    scoring: Optional[Dict[str, int]] = None
+    rules_url_set: Optional[bool] = False
+
+
+@api_router.get("/admin/voita/raffles")
+async def admin_voita_list(_: bool = Depends(require_admin)):
+    from voita_engine import list_raffles_admin
+    items = await list_raffles_admin(db)
+    return {"items": items}
+
+
+@api_router.post("/admin/voita/raffles")
+async def admin_voita_create(payload: _VoitaCreatePayload, _: bool = Depends(require_admin)):
+    from voita_engine import create_raffle
+    try:
+        return {"created": await create_raffle(db, payload.dict())}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+class _VoitaUpdatePayload(BaseModel):
+    title_fi: Optional[str] = None
+    title_en: Optional[str] = None
+    summary_fi: Optional[str] = None
+    summary_en: Optional[str] = None
+    sport: Optional[str] = None
+    league: Optional[str] = None
+    home_team: Optional[str] = None
+    away_team: Optional[str] = None
+    kickoff_at: Optional[str] = None
+    entries_close_at: Optional[str] = None
+    prize_cap_eur: Optional[int] = None
+    prize_distribution: Optional[Dict[str, Any]] = None
+    scoring: Optional[Dict[str, int]] = None
+    gating: Optional[Dict[str, bool]] = None
+    status: Optional[str] = None
+
+
+@api_router.put("/admin/voita/raffles/{raffle_id}")
+async def admin_voita_update(raffle_id: str, payload: _VoitaUpdatePayload, _: bool = Depends(require_admin)):
+    from voita_engine import update_raffle
+    try:
+        # Only forward fields that were actually set
+        patch = {k: v for k, v in payload.dict().items() if v is not None}
+        return {"updated": await update_raffle(db, raffle_id, patch)}
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@api_router.delete("/admin/voita/raffles/{raffle_id}")
+async def admin_voita_delete(raffle_id: str, _: bool = Depends(require_admin)):
+    from voita_engine import delete_raffle
+    try:
+        return await delete_raffle(db, raffle_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@api_router.get("/admin/voita/raffles/{raffle_id}/entries")
+async def admin_voita_entries(raffle_id: str, _: bool = Depends(require_admin)):
+    from voita_engine import list_entries_admin
+    items = await list_entries_admin(db, raffle_id)
+    return {"items": items, "count": len(items)}
+
+
+class _VoitaDrawPayload(BaseModel):
+    home_goals: int = Field(..., ge=0, le=50)
+    away_goals: int = Field(..., ge=0, le=50)
+
+
+@api_router.post("/admin/voita/raffles/{raffle_id}/draw")
+async def admin_voita_draw(raffle_id: str, payload: _VoitaDrawPayload, _: bool = Depends(require_admin)):
+    from voita_engine import draw_raffle
+    try:
+        return await draw_raffle(
+            db, raffle_id,
+            home_goals=payload.home_goals,
+            away_goals=payload.away_goals,
+            drawn_by="admin",
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
 @app.on_event("startup")
 async def _seed_phase3():
     try:
@@ -2331,6 +2493,11 @@ async def _seed_phase3():
         await dispatch_ensure(db)
     except Exception:
         logger.exception("Failed to create dispatch_daily indexes")
+    try:
+        from voita_engine import ensure_indexes as voita_ensure
+        await voita_ensure(db)
+    except Exception:
+        logger.exception("Failed to create voita_engine indexes")
     try:
         from slot_registry import ensure_indexes as reg_ensure, seed_default_registry
         await reg_ensure(db)

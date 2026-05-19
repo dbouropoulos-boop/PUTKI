@@ -28,9 +28,13 @@ import BackOfficePeli from "@/pages/BackOfficePeli";
 import BackOfficeStreamerMeta from "@/pages/BackOfficeStreamerMeta";
 import BackOfficeSlotRegistry from "@/pages/BackOfficeSlotRegistry";
 import BackOfficeOptinSegments from "@/pages/BackOfficeOptinSegments";
+import BackOfficeVoita from "@/pages/BackOfficeVoita";
 import Mittari from "@/pages/Mittari";
 import Pelisignaalit from "@/pages/Pelisignaalit";
 import Voita from "@/pages/Voita";
+import VoitaRaffle from "@/pages/VoitaRaffle";
+import VoitaKiitos from "@/pages/VoitaKiitos";
+import VoitaSaannot from "@/pages/VoitaSaannot";
 import RedirectWithQuery from "@/components/RedirectWithQuery";
 import TopicHubPage from "@/pages/TopicHubPage";
 import Article from "@/pages/Article";
@@ -67,6 +71,7 @@ function App() {
           <Route path="/back-office/streamer-meta" element={<BackOfficeStreamerMeta />} />
           <Route path="/back-office/slot-registry" element={<BackOfficeSlotRegistry />} />
           <Route path="/back-office/optin-segments" element={<BackOfficeOptinSegments />} />
+          <Route path="/back-office/voita" element={<BackOfficeVoita />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
           <Route path="/striimaajat/:id" element={<TopicHubPage kind="streamers" />} />
           <Route path="/operaattorit/:id" element={<TopicHubPage kind="operators" />} />
@@ -92,6 +97,9 @@ function App() {
             <Route path="mittari" element={<Mittari />} />
             <Route path="pelisignaalit" element={<Pelisignaalit />} />
             <Route path="voita" element={<Voita />} />
+            <Route path="voita/saannot" element={<VoitaSaannot />} />
+            <Route path="voita/:slug" element={<VoitaRaffle />} />
+            <Route path="voita/:slug/kiitos" element={<VoitaKiitos />} />
 
             {/* Legacy routes — 301 redirect, preserving ?ref / ?invite / ?pick query params */}
             <Route path="viikon-kortti" element={<RedirectWithQuery to="/pelisignaalit" />} />
