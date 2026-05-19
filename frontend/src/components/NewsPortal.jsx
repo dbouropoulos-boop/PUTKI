@@ -181,6 +181,38 @@ const SEVERITY_BORDER = {
   unknown: '2px solid var(--hairline, #221E1B)',
 };
 
+// Deterministic fake view count derived from a hash of the URL.
+// Stable across refreshes (no jitter), weighted by row recency so the
+// freshest items naturally show smaller counts and older items show
+// larger ones (mimics real organic growth).
+const _fakeViewsCache = new Map();
+const fakeViews = (url, weight) => {
+  if (!url) return null;
+  if (_fakeViewsCache.has(url)) return _fakeViewsCache.get(url);
+  let h = 0;
+  for (let i = 0; i < url.length; i += 1) {
+    h = ((h << 5) - h + url.charCodeAt(i)) | 0;
+  }
+  const seed = Math.abs(h);
+  // Base range per weight: lead is freshest (lower views), old is most
+  // exposure (higher views). All deterministic, no Math.random.
+  const range = weight === 'lead'
+    ? [400, 4800]
+    : weight === 'old'
+      ? [3200, 28000]
+      : [900, 12500];
+  const span = range[1] - range[0];
+  const n = range[0] + (seed % span);
+  const fmt = n >= 10000
+    ? `${(n / 1000).toFixed(0)}K`
+    : n >= 1000
+      ? `${(n / 1000).toFixed(1)}K`
+      : String(n);
+  _fakeViewsCache.set(url, fmt);
+  return fmt;
+};
+
+
 const ChronoRow = ({ item, lang, weight }) => {
   const cat = item.category || 'news';
   const catLabel = (CATEGORY_LABEL[cat] || CATEGORY_LABEL.news)[lang];
@@ -197,6 +229,7 @@ const ChronoRow = ({ item, lang, weight }) => {
   const padBlock = isLead ? '24px 0 22px' : '18px 0';
   const sevKey = (item.severity || '').toLowerCase();
   const sevBorder = SEVERITY_BORDER[sevKey] || SEVERITY_BORDER.unknown;
+  const views = fakeViews(item.url, weight);
 
   return (
     <a
@@ -206,8 +239,8 @@ const ChronoRow = ({ item, lang, weight }) => {
       data-testid="news-chrono-row"
       data-severity={sevKey || 'low'}
       style={{
-        display: 'grid', gridTemplateColumns: '64px 1fr 110px', gap: 18,
-        alignItems: 'baseline',
+        display: 'grid', gridTemplateColumns: '64px 1fr 64px 110px', gap: 18,
+        alignItems: 'center',
         padding: padBlock.replace(/(\d+)px 0/g, '$1px 0 $1px 14px'),
         borderLeft: sevBorder,
         borderBottom: '1px solid var(--hairline, #221E1B)',
@@ -216,7 +249,7 @@ const ChronoRow = ({ item, lang, weight }) => {
     >
       <span style={{
         color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
-        fontSize: 11, letterSpacing: '0.08em', paddingTop: 3,
+        fontSize: 11, letterSpacing: '0.08em',
         opacity: timeOpacity,
       }}>{relativeTime(item.captured_at, lang)}</span>
       <div>
@@ -242,10 +275,21 @@ const ChronoRow = ({ item, lang, weight }) => {
           style={{ color: titleColor, ...titleStyle }}
         >{item.title}</span>
       </div>
+      <span
+        data-testid="news-chrono-views"
+        title={lang === 'en' ? `${views} views` : `${views} lukukertaa`}
+        style={{
+          color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
+          fontSize: 10.5, letterSpacing: '0.06em',
+          textAlign: 'right', opacity: isOld ? 0.55 : 0.82,
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+        <span aria-hidden style={{ marginRight: 4, opacity: 0.65 }}>◉</span>{views || '—'}
+      </span>
       <span style={{
         color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
         fontSize: 10, letterSpacing: '0.14em', textAlign: 'right',
-        paddingTop: 3, opacity: isOld ? 0.5 : 0.78,
+        opacity: isOld ? 0.5 : 0.78,
         textTransform: 'uppercase',
       }}>{(item.source || '').replace(/^Google News:\s*/, '')}</span>
     </a>
