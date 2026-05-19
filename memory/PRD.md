@@ -2,6 +2,12 @@
 
 ## Phase History (latest first)
 
+- **Recent-winners strip + Voita refinements** (2026-05-19)
+  - **5 refinements per spec**: (1) `mask_email` rewritten — major providers (gmail/hotmail/outlook/icloud/yahoo/proton/live/me) show domain, others mask to `***.TLD`, `firstname.lastname` local-parts get fully masked. (2) Optional `display_name` field on entry form (sanitised, ≤40 chars, HTML angle brackets stripped) — when provided, replaces masked email on the winners strip. (3) New `paid` raffle status: admin must explicitly POST `/mark-paid` from `drawn` status; strip filters to `status=paid` only — draws without payment don't surface. (4) Strip moved ABOVE the entry form on `/voita/{slug}` (the trust decision happens pre-entry). (5) Component returns null when no paid raffles exist — silent absence beats a "coming soon" placeholder for a social-proof surface.
+  - **API consolidation**: `/api/voita/recent-winners` removed; `/api/voita/raffles?status=paid&limit=N` now serves the same data (the strip's reading contract per user spec).
+  - **Back-office**: PAID status pill + count, `MARK PAID` button on the drawn-raffle winners panel.
+  - **15/15 pytest** in `test_sprint_voita_recent_winners.py` covering all masking rules, display_name capture + sanitisation, mark-paid lifecycle, paid-filter behaviour, and immutability. **iter30 testing_agent: 100% / 100%, zero issues. DOM order verified with `compareDocumentPosition`.**
+
 - **Voita raffle sprint** (2026-05-19) — Sako-approved mechanic, GDPR Art. 7(4) compliant entry flow.
   - **Backend** `voita_engine.py` — full data model + scoring engine + draw engine + payout validator + 3-gate public visibility. Scoring: 3 pts for correct 1-X-2 + best-of (5 exact / 3 goal-diff / 1 total-goals) — NOT stackable, max 8 pts/entry. Tie-break: deterministic random (raffle_id + entry_id hash seed) — reproducible for audit. Prize cap €500 enforced server-side. Drawn raffles immutable.
   - **Public endpoints**: `GET /api/voita/raffles` (gated), `GET /api/voita/raffles/{slug}` (gated), `POST /api/voita/raffles/{slug}/enter` (validates rules acceptance + 1-X-2 + goals 0..50, rejects duplicate `(raffle_id, email)`, stores entry with `consent_tag=game_raffle` + `raffle_legal_basis=legitimate_interest_contest_admin`, retention=kickoff+30d).
