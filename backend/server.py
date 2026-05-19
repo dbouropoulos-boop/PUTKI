@@ -2588,6 +2588,54 @@ async def public_voita_raffle_detail(slug: str):
     return d
 
 
+@api_router.get("/voita/raffles/{slug}/match-context")
+async def public_voita_match_context(slug: str):
+    """Real per-match context for the prediction game beats: bookmaker
+    consensus, team form (when league is covered), editorial pick, and
+    current pick distribution among entrants. Every field can be null —
+    UI must degrade gracefully."""
+    if not await _voita_feature_enabled():
+        raise HTTPException(status_code=404, detail="raffle not found")
+    raffle_doc = await db.voita_raffles.find_one(
+        {"slug": slug.lower().strip()}, {"_id": 0},
+    )
+    if not raffle_doc:
+        raise HTTPException(status_code=404, detail="raffle not found")
+    from voita_match_context import build_match_context
+    return await build_match_context(db, raffle_doc)
+
+
+@api_router.get("/voita/your-record")
+async def public_voita_your_record(email: EmailStr):
+    """User-facing 'your record' lookup. Returns aggregate counts ONLY
+    for the requesting email — never enumerates other entrants. Used by
+    the listing-page strip; FE must pass the email captured in the
+    visitor's last entry session.
+    """
+    em = str(email).lower().strip()
+    raffles_played = await db.voita_entries.count_documents({"email_lower": em})
+    if raffles_played == 0:
+        return {"raffles_played": 0, "wins": 0, "eur_won": 0}
+    # Look at all paid raffles, find ledger entries that paid this email.
+    wins = 0
+    eur_won = 0
+    em_short = em.split("@")[0][:3]
+    async for r in db.voita_raffles.find(
+        {"status": "paid"}, {"_id": 0, "result": 1},
+    ):
+        for w in ((r.get("result") or {}).get("winners") or []):
+            # voita_engine masks emails before storing on the public surface
+            # so we match against the masked prefix.
+            masked = (w.get("email_masked") or "").lower()
+            if masked.startswith(em_short):
+                wins += 1
+                try:
+                    eur_won += int(w.get("amount_eur") or 0)
+                except Exception:
+                    pass
+    return {"raffles_played": raffles_played, "wins": wins, "eur_won": eur_won}
+
+
 class _VoitaEntryPayload(BaseModel):
     email: EmailStr
     prediction_one_x_two: str = Field(..., description="'1' | 'X' | '2'")

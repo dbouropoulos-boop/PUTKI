@@ -192,6 +192,8 @@ def _public_raffle_view(d: Dict[str, Any]) -> Dict[str, Any]:
         "status": d.get("status"),
         "result": d.get("result") or None,
         "entries_count": d.get("entries_count") or 0,
+        "editorial_pick": d.get("editorial_pick") or None,
+        "seeded": bool(d.get("seeded")),
     }
 
 
@@ -310,6 +312,23 @@ async def update_raffle(db, raffle_id: str, patch: Dict[str, Any]) -> Dict[str, 
             if scoring[k] < 0:
                 raise ValueError(f"scoring.{k} must be >= 0")
         update["scoring"] = scoring
+
+    # Editorial pick — admin-only, optional. Surfaced on the public
+    # match-context endpoint so the quiz `mode_with_editorial` variant
+    # can show the toimitus pick alongside bookmaker consensus.
+    if "editorial_pick" in patch and patch["editorial_pick"] is not None:
+        ep = patch["editorial_pick"]
+        if isinstance(ep, dict):
+            cleaned = {
+                "one_x_two": str(ep.get("one_x_two") or "").upper()[:1] if ep.get("one_x_two") in ("1", "X", "2") else None,
+                "predicted_home_goals": int(ep["predicted_home_goals"]) if ep.get("predicted_home_goals") not in (None, "") else None,
+                "predicted_away_goals": int(ep["predicted_away_goals"]) if ep.get("predicted_away_goals") not in (None, "") else None,
+                "rationale_fi": (ep.get("rationale_fi") or "").strip()[:400] or None,
+                "rationale_en": (ep.get("rationale_en") or "").strip()[:400] or None,
+                "author": (ep.get("author") or "").strip()[:80] or None,
+                "updated_at": _now_iso(),
+            }
+            update["editorial_pick"] = cleaned
 
     gating_patch = patch.get("gating") or {}
     if gating_patch:

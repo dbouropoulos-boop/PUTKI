@@ -28,6 +28,69 @@ const fmtDate = (iso, lang) => {
   } catch { return iso; }
 };
 
+// Real status badge derived from raffle.status + entries_close_at.
+const statusBadge = (r, lang) => {
+  const now = Date.now();
+  const close = r.entries_close_at ? new Date(r.entries_close_at).getTime() : 0;
+  const remaining = close - now;
+  if (r.status === 'paid') return { label: lang === 'en' ? 'PAID' : 'MAKSETTU', color: '#9ad4a9', bg: '#0e2b1a' };
+  if (r.status === 'drawn') return { label: lang === 'en' ? 'DRAWN' : 'ARVOTTU', color: '#E8C26E', bg: '#2b220e' };
+  if (r.status === 'closed') return { label: lang === 'en' ? 'CLOSED' : 'SULJETTU', color: 'var(--muted)', bg: 'var(--bg)' };
+  if (close && remaining > 0 && remaining < 2 * 3600 * 1000) {
+    return { label: lang === 'en' ? 'CLOSING SOON' : 'SULKEUTUU PIAN', color: '#C13B2C', bg: '#2b0e0e' };
+  }
+  return { label: lang === 'en' ? 'ENTRY OPEN' : 'AVOIN', color: '#6FA37D', bg: '#0e1a14' };
+};
+
+// "Your record" — local lookup from last entry session.
+const useYourRecord = () => {
+  const [rec, setRec] = useState(null);
+  useEffect(() => {
+    let stop = false;
+    let email = null;
+    try {
+      // sessionStorage may carry the email from the most recent entry on
+      // this device. Fall back to looking through all voita:* keys.
+      const keys = Object.keys(window.sessionStorage || {});
+      for (const k of keys) {
+        if (!k.startsWith('voita:')) continue;
+        try {
+          const v = JSON.parse(window.sessionStorage.getItem(k));
+          if (v && v.email) { email = v.email; break; }
+        } catch {}
+      }
+    } catch {}
+    if (!email) return;
+    fetch(`${BACKEND}/api/voita/your-record?email=${encodeURIComponent(email)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (!stop && d && d.raffles_played > 0) setRec(d); })
+      .catch(() => {});
+    return () => { stop = true; };
+  }, []);
+  return rec;
+};
+
+const YourRecordStrip = ({ lang }) => {
+  const rec = useYourRecord();
+  if (!rec) return null;
+  return (
+    <div data-testid="your-record-strip" style={{
+      marginBottom: 14, padding: '12px 16px',
+      background: '#1a1810', border: '1px solid #E8C26E55',
+      fontFamily: 'ui-monospace, monospace', fontSize: 11,
+      letterSpacing: '0.14em', color: 'var(--ink)', fontWeight: 700,
+      display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap',
+    }}>
+      <span style={{ color: '#E8C26E' }}>{lang === 'en' ? 'YOUR RECORD' : 'TILASTOSI'}</span>
+      <span>{rec.raffles_played} {lang === 'en' ? 'PLAYED' : 'PELATTU'}</span>
+      <span>·</span>
+      <span>{rec.wins} {lang === 'en' ? 'WIN' + (rec.wins === 1 ? '' : 'S') : 'VOITTO' + (rec.wins === 1 ? '' : 'A')}</span>
+      <span>·</span>
+      <span>€{rec.eur_won} {lang === 'en' ? 'WON' : 'VOITETTU'}</span>
+    </div>
+  );
+};
+
 const Voita = () => {
   const { lang } = useLang();
   const [enabled, setEnabled] = useState(false);
@@ -133,25 +196,41 @@ const Voita = () => {
           borderTop: '1px solid var(--hairline, #221E1B)',
           padding: '24px 0 40px',
         }}>
+          <YourRecordStrip lang={lang} />
           <div style={{ display: 'grid', gap: 14 }}>
-            {raffles.map((r) => (
+            {raffles.map((r) => {
+              const badge = statusBadge(r, lang);
+              return (
               <Link key={r.id} to={`/voita/${r.slug}`}
                 data-testid={`voita-raffle-card-${r.slug}`}
+                data-status={r.status}
                 style={{
                   display: 'grid', gridTemplateColumns: '1fr auto', gap: 16,
                   padding: '20px 22px', background: 'var(--surface, #141210)',
                   border: '1px solid var(--hairline, #221E1B)', textDecoration: 'none',
                 }}>
                 <div>
-                  <div style={{
-                    color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
-                    fontSize: 10, letterSpacing: '0.18em', fontWeight: 700, marginBottom: 4,
-                  }}>{(r.sport || '').toUpperCase()} {r.league ? `· ${r.league.toUpperCase()}` : ''}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                    <span data-testid={`voita-status-${r.slug}`}
+                      style={{
+                        background: badge.bg, color: badge.color,
+                        fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                        letterSpacing: '0.22em', fontWeight: 700,
+                        padding: '3px 7px', border: `1px solid ${badge.color}55`,
+                      }}>{badge.label}</span>
+                    <span style={{
+                      color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
+                      fontSize: 10, letterSpacing: '0.18em', fontWeight: 700,
+                    }}>{(r.sport || '').toUpperCase()} {r.league ? `· ${r.league.toUpperCase()}` : ''}</span>
+                  </div>
                   <div style={{ color: '#FFFFFF', fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700 }}>
                     {r.home_team} <span style={{ color: 'var(--muted)' }}>vs</span> {r.away_team}
                   </div>
                   <div style={{ color: 'var(--muted, #9C9587)', fontSize: 12.5, marginTop: 6, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.06em' }}>
-                    {lang === 'en' ? 'Entries close' : 'Osallistuminen päättyy'}: {fmtDate(r.entries_close_at, lang)}
+                    {lang === 'en' ? 'Closes' : 'Päättyy'}: {fmtDate(r.entries_close_at, lang)}
+                    {(r.entries_count || 0) > 0 && (
+                      <> · <span data-testid={`voita-entries-${r.slug}`} style={{ color: 'var(--ink)' }}>{r.entries_count} {lang === 'en' ? 'entries' : 'osallistunutta'}</span></>
+                    )}
                   </div>
                 </div>
                 <div style={{ alignSelf: 'center', textAlign: 'right' }}>
@@ -163,7 +242,8 @@ const Voita = () => {
                   </div>
                 </div>
               </Link>
-            ))}
+            );
+            })}
           </div>
         </section>
       )}
