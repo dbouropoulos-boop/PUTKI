@@ -28,6 +28,7 @@ import BackOfficePeli from "@/pages/BackOfficePeli";
 import BackOfficeStreamerMeta from "@/pages/BackOfficeStreamerMeta";
 import BackOfficeSlotRegistry from "@/pages/BackOfficeSlotRegistry";
 import BackOfficeOptinSegments from "@/pages/BackOfficeOptinSegments";
+import BackOfficeDispatchPreview from "@/pages/BackOfficeDispatchPreview";
 import BackOfficeVoita from "@/pages/BackOfficeVoita";
 import Mittari from "@/pages/Mittari";
 import Pelisignaalit from "@/pages/Pelisignaalit";
@@ -71,6 +72,7 @@ function App() {
           <Route path="/back-office/streamer-meta" element={<BackOfficeStreamerMeta />} />
           <Route path="/back-office/slot-registry" element={<BackOfficeSlotRegistry />} />
           <Route path="/back-office/optin-segments" element={<BackOfficeOptinSegments />} />
+          <Route path="/back-office/dispatch-preview" element={<BackOfficeDispatchPreview />} />
           <Route path="/back-office/voita" element={<BackOfficeVoita />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
           <Route path="/striimaajat/:id" element={<TopicHubPage kind="streamers" />} />

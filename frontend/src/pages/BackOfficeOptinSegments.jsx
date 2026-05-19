@@ -12,6 +12,21 @@ import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
+// Three segments × three channels. The matrix below is the source of
+// truth: a (channel, consent_tag) pair the dispatch worker knows how
+// to fan out to. Order matters — drives the grid.
+const SEGMENT_MATRIX = [
+  { channel: 'email', consent_tag: 'email_sentiment', label: 'Email digest · sentiment' },
+  { channel: 'sms', consent_tag: 'sms_alerts', label: 'SMS · daily bets' },
+  { channel: 'telegram', consent_tag: 'telegram_alerts', label: 'Telegram · daily bets' },
+];
+
+const MODE_OPTIONS = [
+  { value: 'dry_run', label: 'DRY-RUN · audit only', color: '#E8C26E' },
+  { value: 'live_segment_only', label: 'LIVE · this segment only', color: '#6FA37D' },
+  { value: 'live_global', label: 'LIVE · global (channel-wide)', color: '#9ad4a9' },
+];
+
 const CHANNEL_PILL = {
   email: { label: 'EMAIL', bg: '#0e1a2b', color: '#9ac4d4', border: '#2b4a5a' },
   sms: { label: 'SMS', bg: '#2b1a0e', color: '#d4a89a', border: '#5a3a2b' },
@@ -35,25 +50,59 @@ const BackOfficeOptinSegments = () => {
   const [stats, setStats] = useState(null);
   const [summary, setSummary] = useState(null);
   const [log, setLog] = useState([]);
+  const [overrides, setOverrides] = useState([]);
   const [busy, setBusy] = useState(false);
   const [runResult, setRunResult] = useState(null);
   const [runError, setRunError] = useState('');
 
+  // Test-send form state
+  const [testRecipients, setTestRecipients] = useState('');
+  const [testChannels, setTestChannels] = useState({ email: true, sms: false, telegram: false });
+  const [testBusy, setTestBusy] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [testError, setTestError] = useState('');
+
   const load = useCallback(async () => {
     if (!token || !authed) return;
     try {
-      const [s, su, lg] = await Promise.all([
+      const [s, su, lg, ov] = await Promise.all([
         fetch(`${BACKEND}/api/admin/optin/stats`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/admin/dispatch/summary?days=7`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/admin/dispatch/log?limit=20`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : { items: [] }),
+        fetch(`${BACKEND}/api/admin/dispatch/segment-overrides`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : { items: [] }),
       ]);
-      setStats(s); setSummary(su); setLog(lg.items || []);
+      setStats(s); setSummary(su); setLog(lg.items || []); setOverrides(ov.items || []);
     } catch (e) {
       // network — leave whatever is on screen
     }
   }, [token, authed]);
 
   useEffect(() => { load(); }, [load]);
+
+  const getOverrideMode = (channel, tag) => {
+    const row = overrides.find((o) => o.channel === channel && o.consent_tag === tag);
+    return row?.mode || 'dry_run';
+  };
+
+  const setOverrideMode = async (channel, tag, mode) => {
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/dispatch/segment-overrides`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+        body: JSON.stringify({ channel, consent_tag: tag, mode }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        setOverrides((prev) => {
+          const idx = prev.findIndex((o) => o.channel === channel && o.consent_tag === tag);
+          if (idx === -1) return [...prev, j];
+          const next = prev.slice();
+          next[idx] = j;
+          return next;
+        });
+      }
+    } catch { /* leave previous */ }
+  };
 
   const runCycle = async (dryRun) => {
     setBusy(true); setRunError(''); setRunResult(null);
@@ -77,6 +126,45 @@ const BackOfficeOptinSegments = () => {
     }
   };
 
+  const runTestSend = async () => {
+    setTestBusy(true); setTestError(''); setTestResult(null);
+    const list = testRecipients.split(/[\s,]+/).map((s) => s.trim()).filter(Boolean);
+    if (list.length === 0) {
+      setTestError('Add at least one recipient (email / phone / @handle).');
+      setTestBusy(false); return;
+    }
+    const channels = Object.entries(testChannels).filter(([, v]) => v).map(([k]) => k);
+    if (channels.length === 0) {
+      setTestError('Pick at least one channel.');
+      setTestBusy(false); return;
+    }
+    if (!window.confirm(
+      `TEST SEND · ${list.length} recipient(s) × ${channels.length} channel(s).\n\n` +
+      `Only recipients already in the opt-in segment will receive a message. ` +
+      `Real provider calls will be attempted where credentials are present.`,
+    )) {
+      setTestBusy(false); return;
+    }
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/dispatch/test-send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+        body: JSON.stringify({ recipients: list, channels }),
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        setTestError(j.detail || `HTTP ${r.status}`);
+      } else {
+        setTestResult(j);
+        await load();
+      }
+    } catch (e) {
+      setTestError(e.message || 'Network error');
+    } finally {
+      setTestBusy(false);
+    }
+  };
+
   const segmentRows = useMemo(() => stats?.by_segment || [], [stats]);
   const summaryRows = useMemo(() => summary?.rows || [], [summary]);
 
@@ -96,6 +184,12 @@ const BackOfficeOptinSegments = () => {
         fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 36,
         letterSpacing: '-0.02em', color: '#FFFFFF', margin: '16px 0 8px',
       }}>Opt-in segments &amp; dispatch</h1>
+      <div style={{ marginBottom: 12 }}>
+        <Link to="/back-office/dispatch-preview" data-testid="link-to-dispatch-preview" style={{
+          fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.18em',
+          color: '#E8C26E', textDecoration: 'underline', textUnderlineOffset: 4, fontWeight: 700,
+        }}>→ DISPATCH PREVIEWER (REVIEW PAYLOADS BEFORE GO-LIVE)</Link>
+      </div>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, maxWidth: 760, lineHeight: 1.55 }}>
         Three independent consent tags: <code style={{ color: 'var(--ink)' }}>email_sentiment</code> (slow editorial digest),
         <code style={{ color: 'var(--ink)', margin: '0 4px' }}>sms_alerts</code> (fast daily bets),
@@ -149,6 +243,99 @@ const BackOfficeOptinSegments = () => {
           </tbody>
         </table>
       )}
+
+      {/* Per-segment channel-mode overrides */}
+      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '24px 0 8px' }}>Channel go-live overrides (per segment)</h2>
+      <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 14, maxWidth: 760, lineHeight: 1.55 }}>
+        Default state is <code style={{ color: 'var(--ink)' }}>dry_run</code> (audit-only). Flip a row to{' '}
+        <code style={{ color: '#6FA37D' }}>live_segment_only</code> to unlock this single segment, or to{' '}
+        <code style={{ color: '#9ad4a9' }}>live_global</code> to record intent that the entire channel
+        is going live. Real provider calls only fire when (a) the segment is unlocked AND (b) the channel
+        has credentials in <code style={{ color: 'var(--ink)' }}>backend/.env</code>.
+      </p>
+      <div data-testid="segment-override-grid" style={{
+        display: 'grid', gap: 1, background: 'var(--hairline)',
+        border: '1px solid var(--hairline)', marginBottom: 28,
+      }}>
+        {SEGMENT_MATRIX.map((m) => {
+          const mode = getOverrideMode(m.channel, m.consent_tag);
+          const opt = MODE_OPTIONS.find((o) => o.value === mode);
+          return (
+            <div key={`${m.channel}:${m.consent_tag}`}
+              data-testid={`override-row-${m.consent_tag}`}
+              style={{
+                display: 'grid', gridTemplateColumns: '160px 1fr 320px',
+                gap: 16, alignItems: 'center', padding: '12px 16px',
+                background: 'var(--surface)',
+              }}>
+              <Pill channel={m.channel} />
+              <div>
+                <div style={{ fontFamily: 'Georgia, serif', fontSize: 15, fontWeight: 700, color: '#FFFFFF' }}>{m.label}</div>
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)', marginTop: 2 }}>
+                  {m.consent_tag}
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <select value={mode}
+                  data-testid={`override-select-${m.consent_tag}`}
+                  onChange={(e) => setOverrideMode(m.channel, m.consent_tag, e.target.value)}
+                  style={{
+                    flex: 1, background: 'var(--bg)', color: '#FFFFFF',
+                    border: `1px solid ${opt?.color || 'var(--border-strong)'}`,
+                    padding: '8px 12px', fontFamily: 'inherit', fontSize: 12.5,
+                  }}>
+                  {MODE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Targeted test-send */}
+      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '24px 0 8px' }}>Targeted test-send</h2>
+      <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 14, maxWidth: 760, lineHeight: 1.55 }}>
+        Limit blast radius: send the daily payload to a hand-picked list of recipients only.
+        <strong style={{ color: 'var(--ink)' }}> Safety</strong>: a recipient only receives a message if they're
+        ALREADY in the corresponding opt-in segment — listed addresses outside the segment are silently dropped.
+      </p>
+      <div data-testid="test-send-form" style={{
+        padding: '16px 18px', background: 'var(--surface)', border: '1px solid var(--hairline)',
+        marginBottom: 28,
+      }}>
+        <label style={{ display: 'block', marginBottom: 12 }}>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, marginBottom: 4 }}>
+            RECIPIENTS · ONE PER LINE OR COMMA-SEPARATED
+          </div>
+          <textarea value={testRecipients} onChange={(e) => setTestRecipients(e.target.value)}
+            data-testid="test-send-recipients"
+            rows={3} placeholder="founder@putkihq.fi&#10;+358401234567&#10;@telegram_handle"
+            style={{ width: '100%', background: 'var(--bg)', color: '#FFFFFF', border: '1px solid var(--border-strong)', padding: '10px 12px', fontFamily: 'ui-monospace, monospace', fontSize: 12, resize: 'vertical' }} />
+        </label>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+          <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700 }}>CHANNELS</span>
+          {['email', 'sms', 'telegram'].map((ch) => (
+            <label key={ch} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <input type="checkbox" checked={!!testChannels[ch]}
+                data-testid={`test-send-channel-${ch}`}
+                onChange={(e) => setTestChannels({ ...testChannels, [ch]: e.target.checked })} />
+              <Pill channel={ch} />
+            </label>
+          ))}
+        </div>
+        <button type="button" onClick={runTestSend} disabled={testBusy}
+          data-testid="test-send-submit"
+          style={{
+            padding: '10px 18px', background: '#E8C26E', color: '#0B0A09', border: 0,
+            fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.18em',
+            fontWeight: 700, cursor: testBusy ? 'wait' : 'pointer',
+          }}>{testBusy ? 'SENDING…' : '▶ FIRE TEST DISPATCH'}</button>
+        {testError && <div data-testid="test-send-error" style={{ marginTop: 10, padding: 10, background: '#2b0e0e', border: '1px solid #5a2b2b', color: '#f4a4a4', fontSize: 12 }}>{testError}</div>}
+        {testResult && <div data-testid="test-send-result" style={{ marginTop: 10, padding: 10, background: '#0e2b1a', border: '1px solid #2b5a3e', color: '#9ad4a9', fontSize: 12, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.10em' }}>
+          TEST OK · {(testResult.results || []).map((r) => `${r.channel}=${r.delivered + r.dry_run}/${r.recipients_seen}`).join(' · ')}
+          {(testResult.recipients_override_count || 0) > 0 && ` · ${testResult.recipients_override_count} TARGETED`}
+        </div>}
+      </div>
 
       {/* Dispatch */}
       <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 20, color: '#FFFFFF', margin: '24px 0 12px' }}>Daily dispatch (dry-run)</h2>

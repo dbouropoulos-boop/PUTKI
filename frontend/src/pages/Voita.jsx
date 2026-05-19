@@ -59,14 +59,26 @@ const Voita = () => {
   return (
     <div data-testid="voita-page" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
       <section data-testid={enabled && raffles.length > 0 ? 'voita-hero-active' : 'voita-hero-gated'}
-        style={{ position: 'relative', padding: '64px 0 36px', minHeight: 260, overflow: 'hidden' }}>
-        <span aria-hidden style={{
+        style={{ position: 'relative', padding: '64px 0 36px', minHeight: 320, overflow: 'hidden' }}>
+        {/* Editorial hero photo — Nano Banana floodlit stadium */}
+        <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 0,
+          backgroundImage: `url('/hero/voita.jpg')`,
+          backgroundSize: 'cover', backgroundPosition: 'center 30%',
+          filter: 'saturate(0.85)',
+        }} />
+        {/* Gradient overlay — heavy on the left for headline legibility */}
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, zIndex: 1,
+          background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.82) 45%, rgba(11,10,9,0.40) 80%, rgba(11,10,9,0.20) 100%)',
+        }} />
+        <span aria-hidden style={{
+          position: 'absolute', inset: 0, zIndex: 1,
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
           paddingRight: '5%',
           fontFamily: 'Georgia, serif', fontWeight: 900,
           fontSize: 'clamp(180px, 28vw, 320px)',
-          letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.025)',
+          letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.045)',
           pointerEvents: 'none', userSelect: 'none', lineHeight: 1,
         }}>VOITA</span>
 

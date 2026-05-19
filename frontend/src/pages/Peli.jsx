@@ -231,15 +231,16 @@ const Peli = () => {
         position: 'relative', overflow: 'hidden',
         borderBottom: '1px solid var(--hairline, #221E1B)',
       }}>
-        {/* slot-reel macro background */}
+        {/* Editorial hero photo — Nano Banana slot-reel macro */}
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 0,
-          background: 'radial-gradient(circle at 75% 50%, rgba(212,180,69,0.18) 0%, rgba(212,180,69,0) 50%), conic-gradient(from 0deg at 75% 50%, #1a1612 0deg, #2a221a 30deg, #1a1612 60deg, #2a221a 90deg, #1a1612 360deg)',
-          opacity: 0.55, filter: 'blur(0.5px)',
+          backgroundImage: `url('/hero/peli.jpg')`,
+          backgroundSize: 'cover', backgroundPosition: 'right center',
+          filter: 'saturate(0.92)',
         }} />
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(90deg, rgba(11,10,9,0.92) 0%, rgba(11,10,9,0.78) 60%, rgba(11,10,9,0.94) 100%)',
+          background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.82) 45%, rgba(11,10,9,0.55) 80%, rgba(11,10,9,0.40) 100%)',
         }} />
 
         <div style={{
