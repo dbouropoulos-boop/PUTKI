@@ -2260,6 +2260,122 @@ async def admin_dispatch_summary(
     return await cycle_summary(db, days=days)
 
 
+# ── Dispatch previewer + flags + overrides + test-send ───────────────────
+
+
+class _DispatchTestSendPayload(BaseModel):
+    recipients: List[str]
+    channels: Optional[List[str]] = None  # subset of email|sms|telegram
+
+
+class _DispatchFlagPayload(BaseModel):
+    reason: str
+    note: Optional[str] = None
+    flagged_by: Optional[str] = None
+
+
+class _DispatchSegmentOverridePayload(BaseModel):
+    channel: str
+    consent_tag: str
+    mode: str  # dry_run | live_segment_only | live_global
+
+
+@api_router.get("/admin/dispatch/cycles")
+async def admin_dispatch_cycles(
+    days: int = 14, limit: int = 50,
+    _: bool = Depends(require_admin),
+):
+    from dispatch_daily import list_cycles
+    items = await list_cycles(db, days=days, limit=limit)
+    return {"items": items, "count": len(items)}
+
+
+@api_router.get("/admin/dispatch/cycles/{cycle_id}")
+async def admin_dispatch_cycle_detail(
+    cycle_id: str, _: bool = Depends(require_admin),
+):
+    from dispatch_daily import cycle_detail
+    try:
+        return await cycle_detail(db, cycle_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+
+
+@api_router.post("/admin/dispatch/logs/{send_id}/flag")
+async def admin_dispatch_flag_send(
+    send_id: str, payload: _DispatchFlagPayload,
+    _: bool = Depends(require_admin),
+):
+    from dispatch_daily import flag_send
+    try:
+        return await flag_send(db, send_id,
+                                reason=payload.reason,
+                                note=payload.note,
+                                flagged_by=payload.flagged_by)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@api_router.delete("/admin/dispatch/logs/{send_id}/flag")
+async def admin_dispatch_unflag_send(
+    send_id: str, _: bool = Depends(require_admin),
+):
+    from dispatch_daily import unflag_send
+    removed = await unflag_send(db, send_id)
+    return {"removed": removed}
+
+
+@api_router.get("/admin/dispatch/review-flags")
+async def admin_dispatch_review_flags(
+    status: Optional[str] = None, limit: int = 200,
+    _: bool = Depends(require_admin),
+):
+    from dispatch_daily import list_flags
+    items = await list_flags(db, status=status, limit=limit)
+    return {"items": items, "count": len(items)}
+
+
+@api_router.get("/admin/dispatch/segment-overrides")
+async def admin_dispatch_segment_overrides_list(
+    _: bool = Depends(require_admin),
+):
+    from dispatch_daily import list_segment_overrides
+    items = await list_segment_overrides(db)
+    return {"items": items, "count": len(items)}
+
+
+@api_router.put("/admin/dispatch/segment-overrides")
+async def admin_dispatch_segment_overrides_set(
+    payload: _DispatchSegmentOverridePayload,
+    _: bool = Depends(require_admin),
+):
+    from dispatch_daily import set_segment_override
+    try:
+        return await set_segment_override(
+            db, payload.channel, payload.consent_tag, payload.mode,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@api_router.post("/admin/dispatch/test-send")
+async def admin_dispatch_test_send(
+    payload: _DispatchTestSendPayload,
+    _: bool = Depends(require_admin),
+):
+    """Trigger a targeted dispatch — only to readers in the opt-in
+    segment whose identifier is in `recipients`. Used for go-live
+    smoke tests with a tiny inbox set before flipping a full segment."""
+    from dispatch_daily import run_daily_dispatch
+    if not payload.recipients:
+        raise HTTPException(status_code=400, detail="recipients required")
+    return await run_daily_dispatch(
+        db, dry_run=False,
+        recipients_override=payload.recipients,
+        channels=payload.channels,
+    )
+
+
 # ── Voita raffle (gated until Sako sign-off + 3 gating flags clear) ──
 
 async def _voita_feature_enabled() -> bool:

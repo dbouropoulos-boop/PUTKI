@@ -314,10 +314,21 @@ async def update_raffle(db, raffle_id: str, patch: Dict[str, Any]) -> Dict[str, 
     gating_patch = patch.get("gating") or {}
     if gating_patch:
         gating = dict(existing.get("gating") or {})
-        for k in ("rules_url_set", "prize_distribution_locked", "match_populated"):
+        # match_populated is auto-derived from team + kickoff fields; admins
+        # cannot toggle it manually. Only the two human gates are writable.
+        for k in ("rules_url_set", "prize_distribution_locked"):
             if k in gating_patch:
                 gating[k] = bool(gating_patch[k])
         update["gating"] = gating
+
+    # Always recompute match_populated from the post-patch field values.
+    post_home = update.get("home_team", existing.get("home_team"))
+    post_away = update.get("away_team", existing.get("away_team"))
+    post_kickoff = update.get("kickoff_at", existing.get("kickoff_at"))
+    auto_match = bool(post_home and post_away and post_kickoff)
+    gating_final = dict(update.get("gating") or existing.get("gating") or {})
+    gating_final["match_populated"] = auto_match
+    update["gating"] = gating_final
 
     if "status" in patch:
         new_status = (patch["status"] or "").lower()

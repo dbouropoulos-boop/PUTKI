@@ -234,12 +234,11 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
           onChange={(next) => setForm({ ...form, payouts: next })} />
       </div>
 
-      {/* Gating flags */}
-      <div style={{ marginTop: 18, display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+      {/* Gating flags — match_populated is auto-derived (server-side) from home_team + away_team + kickoff_at presence */}
+      <div style={{ marginTop: 18, display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}>
         {[
           ['rules_url_set', 'RULES URL SET'],
           ['prize_distribution_locked', 'PRIZE LOCKED'],
-          ['match_populated', 'MATCH POPULATED'],
         ].map(([key, label]) => (
           <label key={key} data-testid={`gating-${key}`} style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -255,6 +254,17 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
             {label}
           </label>
         ))}
+        {/* Auto-derived read-only indicator */}
+        <span data-testid="gating-match_populated-auto" style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '6px 12px', cursor: 'default',
+          background: raffle?.gating?.match_populated ? '#0e2b1a' : 'var(--bg)',
+          border: `1px dashed ${raffle?.gating?.match_populated ? '#2b5a3e' : 'var(--border-strong)'}`,
+          color: raffle?.gating?.match_populated ? '#9ad4a9' : 'var(--muted)',
+          fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.16em', fontWeight: 700,
+        }} title="Auto-derived from home_team + away_team + kickoff_at being set.">
+          {raffle?.gating?.match_populated ? '✓' : '○'} MATCH POPULATED (AUTO)
+        </span>
       </div>
 
       {/* Status select */}

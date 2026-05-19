@@ -73,8 +73,192 @@ async def ensure_indexes(db) -> None:
     try:
         await db.dispatch_log.create_index("sent_at")
         await db.dispatch_log.create_index([("kind", 1), ("sent_at", -1)])
+        await db.dispatch_log.create_index([("cycle_id", 1), ("kind", 1)])
+        await db.dispatch_review_flags.create_index("send_id", unique=True)
+        await db.dispatch_review_flags.create_index([("status", 1), ("created_at", -1)])
+        await db.dispatch_segment_overrides.create_index(
+            [("channel", 1), ("consent_tag", 1)], unique=True,
+        )
     except Exception:
         logger.exception("dispatch_daily.ensure_indexes failed")
+
+
+# ── Segment-channel mode overrides ───────────────────────────────────────
+#
+# Mode states (per channel × segment):
+#   * `dry_run`            — default. Audit-only. Records intent.
+#   * `live_segment_only`  — provider hit IF this segment is the recipient set.
+#                            Other segments on the same channel remain dry-run.
+#   * `live_global`        — channel is globally live (creds permitting); this
+#                            segment is part of the unlocked set.
+#
+# `live_segment_only` and `live_global` are functionally the same at the
+# per-segment dispatch level (both → real send for this segment). The
+# distinction is intent recorded for audit + a UI hint: `live_global` means
+# the admin intends to flip the entire channel live across all unlocked
+# segments. The worker honors both as "this segment goes live".
+
+VALID_OVERRIDE_MODES = {"dry_run", "live_segment_only", "live_global"}
+
+
+async def get_segment_override(db, channel: str, consent_tag: str) -> str:
+    """Returns mode for (channel, consent_tag). Defaults to `dry_run`."""
+    doc = await db.dispatch_segment_overrides.find_one(
+        {"channel": channel, "consent_tag": consent_tag},
+        {"_id": 0, "mode": 1},
+    )
+    if not doc:
+        return "dry_run"
+    mode = doc.get("mode") or "dry_run"
+    return mode if mode in VALID_OVERRIDE_MODES else "dry_run"
+
+
+async def set_segment_override(db, channel: str, consent_tag: str, mode: str) -> Dict[str, Any]:
+    if mode not in VALID_OVERRIDE_MODES:
+        raise ValueError(f"mode must be one of {sorted(VALID_OVERRIDE_MODES)}")
+    if channel not in {"email", "sms", "telegram"}:
+        raise ValueError("channel must be email|sms|telegram")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.dispatch_segment_overrides.update_one(
+        {"channel": channel, "consent_tag": consent_tag},
+        {"$set": {"channel": channel, "consent_tag": consent_tag,
+                   "mode": mode, "updated_at": now}},
+        upsert=True,
+    )
+    return {"channel": channel, "consent_tag": consent_tag,
+            "mode": mode, "updated_at": now}
+
+
+async def list_segment_overrides(db) -> List[Dict[str, Any]]:
+    cur = db.dispatch_segment_overrides.find({}, {"_id": 0})
+    return [d async for d in cur]
+
+
+# ── Review flags ─────────────────────────────────────────────────────────
+
+VALID_FLAG_REASONS = {"tone_off", "factually_incorrect", "legal_concern", "formatting", "other"}
+
+
+async def flag_send(db, send_id: str, reason: str,
+                    note: Optional[str] = None,
+                    flagged_by: Optional[str] = None) -> Dict[str, Any]:
+    if reason not in VALID_FLAG_REASONS:
+        raise ValueError(f"reason must be one of {sorted(VALID_FLAG_REASONS)}")
+    # Confirm the send exists.
+    send = await db.dispatch_log.find_one(
+        {"id": send_id, "kind": "send"}, {"_id": 0, "id": 1, "channel": 1, "segment": 1, "cycle_id": 1},
+    )
+    if not send:
+        raise ValueError(f"send {send_id} not found")
+    now = datetime.now(timezone.utc).isoformat()
+    doc = {
+        "id": uuid.uuid4().hex,
+        "send_id": send_id,
+        "cycle_id": send.get("cycle_id"),
+        "channel": send.get("channel"),
+        "segment": send.get("segment"),
+        "reason": reason,
+        "note": (note or "").strip()[:600],
+        "status": "open",
+        "flagged_by": (flagged_by or "admin")[:120],
+        "created_at": now,
+        "updated_at": now,
+    }
+    # Upsert by send_id so flagging twice updates the existing row.
+    await db.dispatch_review_flags.update_one(
+        {"send_id": send_id},
+        {"$set": doc},
+        upsert=True,
+    )
+    stored = await db.dispatch_review_flags.find_one({"send_id": send_id}, {"_id": 0})
+    return stored
+
+
+async def unflag_send(db, send_id: str) -> bool:
+    result = await db.dispatch_review_flags.delete_one({"send_id": send_id})
+    return result.deleted_count > 0
+
+
+async def list_flags(db, *, status: Optional[str] = None,
+                     limit: int = 200) -> List[Dict[str, Any]]:
+    q: Dict[str, Any] = {}
+    if status:
+        q["status"] = status
+    cur = db.dispatch_review_flags.find(q, {"_id": 0}).sort([("created_at", -1)]).limit(
+        max(1, min(int(limit or 200), 500))
+    )
+    return [d async for d in cur]
+
+
+# ── Cycle list + detail (for the previewer) ──────────────────────────────
+
+async def list_cycles(db, *, days: int = 14, limit: int = 50) -> List[Dict[str, Any]]:
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=max(1, days))).isoformat()
+    cur = db.dispatch_log.find(
+        {"kind": "cycle", "$or": [
+            {"finished_at": {"$gte": cutoff}},
+            {"started_at": {"$gte": cutoff}},
+        ]},
+        {"_id": 0},
+    ).sort([("finished_at", -1), ("started_at", -1)]).limit(
+        max(1, min(int(limit or 50), 100))
+    )
+    return [d async for d in cur]
+
+
+async def cycle_detail(db, cycle_id: str) -> Dict[str, Any]:
+    """Full cycle bundle: cycle doc + per-channel grouped sends + payloads
+    + flag overlay. Powers the side-by-side previewer."""
+    cycle = await db.dispatch_log.find_one(
+        {"kind": "cycle", "id": cycle_id}, {"_id": 0},
+    )
+    if not cycle:
+        raise ValueError(f"cycle {cycle_id} not found")
+    sends_cur = db.dispatch_log.find(
+        {"kind": "send", "cycle_id": cycle_id}, {"_id": 0},
+    ).sort([("sent_at", 1)])
+    sends = [d async for d in sends_cur]
+
+    # Flags keyed by send_id.
+    flag_cur = db.dispatch_review_flags.find(
+        {"cycle_id": cycle_id}, {"_id": 0},
+    )
+    flag_map: Dict[str, Dict[str, Any]] = {}
+    async for f in flag_cur:
+        flag_map[f["send_id"]] = f
+
+    # Group sends by channel, surface one representative payload per channel.
+    per_channel: Dict[str, Dict[str, Any]] = {}
+    for ch in ("email", "sms", "telegram"):
+        ch_sends = [s for s in sends if s.get("channel") == ch]
+        # One representative payload — they're identical within a channel.
+        payload = ch_sends[0].get("payload") if ch_sends else None
+        rendered = render_preview(ch, payload or {}) if payload else None
+        per_channel[ch] = {
+            "channel": ch,
+            "segment": ch_sends[0].get("segment") if ch_sends else None,
+            "recipient_count": len(ch_sends),
+            "payload": payload,
+            "rendered_text": rendered,
+            "mode": ch_sends[0].get("mode") if ch_sends else None,
+            "sends": [
+                {**s, "flag": flag_map.get(s.get("id"))}
+                for s in ch_sends
+            ],
+        }
+
+    return {
+        "cycle": cycle,
+        "per_channel": per_channel,
+        "flag_count": len(flag_map),
+    }
+
+
+def render_preview(channel: str, payload: Dict[str, Any]) -> str:
+    """Channel-aware text renderer reused for both real sends + UI preview."""
+    if channel == "email":
+        return _render_email_text(payload or {})
+    return _render_sms_text(payload or {})
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────
@@ -336,9 +520,46 @@ def _render_sms_text(payload: Dict[str, Any]) -> str:
 
 async def _dispatch_segment(
     db, *, channel: str, consent_tag: str, payload: Dict[str, Any],
-    cycle_id: str,
+    cycle_id: str, force_dry_run: bool = False,
+    override_mode: Optional[str] = None,
+    recipients_override: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    recipients = await _recipients_for_tag(db, consent_tag)
+    """Per-channel dispatch.
+
+    Decision tree:
+      1. If `force_dry_run` → ALL recipients get dry_run rows.
+      2. If `recipients_override` is set → filter the segment's recipients
+         to ONLY those listed (safety check: never sends to anyone not in
+         the opt-in segment). Forces `live_segment_only` semantics.
+      3. Else honor the persisted `override_mode` for this (channel, segment).
+         `dry_run` (default) → audit-only. `live_segment_only` / `live_global`
+         → real provider call when creds present, dry_run fallback when not.
+    """
+    all_recipients = await _recipients_for_tag(db, consent_tag)
+
+    if recipients_override is not None:
+        allow = {r.strip().lower() for r in recipients_override if r and r.strip()}
+        if not allow:
+            return {
+                "channel": channel, "segment": consent_tag,
+                "delivered": 0, "dry_run": 0, "errors": 0,
+                "recipients_seen": 0, "mode": "no_recipients",
+                "skipped_reason": "recipients_override_empty",
+            }
+        recipients = [
+            r for r in all_recipients
+            if (r.get("identifier") or "").strip().lower() in allow
+        ]
+        # Effective mode: real send if creds present, dry_run otherwise.
+        effective_live = True
+    else:
+        recipients = all_recipients
+        mode = override_mode or await get_segment_override(db, channel, consent_tag)
+        effective_live = mode in {"live_segment_only", "live_global"}
+
+    if force_dry_run:
+        effective_live = False
+
     sender = {
         "email": _attempt_email_send,
         "sms": _attempt_sms_send,
@@ -353,10 +574,13 @@ async def _dispatch_segment(
         ident = r.get("identifier")
         if not ident:
             continue
-        try:
-            result = await sender(ident, payload)
-        except Exception as exc:
-            result = {"mode": "live", "error": str(exc)[:300]}
+        if effective_live:
+            try:
+                result = await sender(ident, payload)
+            except Exception as exc:
+                result = {"mode": "live", "error": str(exc)[:300]}
+        else:
+            result = {"mode": "dry_run", "provider": _channel_live_mode(channel)[1]}
         if result.get("error"):
             errors += 1
         elif result.get("mode") == "dry_run":
@@ -376,6 +600,7 @@ async def _dispatch_segment(
             "provider_response": result.get("provider_response"),
             "error": result.get("error"),
             "sent_at": sent_at,
+            "test_send": recipients_override is not None,
         })
     if docs:
         try:
@@ -386,60 +611,71 @@ async def _dispatch_segment(
         "channel": channel, "segment": consent_tag,
         "delivered": delivered, "dry_run": dry_run, "errors": errors,
         "recipients_seen": len(recipients),
+        "mode": "live" if effective_live else "dry_run",
     }
 
 
 # ── Public entrypoint ────────────────────────────────────────────────────
 
 async def run_daily_dispatch(db, *, dry_run: bool = True,
-                              cycle_id: Optional[str] = None) -> Dict[str, Any]:
+                              cycle_id: Optional[str] = None,
+                              recipients_override: Optional[List[str]] = None,
+                              channels: Optional[List[str]] = None) -> Dict[str, Any]:
     """Assemble payloads, fan out to each segment, write the audit trail.
 
-    `dry_run=True` short-circuits all provider creds — every send becomes
-    a dry-run row regardless of whether keys are present. `dry_run=False`
-    means "use real creds where available, fall back to dry-run for the
-    channels still missing keys."
+    Parameters
+    ----------
+    dry_run
+        `True` (default) forces every send into dry-run regardless of
+        creds or persisted segment-override mode. `False` lets each
+        segment's persisted mode drive the decision (defaults to dry_run
+        when no override row exists). Real provider calls only happen
+        when (a) creds are present AND (b) the segment is unlocked.
+    recipients_override
+        When provided, the cycle becomes a "test send" — only readers in
+        the opt-in segment whose identifier is in the list receive the
+        message. Forces live attempt (creds permitting). Other segments
+        on the channel are SKIPPED entirely (no log rows). Each cycle
+        doc records the override list for audit.
+    channels
+        Optional whitelist (e.g. `["email"]`) to scope a test send to
+        one channel. Defaults to all three.
     """
     cycle_id = cycle_id or uuid.uuid4().hex
     started_at = datetime.now(timezone.utc).isoformat()
     cycle_date = _today_key()
 
-    # Payload assembly (cheap — once per cycle)
-    email_payload = await _build_email_digest_payload(db)
-    sms_payload = await _build_sms_alerts_payload(db)
-    telegram_payload = await _build_telegram_alerts_payload(db)
+    channels = channels or ["email", "sms", "telegram"]
+    channels = [c for c in channels if c in {"email", "sms", "telegram"}]
 
-    # Force dry-run by stripping credentials at runtime when caller asked.
-    if dry_run:
-        # Easiest way to honor the contract: monkeypatch the provider
-        # check for this call. We can't actually do that cleanly across
-        # tasks — instead, we drop into a guarded mode that wraps each
-        # sender. Keep it explicit and obvious.
-        results = await asyncio.gather(
-            _dispatch_segment_dryrun(db, channel="email",
-                                      consent_tag="email_sentiment",
-                                      payload=email_payload, cycle_id=cycle_id),
-            _dispatch_segment_dryrun(db, channel="sms",
-                                      consent_tag="sms_alerts",
-                                      payload=sms_payload, cycle_id=cycle_id),
-            _dispatch_segment_dryrun(db, channel="telegram",
-                                      consent_tag="telegram_alerts",
-                                      payload=telegram_payload, cycle_id=cycle_id),
-            return_exceptions=False,
-        )
-    else:
-        results = await asyncio.gather(
-            _dispatch_segment(db, channel="email",
-                              consent_tag="email_sentiment",
-                              payload=email_payload, cycle_id=cycle_id),
-            _dispatch_segment(db, channel="sms",
-                              consent_tag="sms_alerts",
-                              payload=sms_payload, cycle_id=cycle_id),
-            _dispatch_segment(db, channel="telegram",
-                              consent_tag="telegram_alerts",
-                              payload=telegram_payload, cycle_id=cycle_id),
-            return_exceptions=False,
-        )
+    # Payload assembly (cheap — once per cycle)
+    email_payload = await _build_email_digest_payload(db) if "email" in channels else None
+    sms_payload = await _build_sms_alerts_payload(db) if "sms" in channels else None
+    telegram_payload = await _build_telegram_alerts_payload(db) if "telegram" in channels else None
+
+    tasks = []
+    if "email" in channels:
+        tasks.append(_dispatch_segment(
+            db, channel="email", consent_tag="email_sentiment",
+            payload=email_payload, cycle_id=cycle_id,
+            force_dry_run=dry_run,
+            recipients_override=recipients_override,
+        ))
+    if "sms" in channels:
+        tasks.append(_dispatch_segment(
+            db, channel="sms", consent_tag="sms_alerts",
+            payload=sms_payload, cycle_id=cycle_id,
+            force_dry_run=dry_run,
+            recipients_override=recipients_override,
+        ))
+    if "telegram" in channels:
+        tasks.append(_dispatch_segment(
+            db, channel="telegram", consent_tag="telegram_alerts",
+            payload=telegram_payload, cycle_id=cycle_id,
+            force_dry_run=dry_run,
+            recipients_override=recipients_override,
+        ))
+    results = await asyncio.gather(*tasks, return_exceptions=False)
 
     finished_at = datetime.now(timezone.utc).isoformat()
     cycle_doc = {
@@ -450,6 +686,9 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
         "results": results,
         "started_at": started_at,
         "finished_at": finished_at,
+        "test_send": bool(recipients_override),
+        "recipients_override_count": len(recipients_override) if recipients_override else 0,
+        "channels": channels,
     }
     try:
         await db.dispatch_log.insert_one(cycle_doc)
@@ -457,44 +696,6 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
         logger.exception("dispatch_log cycle insert failed")
     cycle_doc.pop("_id", None)
     return cycle_doc
-
-
-async def _dispatch_segment_dryrun(db, *, channel: str, consent_tag: str,
-                                    payload: Dict[str, Any],
-                                    cycle_id: str) -> Dict[str, Any]:
-    """Mirror of _dispatch_segment that NEVER hits a provider — purely
-    writes audit rows. Used when the caller forces dry-run."""
-    recipients = await _recipients_for_tag(db, consent_tag)
-    sent_at = datetime.now(timezone.utc).isoformat()
-    docs = []
-    for r in recipients:
-        ident = r.get("identifier")
-        if not ident:
-            continue
-        docs.append({
-            "id": uuid.uuid4().hex,
-            "kind": "send",
-            "cycle_id": cycle_id,
-            "channel": channel,
-            "segment": consent_tag,
-            "recipient": ident,
-            "payload": payload,
-            "mode": "dry_run",
-            "provider": _channel_live_mode(channel)[1],
-            "provider_response": None,
-            "error": None,
-            "sent_at": sent_at,
-        })
-    if docs:
-        try:
-            await db.dispatch_log.insert_many(docs, ordered=False)
-        except Exception:
-            logger.exception("dispatch_log dry-run insert_many failed for %s", consent_tag)
-    return {
-        "channel": channel, "segment": consent_tag,
-        "delivered": 0, "dry_run": len(docs), "errors": 0,
-        "recipients_seen": len(recipients),
-    }
 
 
 # ── Worker loop ──────────────────────────────────────────────────────────
