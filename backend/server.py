@@ -2807,6 +2807,138 @@ async def admin_voita_list(_: bool = Depends(require_admin)):
     return {"items": items}
 
 
+# ── Telegram bot — Voita raffle confirmation (Sprint B Slice 3) ──────────
+
+@api_router.post("/webhooks/telegram")
+async def webhook_telegram(request: Request):
+    """Inbound webhook from Telegram. Validates the secret token header
+    (when configured) and dispatches updates to the bot module."""
+    import telegram_bot as _tg
+    expected_secret = _tg._webhook_secret()
+    if expected_secret:
+        provided = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+        if provided != expected_secret:
+            raise HTTPException(status_code=401, detail="invalid_telegram_secret")
+    try:
+        update = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=f"invalid_json: {exc}")
+    result = await _tg.handle_update(db, update)
+    # Audit log — small TTL collection so we can debug binding issues.
+    try:
+        await db.telegram_webhook_log.insert_one({
+            "received_at": datetime.now(timezone.utc).isoformat(),
+            "update_id": update.get("update_id"),
+            "result": result,
+            "chat_id": ((update.get("message") or {}).get("chat") or {}).get("id"),
+        })
+    except Exception:
+        logger.exception("telegram webhook audit log failed")
+    return {"ok": True, **result}
+
+
+class _TelegramSetWebhookPayload(BaseModel):
+    url: str
+    secret_token: Optional[str] = None
+    drop_pending_updates: bool = True
+
+
+@api_router.post("/admin/telegram/set-webhook")
+async def admin_telegram_set_webhook(payload: _TelegramSetWebhookPayload,
+                                     _: bool = Depends(require_admin)):
+    import telegram_bot as _tg
+    return await _tg.set_webhook(
+        payload.url.strip(),
+        secret_token=payload.secret_token,
+        drop_pending_updates=payload.drop_pending_updates,
+    )
+
+
+@api_router.get("/admin/telegram/webhook-info")
+async def admin_telegram_webhook_info(_: bool = Depends(require_admin)):
+    import telegram_bot as _tg
+    return await _tg.get_webhook_info()
+
+
+@api_router.get("/admin/telegram/bound-entries")
+async def admin_telegram_bound_entries(limit: int = 50, _: bool = Depends(require_admin)):
+    """Lists recent voita entries that have a bound Telegram chat_id.
+    Used to sanity-check the binding pipeline end-to-end."""
+    cur = db.voita_entries.find(
+        {"telegram_chat_id": {"$exists": True, "$ne": None}},
+        {"_id": 0, "id": 1, "raffle_slug": 1, "telegram_chat_id": 1,
+         "telegram_username": 1, "telegram_bound_at": 1, "pending_id": 1,
+         "confidence": 1, "prediction_one_x_two": 1,
+         "predicted_home_goals": 1, "predicted_away_goals": 1,
+         "email_hash": 1, "display_name": 1, "created_at": 1},
+    ).sort([("telegram_bound_at", -1)]).limit(max(1, min(200, int(limit))))
+    items = [d async for d in cur]
+    return {"items": items, "count": len(items)}
+
+
+# ── Mittari signal subscriptions (Sprint B Slice 4) ──────────────────────
+
+class _MittariSubscribePayload(BaseModel):
+    pending_id: str = Field(..., max_length=64)
+
+
+@api_router.post("/mittari/subscribe")
+async def mittari_subscribe(payload: _MittariSubscribePayload):
+    """Pre-register the pending_id so the bot can resolve it when the
+    user lands via t.me/Putkihq_bot?start=mittari_<id>. Optimistic — the
+    FE unlocks the signals client-side immediately; the bot side
+    finalises the binding (chat_id + telegram_username) async."""
+    pid = (payload.pending_id or "").strip()[:64]
+    if not pid:
+        raise HTTPException(status_code=400, detail="pending_id required")
+    now = datetime.now(timezone.utc).isoformat()
+    await db.mittari_subscribers.update_one(
+        {"pending_id": pid},
+        {
+            "$set": {
+                "pending_id": pid,
+                "consent_tag": "mittari_alerts",
+                "source": "mittari_signals",
+                "last_seen_at": now,
+            },
+            "$setOnInsert": {"created_at": now, "active": True},
+        },
+        upsert=True,
+    )
+    return {"ok": True, "pending_id": pid}
+
+
+@api_router.get("/mittari/binding-status")
+async def mittari_binding_status(pending_id: str):
+    """Public lookup so the page can poll for bot confirmation after the
+    user lands in Telegram. Returns minimal info — no chat_id leaks."""
+    pid = (pending_id or "").strip()[:64]
+    if not pid:
+        raise HTTPException(status_code=400, detail="pending_id required")
+    sub = await db.mittari_subscribers.find_one(
+        {"pending_id": pid},
+        {"_id": 0, "telegram_bound_at": 1, "active": 1},
+    )
+    if not sub:
+        return {"bound": False, "active": False}
+    return {
+        "bound": bool(sub.get("telegram_bound_at")),
+        "active": bool(sub.get("active")),
+        "bound_at": sub.get("telegram_bound_at"),
+    }
+
+
+@api_router.get("/admin/mittari/subscribers")
+async def admin_mittari_subscribers(limit: int = 50, _: bool = Depends(require_admin)):
+    cur = db.mittari_subscribers.find(
+        {}, {"_id": 0},
+    ).sort([("created_at", -1)]).limit(max(1, min(500, int(limit))))
+    items = [d async for d in cur]
+    total = await db.mittari_subscribers.count_documents({})
+    active = await db.mittari_subscribers.count_documents({"active": True, "telegram_chat_id": {"$ne": None}})
+    return {"items": items, "count": len(items), "total": total, "active_bound": active}
+
+
 @api_router.post("/admin/voita/raffles")
 async def admin_voita_create(payload: _VoitaCreatePayload, _: bool = Depends(require_admin)):
     from voita_engine import create_raffle

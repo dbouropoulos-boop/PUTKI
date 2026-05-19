@@ -282,6 +282,20 @@ async def recalculate_dial(db) -> Dict[str, Any]:
         except Exception as e:
             logger.debug("Mittari OG dispatch skipped: %s", e)
 
+        # Sprint B Slice 4 — fan-out state-change Telegram pings to every
+        # bound Mittari subscriber. Fire-and-forget; dial loop never
+        # blocks on Telegram round-trips.
+        try:
+            from telegram_bot import broadcast_mittari_state_change
+            asyncio.create_task(broadcast_mittari_state_change(
+                db,
+                from_state=prev_key or "",
+                to_state=snapshot["state"]["key"],
+                score=snapshot.get("composite_score") or 0,
+            ))
+        except Exception as e:
+            logger.debug("Mittari Telegram broadcast skipped: %s", e)
+
     # Retention: keep last 500 raw snapshots (the live UI only needs recent history).
     count = await db.dial_snapshots.count_documents({})
     if count > 500:

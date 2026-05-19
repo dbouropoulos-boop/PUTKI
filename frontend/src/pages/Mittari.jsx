@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import DialCockpit from '../components/DialCockpit';
 import ProgressiveOptIn from '../components/ProgressiveOptIn';
 import MittariStreak from '../components/MittariStreak';
+import MittariSignals from '../components/MittariSignals';
 import { dialReading } from '../constants/dial';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
@@ -158,6 +159,9 @@ const Mittari = () => {
             {lang === 'en' ? 'COMPOSITE ' : 'YHDISTELMÄ '}{Math.round(composite)}/100</p>
         )}
       </section>
+
+      {/* DAILY SIGNALS (Sprint B Slice 4) — Telegram-gated */}
+      <MittariSignals />
 
       {/* METHODOLOGY SUMMARY */}
       <section data-testid="mittari-method" style={{
