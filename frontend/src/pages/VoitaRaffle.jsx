@@ -130,7 +130,7 @@ const QuizScreen = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) => 
       <div style={{
         fontFamily: 'ui-monospace, monospace', fontSize: 10,
         letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 8,
-      }}>{lang === 'en' ? `LESSON ${lessonNum} OF ${total}` : `OPPI ${lessonNum} / ${total}`}{lessonTitle ? ` · ${lessonTitle.toUpperCase()}` : ''}</div>
+      }}>{lang === 'en' ? `QUESTION ${lessonNum} OF ${total}` : `KYSYMYS ${lessonNum} / ${total}`}{lessonTitle ? ` · ${lessonTitle.toUpperCase()}` : ''}</div>
       <h2 data-testid="quiz-question-title" style={{
         fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 700, color: 'var(--ink)',
         margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15,
@@ -230,131 +230,79 @@ const RevealOpenRaffles = ({ sports, onAdvance, lang }) => {
 };
 
 
-// ── Lesson reveal — shown after every Q. The teaching moment. ──────────
-const LessonReveal = ({ q, answer, onContinue, lang, isLast }) => {
+// ── Zinger card — 1-line interstitial reveal. Auto-advance 2s, tap-to-skip.
+// Replaces the verbose lesson reveal. Full lessons now ship via email drip.
+const ZingerCard = ({ q, answer, onContinue, lang, isLast }) => {
+  React.useEffect(() => {
+    if (!q) return;
+    const t = setTimeout(onContinue, 2000);
+    return () => clearTimeout(t);
+  }, [q, onContinue]);
   if (!q) return null;
-  const heading = lang === 'en' ? (q.reveal_heading_en || '') : (q.reveal_heading_fi || '');
-  const fact = lang === 'en' ? (q.reveal_fact_en || '') : (q.reveal_fact_fi || '');
-  const why = lang === 'en' ? (q.reveal_why_en || '') : (q.reveal_why_fi || '');
-  const application = lang === 'en' ? (q.reveal_application_en || '') : (q.reveal_application_fi || '');
-  // Personalized reveal — find the option the user picked
-  let personalized = '';
+  let zinger = lang === 'en' ? (q.zinger_en || '') : (q.zinger_fi || '');
   if (answer) {
     const picked = Array.isArray(answer) ? answer[0] : answer;
     const opt = (q.options || []).find((o) => o.v === picked);
-    if (opt) personalized = lang === 'en' ? (opt.reveal_personalized_en || '') : (opt.reveal_personalized_fi || '');
+    const per = opt && (lang === 'en' ? opt.zinger_personalized_en : opt.zinger_personalized_fi);
+    if (per) zinger = per;
   }
-  const labels = lang === 'en'
-    ? { why: 'WHY?', app: 'WHAT THIS MEANS FOR YOUR RAFFLES', cta: isLast ? 'SEE MY REPORT →' : 'NEXT LESSON →', your: 'YOUR ANSWER' }
-    : { why: 'MIKSI?', app: 'MITÄ TÄMÄ TARKOITTAA ARVONNOISSASI', cta: isLast ? 'NÄYTÄ RAPORTTINI →' : 'SEURAAVA OPPI →', your: 'VASTAUKSESI' };
+  const cta = lang === 'en'
+    ? (isLast ? 'SEE YOUR RESULT →' : 'CONTINUE →')
+    : (isLast ? 'NÄYTÄ TULOKSESI →' : 'JATKA →');
   return (
-    <div data-testid={`lesson-reveal-${q.key}`}>
-      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>
-        {heading.toUpperCase()}
+    <div data-testid={`zinger-${q.key}`}
+      onClick={onContinue}
+      style={{
+        padding: '40px 22px 32px', cursor: 'pointer',
+        minHeight: 240, display: 'flex', flexDirection: 'column',
+        justifyContent: 'center',
+      }}>
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 14 }}>
+        {lang === 'en' ? `LESSON ${q.lesson_number} · COMING IN YOUR INBOX` : `OPPI ${q.lesson_number} · TULOSSA SÄHKÖPOSTIIN`}
       </div>
-      <h2 data-testid="lesson-reveal-fact" style={{
-        fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: 'var(--ink)',
-        margin: '0 0 18px', letterSpacing: '-0.012em', lineHeight: 1.25,
-      }}>{fact}</h2>
-      {why && (
-        <div data-testid="lesson-reveal-why" style={{ marginBottom: 18 }}>
-          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#C13B2C', fontWeight: 700, marginBottom: 6 }}>{labels.why}</div>
-          <p style={{ color: 'var(--ink)', fontSize: 14.5, lineHeight: 1.6, margin: 0, opacity: 0.92 }}>{why}</p>
-        </div>
-      )}
-      {personalized && (
-        <div data-testid="lesson-reveal-personalized" style={{
-          padding: '14px 16px', marginBottom: 18,
-          background: 'rgba(232,194,110,0.08)', border: '1px solid rgba(232,194,110,0.32)',
-        }}>
-          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 6 }}>{labels.your}</div>
-          <p style={{ color: 'var(--ink)', fontSize: 14.5, lineHeight: 1.55, margin: 0, fontStyle: 'italic' }}>{personalized}</p>
-        </div>
-      )}
-      {application && (
-        <div data-testid="lesson-reveal-application" style={{ marginBottom: 24 }}>
-          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#6FA37D', fontWeight: 700, marginBottom: 6 }}>{labels.app}</div>
-          <p style={{ color: 'var(--ink)', fontSize: 14.5, lineHeight: 1.6, margin: 0, opacity: 0.92 }}>{application}</p>
-        </div>
-      )}
-      <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onContinue}
-        data-testid="lesson-reveal-continue"
-        style={{
-          padding: '15px 22px', width: '100%',
-          background: '#E8C26E', color: '#0B0A09', border: 0,
-          fontFamily: 'ui-monospace, monospace', fontSize: 12,
-          letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
-        }}>{labels.cta}</motion.button>
+      <p data-testid="zinger-text" style={{
+        fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--ink)',
+        lineHeight: 1.3, letterSpacing: '-0.01em', margin: '0 0 22px',
+      }}>{zinger}</p>
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+        {cta}
+      </div>
     </div>
   );
 };
 
 
-// ── Personal Predictor Report — unlock screen before email gate. ───────
-const ReportScreen = ({ profile, loading, onContinue, lang }) => {
+// ── Result tease — one paragraph from on_site_tease. Full report → email.
+const ResultTease = ({ profile, loading, onContinue, lang }) => {
   if (loading || !profile) {
     return (
-      <div data-testid="report-loading" style={{ textAlign: 'center', padding: '40px 0' }}>
+      <div data-testid="tease-loading" style={{ textAlign: 'center', padding: '40px 0' }}>
         <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-          {lang === 'en' ? 'COMPILING YOUR REPORT…' : 'KOOSTAN RAPORTTIASI…'}
+          {lang === 'en' ? 'COMPILING YOUR RESULT…' : 'KOOSTAN TULOSTASI…'}
         </div>
       </div>
     );
   }
   const name = lang === 'en' ? profile.name_en : profile.name_fi;
-  const diagnosis = lang === 'en' ? profile.diagnosis_en : profile.diagnosis_fi;
-  const weakness = lang === 'en' ? profile.weakness_en : profile.weakness_fi;
-  const edge = lang === 'en' ? profile.edge_en : profile.edge_fi;
-  const hooks = (profile.hooks || []).map((h) => lang === 'en' ? h.en : h.fi).filter(Boolean);
+  const tease = lang === 'en' ? (profile.on_site_tease_en || profile.diagnosis_en || '') : (profile.on_site_tease_fi || profile.diagnosis_fi || '');
   const labels = lang === 'en'
-    ? { eyebrow: 'YOUR PERSONAL PREDICTOR REPORT', profile: 'PROFILE', diagnosis: '', weakness: 'YOUR WEAKNESS', edge: 'YOUR EDGE', hooks: "WHAT WE'LL DO FOR YOU", cta: 'SAVE MY REPORT →' }
-    : { eyebrow: 'HENKILÖKOHTAINEN ENNUSTAJARAPORTTISI', profile: 'PROFIILI', diagnosis: '', weakness: 'HEIKKOUTESI', edge: 'ETUSI', hooks: 'MITÄ TEEMME PUOLESTASI', cta: 'TALLENNA RAPORTTINI →' };
+    ? { eyebrow: 'YOUR PROFILE', cta: 'CONTINUE TO RAFFLE →' }
+    : { eyebrow: 'PROFIILISI', cta: 'JATKA ARVONTAAN →' };
   return (
-    <div data-testid="report-step">
+    <div data-testid="tease-step">
       <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>
         {labels.eyebrow}
       </div>
-      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, marginBottom: 6 }}>
-        {labels.profile}
-      </div>
-      <h2 data-testid="report-profile-name" style={{
-        fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 700, color: 'var(--ink)',
-        margin: '0 0 18px', letterSpacing: '-0.02em', lineHeight: 1.05,
+      <h2 data-testid="tease-profile-name" style={{
+        fontFamily: 'Georgia, serif', fontSize: 34, fontWeight: 700, color: 'var(--ink)',
+        margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.05,
       }}>{name}</h2>
-
-      {diagnosis && (
-        <p data-testid="report-diagnosis" style={{ color: 'var(--ink)', fontSize: 15, lineHeight: 1.6, margin: '0 0 20px' }}>{diagnosis}</p>
-      )}
-
-      <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 18, marginBottom: 18 }}>
-        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#C13B2C', fontWeight: 700, marginBottom: 6 }}>{labels.weakness}</div>
-        <p data-testid="report-weakness" style={{ color: 'var(--ink)', fontSize: 14, lineHeight: 1.6, margin: 0, opacity: 0.94 }}>{weakness}</p>
-      </div>
-
-      <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 18, marginBottom: 18 }}>
-        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#6FA37D', fontWeight: 700, marginBottom: 6 }}>{labels.edge}</div>
-        <p data-testid="report-edge" style={{ color: 'var(--ink)', fontSize: 14, lineHeight: 1.6, margin: 0, opacity: 0.94 }}>{edge}</p>
-      </div>
-
-      {hooks.length > 0 && (
-        <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 18, marginBottom: 28 }}>
-          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>{labels.hooks}</div>
-          <ul data-testid="report-hooks" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-            {hooks.map((h, i) => (
-              <li key={i} style={{
-                display: 'flex', gap: 10, alignItems: 'flex-start',
-                padding: '6px 0', color: 'var(--ink)', fontSize: 13.5, lineHeight: 1.55,
-              }}>
-                <span style={{ color: '#E8C26E', fontWeight: 700 }}>→</span>
-                <span>{h}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
+      <p data-testid="tease-paragraph" style={{
+        color: 'var(--ink)', fontSize: 15, lineHeight: 1.6,
+        margin: '0 0 28px', opacity: 0.94,
+      }}>{tease}</p>
       <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onContinue}
-        data-testid="report-continue"
+        data-testid="tease-continue"
         style={{
           padding: '15px 22px', width: '100%',
           background: '#E8C26E', color: '#0B0A09', border: 0,
@@ -366,12 +314,43 @@ const ReportScreen = ({ profile, loading, onContinue, lang }) => {
 };
 
 
-// ── APPLY YOUR LESSON transition — between email gate and prediction. ──
+// ── Confirmation — shown after email gate. Email drip is en route.
+const ConfirmationScreen = ({ email, profileName, lang }) => {
+  const labels = lang === 'en'
+    ? { eyebrow: 'YOU\'RE IN', headline: 'Entry locked.', body1: `Your full report (${profileName}) is on its way to`, body2: 'Over the next five days we\'ll send you the playbook — one lesson per day. Read at your own pace.', linkHome: 'BACK TO PUTKI HQ →' }
+    : { eyebrow: 'OLET MUKANA', headline: 'Veikkauksesi lukittu.', body1: `Täysi raporttisi (${profileName}) on matkalla osoitteeseen`, body2: 'Seuraavan viiden päivän aikana lähetämme sinulle playbookin — yksi oppi päivässä. Lue omassa tahdissasi.', linkHome: 'TAKAISIN PUTKI HQ →' };
+  return (
+    <div data-testid="confirmation-step">
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#6FA37D', fontWeight: 700, marginBottom: 10 }}>
+        ✓ {labels.eyebrow}
+      </div>
+      <h2 style={{
+        fontFamily: 'Georgia, serif', fontSize: 34, fontWeight: 700, color: 'var(--ink)',
+        margin: '0 0 14px', letterSpacing: '-0.02em', lineHeight: 1.05,
+      }}>{labels.headline}</h2>
+      <p style={{ color: 'var(--ink)', fontSize: 15, lineHeight: 1.6, margin: '0 0 6px', opacity: 0.94 }}>
+        {labels.body1} <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 13, color: '#E8C26E' }}>{email}</span>.
+      </p>
+      <p style={{ color: 'var(--muted)', fontSize: 14, lineHeight: 1.55, margin: '0 0 24px' }}>{labels.body2}</p>
+      <Link to="/" data-testid="confirmation-home"
+        style={{
+          display: 'inline-block', padding: '13px 22px',
+          background: 'var(--surface)', color: 'var(--ink)',
+          border: '1px solid var(--border-strong)', textDecoration: 'none',
+          fontFamily: 'ui-monospace, monospace', fontSize: 11,
+          letterSpacing: '0.22em', fontWeight: 700,
+        }}>{labels.linkHome}</Link>
+    </div>
+  );
+};
+
+
+// ── APPLY YOUR LESSON transition — between tease and prediction. ───────
 const ApplyScreen = ({ raffle, onContinue, lang }) => {
   const prize = (raffle.prize_distribution?.payouts || []).reduce((s, p) => s + (p.amount_eur || 0), 0);
   const labels = lang === 'en'
-    ? { eyebrow: 'APPLY YOUR LESSON', sub: 'Time to use what you just learned. Predict the winner and the score.', cta: 'START PREDICTION →' }
-    : { eyebrow: 'SOVELLA OPPIASI', sub: 'Aika käyttää oppimaasi. Ennusta voittaja ja lopputulos.', cta: 'ALOITA ENNUSTUS →' };
+    ? { eyebrow: 'YOUR RAFFLE', sub: 'Predict the winner and the score. Email comes after.', cta: 'START PREDICTION →' }
+    : { eyebrow: 'ARVONTASI', sub: 'Ennusta voittaja ja lopputulos. Sähköposti tulee perään.', cta: 'ALOITA ENNUSTUS →' };
   return (
     <div data-testid="apply-step">
       <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>
@@ -399,19 +378,19 @@ const ApplyScreen = ({ raffle, onContinue, lang }) => {
 
 
 
-// ── Email gate (after report) — reframed as "save your report" ─────────
+// ── Email gate (after prediction) — reframed as "lock in my entry" ─────
 const EmailGate = ({ email, setEmail, displayName, setDisplayName, age, setAge, rules, setRules, onSubmit, busy, error, lang }) => {
   const canSubmit = !!email && age && rules && !busy;
   return (
     <div data-testid="email-gate-step">
       <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 8 }}>
-        {lang === 'en' ? 'SAVE YOUR REPORT' : 'TALLENNA RAPORTTISI'}
+        {lang === 'en' ? 'FINALISE YOUR ENTRY' : 'VIIMEISTELE OSALLISTUMINEN'}
       </div>
       <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: 'var(--ink)', margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15 }}>
-        {lang === 'en' ? 'Send your report. Get weekly signals.' : 'Lähetä raporttisi. Saa viikoittaiset signaalit.'}
+        {lang === 'en' ? 'Lock in your entry.' : 'Lukitse osallistumisesi.'}
       </h2>
       <p style={{ color: 'var(--muted)', fontSize: 13.5, marginBottom: 22, lineHeight: 1.55 }}>
-        {lang === 'en' ? 'Then play the raffle and apply what you just learned.' : 'Sitten sovella opittua arvonnassa.'}
+        {lang === 'en' ? 'We send your prediction confirmation, full predictor report, and a 5-day playbook to this address.' : 'Lähetämme veikkausvahvistuksen, koko ennustajaraporttisi ja 5 päivän playbookin tähän osoitteeseen.'}
       </p>
       <div style={{ display: 'grid', gap: 14 }}>
         <input data-testid="email-gate-input" type="email" required value={email}
@@ -451,7 +430,7 @@ const EmailGate = ({ email, setEmail, displayName, setDisplayName, age, setAge, 
             letterSpacing: '0.22em', fontWeight: 700,
             cursor: canSubmit ? 'pointer' : 'not-allowed',
           }}>
-          {busy ? '…' : (lang === 'en' ? 'SEND ME MY REPORT →' : 'LÄHETÄ RAPORTTINI →')}
+          {busy ? '…' : (lang === 'en' ? 'LOCK IN MY ENTRY →' : 'LUKITSE OSALLISTUMINEN →')}
         </motion.button>
         <p style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
           {lang === 'en' ? 'Stored 30 days after match, then auto-deleted unless you opt in to news separately.' : 'Säilytetään 30 päivää ottelun jälkeen, sitten poistetaan ellet erikseen tilaa uutiskirjettä.'}
@@ -806,23 +785,22 @@ const VoitaRaffle = () => {
     if (step === 'quiz') return quizIdx + 1;
     if (step === 'reveal') return quizIdx + 1.5;
     if (step === 'report') return 5.8;
-    if (step === 'email') return 6;
-    if (step === 'apply') return 6.3;
-    if (step === 'match') return 6.5;
-    if (step === 'pick') return 7;
-    if (step === 'score') return 8;
-    if (step === 'review') return 9;
+    if (step === 'apply') return 5.9;
+    if (step === 'match') return 6;
+    if (step === 'pick') return 6.5;
+    if (step === 'score') return 7;
+    if (step === 'review') return 7.5;
+    if (step === 'email') return 8;
+    if (step === 'confirm') return 9;
     return 0;
   }, [step, quizIdx]);
 
-  // Compose user's q_key → tag map from current answers. Each option in
-  // quizConfig carries a `tag` (falls back to its `v`).
+  // Compose user's q_key → tag map from current answers.
   const composeAnswerTags = useCallback(() => {
     const tags = {};
     for (const q of quiz) {
       const raw = answers[q.key];
       if (!raw) continue;
-      // multi questions store arrays; we use the first picked for profile
       const v = Array.isArray(raw) ? raw[0] : raw;
       const opt = (q.options || []).find((o) => o.v === v);
       if (opt) tags[q.key] = opt.tag || opt.v;
@@ -831,8 +809,7 @@ const VoitaRaffle = () => {
   }, [quiz, answers]);
 
   const advanceQuiz = useCallback(() => {
-    // Every lesson question rolls into its reveal block — that's the
-    // teaching moment. The reveal screen handles "continue" → next Q.
+    // Each Q rolls into its 1-line zinger (2s auto-advance, tap-to-skip).
     setStep('reveal');
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
   }, []);
@@ -844,7 +821,7 @@ const VoitaRaffle = () => {
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
       return;
     }
-    // All 5 lessons complete → resolve profile + show report.
+    // All 5 lessons done → resolve profile + show 1-paragraph tease.
     setProfileLoading(true);
     setStep('report');
     try {
@@ -863,10 +840,19 @@ const VoitaRaffle = () => {
   }, [quizIdx, quiz.length, composeAnswerTags]);
 
   const saveLeadAndAdvance = async () => {
+    // In the new flow this is called AFTER the prediction is committed.
+    // It submits both the lead + the raffle entry atomically and ships
+    // the user to the confirmation screen. The Day-0 report + 5-day
+    // drip is queued server-side as part of /enter.
     if (!email || !age || !rules) return;
+    if (!pick) {
+      setEmailError(lang === 'en' ? 'Prediction missing. Please go back and pick.' : 'Veikkaus puuttuu. Palaa ja valitse.');
+      return;
+    }
     setBusy(true); setEmailError('');
     try {
-      const r = await fetch(`${BACKEND}/api/voita/lead`, {
+      // 1) Capture lead with quiz answers (resolves profile server-side).
+      const leadRes = await fetch(`${BACKEND}/api/voita/lead`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email, raffle_slug: slug, age_18_plus: true,
@@ -874,24 +860,18 @@ const VoitaRaffle = () => {
           bet_frequency: answers.frequency,
           sportsbooks: answers.style ? [answers.style] : [],
           confidence: answers.skill,
+          quiz_tags: composeAnswerTags(),
+          display_name: displayName.trim() || null,
+          lang,
         }),
       });
-      if (!r.ok) {
-        const j = await r.json().catch(() => ({}));
-        setEmailError(j.detail || `HTTP ${r.status}`); return;
+      if (!leadRes.ok) {
+        const j = await leadRes.json().catch(() => ({}));
+        setEmailError(j.detail || `HTTP ${leadRes.status}`);
+        return;
       }
-      setStep('apply');
-    } catch (e) {
-      setEmailError(e.message || 'Network');
-    } finally { setBusy(false); }
-  };
-
-  const submitEntry = async () => {
-    setServerError('');
-    if (!pick) { setServerError(lang === 'en' ? 'Pick missing.' : 'Veikkaus puuttuu.'); return; }
-    setBusy(true);
-    try {
-      const r = await fetch(`${BACKEND}/api/voita/raffles/${slug}/enter`, {
+      // 2) Commit the raffle entry.
+      const entryRes = await fetch(`${BACKEND}/api/voita/raffles/${slug}/enter`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
@@ -902,20 +882,28 @@ const VoitaRaffle = () => {
           display_name: displayName.trim(),
         }),
       });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) { setServerError(j.detail || `HTTP ${r.status}`); return; }
+      const ej = await entryRes.json().catch(() => ({}));
+      if (!entryRes.ok) {
+        setEmailError(ej.detail || `HTTP ${entryRes.status}`);
+        return;
+      }
       try {
         sessionStorage.setItem(`voita:${slug}:entry`, JSON.stringify({
-          email, entry_id: j.entry_id, position: j.position,
+          email, entry_id: ej.entry_id, position: ej.position,
           prediction: pick, home: homeGoals, away: awayGoals,
-          quiz: answers, mode: answers.mode || 'quick',
+          quiz: answers, mode: answers.mode || 'snap',
         }));
       } catch {}
-      navigate(`/voita/${slug}/kiitos`);
+      setStep('confirm');
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
     } catch (e) {
-      setServerError(e.message || 'Network');
+      setEmailError(e.message || 'Network');
     } finally { setBusy(false); }
   };
+
+  // Legacy submitEntry no longer used in the new flow but kept so older
+  // back-office tests that stub it don't break the bundle.
+  const submitEntry = async () => { await saveLeadAndAdvance(); };
 
   if (!loaded) return <div style={{ padding: 64, color: 'var(--muted)', textAlign: 'center' }} data-testid="voita-raffle-loading">…</div>;
   if (!raffle) {
@@ -946,8 +934,8 @@ const VoitaRaffle = () => {
             }}>{raffle.home_team} <span style={{ color: 'var(--muted)' }}>vs</span> {raffle.away_team}</h1>
             <p style={{ color: 'var(--muted)', fontSize: 14.5, lineHeight: 1.55, margin: '14px 0 22px', maxWidth: 480 }}>
               {lang === 'en'
-                ? 'Bet smarter. Take the 90-second lesson, get your personal predictor report, then play the raffle. Free. No deposit. No betting.'
-                : 'Veikkaa fiksummin. Ota 90 sekunnin opetus, saa henkilökohtainen ennustajaraportti, sitten pelaa arvonta. Ilmainen. Ei talletusta. Ei vedonlyöntiä.'}
+                ? 'Take the 75-second diagnostic, predict the winner, then we send you a personal predictor report and a 5-day playbook on reading betting markets. Free. No deposit.'
+                : 'Tee 75 sekunnin diagnostiikka, ennusta voittaja, ja lähetämme sinulle henkilökohtaisen ennustajaraportin sekä 5 päivän playbookin vedonvälitysmarkkinoiden lukemiseen. Ilmainen. Ei talletusta.'}
             </p>
             <div style={{
               display: 'flex', gap: 14, padding: '14px 0',
@@ -979,10 +967,10 @@ const VoitaRaffle = () => {
                 border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 12,
                 letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
               }}>
-              {lang === 'en' ? 'TAKE THE LESSON — 90 SECONDS →' : 'OTA OPPI — 90 SEKUNTIA →'}
+              {lang === 'en' ? 'START THE DIAGNOSTIC — 75 SECONDS →' : 'ALOITA DIAGNOSTIIKKA — 75 SEKUNTIA →'}
             </motion.button>
             <p style={{ marginTop: 14, fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.55, textAlign: 'center' }}>
-              {lang === 'en' ? '5 micro-lessons on how to read betting markets. Your report is yours to keep.' : '5 mikro-oppia siitä, miten vedonvälitysmarkkinoita luetaan. Raporttisi on sinun.'}
+              {lang === 'en' ? '5 quick questions on how you predict. Full playbook arrives in your inbox.' : '5 nopeaa kysymystä siitä, miten ennustat. Koko playbook tulee sähköpostiisi.'}
             </p>
           </motion.div>
         )}
@@ -998,7 +986,7 @@ const VoitaRaffle = () => {
         )}
         {step === 'reveal' && (
           <motion.div key={`reveal-${quizIdx}`} {...slideIn}>
-            <LessonReveal
+            <ZingerCard
               q={quiz[quizIdx]}
               answer={answers[quiz[quizIdx]?.key]}
               onContinue={afterReveal}
@@ -1008,22 +996,12 @@ const VoitaRaffle = () => {
           </motion.div>
         )}
         {step === 'report' && (
-          <motion.div key="report" {...slideIn}>
-            <ReportScreen
+          <motion.div key="tease" {...slideIn}>
+            <ResultTease
               profile={profile}
               loading={profileLoading}
-              onContinue={() => setStep('email')}
+              onContinue={() => setStep('apply')}
               lang={lang}
-            />
-          </motion.div>
-        )}
-        {step === 'email' && (
-          <motion.div key="email" {...slideIn}>
-            <EmailGate
-              email={email} setEmail={setEmail}
-              displayName={displayName} setDisplayName={setDisplayName}
-              age={age} setAge={setAge} rules={rules} setRules={setRules}
-              onSubmit={saveLeadAndAdvance} busy={busy} error={emailError} lang={lang}
             />
           </motion.div>
         )}
@@ -1062,7 +1040,26 @@ const VoitaRaffle = () => {
               raffle={raffle} pick={pick}
               homeGoals={homeGoals} awayGoals={awayGoals}
               skillAnswer={answers.skill}
-              onSubmit={submitEntry} busy={busy} error={serverError} lang={lang}
+              onSubmit={() => setStep('email')} busy={busy} error={serverError} lang={lang}
+            />
+          </motion.div>
+        )}
+        {step === 'email' && (
+          <motion.div key="email" {...slideIn}>
+            <EmailGate
+              email={email} setEmail={setEmail}
+              displayName={displayName} setDisplayName={setDisplayName}
+              age={age} setAge={setAge} rules={rules} setRules={setRules}
+              onSubmit={saveLeadAndAdvance} busy={busy} error={emailError} lang={lang}
+            />
+          </motion.div>
+        )}
+        {step === 'confirm' && (
+          <motion.div key="confirm" {...slideIn}>
+            <ConfirmationScreen
+              email={email}
+              profileName={profile ? (lang === 'en' ? profile.name_en : profile.name_fi) : ''}
+              lang={lang}
             />
           </motion.div>
         )}

@@ -176,12 +176,12 @@ SETTINGS_KEY = "site"
 # via PUT /api/admin/settings. Image path is served from /hero/voita.jpg
 # (frontend public/).
 DEFAULT_VOITA_HERO = {
-    "eyebrow_fi": "VOITA · 90-SEKUNNIN OPETUS",
-    "eyebrow_en": "VOITA · 90-SECOND LESSON",
-    "title_fi": "Veikkaa fiksummin. Ota 90 sekunnin opetus, saa henkilökohtainen ennustajaraportti, sitten pelaa arvonta.",
-    "title_en": "Bet smarter. Take the 90-second lesson, get your personal predictor report, then play the raffle.",
-    "subtitle_fi": "Opi mitä vedonvälittäjät oikeasti tietävät. Ilmainen. Ei talletusta. Ei vedonlyöntiä.",
-    "subtitle_en": "Learn what bookmakers actually know. Free. No deposit. No betting.",
+    "eyebrow_fi": "VOITA · 75-SEKUNNIN DIAGNOSTIIKKA",
+    "eyebrow_en": "VOITA · 75-SECOND DIAGNOSTIC",
+    "title_fi": "Veikkaa fiksummin. 5 kysymystä, ennustus, ja koko playbook sähköpostiisi.",
+    "title_en": "Bet smarter. 5 questions, one prediction, and the full playbook in your inbox.",
+    "subtitle_fi": "Diagnostiikka kertoo ennustajatyyppisi. Ennustus arvonnasta on osa testiä. Sähköpostiisi tulee henkilökohtainen raportti + 5 päivän playbook.",
+    "subtitle_en": "The diagnostic names your predictor type. Your raffle prediction is part of the test. Your inbox gets a personal report + 5-day playbook.",
     "image_url": "/hero/voita.jpg",
     "photo_credit": "Photo: Mitch Rosen / Unsplash",
 }
@@ -275,12 +275,18 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
         update["site_tagline_en"] = (data.site_tagline_en or "").strip()[:120]
     if data.voita_quiz_config is not None:
         from voita_quiz_config import sanitize_quiz_config
-        update["voita_quiz_config"] = sanitize_quiz_config(data.voita_quiz_config)
+        try:
+            update["voita_quiz_config"] = sanitize_quiz_config(data.voita_quiz_config)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
     if data.voita_hero is not None:
         update["voita_hero"] = _sanitize_voita_hero(data.voita_hero)
     if data.voita_predictor_profiles is not None:
         from voita_profiles import sanitize_profiles
-        update["voita_predictor_profiles"] = sanitize_profiles(data.voita_predictor_profiles)
+        try:
+            update["voita_predictor_profiles"] = sanitize_profiles(data.voita_predictor_profiles)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
     await db.settings.update_one(
         {"_id": SETTINGS_KEY},
         {"$set": update},
