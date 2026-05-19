@@ -112,6 +112,8 @@ const ProgressBar = ({ step, total }) => (
 const QuizScreen = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) => {
   const title = lang === 'en' ? q.title_en : q.title_fi;
   const sub = lang === 'en' ? q.sub_en : q.sub_fi;
+  const lessonTitle = lang === 'en' ? (q.lesson_title_en || '') : (q.lesson_title_fi || '');
+  const lessonNum = q.lesson_number || idx + 1;
   const answer = answers[q.key];
   const pick = (v) => {
     if (q.multi) {
@@ -121,14 +123,14 @@ const QuizScreen = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) => 
       return;
     }
     setAnswers({ ...answers, [q.key]: v });
-    if (q.auto) setTimeout(onAdvance, 260);
+    if (q.auto) setTimeout(onAdvance, 320);
   };
   return (
     <div data-testid={`quiz-step-${q.key}`}>
       <div style={{
         fontFamily: 'ui-monospace, monospace', fontSize: 10,
         letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 8,
-      }}>{lang === 'en' ? `QUESTION ${idx + 1} / ${total}` : `KYSYMYS ${idx + 1} / ${total}`}</div>
+      }}>{lang === 'en' ? `LESSON ${lessonNum} OF ${total}` : `OPPI ${lessonNum} / ${total}`}{lessonTitle ? ` · ${lessonTitle.toUpperCase()}` : ''}</div>
       <h2 data-testid="quiz-question-title" style={{
         fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 700, color: 'var(--ink)',
         margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15,
@@ -228,17 +230,189 @@ const RevealOpenRaffles = ({ sports, onAdvance, lang }) => {
 };
 
 
-// ── Email gate (after quiz) ────────────────────────────────────────────
+// ── Lesson reveal — shown after every Q. The teaching moment. ──────────
+const LessonReveal = ({ q, answer, onContinue, lang, isLast }) => {
+  if (!q) return null;
+  const heading = lang === 'en' ? (q.reveal_heading_en || '') : (q.reveal_heading_fi || '');
+  const fact = lang === 'en' ? (q.reveal_fact_en || '') : (q.reveal_fact_fi || '');
+  const why = lang === 'en' ? (q.reveal_why_en || '') : (q.reveal_why_fi || '');
+  const application = lang === 'en' ? (q.reveal_application_en || '') : (q.reveal_application_fi || '');
+  // Personalized reveal — find the option the user picked
+  let personalized = '';
+  if (answer) {
+    const picked = Array.isArray(answer) ? answer[0] : answer;
+    const opt = (q.options || []).find((o) => o.v === picked);
+    if (opt) personalized = lang === 'en' ? (opt.reveal_personalized_en || '') : (opt.reveal_personalized_fi || '');
+  }
+  const labels = lang === 'en'
+    ? { why: 'WHY?', app: 'WHAT THIS MEANS FOR YOUR RAFFLES', cta: isLast ? 'SEE MY REPORT →' : 'NEXT LESSON →', your: 'YOUR ANSWER' }
+    : { why: 'MIKSI?', app: 'MITÄ TÄMÄ TARKOITTAA ARVONNOISSASI', cta: isLast ? 'NÄYTÄ RAPORTTINI →' : 'SEURAAVA OPPI →', your: 'VASTAUKSESI' };
+  return (
+    <div data-testid={`lesson-reveal-${q.key}`}>
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>
+        {heading.toUpperCase()}
+      </div>
+      <h2 data-testid="lesson-reveal-fact" style={{
+        fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: 'var(--ink)',
+        margin: '0 0 18px', letterSpacing: '-0.012em', lineHeight: 1.25,
+      }}>{fact}</h2>
+      {why && (
+        <div data-testid="lesson-reveal-why" style={{ marginBottom: 18 }}>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#C13B2C', fontWeight: 700, marginBottom: 6 }}>{labels.why}</div>
+          <p style={{ color: 'var(--ink)', fontSize: 14.5, lineHeight: 1.6, margin: 0, opacity: 0.92 }}>{why}</p>
+        </div>
+      )}
+      {personalized && (
+        <div data-testid="lesson-reveal-personalized" style={{
+          padding: '14px 16px', marginBottom: 18,
+          background: 'rgba(232,194,110,0.08)', border: '1px solid rgba(232,194,110,0.32)',
+        }}>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 6 }}>{labels.your}</div>
+          <p style={{ color: 'var(--ink)', fontSize: 14.5, lineHeight: 1.55, margin: 0, fontStyle: 'italic' }}>{personalized}</p>
+        </div>
+      )}
+      {application && (
+        <div data-testid="lesson-reveal-application" style={{ marginBottom: 24 }}>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#6FA37D', fontWeight: 700, marginBottom: 6 }}>{labels.app}</div>
+          <p style={{ color: 'var(--ink)', fontSize: 14.5, lineHeight: 1.6, margin: 0, opacity: 0.92 }}>{application}</p>
+        </div>
+      )}
+      <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onContinue}
+        data-testid="lesson-reveal-continue"
+        style={{
+          padding: '15px 22px', width: '100%',
+          background: '#E8C26E', color: '#0B0A09', border: 0,
+          fontFamily: 'ui-monospace, monospace', fontSize: 12,
+          letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
+        }}>{labels.cta}</motion.button>
+    </div>
+  );
+};
+
+
+// ── Personal Predictor Report — unlock screen before email gate. ───────
+const ReportScreen = ({ profile, loading, onContinue, lang }) => {
+  if (loading || !profile) {
+    return (
+      <div data-testid="report-loading" style={{ textAlign: 'center', padding: '40px 0' }}>
+        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+          {lang === 'en' ? 'COMPILING YOUR REPORT…' : 'KOOSTAN RAPORTTIASI…'}
+        </div>
+      </div>
+    );
+  }
+  const name = lang === 'en' ? profile.name_en : profile.name_fi;
+  const diagnosis = lang === 'en' ? profile.diagnosis_en : profile.diagnosis_fi;
+  const weakness = lang === 'en' ? profile.weakness_en : profile.weakness_fi;
+  const edge = lang === 'en' ? profile.edge_en : profile.edge_fi;
+  const hooks = (profile.hooks || []).map((h) => lang === 'en' ? h.en : h.fi).filter(Boolean);
+  const labels = lang === 'en'
+    ? { eyebrow: 'YOUR PERSONAL PREDICTOR REPORT', profile: 'PROFILE', diagnosis: '', weakness: 'YOUR WEAKNESS', edge: 'YOUR EDGE', hooks: "WHAT WE'LL DO FOR YOU", cta: 'SAVE MY REPORT →' }
+    : { eyebrow: 'HENKILÖKOHTAINEN ENNUSTAJARAPORTTISI', profile: 'PROFIILI', diagnosis: '', weakness: 'HEIKKOUTESI', edge: 'ETUSI', hooks: 'MITÄ TEEMME PUOLESTASI', cta: 'TALLENNA RAPORTTINI →' };
+  return (
+    <div data-testid="report-step">
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>
+        {labels.eyebrow}
+      </div>
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, marginBottom: 6 }}>
+        {labels.profile}
+      </div>
+      <h2 data-testid="report-profile-name" style={{
+        fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 700, color: 'var(--ink)',
+        margin: '0 0 18px', letterSpacing: '-0.02em', lineHeight: 1.05,
+      }}>{name}</h2>
+
+      {diagnosis && (
+        <p data-testid="report-diagnosis" style={{ color: 'var(--ink)', fontSize: 15, lineHeight: 1.6, margin: '0 0 20px' }}>{diagnosis}</p>
+      )}
+
+      <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 18, marginBottom: 18 }}>
+        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#C13B2C', fontWeight: 700, marginBottom: 6 }}>{labels.weakness}</div>
+        <p data-testid="report-weakness" style={{ color: 'var(--ink)', fontSize: 14, lineHeight: 1.6, margin: 0, opacity: 0.94 }}>{weakness}</p>
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 18, marginBottom: 18 }}>
+        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#6FA37D', fontWeight: 700, marginBottom: 6 }}>{labels.edge}</div>
+        <p data-testid="report-edge" style={{ color: 'var(--ink)', fontSize: 14, lineHeight: 1.6, margin: 0, opacity: 0.94 }}>{edge}</p>
+      </div>
+
+      {hooks.length > 0 && (
+        <div style={{ borderTop: '1px solid var(--hairline)', paddingTop: 18, marginBottom: 28 }}>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>{labels.hooks}</div>
+          <ul data-testid="report-hooks" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+            {hooks.map((h, i) => (
+              <li key={i} style={{
+                display: 'flex', gap: 10, alignItems: 'flex-start',
+                padding: '6px 0', color: 'var(--ink)', fontSize: 13.5, lineHeight: 1.55,
+              }}>
+                <span style={{ color: '#E8C26E', fontWeight: 700 }}>→</span>
+                <span>{h}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onContinue}
+        data-testid="report-continue"
+        style={{
+          padding: '15px 22px', width: '100%',
+          background: '#E8C26E', color: '#0B0A09', border: 0,
+          fontFamily: 'ui-monospace, monospace', fontSize: 12,
+          letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
+        }}>{labels.cta}</motion.button>
+    </div>
+  );
+};
+
+
+// ── APPLY YOUR LESSON transition — between email gate and prediction. ──
+const ApplyScreen = ({ raffle, onContinue, lang }) => {
+  const prize = (raffle.prize_distribution?.payouts || []).reduce((s, p) => s + (p.amount_eur || 0), 0);
+  const labels = lang === 'en'
+    ? { eyebrow: 'APPLY YOUR LESSON', sub: 'Time to use what you just learned. Predict the winner and the score.', cta: 'START PREDICTION →' }
+    : { eyebrow: 'SOVELLA OPPIASI', sub: 'Aika käyttää oppimaasi. Ennusta voittaja ja lopputulos.', cta: 'ALOITA ENNUSTUS →' };
+  return (
+    <div data-testid="apply-step">
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 10 }}>
+        {labels.eyebrow}
+      </div>
+      <h2 style={{
+        fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 700, color: 'var(--ink)',
+        margin: '0 0 6px', letterSpacing: '-0.02em', lineHeight: 1.1,
+      }}>{raffle.home_team} <span style={{ color: 'var(--muted)' }}>vs</span> {raffle.away_team}</h2>
+      <p style={{ color: 'var(--muted)', fontSize: 13, margin: '0 0 18px' }}>
+        {(raffle.league || raffle.sport || '').toUpperCase()} · €{prize}
+      </p>
+      <p style={{ color: 'var(--ink)', fontSize: 15, lineHeight: 1.6, margin: '0 0 24px', opacity: 0.92 }}>{labels.sub}</p>
+      <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onContinue}
+        data-testid="apply-continue"
+        style={{
+          padding: '15px 22px', width: '100%',
+          background: '#E8C26E', color: '#0B0A09', border: 0,
+          fontFamily: 'ui-monospace, monospace', fontSize: 12,
+          letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
+        }}>{labels.cta}</motion.button>
+    </div>
+  );
+};
+
+
+
+// ── Email gate (after report) — reframed as "save your report" ─────────
 const EmailGate = ({ email, setEmail, displayName, setDisplayName, age, setAge, rules, setRules, onSubmit, busy, error, lang }) => {
   const canSubmit = !!email && age && rules && !busy;
   return (
     <div data-testid="email-gate-step">
       <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 8 }}>
-        {lang === 'en' ? 'LOCK YOUR ENTRY' : 'LUKITSE VEIKKAUKSESI'}
+        {lang === 'en' ? 'SAVE YOUR REPORT' : 'TALLENNA RAPORTTISI'}
       </div>
-      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: 'var(--ink)', margin: '0 0 18px', letterSpacing: '-0.015em', lineHeight: 1.15 }}>
-        {lang === 'en' ? 'Where do we send your result?' : 'Mihin lähetämme tuloksen?'}
+      <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: 'var(--ink)', margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15 }}>
+        {lang === 'en' ? 'Send your report. Get weekly signals.' : 'Lähetä raporttisi. Saa viikoittaiset signaalit.'}
       </h2>
+      <p style={{ color: 'var(--muted)', fontSize: 13.5, marginBottom: 22, lineHeight: 1.55 }}>
+        {lang === 'en' ? 'Then play the raffle and apply what you just learned.' : 'Sitten sovella opittua arvonnassa.'}
+      </p>
       <div style={{ display: 'grid', gap: 14 }}>
         <input data-testid="email-gate-input" type="email" required value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -277,7 +451,7 @@ const EmailGate = ({ email, setEmail, displayName, setDisplayName, age, setAge, 
             letterSpacing: '0.22em', fontWeight: 700,
             cursor: canSubmit ? 'pointer' : 'not-allowed',
           }}>
-          {busy ? '…' : (lang === 'en' ? 'CONTINUE →' : 'JATKA →')}
+          {busy ? '…' : (lang === 'en' ? 'SEND ME MY REPORT →' : 'LÄHETÄ RAPORTTINI →')}
         </motion.button>
         <p style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
           {lang === 'en' ? 'Stored 30 days after match, then auto-deleted unless you opt in to news separately.' : 'Säilytetään 30 päivää ottelun jälkeen, sitten poistetaan ellet erikseen tilaa uutiskirjettä.'}
@@ -599,6 +773,8 @@ const VoitaRaffle = () => {
   const [busy, setBusy] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [serverError, setServerError] = useState('');
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
   const quiz = quizConfig;
 
   useEffect(() => {
@@ -629,7 +805,9 @@ const VoitaRaffle = () => {
     if (step === 'intro') return 0;
     if (step === 'quiz') return quizIdx + 1;
     if (step === 'reveal') return quizIdx + 1.5;
+    if (step === 'report') return 5.8;
     if (step === 'email') return 6;
+    if (step === 'apply') return 6.3;
     if (step === 'match') return 6.5;
     if (step === 'pick') return 7;
     if (step === 'score') return 8;
@@ -637,26 +815,52 @@ const VoitaRaffle = () => {
     return 0;
   }, [step, quizIdx]);
 
-  const advanceQuiz = useCallback(() => {
-    const q = quiz[quizIdx];
-    // After Q2 (sports) we drop into the reveal screen, then continue.
-    if (q.key === 'sports') {
-      setStep('reveal');
-      return;
+  // Compose user's q_key → tag map from current answers. Each option in
+  // quizConfig carries a `tag` (falls back to its `v`).
+  const composeAnswerTags = useCallback(() => {
+    const tags = {};
+    for (const q of quiz) {
+      const raw = answers[q.key];
+      if (!raw) continue;
+      // multi questions store arrays; we use the first picked for profile
+      const v = Array.isArray(raw) ? raw[0] : raw;
+      const opt = (q.options || []).find((o) => o.v === v);
+      if (opt) tags[q.key] = opt.tag || opt.v;
     }
+    return tags;
+  }, [quiz, answers]);
+
+  const advanceQuiz = useCallback(() => {
+    // Every lesson question rolls into its reveal block — that's the
+    // teaching moment. The reveal screen handles "continue" → next Q.
+    setStep('reveal');
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+  }, []);
+
+  const afterReveal = useCallback(async () => {
     if (quizIdx + 1 < quiz.length) {
       setQuizIdx(quizIdx + 1);
+      setStep('quiz');
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
       return;
     }
-    // Quiz complete → email gate.
-    setStep('email');
-  }, [quiz, quizIdx]);
-
-  const afterReveal = useCallback(() => {
-    setQuizIdx(quizIdx + 1);
-    setStep('quiz');
-  }, [quizIdx]);
+    // All 5 lessons complete → resolve profile + show report.
+    setProfileLoading(true);
+    setStep('report');
+    try {
+      const tags = composeAnswerTags();
+      const r = await fetch(`${BACKEND}/api/voita/profile/resolve`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: tags }),
+      });
+      const j = await r.json();
+      setProfile(j.profile || null);
+    } catch {
+      setProfile(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  }, [quizIdx, quiz.length, composeAnswerTags]);
 
   const saveLeadAndAdvance = async () => {
     if (!email || !age || !rules) return;
@@ -676,7 +880,7 @@ const VoitaRaffle = () => {
         const j = await r.json().catch(() => ({}));
         setEmailError(j.detail || `HTTP ${r.status}`); return;
       }
-      setStep('match');
+      setStep('apply');
     } catch (e) {
       setEmailError(e.message || 'Network');
     } finally { setBusy(false); }
@@ -740,10 +944,10 @@ const VoitaRaffle = () => {
               color: 'var(--ink)', margin: '0 0 6px',
               letterSpacing: '-0.025em', lineHeight: 1.04,
             }}>{raffle.home_team} <span style={{ color: 'var(--muted)' }}>vs</span> {raffle.away_team}</h1>
-            <p style={{ color: 'var(--muted)', fontSize: 14.5, lineHeight: 1.55, margin: '14px 0 22px', maxWidth: 460 }}>
+            <p style={{ color: 'var(--muted)', fontSize: 14.5, lineHeight: 1.55, margin: '14px 0 22px', maxWidth: 480 }}>
               {lang === 'en'
-                ? 'Free entry. No deposit. No betting. Closest prediction wins, winners paid within 48h.'
-                : 'Maksuton osallistuminen. Ei talletusta. Ei vedonlyöntiä. Lähimmäs osunut voittaa, voittaja maksetaan 48h sisällä.'}
+                ? 'Bet smarter. Take the 90-second lesson, get your personal predictor report, then play the raffle. Free. No deposit. No betting.'
+                : 'Veikkaa fiksummin. Ota 90 sekunnin opetus, saa henkilökohtainen ennustajaraportti, sitten pelaa arvonta. Ilmainen. Ei talletusta. Ei vedonlyöntiä.'}
             </p>
             <div style={{
               display: 'flex', gap: 14, padding: '14px 0',
@@ -775,10 +979,10 @@ const VoitaRaffle = () => {
                 border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 12,
                 letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
               }}>
-              {lang === 'en' ? 'START — 5 QUESTIONS, 60 SECONDS →' : 'ALOITA — 5 KYSYMYSTÄ, 60 SEKUNTIA →'}
+              {lang === 'en' ? 'TAKE THE LESSON — 90 SECONDS →' : 'OTA OPPI — 90 SEKUNTIA →'}
             </motion.button>
             <p style={{ marginTop: 14, fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.55, textAlign: 'center' }}>
-              {lang === 'en' ? 'Quick quiz before you predict. Helps us route the right signals to you later.' : 'Lyhyt kysely ennen veikkausta. Auttaa meitä lähettämään sinulle relevantit signaalit jatkossa.'}
+              {lang === 'en' ? '5 micro-lessons on how to read betting markets. Your report is yours to keep.' : '5 mikro-oppia siitä, miten vedonvälitysmarkkinoita luetaan. Raporttisi on sinun.'}
             </p>
           </motion.div>
         )}
@@ -793,8 +997,24 @@ const VoitaRaffle = () => {
           </motion.div>
         )}
         {step === 'reveal' && (
-          <motion.div key="reveal" {...slideIn}>
-            <RevealOpenRaffles sports={answers.sports || []} onAdvance={afterReveal} lang={lang} />
+          <motion.div key={`reveal-${quizIdx}`} {...slideIn}>
+            <LessonReveal
+              q={quiz[quizIdx]}
+              answer={answers[quiz[quizIdx]?.key]}
+              onContinue={afterReveal}
+              isLast={quizIdx + 1 >= quiz.length}
+              lang={lang}
+            />
+          </motion.div>
+        )}
+        {step === 'report' && (
+          <motion.div key="report" {...slideIn}>
+            <ReportScreen
+              profile={profile}
+              loading={profileLoading}
+              onContinue={() => setStep('email')}
+              lang={lang}
+            />
           </motion.div>
         )}
         {step === 'email' && (
@@ -805,6 +1025,11 @@ const VoitaRaffle = () => {
               age={age} setAge={setAge} rules={rules} setRules={setRules}
               onSubmit={saveLeadAndAdvance} busy={busy} error={emailError} lang={lang}
             />
+          </motion.div>
+        )}
+        {step === 'apply' && (
+          <motion.div key="apply" {...slideIn}>
+            <ApplyScreen raffle={raffle} lang={lang} onContinue={() => setStep('match')} />
           </motion.div>
         )}
         {step === 'match' && (

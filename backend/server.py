@@ -166,6 +166,7 @@ class SettingsPayload(BaseModel):
     site_tagline_en: Optional[str] = None
     voita_quiz_config: Optional[List[Dict[str, Any]]] = None
     voita_hero: Optional[Dict[str, Any]] = None
+    voita_predictor_profiles: Optional[List[Dict[str, Any]]] = None
 
 
 SETTINGS_KEY = "site"
@@ -175,12 +176,12 @@ SETTINGS_KEY = "site"
 # via PUT /api/admin/settings. Image path is served from /hero/voita.jpg
 # (frontend public/).
 DEFAULT_VOITA_HERO = {
-    "eyebrow_fi": "VOITA · KÄYNNISSÄ",
-    "eyebrow_en": "VOITA · LIVE NOW",
-    "title_fi": "Suomen mestaruus alkaa kentältä.",
-    "title_en": "The title race starts on the pitch.",
-    "subtitle_fi": "Ennusta kauden ratkaisevien otteluiden voittajat. Ilmainen osallistua. Ei talletusta. Ei vedonlyöntiä.",
-    "subtitle_en": "Predict the winners of the season's title-deciding matches. Free entry. No deposit. No betting.",
+    "eyebrow_fi": "VOITA · 90-SEKUNNIN OPETUS",
+    "eyebrow_en": "VOITA · 90-SECOND LESSON",
+    "title_fi": "Veikkaa fiksummin. Ota 90 sekunnin opetus, saa henkilökohtainen ennustajaraportti, sitten pelaa arvonta.",
+    "title_en": "Bet smarter. Take the 90-second lesson, get your personal predictor report, then play the raffle.",
+    "subtitle_fi": "Opi mitä vedonvälittäjät oikeasti tietävät. Ilmainen. Ei talletusta. Ei vedonlyöntiä.",
+    "subtitle_en": "Learn what bookmakers actually know. Free. No deposit. No betting.",
     "image_url": "/hero/voita.jpg",
     "photo_credit": "Photo: Mitch Rosen / Unsplash",
 }
@@ -220,6 +221,7 @@ async def _get_settings_doc():
         "site_tagline_en": doc.get("site_tagline_en") or "Where Finland's gambling scene shows up",
         "voita_quiz_config": doc.get("voita_quiz_config"),
         "voita_hero": _sanitize_voita_hero(doc.get("voita_hero") or DEFAULT_VOITA_HERO),
+        "voita_predictor_profiles": doc.get("voita_predictor_profiles"),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -228,6 +230,7 @@ async def _get_settings_doc():
 async def get_public_settings():
     """Public — only safe-to-expose settings."""
     from voita_quiz_config import DEFAULT_VOITA_QUIZ, sanitize_quiz_config
+    from voita_profiles import DEFAULT_PROFILES, sanitize_profiles
     s = await _get_settings_doc()
     return {
         "telegram_channel": s.get("telegram_channel"),
@@ -239,6 +242,7 @@ async def get_public_settings():
         "site_tagline_en": s.get("site_tagline_en"),
         "voita_quiz_config": sanitize_quiz_config(s.get("voita_quiz_config") or DEFAULT_VOITA_QUIZ),
         "voita_hero": s.get("voita_hero") or DEFAULT_VOITA_HERO,
+        "voita_predictor_profiles": sanitize_profiles(s.get("voita_predictor_profiles") or DEFAULT_PROFILES),
     }
 
 
@@ -274,6 +278,9 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
         update["voita_quiz_config"] = sanitize_quiz_config(data.voita_quiz_config)
     if data.voita_hero is not None:
         update["voita_hero"] = _sanitize_voita_hero(data.voita_hero)
+    if data.voita_predictor_profiles is not None:
+        from voita_profiles import sanitize_profiles
+        update["voita_predictor_profiles"] = sanitize_profiles(data.voita_predictor_profiles)
     await db.settings.update_one(
         {"_id": SETTINGS_KEY},
         {"$set": update},
@@ -2648,6 +2655,26 @@ async def public_voita_match_context(slug: str):
         raise HTTPException(status_code=404, detail="raffle not found")
     from voita_match_context import build_match_context
     return await build_match_context(db, raffle_doc)
+
+
+@api_router.post("/voita/profile/resolve")
+async def public_voita_profile_resolve(payload: Dict[str, Any]):
+    """Resolve a user's quiz answers to a named predictor profile.
+    Public — accepts {answers: {q_key: tag}} from the lesson funnel and
+    returns the matched profile (name + diagnosis + weakness + edge +
+    hooks). Stateless; nothing about the user is persisted here.
+    """
+    from voita_profiles import DEFAULT_PROFILES, sanitize_profiles, resolve_profile
+    settings_doc = await db.settings.find_one({"_id": SETTINGS_KEY}) or {}
+    profiles = sanitize_profiles(settings_doc.get("voita_predictor_profiles") or DEFAULT_PROFILES)
+    answers = payload.get("answers") if isinstance(payload, dict) else {}
+    if not isinstance(answers, dict):
+        answers = {}
+    cleaned = {str(k)[:32]: str(v)[:48] for k, v in answers.items() if k and v}
+    matched = resolve_profile(profiles, cleaned)
+    if not matched:
+        raise HTTPException(status_code=500, detail="no profile available")
+    return {"profile": matched, "matched_answers": cleaned}
 
 
 @api_router.get("/voita/your-record")
