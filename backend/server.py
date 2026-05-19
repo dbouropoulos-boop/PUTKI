@@ -327,6 +327,12 @@ class OptinPayload(BaseModel):
 # consent tag (`voita_lead`) — distinct from the raffle entry itself
 # (which uses `game_raffle`) and distinct from marketing consent.
 
+# PUTKI-wide lead sources. Each surface tags its capture so the drip
+# worker can fan out the correct sequence (Mestari 5-day playbook,
+# Voita post-entry recap, Mittari onboarding, etc.).
+_PUTKI_LEAD_SOURCES = {"mestari", "voita", "mittari", "peli_voyager"}
+
+
 class _VoitaLeadPayload(BaseModel):
     email: EmailStr
     raffle_slug: Optional[str] = Field(default=None, max_length=120)
@@ -335,6 +341,10 @@ class _VoitaLeadPayload(BaseModel):
     bet_frequency: Optional[str] = Field(default=None, max_length=32)
     sportsbooks: Optional[List[str]] = None
     confidence: Optional[str] = Field(default=None, max_length=32)
+    quiz_tags: Optional[Dict[str, str]] = None
+    display_name: Optional[str] = Field(default=None, max_length=80)
+    lang: Optional[str] = Field(default=None, max_length=4)
+    source: Optional[str] = Field(default=None, max_length=32)
 
 
 @api_router.post("/voita/lead")
@@ -343,6 +353,17 @@ async def voita_capture_lead(payload: _VoitaLeadPayload):
         raise HTTPException(status_code=400, detail="must_be_18_plus")
     email = str(payload.email).lower().strip()
     now = datetime.now(timezone.utc).isoformat()
+    source = (payload.source or "voita").strip().lower()[:32]
+    if source not in _PUTKI_LEAD_SOURCES:
+        source = "voita"
+    # Per-surface mapping → which consent tag + surface label to store.
+    # Mestari is the standalone diagnostic; voita_landing is the raffle entry.
+    if source == "mestari":
+        surface, consent_tag = "mestari_landing", "mestari_lead"
+    elif source == "mittari":
+        surface, consent_tag = "mittari_landing", "mittari_lead"
+    else:
+        surface, consent_tag = "voita_landing", "voita_lead"
     quiz = {
         "favorite_sport": (payload.favorite_sport or "").strip().lower()[:32] or None,
         "bet_frequency": (payload.bet_frequency or "").strip().lower()[:32] or None,
@@ -353,24 +374,28 @@ async def voita_capture_lead(payload: _VoitaLeadPayload):
         "confidence": (payload.confidence or "").strip().lower()[:32] or None,
         "captured_at": now,
         "raffle_slug": payload.raffle_slug,
+        "tags": payload.quiz_tags or None,
     }
     await db.optin_consents.update_one(
-        {"channel": "email", "surface": "voita_landing", "identifier": email},
+        {"channel": "email", "surface": surface, "identifier": email},
         {
             "$set": {
                 "channel": "email",
-                "surface": "voita_landing",
+                "surface": surface,
                 "identifier": email,
-                "consent_tag": "voita_lead",
+                "consent_tag": consent_tag,
+                "source": source,
                 "email": email,
                 "last_seen_at": now,
                 "voita_quiz": quiz,
+                "lang": (payload.lang or "").strip().lower()[:4] or None,
+                "display_name": (payload.display_name or "").strip()[:80] or None,
             },
-            "$setOnInsert": {"created_at": now},
+            "$setOnInsert": {"created_at": now, "first_source": source},
         },
         upsert=True,
     )
-    return {"ok": True, "consent_tag": "voita_lead"}
+    return {"ok": True, "consent_tag": consent_tag, "source": source}
 
 
 @api_router.post("/optin")
@@ -2721,6 +2746,9 @@ class _VoitaEntryPayload(BaseModel):
     predicted_away_goals: int = Field(..., ge=0, le=50)
     rules_accepted: bool
     display_name: Optional[str] = ""
+    confidence: Optional[int] = Field(default=None, ge=1, le=5)
+    contact_channel: Optional[str] = Field(default=None, max_length=16)
+    pending_id: Optional[str] = Field(default=None, max_length=64)
 
 
 @api_router.post("/voita/raffles/{slug}/enter")
@@ -2731,6 +2759,9 @@ async def public_voita_enter(slug: str, payload: _VoitaEntryPayload, request: Re
     try:
         ip = request.client.host if request.client else ""
         ua = request.headers.get("user-agent", "")[:240]
+        ch = (payload.contact_channel or "").strip().lower() or None
+        if ch not in (None, "telegram", "email"):
+            ch = None
         return await submit_entry(
             db, slug=slug.lower().strip(),
             email=str(payload.email),
@@ -2739,6 +2770,9 @@ async def public_voita_enter(slug: str, payload: _VoitaEntryPayload, request: Re
             predicted_away_goals=payload.predicted_away_goals,
             rules_accepted=bool(payload.rules_accepted),
             display_name=payload.display_name or "",
+            confidence=payload.confidence,
+            contact_channel=ch,
+            pending_id=(payload.pending_id or "").strip()[:64] or None,
             ip=ip, ua=ua,
         )
     except ValueError as exc:

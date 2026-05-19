@@ -404,6 +404,9 @@ async def submit_entry(
     db, *, slug: str, email: str, prediction_one_x_two: str,
     predicted_home_goals: int, predicted_away_goals: int,
     rules_accepted: bool, display_name: str = "",
+    confidence: Optional[int] = None,
+    contact_channel: Optional[str] = None,
+    pending_id: Optional[str] = None,
     ip: str = "", ua: str = "",
 ) -> Dict[str, Any]:
     """Step 1 — raffle entry. Captures the minimum required for contest
@@ -482,6 +485,10 @@ async def submit_entry(
         "created_at": _now_iso(),
         "ip_hash": _hash(ip) if ip else None,
         "ua_hash": _hash(ua) if ua else None,
+        "confidence": int(confidence) if confidence and 1 <= int(confidence) <= 5 else None,
+        "contact_channel": contact_channel if contact_channel in {"telegram", "email"} else None,
+        "pending_id": (pending_id or "").strip()[:64] or None,
+        "telegram_bound_at": None,  # set by Slice 3 bot when /start hits
     }
     await db.voita_entries.insert_one(entry)
     await db.voita_raffles.update_one(

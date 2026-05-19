@@ -37,6 +37,7 @@ import Voita from "@/pages/Voita";
 import VoitaRaffle from "@/pages/VoitaRaffle";
 import VoitaKiitos from "@/pages/VoitaKiitos";
 import VoitaSaannot from "@/pages/VoitaSaannot";
+import Mestari from "@/pages/Mestari";
 import RedirectWithQuery from "@/components/RedirectWithQuery";
 import TopicHubPage from "@/pages/TopicHubPage";
 import Article from "@/pages/Article";
@@ -61,6 +62,7 @@ function App() {
           {/* Standalone (no header/footer) */}
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
+          <Route path="/mestari" element={<Mestari />} />
           <Route path="/back-office" element={<BackOffice />} />
           <Route path="/back-office/queue" element={<BackOfficeQueue />} />
           <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
