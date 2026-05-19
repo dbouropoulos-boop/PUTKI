@@ -19,11 +19,14 @@
  * Loading state: no stale fallback. We show the "feed updating" line until
  * the first response arrives or if the response is empty.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 90_000;
+// Bloomberg-comfortable reading pace. Set in JS not CSS so the
+// animation duration scales with actual track width.
+const TICKER_PIXELS_PER_SECOND = 55;
 
 const SEVERITY_COLOR = {
   high:   '#C13B2C',
@@ -78,6 +81,26 @@ const NewsTicker = () => {
     return () => clearInterval(id);
   }, [load]);
 
+  // Measure the track width once it renders so we can derive the
+  // animation duration from a target px/s (instead of a hardcoded 90s
+  // which felt 2-3x too fast on wide viewports with rich content).
+  const trackRef = useRef(null);
+  const [duration, setDuration] = useState(180);
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const measure = () => {
+      // The track contains the items twice, animation translates -50%,
+      // so the perceived loop covers `scrollWidth / 2` pixels.
+      const loopPx = el.scrollWidth / 2;
+      if (loopPx > 0) setDuration(Math.max(60, loopPx / TICKER_PIXELS_PER_SECOND));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [items, lang]);
+
   // Loading / empty / stale → quiet status line.
   if (items === null || items.length === 0 || stale) {
     const msg = items === null
@@ -129,7 +152,7 @@ const NewsTicker = () => {
           {lang === 'en' ? 'NEWS · LAST 24H' : 'UUTISET · 24 H'}
         </span>
         <div className="news-ticker-marquee" style={{ flex: 1, overflow: 'hidden' }}>
-          <div className="news-ticker-track">
+          <div className="news-ticker-track" ref={trackRef} style={{ animationDuration: `${duration}s` }}>
             {reel.map((it, i) => (
               <a
                 key={`${it.url}-${i}`}
@@ -185,9 +208,13 @@ const NewsTicker = () => {
         .news-ticker-track {
           display: inline-flex;
           align-items: center;
-          animation: news-ticker-scroll 90s linear infinite;
+          animation-name: news-ticker-scroll;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+          will-change: transform;
         }
-        .news-ticker-marquee:hover .news-ticker-track {
+        .news-ticker-marquee:hover .news-ticker-track,
+        .news-ticker-marquee:focus-within .news-ticker-track {
           animation-play-state: paused;
         }
         @keyframes news-ticker-scroll {

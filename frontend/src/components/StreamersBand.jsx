@@ -65,7 +65,7 @@ const buildThumb = (url) => {
 };
 
 // ── Card ───────────────────────────────────────────────────────────────
-const StreamerCard = ({ streamer, platform, lang, viewerDelta, rank, onAlertClick }) => {
+const StreamerCard = ({ streamer, platform, lang, viewerDelta, rank, alertSignal, onAlertClick }) => {
   const meta = PLATFORM_META[platform];
   const handle = (streamer.user_login || streamer.user_name || streamer.channel || '?').toLowerCase();
   const displayName = streamer.user_name || handle;
@@ -199,7 +199,28 @@ const StreamerCard = ({ streamer, platform, lang, viewerDelta, rank, onAlertClic
             color: '#9ad4a9',
             fontFamily: 'ui-monospace, monospace', fontSize: 9,
             letterSpacing: '0.20em', fontWeight: 700,
-          }}>★ EDITORIAL</div>
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}>
+            ★ EDITORIAL
+            {/* Bell — visible on every PUBLISHED card; pulses if a
+                per-streamer notification fired in the last 60min */}
+            <span
+              data-testid="streamer-card-bell"
+              data-pulse={alertSignal?.count > 0 ? '1' : '0'}
+              className={alertSignal?.count > 0 ? 'streamer-bell-pulse' : 'streamer-bell-static'}
+              title={alertSignal?.count > 0
+                ? (lang === 'en'
+                    ? `${alertSignal.count} alert${alertSignal.count === 1 ? '' : 's'} dispatched in the last hour`
+                    : `${alertSignal.count} hälytystä lähetetty viimeisen tunnin sisällä`)
+                : (lang === 'en' ? 'Alerts armed' : 'Hälytys käytössä')}
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                color: alertSignal?.count > 0 ? '#FFD66E' : '#9ad4a9',
+              }}
+            >
+              <Bell strokeWidth={2} size={10} fill={alertSignal?.count > 0 ? '#FFD66E' : 'none'} />
+            </span>
+          </div>
         )}
       </a>
 
@@ -342,8 +363,27 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
   const [activeTab, setActiveTab] = useState('twitch');
   const [deltas, setDeltas] = useState({});
   const [alertStreamer, setAlertStreamer] = useState(null);
+  const [alertSignals, setAlertSignals] = useState({});
   const scrollerRef = useRef(null);
   const [overflow, setOverflow] = useState(false);
+
+  // Per-streamer alert signal — recently-dispatched notifications. Pulls
+  // /api/streamers/recent-alerts every 60s; the bell on the card pulses
+  // when the count is > 0 within the last 60min window.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const r = await fetch(`${BACKEND}/api/streamers/recent-alerts?within_minutes=60`);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled) setAlertSignals(d.by_streamer || {});
+      } catch { /* keep last good signals */ }
+    };
+    load();
+    const id = setInterval(load, 60_000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
   // Toggle scroll-arrow visibility based on whether the carousel actually
   // overflows. On wide desktops the 12 active streamers may fit without
@@ -568,6 +608,7 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
               streamer={s} platform={activeTab} lang={lang}
               viewerDelta={deltas[login]}
               rank={rankByLogin[login]}
+              alertSignal={alertSignals[login]}
               onAlertClick={onAlertClick} />
           );
         })}
@@ -582,6 +623,19 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
         @keyframes pulseDot {
           0%, 100% { opacity: 1; transform: scale(1); }
           50%      { opacity: 0.45; transform: scale(0.85); }
+        }
+        @keyframes bellPulse {
+          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+          15%      { transform: scale(1.2) rotate(-8deg); opacity: 1; }
+          30%      { transform: scale(1.2) rotate(8deg); opacity: 1; }
+          45%      { transform: scale(1.1) rotate(0deg); opacity: 0.8; }
+        }
+        .streamer-bell-pulse {
+          animation: bellPulse 2.4s ease-in-out infinite;
+          transform-origin: 50% 0%;
+        }
+        .streamer-bell-static {
+          opacity: 0.65;
         }
         .streamer-card-v2:hover {
           transform: translateY(-2px);

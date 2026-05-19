@@ -161,6 +161,14 @@ export const NewsroomLiveStrip = () => {
           </span>
         </>
       )}
+      {stats.alerts_dispatched_24h != null && stats.alerts_dispatched_24h > 0 && (
+        <>
+          <span style={{ opacity: 0.45, margin: '0 9px' }}>·</span>
+          <span data-testid="newsroom-alerts-dispatched">
+            {stats.alerts_dispatched_24h} {lang === 'en' ? 'ALERTS DISPATCHED' : 'HÄLYTYSTÄ LÄHETETTY'}
+          </span>
+        </>
+      )}
       <span style={{ opacity: 0.45, margin: '0 9px' }}>·</span>
       <span data-testid="newsroom-live-tag" style={{ color: '#6FA37D' }}>
         {lang === 'en' ? 'UPDATED LIVE' : 'PÄIVITTYY LIVENÄ'}

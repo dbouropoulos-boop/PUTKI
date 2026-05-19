@@ -875,6 +875,20 @@ async def public_newsroom_live_stats():
     except Exception:
         logger.exception("Mittari fetch in newsroom stats failed")
 
+    # Alerts dispatched in the last 24h (system-wide signal).
+    # Counts both the daily-dispatch sends AND the per-streamer
+    # notify_subscribers_of_live writes (via streamer_alerts.last_notified_at).
+    alerts_24h = 0
+    try:
+        alerts_24h += await db.dispatch_log.count_documents(
+            {"kind": "send", "sent_at": {"$gte": since}},
+        )
+        alerts_24h += await db.streamer_alerts.count_documents(
+            {"last_notified_at": {"$gte": since}},
+        )
+    except Exception:
+        logger.exception("alerts dispatched count failed")
+
     return {
         "stories_today": stories_today,
         "named_outlets": named_outlets,
@@ -883,7 +897,47 @@ async def public_newsroom_live_stats():
         "mittari_delta": mittari_delta,
         "mittari_state": mittari_state,
         "state_change": state_change,
+        "alerts_dispatched_24h": alerts_24h,
         "as_of": now.isoformat(),
+    }
+
+
+@api_router.get("/streamers/recent-alerts")
+async def public_streamers_recent_alerts(within_minutes: int = 60):
+    """Returns a map of streamer_login -> dispatched count for streamers
+    whose subscribers were notified within the last N minutes. Used by
+    the homepage band to pulse the bell icon on cards where a real
+    notification just fired.
+
+    Honest: only counts published live-notifications via
+    `streamer_alerts.last_notified_at`. Daily-pick SMS/Telegram dispatch
+    isn't per-streamer so it's excluded here (that's surfaced in the
+    newsroom strip's `alerts_dispatched_24h` instead).
+    """
+    within = max(1, min(int(within_minutes), 1440))
+    cutoff = (datetime.now(timezone.utc) - timedelta(minutes=within)).isoformat()
+    cur = db.streamer_alerts.aggregate([
+        {"$match": {"last_notified_at": {"$gte": cutoff}}},
+        {"$group": {
+            "_id": {"login": "$streamer_login", "platform": "$platform"},
+            "count": {"$sum": 1},
+            "latest": {"$max": "$last_notified_at"},
+        }},
+    ])
+    by_streamer: Dict[str, Dict[str, Any]] = {}
+    async for r in cur:
+        login = (r["_id"]["login"] or "").lower()
+        if not login:
+            continue
+        by_streamer[login] = {
+            "platform": r["_id"]["platform"],
+            "count": int(r["count"]),
+            "latest": r["latest"],
+        }
+    return {
+        "within_minutes": within,
+        "by_streamer": by_streamer,
+        "as_of": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -2171,6 +2225,41 @@ async def admin_feed_rebuild(market_id: str = FEED_DEFAULT_MARKET, _: bool = Dep
     return await rebuild_feed(db, market_id=market_id)
 
 
+# ── Daily dispatch worker (Email digest + SMS + Telegram, dry-run default) ──
+
+class _DispatchRunPayload(BaseModel):
+    dry_run: Optional[bool] = True
+
+
+@api_router.post("/admin/dispatch/run")
+async def admin_dispatch_run(
+    payload: _DispatchRunPayload,
+    _: bool = Depends(require_admin),
+):
+    """Manually fire the daily dispatch cycle. Dry-run by default — keeps
+    the audit trail honest until Resend/Twilio/Telegram keys land."""
+    from dispatch_daily import run_daily_dispatch
+    return await run_daily_dispatch(db, dry_run=bool(payload.dry_run))
+
+
+@api_router.get("/admin/dispatch/log")
+async def admin_dispatch_log(
+    limit: int = 100, kind: Optional[str] = None,
+    _: bool = Depends(require_admin),
+):
+    from dispatch_daily import list_recent_log
+    items = await list_recent_log(db, limit=limit, kind=kind)
+    return {"items": items, "count": len(items)}
+
+
+@api_router.get("/admin/dispatch/summary")
+async def admin_dispatch_summary(
+    days: int = 7, _: bool = Depends(require_admin),
+):
+    from dispatch_daily import cycle_summary
+    return await cycle_summary(db, days=days)
+
+
 @app.on_event("startup")
 async def _seed_phase3():
     try:
@@ -2238,6 +2327,11 @@ async def _seed_phase3():
     except Exception:
         logger.exception("Failed to create streamer_meta_drafter indexes")
     try:
+        from dispatch_daily import ensure_indexes as dispatch_ensure
+        await dispatch_ensure(db)
+    except Exception:
+        logger.exception("Failed to create dispatch_daily indexes")
+    try:
         from slot_registry import ensure_indexes as reg_ensure, seed_default_registry
         await reg_ensure(db)
         result = await seed_default_registry(db)
@@ -2270,6 +2364,12 @@ async def _seed_phase3():
         import asyncio as _aio
         _aio.create_task(scheduler_worker_loop(db))
         _aio.create_task(variant_filler_worker_loop(db))
+    # Daily dispatch worker (Email digest + SMS + Telegram). Dry-run by
+    # default until Resend / Twilio / Telegram keys land.
+    if os.environ.get("PUTKI_HQ_DISABLE_DISPATCH_WORKER", "0") != "1":
+        import asyncio as _aio
+        from dispatch_daily import dispatch_worker_loop
+        _aio.create_task(dispatch_worker_loop(db))
 
 
 _content_generator: Optional[ContentGenerator] = None

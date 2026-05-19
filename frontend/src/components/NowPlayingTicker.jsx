@@ -8,10 +8,13 @@
  * Data: GET /api/streamers/now-playing
  * Refresh: 60s
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
+// Slot data changes less frequently than news — keep this calmer than
+// the news ticker (40 px/s vs ~55 px/s).
+const SLOTS_PIXELS_PER_SECOND = 40;
 
 const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
   const { lang } = useLang();
@@ -36,6 +39,22 @@ const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
   }, []);
 
   const label = lang === 'en' ? 'NOW PLAYING' : 'PELISSÄ NYT';
+
+  // Dynamic animation duration based on actual track width.
+  const trackRef = useRef(null);
+  const [duration, setDuration] = useState(180);
+  useLayoutEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const measure = () => {
+      const loopPx = el.scrollWidth / 2;
+      if (loopPx > 0) setDuration(Math.max(60, loopPx / SLOTS_PIXELS_PER_SECOND));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [slots]);
 
   if (loading) {
     return (
@@ -97,9 +116,13 @@ const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
           100% { transform: translateX(-50%); }
         }
         [data-testid="now-playing-ticker"] .ticker-track {
-          animation: slotsTicker 90s linear infinite;
+          animation-name: slotsTicker;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+          will-change: transform;
         }
-        [data-testid="now-playing-ticker"]:hover .ticker-track {
+        [data-testid="now-playing-ticker"]:hover .ticker-track,
+        [data-testid="now-playing-ticker"]:focus-within .ticker-track {
           animation-play-state: paused;
         }
       `}</style>
@@ -109,8 +132,9 @@ const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
         color: 'var(--ink, #ECE6D8)', whiteSpace: 'nowrap',
       }}>{label}</span>
       <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-        <div className="ticker-track" style={{
+        <div className="ticker-track" ref={trackRef} style={{
           display: 'inline-flex', gap: 24, whiteSpace: 'nowrap',
+          animationDuration: `${duration}s`,
         }}>
           {items.map((slot, i) => {
             const isActive = activeSlot && activeSlot.toLowerCase() === slot.name.toLowerCase();

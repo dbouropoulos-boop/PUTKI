@@ -171,9 +171,14 @@ const FeaturedCard = ({ item, lang }) => {
 };
 
 const SEVERITY_BORDER = {
-  high: '2px solid #C13B2C',
-  med:  '2px solid #C97A3A',
+  high:   '2px solid #C13B2C',
+  med:    '2px solid #C97A3A',
   medium: '2px solid #C97A3A',
+  low:    '2px solid #6FA37D',
+  // Anything we couldn't classify still gets a neutral stripe so the
+  // chrono list reads as a single typographic block, not a stitched
+  // patchwork of with/without rows.
+  unknown: '2px solid var(--hairline, #221E1B)',
 };
 
 const ChronoRow = ({ item, lang, weight }) => {
@@ -191,7 +196,7 @@ const ChronoRow = ({ item, lang, weight }) => {
   const timeOpacity = isOld ? 0.6 : 1;
   const padBlock = isLead ? '24px 0 22px' : '18px 0';
   const sevKey = (item.severity || '').toLowerCase();
-  const sevBorder = SEVERITY_BORDER[sevKey];
+  const sevBorder = SEVERITY_BORDER[sevKey] || SEVERITY_BORDER.unknown;
 
   return (
     <a
@@ -203,8 +208,8 @@ const ChronoRow = ({ item, lang, weight }) => {
       style={{
         display: 'grid', gridTemplateColumns: '64px 1fr 110px', gap: 18,
         alignItems: 'baseline',
-        padding: sevBorder ? padBlock.replace(/(\d+)px 0/g, '$1px 0 $1px 14px') : padBlock,
-        borderLeft: sevBorder || '2px solid transparent',
+        padding: padBlock.replace(/(\d+)px 0/g, '$1px 0 $1px 14px'),
+        borderLeft: sevBorder,
         borderBottom: '1px solid var(--hairline, #221E1B)',
         textDecoration: 'none', color: 'inherit',
       }}

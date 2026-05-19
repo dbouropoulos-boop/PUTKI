@@ -39,6 +39,137 @@ const Sparkline = ({ points = [], color = '#D4B445' }) => {
   );
 };
 
+const trackBand = (score) => {
+  if (score >= 90) return { label: 'TIGHT', color: '#6FA37D' };
+  if (score >= 75) return { label: 'CLEAR', color: '#6FA37D' };
+  if (score >= 60) return { label: 'MIXED', color: '#D4B445' };
+  if (score >= 40) return { label: 'LOOSE', color: '#C97A3A' };
+  return { label: 'SCATTERED', color: '#C13B2C' };
+};
+
+/**
+ * Track record strip — pure FE summary computed from the sharpness_daily
+ * sparkline payload. No new endpoint required; the values are derived
+ * from the same `points` array that drives the sparkline.
+ *
+ * Stats:
+ *   - 30D AVG       (rolling average of available days)
+ *   - PEAK / NADIR  (max & min daily averages with date)
+ *   - DAYS ≥ 75     (how many of the last 30 cleared the "clear" threshold)
+ *   - TREND         (last-7d avg vs prior-7d avg, with arrow)
+ *
+ * Honest empty state when no data has accumulated yet.
+ */
+const TrackRecordStrip = ({ points = [], lang = 'fi' }) => {
+  if (!points.length) {
+    return (
+      <div data-testid="track-record-empty" style={{
+        marginTop: 14, padding: '14px 18px',
+        border: '1px dashed var(--hairline, #221E1B)',
+        color: 'var(--muted, #9C9587)',
+        fontFamily: 'ui-monospace, monospace', fontSize: 11,
+        letterSpacing: '0.14em',
+      }}>{lang === 'en'
+        ? 'TRACK RECORD · NO DATA YET. CHECK BACK AFTER A FEW DAILY CYCLES.'
+        : 'TRACK RECORD · EI DATAA VIELÄ. SEURAA MUUTAMAN VUOROKAUDEN KULUTTUA.'}</div>
+    );
+  }
+  const scores = points.map((p) => p.score || 0);
+  const sum = scores.reduce((a, b) => a + b, 0);
+  const avg = sum / scores.length;
+  const peakIdx = scores.indexOf(Math.max(...scores));
+  const nadirIdx = scores.indexOf(Math.min(...scores));
+  const above75 = scores.filter((s) => s >= 75).length;
+
+  const last7 = scores.slice(-7);
+  const prev7 = scores.slice(-14, -7);
+  const last7Avg = last7.length ? last7.reduce((a, b) => a + b, 0) / last7.length : null;
+  const prev7Avg = prev7.length ? prev7.reduce((a, b) => a + b, 0) / prev7.length : null;
+  const trendDelta = last7Avg != null && prev7Avg != null
+    ? last7Avg - prev7Avg
+    : null;
+  const trendArrow = trendDelta == null ? null
+    : trendDelta > 0.5 ? '▲'
+    : trendDelta < -0.5 ? '▼'
+    : '→';
+  const trendColor = trendArrow === '▲' ? '#6FA37D'
+    : trendArrow === '▼' ? '#C13B2C'
+    : 'var(--muted, #9C9587)';
+
+  const cells = [
+    {
+      label: lang === 'en' ? '30D AVG' : '30 PV KESKIARVO',
+      value: Math.round(avg),
+      sub: trackBand(avg).label,
+      subColor: trackBand(avg).color,
+    },
+    {
+      label: lang === 'en' ? 'PEAK' : 'KORKEIN',
+      value: Math.round(scores[peakIdx]),
+      sub: points[peakIdx]?.date || '',
+      subColor: '#6FA37D',
+    },
+    {
+      label: lang === 'en' ? 'NADIR' : 'MATALIN',
+      value: Math.round(scores[nadirIdx]),
+      sub: points[nadirIdx]?.date || '',
+      subColor: '#C97A3A',
+    },
+    {
+      label: lang === 'en' ? 'DAYS ≥ 75' : 'PV ≥ 75',
+      value: above75,
+      sub: `${Math.round((above75 / scores.length) * 100)}%`,
+      subColor: '#D4B445',
+    },
+    {
+      label: lang === 'en' ? '7D TREND' : '7 PV TRENDI',
+      value: trendArrow || '—',
+      sub: trendDelta != null
+        ? `${trendDelta > 0 ? '+' : ''}${trendDelta.toFixed(1)}`
+        : (lang === 'en' ? 'NOT ENOUGH DATA' : 'EI VIELÄ DATAA'),
+      subColor: trendColor,
+      isArrow: true,
+    },
+  ];
+
+  return (
+    <div data-testid="pelisignaalit-track-record" style={{
+      marginTop: 14, padding: '16px 22px',
+      border: '1px solid var(--hairline, #221E1B)',
+      background: 'var(--surface, #141210)',
+      borderLeft: '2px solid #6FA37D',
+      display: 'flex', flexWrap: 'wrap', gap: 36,
+    }}>
+      <div style={{
+        flex: '0 0 100%',
+        color: 'var(--muted, #9C9587)',
+        fontFamily: 'ui-monospace, monospace', fontSize: 10,
+        letterSpacing: '0.22em', fontWeight: 700,
+        marginBottom: 4,
+      }}>{lang === 'en' ? 'TRACK RECORD · LAST 30D' : 'TRACK RECORD · 30 VRK'}</div>
+      {cells.map((c, i) => (
+        <div key={i} data-testid={`track-record-cell-${i}`} style={{ minWidth: 90 }}>
+          <div style={{
+            color: 'var(--muted, #9C9587)',
+            fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+            letterSpacing: '0.18em', fontWeight: 700, marginBottom: 4,
+          }}>{c.label}</div>
+          <div style={{
+            color: c.isArrow ? c.subColor : '#FFFFFF',
+            fontFamily: 'Georgia, serif',
+            fontWeight: 700, fontSize: 26, lineHeight: 1,
+          }}>{c.value}</div>
+          {c.sub && <div style={{
+            color: c.subColor,
+            fontFamily: 'ui-monospace, monospace', fontSize: 10,
+            letterSpacing: '0.14em', marginTop: 4,
+          }}>{c.sub}</div>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const Pelisignaalit = () => {
   const { lang } = useLang();
   const [picks, setPicks] = useState([]);
@@ -135,6 +266,9 @@ const Pelisignaalit = () => {
             <Sparkline points={sparkline} />
           </div>
         </div>
+
+        {/* TRACK RECORD STRIP — derived stats from the 30-day sparkline */}
+        <TrackRecordStrip points={sparkline} lang={lang} />
       </section>
 
       {/* PICKS */}

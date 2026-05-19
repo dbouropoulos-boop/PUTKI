@@ -1,0 +1,33 @@
+{
+  "summary": "Iter28 sprint test — dispatch_daily worker + bell-icon + newsroom-alerts metric + ticker pause-on-hover + chrono row stripes + /back-office/optin-segments admin. Backend pytest 15/15 PASS (new) and regression 19/19 PASS (streamer-meta drafter). Frontend e2e covered: newsroom-alerts-dispatched pill shows '70 ALERTS DISPATCHED', back-office admin auth gate + totals + segments table + dispatch dry-run trigger all work end-to-end (returned 'CYCLE OK · DRY-RUN · email=7 · sms=2 · telegram=1'), TrackRecordStrip empty state rendered on /pelisignaalit (track-record-empty present — acceptance allows OR), NewsTicker animation-duration measured 412.155s (>=60s requirement, scaled via ResizeObserver), pause-on-hover CSS rules confirmed for both '.news-ticker-marquee:hover .news-ticker-track' and '.ticker-track:hover' selectors, SEVERITY_BORDER unknown fallback present in NewsPortal.jsx code review. Bell-icon on EDITORIAL badges could not be visually exercised because zero streamer_meta rows are currently status=published in registry; code path + testid wiring confirmed in StreamersBand.jsx and backend endpoint /api/streamers/recent-alerts returns the expected shape.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint_dispatch_daily.py",
+    "/app/backend/tests/test_sprint_streamer_meta_drafter.py",
+    "/app/test_reports/pytest/iter28_dispatch.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (BACK_OFFICE_TOKEN). Back-office UI auth gate via [data-testid=back-office-token-input] + [data-testid=back-office-token-submit].",
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Bell icon visual verification is data-dependent — no streamer_meta rows currently have status=published, so [data-testid=streamer-card-editorial-badge] count is 0 on the public homepage and [data-testid=streamer-card-bell] cannot be DOM-asserted right now. Backend endpoint /api/streamers/recent-alerts is fully functional and returns by_streamer dict; main agent may want to seed at least one published streamer_meta to confirm bell render in a future round.",
+    "TrackRecordStrip on /pelisignaalit correctly renders [data-testid=track-record-empty] because sharpness_daily collection is still warming up — first daily cycles haven't accumulated 30D worth yet. Empty state copy is correct ('TRACK RECORD · NO DATA YET. CHECK BACK AFTER A FEW DAILY CYCLES.'). Acceptance criterion was OR (strip OR empty), so PASS.",
+    "NewsTicker computed animation-duration was 412s on this run — well above the 60s floor and far from the 30s regression threshold mentioned in other_misc_info. Scales correctly with content width via ResizeObserver.",
+    "Both pause-on-hover CSS rules co-exist (legacy '.ticker-track:hover' and new '.news-ticker-marquee:hover .news-ticker-track'). Not a bug, just observation.",
+    "Dispatch dry-run cycle in preview produces email=7 sms=2 telegram=1 send-rows with mode=DRY_RUN — confirms _dispatch_segment_dryrun never escalates to delivered>0 when keys absent (RESEND/TWILIO/TELEGRAM env empty)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Two dispatch cycles were triggered during testing (one via pytest, one via UI DRY-RUN click). Both produced dry_run cycle docs + ~10 send-audit rows each in dispatch_log. All rows are tagged mode=DRY_RUN and tied to today's UTC date — they will not contaminate production telemetry.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Regression suite: pytest tests/test_sprint_dispatch_daily.py (15 tests) + tests/test_sprint_streamer_meta_drafter.py (19 tests) = 34/34 PASS. New testids verified: back-office-optin-segments, optin-totals, segments-table, dispatch-run-dryrun, dispatch-result, pelisignaalit-track-record (or track-record-empty), newsroom-alerts-dispatched, streamer-card-bell (code wired but no published streamers to render yet), news-chrono-row with data-severity attribute. Public endpoints all verified: /api/newsroom/live-stats now exposes alerts_dispatched_24h:int, /api/streamers/recent-alerts {within_minutes, by_streamer, as_of} with window clamping (0→1, 999999→1440). Admin endpoints require X-Admin-Token; unauth returns 401. NewsTicker pixels_per_second=55 + NowPlayingTicker pixels_per_second=40 both compute durations dynamically and pause-on-hover/focus-within. SEVERITY_BORDER.unknown fallback ensures every chrono row gets a left stripe.",
+  "rca of the issue": "No issues to RCA — clean sprint."
+}
