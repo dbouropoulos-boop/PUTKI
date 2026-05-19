@@ -2271,12 +2271,17 @@ async def _voita_feature_enabled() -> bool:
 
 
 @api_router.get("/voita/raffles")
-async def public_voita_raffles_list():
-    """Public list — only returns raffles where all 3 gates AND the
-    global feature flag are true. Empty list = silent gating, exactly as
-    intended for a soft launch."""
+async def public_voita_raffles_list(status: Optional[str] = None, limit: int = 50):
+    """Public list. Without filter, returns currently-visible raffles
+    (the homepage CTA surface). With `?status=paid&limit=N`, returns the
+    last N paid raffles with winner detail + masked emails — used by
+    the recent-winners trust strip."""
     if not await _voita_feature_enabled():
         return {"items": [], "feature_enabled": False}
+    if (status or "").lower() == "paid":
+        from voita_engine import recent_winners_public
+        items = await recent_winners_public(db, limit=max(1, min(int(limit or 3), 10)))
+        return {"items": items, "feature_enabled": True, "view": "paid"}
     from voita_engine import list_raffles_public
     items = await list_raffles_public(db)
     return {"items": items, "feature_enabled": True}
@@ -2299,6 +2304,7 @@ class _VoitaEntryPayload(BaseModel):
     predicted_home_goals: int = Field(..., ge=0, le=50)
     predicted_away_goals: int = Field(..., ge=0, le=50)
     rules_accepted: bool
+    display_name: Optional[str] = ""
 
 
 @api_router.post("/voita/raffles/{slug}/enter")
@@ -2316,6 +2322,7 @@ async def public_voita_enter(slug: str, payload: _VoitaEntryPayload, request: Re
             predicted_home_goals=payload.predicted_home_goals,
             predicted_away_goals=payload.predicted_away_goals,
             rules_accepted=bool(payload.rules_accepted),
+            display_name=payload.display_name or "",
             ip=ip, ua=ua,
         )
     except ValueError as exc:
@@ -2418,6 +2425,19 @@ async def admin_voita_draw(raffle_id: str, payload: _VoitaDrawPayload, _: bool =
             away_goals=payload.away_goals,
             drawn_by="admin",
         )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@api_router.post("/admin/voita/raffles/{raffle_id}/mark-paid")
+async def admin_voita_mark_paid(raffle_id: str, _: bool = Depends(require_admin)):
+    """Flip a drawn raffle to `paid`. Required step before the recent-
+    winners strip will surface it on /voita/{slug}. A draw without
+    payment is a weaker trust claim than a draw + paid timestamp."""
+    from voita_engine import mark_paid
+    try:
+        doc = await mark_paid(db, raffle_id, paid_by="admin")
+        return {"ok": True, "raffle": doc}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 

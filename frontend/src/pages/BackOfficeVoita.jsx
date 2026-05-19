@@ -20,6 +20,7 @@ const STATUS_COLOR = {
   open: { bg: '#0e2b1a', color: '#6FA37D', border: '#2b5a3e' },
   closed: { bg: '#2b1a0e', color: '#d4a89a', border: '#5a3a2b' },
   drawn: { bg: '#1a0e2b', color: '#a89ad4', border: '#3a2b5a' },
+  paid: { bg: '#0e2b1a', color: '#FFD66E', border: '#7a5c1d' },
   archived: { bg: 'transparent', color: 'var(--muted)', border: 'var(--border-strong)' },
 };
 
@@ -109,7 +110,21 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
   const [info, setInfo] = useState('');
   const [drawHome, setDrawHome] = useState('');
   const [drawAway, setDrawAway] = useState('');
-  const drawn = raffle.status === 'drawn';
+  const drawn = raffle.status === 'drawn' || raffle.status === 'paid';
+
+  const markPaid = async () => {
+    if (!window.confirm('Mark this raffle as PAID? Prizes must have actually been paid out before clicking. Surfaces the raffle on the public recent-winners strip.')) return;
+    setBusy(true); setError(''); setInfo('');
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/mark-paid`, {
+        method: 'POST', headers: { 'X-Admin-Token': token },
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { setError(j.detail || `HTTP ${r.status}`); return; }
+      setInfo('MARKED PAID.');
+      onSaved && onSaved();
+    } finally { setBusy(false); }
+  };
 
   const save = async () => {
     setError(''); setInfo(''); setBusy(true);
@@ -293,7 +308,23 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
       {info && <div data-testid="raffle-editor-info" style={{ marginTop: 12, padding: 10, background: '#0e2b1a', border: '1px solid #2b5a3e', color: '#9ad4a9', fontSize: 12 }}>{info}</div>}
 
       {raffle.result && <div data-testid="raffle-winners" style={{ marginTop: 14, padding: 12, background: 'var(--bg)', border: '1px solid var(--hairline)' }}>
-        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', marginBottom: 8 }}>WINNERS · DRAW {raffle.result.drawn_at?.slice(0, 16).replace('T', ' ')}</div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)' }}>
+            WINNERS · DRAW {raffle.result.drawn_at?.slice(0, 16).replace('T', ' ')}
+            {raffle.paid_at && <span style={{ color: '#FFD66E', marginLeft: 12 }}>· PAID {raffle.paid_at?.slice(0, 10)}</span>}
+          </span>
+          {raffle.status === 'drawn' && (
+            <button type="button" onClick={markPaid} disabled={busy}
+              data-testid="raffle-mark-paid-btn"
+              style={{
+                padding: '8px 18px', background: '#FFD66E', color: '#0B0A09',
+                border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+                letterSpacing: '0.18em', fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
+              }}>
+              {busy ? '…' : '✓ MARK PAID'}
+            </button>
+          )}
+        </div>
         {(raffle.result.winners || []).map((w) => (
           <div key={w.entry_id} style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12, color: 'var(--ink)', marginBottom: 4 }}>
             #{w.position} · €{w.prize_amount_eur} {w.prize_type} · entry {w.entry_id?.slice(0, 8)} · {w.score} pts
@@ -372,6 +403,7 @@ const BackOfficeVoita = () => {
     draft: items.filter((r) => r.status === 'draft').length,
     open: items.filter((r) => r.status === 'open').length,
     drawn: items.filter((r) => r.status === 'drawn').length,
+    paid: items.filter((r) => r.status === 'paid').length,
   }), [items]);
 
   if (!authed) {
@@ -397,6 +429,7 @@ const BackOfficeVoita = () => {
         <span style={{ color: 'var(--muted)' }}>DRAFT <strong style={{ color: '#FFFFFF', marginLeft: 6 }}>{counts.draft}</strong></span>
         <span style={{ color: 'var(--muted)' }}>OPEN <strong style={{ color: '#6FA37D', marginLeft: 6 }}>{counts.open}</strong></span>
         <span style={{ color: 'var(--muted)' }}>DRAWN <strong style={{ color: '#a89ad4', marginLeft: 6 }}>{counts.drawn}</strong></span>
+        <span style={{ color: 'var(--muted)' }}>PAID <strong style={{ color: '#FFD66E', marginLeft: 6 }}>{counts.paid}</strong></span>
       </div>
 
       <NewRaffleForm token={token} onCreated={load} />

@@ -13,6 +13,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useLang } from '../context/LanguageContext';
+import RecentWinnersStrip from '../components/RecentWinnersStrip';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -30,6 +31,7 @@ const VoitaRaffle = () => {
   const [homeGoals, setHomeGoals] = useState('');
   const [awayGoals, setAwayGoals] = useState('');
   const [email, setEmail] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [rulesAccepted, setRulesAccepted] = useState(false);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ const VoitaRaffle = () => {
           predicted_home_goals: Number(homeGoals),
           predicted_away_goals: Number(awayGoals),
           rules_accepted: true,
+          display_name: (displayName || '').trim(),
         }),
       });
       const j = await r.json().catch(() => ({}));
@@ -111,6 +114,11 @@ const VoitaRaffle = () => {
         {title ? <span style={{ marginLeft: 12, color: '#FFFFFF', textTransform: 'none', letterSpacing: 0, fontFamily: 'Georgia, serif', fontSize: 14, fontStyle: 'italic' }}>· {title}</span> : null}
       </div>
       {summary && <p style={{ color: 'var(--ink)', fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>{summary}</p>}
+
+      {/* Trust strip — only renders when ≥1 paid raffle exists. Placed
+          ABOVE the entry form because the trust decision happens
+          pre-entry. */}
+      <RecentWinnersStrip />
 
       <form onSubmit={onSubmit} data-testid="voita-entry-form" style={{
         display: 'grid', gap: 18,
@@ -176,12 +184,31 @@ const VoitaRaffle = () => {
           </div>
         </label>
 
+        {/* Optional display name */}
+        <label>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, marginBottom: 8 }}>
+            {lang === 'en' ? '04 · DISPLAY NAME (OPTIONAL)' : '04 · NÄYTTÖNIMI (VAPAAEHTOINEN)'}
+          </div>
+          <input data-testid="voita-display-name" type="text" maxLength={40}
+            value={displayName} onChange={(e) => setDisplayName(e.target.value)}
+            placeholder={lang === 'en' ? 'e.g. Mikko H. or @nickname' : 'esim. Mikko H. tai @nimimerkki'}
+            style={{ width: '100%', background: 'var(--bg)', color: '#FFFFFF', border: '1px solid var(--border-strong)', padding: '12px 14px', fontFamily: 'inherit', fontSize: 14 }} />
+          <div style={{ marginTop: 6, fontSize: 11, color: 'var(--muted)', lineHeight: 1.5 }}>
+            {lang === 'en'
+              ? "If you win, this name will be shown on the winners list. Leave blank to be shown only as a masked email."
+              : 'Voit halutessasi näkyä voittajalistassa antamallasi nimellä. Jos jätät tyhjäksi, sähköpostisi näytetään peitetyssä muodossa.'}
+          </div>
+        </label>
+
         {/* Rules acceptance — mandatory */}
         <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', cursor: 'pointer' }}>
           <input data-testid="voita-rules-accepted" type="checkbox" checked={rulesAccepted}
             onChange={(e) => setRulesAccepted(e.target.checked)}
             style={{ marginTop: 3, flex: '0 0 18px', width: 18, height: 18, accentColor: '#6FA37D' }} />
           <span style={{ color: 'var(--ink)', fontSize: 13, lineHeight: 1.55 }}>
+            <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, display: 'block', marginBottom: 4 }}>
+              {lang === 'en' ? '05 · RULES' : '05 · SÄÄNNÖT'}
+            </span>
             {lang === 'en' ? 'I have read and accept the ' : 'Olen lukenut ja hyväksyn '}
             <Link to="/voita/saannot" target="_blank" rel="noopener" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>
               {lang === 'en' ? 'raffle rules' : 'arvonnan säännöt'}

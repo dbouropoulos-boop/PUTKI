@@ -153,6 +153,18 @@ def _coerce_slug(slug: str) -> str:
     return slug
 
 
+def _sanitize_display_name(raw: str) -> str:
+    """Optional self-chosen display name shown on the recent-winners
+    strip. Aggressively bounded: 40 chars max, strips control chars +
+    HTML angle brackets. Empty / missing is fine — strip falls back to
+    the masked email."""
+    if not raw:
+        return ""
+    cleaned = "".join(c for c in str(raw) if c.isprintable())
+    cleaned = cleaned.replace("<", "").replace(">", "").strip()
+    return cleaned[:40]
+
+
 def _public_raffle_view(d: Dict[str, Any]) -> Dict[str, Any]:
     """Strip ObjectId + redact admin-only fields for public reads."""
     gating = d.get("gating") or {}
@@ -191,7 +203,7 @@ def _is_publicly_visible(d: Dict[str, Any]) -> bool:
         bool(gating.get("rules_url_set"))
         and bool(gating.get("prize_distribution_locked"))
         and bool(gating.get("match_populated"))
-        and d.get("status") in ("open", "closed", "drawn")
+        and d.get("status") in ("open", "closed", "drawn", "paid")
     )
 
 
@@ -264,8 +276,8 @@ async def update_raffle(db, raffle_id: str, patch: Dict[str, Any]) -> Dict[str, 
     existing = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
     if not existing:
         raise ValueError(f"raffle {raffle_id} not found")
-    if existing.get("status") == "drawn":
-        raise ValueError("raffle is drawn — no further edits permitted")
+    if existing.get("status") in {"drawn", "paid"}:
+        raise ValueError("raffle is drawn/paid — no further edits permitted")
 
     update: Dict[str, Any] = {"updated_at": _now_iso()}
 
@@ -310,7 +322,7 @@ async def update_raffle(db, raffle_id: str, patch: Dict[str, Any]) -> Dict[str, 
     if "status" in patch:
         new_status = (patch["status"] or "").lower()
         if new_status not in {"draft", "open", "closed", "archived"}:
-            raise ValueError("status must be draft|open|closed|archived (drawn set via /draw)")
+            raise ValueError("status must be draft|open|closed|archived (drawn set via /draw, paid via /mark-paid)")
         update["status"] = new_status
 
     await db.voita_raffles.update_one({"id": raffle_id}, {"$set": update})
@@ -322,8 +334,8 @@ async def delete_raffle(db, raffle_id: str) -> Dict[str, Any]:
     existing = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
     if not existing:
         raise ValueError(f"raffle {raffle_id} not found")
-    if existing.get("status") == "drawn":
-        raise ValueError("raffle is drawn — cannot delete (use status='archived' instead)")
+    if existing.get("status") in {"drawn", "paid"}:
+        raise ValueError("raffle is drawn/paid — cannot delete (use status='archived' instead)")
     await db.voita_raffles.delete_one({"id": raffle_id})
     # Also drop entries that belonged to it.
     await db.voita_entries.delete_many({"raffle_id": raffle_id})
@@ -359,7 +371,8 @@ async def get_raffle_public(db, slug: str) -> Optional[Dict[str, Any]]:
 async def submit_entry(
     db, *, slug: str, email: str, prediction_one_x_two: str,
     predicted_home_goals: int, predicted_away_goals: int,
-    rules_accepted: bool, ip: str = "", ua: str = "",
+    rules_accepted: bool, display_name: str = "",
+    ip: str = "", ua: str = "",
 ) -> Dict[str, Any]:
     """Step 1 — raffle entry. Captures the minimum required for contest
     administration under legitimate-interest basis. NO marketing consent
@@ -425,6 +438,7 @@ async def submit_entry(
         "raffle_slug": raffle["slug"],
         "email_lower": email,
         "email_hash": _hash(email),
+        "display_name": _sanitize_display_name(display_name),
         "prediction_one_x_two": prediction_one_x_two.upper(),
         "predicted_home_goals": ph,
         "predicted_away_goals": pa,
@@ -598,3 +612,130 @@ async def draw_raffle(db, raffle_id: str, *, home_goals: int, away_goals: int,
 async def list_entries_admin(db, raffle_id: str) -> List[Dict[str, Any]]:
     cur = db.voita_entries.find({"raffle_id": raffle_id}, {"_id": 0}).sort([("created_at", 1)])
     return [d async for d in cur]
+
+
+def mask_email(email: str) -> str:
+    """First-letter + ***@domain mask, tuned for the Finnish small-market
+    identifiability risk.
+
+    Rules:
+      • Major providers (gmail, hotmail, outlook, icloud, yahoo, proton,
+        live, me) → show domain. Otherwise mask domain to *** + TLD.
+        `d***@gmail.com`   vs   `d***@***.fi`
+      • When local-part looks like `firstname.lastname` (period-split,
+        each part ≥ 2 alphabetic chars) → mask the local-part fully:
+        `***@gmail.com`. Stops the d***@gmail.com from being a
+        recognisable first name in a small dataset.
+      • Empty / no @ → '' (caller hides the row).
+    """
+    if not email or "@" not in email:
+        return ""
+    local, _, domain = email.partition("@")
+    local = (local or "").strip()
+    domain = (domain or "").strip().lower()
+    if not local or not domain:
+        return ""
+
+    major = {
+        "gmail.com", "hotmail.com", "hotmail.fi", "outlook.com",
+        "icloud.com", "yahoo.com", "yahoo.fi",
+        "proton.me", "protonmail.com",
+        "live.com", "me.com",
+    }
+
+    # Detect firstname.lastname pattern
+    parts = local.lower().split(".")
+    is_full_name = (
+        len(parts) >= 2
+        and all(len(p) >= 2 for p in parts)
+        and all(p.replace("-", "").isalpha() for p in parts)
+    )
+    local_masked = "***" if is_full_name else f"{local[0].lower()}***"
+
+    if domain in major:
+        domain_masked = domain
+    else:
+        tld = domain.rsplit(".", 1)[-1] if "." in domain else domain
+        domain_masked = f"***.{tld}"
+
+    return f"{local_masked}@{domain_masked}"
+
+
+async def mark_paid(db, raffle_id: str, *, paid_by: str = "admin") -> Dict[str, Any]:
+    """Flip a drawn raffle to `paid` status. The recent-winners strip
+    surfaces only paid raffles — a draw without payment is a weaker
+    trust claim than a draw + paid timestamp."""
+    existing = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
+    if not existing:
+        raise ValueError(f"raffle {raffle_id} not found")
+    if existing.get("status") != "drawn":
+        raise ValueError("raffle must be in 'drawn' status before it can be marked paid")
+    now = _now_iso()
+    await db.voita_raffles.update_one(
+        {"id": raffle_id},
+        {"$set": {"status": "paid", "paid_at": now, "paid_by": paid_by, "updated_at": now}},
+    )
+    try:
+        await db.audit_log.insert_one({
+            "kind": "raffle_paid", "raffle_id": raffle_id,
+            "paid_by": paid_by, "paid_at": now,
+        })
+    except Exception:
+        logger.exception("voita mark-paid audit_log insert failed")
+    return await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
+
+
+async def recent_winners_public(db, *, limit: int = 3) -> List[Dict[str, Any]]:
+    """Returns the last N *paid* raffles with masked winner emails (or
+    self-chosen display names, when the entrant supplied one).
+
+    Each item carries `paid_at` so the strip can show "Maksettu {date}",
+    which is a stronger trust signal than just "drawn".
+    """
+    cur = db.voita_raffles.find(
+        {"status": "paid"}, {"_id": 0},
+    ).sort([("paid_at", -1)]).limit(max(1, int(limit)))
+    items: List[Dict[str, Any]] = []
+    async for d in cur:
+        if not _is_publicly_visible(d):
+            continue
+        result = d.get("result") or {}
+        winners = result.get("winners") or []
+        entry_ids = [w.get("entry_id") for w in winners if w.get("entry_id")]
+        # Pull display_name AND email so we can prefer the name when given.
+        entries_by_id: Dict[str, Dict[str, Any]] = {}
+        if entry_ids:
+            ecur = db.voita_entries.find(
+                {"id": {"$in": entry_ids}},
+                {"_id": 0, "id": 1, "email_lower": 1, "display_name": 1},
+            )
+            async for e in ecur:
+                entries_by_id[e["id"]] = e
+        winner_views = []
+        for w in winners:
+            ent = entries_by_id.get(w.get("entry_id")) or {}
+            display_name = (ent.get("display_name") or "").strip()
+            email_masked = mask_email(ent.get("email_lower") or "")
+            winner_views.append({
+                "position": w.get("position"),
+                "prize_amount_eur": w.get("prize_amount_eur"),
+                "prize_type": w.get("prize_type"),
+                "score": w.get("score"),
+                "display_name": display_name or None,
+                "email_masked": email_masked,
+                # Frontend reads `display_label` first — falls back to mask.
+                "display_label": display_name or email_masked,
+            })
+        items.append({
+            "raffle_slug": d.get("slug"),
+            "home_team": d.get("home_team"),
+            "away_team": d.get("away_team"),
+            "sport": d.get("sport"),
+            "league": d.get("league"),
+            "drawn_at": result.get("drawn_at"),
+            "paid_at": d.get("paid_at"),
+            "scored_count": result.get("scored_count"),
+            "result_score": f"{result.get('home_goals')}–{result.get('away_goals')}",
+            "winners": winner_views,
+        })
+    return items
