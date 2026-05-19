@@ -240,7 +240,7 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
 # ── Phase 1 Final · Chunk B — ProgressiveOptIn capture endpoint ──
 
 OPTIN_CHANNELS = {"email", "sms", "telegram"}
-OPTIN_SURFACES = {"mittari", "pelisignaalit", "voita", "peli", "homepage"}
+OPTIN_SURFACES = {"mittari", "pelisignaalit", "voita", "peli", "homepage", "voita_landing"}
 
 
 class OptinPayload(BaseModel):
@@ -261,6 +261,58 @@ class OptinPayload(BaseModel):
     phone: Optional[str] = Field(default=None, max_length=32)
     telegram_username: Optional[str] = Field(default=None, max_length=64)
     consent_tag: Optional[str] = Field(default=None, max_length=64)
+
+
+# ── Voita lead capture (quiz answers + email before raffle play) ────────
+# Captures qualifying data BEFORE the raffle form. Even if the visitor
+# bounces at the raffle step we keep the email + quiz answers. Single
+# consent tag (`voita_lead`) — distinct from the raffle entry itself
+# (which uses `game_raffle`) and distinct from marketing consent.
+
+class _VoitaLeadPayload(BaseModel):
+    email: EmailStr
+    raffle_slug: Optional[str] = Field(default=None, max_length=120)
+    age_18_plus: bool
+    favorite_sport: Optional[str] = Field(default=None, max_length=32)
+    bet_frequency: Optional[str] = Field(default=None, max_length=32)
+    sportsbooks: Optional[List[str]] = None
+    confidence: Optional[str] = Field(default=None, max_length=32)
+
+
+@api_router.post("/voita/lead")
+async def voita_capture_lead(payload: _VoitaLeadPayload):
+    if not payload.age_18_plus:
+        raise HTTPException(status_code=400, detail="must_be_18_plus")
+    email = str(payload.email).lower().strip()
+    now = datetime.now(timezone.utc).isoformat()
+    quiz = {
+        "favorite_sport": (payload.favorite_sport or "").strip().lower()[:32] or None,
+        "bet_frequency": (payload.bet_frequency or "").strip().lower()[:32] or None,
+        "sportsbooks": [
+            s.strip().lower()[:32] for s in (payload.sportsbooks or [])
+            if s and isinstance(s, str)
+        ][:8] or None,
+        "confidence": (payload.confidence or "").strip().lower()[:32] or None,
+        "captured_at": now,
+        "raffle_slug": payload.raffle_slug,
+    }
+    await db.optin_consents.update_one(
+        {"channel": "email", "surface": "voita_landing", "identifier": email},
+        {
+            "$set": {
+                "channel": "email",
+                "surface": "voita_landing",
+                "identifier": email,
+                "consent_tag": "voita_lead",
+                "email": email,
+                "last_seen_at": now,
+                "voita_quiz": quiz,
+            },
+            "$setOnInsert": {"created_at": now},
+        },
+        upsert=True,
+    )
+    return {"ok": True, "consent_tag": "voita_lead"}
 
 
 @api_router.post("/optin")
