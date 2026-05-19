@@ -343,6 +343,21 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
   const [deltas, setDeltas] = useState({});
   const [alertStreamer, setAlertStreamer] = useState(null);
   const scrollerRef = useRef(null);
+  const [overflow, setOverflow] = useState(false);
+
+  // Toggle scroll-arrow visibility based on whether the carousel actually
+  // overflows. On wide desktops the 12 active streamers may fit without
+  // a horizontal scroll, in which case the arrows are pure noise.
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const measure = () => setOverflow(el.scrollWidth > el.clientWidth + 4);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener('resize', measure);
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure); };
+  }, [data, activeTab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -467,8 +482,9 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
             liveCount={counts[p].live} totalCount={counts[p].total}
             onClick={() => setActiveTab(p)} />
         ))}
-        {/* Carousel controls — right edge, mono */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
+        {/* Carousel controls — only when content actually overflows */}
+        {overflow && (
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
           <button type="button" onClick={() => scrollBy(-340)}
             data-testid="band-scroll-left"
             aria-label="scroll left"
@@ -490,6 +506,7 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
             <ChevronRight strokeWidth={1.8} size={16} />
           </button>
         </div>
+        )}
       </div>
 
       {/* Slot filter chip */}
