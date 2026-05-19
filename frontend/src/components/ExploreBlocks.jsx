@@ -83,6 +83,7 @@ const Cta = ({ label, color, disabled }) => (
 const MittariBlock = ({ lang }) => {
   const [dial, setDial] = useState(null);
   const [liveStats, setLiveStats] = useState(null);
+  const [news, setNews] = useState(null);
   useEffect(() => {
     let cancelled = false;
     fetch(`${BACKEND}/api/dial`).then((r) => r.json()).then((d) => {
@@ -90,6 +91,10 @@ const MittariBlock = ({ lang }) => {
     }).catch(() => {});
     fetch(`${BACKEND}/api/data/live-stats`).then((r) => r.ok ? r.json() : null).then((d) => {
       if (!cancelled && d) setLiveStats(d);
+    }).catch(() => {});
+    // newsroom stats carries the 24h delta + state-change
+    fetch(`${BACKEND}/api/newsroom/live-stats`).then((r) => r.ok ? r.json() : null).then((d) => {
+      if (!cancelled && d) setNews(d);
     }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
@@ -141,9 +146,29 @@ const MittariBlock = ({ lang }) => {
           <h3 data-testid="explore-mittari-state" style={{
             fontFamily: 'Georgia, serif', fontWeight: 700,
             fontSize: 28, lineHeight: 1.02, color: '#FFFFFF',
-            letterSpacing: '-0.02em', margin: '0 0 8px',
+            letterSpacing: '-0.02em', margin: '0 0 6px',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{name}</h3>
+          {news?.mittari_delta != null && (
+            <div data-testid="explore-mittari-delta" style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+              letterSpacing: '0.06em', marginBottom: 6,
+              color: news.mittari_delta > 0 ? '#6FA37D' : (news.mittari_delta < 0 ? '#C13B2C' : 'var(--muted, #9C9587)'),
+            }}>
+              {news.mittari_delta > 0 ? '▲' : (news.mittari_delta < 0 ? '▼' : '─')} {Math.abs(news.mittari_delta)} {lang === 'en' ? 'from yesterday' : 'eilisestä'}
+            </div>
+          )}
+          {news?.state_change && (
+            <div data-testid="explore-mittari-state-change" style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+              letterSpacing: '0.08em', color: 'var(--muted, #9C9587)',
+              marginBottom: 6,
+            }}>
+              {lang === 'en' ? 'STATE CHANGE · ' : 'TILANVAIHTO · '}
+              {news.state_change.from_state} → {news.state_change.to_state}
+              <span style={{ opacity: 0.6, marginLeft: 6 }}>· {news.state_change.hours_ago}h {lang === 'en' ? 'ago' : 'sitten'}</span>
+            </div>
+          )}
           <p style={{
             color: 'var(--ink, #ECE6D8)', fontSize: 12.5,
             lineHeight: 1.5, opacity: 0.88, margin: 0,
@@ -161,6 +186,7 @@ const MittariBlock = ({ lang }) => {
 // ── PELISIGNAALIT — sparkline texture + top pick (no truncation) ──
 const PelisignaalitBlock = ({ lang }) => {
   const [topPick, setTopPick] = useState(null);
+  const [trackRecord, setTrackRecord] = useState(null);
   useEffect(() => {
     let cancelled = false;
     fetch(`${BACKEND}/api/odds/featured`).then((r) => r.ok ? r.json() : null).then((d) => {
@@ -168,6 +194,16 @@ const PelisignaalitBlock = ({ lang }) => {
       const picks = (d.picks || []).filter((p) => (p?.sharpness?.sharpness || 0) >= 40);
       const top = picks.sort((a, b) => (b?.sharpness?.sharpness || 0) - (a?.sharpness?.sharpness || 0))[0] || null;
       setTopPick(top);
+    }).catch(() => {});
+    // 30d track-record: count of days where market consensus held
+    fetch(`${BACKEND}/api/odds/market-watch`).then((r) => r.ok ? r.json() : null).then((d) => {
+      if (cancelled || !d?.sparkline) return;
+      const points = d.sparkline;
+      // Only render the line when ≥7 days of data exists
+      if (points.length < 7) return;
+      const window = points.slice(-30);
+      const held = window.filter((p) => (p.score || 0) >= 50).length;
+      setTrackRecord({ window_days: window.length, held });
     }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
@@ -247,6 +283,17 @@ const PelisignaalitBlock = ({ lang }) => {
                 fontFamily: 'ui-monospace, monospace', fontSize: 9,
                 letterSpacing: '0.22em', fontWeight: 700,
               }}>SHARPNESS</span>
+            </div>
+          )}
+          {trackRecord && (
+            <div data-testid="explore-pelisignaalit-track-record" style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
+              letterSpacing: '0.08em', color: 'var(--muted, #9C9587)',
+              marginTop: 8,
+            }}>
+              {lang === 'en'
+                ? `LAST ${trackRecord.window_days}D · consensus held ${trackRecord.held}/${trackRecord.window_days} reads`
+                : `VIIM. ${trackRecord.window_days}PV · konsensus piti ${trackRecord.held}/${trackRecord.window_days} luennassa`}
             </div>
           )}
         </div>

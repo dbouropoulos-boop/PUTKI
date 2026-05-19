@@ -170,6 +170,12 @@ const FeaturedCard = ({ item, lang }) => {
   );
 };
 
+const SEVERITY_BORDER = {
+  high: '2px solid #C13B2C',
+  med:  '2px solid #C97A3A',
+  medium: '2px solid #C97A3A',
+};
+
 const ChronoRow = ({ item, lang, weight }) => {
   const cat = item.category || 'news';
   const catLabel = (CATEGORY_LABEL[cat] || CATEGORY_LABEL.news)[lang];
@@ -184,6 +190,8 @@ const ChronoRow = ({ item, lang, weight }) => {
 
   const timeOpacity = isOld ? 0.6 : 1;
   const padBlock = isLead ? '24px 0 22px' : '18px 0';
+  const sevKey = (item.severity || '').toLowerCase();
+  const sevBorder = SEVERITY_BORDER[sevKey];
 
   return (
     <a
@@ -191,9 +199,12 @@ const ChronoRow = ({ item, lang, weight }) => {
       target="_blank"
       rel="noreferrer noopener"
       data-testid="news-chrono-row"
+      data-severity={sevKey || 'low'}
       style={{
         display: 'grid', gridTemplateColumns: '64px 1fr 110px', gap: 18,
-        alignItems: 'baseline', padding: padBlock,
+        alignItems: 'baseline',
+        padding: sevBorder ? padBlock.replace(/(\d+)px 0/g, '$1px 0 $1px 14px') : padBlock,
+        borderLeft: sevBorder || '2px solid transparent',
         borderBottom: '1px solid var(--hairline, #221E1B)',
         textDecoration: 'none', color: 'inherit',
       }}
@@ -291,6 +302,25 @@ const NewsPortal = () => {
             ? (lang === 'en' ? 'LOADING…' : 'LADATAAN…')
             : (lang === 'en' ? 'UPDATED LIVE' : 'PÄIVITTYY LIVENÄ')}
         </span>
+      </div>
+
+      {/* Micro-citation — what this section is, in one quiet line */}
+      <div
+        data-testid="news-portal-micro-citation"
+        style={{
+          color: 'var(--muted, #9C9587)',
+          fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+          letterSpacing: '0.06em', opacity: 0.65,
+          padding: '0 0 18px',
+        }}
+      >
+        {lang === 'en'
+          ? '12 sources · every story cites a named outlet · '
+          : '12 lähdettä · jokainen juttu siteeraa nimettyä julkaisua · '}
+        <a href="/menetelma" style={{
+          color: 'var(--amber, #C97A3A)',
+          textDecoration: 'underline', textUnderlineOffset: 3,
+        }}>/menetelma →</a>
       </div>
 
       {/* Featured row */}

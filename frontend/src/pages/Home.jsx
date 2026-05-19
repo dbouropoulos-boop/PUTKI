@@ -1,84 +1,78 @@
 /**
- * PUTKI HQ — Home (Phase 1 Final Restructure · Chunk A).
+ * PUTKI HQ — Home (Phase 1 Final · sprint follow-up restructure).
  *
- * News portal first. Streamers second. Explore blocks third.
- *
- * Architecture
- * ------------
- * The homepage is now a focused, high-tech editorial news portal.
- * Mittari dial, Pelisignaalit picks, Voita raffle, and Peli Voyager
- * each have their own dedicated landing page (Chunk B). The homepage
- * only "hints" at them via compact preview blocks at the bottom.
- *
- * Layout
- * ------
- *   Zone 1 · UTM banner (unchanged)
- *   Zone 2 · Main 2-col grid:
- *             LEFT — NewsPortal (2 featured + 12 chronological)
- *             RIGHT — StreamersRail (Twitch · Kick · YouTube grouped)
- *   Zone 3 · ExploreBlocks (2×2 compact preview grid)
- *   Zone 4 · EditorialFooter (accountability stamp)
- *
- * Removed
- * -------
- * The previous Zone 1 (DialCockpit + NewsCarousel hero), Zone 2 (HubMosaic),
- * Zone 3 (ZonePublicationDepth), Zone 4 (Games strip), Zone 5 (CaptureSection),
- * LiveActivityFeed, WinnersCorner, SocialProofBar, MostReadRail,
- * PaivaVitoset, StreamerLiveGrid, GamesSection, "What is PUTKI HQ" pillars,
- * and PhaseOneDiscoveryRow are all GONE from the homepage. Each lives on
- * its dedicated landing page (Chunk B): /mittari · /pelisignaalit · /voita
- * · /peli · /tietoa-meista (where the "What is PUTKI HQ" cards belong).
+ * New page structure (per sprint spec, Section 2):
+ *   1. UTM banner
+ *   2. OrientationStrip — what PUTKI HQ is in one line
+ *   3. NewsroomLiveStrip — newsroom metrics, refresh 30s
+ *   4. NewsPortal — full-width single column (featured row + chronological list)
+ *   5. StreamersBand — full-width horizontal card band, replaces sidebar rail
+ *   6. NowPlayingTicker — slot ticker, slot-click filters band above
+ *   7. ExploreBlocks — 2×2 grid (Mittari · Pelisignaalit · Voita · Peli)
+ *   8. AboutStrip — manifesto block
+ *   9. EditorialFooter — accountability stamp
  */
-import React from 'react';
+import React, { useState } from 'react';
 import NewsPortal from '../components/NewsPortal';
-import StreamersRail from '../components/StreamersRail';
+import StreamersBand from '../components/StreamersBand';
+import NowPlayingTicker from '../components/NowPlayingTicker';
 import ExploreBlocks from '../components/ExploreBlocks';
 import AboutStrip from '../components/AboutStrip';
 import EditorialFooter from '../components/EditorialFooter';
 import UTMBanner from '../components/UTMBanner';
+import { OrientationStrip, NewsroomLiveStrip } from '../components/InfoStrips';
 
 const Home = () => {
+  const [slotFilter, setSlotFilter] = useState(null);
   return (
     <div data-testid="home-page">
+      {/* Zone 1 — orientation strips (under the rolling news ticker rendered by Layout) */}
+      <OrientationStrip />
+      <NewsroomLiveStrip />
       <UTMBanner />
 
-      {/* Zone 2 — main 2-col grid. News dominant; streamers as a quieter rail. */}
+      {/* Zone 2 — News portal full-width */}
       <section
-        data-testid="home-main-grid"
+        data-testid="home-news-section"
         style={{
-          padding: '32px 0 24px',
-          maxWidth: 1380,
-          margin: '0 auto',
-          paddingLeft: 32,
-          paddingRight: 32,
-          width: '100%',
+          padding: '32px 0 8px',
+          maxWidth: 1180, margin: '0 auto',
+          paddingLeft: 32, paddingRight: 32, width: '100%',
         }}
       >
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1fr) 260px',
-            gap: 56,
-            alignItems: 'start',
-          }}
-          className="home-main-grid"
-        >
-          <NewsPortal />
-          <StreamersRail />
-        </div>
+        <NewsPortal />
       </section>
 
-      {/* Zone 3 — Explore preview blocks (Mittari · Pelisignaalit · Voita · Peli) */}
+      {/* Zone 3 — Streamers band */}
       <section
         style={{
           maxWidth: 1380, margin: '0 auto',
           paddingLeft: 32, paddingRight: 32, width: '100%',
         }}
       >
+        <StreamersBand
+          slotFilter={slotFilter}
+          onClearSlotFilter={() => setSlotFilter(null)}
+        />
+      </section>
+
+      {/* Zone 4 — Now-playing slot ticker */}
+      <NowPlayingTicker
+        activeSlot={slotFilter}
+        onSlotClick={(name) => setSlotFilter((cur) => cur === name ? null : name)}
+      />
+
+      {/* Zone 5 — Explore preview blocks (Mittari · Pelisignaalit · Voita · Peli) */}
+      <section
+        style={{
+          maxWidth: 1380, margin: '32px auto 0',
+          paddingLeft: 32, paddingRight: 32, width: '100%',
+        }}
+      >
         <ExploreBlocks />
       </section>
 
-      {/* Zone 4 — About strip ("Who we are") — single trust paragraph */}
+      {/* Zone 6 — Manifesto block ("Who we are") */}
       <section
         data-testid="home-about-section"
         style={{
@@ -89,7 +83,7 @@ const Home = () => {
         <AboutStrip />
       </section>
 
-      {/* Zone 5 — Accountability footer */}
+      {/* Zone 7 — Accountability footer */}
       <section
         data-testid="home-accountability-section"
         style={{
@@ -106,16 +100,6 @@ const Home = () => {
           <EditorialFooter byline="PUTKI HQ" readMinutes={2} />
         </div>
       </section>
-
-      {/* Mobile collapse — single column at < 900px */}
-      <style>{`
-        @media (max-width: 900px) {
-          .home-main-grid {
-            grid-template-columns: 1fr !important;
-            gap: 32px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };

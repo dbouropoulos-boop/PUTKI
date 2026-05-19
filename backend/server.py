@@ -777,14 +777,284 @@ async def public_streamers_live(platform: Optional[str] = None):
         from streamer_live import get_live_streamers
         d = await get_live_streamers()
         d["platform"] = "twitch"
-        return d
-    if p == "kick":
+    elif p == "kick":
         from multi_platform_live import fetch_kick_live
-        return await fetch_kick_live(db)
-    if p == "youtube":
+        d = await fetch_kick_live(db)
+    elif p == "youtube":
         from multi_platform_live import fetch_youtube_live
-        return await fetch_youtube_live(db)
-    raise HTTPException(status_code=400, detail="unknown platform")
+        d = await fetch_youtube_live(db)
+    else:
+        raise HTTPException(status_code=400, detail="unknown platform")
+
+    # Record viewer-count snapshots for change indicators (24h TTL)
+    try:
+        from streamer_snapshots import record_snapshot_batch, attach_meta
+        items = d.get("streamers") or d.get("items") or []
+        if items:
+            await record_snapshot_batch(db, platform=p, items=items)
+            await attach_meta(db, items, platform=p)
+    except Exception:
+        logger.exception("snapshot/meta enrichment failed for %s", p)
+    return d
+
+
+# ── Phase 1 sprint follow-up — newsroom-live strip ────────────────────────
+
+@api_router.get("/newsroom/live-stats")
+async def public_newsroom_live_stats():
+    """Powers the homepage NEWSROOM strip: stories today + named outlets +
+    last-publish age + Mittari composite + 24h delta. Refreshes every 30s
+    on the frontend."""
+    now = datetime.now(timezone.utc)
+    since = (now - timedelta(hours=24)).isoformat()
+
+    stories_today = await db.news_ticker_items.count_documents(
+        {"captured_at": {"$gte": since}},
+    )
+    outlets_cursor = db.news_ticker_items.aggregate([
+        {"$match": {"captured_at": {"$gte": since}}},
+        {"$group": {"_id": "$source"}},
+    ])
+    named_outlets = 0
+    async for _ in outlets_cursor:
+        named_outlets += 1
+
+    latest_doc = await db.news_ticker_items.find_one(
+        {}, {"_id": 0, "captured_at": 1}, sort=[("captured_at", -1)],
+    )
+    last_publish_iso = (latest_doc or {}).get("captured_at")
+    last_publish_minutes_ago: Optional[int] = None
+    if last_publish_iso:
+        try:
+            last_dt = datetime.fromisoformat(last_publish_iso.replace("Z", "+00:00"))
+            if last_dt.tzinfo is None:
+                last_dt = last_dt.replace(tzinfo=timezone.utc)
+            last_publish_minutes_ago = max(0, int((now - last_dt).total_seconds() // 60))
+        except Exception:
+            pass
+
+    # Mittari composite + delta vs yesterday
+    mittari_score: Optional[int] = None
+    mittari_delta: Optional[int] = None
+    mittari_state: Optional[str] = None
+    state_change: Optional[Dict[str, Any]] = None
+    try:
+        from dial_engine import latest_snapshot
+        snap = await latest_snapshot(db)
+        if snap:
+            mittari_score = int(round(snap.get("composite_score") or 0))
+            mittari_state = (snap.get("state") or {}).get("key") or snap.get("state_key")
+        # yesterday's snapshot (~24h ago, ±2h window)
+        y_lo = (now - timedelta(hours=26))
+        y_hi = (now - timedelta(hours=22))
+        prev = await db.dial_snapshots.find_one(
+            {"computed_at": {"$gte": y_lo.isoformat(), "$lte": y_hi.isoformat()}},
+            sort=[("computed_at", -1)], projection={"_id": 0},
+        )
+        if prev and prev.get("composite_score") is not None:
+            mittari_delta = mittari_score - int(round(prev["composite_score"]))
+        # state change in last 24h
+        evt = await db.dial_state_events.find_one(
+            {"changed_at": {"$gte": since}},
+            sort=[("changed_at", -1)],
+            projection={"_id": 0},
+        )
+        if evt:
+            try:
+                changed_dt = datetime.fromisoformat(evt["changed_at"].replace("Z", "+00:00"))
+                if changed_dt.tzinfo is None:
+                    changed_dt = changed_dt.replace(tzinfo=timezone.utc)
+                hours_ago = (now - changed_dt).total_seconds() / 3600
+                state_change = {
+                    "from_state": evt.get("from_state"),
+                    "to_state": evt.get("to_state"),
+                    "hours_ago": round(hours_ago, 1),
+                }
+            except Exception:
+                pass
+    except Exception:
+        logger.exception("Mittari fetch in newsroom stats failed")
+
+    return {
+        "stories_today": stories_today,
+        "named_outlets": named_outlets,
+        "last_publish_minutes_ago": last_publish_minutes_ago,
+        "mittari_score": mittari_score,
+        "mittari_delta": mittari_delta,
+        "mittari_state": mittari_state,
+        "state_change": state_change,
+        "as_of": now.isoformat(),
+    }
+
+
+@api_router.get("/streamers/viewer-delta")
+async def public_streamer_viewer_delta(platform: str, user_login: str):
+    """Returns the change indicator for a streamer's viewer count vs ~1h ago.
+    Returns 200 with `null` fields when 24h-snapshot data isn't yet meaningful
+    so the frontend cleanly suppresses the indicator."""
+    from streamer_snapshots import viewer_delta_last_hour
+    p = (platform or "").lower()
+    if p not in {"twitch", "kick", "youtube"}:
+        raise HTTPException(status_code=400, detail="unknown platform")
+    res = await viewer_delta_last_hour(db, platform=p, user_login=user_login)
+    if not res:
+        return {"delta": None, "direction": None}
+    return res
+
+
+@api_router.get("/streamers/now-playing")
+async def public_streamers_now_playing():
+    """Aggregates currently-live streamers across Twitch + Kick + YouTube,
+    matches their stream titles + game categories against the slot registry
+    using longest-match-wins, and returns the per-slot count table for the
+    homepage "NOW PLAYING" ticker.
+
+    Refresh cadence on the frontend: 60s.
+    """
+    from slot_registry import extract_now_playing
+    all_rows: List[Dict[str, Any]] = []
+    for p in ("twitch", "kick", "youtube"):
+        try:
+            if p == "twitch":
+                from streamer_live import get_live_streamers
+                d = await get_live_streamers()
+            elif p == "kick":
+                from multi_platform_live import fetch_kick_live
+                d = await fetch_kick_live(db)
+            else:
+                from multi_platform_live import fetch_youtube_live
+                d = await fetch_youtube_live(db)
+            items = d.get("streamers") or d.get("items") or []
+            rows = await extract_now_playing(db, items, platform=p)
+            # merge into all_rows
+            for r in rows:
+                # consolidate by slot name
+                hit = next((x for x in all_rows if x["name"] == r["name"]), None)
+                if hit:
+                    hit["count"] += r["count"]
+                    hit["streamers"].extend(r["streamers"])
+                else:
+                    all_rows.append(r)
+        except Exception:
+            logger.exception("now-playing platform %s failed", p)
+    all_rows.sort(key=lambda r: (-r["count"], r["name"]))
+    return {
+        "slots": all_rows,
+        "total_streams_matched": sum(r["count"] for r in all_rows),
+        "as_of": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+# ── Editorial back-office: streamer_meta + slot_registry ──
+
+class _StreamerMetaPayload(BaseModel):
+    platform: str
+    user_login: str
+    meta_fi: Optional[str] = ""
+    meta_en: Optional[str] = ""
+    suppressed: Optional[bool] = False
+
+
+@api_router.get("/admin/streamer-meta")
+async def admin_list_streamer_meta(_: bool = Depends(require_admin)):
+    from streamer_snapshots import list_meta
+    return {"items": await list_meta(db)}
+
+
+@api_router.put("/admin/streamer-meta")
+async def admin_upsert_streamer_meta(
+    payload: _StreamerMetaPayload,
+    _: bool = Depends(require_admin),
+):
+    from streamer_snapshots import upsert_meta
+    try:
+        doc = await upsert_meta(
+            db,
+            platform=payload.platform.lower(),
+            user_login=payload.user_login,
+            meta_fi=payload.meta_fi or "",
+            meta_en=payload.meta_en or "",
+            suppressed=bool(payload.suppressed),
+        )
+        return {"saved": doc}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+class _SlotEntryAdd(BaseModel):
+    name: str
+    category: str  # slot | live_table
+    provider: Optional[str] = ""
+    enabled: Optional[bool] = True
+
+
+class _SlotEntryUpdate(BaseModel):
+    enabled: Optional[bool] = None
+    category: Optional[str] = None
+    provider: Optional[str] = None
+
+
+@api_router.get("/admin/slot-registry")
+async def admin_list_slot_registry(_: bool = Depends(require_admin)):
+    from slot_registry import list_registry
+    return {"items": await list_registry(db, include_disabled=True)}
+
+
+@api_router.post("/admin/slot-registry")
+async def admin_add_slot_registry(
+    payload: _SlotEntryAdd,
+    _: bool = Depends(require_admin),
+):
+    from slot_registry import add_entry
+    try:
+        doc = await add_entry(
+            db,
+            name=payload.name,
+            category=payload.category,
+            provider=payload.provider or "",
+            enabled=bool(payload.enabled if payload.enabled is not None else True),
+        )
+        return {"added": doc}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.patch("/admin/slot-registry/{entry_id}")
+async def admin_update_slot_registry(
+    entry_id: str, payload: _SlotEntryUpdate,
+    _: bool = Depends(require_admin),
+):
+    from slot_registry import update_entry
+    try:
+        doc = await update_entry(
+            db, entry_id,
+            enabled=payload.enabled,
+            category=payload.category,
+            provider=payload.provider,
+        )
+        if not doc:
+            raise HTTPException(status_code=404, detail="not found")
+        return {"updated": doc}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.delete("/admin/slot-registry/{entry_id}")
+async def admin_delete_slot_registry(
+    entry_id: str, _: bool = Depends(require_admin),
+):
+    from slot_registry import delete_entry
+    ok = await delete_entry(db, entry_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="not found")
+    return {"deleted": entry_id}
+
+
+@api_router.post("/admin/slot-registry/seed")
+async def admin_seed_slot_registry(_: bool = Depends(require_admin)):
+    """Idempotent seed of the default editorial registry. Safe to re-run."""
+    from slot_registry import seed_default_registry
+    return await seed_default_registry(db)
 
 
 @api_router.get("/streamers/roster_summary")
@@ -1841,6 +2111,19 @@ async def _seed_phase3():
         await og_ensure_indexes(db)
     except Exception:
         logger.exception("Failed to create og_image_fetcher indexes")
+    try:
+        from streamer_snapshots import ensure_indexes as snap_ensure
+        await snap_ensure(db)
+    except Exception:
+        logger.exception("Failed to create streamer_snapshots indexes")
+    try:
+        from slot_registry import ensure_indexes as reg_ensure, seed_default_registry
+        await reg_ensure(db)
+        result = await seed_default_registry(db)
+        if result["inserted"]:
+            logger.info("slot_registry seeded: %s", result)
+    except Exception:
+        logger.exception("Failed to ensure/seed slot_registry")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)
