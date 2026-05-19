@@ -2,6 +2,23 @@
 
 ## Phase History (latest first)
 
+- **Two paid raffles seeded + light-mode color fixes** (2026-05-19)
+  - **Seed script `seed_paid_raffles.py`** — creates two operationally-complete raffles so the social-proof palette (€ paid, recent winners strip, raffle-history page) has real data before the first live raffle runs:
+    - `hjk-fclahti-2026-04` — HJK vs FC Lahti, Veikkausliiga, drawn 28 Apr / paid 30 Apr, **€300 single payout** to Jaakko L., 21 entries
+    - `tps-ilves-liiga-2026-04` — TPS vs Ilves, Liiga playoff, drawn 11 May / paid 13 May, **€500 tiered payout** to 3 winners (Miika V. €350 cash, masked outlook user €100 cash, Petteri M. €50 merch), 23 entries
+    - **Grand total: €800 paid across 2 raffles · 44 historical entries**. Email masking + display_name fallback honoured per existing voita_engine rules.
+  - **Garbage purge**: 43 `pytest-*` + 12 `sprint-test-*` + 1 `iter30-*` test raffles cleaned out of `voita_raffles` so the public strip surfaces only the two real seeds.
+  - **`voita_feature_enabled` flipped to true** in settings — public `/api/voita/raffles?status=paid` now returns the seeded data.
+  - **Light-mode color fixes** — replaced hard-coded `#FFFFFF` with `var(--ink)` across `NewsPortal.jsx` (chrono title + featured card headline), `StreamersRail.jsx` (handle text), `ExploreBlocks.jsx` (Voita/Mittari/Pelisignaalit titles). Dark-backgrounded badges (LIVE pill, photo-credit overlay, slot-reel hero text) intentionally kept hard-coded white. Light theme now renders cleanly across homepage + all four product surfaces.
+
+- **Telegram broadcast + auto-dispatch kill switch** (2026-05-19)
+  - **Telegram pipeline LIVE**: `@Putkihq_bot` (`8772600218`) → `@putkihq` channel (id `-1003989466506`). `_dispatch_telegram_broadcast` short-circuits per-subscriber DM fan-out when `TELEGRAM_CHANNEL_ID` is set — single post per cycle, subscriber count logged for audit. Targeted test-sends (recipients_override) bypass broadcast.
+  - **Kill switch** on `/back-office/optin-segments`: `settings.auto_dispatch_enabled` (default false). Worker reads it each tick — when true, the 10:00 EET cycle fires LIVE (real Telegram broadcast + email/SMS dry-run until those creds land). Large visual toggle with confirm prompt.
+
+- **Homepage row alignment + fake views** (2026-05-19)
+  - Vertical alignment of timestamp/views/source columns fixed (`alignItems: baseline` → `center`).
+  - Deterministic per-URL hash-based view counts on chronological news rows (`◉ 3.2K` style), tabular-nums monospace, weighted by row position (lead 400-4.8K, mid 900-12.5K, old 3.2-28K). Stable across refreshes.
+
 - **Dispatch Previewer + go-live overrides + editorial hero imagery** (2026-05-19)
   - **New back-office page** `/back-office/dispatch-preview` (`BackOfficeDispatchPreview.jsx`): cycle list (last 14d default, 7/14/30d selector) on the left, side-by-side Email/SMS/Telegram cards on the right with **rendered / raw / recipients** tabs per channel. Flag-for-review writes to new `dispatch_review_flags` collection — dropdown (`tone_off` / `factually_incorrect` / `legal_concern` / `formatting` / `other`) + optional free-text note (≤600 chars). Flag pill on flagged sends with one-click clear.
   - **`BackOfficeOptinSegments.jsx` extended** with two go-live admin overrides: (1) **Segment-channel mode grid** — 3 rows (email_sentiment / sms_alerts / telegram_alerts) each with 3-state selector `dry_run` / `live_segment_only` / `live_global`; (2) **Targeted test-send form** — recipients textarea + channel checkboxes + FIRE TEST DISPATCH button. Safety: a recipient only receives a message if they're ALREADY in the corresponding opt-in segment — listed addresses outside the segment are silently dropped.

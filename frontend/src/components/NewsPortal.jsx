@@ -142,7 +142,7 @@ const FeaturedCard = ({ item, lang }) => {
           data-testid="news-featured-title"
           style={{
             fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 700,
-            color: '#FFFFFF', fontSize: 22, lineHeight: 1.18,
+            color: 'var(--ink)', fontSize: 22, lineHeight: 1.18,
             letterSpacing: '-0.01em', margin: '0 0 12px',
           }}
         >{item.title}</h2>
@@ -220,7 +220,7 @@ const ChronoRow = ({ item, lang, weight }) => {
   const isLead = weight === 'lead';
   const isOld = weight === 'old';
 
-  const titleColor = isOld ? '#B5AFA1' : '#FFFFFF';
+  const titleColor = isOld ? 'var(--muted)' : 'var(--ink)';
   const titleStyle = isLead
     ? { fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 21, lineHeight: 1.22 }
     : { fontSize: 16, lineHeight: 1.32, letterSpacing: '-0.005em' };

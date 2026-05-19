@@ -115,7 +115,7 @@ const LiveRow = ({ streamer, platform, justArrived }) => {
       {/* Handle + game */}
       <div style={{ minWidth: 0 }}>
         <div data-testid="streamer-handle" style={{
-          color: '#FFFFFF', fontSize: 13, fontWeight: 600,
+          color: 'var(--ink)', fontSize: 13, fontWeight: 600,
           letterSpacing: '-0.01em', lineHeight: 1.2,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>{displayName}</div>
@@ -132,7 +132,7 @@ const LiveRow = ({ streamer, platform, justArrived }) => {
       {/* Viewer count */}
       <div style={{ textAlign: 'right' }}>
         <div data-testid="streamer-viewers" style={{
-          color: '#FFFFFF',
+          color: 'var(--ink)',
           fontFamily: 'Georgia, "Times New Roman", serif',
           fontWeight: 700, fontSize: 15, lineHeight: 1,
           letterSpacing: '-0.01em',
