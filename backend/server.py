@@ -161,6 +161,7 @@ class SettingsPayload(BaseModel):
     smartico_loader_url: Optional[str] = None
     smartico_brand_key: Optional[str] = None
     voita_feature_enabled: Optional[bool] = None
+    auto_dispatch_enabled: Optional[bool] = None
 
 
 SETTINGS_KEY = "site"
@@ -174,6 +175,7 @@ async def _get_settings_doc():
         "smartico_loader_url": doc.get("smartico_loader_url"),
         "smartico_brand_key": doc.get("smartico_brand_key"),
         "voita_feature_enabled": bool(doc.get("voita_feature_enabled", False)),
+        "auto_dispatch_enabled": bool(doc.get("auto_dispatch_enabled", False)),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -208,6 +210,11 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     # voita_feature_enabled is opt-in: only set when explicitly passed.
     if data.voita_feature_enabled is not None:
         update["voita_feature_enabled"] = bool(data.voita_feature_enabled)
+    # auto_dispatch_enabled is the back-office kill switch for the 10:00
+    # Helsinki cycle. Default false. When true, worker fires LIVE (real
+    # creds where available, falls back to dry_run per channel).
+    if data.auto_dispatch_enabled is not None:
+        update["auto_dispatch_enabled"] = bool(data.auto_dispatch_enabled)
     await db.settings.update_one(
         {"_id": SETTINGS_KEY},
         {"$set": update},

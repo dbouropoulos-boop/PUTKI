@@ -51,6 +51,8 @@ const BackOfficeOptinSegments = () => {
   const [summary, setSummary] = useState(null);
   const [log, setLog] = useState([]);
   const [overrides, setOverrides] = useState([]);
+  const [settings, setSettings] = useState(null);
+  const [settingsBusy, setSettingsBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [runResult, setRunResult] = useState(null);
   const [runError, setRunError] = useState('');
@@ -65,19 +67,39 @@ const BackOfficeOptinSegments = () => {
   const load = useCallback(async () => {
     if (!token || !authed) return;
     try {
-      const [s, su, lg, ov] = await Promise.all([
+      const [s, su, lg, ov, st] = await Promise.all([
         fetch(`${BACKEND}/api/admin/optin/stats`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/admin/dispatch/summary?days=7`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/admin/dispatch/log?limit=20`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : { items: [] }),
         fetch(`${BACKEND}/api/admin/dispatch/segment-overrides`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : { items: [] }),
+        fetch(`${BACKEND}/api/admin/settings`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
       ]);
-      setStats(s); setSummary(su); setLog(lg.items || []); setOverrides(ov.items || []);
+      setStats(s); setSummary(su); setLog(lg.items || []); setOverrides(ov.items || []); setSettings(st);
     } catch (e) {
       // network — leave whatever is on screen
     }
   }, [token, authed]);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleAutoDispatch = async () => {
+    if (!settings) return;
+    const next = !settings.auto_dispatch_enabled;
+    const verb = next ? 'ENABLE' : 'DISABLE';
+    const consequence = next
+      ? 'The 10:00 Helsinki cycle will fire LIVE every day (real provider calls where credentials are present). Subscribers begin receiving messages tomorrow morning.'
+      : 'The 10:00 Helsinki cycle returns to DRY-RUN — audit rows only, no provider calls.';
+    if (!window.confirm(`${verb} auto-dispatch?\n\n${consequence}`)) return;
+    setSettingsBusy(true);
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+        body: JSON.stringify({ auto_dispatch_enabled: next }),
+      });
+      if (r.ok) setSettings(await r.json());
+    } finally { setSettingsBusy(false); }
+  };
 
   const getOverrideMode = (channel, tag) => {
     const row = overrides.find((o) => o.channel === channel && o.consent_tag === tag);
@@ -190,6 +212,50 @@ const BackOfficeOptinSegments = () => {
           color: '#E8C26E', textDecoration: 'underline', textUnderlineOffset: 4, fontWeight: 700,
         }}>→ DISPATCH PREVIEWER (REVIEW PAYLOADS BEFORE GO-LIVE)</Link>
       </div>
+
+      {/* ── Kill switch — auto-dispatch on/off ───────────────────────── */}
+      {settings && (
+        <div data-testid="auto-dispatch-kill-switch" style={{
+          marginBottom: 28, padding: '20px 22px',
+          background: settings.auto_dispatch_enabled ? '#0e2b1a' : 'var(--surface)',
+          border: `1px solid ${settings.auto_dispatch_enabled ? '#2b5a3e' : 'var(--hairline)'}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 320 }}>
+              <div style={{
+                fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em',
+                color: settings.auto_dispatch_enabled ? '#6FA37D' : '#E8C26E', fontWeight: 700, marginBottom: 6,
+              }}>
+                {settings.auto_dispatch_enabled ? '● AUTO-DISPATCH · LIVE' : '○ AUTO-DISPATCH · PAUSED'}
+              </div>
+              <div style={{ fontFamily: 'Georgia, serif', fontSize: 17, color: '#FFFFFF', lineHeight: 1.4 }}>
+                Daily 10:00 Helsinki cycle is {settings.auto_dispatch_enabled ? (
+                  <strong style={{ color: '#9ad4a9' }}>broadcasting</strong>
+                ) : (
+                  <strong style={{ color: '#E8C26E' }}>in dry-run</strong>
+                )}.
+              </div>
+              <div style={{ marginTop: 4, fontFamily: 'ui-monospace, monospace', fontSize: 11, color: 'var(--muted)', lineHeight: 1.55, maxWidth: 600 }}>
+                {settings.auto_dispatch_enabled
+                  ? 'Real provider calls fire daily where credentials are present (Telegram channel: live · Email: pending Resend · SMS: pending Twilio).'
+                  : 'Cycle still runs every morning but writes audit rows only. Flip on when ready to ship.'}
+              </div>
+            </div>
+            <button type="button" onClick={toggleAutoDispatch} disabled={settingsBusy}
+              data-testid="auto-dispatch-toggle"
+              style={{
+                padding: '12px 22px',
+                background: settings.auto_dispatch_enabled ? '#5a2b2b' : '#6FA37D',
+                color: settings.auto_dispatch_enabled ? '#f4a4a4' : '#0B0A09',
+                border: 0, fontFamily: 'ui-monospace, monospace',
+                fontSize: 11, letterSpacing: '0.22em', fontWeight: 700,
+                cursor: settingsBusy ? 'wait' : 'pointer',
+              }}>
+              {settingsBusy ? '…' : (settings.auto_dispatch_enabled ? '⏸ PAUSE AUTO-DISPATCH' : '▶ ENABLE AUTO-DISPATCH')}
+            </button>
+          </div>
+        </div>
+      )}
       <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, maxWidth: 760, lineHeight: 1.55 }}>
         Three independent consent tags: <code style={{ color: 'var(--ink)' }}>email_sentiment</code> (slow editorial digest),
         <code style={{ color: 'var(--ink)', margin: '0 4px' }}>sms_alerts</code> (fast daily bets),

@@ -794,8 +794,22 @@ async def dispatch_worker_loop(db) -> None:
     while True:
         try:
             if _is_dispatch_window() and not await _cycle_already_ran_today(db):
-                logger.info("dispatch window open — running daily cycle (dry_run=True default)")
-                await run_daily_dispatch(db, dry_run=True)
+                # Back-office kill switch — settings.auto_dispatch_enabled
+                # determines whether the scheduled cycle fires LIVE or
+                # stays in dry-run. Default false (safety): the worker
+                # writes audit rows but won't hit any provider until
+                # the admin explicitly flips the switch.
+                enabled = False
+                try:
+                    s = await db.settings.find_one({"_id": "site"}, {"_id": 0, "auto_dispatch_enabled": 1}) or {}
+                    enabled = bool(s.get("auto_dispatch_enabled", False))
+                except Exception:
+                    logger.exception("dispatch worker: settings lookup failed")
+                logger.info(
+                    "dispatch window open — running daily cycle (auto_dispatch_enabled=%s, dry_run=%s)",
+                    enabled, not enabled,
+                )
+                await run_daily_dispatch(db, dry_run=not enabled)
         except Exception:
             logger.exception("dispatch worker tick failed")
         await asyncio.sleep(WORKER_INTERVAL_SECONDS)
