@@ -165,9 +165,43 @@ class SettingsPayload(BaseModel):
     site_tagline_fi: Optional[str] = None
     site_tagline_en: Optional[str] = None
     voita_quiz_config: Optional[List[Dict[str, Any]]] = None
+    voita_hero: Optional[Dict[str, Any]] = None
 
 
 SETTINGS_KEY = "site"
+
+
+# Default editorial copy for /voita hero. Editorial can override any field
+# via PUT /api/admin/settings. Image path is served from /hero/voita.jpg
+# (frontend public/).
+DEFAULT_VOITA_HERO = {
+    "eyebrow_fi": "VOITA · KÄYNNISSÄ",
+    "eyebrow_en": "VOITA · LIVE NOW",
+    "title_fi": "Suomen mestaruus alkaa kentältä.",
+    "title_en": "The title race starts on the pitch.",
+    "subtitle_fi": "Ennusta kauden ratkaisevien otteluiden voittajat. Ilmainen osallistua. Ei talletusta. Ei vedonlyöntiä.",
+    "subtitle_en": "Predict the winners of the season's title-deciding matches. Free entry. No deposit. No betting.",
+    "image_url": "/hero/voita.jpg",
+    "photo_credit": "Photo: Mitch Rosen / Unsplash",
+}
+
+
+def _sanitize_voita_hero(payload: Any) -> Dict[str, Any]:
+    """Clamp + sanitize admin-edited hero copy. Falls back to defaults
+    field-by-field so a partial save doesn't blank the banner."""
+    if not isinstance(payload, dict):
+        return DEFAULT_VOITA_HERO
+    out = dict(DEFAULT_VOITA_HERO)
+    for key, maxlen in (
+        ("eyebrow_fi", 80), ("eyebrow_en", 80),
+        ("title_fi", 200), ("title_en", 200),
+        ("subtitle_fi", 320), ("subtitle_en", 320),
+        ("image_url", 400), ("photo_credit", 120),
+    ):
+        v = payload.get(key)
+        if v is not None:
+            out[key] = str(v).strip()[:maxlen]
+    return out
 
 
 async def _get_settings_doc():
@@ -185,6 +219,7 @@ async def _get_settings_doc():
         "site_tagline_fi": doc.get("site_tagline_fi") or "Missä Suomen rahapeliskene näkyy",
         "site_tagline_en": doc.get("site_tagline_en") or "Where Finland's gambling scene shows up",
         "voita_quiz_config": doc.get("voita_quiz_config"),
+        "voita_hero": _sanitize_voita_hero(doc.get("voita_hero") or DEFAULT_VOITA_HERO),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -203,6 +238,7 @@ async def get_public_settings():
         "site_tagline_fi": s.get("site_tagline_fi"),
         "site_tagline_en": s.get("site_tagline_en"),
         "voita_quiz_config": sanitize_quiz_config(s.get("voita_quiz_config") or DEFAULT_VOITA_QUIZ),
+        "voita_hero": s.get("voita_hero") or DEFAULT_VOITA_HERO,
     }
 
 
@@ -236,6 +272,8 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     if data.voita_quiz_config is not None:
         from voita_quiz_config import sanitize_quiz_config
         update["voita_quiz_config"] = sanitize_quiz_config(data.voita_quiz_config)
+    if data.voita_hero is not None:
+        update["voita_hero"] = _sanitize_voita_hero(data.voita_hero)
     await db.settings.update_one(
         {"_id": SETTINGS_KEY},
         {"$set": update},

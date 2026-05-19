@@ -127,6 +127,7 @@ const QuestionBlock = ({ q, qIdx, total, onChange, onRemove, onMoveUp, onMoveDow
 const BackOfficeVoitaQuiz = () => {
   const { token, setToken, authed, authError, checkAuth } = useBackOfficeToken();
   const [config, setConfig] = useState([]);
+  const [hero, setHero] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [savedAt, setSavedAt] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -145,6 +146,7 @@ const BackOfficeVoitaQuiz = () => {
           cfg = (pub && pub.voita_quiz_config) || [];
         }
         setConfig(cfg);
+        setHero(d.voita_hero || null);
       }
     } catch (e) {
       setError(e.message || 'Network error');
@@ -159,11 +161,12 @@ const BackOfficeVoitaQuiz = () => {
       const r = await fetch(`${BACKEND}/api/admin/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ voita_quiz_config: config }),
+        body: JSON.stringify({ voita_quiz_config: config, voita_hero: hero }),
       });
       if (r.ok) {
         const d = await r.json();
         setConfig(d.voita_quiz_config || config);
+        setHero(d.voita_hero || hero);
         setSavedAt(new Date().toLocaleTimeString());
       } else {
         const j = await r.json().catch(() => ({}));
@@ -173,6 +176,8 @@ const BackOfficeVoitaQuiz = () => {
       setError(e.message || 'Network error');
     } finally { setBusy(false); }
   };
+
+  const updateHero = (patch) => setHero({ ...(hero || {}), ...patch });
 
   const updateQ = (idx, next) => setConfig(config.map((q, i) => i === idx ? next : q));
   const removeQ = (idx) => {
@@ -208,6 +213,33 @@ const BackOfficeVoitaQuiz = () => {
       </p>
 
       {!loaded && <div style={{ color: 'var(--muted)' }}>Loading…</div>}
+
+      {/* Hero banner editor */}
+      {loaded && hero && (
+        <Section title="HERO BANNER">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <Input label="EYEBROW · FI" value={hero.eyebrow_fi} onChange={(v) => updateHero({ eyebrow_fi: v })} dataTestId="hero-eyebrow-fi" maxLength={80} />
+            <Input label="EYEBROW · EN" value={hero.eyebrow_en} onChange={(v) => updateHero({ eyebrow_en: v })} dataTestId="hero-eyebrow-en" maxLength={80} />
+            <Input label="TITLE · FI" value={hero.title_fi} onChange={(v) => updateHero({ title_fi: v })} dataTestId="hero-title-fi" maxLength={200} />
+            <Input label="TITLE · EN" value={hero.title_en} onChange={(v) => updateHero({ title_en: v })} dataTestId="hero-title-en" maxLength={200} />
+            <Input label="SUBTITLE · FI" value={hero.subtitle_fi} onChange={(v) => updateHero({ subtitle_fi: v })} dataTestId="hero-subtitle-fi" maxLength={320} />
+            <Input label="SUBTITLE · EN" value={hero.subtitle_en} onChange={(v) => updateHero({ subtitle_en: v })} dataTestId="hero-subtitle-en" maxLength={320} />
+            <Input label="IMAGE URL (absolute or /hero/…)" value={hero.image_url} onChange={(v) => updateHero({ image_url: v })} dataTestId="hero-image-url" maxLength={400} />
+            <Input label="PHOTO CREDIT" value={hero.photo_credit} onChange={(v) => updateHero({ photo_credit: v })} dataTestId="hero-photo-credit" maxLength={120} />
+          </div>
+          {hero.image_url && (
+            <div style={{ marginTop: 10, padding: 6, background: 'var(--bg)', border: '1px solid var(--hairline)' }}>
+              <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, marginBottom: 4 }}>PREVIEW</div>
+              <img src={hero.image_url} alt="hero preview" data-testid="hero-image-preview"
+                style={{ display: 'block', width: '100%', maxHeight: 180, objectFit: 'cover' }} />
+            </div>
+          )}
+        </Section>
+      )}
+
+      <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, margin: '18px 0 8px' }}>
+        QUIZ QUESTIONS
+      </div>
 
       {loaded && config.map((q, idx) => (
         <QuestionBlock key={idx} q={q} qIdx={idx} total={config.length}

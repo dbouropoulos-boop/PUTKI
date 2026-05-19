@@ -1,0 +1,36 @@
+{
+  "summary": "Iter32 — /voita listing restructure + editable hero banner + active/paid split. Backend pytest 8/8 PASS (test_sprint_voita_hero.py): GET /api/voita/raffles returns 4 total (2 open: kups-hjk-veikkausliiga-final-2026 + tappara-karpat-liiga-final-2026, 2 paid: hjk-fclahti-2026-04 + tps-ilves-liiga-2026-04 — both carry result.winners[]); GET /api/settings/public exposes voita_hero with all 8 fields (eyebrow_fi/en, title_fi/en, subtitle_fi/en, image_url, photo_credit); PUT /api/admin/settings persists voita_hero round-trip; partial updates merge with DEFAULT_VOITA_HERO (no blanking); oversize strings clamped (title→200, subtitle→320, eyebrow→80); combined voita_hero + voita_quiz_config save in same PUT works. Regression: test_sprint_dispatch_preview + test_sprint_voita_recent_winners + test_sprint_voita_engine 57/57 PASS. Frontend e2e on /voita listing: hero shows 'The title race starts on the pitch.' (EN) / 'Suomen mestaruus alkaa kentältä.' (FI) with eyebrow 'VOITA · LIVE NOW' / 'VOITA · KÄYNNISSÄ' and photo_credit 'Photo: Mitch Rosen / Unsplash' rendered over bg image; [data-testid=voita-trust-strip] renders 4 metric tiles; [data-testid=voita-active-section] renders exactly 2 ActiveRaffleCard tiles with PLAY NOW (PELAA NYT) CTAs linking to /voita/pelisignaali-fi, prize pools €400 (KuPS vs HJK) + €500 (Tappara vs Kärpät), entries count + countdown; 'How it works' section renders 3 numbered steps 01/02/03; [data-testid=voita-past-section] renders compact rows with 'Jaakko L.' (€300) + 'Miika V.' (€500) and ZERO PLAY NOW/ENTER CTAs and ZERO anchor links into /voita/* — past rows are pure divs as spec requires. DOM Y-order verified hero < trust(460) < active(545) < past(1249). Back-office: /back-office sidebar has [data-testid=back-office-link-voita-quiz] 'VOITA HERO + QUIZ →' and [data-testid=back-office-link-dispatch-preview] 'DISPATCH PREVIEW →'. /back-office/voita-quiz: AuthGate accepts 'putki-hq-admin'; HERO BANNER section renders ABOVE QUIZ QUESTIONS (hero_y=316 < save_y=1013); all 8 hero-* testids present (hero-eyebrow-fi/en, hero-title-fi/en, hero-subtitle-fi/en, hero-image-url, hero-photo-credit); img[data-testid=hero-image-preview] renders /hero/voita.jpg preview; [data-testid=quiz-save] persists hero edits — edited title_fi to 'TEST_iter32_FI_TITLE', reloaded, value retained ✓ (then restored to default via API).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/voita TrustStrip numbers", "issues": ["Spec expected 2 RAFFLES DRAWN / 44 ENTRANTS / 4 WINNERS but DB shows 8 / 51 / 10 because legacy pytest-paid-* / pytest-not-paid-* fixture raffles from iter28-30 are still in MongoDB. €800 PAID matches because cash-payout raffles are only the 2 seeded ones — non-cash test raffles inflate DRAWN/ENTRANTS/WINNERS counts. Structurally the strip works; this is a seed-cleanup concern, not a logic bug. iter30 already flagged sweep candidates."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint_voita_hero.py",
+    "/app/test_reports/pytest/iter32_voita_hero.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (BACK_OFFICE_TOKEN). Public has no auth.",
+  "action_items": [
+    "Optional: sweep legacy pytest-paid-* / pytest-not-paid-* raffles from MongoDB so the public TrustStrip on /voita reflects only the 2 editorial seeded paid raffles (matches the editorial brief of 2 / 44 / 4). Use DELETE /api/admin/voita/raffles/{id} or one-shot script.",
+    "Hero photo_credit is rendered absolute-positioned over the hero image and currently overlaps the trust-strip top edge on 1920 viewport — readable but tight. Consider bumping the strip's top margin or moving credit inside the dark gradient overlay."
+  ],
+  "critical_code_review_comments": [
+    "_sanitize_voita_hero falls back to DEFAULT_VOITA_HERO per-field on partial save — solid pattern, prevents editorial from accidentally blanking the banner.",
+    "Clamp lengths (eyebrow 80 / title 200 / subtitle 320 / image_url 400 / photo_credit 120) are sensible but image_url is not validated as a URL/path; an editor could paste arbitrary text and break the <img src>. Consider regex `^(/|https?://)` or surface a preview-broken warning in BackOfficeVoitaQuiz.",
+    "PastRaffleRow is correctly rendered as a non-anchor <div> per spec — past raffle anchor count == 0 verified by Playwright. Good defensive UX (finished raffles cannot mislead users into another quiz attempt).",
+    "Active vs past split uses `status in ('open','closed','drawing','drawn')` for active vs `paid` for past — but currently no closed/drawn raffles exist in the active section. Edge case: a DRAWN-but-not-yet-PAID raffle would show in 'Active' with a PLAY NOW CTA pointing at a quiz that no longer accepts entries. Recommend explicitly bucketing only `status=='open'` into the active section, or hiding CTA for non-open statuses.",
+    "GET /api/voita/raffles returns 4 items unfiltered; if seed grows, the listing page could explode. Consider server-side limit + status filter in the listing endpoint (admin already paginates)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_sprint_voita_hero.py (new)"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "No new seed created. Temporarily flipped hero title_fi to 'TEST_iter32_FI_TITLE' during back-office persistence test, then restored DEFAULT_VOITA_HERO via PUT /api/admin/settings.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Voita listing restructure (hero + trust strip + active cards + how-it-works + past rows) and editable hero banner via settings.voita_hero are production-ready. Backend 8/8 + regression 57/57 + frontend e2e all PASS. To re-run: cd /app/backend && python -m pytest tests/test_sprint_voita_hero.py -v. Frontend testids of interest: voita-trust-strip, voita-active-section, voita-past-section (on /voita); hero-eyebrow-fi/en, hero-title-fi/en, hero-subtitle-fi/en, hero-image-url, hero-photo-credit, hero-image-preview, quiz-save (on /back-office/voita-quiz); back-office-link-voita-quiz, back-office-link-dispatch-preview (on /back-office sidebar). Known DB state: 4 raffles in /api/voita/raffles (2 open + 2 paid editorial) PLUS leftover pytest-paid-* + pytest-not-paid-* raffles from prior iters — the latter inflate TrustStrip counters DRAWN/ENTRANTS/WINNERS but do not surface in active or past sections (they are filtered by seeded flag or non-cash payout type — confirmed by spot-check, the past section only shows the 2 editorial cash-winner rows).",
+  "rca of the issue": "No issues to RCA — clean iteration. Only nuance: TrustStrip counters reflect aggregate DB state (legacy test raffles inflate counts) rather than the brief's narrative numbers (2/44/4). Mitigation: optional DB sweep of pytest-* slugs."
+}
