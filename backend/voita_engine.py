@@ -484,6 +484,16 @@ async def submit_entry(
         logger.exception("voita audit_log insert failed")
 
     entry.pop("_id", None)
+    # Compute entrant position (1-indexed) — count of entries created
+    # at or before this one in the same raffle. Surfaced on the
+    # confirmation page so the entrant sees "Olet osallistuja #N".
+    try:
+        position = await db.voita_entries.count_documents({
+            "raffle_id": raffle["id"],
+            "created_at": {"$lte": entry["created_at"]},
+        })
+    except Exception:
+        position = None
     return {
         "ok": True,
         "entry_id": entry["id"],
@@ -491,6 +501,7 @@ async def submit_entry(
         "raffle_title_fi": raffle.get("title_fi"),
         "raffle_title_en": raffle.get("title_en"),
         "created_at": entry["created_at"],
+        "position": position,
     }
 
 

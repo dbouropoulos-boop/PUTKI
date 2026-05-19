@@ -145,7 +145,7 @@ const MittariBlock = ({ lang }) => {
         <div style={{ minWidth: 0 }}>
           <h3 data-testid="explore-mittari-state" style={{
             fontFamily: 'Georgia, serif', fontWeight: 700,
-            fontSize: 28, lineHeight: 1.02, color: 'var(--ink)',
+            fontSize: 28, lineHeight: 1.02, color: '#F5F3EE',
             letterSpacing: '-0.02em', margin: '0 0 6px',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{name}</h3>
@@ -245,7 +245,7 @@ const PelisignaalitBlock = ({ lang }) => {
       {topPick ? (
         <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
           <div data-testid="explore-pelisignaalit-match" style={{
-            color: 'var(--ink)', fontSize: 17, fontWeight: 700,
+            color: '#F5F3EE', fontSize: 17, fontWeight: 700,
             letterSpacing: '-0.01em', lineHeight: 1.25,
             marginBottom: 10,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
@@ -355,7 +355,7 @@ const VoitaBlock = ({ lang }) => {
 
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
         <h3 data-testid="explore-voita-placeholder" style={{
-          color: 'var(--ink)', fontFamily: 'Georgia, serif', fontWeight: 700,
+          color: '#F5F3EE', fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 26, lineHeight: 1.1, margin: '0 0 10px',
           letterSpacing: '-0.015em',
         }}>{enabled
@@ -422,7 +422,7 @@ const PeliBlock = ({ lang }) => {
 
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
         <h3 data-testid="explore-peli-campaign" style={{
-          color: 'var(--ink)', fontFamily: 'Georgia, serif', fontWeight: 700,
+          color: '#F5F3EE', fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 22, lineHeight: 1.15, margin: '0 0 10px',
           letterSpacing: '-0.015em',
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',

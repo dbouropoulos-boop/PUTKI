@@ -162,6 +162,8 @@ class SettingsPayload(BaseModel):
     smartico_brand_key: Optional[str] = None
     voita_feature_enabled: Optional[bool] = None
     auto_dispatch_enabled: Optional[bool] = None
+    site_tagline_fi: Optional[str] = None
+    site_tagline_en: Optional[str] = None
 
 
 SETTINGS_KEY = "site"
@@ -176,6 +178,11 @@ async def _get_settings_doc():
         "smartico_brand_key": doc.get("smartico_brand_key"),
         "voita_feature_enabled": bool(doc.get("voita_feature_enabled", False)),
         "auto_dispatch_enabled": bool(doc.get("auto_dispatch_enabled", False)),
+        # Editable tagline — renders under the header logo and as the
+        # lead line of the homepage manifesto. Editorial can A/B test
+        # without dev cycles. Defaults match the brief.
+        "site_tagline_fi": doc.get("site_tagline_fi") or "Missä Suomen rahapeliskene näkyy",
+        "site_tagline_en": doc.get("site_tagline_en") or "Where Finland's gambling scene shows up",
         "updated_at": doc.get("updated_at"),
     }
 
@@ -190,6 +197,8 @@ async def get_public_settings():
         "smartico_loader_url": s.get("smartico_loader_url"),
         "smartico_brand_key": s.get("smartico_brand_key"),
         "voita_feature_enabled": s.get("voita_feature_enabled", False),
+        "site_tagline_fi": s.get("site_tagline_fi"),
+        "site_tagline_en": s.get("site_tagline_en"),
     }
 
 
@@ -215,6 +224,11 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     # creds where available, falls back to dry_run per channel).
     if data.auto_dispatch_enabled is not None:
         update["auto_dispatch_enabled"] = bool(data.auto_dispatch_enabled)
+    # Tagline — editorial copy, free-text, length-capped to avoid abuse.
+    if data.site_tagline_fi is not None:
+        update["site_tagline_fi"] = (data.site_tagline_fi or "").strip()[:120]
+    if data.site_tagline_en is not None:
+        update["site_tagline_en"] = (data.site_tagline_en or "").strip()[:120]
     await db.settings.update_one(
         {"_id": SETTINGS_KEY},
         {"$set": update},
@@ -324,6 +338,107 @@ async def admin_optin_stats(_: bool = Depends(require_admin)):
         })
     total = await db.optin_consents.count_documents({})
     return {"by_segment": rows, "total": total}
+
+
+# ── Public subscriber-count surface (3,000-gating) ───────────────────────
+# Returns a public dict {consent_tag: count} so the FE can decide whether
+# to surface "N subscribers" social proof or fall back to operational
+# facts. Counts are exact — no rounding, no fabrication. Only consent
+# tags that exist in `optin_consents` show up.
+@api_router.get("/public/subscriber-counts")
+async def public_subscriber_counts():
+    pipeline = [
+        {"$group": {"_id": "$consent_tag", "count": {"$sum": 1}}},
+    ]
+    out: Dict[str, int] = {}
+    async for r in db.optin_consents.aggregate(pipeline):
+        if r.get("_id"):
+            out[str(r["_id"])] = int(r.get("count") or 0)
+    return {"counts": out}
+
+
+# ── Operational social-proof palette (defensible, always-on facts) ──────
+# Six slot-types: news-aggregated-today, streamers-tracked, mittari-days-live,
+# voita-paid-eur, voyager-rounds, pelisignaalit-track-record. All numbers
+# pulled live from existing collections. Returned in a single payload so the
+# FE can fan them out across product pages without N round-trips.
+@api_router.get("/public/ops-facts")
+async def public_ops_facts():
+    now = datetime.now(timezone.utc)
+    day_ago = now - timedelta(days=1)
+    facts: Dict[str, Any] = {}
+
+    # Stories aggregated today (news_ticker_items, last 24h)
+    try:
+        facts["stories_today"] = await db.news_ticker_items.count_documents(
+            {"captured_at": {"$gte": day_ago.isoformat()}},
+        )
+    except Exception:
+        facts["stories_today"] = 0
+
+    # Streamers tracked (distinct streamer_id in streamer_state)
+    try:
+        cur = db.streamer_state.distinct("streamer_id")
+        ids = await cur
+        facts["streamers_tracked"] = len([x for x in ids if x])
+    except Exception:
+        facts["streamers_tracked"] = 0
+
+    # Mittari: days live + state changes tracked total
+    try:
+        oldest = await db.dial_snapshots.find_one({}, {"_id": 0, "ts": 1}, sort=[("ts", 1)])
+        if oldest and oldest.get("ts"):
+            try:
+                first = datetime.fromisoformat(str(oldest["ts"]).replace("Z", "+00:00"))
+                facts["mittari_days_live"] = max(1, (now - first).days)
+            except Exception:
+                facts["mittari_days_live"] = 0
+        else:
+            facts["mittari_days_live"] = 0
+        facts["mittari_state_changes_total"] = await db.dial_snapshots.count_documents(
+            {"is_transition": True},
+        )
+    except Exception:
+        facts["mittari_days_live"] = 0
+        facts["mittari_state_changes_total"] = 0
+
+    # Voita: total EUR paid across paid raffles
+    try:
+        paid_eur = 0
+        async for r in db.voita_raffles.find({"status": "paid"}, {"_id": 0, "prize_distribution": 1}):
+            for p in (r.get("prize_distribution") or {}).get("payouts") or []:
+                try:
+                    paid_eur += int(p.get("amount_eur") or 0)
+                except Exception:
+                    pass
+        facts["voita_eur_paid_total"] = paid_eur
+        facts["voita_raffles_paid_count"] = await db.voita_raffles.count_documents({"status": "paid"})
+    except Exception:
+        facts["voita_eur_paid_total"] = 0
+        facts["voita_raffles_paid_count"] = 0
+
+    # Voyager: rounds completed
+    try:
+        facts["voyager_rounds_total"] = await db.peli_entries.count_documents({})
+    except Exception:
+        facts["voyager_rounds_total"] = 0
+
+    # Pelisignaalit: top-line track record from sharpness_daily.
+    # When <7 docs, suppress (brief: "Suppress when reads <7").
+    try:
+        n_docs = await db.sharpness_daily.count_documents({})
+        if n_docs >= 7:
+            # "Held" defined as avg_score>=70 (proxy until signal_outcomes lands).
+            held = await db.sharpness_daily.count_documents(
+                {"avg_score": {"$gte": 70}},
+            )
+            facts["pelisignaalit_held_30d"] = {"held": held, "total": min(n_docs, 30)}
+        else:
+            facts["pelisignaalit_held_30d"] = None
+    except Exception:
+        facts["pelisignaalit_held_30d"] = None
+
+    return {"facts": facts, "generated_at": now.isoformat()}
 
 
 # ---------- Game scores (Phase 2.5 — Weezy Rally) ----------
