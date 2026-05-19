@@ -2,6 +2,24 @@
 
 ## Phase History (latest first)
 
+- **Voita raffle sprint** (2026-05-19) — Sako-approved mechanic, GDPR Art. 7(4) compliant entry flow.
+  - **Backend** `voita_engine.py` — full data model + scoring engine + draw engine + payout validator + 3-gate public visibility. Scoring: 3 pts for correct 1-X-2 + best-of (5 exact / 3 goal-diff / 1 total-goals) — NOT stackable, max 8 pts/entry. Tie-break: deterministic random (raffle_id + entry_id hash seed) — reproducible for audit. Prize cap €500 enforced server-side. Drawn raffles immutable.
+  - **Public endpoints**: `GET /api/voita/raffles` (gated), `GET /api/voita/raffles/{slug}` (gated), `POST /api/voita/raffles/{slug}/enter` (validates rules acceptance + 1-X-2 + goals 0..50, rejects duplicate `(raffle_id, email)`, stores entry with `consent_tag=game_raffle` + `raffle_legal_basis=legitimate_interest_contest_admin`, retention=kickoff+30d).
+  - **Admin endpoints**: full CRUD + `POST .../draw` + `GET .../entries` — all `X-Admin-Token`-gated.
+  - **Frontend**: `Voita.jsx` rewritten as listing page (gated/empty/live states). `VoitaRaffle.jsx` Step 1 entry form (mandatory rules acceptance, ZERO marketing consent bundled). `VoitaKiitos.jsx` Step 2 confirmation with separate marketing prefs. `VoitaSaannot.jsx` rules page with DRAFT banner. `RafflePostEntryPreferences.jsx` — three independent unchecked checkboxes (`daily_game_signals` / `mittari_alerts_sms` / `telegram_general`), SAVE and SKIP both primary weight.
+  - **Back-office** `BackOfficeVoita.jsx` — raffle CRUD, prize editor with live cap check (+ `OVER CAP` warning), gate-flag toggles, draw trigger, winners panel.
+  - **Three gates** required for public visibility: `rules_url_set` + `prize_distribution_locked` + `match_populated` AND `voita_feature_enabled=true` AND `status='open'`. Missing any → raffle invisible.
+  - **18/18 backend pytest** in `test_sprint_voita_engine.py`. **iter29 testing_agent: 100% / 100%, zero issues.**
+
+- **P1 sprint — Track record + dispatch + opt-in segments + 3 follow-ups** (2026-05-19)
+  - `dispatch_daily.py` — dry-run worker, Email/SMS/Telegram fan-out, writes `dispatch_log` audit rows. 10:00 Helsinki cycle. Falls through to dry-run when provider keys absent. **15/15 pytest pass.**
+  - `/back-office/optin-segments` — segment totals, dispatch summary, recent log, manual cycle trigger.
+  - `TrackRecordStrip` on `/pelisignaalit` — 30d avg / peak / nadir / days≥75 / 7d trend (pure FE).
+  - Bell icon on PUBLISHED streamer cards — soft pulse when notification dispatched in last 60min. `/api/streamers/recent-alerts` powers it.
+  - `alerts_dispatched_24h` field added to `/api/newsroom/live-stats`; surfaced in NewsroomLiveStrip.
+  - NewsTicker + NowPlayingTicker — slowed to ~55 / 40 px/s via dynamic `ResizeObserver`-measured animation duration, pause-on-hover + pause-on-focus.
+  - Chronological news list — every row now has a left stripe (high=red, med=amber, low=green, unknown=neutral grey). No more borderless rows.
+
 - **Sprint follow-up — AI-assisted streamer meta drafter + carousel redesign + header fix** (2026-05-19)
   - **New backend module** `streamer_meta_drafter.py` — Claude Haiku via Emergent Universal Key. Status state machine: `no_meta` / `draft_needs_review` / `published` / `suppressed`. 30-day per-streamer draft cache. 10 generations/hour hard rate limit (Mongo TTL collection). Locked system prompt with forbidden-claim list (no sponsor names, no income claims, no promotional language, no tipster vocabulary). JSON output validator (`_parse_llm_json`). `STREAMER_META_AI_DRAFT_ENABLED` + `STREAMER_META_WEBSEARCH_ENABLED` kill switches.
   - **New admin endpoints**: `GET /api/admin/streamer-meta/v2` (status-aware listing + rate-limit status), `POST /api/admin/streamer-meta/generate-draft` (force flag, 429 on rate-limit, 503 on `llm_unavailable`), `POST /api/admin/streamer-meta/publish`, `POST /api/admin/streamer-meta/suppress`, `GET /api/admin/streamer-meta/history/{platform}/{user_login}` (GDPR audit log).
