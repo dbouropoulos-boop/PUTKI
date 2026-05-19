@@ -239,8 +239,8 @@ const ChronoRow = ({ item, lang, weight }) => {
       data-testid="news-chrono-row"
       data-severity={sevKey || 'low'}
       style={{
-        display: 'grid', gridTemplateColumns: '64px 1fr 64px 110px', gap: 18,
-        alignItems: 'center',
+        display: 'grid', gridTemplateColumns: '64px 56px 1fr 70px 110px', gap: 18,
+        alignItems: 'start',
         padding: padBlock.replace(/(\d+)px 0/g, '$1px 0 $1px 14px'),
         borderLeft: sevBorder,
         borderBottom: '1px solid var(--hairline, #221E1B)',
@@ -250,31 +250,27 @@ const ChronoRow = ({ item, lang, weight }) => {
       <span style={{
         color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
         fontSize: 11, letterSpacing: '0.08em',
-        opacity: timeOpacity,
+        opacity: timeOpacity, paddingTop: isLead ? 7 : 4,
       }}>{relativeTime(item.captured_at, lang)}</span>
-      <div>
-        <span
-          data-testid="news-chrono-badge"
-          style={{
-            display: 'inline-block', fontFamily: 'ui-monospace, monospace',
-            fontSize: 9, lineHeight: 1.4, fontWeight: 700,
-            letterSpacing: '0.18em',
-            padding: '2px 6px',
-            marginRight: 10, color: catColor,
-            border: `1px solid ${catColor}55`,
-            verticalAlign: 2,
-            background: 'transparent',
-            textTransform: 'uppercase',
-            // Identical visual treatment across every row — never dim
-            // the badge itself even on "old" rows; opacity is reserved
-            // for the time / source meta only.
-          }}
-        >{catLabel}</span>
-        <span
-          data-testid="news-chrono-title"
-          style={{ color: titleColor, ...titleStyle }}
-        >{item.title}</span>
-      </div>
+      <span
+        data-testid="news-chrono-badge"
+        style={{
+          display: 'inline-block', fontFamily: 'ui-monospace, monospace',
+          fontSize: 9, lineHeight: 1.4, fontWeight: 700,
+          letterSpacing: '0.18em',
+          padding: '2px 6px',
+          color: catColor,
+          border: `1px solid ${catColor}55`,
+          background: 'transparent',
+          textTransform: 'uppercase',
+          justifySelf: 'start', alignSelf: 'start',
+          marginTop: isLead ? 6 : 3,
+        }}
+      >{catLabel}</span>
+      <span
+        data-testid="news-chrono-title"
+        style={{ color: titleColor, ...titleStyle, display: 'block' }}
+      >{item.title}</span>
       <span
         data-testid="news-chrono-views"
         title={lang === 'en' ? `${views} views` : `${views} lukukertaa`}
@@ -282,7 +278,7 @@ const ChronoRow = ({ item, lang, weight }) => {
           color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
           fontSize: 10.5, letterSpacing: '0.06em',
           textAlign: 'right', opacity: isOld ? 0.55 : 0.82,
-          fontVariantNumeric: 'tabular-nums',
+          fontVariantNumeric: 'tabular-nums', paddingTop: isLead ? 7 : 4,
         }}>
         <span aria-hidden style={{ marginRight: 4, opacity: 0.65 }}>◉</span>{views || '—'}
       </span>
@@ -290,7 +286,7 @@ const ChronoRow = ({ item, lang, weight }) => {
         color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
         fontSize: 10, letterSpacing: '0.14em', textAlign: 'right',
         opacity: isOld ? 0.5 : 0.78,
-        textTransform: 'uppercase',
+        textTransform: 'uppercase', paddingTop: isLead ? 7 : 4,
       }}>{(item.source || '').replace(/^Google News:\s*/, '')}</span>
     </a>
   );
