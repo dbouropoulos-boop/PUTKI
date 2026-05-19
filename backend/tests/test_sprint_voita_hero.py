@@ -14,28 +14,50 @@ HERO_KEYS = [
 
 
 # ── Raffles listing (active vs paid split) ──
+SEEDED_OPEN_SLUGS = {
+    "kups-hjk-veikkausliiga-final-2026",
+    "tappara-karpat-liiga-final-2026",
+}
+SEEDED_PAID_SLUGS = {
+    "hjk-fclahti-2026-04",
+    "tps-ilves-liiga-2026-04",
+}
+
+
 class TestVoitaRaffles:
-    def test_raffles_total_count_and_statuses(self):
+    def test_seeded_raffles_present_and_statuses_correct(self):
+        """Robust against fixture leaks from other test runs (admin
+        creates throwaway raffles). We assert the *seeded* slugs are
+        present + their statuses are intact, rather than locking total
+        count which leaks across runs."""
         r = requests.get(f"{BASE_URL}/api/voita/raffles", timeout=10)
         assert r.status_code == 200
         items = r.json()["items"]
-        assert len(items) == 4, f"Expected 4 raffles, got {len(items)}"
-        statuses = sorted([x["status"] for x in items])
-        assert statuses == ["open", "open", "paid", "paid"], f"Got {statuses}"
+        by_slug = {x["slug"]: x for x in items}
+        for s in SEEDED_OPEN_SLUGS:
+            assert s in by_slug, f"Open slug {s} missing"
+            assert by_slug[s]["status"] == "open", f"{s} status={by_slug[s]['status']}"
+        for s in SEEDED_PAID_SLUGS:
+            assert s in by_slug, f"Paid slug {s} missing"
+            assert by_slug[s]["status"] == "paid", f"{s} status={by_slug[s]['status']}"
 
     def test_active_raffles_seeded(self):
         r = requests.get(f"{BASE_URL}/api/voita/raffles", timeout=10)
         items = r.json()["items"]
-        open_slugs = sorted([x["slug"] for x in items if x["status"] == "open"])
-        assert "kups-hjk-veikkausliiga-final-2026" in open_slugs
-        assert "tappara-karpat-liiga-final-2026" in open_slugs
+        open_slugs = {x["slug"] for x in items if x["status"] == "open"}
+        for s in SEEDED_OPEN_SLUGS:
+            assert s in open_slugs, f"Expected seeded open slug {s}"
 
     def test_paid_raffles_have_winners(self):
         r = requests.get(f"{BASE_URL}/api/voita/raffles", timeout=10)
         items = r.json()["items"]
-        paid = [x for x in items if x["status"] == "paid"]
-        assert len(paid) == 2
-        for p in paid:
+        # Only inspect the seeded paid slugs — tests in other suites may
+        # have introduced additional paid raffles via admin endpoints.
+        seeded_paid = [x for x in items if x["status"] == "paid"
+                        and x["slug"] in SEEDED_PAID_SLUGS]
+        assert len(seeded_paid) == len(SEEDED_PAID_SLUGS), \
+            f"Seeded paid raffles missing: got {[p['slug'] for p in seeded_paid]}"
+        for p in seeded_paid:
             assert p.get("result", {}).get("winners"), f"{p['slug']} missing winners"
 
 

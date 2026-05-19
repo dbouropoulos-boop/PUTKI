@@ -146,6 +146,7 @@ const BackOffice = () => {
             <Link to="/back-office/voita-quiz" className="btn-ghost" data-testid="back-office-link-voita-quiz">VOITA HERO + QUIZ →</Link>
             <Link to="/back-office/dispatch-preview" className="btn-ghost" data-testid="back-office-link-dispatch-preview">DISPATCH PREVIEW →</Link>
             <Link to="/back-office/webhooks" className="btn-ghost" data-testid="back-office-link-webhooks">WEBHOOKS →</Link>
+            <Link to="/back-office/telegram" className="btn-ghost" data-testid="back-office-link-telegram">TELEGRAM BOT →</Link>
             <Link to="/back-office/foundational-research" className="btn-ghost" data-testid="back-office-link-research">RESEARCH →</Link>
             <Link to="/" className="btn-ghost">← Back to site</Link>
           </div>

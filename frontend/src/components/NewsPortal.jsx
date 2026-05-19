@@ -241,6 +241,7 @@ const ChronoRow = ({ item, lang, weight }) => {
       rel="noreferrer noopener"
       data-testid="news-chrono-row"
       data-severity={sevKey || 'low'}
+      className="news-chrono-row"
       style={{
         display: 'grid', gridTemplateColumns: '52px max-content 1fr 64px 100px', gap: 14,
         alignItems: 'center',
@@ -248,6 +249,7 @@ const ChronoRow = ({ item, lang, weight }) => {
         borderLeft: sevBorder,
         borderBottom: '1px solid var(--hairline, #221E1B)',
         textDecoration: 'none', color: 'inherit',
+        minWidth: 0,
       }}
     >
       <span style={{
@@ -271,7 +273,7 @@ const ChronoRow = ({ item, lang, weight }) => {
       >{catLabel}</span>
       <span
         data-testid="news-chrono-title"
-        style={{ color: titleColor, ...titleStyle, display: 'block' }}
+        style={{ color: titleColor, ...titleStyle, display: 'block', minWidth: 0, overflowWrap: 'anywhere' }}
       >{item.title}</span>
       <span
         data-testid="news-chrono-views"
@@ -284,7 +286,7 @@ const ChronoRow = ({ item, lang, weight }) => {
         }}>
         <span aria-hidden style={{ marginRight: 4, opacity: 0.65 }}>◉</span>{views || '—'}
       </span>
-      <span style={{
+      <span data-testid="news-chrono-outlet" style={{
         color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
         fontSize: 10, letterSpacing: '0.14em', textAlign: 'right',
         opacity: isOld ? 0.5 : 0.78,
@@ -373,8 +375,11 @@ const NewsPortal = () => {
       {/* Featured row */}
       <div
         data-testid="news-featured-row"
+        className="news-featured-row"
         style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: 24,
           marginBottom: 36,
         }}
       >
@@ -406,6 +411,25 @@ const NewsPortal = () => {
           </div>
         )}
       </div>
+      <style>{`
+        @media (max-width: 720px) {
+          .news-chrono-row {
+            grid-template-columns: 48px 1fr !important;
+            row-gap: 6px !important;
+            column-gap: 10px !important;
+            padding-left: 10px !important;
+          }
+          .news-chrono-row [data-testid="news-chrono-badge"],
+          .news-chrono-row [data-testid="news-chrono-views"],
+          .news-chrono-row [data-testid="news-chrono-outlet"] {
+            display: none !important;
+          }
+          .news-chrono-row [data-testid="news-chrono-title"] {
+            font-size: 15px !important;
+            line-height: 1.32 !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };

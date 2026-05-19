@@ -79,6 +79,9 @@
   }
   html {
     background-color: var(--bg);
+    /* Hard-stop horizontal scroll on mobile — any element wider than the
+       viewport is clipped here, preventing 'wiggle' scroll on iOS Safari. */
+    overflow-x: clip;
   }
   body {
     margin: 0;
@@ -90,6 +93,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 200ms ease, color 200ms ease;
+    overflow-x: clip;
   }
 
   h1, h2, h3, h4, h5, h6, .display {

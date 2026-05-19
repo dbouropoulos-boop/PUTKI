@@ -1,0 +1,37 @@
+{
+  "summary": "Sprint C overnight build — full validation PASSED. (1) Mobile sweep at 390x844 across all 8 priority routes: /, /mestari, /mittari, /voita, /voita/kups-hjk-veikkausliiga-final-2026, /voita/tappara-karpat-liiga-final-2026, /peli, /pelisignaalit — ALL within tolerance. Body scrollWidth deltas: Home=22 (news-ticker marquee clipped by overflow-x:clip as designed), all other 7 routes delta=0. (2) /mittari DialCockpit verified visually unchanged: [data-testid=mittari-dial-slot] (w=326, right=358), [data-testid=mittari-state-name], [data-testid=mittari-drivers] all visible AND fit in 390px viewport with no truncation/stretching/squishing — dial colors intact. (3) NewsPortal Home mobile: 12 [data-testid=news-chrono-row] visible with titles, 12 [data-testid=news-chrono-views] all display:none (hidden as spec); 2 featured cards both at x=16 (stacked, 1-column). Desktop 1280px: featured cards at x=82 and x=652 (2-column), views display:block. (4) Backend /api/admin/leads/summary returns {counts:{mestari:4,voita:11,mittari:0,total:15}, fresh_24h:{mestari:4,voita:11,mittari:0}, telegram:{voita_bound:1,mittari_bound_active:2}} — all ints, no errors. (5) /api/admin/leads with source=mestari/voita/mittari filters correctly by consent_tag, no-source returns all, includes counts+fresh_24h+filter. (6) /api/admin/telegram/log returns items sorted newest-first with received_at/update_id/chat_id/result.handled/result.kind, total+fresh_24h present. (7) /back-office/telegram FE: AuthGate accepts putki-hq-admin → all 4 stat pills [bo-tg-stat-webhook|pending-updates|voita-bound|mittari-bound], [bo-tg-leads] with 4 sub-tiles mestari/voita/mittari/total, [bo-tg-refresh] functional, [bo-tg-reset-webhook] functional (clicked → [bo-tg-action-result] shows '✓ Webhook registered to https://pelisignaali-fi.preview.emergentagent.com/api/webhooks/telegram' and stat-webhook flipped ✗ OFF → ✓ LIVE), [bo-tg-bound-table] populated (1 voita binding @e2etester for tappara-karpat-liiga-final-2026), [bo-tg-subscribers-table] populated (6 rows), [bo-tg-log-table] populated. (8) BackOffice index page has [data-testid=back-office-link-telegram] visible, href=/back-office/telegram, text 'TELEGRAM BOT →'. (9) pytest test_sprint_voita_hero.py: 8/8 PASS in 2.40s (fixture-leak fix confirmed). (10) New test_iter37_sprint_c.py: 10/10 PASS covering all 3 new admin endpoints + auth gating + cross-endpoint counts consistency.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter37_sprint_c.py",
+    "/app/backend/tests/test_sprint_voita_hero.py",
+    "/app/test_reports/pytest/iter37.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin",
+  "action_items": [
+    "[LOW] React console warning on /back-office/telegram: 'Encountered two children with the same key' — appears repeatedly when rendering tables (bound entries / subscribers / log). Likely a non-unique React key={} in one of the .map() calls in BackOfficeTelegram.jsx. Does NOT break rendering (all tables populated correctly) but pollutes console. Recommend changing key to a guaranteed-unique field (e.g. update_id+received_at for log, id for entries, or array index fallback)."
+  ],
+  "critical_code_review_comments": [
+    "BackOfficeTelegram.jsx emits React duplicate-key warnings in console for the 3 tables (bound/subscribers/log). Pick a unique key per row (e.g. log row key = `${update_id}-${received_at}` or fall back to idx). Functional but noisy.",
+    "Home delta of 22px on mobile comes from the news-ticker marquee — overflow-x:clip on html+body correctly prevents user-reachable horizontal scroll. The marquee's animated content is wider than viewport by design; html-clip cuts it. This is correct behavior and within the +25 tolerance specified.",
+    "/api/admin/leads/summary and /api/admin/leads share counts shape — endpoint test_summary_and_leads_counts_match passes, but consider extracting the count computation into a shared helper to avoid drift between the two routes.",
+    "telegram_webhook_log still has no TTL index (carried forward from iter36 review). With Sprint C now actively reading from this collection in the back-office UI, growth is more visible. Recommend adding TTL on received_at (e.g. 30-90 days).",
+    "Reset-webhook button in BackOfficeTelegram has no visual disabled state during the in-flight POST (busy state tracked but not reflected on the button) — minor UX nit."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter37_sprint_c.py (NEW — 10 tests: leads/summary shape+auth, leads filter parametrized over mestari/voita/mittari+all+auth, telegram/log shape+sorting+auth, summary/leads consistency)"
+  ],
+  "success_rate": {
+    "backend": "100% (18/18: 10 new iter37 + 8 voita_hero fixture-fix re-run)",
+    "frontend": "100% (mobile sweep 8/8 routes within tolerance; /back-office/telegram all 17 testids present and functional; refresh+reset-webhook both succeed; NewsPortal mobile/desktop responsive layouts confirmed)"
+  },
+  "seed_data_creation": "None — read-only verification against existing seed data (4 mestari leads, 11 voita leads, 0 mittari leads, 1 voita-bound entry, 6 mittari subscribers, 16 telegram log rows from iter35/iter36).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All Sprint C acceptance criteria validated. Pytest fixture leak fix in test_sprint_voita_hero.py is robust (8/8 PASS deterministic). DialCockpit unchanged on /mittari mobile — main agent's claim verified. The 22px Home overflow is by-design (news-ticker marquee clipped via overflow-x:clip). One LOW-priority cleanup remaining: React duplicate-key warnings in BackOfficeTelegram tables. Backend admin endpoints are properly auth-gated (401 without X-Admin-Token, 200 with putki-hq-admin). Reusable regression test: pytest /app/backend/tests/test_iter37_sprint_c.py + /app/backend/tests/test_sprint_voita_hero.py.",
+  "rca of the issue": "No defects found. Minor non-blocking React key warning in BackOfficeTelegram noted as action item."
+}

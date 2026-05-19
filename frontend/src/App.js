@@ -22,6 +22,7 @@ import FoundationalResearch from "@/pages/FoundationalResearch";
 import OperatorsAdmin from "@/pages/OperatorsAdmin";
 import StreamersAdmin from "@/pages/StreamersAdmin";
 import BackOfficeWebhooks from "@/pages/BackOfficeWebhooks";
+import BackOfficeTelegram from "@/pages/BackOfficeTelegram";
 import BackOfficeDrafts from "@/pages/BackOfficeDrafts";
 import BackOfficeWeekly from "@/pages/BackOfficeWeekly";
 import BackOfficePeli from "@/pages/BackOfficePeli";
@@ -69,6 +70,7 @@ function App() {
           <Route path="/back-office/operators" element={<OperatorsAdmin />} />
           <Route path="/back-office/streamers" element={<StreamersAdmin />} />
           <Route path="/back-office/webhooks" element={<BackOfficeWebhooks />} />
+          <Route path="/back-office/telegram" element={<BackOfficeTelegram />} />
           <Route path="/back-office/drafts" element={<BackOfficeDrafts />} />
           <Route path="/back-office/weekly" element={<BackOfficeWeekly />} />
           <Route path="/back-office/peli" element={<BackOfficePeli />} />

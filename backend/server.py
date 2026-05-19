@@ -2939,6 +2939,109 @@ async def admin_mittari_subscribers(limit: int = 50, _: bool = Depends(require_a
     return {"items": items, "count": len(items), "total": total, "active_bound": active}
 
 
+# ── PUTKI lead — unified view across all surfaces ────────────────────────
+
+_PUTKI_LEAD_TAGS = {
+    "mestari_lead": "mestari",
+    "voita_lead": "voita",
+    "mittari_lead": "mittari",
+}
+
+
+@api_router.get("/admin/leads")
+async def admin_putki_leads(
+    source: Optional[str] = None,
+    limit: int = 200,
+    _: bool = Depends(require_admin),
+):
+    """Unified leads view across all PUTKI surfaces. `source` filter:
+    mestari | voita | mittari | (omitted = all).
+
+    Aggregates `optin_consents` rows tagged `mestari_lead`/`voita_lead`/
+    `mittari_lead` plus voita_entries rows that opted-in by email (the
+    raffle entries themselves are leads too). Sorted newest-first."""
+    src = (source or "").strip().lower()
+    consent_tags = list(_PUTKI_LEAD_TAGS.keys())
+    if src in _PUTKI_LEAD_TAGS.values():
+        consent_tags = [t for t, s in _PUTKI_LEAD_TAGS.items() if s == src]
+
+    q = {"consent_tag": {"$in": consent_tags}}
+    lim = max(1, min(2000, int(limit)))
+
+    cur = db.optin_consents.find(
+        q,
+        {"_id": 0, "identifier": 1, "consent_tag": 1, "source": 1,
+         "surface": 1, "email": 1, "lang": 1, "display_name": 1,
+         "created_at": 1, "last_seen_at": 1, "first_source": 1,
+         "voita_quiz": 1},
+    ).sort([("last_seen_at", -1)]).limit(lim)
+    items = [d async for d in cur]
+
+    # Source counts (always emit all four buckets even if zero so the
+    # admin UI can render a stable summary row).
+    counts: Dict[str, int] = {}
+    for tag, label in _PUTKI_LEAD_TAGS.items():
+        counts[label] = await db.optin_consents.count_documents({"consent_tag": tag})
+    counts["total"] = sum(counts.values())
+
+    # 24h fresh stats
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    fresh = {}
+    for tag, label in _PUTKI_LEAD_TAGS.items():
+        fresh[label] = await db.optin_consents.count_documents({
+            "consent_tag": tag, "created_at": {"$gte": cutoff},
+        })
+
+    return {
+        "items": items,
+        "count": len(items),
+        "counts": counts,
+        "fresh_24h": fresh,
+        "filter": src or "all",
+    }
+
+
+@api_router.get("/admin/leads/summary")
+async def admin_putki_leads_summary(_: bool = Depends(require_admin)):
+    """Lightweight summary endpoint for at-a-glance dashboards. Same
+    counts as /admin/leads but without paging items."""
+    counts: Dict[str, int] = {}
+    for tag, label in _PUTKI_LEAD_TAGS.items():
+        counts[label] = await db.optin_consents.count_documents({"consent_tag": tag})
+    counts["total"] = sum(counts.values())
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    fresh: Dict[str, int] = {}
+    for tag, label in _PUTKI_LEAD_TAGS.items():
+        fresh[label] = await db.optin_consents.count_documents({
+            "consent_tag": tag, "created_at": {"$gte": cutoff},
+        })
+    # Telegram subscribers counts piggyback here so the admin dashboard
+    # has a single fetch for the full PUTKI HQ acquisition snapshot.
+    tg_voita = await db.voita_entries.count_documents({"telegram_chat_id": {"$ne": None}})
+    tg_mittari = await db.mittari_subscribers.count_documents({
+        "active": True, "telegram_chat_id": {"$ne": None},
+    })
+    return {
+        "counts": counts,
+        "fresh_24h": fresh,
+        "telegram": {"voita_bound": tg_voita, "mittari_bound_active": tg_mittari},
+    }
+
+
+# ── Telegram delivery audit (Sprint C overnight build) ───────────────────
+
+@api_router.get("/admin/telegram/log")
+async def admin_telegram_log(limit: int = 50, _: bool = Depends(require_admin)):
+    cur = db.telegram_webhook_log.find({}, {"_id": 0}).sort([("received_at", -1)]).limit(
+        max(1, min(500, int(limit)))
+    )
+    items = [d async for d in cur]
+    total = await db.telegram_webhook_log.count_documents({})
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+    fresh_24h = await db.telegram_webhook_log.count_documents({"received_at": {"$gte": cutoff}})
+    return {"items": items, "count": len(items), "total": total, "fresh_24h": fresh_24h}
+
+
 @api_router.post("/admin/voita/raffles")
 async def admin_voita_create(payload: _VoitaCreatePayload, _: bool = Depends(require_admin)):
     from voita_engine import create_raffle

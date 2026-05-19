@@ -1,32 +1,34 @@
 /**
- * PUTKI HQ — Home (Phase 1 Final · sprint follow-up restructure).
+ * PUTKI HQ — Home page (router root).
  *
- * New page structure (per sprint spec, Section 2):
- *   1. UTM banner
- *   2. OrientationStrip — what PUTKI HQ is in one line
- *   3. NewsroomLiveStrip — newsroom metrics, refresh 30s
- *   4. NewsPortal — full-width single column (featured row + chronological list)
- *   5. StreamersBand — full-width horizontal card band, replaces sidebar rail
- *   6. NowPlayingTicker — slot ticker, slot-click filters band above
- *   7. ExploreBlocks — 2×2 grid (Mittari · Pelisignaalit · Voita · Peli)
- *   8. AboutStrip — manifesto block
- *   9. EditorialFooter — accountability stamp
+ * Layout zones, top → bottom:
+ *   1. Newsroom info strips (orientation + live counters)
+ *   2. News portal (full-width grid + chronological list)
+ *   3. Streamers band ("kuka striimaa nyt")
+ *   4. NowPlayingTicker (live slot status, fixed-bottom)
+ *   5. Explore blocks (Mittari · Mestari · Voita · Peli — 2x2 on desktop, 1-col on mobile)
+ *   6. Manifesto strip (who we are)
+ *   7. Editorial footer (byline + read time)
  */
-import React, { useState } from 'react';
-import NewsPortal from '../components/NewsPortal';
-import StreamersBand from '../components/StreamersBand';
-import NowPlayingTicker from '../components/NowPlayingTicker';
-import ExploreBlocks from '../components/ExploreBlocks';
-import AboutStrip from '../components/AboutStrip';
-import EditorialFooter from '../components/EditorialFooter';
-import UTMBanner from '../components/UTMBanner';
-import { OrientationStrip, NewsroomLiveStrip } from '../components/InfoStrips';
+import React, { useState } from "react";
+import { OrientationStrip, NewsroomLiveStrip } from "../components/InfoStrips";
+import NewsPortal from "../components/NewsPortal";
+import StreamersBand from "../components/StreamersBand";
+import NowPlayingTicker from "../components/NowPlayingTicker";
+import ExploreBlocks from "../components/ExploreBlocks";
+import AboutStrip from "../components/AboutStrip";
+import EditorialFooter from "../components/EditorialFooter";
+import UTMBanner from "../components/UTMBanner";
 
 const Home = () => {
+  // Slot filter is hoisted here so the StreamersBand and NowPlayingTicker
+  // can stay in sync — clicking a slot pill in the ticker drives band
+  // filtering, and the band's clear button resets ticker state.
   const [slotFilter, setSlotFilter] = useState(null);
+
   return (
-    <div data-testid="home-page">
-      {/* Zone 1 — orientation strips (under the rolling news ticker rendered by Layout) */}
+    <div className="putki-home" data-testid="home-shell">
+      {/* Zone 1 — Newsroom strips */}
       <OrientationStrip />
       <NewsroomLiveStrip />
       <UTMBanner />
@@ -34,22 +36,13 @@ const Home = () => {
       {/* Zone 2 — News portal full-width */}
       <section
         data-testid="home-news-section"
-        style={{
-          padding: '32px 0 8px',
-          maxWidth: 1180, margin: '0 auto',
-          paddingLeft: 32, paddingRight: 32, width: '100%',
-        }}
+        className="home-zone home-zone--news"
       >
         <NewsPortal />
       </section>
 
       {/* Zone 3 — Streamers band */}
-      <section
-        style={{
-          maxWidth: 1380, margin: '0 auto',
-          paddingLeft: 32, paddingRight: 32, width: '100%',
-        }}
-      >
+      <section className="home-zone home-zone--band">
         <StreamersBand
           slotFilter={slotFilter}
           onClearSlotFilter={() => setSlotFilter(null)}
@@ -62,23 +55,15 @@ const Home = () => {
         onSlotClick={(name) => setSlotFilter((cur) => cur === name ? null : name)}
       />
 
-      {/* Zone 5 — Explore preview blocks (Mittari · Pelisignaalit · Voita · Peli) */}
-      <section
-        style={{
-          maxWidth: 1380, margin: '32px auto 0',
-          paddingLeft: 32, paddingRight: 32, width: '100%',
-        }}
-      >
+      {/* Zone 5 — Explore preview blocks (Mittari · Mestari · Voita · Peli) */}
+      <section className="home-zone home-zone--explore">
         <ExploreBlocks />
       </section>
 
       {/* Zone 6 — Manifesto block ("Who we are") */}
       <section
         data-testid="home-about-section"
-        style={{
-          maxWidth: 1380, margin: '32px auto 0',
-          paddingLeft: 32, paddingRight: 32, width: '100%',
-        }}
+        className="home-zone home-zone--about"
       >
         <AboutStrip />
       </section>
@@ -86,20 +71,40 @@ const Home = () => {
       {/* Zone 7 — Accountability footer */}
       <section
         data-testid="home-accountability-section"
-        style={{
-          borderTop: '1px solid var(--hairline, #221E1B)',
-          background: 'var(--surface, #141210)',
-          padding: '40px 0',
-          marginTop: 40,
-        }}
+        className="home-zone home-zone--accountability"
       >
-        <div style={{
-          maxWidth: 1380, margin: '0 auto',
-          paddingLeft: 32, paddingRight: 32, width: '100%',
-        }}>
+        <div className="home-accountability-inner">
           <EditorialFooter byline="PUTKI HQ" readMinutes={2} />
         </div>
       </section>
+
+      <style>{`
+        .home-zone { width: 100%; margin: 0 auto; box-sizing: border-box; }
+        .home-zone--news { max-width: 1180px; padding: 32px 32px 8px; }
+        .home-zone--band { max-width: 1380px; padding: 0 32px; }
+        .home-zone--explore { max-width: 1380px; padding: 0 32px; margin-top: 32px; }
+        .home-zone--about { max-width: 1380px; padding: 0 32px; margin-top: 32px; }
+        .home-zone--accountability {
+          border-top: 1px solid var(--hairline, #221E1B);
+          background: var(--surface, #141210);
+          padding: 40px 0;
+          margin-top: 40px;
+        }
+        .home-accountability-inner {
+          max-width: 1380px;
+          margin: 0 auto;
+          padding: 0 32px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        @media (max-width: 720px) {
+          .home-zone--news { padding: 20px 16px 4px; }
+          .home-zone--band,
+          .home-zone--explore,
+          .home-zone--about { padding: 0 16px; }
+          .home-accountability-inner { padding: 0 16px; }
+        }
+      `}</style>
     </div>
   );
 };
