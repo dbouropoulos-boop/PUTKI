@@ -2,6 +2,20 @@
 
 ## Phase History (latest first)
 
+- **Master Brief Sprint B — Voita Telegram bot + Mittari v3 signals/pings** (2026-05-19)
+  - **Slice 3 — Voita Telegram bot (`@Putkihq_bot`)**: new module `/app/backend/telegram_bot.py`. Inbound webhook at `POST /api/webhooks/telegram` (validates `X-Telegram-Bot-Api-Secret-Token` when `TELEGRAM_WEBHOOK_SECRET` is set) routes:
+    - `/start <pending_id>` → looks up `voita_entries` by `pending_id`, binds `telegram_chat_id` + `telegram_username` + `telegram_bound_at` + `contact_channel='telegram'`, replies with a rich confirmation card (`match · pick · score · confidence · position#` + kickoff-relative ping promise). Idempotent re-binding.
+    - `/start mittari_<pending_id>` → binds Mittari subscriber instead, sends welcome card with current state + score.
+    - `/stop` / `/unsubscribe` → flips `mittari_subscribers.active=False` for the chat. Audit row preserved.
+    - `/help` + fallback for chitchat.
+  - **Admin endpoints**: `POST /api/admin/telegram/set-webhook` (registers webhook URL + optional secret), `GET /api/admin/telegram/webhook-info`, `GET /api/admin/telegram/bound-entries?limit=N`, `GET /api/admin/mittari/subscribers`. All `X-Admin-Token`-gated.
+  - **Slice 4 — Mittari v3 signals + state-change pings**:
+    - **`MittariSignals.jsx`** component injected on `/mittari` BETWEEN drivers and method (DialCockpit hero left UNTOUCHED per user). Top-5 picks from `/api/odds/featured` (sharpness ≥ 40). First card unblurred (teaser); cards 1-4 blurred behind a `[data-testid=mittari-signals-gate]` with a Telegram-primary CTA. Click → optimistic unlock + `POST /api/mittari/subscribe` + 60s polling of `/api/mittari/binding-status` for bot confirmation. Status pill toggles `⏳ WAITING FOR TELEGRAM /START` → `✓ TELEGRAM BOUND`.
+    - **`POST /api/mittari/subscribe`** (public) + **`GET /api/mittari/binding-status?pending_id=`** (public, no PII leak — only `bound`/`active`/`bound_at` returned).
+    - **State-change broadcast hook** wired into `dial_engine.compute_and_store`: whenever `prev_key != snapshot.state.key`, `asyncio.create_task(broadcast_mittari_state_change(...))` fans out a Telegram DM to every active bound subscriber. Dial loop never blocks; failures swallowed.
+    - **New collections**: `mittari_subscribers` (unique on `pending_id`; `consent_tag=mittari_alerts`, `source=mittari_signals`), `telegram_webhook_log` (audit).
+  - **iter36 testing_agent: 100% backend (20/20 + 1 skipped-by-design) + 100% frontend, zero issues, retest_needed=false.** DialCockpit visually unchanged (Y-position regression check passed). Empty-state branch live-tested since `/api/odds/featured` currently returns no qualifying picks. With-picks branch code-reviewed.
+
 - **Master Brief Sprint A — Mestari split out + Voita stripped to pure raffle** (2026-05-19)
   - **`/mestari` standalone diagnostic** wired into `App.js` (Layout-less, like ColdEmailLanding). Cold-acquisition workhorse: 5 quiz Qs → 1-line zinger after each (2s auto-advance) → 1-paragraph profile tease → email gate ("Send me my report") → confirmation ("Playbook on its way"). Captures lead via `POST /api/voita/lead` with `source='mestari'`. BackToHome (`← PUTKI HQ`) injected top-left.
   - **`/voita/{slug}` aggressively stripped**: ALL quiz logic deleted (~600 LOC removed). New 8-beat flow: intro → scout report (market consensus + recent form + editorial read + pick distribution) → pick (1-X-2) → score wheels → **confidence meter (1..5, NEW)** → review → **contact gate (Telegram primary `#229ED9` · email fallback)** → confirmation. Pure 60-second prediction game.
@@ -134,16 +148,19 @@ PUTKI HQ pivots from a multi-purpose homepage into a focused, high-tech editoria
 - ✅ Backend schema for `source` on leads, `confidence`+`contact_channel`+`pending_id` on entries
 - ✅ ← PUTKI HQ persistent back link on standalone funnels
 
-### P0 — Sprint B (NEXT)
-- **Slice 3 — Voita Telegram bot**: webhook handler at `POST /api/webhooks/telegram`. On `/start <pending_id>` → look up entry by `pending_id`, persist `telegram_chat_id` + `telegram_bound_at`, DM the confirmation card + offer post-match result ping. Reuse existing `TELEGRAM_BOT_TOKEN=@Putkihq_bot`.
-- **Slice 4 — Mittari v3 React translation**: implement raw HTML mock (Message 478) into `/mittari`. Telegram-primary gate + daily signal feed.
-- **Lead table refactor**: rename `optin_consents`/`voita_lead` semantics → unified `putki_lead` view with `source` enum (already partly done — `first_source` field is in place).
+### P0 — Sprint B (DONE 2026-05-19, iter36) ✅
+- ✅ Slice 3 — Voita Telegram bot webhook + binding + rich confirmation card
+- ✅ Slice 4 — Mittari signals (Telegram-gated) + state-change ping broadcast hook
+- ✅ Mittari `/stop` unsubscribe + admin subscriber listing
+- ⏳ **Register webhook in production**: requires user to call `POST /api/admin/telegram/set-webhook` with the public preview/prod URL (e.g. `https://putkihq.fi/api/webhooks/telegram`) once deployed. Optional: set `TELEGRAM_WEBHOOK_SECRET` env first.
 
-### P1 — Email drip workers (DEFERRED, pending Resend keys)
-- Mestari 5-day drip (Day 0 report + 5 lessons)
-- Mittari onboarding drip (Days 0, 1, 3, 7)
-- Voita post-match result email
-- Requires `RESEND_API_KEY` + `RESEND_FROM` + DNS verification on `putkihq.fi`
+### P0 — Sprint C (NEXT — pending Resend keys)
+- **Email drip workers**:
+  - Mestari 5-day drip (Day 0 report + 5 lessons)
+  - Mittari onboarding drip (Days 0, 1, 3, 7)
+  - Voita post-match result email (parallel to the Telegram post-match ping)
+- Requires `RESEND_API_KEY` + `RESEND_FROM` + DNS verification on `putkihq.fi` (SPF/DKIM/DMARC)
+- **Lead table view consolidation**: `putki_lead` aggregate view across `optin_consents` rows where `consent_tag IN (mestari_lead, voita_lead, mittari_lead)`. `first_source` field already in place.
 
 ### P1 — Backlog
 - Backend pytest fixture cleanup (recurring `test_paid_raffles_have_winners` / `test_active_raffles_seeded` leak)
