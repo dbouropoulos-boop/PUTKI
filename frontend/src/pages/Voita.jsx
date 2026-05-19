@@ -70,6 +70,133 @@ const useYourRecord = () => {
   return rec;
 };
 
+// Sport-themed gradient for the card background. Real photos overlay on top.
+const SPORT_GRADIENT = {
+  football: 'linear-gradient(135deg, #0e2b1a 0%, #1a4730 60%, #2b6f4e 100%)',
+  icehockey: 'linear-gradient(135deg, #0e1a2b 0%, #1f3a5a 60%, #4a7aa6 100%)',
+  nhl: 'linear-gradient(135deg, #0e1a2b 0%, #1f3a5a 60%, #4a7aa6 100%)',
+  tennis: 'linear-gradient(135deg, #2b1a0e 0%, #5a3a1f 60%, #b08a4a 100%)',
+  basketball: 'linear-gradient(135deg, #2b1a0e 0%, #6a3a1a 60%, #b8632c 100%)',
+  f1: 'linear-gradient(135deg, #2b0e0e 0%, #5a1a1a 60%, #b03030 100%)',
+  mma: 'linear-gradient(135deg, #1a1a1a 0%, #3a3a3a 60%, #6a6a6a 100%)',
+};
+const SPORT_EMOJI = {
+  football: '⚽', icehockey: '🏒', nhl: '🏒', tennis: '🎾',
+  basketball: '🏀', f1: '🏎️', mma: '🥊',
+};
+
+const RaffleCard = ({ r, lang }) => {
+  const badge = statusBadge(r, lang);
+  const grad = SPORT_GRADIENT[r.sport] || SPORT_GRADIENT.football;
+  const emoji = SPORT_EMOJI[r.sport] || '🎯';
+  const prize = (r.prize_distribution?.payouts || []).reduce((s, p) => s + (p.amount_eur || 0), 0);
+  const entries = r.entries_count || 0;
+
+  // Real time-left (when open).
+  const now = Date.now();
+  const close = r.entries_close_at ? new Date(r.entries_close_at).getTime() : 0;
+  const remaining = close - now;
+  let timeLeft = null;
+  if (r.status === 'open' && remaining > 0) {
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    timeLeft = h >= 1 ? `${h}h ${m}m` : `${m}m`;
+  }
+
+  return (
+    <Link to={`/voita/${r.slug}`}
+      data-testid={`voita-raffle-card-${r.slug}`}
+      data-status={r.status}
+      style={{
+        position: 'relative', display: 'block',
+        background: grad, border: '1px solid var(--hairline)',
+        padding: '24px 22px 22px', textDecoration: 'none',
+        overflow: 'hidden', minHeight: 200,
+        transition: 'transform 180ms cubic-bezier(.2,.7,.3,1), box-shadow 180ms',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 18px 40px -18px rgba(0,0,0,0.6)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}>
+      {/* Giant ghost emoji as background watermark */}
+      <span aria-hidden style={{
+        position: 'absolute', right: -20, bottom: -40,
+        fontSize: 220, opacity: 0.06, lineHeight: 1, pointerEvents: 'none',
+      }}>{emoji}</span>
+      {/* Status row */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+        <span data-testid={`voita-status-${r.slug}`} style={{
+          background: badge.bg, color: badge.color,
+          fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+          letterSpacing: '0.22em', fontWeight: 700,
+          padding: '4px 8px', border: `1px solid ${badge.color}55`,
+        }}>{badge.label}</span>
+        <span style={{
+          background: 'rgba(0,0,0,0.4)', color: '#FFFFFF',
+          fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+          letterSpacing: '0.22em', fontWeight: 700,
+          padding: '4px 8px', border: '1px solid rgba(255,255,255,0.15)',
+        }}>{(r.sport || '').toUpperCase()}{r.league ? ` · ${r.league.toUpperCase()}` : ''}</span>
+      </div>
+
+      {/* Matchup */}
+      <div style={{
+        fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 700,
+        color: '#FFFFFF', lineHeight: 1.05, letterSpacing: '-0.02em',
+        marginBottom: 16, position: 'relative',
+      }}>
+        {r.home_team}<br />
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontStyle: 'italic', fontSize: 18 }}>vs</span><br />
+        {r.away_team}
+      </div>
+
+      {/* Stat pills */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 18, flexWrap: 'wrap', position: 'relative' }}>
+        <span style={{
+          background: 'rgba(0,0,0,0.4)', color: '#FFFFFF',
+          fontFamily: 'ui-monospace, monospace', fontSize: 10,
+          letterSpacing: '0.14em', fontWeight: 700, padding: '4px 8px',
+          border: '1px solid rgba(255,255,255,0.15)',
+        }}>👥 {entries} {lang === 'en' ? 'ENTRIES' : 'OSALLIST.'}</span>
+        {timeLeft && (
+          <span data-testid={`voita-time-left-${r.slug}`} style={{
+            background: 'rgba(232,194,110,0.18)', color: '#FFE5A8',
+            fontFamily: 'ui-monospace, monospace', fontSize: 10,
+            letterSpacing: '0.14em', fontWeight: 700, padding: '4px 8px',
+            border: '1px solid rgba(232,194,110,0.4)',
+          }}>⏱ {timeLeft}</span>
+        )}
+      </div>
+
+      {/* Prize chip + CTA */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 16px', background: 'rgba(0,0,0,0.55)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        position: 'relative',
+      }}>
+        <div>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.6)', fontWeight: 700, marginBottom: 2 }}>
+            {lang === 'en' ? 'PRIZE POOL' : 'PALKINTOPOTTI'}
+          </div>
+          <div style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: '#FFE5A8', lineHeight: 1 }}>
+            €{prize}
+          </div>
+        </div>
+        <div style={{
+          fontFamily: 'ui-monospace, monospace', fontSize: 11,
+          letterSpacing: '0.22em', fontWeight: 800, color: '#0B0A09',
+          background: '#E8C26E', padding: '12px 16px',
+        }}>{lang === 'en' ? 'ENTER →' : 'OSALLISTU →'}</div>
+      </div>
+    </Link>
+  );
+};
+
 const YourRecordStrip = ({ lang }) => {
   const rec = useYourRecord();
   if (!rec) return null;
@@ -197,53 +324,8 @@ const Voita = () => {
           padding: '24px 0 40px',
         }}>
           <YourRecordStrip lang={lang} />
-          <div style={{ display: 'grid', gap: 14 }}>
-            {raffles.map((r) => {
-              const badge = statusBadge(r, lang);
-              return (
-              <Link key={r.id} to={`/voita/${r.slug}`}
-                data-testid={`voita-raffle-card-${r.slug}`}
-                data-status={r.status}
-                style={{
-                  display: 'grid', gridTemplateColumns: '1fr auto', gap: 16,
-                  padding: '20px 22px', background: 'var(--surface, #141210)',
-                  border: '1px solid var(--hairline, #221E1B)', textDecoration: 'none',
-                }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                    <span data-testid={`voita-status-${r.slug}`}
-                      style={{
-                        background: badge.bg, color: badge.color,
-                        fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                        letterSpacing: '0.22em', fontWeight: 700,
-                        padding: '3px 7px', border: `1px solid ${badge.color}55`,
-                      }}>{badge.label}</span>
-                    <span style={{
-                      color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
-                      fontSize: 10, letterSpacing: '0.18em', fontWeight: 700,
-                    }}>{(r.sport || '').toUpperCase()} {r.league ? `· ${r.league.toUpperCase()}` : ''}</span>
-                  </div>
-                  <div style={{ color: '#FFFFFF', fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700 }}>
-                    {r.home_team} <span style={{ color: 'var(--muted)' }}>vs</span> {r.away_team}
-                  </div>
-                  <div style={{ color: 'var(--muted, #9C9587)', fontSize: 12.5, marginTop: 6, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.06em' }}>
-                    {lang === 'en' ? 'Closes' : 'Päättyy'}: {fmtDate(r.entries_close_at, lang)}
-                    {(r.entries_count || 0) > 0 && (
-                      <> · <span data-testid={`voita-entries-${r.slug}`} style={{ color: 'var(--ink)' }}>{r.entries_count} {lang === 'en' ? 'entries' : 'osallistunutta'}</span></>
-                    )}
-                  </div>
-                </div>
-                <div style={{ alignSelf: 'center', textAlign: 'right' }}>
-                  <div style={{ color: '#FFD66E', fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700 }}>
-                    €{(r.prize_distribution?.payouts || []).reduce((s, p) => s + (p.amount_eur || 0), 0)}
-                  </div>
-                  <div style={{ color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', fontWeight: 700 }}>
-                    {lang === 'en' ? 'PRIZE POOL · ENTER →' : 'PALKINTOPOTTI · OSALLISTU →'}
-                  </div>
-                </div>
-              </Link>
-            );
-            })}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 18 }}>
+            {raffles.map((r) => <RaffleCard key={r.id} r={r} lang={lang} />)}
           </div>
         </section>
       )}

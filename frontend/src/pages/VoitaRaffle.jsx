@@ -28,117 +28,59 @@ import { useOpsFacts } from '../hooks/useOpsFacts';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// ── Quiz definition ────────────────────────────────────────────────────
-const QUIZ_FI = [
-  {
-    key: 'style', auto: true,
-    title: 'Mikä veikkaajatyyppi sinä olet?',
-    sub: 'Yksi vastaus — autamme räätälöimään fiiliksen.',
+// ── Quiz definition (default fallback; real one comes from
+// /api/settings/public → voita_quiz_config; admins can edit copy from
+// the back-office without re-deploying)
+const DEFAULT_QUIZ = [
+  { key: 'style', auto: true, multi: false, callback: false,
+    title_fi: 'Mikä veikkaajatyyppi sinä olet?', title_en: 'What kind of predictor are you?',
+    sub_fi: 'Yksi vastaus — autamme räätälöimään fiiliksen.', sub_en: 'One answer — helps us tune the experience.',
     options: [
-      { v: 'stats', label: 'Tilastoja seuraan', emoji: '🧊' },
-      { v: 'gut', label: 'Tunteella menen', emoji: '🔥' },
-      { v: 'loyal', label: 'Lempijoukkue aina', emoji: '🎯' },
-      { v: 'chaos', label: 'Tuuripeli, baby', emoji: '🎲' },
+      { v: 'stats', label_fi: 'Tilastoja seuraan', label_en: 'Numbers guy', emoji: '🧊' },
+      { v: 'gut', label_fi: 'Tunteella menen', label_en: 'Gut player', emoji: '🔥' },
+      { v: 'loyal', label_fi: 'Lempijoukkue aina', label_en: 'Loyal to my team', emoji: '🎯' },
+      { v: 'chaos', label_fi: 'Tuuripeli, baby', label_en: 'Pure luck', emoji: '🎲' },
     ],
   },
-  {
-    key: 'sports', multi: true,
-    title: 'Minkä lajin parissa olet kotonasi?',
-    sub: 'Valitse vähintään yksi.',
+  { key: 'sports', auto: false, multi: true, callback: false,
+    title_fi: 'Minkä lajin parissa olet kotonasi?', title_en: 'What\'s your home turf?',
+    sub_fi: 'Valitse vähintään yksi.', sub_en: 'Pick at least one.',
     options: [
-      { v: 'football', label: 'Jalkapallo', emoji: '⚽' },
-      { v: 'icehockey', label: 'Jääkiekko', emoji: '🏒' },
-      { v: 'tennis', label: 'Tennis', emoji: '🎾' },
-      { v: 'basketball', label: 'Koripallo', emoji: '🏀' },
-      { v: 'f1', label: 'F1', emoji: '🏎️' },
-      { v: 'mma', label: 'MMA / Nyrkkeily', emoji: '🥊' },
+      { v: 'football', label_fi: 'Jalkapallo', label_en: 'Football', emoji: '⚽' },
+      { v: 'icehockey', label_fi: 'Jääkiekko', label_en: 'Ice hockey', emoji: '🏒' },
+      { v: 'tennis', label_fi: 'Tennis', label_en: 'Tennis', emoji: '🎾' },
+      { v: 'basketball', label_fi: 'Koripallo', label_en: 'Basketball', emoji: '🏀' },
+      { v: 'f1', label_fi: 'F1', label_en: 'F1', emoji: '🏎️' },
+      { v: 'mma', label_fi: 'MMA / Nyrkkeily', label_en: 'MMA / Boxing', emoji: '🥊' },
     ],
   },
-  {
-    key: 'frequency', auto: true,
-    title: 'Kuinka usein olet veikkaamassa?',
+  { key: 'frequency', auto: true, multi: false, callback: false,
+    title_fi: 'Kuinka usein olet veikkaamassa?', title_en: 'How often do you predict?',
+    sub_fi: '', sub_en: '',
     options: [
-      { v: 'weekly', label: 'Viikoittain — joka peli mukaan', emoji: '🔥' },
-      { v: 'monthly', label: 'Kuukausittain — vain isot ottelut', emoji: '📅' },
-      { v: 'rare', label: 'Vain finaalihetkinä', emoji: '🎯' },
-      { v: 'first', label: 'Tämä on ensimmäiseni', emoji: '🆕' },
+      { v: 'weekly', label_fi: 'Viikoittain — joka peli mukaan', label_en: 'Weekly — every match', emoji: '🔥' },
+      { v: 'monthly', label_fi: 'Kuukausittain — vain isot ottelut', label_en: 'Monthly — only big games', emoji: '📅' },
+      { v: 'rare', label_fi: 'Vain finaalihetkinä', label_en: 'Only championship moments', emoji: '🎯' },
+      { v: 'first', label_fi: 'Tämä on ensimmäiseni', label_en: 'This is my first time', emoji: '🆕' },
     ],
   },
-  {
-    key: 'skill', auto: true, callback: true,
-    title: 'Kuinka usein veikkauksesi osuvat?',
+  { key: 'skill', auto: true, multi: false, callback: true,
+    title_fi: 'Kuinka usein veikkauksesi osuvat?', title_en: 'How often do your predictions hit?',
+    sub_fi: '', sub_en: '',
     options: [
-      { v: 'often', label: 'Useammin kuin kerran kuussa', emoji: '😤' },
-      { v: 'fifty', label: 'Joskus osuu, joskus ei', emoji: '🤷' },
-      { v: 'unknown', label: 'En oikeasti tiedä', emoji: '😅' },
-      { v: 'first', label: 'En ole vielä veikannut', emoji: '🎯' },
+      { v: 'often', label_fi: 'Useammin kuin kerran kuussa', label_en: 'More often than not', emoji: '😤' },
+      { v: 'fifty', label_fi: 'Joskus osuu, joskus ei', label_en: '50/50 — fair coin', emoji: '🤷' },
+      { v: 'unknown', label_fi: 'En oikeasti tiedä', label_en: 'I genuinely don\'t know', emoji: '😅' },
+      { v: 'first', label_fi: 'En ole vielä veikannut', label_en: 'I haven\'t predicted before', emoji: '🎯' },
     ],
   },
-  {
-    key: 'mode', auto: true,
-    title: 'Kuinka haluat veikata?',
-    sub: 'Tämä määrittää loppupelin tyylin.',
+  { key: 'mode', auto: true, multi: false, callback: false,
+    title_fi: 'Kuinka haluat veikata?', title_en: 'How do you want to predict?',
+    sub_fi: 'Tämä määrittää loppupelin tyylin.', sub_en: 'This shapes the rest of the experience.',
     options: [
-      { v: 'with_data', label: 'Näytä mulle data — sitten valitsen', emoji: '🎯' },
-      { v: 'quick', label: 'Tuurilla menen — heti lukkoon', emoji: '⚡' },
-      { v: 'with_editorial', label: 'Toimitus kertoo mitä se ajattelee', emoji: '🤝' },
-    ],
-  },
-];
-
-const QUIZ_EN = [
-  {
-    key: 'style', auto: true,
-    title: 'What kind of predictor are you?',
-    sub: 'One answer — helps us tune the experience.',
-    options: [
-      { v: 'stats', label: 'Numbers guy', emoji: '🧊' },
-      { v: 'gut', label: 'Gut player', emoji: '🔥' },
-      { v: 'loyal', label: 'Loyal to my team', emoji: '🎯' },
-      { v: 'chaos', label: 'Pure luck', emoji: '🎲' },
-    ],
-  },
-  {
-    key: 'sports', multi: true,
-    title: 'What\'s your home turf?',
-    sub: 'Pick at least one.',
-    options: [
-      { v: 'football', label: 'Football', emoji: '⚽' },
-      { v: 'icehockey', label: 'Ice hockey', emoji: '🏒' },
-      { v: 'tennis', label: 'Tennis', emoji: '🎾' },
-      { v: 'basketball', label: 'Basketball', emoji: '🏀' },
-      { v: 'f1', label: 'F1', emoji: '🏎️' },
-      { v: 'mma', label: 'MMA / Boxing', emoji: '🥊' },
-    ],
-  },
-  {
-    key: 'frequency', auto: true,
-    title: 'How often do you predict?',
-    options: [
-      { v: 'weekly', label: 'Weekly — every match', emoji: '🔥' },
-      { v: 'monthly', label: 'Monthly — only big games', emoji: '📅' },
-      { v: 'rare', label: 'Only championship moments', emoji: '🎯' },
-      { v: 'first', label: 'This is my first time', emoji: '🆕' },
-    ],
-  },
-  {
-    key: 'skill', auto: true, callback: true,
-    title: 'How often do your predictions hit?',
-    options: [
-      { v: 'often', label: 'More often than not', emoji: '😤' },
-      { v: 'fifty', label: '50/50 — fair coin', emoji: '🤷' },
-      { v: 'unknown', label: 'I genuinely don\'t know', emoji: '😅' },
-      { v: 'first', label: 'I haven\'t predicted before', emoji: '🎯' },
-    ],
-  },
-  {
-    key: 'mode', auto: true,
-    title: 'How do you want to predict?',
-    sub: 'This shapes the rest of the experience.',
-    options: [
-      { v: 'with_data', label: 'Show me the data — I\'ll decide', emoji: '🎯' },
-      { v: 'quick', label: 'Trust my gut — lock it now', emoji: '⚡' },
-      { v: 'with_editorial', label: 'Editorial gives me their read', emoji: '🤝' },
+      { v: 'with_data', label_fi: 'Näytä mulle data — sitten valitsen', label_en: 'Show me the data — I\'ll decide', emoji: '🎯' },
+      { v: 'quick', label_fi: 'Tuurilla menen — heti lukkoon', label_en: 'Trust my gut — lock it now', emoji: '⚡' },
+      { v: 'with_editorial', label_fi: 'Toimitus kertoo mitä se ajattelee', label_en: 'Editorial gives me their read', emoji: '🤝' },
     ],
   },
 ];
@@ -168,6 +110,8 @@ const ProgressBar = ({ step, total }) => (
 
 // ── Quiz screen ────────────────────────────────────────────────────────
 const QuizScreen = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) => {
+  const title = lang === 'en' ? q.title_en : q.title_fi;
+  const sub = lang === 'en' ? q.sub_en : q.sub_fi;
   const answer = answers[q.key];
   const pick = (v) => {
     if (q.multi) {
@@ -188,11 +132,12 @@ const QuizScreen = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) => 
       <h2 data-testid="quiz-question-title" style={{
         fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 700, color: 'var(--ink)',
         margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15,
-      }}>{q.title}</h2>
-      {q.sub && <p style={{ color: 'var(--muted)', fontSize: 13.5, marginBottom: 22, lineHeight: 1.55 }}>{q.sub}</p>}
+      }}>{title}</h2>
+      {sub && <p style={{ color: 'var(--muted)', fontSize: 13.5, marginBottom: 22, lineHeight: 1.55 }}>{sub}</p>}
       <div style={{ display: 'grid', gap: 8 }}>
         {q.options.map((opt) => {
           const active = q.multi ? (answers[q.key] || []).includes(opt.v) : answer === opt.v;
+          const label = lang === 'en' ? opt.label_en : opt.label_fi;
           return (
             <motion.button type="button" key={opt.v}
               data-testid={`quiz-option-${q.key}-${opt.v}`}
@@ -209,7 +154,7 @@ const QuizScreen = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) => 
                 display: 'flex', alignItems: 'center', gap: 12,
               }}>
               {opt.emoji && <span style={{ fontSize: 22 }} aria-hidden>{opt.emoji}</span>}
-              <span style={{ flex: 1 }}>{opt.label}</span>
+              <span style={{ flex: 1 }}>{label}</span>
               {q.multi && (
                 <span style={{
                   width: 18, height: 18, border: `2px solid ${active ? 'var(--bg)' : 'var(--border-strong)'}`,
@@ -640,7 +585,8 @@ const VoitaRaffle = () => {
   const [raffle, setRaffle] = useState(null);
   const [ctx, setCtx] = useState(null);
   const [loaded, setLoaded] = useState(false);
-  const [step, setStep] = useState('quiz'); // quiz | reveal | email | match | pick | score | review | blocked
+  const [quizConfig, setQuizConfig] = useState(DEFAULT_QUIZ);
+  const [step, setStep] = useState('intro'); // intro | quiz | reveal | email | match | pick | score | review
   const [quizIdx, setQuizIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [email, setEmail] = useState('');
@@ -653,7 +599,7 @@ const VoitaRaffle = () => {
   const [busy, setBusy] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [serverError, setServerError] = useState('');
-  const quiz = lang === 'en' ? QUIZ_EN : QUIZ_FI;
+  const quiz = quizConfig;
 
   useEffect(() => {
     let stop = false;
@@ -665,10 +611,22 @@ const VoitaRaffle = () => {
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (!stop) setCtx(d); })
       .catch(() => {});
+    // Quiz config is editable from the back-office — fetched from public
+    // settings; fall back to DEFAULT_QUIZ if unreachable.
+    fetch(`${BACKEND}/api/settings/public`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (stop) return;
+        const cfg = (d && Array.isArray(d.voita_quiz_config) && d.voita_quiz_config.length > 0)
+          ? d.voita_quiz_config : DEFAULT_QUIZ;
+        setQuizConfig(cfg);
+      })
+      .catch(() => {});
     return () => { stop = true; };
   }, [slug]);
 
   const stepNumber = useMemo(() => {
+    if (step === 'intro') return 0;
     if (step === 'quiz') return quizIdx + 1;
     if (step === 'reveal') return quizIdx + 1.5;
     if (step === 'email') return 6;
@@ -772,6 +730,59 @@ const VoitaRaffle = () => {
       <ProgressBar step={stepNumber} total={TOTAL_BEATS} />
 
       <AnimatePresence mode="wait">
+        {step === 'intro' && (
+          <motion.div key="intro" {...slideIn} data-testid="intro-step">
+            <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginBottom: 12 }}>
+              {(raffle.league || raffle.sport || '').toUpperCase()} · {lang === 'en' ? 'TODAY\'S RAFFLE' : 'PÄIVÄN ARVONTA'}
+            </div>
+            <h1 style={{
+              fontFamily: 'Georgia, serif', fontSize: 42, fontWeight: 700,
+              color: 'var(--ink)', margin: '0 0 6px',
+              letterSpacing: '-0.025em', lineHeight: 1.04,
+            }}>{raffle.home_team} <span style={{ color: 'var(--muted)' }}>vs</span> {raffle.away_team}</h1>
+            <p style={{ color: 'var(--muted)', fontSize: 14.5, lineHeight: 1.55, margin: '14px 0 22px', maxWidth: 460 }}>
+              {lang === 'en'
+                ? 'Free entry. No deposit. No betting. Closest prediction wins, winners paid within 48h.'
+                : 'Maksuton osallistuminen. Ei talletusta. Ei vedonlyöntiä. Lähimmäs osunut voittaa, voittaja maksetaan 48h sisällä.'}
+            </p>
+            <div style={{
+              display: 'flex', gap: 14, padding: '14px 0',
+              borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)',
+              marginBottom: 24, flexWrap: 'wrap',
+            }}>
+              <div style={{ flex: 1, minWidth: 120 }}>
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, marginBottom: 4 }}>
+                  {lang === 'en' ? 'PRIZE POOL' : 'PALKINTOPOTTI'}
+                </div>
+                <div style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: '#E8C26E', lineHeight: 1 }}>
+                  €{(raffle.prize_distribution?.payouts || []).reduce((s, p) => s + (p.amount_eur || 0), 0)}
+                </div>
+              </div>
+              <div style={{ flex: 1, minWidth: 120 }}>
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, marginBottom: 4 }}>
+                  {lang === 'en' ? 'ENTRIES' : 'OSALLISTUNEET'}
+                </div>
+                <div style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: 'var(--ink)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                  {raffle.entries_count || 0}
+                </div>
+              </div>
+            </div>
+            <motion.button whileTap={{ scale: 0.97 }}
+              onClick={() => setStep('quiz')} data-testid="intro-start-cta"
+              style={{
+                padding: '17px 28px', width: '100%',
+                background: '#E8C26E', color: '#0B0A09',
+                border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 12,
+                letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
+              }}>
+              {lang === 'en' ? 'START — 5 QUESTIONS, 60 SECONDS →' : 'ALOITA — 5 KYSYMYSTÄ, 60 SEKUNTIA →'}
+            </motion.button>
+            <p style={{ marginTop: 14, fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.55, textAlign: 'center' }}>
+              {lang === 'en' ? 'Quick quiz before you predict. Helps us route the right signals to you later.' : 'Lyhyt kysely ennen veikkausta. Auttaa meitä lähettämään sinulle relevantit signaalit jatkossa.'}
+            </p>
+          </motion.div>
+        )}
+
         {step === 'quiz' && (
           <motion.div key={`quiz-${quizIdx}`} {...slideIn}>
             <QuizScreen

@@ -164,6 +164,7 @@ class SettingsPayload(BaseModel):
     auto_dispatch_enabled: Optional[bool] = None
     site_tagline_fi: Optional[str] = None
     site_tagline_en: Optional[str] = None
+    voita_quiz_config: Optional[List[Dict[str, Any]]] = None
 
 
 SETTINGS_KEY = "site"
@@ -183,6 +184,7 @@ async def _get_settings_doc():
         # without dev cycles. Defaults match the brief.
         "site_tagline_fi": doc.get("site_tagline_fi") or "Missä Suomen rahapeliskene näkyy",
         "site_tagline_en": doc.get("site_tagline_en") or "Where Finland's gambling scene shows up",
+        "voita_quiz_config": doc.get("voita_quiz_config"),
         "updated_at": doc.get("updated_at"),
     }
 
@@ -190,6 +192,7 @@ async def _get_settings_doc():
 @api_router.get("/settings/public")
 async def get_public_settings():
     """Public — only safe-to-expose settings."""
+    from voita_quiz_config import DEFAULT_VOITA_QUIZ, sanitize_quiz_config
     s = await _get_settings_doc()
     return {
         "telegram_channel": s.get("telegram_channel"),
@@ -199,6 +202,7 @@ async def get_public_settings():
         "voita_feature_enabled": s.get("voita_feature_enabled", False),
         "site_tagline_fi": s.get("site_tagline_fi"),
         "site_tagline_en": s.get("site_tagline_en"),
+        "voita_quiz_config": sanitize_quiz_config(s.get("voita_quiz_config") or DEFAULT_VOITA_QUIZ),
     }
 
 
@@ -229,6 +233,9 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
         update["site_tagline_fi"] = (data.site_tagline_fi or "").strip()[:120]
     if data.site_tagline_en is not None:
         update["site_tagline_en"] = (data.site_tagline_en or "").strip()[:120]
+    if data.voita_quiz_config is not None:
+        from voita_quiz_config import sanitize_quiz_config
+        update["voita_quiz_config"] = sanitize_quiz_config(data.voita_quiz_config)
     await db.settings.update_one(
         {"_id": SETTINGS_KEY},
         {"$set": update},
@@ -2780,8 +2787,38 @@ async def admin_voita_mark_paid(raffle_id: str, _: bool = Depends(require_admin)
         raise HTTPException(status_code=400, detail=str(exc))
 
 
-@app.on_event("startup")
-async def _seed_phase3():
+@api_router.post("/admin/voita/raffles/{raffle_id}/import-odds")
+async def admin_voita_import_odds(raffle_id: str, _: bool = Depends(require_admin)):
+    """Snapshot the current bookmaker consensus + team form on the
+    raffle doc as `match_meta`. Useful at raffle-creation time so that
+    even after the Odds API event expires, the previewer still shows
+    what the markets read at day-0 — backs editorial post-mortems."""
+    from voita_match_context import odds_for_match, team_form_for_match
+    doc = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="raffle not found")
+    home, away = doc.get("home_team"), doc.get("away_team")
+    if not (home and away):
+        raise HTTPException(status_code=400, detail="raffle missing home/away team")
+    odds = await odds_for_match(
+        home_team=home, away_team=away, sport=doc.get("sport") or "football",
+    )
+    form = await team_form_for_match(
+        league=doc.get("league"), home_team=home, away_team=away,
+    )
+    meta = {
+        "odds_snapshot": odds,
+        "team_form_snapshot": form,
+        "snapshotted_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.voita_raffles.update_one(
+        {"id": raffle_id},
+        {"$set": {"match_meta": meta, "updated_at": meta["snapshotted_at"]}},
+    )
+    return {"ok": True, "match_meta": meta}
+
+
+
     try:
         await seed_default_guidelines(db)
     except Exception:
