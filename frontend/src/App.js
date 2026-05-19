@@ -25,6 +25,8 @@ import BackOfficeWebhooks from "@/pages/BackOfficeWebhooks";
 import BackOfficeDrafts from "@/pages/BackOfficeDrafts";
 import BackOfficeWeekly from "@/pages/BackOfficeWeekly";
 import BackOfficePeli from "@/pages/BackOfficePeli";
+import BackOfficeStreamerMeta from "@/pages/BackOfficeStreamerMeta";
+import BackOfficeSlotRegistry from "@/pages/BackOfficeSlotRegistry";
 import Mittari from "@/pages/Mittari";
 import Pelisignaalit from "@/pages/Pelisignaalit";
 import Voita from "@/pages/Voita";
@@ -61,6 +63,8 @@ function App() {
           <Route path="/back-office/drafts" element={<BackOfficeDrafts />} />
           <Route path="/back-office/weekly" element={<BackOfficeWeekly />} />
           <Route path="/back-office/peli" element={<BackOfficePeli />} />
+          <Route path="/back-office/streamer-meta" element={<BackOfficeStreamerMeta />} />
+          <Route path="/back-office/slot-registry" element={<BackOfficeSlotRegistry />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
           <Route path="/striimaajat/:id" element={<TopicHubPage kind="streamers" />} />
           <Route path="/operaattorit/:id" element={<TopicHubPage kind="operators" />} />

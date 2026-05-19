@@ -1,0 +1,91 @@
+/**
+ * useBackOfficeToken — tiny shared hook for the back-office admin pages.
+ *
+ * Centralises the X-Admin-Token persistence pattern that each admin page
+ * was reimplementing inline. Returns `{token, setToken, authed, authError,
+ * checkAuth, logout}`.
+ *
+ * Usage:
+ *     const { token, authed, authError, checkAuth, setToken, logout } = useBackOfficeToken();
+ *     if (!authed) return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} />;
+ *     // ... then use token in your X-Admin-Token header
+ */
+import { useCallback, useEffect, useState } from 'react';
+
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+const TOKEN_KEY = 'putki-hq-admin-token';
+
+export const useBackOfficeToken = () => {
+  const [token, setToken] = useState(() => {
+    try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
+  });
+  const [authed, setAuthed] = useState(false);
+  const [authError, setAuthError] = useState('');
+
+  const checkAuth = useCallback(async (candidate) => {
+    const tk = candidate ?? token;
+    if (!tk) { setAuthError('Token required.'); return false; }
+    setAuthError('');
+    try {
+      // The settings endpoint is the cheapest token verifier we have.
+      const r = await fetch(`${BACKEND}/api/admin/settings`, {
+        headers: { 'X-Admin-Token': tk },
+      });
+      if (r.status === 401) {
+        setAuthError('Wrong token.'); setAuthed(false); return false;
+      }
+      if (!r.ok) {
+        setAuthError(`HTTP ${r.status}`); setAuthed(false); return false;
+      }
+      setAuthed(true);
+      try { localStorage.setItem(TOKEN_KEY, tk); } catch { /* ignore quota errors */ }
+      return true;
+    } catch (e) {
+      setAuthError(e.message || 'Network error'); setAuthed(false); return false;
+    }
+  }, [token]);
+
+  // Auto-verify on mount when a stored token exists.
+  useEffect(() => {
+    if (token) checkAuth(token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const logout = useCallback(() => {
+    setToken(''); setAuthed(false); setAuthError('');
+    try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+  }, []);
+
+  return { token, setToken, authed, authError, checkAuth, logout };
+};
+
+export const AuthGate = ({ token, setToken, onSubmit, error, title = 'Back-office' }) => (
+  <div style={{
+    maxWidth: 420, margin: '80px auto', padding: 32, color: 'var(--ink)',
+    background: 'var(--surface)', border: '1px solid var(--hairline)',
+  }} data-testid="back-office-auth-gate">
+    <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, margin: '0 0 16px', color: '#FFFFFF' }}>
+      {title}
+    </h2>
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(token); }}>
+      <label style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)' }}>
+        ADMIN TOKEN
+        <input type="password" value={token} onChange={(e) => setToken(e.target.value)}
+          autoFocus data-testid="back-office-token-input"
+          style={{
+            display: 'block', width: '100%', marginTop: 6,
+            background: 'var(--bg)', color: 'var(--ink)',
+            border: '1px solid var(--border-strong)', padding: '10px 12px',
+            fontFamily: 'inherit', fontSize: 13,
+          }} />
+      </label>
+      {error && <div data-testid="auth-error" style={{ marginTop: 10, padding: 8, background: '#2b0e0e', border: '1px solid #5a2b2b', color: '#f4a4a4', fontSize: 12 }}>{error}</div>}
+      <button type="submit" data-testid="back-office-token-submit"
+        style={{
+          marginTop: 16, padding: '10px 18px', background: '#FFFFFF', color: '#0B0A09',
+          border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+          letterSpacing: '0.18em', fontWeight: 700, cursor: 'pointer',
+        }}>UNLOCK →</button>
+    </form>
+  </div>
+);

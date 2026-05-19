@@ -154,8 +154,14 @@ async def upsert_meta(db, *, platform: str, user_login: str,
 
 async def attach_meta(db, items: List[Dict[str, Any]], platform: str) -> List[Dict[str, Any]]:
     """Mutates each item with `meta_fi`/`meta_en` when an editorial line
-    exists AND is not suppressed. Items without meta carry `None`s, which
-    the frontend reads as "no hover affordance for this card"."""
+    exists, is published, and is not suppressed. Items without meta carry
+    `None`s, which the frontend reads as "no hover affordance for this
+    card".
+
+    Status-aware: rows with `status == 'draft_needs_review'` NEVER reach
+    the public surface — drafts are reviewer-only. Legacy rows without
+    `status` fall back to the published treatment (back-compat).
+    """
     if not items:
         return items
     logins = [
@@ -173,10 +179,18 @@ async def attach_meta(db, items: List[Dict[str, Any]], platform: str) -> List[Di
     async for d in cur:
         if d.get("suppressed"):
             continue
+        status = d.get("status")
+        # Block drafts from the public surface. Legacy rows have no
+        # status field — those are treated as published for back-compat.
+        if status == "draft_needs_review" or status == "no_meta":
+            continue
         by_login[d["user_login"]] = d
     for it in items:
         login = (it.get("user_login") or it.get("user_name") or it.get("channel") or "").strip().lower()
         m = by_login.get(login)
-        it["meta_fi"] = (m or {}).get("meta_fi") or None
-        it["meta_en"] = (m or {}).get("meta_en") or None
+        # Prefer the new `meta_line_*` fields; fall back to legacy `meta_*`.
+        it["meta_fi"] = (m or {}).get("meta_line_fi") or (m or {}).get("meta_fi") or None
+        it["meta_en"] = (m or {}).get("meta_line_en") or (m or {}).get("meta_en") or None
+        it["meta_line_fi"] = it["meta_fi"]
+        it["meta_line_en"] = it["meta_en"]
     return items

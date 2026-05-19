@@ -1,0 +1,30 @@
+{
+  "summary": "Verified PUTKI HQ sprint follow-up: AI-assisted streamer meta drafter, slot registry CRUD, StreamersBand carousel redesign, opaque header. Backend pytest 19/19 PASS; admin endpoints, public surface gating, status pills, rate-limit, history audit, idempotent seed, generate-draft (LLM 200 OK in preview), opaque sticky header, SET ALERT modal, platform tabs, scroll arrows, pulseDot keyframe all confirmed.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint_streamer_meta_drafter.py",
+    "/app/test_reports/pytest/iter27_sprint.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (BACK_OFFICE_TOKEN)",
+  "action_items": [],
+  "critical_code_review_comments": [
+    "/app/backend/server.py file size is large (consider modular split, but not blocking).",
+    "scroll-snap horizontal carousel: on 1920px desktop the 12 Twitch cards may already fit without overflow, so scrollLeft does not change when arrow is clicked. Consider hiding arrows when no overflow exists (cosmetic only — arrows render visible even when content fits).",
+    "Generate-draft endpoint correctly accepts both 200 (LLM healthy) and 503 (llm_unavailable). LLM call in this preview succeeded (200 OK with draft_line_fi/en)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "Pytest run created multiple pytest-user-*/pytest-suppress-* meta rows. They are visible in /back-office/streamer-meta and harmless (no clash with real streamers).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend pytest suite test_sprint_streamer_meta_drafter.py (19 tests) is the regression bedrock for streamer-meta + slot-registry. Universal LLM Key in preview is NOT out of budget — generate-draft returned a real 200 OK Finnish draft for user 'someuser'. AI BUDGET pill shows 9/10 remaining after 1 invocation. All BackOffice testids verified: back-office-token-input/submit, filter-{all,no_meta,draft_needs_review,published,suppressed}, status-pill-{published,draft_needs_review,no_meta,suppressed}, meta-row-{platform}-{login}, slot-{add-form,add-name,add-category,add-provider,add-btn,reseed-btn,filter-*,search-input,row-*,enabled-toggle-*,delete-btn-*}, category-pill-{slot,live_table}. Homepage carousel testids verified: streamers-band, band-tabs, band-tab-{twitch,kick,youtube}, band-scroll-{left,right}, band-cards-row, streamer-card-{login}, streamer-card-thumb-link, streamer-rank-badge, streamer-card-viewers-overlay, streamer-card-uptime, streamer-card-name, streamer-card-game, streamer-card-social-proof, streamer-card-followers, streamer-card-alert-btn-{login}, streamer-alert-modal. pulseDot keyframe confirmed via DOM inspection. Header.jsx confirmed: position=sticky, top=0, background=rgb(251,250,248), opacity=1, zIndex=40 — no bleed-through. Public /api/streamers/live currently empty (no live FI streamers in test window), so meta_line_fi surfacing path can only be unit-tested via streamer_snapshots.attach_meta — status-aware gating is enforced in backend code.",
+  "rca of the issue": "No issues to RCA — clean run."
+}

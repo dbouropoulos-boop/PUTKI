@@ -15,7 +15,7 @@
  */
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useBackOffice } from '../context/BackOfficeContext';
+import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const PLATFORMS = ['twitch', 'kick', 'youtube'];
@@ -279,7 +279,7 @@ const Row = ({ row, token, onChanged }) => {
 };
 
 const BackOfficeStreamerMeta = () => {
-  const { token } = useBackOffice();
+  const { token, setToken, authed, authError, checkAuth } = useBackOfficeToken();
   const [data, setData] = useState({ items: [], rate_limit: null });
   const [streamers, setStreamers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -289,7 +289,7 @@ const BackOfficeStreamerMeta = () => {
   const [addLogin, setAddLogin] = useState('');
 
   const load = useCallback(async () => {
-    if (!token) return;
+    if (!token || !authed) return;
     setLoading(true);
     try {
       const [metaRes, liveRes] = await Promise.all([
@@ -307,7 +307,7 @@ const BackOfficeStreamerMeta = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, authed]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -335,19 +335,6 @@ const BackOfficeStreamerMeta = () => {
       .filter((r) => !q || r.user_login.includes(q) || r.platform.includes(q));
   }, [data, streamers, filter, search]);
 
-  const addCustom = async () => {
-    const login = addLogin.trim().toLowerCase();
-    if (!login || !token) return;
-    setAddLogin('');
-    // Just seed the row with empty fields so it shows up; AI draft can fill it in.
-    await fetch(`${BACKEND}/api/admin/streamer-meta`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-      body: JSON.stringify({ platform: addPlatform, user_login: login, meta_fi: '', meta_en: '' }),
-    });
-    await load();
-  };
-
   const counts = useMemo(() => {
     const c = { all: 0, no_meta: 0, draft_needs_review: 0, published: 0, suppressed: 0 };
     const allRows = [
@@ -363,6 +350,23 @@ const BackOfficeStreamerMeta = () => {
     });
     return c;
   }, [data, streamers]);
+
+  if (!authed) {
+    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Streamer editorial meta" />;
+  }
+
+  const addCustom = async () => {
+    const login = addLogin.trim().toLowerCase();
+    if (!login || !token) return;
+    setAddLogin('');
+    // Just seed the row with empty fields so it shows up; AI draft can fill it in.
+    await fetch(`${BACKEND}/api/admin/streamer-meta`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+      body: JSON.stringify({ platform: addPlatform, user_login: login, meta_fi: '', meta_en: '' }),
+    });
+    await load();
+  };
 
   const rl = data.rate_limit;
 

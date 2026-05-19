@@ -139,6 +139,8 @@ const BackOffice = () => {
             <Link to="/back-office/peli" className="btn-ghost" data-testid="back-office-link-peli">PELI →</Link>
             <Link to="/back-office/operators" className="btn-ghost" data-testid="back-office-link-operators">OPERATORS →</Link>
             <Link to="/back-office/streamers" className="btn-ghost" data-testid="back-office-link-streamers">STREAMERS →</Link>
+            <Link to="/back-office/streamer-meta" className="btn-ghost" data-testid="back-office-link-streamer-meta">STREAMER META →</Link>
+            <Link to="/back-office/slot-registry" className="btn-ghost" data-testid="back-office-link-slot-registry">SLOT REGISTRY →</Link>
             <Link to="/back-office/webhooks" className="btn-ghost" data-testid="back-office-link-webhooks">WEBHOOKS →</Link>
             <Link to="/back-office/foundational-research" className="btn-ghost" data-testid="back-office-link-research">RESEARCH →</Link>
             <Link to="/" className="btn-ghost">← Back to site</Link>
