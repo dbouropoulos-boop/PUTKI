@@ -183,7 +183,57 @@ const MittariBlock = ({ lang }) => {
   );
 };
 
-// ── PELISIGNAALIT — sparkline texture + top pick (no truncation) ──
+// ── MESTARI — diagnostic quiz with editorial framing ──
+const MestariBlock = ({ lang }) => {
+  const blue = '#5B8DEE';
+  return (
+    <Block to="/mestari" dataTestId="explore-block-mestari">
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        background: `
+          radial-gradient(circle at 28% 32%, rgba(91,141,238,0.22) 0%, rgba(91,141,238,0) 55%),
+          linear-gradient(135deg, #10141c 0%, #161b25 100%)`,
+        opacity: 0.85,
+      }} />
+      <svg viewBox="0 0 240 80" preserveAspectRatio="none" aria-hidden style={{
+        position: 'absolute', right: 0, top: '50%', width: '55%', height: 80,
+        transform: 'translateY(-50%)', opacity: 0.3, zIndex: 1,
+      }}>
+        <text x="0" y="22" fill={blue} fontFamily="ui-monospace, monospace" fontSize="9" letterSpacing="2">Q1</text>
+        <text x="0" y="44" fill={blue} fontFamily="ui-monospace, monospace" fontSize="9" letterSpacing="2">Q2</text>
+        <text x="0" y="66" fill={blue} fontFamily="ui-monospace, monospace" fontSize="9" letterSpacing="2">Q3</text>
+        <line x1="22" y1="18" x2="220" y2="18" stroke={blue} strokeWidth="0.8" strokeDasharray="2 3" />
+        <line x1="22" y1="40" x2="180" y2="40" stroke={blue} strokeWidth="0.8" strokeDasharray="2 3" />
+        <line x1="22" y1="62" x2="200" y2="62" stroke={blue} strokeWidth="0.8" strokeDasharray="2 3" />
+      </svg>
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 1,
+        background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.96) 100%)',
+      }} />
+
+      <Anchor color={blue} label={lang === 'en' ? 'MESTARI · DIAGNOSTIC' : 'MESTARI · DIAGNOSTIIKKA'} />
+
+      <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
+        <h3 data-testid="explore-mestari-headline" style={{
+          color: '#F5F3EE', fontFamily: 'Georgia, serif', fontWeight: 700,
+          fontSize: 24, lineHeight: 1.1, margin: '0 0 10px',
+          letterSpacing: '-0.018em',
+        }}>{lang === 'en' ? 'What kind of bettor are you?' : 'Mikä bettaaja sinä olet?'}</h3>
+        <p style={{
+          color: 'var(--ink, #ECE6D8)', fontSize: 12.5, lineHeight: 1.5,
+          opacity: 0.86, maxWidth: 360, margin: 0,
+        }}>{lang === 'en'
+          ? '90-second diagnostic. Personal report + 5-day playbook to your inbox. Free.'
+          : '90-sekunnin diagnostiikka. Henkilökohtainen raportti + 5 päivän pelikirja sähköpostiisi. Ilmainen.'}</p>
+      </div>
+
+      <Cta label={lang === 'en' ? 'START →' : 'ALOITA →'} color={blue} />
+    </Block>
+  );
+};
+
+
+// ── PELISIGNAALIT (legacy — kept for backward compat, no longer on homepage) ──
 const PelisignaalitBlock = ({ lang }) => {
   const [topPick, setTopPick] = useState(null);
   const [trackRecord, setTrackRecord] = useState(null);
@@ -373,7 +423,7 @@ const VoitaBlock = ({ lang }) => {
 
       <Cta
         label={enabled
-          ? (lang === 'en' ? 'ENTER' : 'OSALLISTU')
+          ? (lang === 'en' ? 'PLAY →' : 'PELAA →')
           : (lang === 'en' ? 'WAITING' : 'ODOTTAA')}
         color={red}
         disabled={!enabled}
@@ -476,7 +526,7 @@ const ExploreBlocks = () => {
         background: 'var(--hairline, #221E1B)',
       }}>
         <MittariBlock lang={lang} />
-        <PelisignaalitBlock lang={lang} />
+        <MestariBlock lang={lang} />
         <VoitaBlock lang={lang} />
         <PeliBlock lang={lang} />
       </div>
