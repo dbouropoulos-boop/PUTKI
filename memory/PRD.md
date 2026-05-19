@@ -2,6 +2,16 @@
 
 ## Phase History (latest first)
 
+- **Master Brief Sprint A — Mestari split out + Voita stripped to pure raffle** (2026-05-19)
+  - **`/mestari` standalone diagnostic** wired into `App.js` (Layout-less, like ColdEmailLanding). Cold-acquisition workhorse: 5 quiz Qs → 1-line zinger after each (2s auto-advance) → 1-paragraph profile tease → email gate ("Send me my report") → confirmation ("Playbook on its way"). Captures lead via `POST /api/voita/lead` with `source='mestari'`. BackToHome (`← PUTKI HQ`) injected top-left.
+  - **`/voita/{slug}` aggressively stripped**: ALL quiz logic deleted (~600 LOC removed). New 8-beat flow: intro → scout report (market consensus + recent form + editorial read + pick distribution) → pick (1-X-2) → score wheels → **confidence meter (1..5, NEW)** → review → **contact gate (Telegram primary `#229ED9` · email fallback)** → confirmation. Pure 60-second prediction game.
+  - **Telegram deep-link binding stub**: each session generates a `pending_id` (UUID). Telegram CTA opens `t.me/Putkihq_bot?start={pending_id}` in a new tab and simultaneously commits the entry with `contact_channel='telegram'` so the Slice-3 bot can resolve the binding on `/start`. Email fallback commits with `contact_channel='email'`.
+  - **Backend schema extensions**:
+    - `_VoitaLeadPayload`: + `source` (enum `mestari|voita|mittari|peli_voyager`, default `voita`), `quiz_tags` (dict), `display_name`, `lang`. Mestari → `surface=mestari_landing` + `consent_tag=mestari_lead`. Voita → `surface=voita_landing` + `consent_tag=voita_lead`. `first_source` set on insert for source attribution.
+    - `_VoitaEntryPayload`: + `confidence` (1..5), `contact_channel` ('telegram'|'email'), `pending_id` (≤64 chars). `submit_entry` persists them on `voita_entries`; `telegram_bound_at` field reserved for Slice-3 bot.
+  - **`ExploreBlocks` already updated** (prior session): Pelisignaalit removed, `MestariBlock` added, Voita CTA = "PLAY/PELAA". 2×2 grid: Mittari · Mestari · Voita · Peli.
+  - **iter35 testing_agent: 100% backend (9/9 new `test_sprint_a_mestari_voita.py`) + 100% frontend e2e (both /mestari and /voita/{slug} happy paths), retest_needed=false, zero issues.** Critical quiz-absence check on /voita/{slug} confirms ZERO mestari-q-* / mestari-zinger-* / mestari-tease selectors leaked into the raffle flow.
+
 - **Voita SHRINK — 75-second on-site diagnostic + raffle prediction + email gate (Slice A)** (2026-05-19)
   - Repositioned again: the full 5-lesson reveal + full Personal Predictor Report were RIPPED OUT of the on-site flow. On-site is now a 75-second diagnostic (5 quick Qs each followed by a 1-line zinger card with 2s auto-advance + tap-to-skip), a 1-paragraph ResultTease (profile name + `on_site_tease`), the raffle prediction beats (`apply → match → pick → score → review`), then the EmailGate with "LOCK IN MY ENTRY →" copy, then a ConfirmationScreen ("Entry locked. Over the next five days we'll send you the playbook"). No /kiitos redirect anymore — confirmation is in-flow.
   - **Canonical tag vocabulary** (locked): Q3 `wrong_pattern` tags renamed `wrong_pattern_*` → `bias_loyalty / bias_gut / bias_crowd / bias_overthink / bias_unknown`. Q5 `apply_mode` replaced from 3 options (`mode_data/gut/editorial`) to **4 options** (`mode_snap / mode_slow / mode_social / mode_chaos`). Profile match_rules updated everywhere — CAUTIOUS_ANALYST resolves on `mode_slow`, GUT_PLAYER on `mode_snap`, SECOND_GUESSER on `bias_overthink + mode_chaos`, CHAOS_BETTOR on `mode_chaos`, etc.
@@ -118,26 +128,30 @@ PUTKI HQ pivots from a multi-purpose homepage into a focused, high-tech editoria
 
 ## Roadmap
 
-### P0 — Chunk C (Email pipeline) — NEXT
-- Resend integration for daily 10:00 AM email cron (user-confirmed provider)
-- DMARC/DKIM/SPF setup guide for putkihq.fi
-- Daily worker: digest assembler (Mittari state + 4 top news + skene tunnelma for `email_sentiment` segment)
-- Daily worker: signals dispatch (Sharpness ≥ 75 picks for `sms_bets` + `telegram_bets` segments via Twilio + Telegram Bot API)
-- `/back-office/optin-segments` admin panel showing `/api/admin/optin/stats` table
+### P0 — Sprint A (DONE 2026-05-19, iter35) ✅
+- ✅ /mestari standalone route + flow + lead-source-aware capture
+- ✅ /voita/{slug} stripped (quiz removed), new confidence + Telegram contact gate
+- ✅ Backend schema for `source` on leads, `confidence`+`contact_channel`+`pending_id` on entries
+- ✅ ← PUTKI HQ persistent back link on standalone funnels
 
-### P1 — Phase 2
-- `/uutiset` full news archive with filters + search
-- `/striimaajat` full directory with per-streamer alert subscriptions
-- `/quiz` weekly quiz module (score-then-email gate)
+### P0 — Sprint B (NEXT)
+- **Slice 3 — Voita Telegram bot**: webhook handler at `POST /api/webhooks/telegram`. On `/start <pending_id>` → look up entry by `pending_id`, persist `telegram_chat_id` + `telegram_bound_at`, DM the confirmation card + offer post-match result ping. Reuse existing `TELEGRAM_BOT_TOKEN=@Putkihq_bot`.
+- **Slice 4 — Mittari v3 React translation**: implement raw HTML mock (Message 478) into `/mittari`. Telegram-primary gate + daily signal feed.
+- **Lead table refactor**: rename `optin_consents`/`voita_lead` semantics → unified `putki_lead` view with `source` enum (already partly done — `first_source` field is in place).
+
+### P1 — Email drip workers (DEFERRED, pending Resend keys)
+- Mestari 5-day drip (Day 0 report + 5 lessons)
+- Mittari onboarding drip (Days 0, 1, 3, 7)
+- Voita post-match result email
+- Requires `RESEND_API_KEY` + `RESEND_FROM` + DNS verification on `putkihq.fi`
+
+### P1 — Backlog
+- Backend pytest fixture cleanup (recurring `test_paid_raffles_have_winners` / `test_active_raffles_seeded` leak)
+- /uutiset full news archive with filters + search
+- /striimaajat full directory with per-streamer alert subscriptions
 - PUTKI Score user engagement metric
-- Full historical-snapshot pages for `/m/{state-slug}-{date}` (replace stubs)
-- `/back-office/voita` admin page to toggle `voita_feature_enabled` and configure active raffle (deferred until Sako legal sign-off)
-
-### P2 — Backlog
 - Tier 2 Haiku classifier fallback for ambiguous ticker items
 - Kick + YouTube full integration (Kick API still 403 Cloudflare)
-- Refactoring: array index keys in StreamerProfile/OperatorReview, content_generator.py complexity, localStorage in admin
-- Content backfill (PAUSED — Universal Key budget; resume after top-up)
 
 ## Architecture invariants (do not break)
 
