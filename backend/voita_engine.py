@@ -181,6 +181,7 @@ def _public_raffle_view(d: Dict[str, Any]) -> Dict[str, Any]:
         "away_team": d.get("away_team"),
         "kickoff_at": d.get("kickoff_at"),
         "entries_close_at": d.get("entries_close_at"),
+        "image_url": d.get("image_url"),
         "prize_cap_eur": d.get("prize_cap_eur") or DEFAULT_PRIZE_CAP_EUR,
         "prize_distribution": d.get("prize_distribution") or {},
         "scoring": d.get("scoring") or DEFAULT_SCORING,
@@ -250,6 +251,7 @@ async def create_raffle(db, payload: Dict[str, Any]) -> Dict[str, Any]:
         "away_team": (payload.get("away_team") or "").strip()[:120],
         "kickoff_at": payload.get("kickoff_at"),
         "entries_close_at": payload.get("entries_close_at") or payload.get("kickoff_at"),
+        "image_url": (payload.get("image_url") or "").strip()[:400] or None,
         "prize_cap_eur": prize_cap,
         "prize_distribution": {"mode": mode, "payouts": payouts},
         "scoring": scoring,
@@ -285,7 +287,7 @@ async def update_raffle(db, raffle_id: str, patch: Dict[str, Any]) -> Dict[str, 
 
     for key in ("title_fi", "title_en", "summary_fi", "summary_en",
                  "sport", "league", "home_team", "away_team",
-                 "kickoff_at", "entries_close_at"):
+                 "kickoff_at", "entries_close_at", "image_url"):
         if key in patch and patch[key] is not None:
             update[key] = patch[key]
 

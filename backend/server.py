@@ -2726,6 +2726,7 @@ class _VoitaCreatePayload(BaseModel):
     away_team: Optional[str] = ""
     kickoff_at: Optional[str] = None
     entries_close_at: Optional[str] = None
+    image_url: Optional[str] = None
     prize_cap_eur: Optional[int] = 500
     prize_distribution: Optional[Dict[str, Any]] = None
     scoring: Optional[Dict[str, int]] = None
@@ -2759,6 +2760,7 @@ class _VoitaUpdatePayload(BaseModel):
     away_team: Optional[str] = None
     kickoff_at: Optional[str] = None
     entries_close_at: Optional[str] = None
+    image_url: Optional[str] = None
     prize_cap_eur: Optional[int] = None
     prize_distribution: Optional[Dict[str, Any]] = None
     scoring: Optional[Dict[str, int]] = None

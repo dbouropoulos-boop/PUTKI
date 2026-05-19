@@ -99,6 +99,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     home_team: raffle.home_team || '', away_team: raffle.away_team || '',
     kickoff_at: raffle.kickoff_at || '',
     entries_close_at: raffle.entries_close_at || '',
+    image_url: raffle.image_url || '',
     prize_cap_eur: raffle.prize_cap_eur || 500,
     payouts: (raffle.prize_distribution?.payouts || []).slice(),
     scoring: raffle.scoring || { one_x_two_points: 3, exact_score_points: 5, goal_diff_points: 3, total_goals_points: 1 },
@@ -138,6 +139,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
           sport: form.sport, league: form.league,
           home_team: form.home_team, away_team: form.away_team,
           kickoff_at: form.kickoff_at, entries_close_at: form.entries_close_at,
+          image_url: form.image_url || null,
           prize_cap_eur: Number(form.prize_cap_eur),
           prize_distribution: { mode: form.payouts.length > 1 ? 'tiered' : 'single', payouts: form.payouts },
           scoring: form.scoring,
@@ -218,6 +220,19 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
         <Field label="TITLE · FI"><TextInput value={form.title_fi} onChange={(v) => setForm({ ...form, title_fi: v })} disabled={drawn} /></Field>
         <Field label="TITLE · EN"><TextInput value={form.title_en} onChange={(v) => setForm({ ...form, title_en: v })} disabled={drawn} /></Field>
       </div>
+
+      <Field label="CARD IMAGE URL (optional · used as photo backdrop on the active card)">
+        <TextInput value={form.image_url} onChange={(v) => setForm({ ...form, image_url: v })}
+          disabled={drawn} placeholder="/raffles/kups-hjk.jpg or https://…"
+          data-testid="raffle-image-url-input" />
+      </Field>
+      {form.image_url && (
+        <div style={{ marginTop: 8, marginBottom: 14, padding: 6, background: 'var(--bg)', border: '1px solid var(--hairline)' }}>
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, marginBottom: 4 }}>CARD IMAGE PREVIEW</div>
+          <img src={form.image_url} alt="raffle card preview" data-testid="raffle-image-preview"
+            style={{ display: 'block', width: '100%', maxHeight: 160, objectFit: 'cover' }} />
+        </div>
+      )}
 
       <Field label="PRIZE CAP (€) · HARD MAX 500">
         <input type="number" min={0} max={500} value={form.prize_cap_eur}

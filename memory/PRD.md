@@ -2,6 +2,14 @@
 
 ## Phase History (latest first)
 
+- **Voita listing restructure + editable hero + per-raffle images** (2026-05-19)
+  - **`/voita` page completely re-ordered** per editorial brief: (1) hero with editable copy/image, (2) trust strip showing real €/raffles/entrants/winners pulled from paid raffles, (3) "Active raffles" section with FanDuel-style tall photo-led cards (flex-column so prize chip stays bottom-aligned regardless of header content), (4) "How it works" 3-step explainer, (5) "Past winners" compact news-portal-style rows (NO ENTER/PLAY NOW CTAs — past raffles are read-only). Active cards link to /voita/{slug} quiz funnel; past rows are pure divs.
+  - **Editable hero banner** via new `settings.voita_hero` doc — 8 fields: eyebrow_fi/en, title_fi/en, subtitle_fi/en, image_url, photo_credit. `_sanitize_voita_hero` clamps lengths (title→200, subtitle→320, eyebrow→80). `GET /api/settings/public` exposes; `PUT /api/admin/settings` accepts partial updates. Default copy: "Suomen mestaruus alkaa kentältä. / The title race starts on the pitch." over Unsplash photo-1431324155629-1a6deb1dec8d (Mitch Rosen — dramatic night match floodlights).
+  - **Per-raffle editable card image** — new `image_url` field on `voita_raffles` (added to `_VoitaCreatePayload` + `_VoitaUpdatePayload` + engine create/update/public-view). Surfaces as a photo backdrop with darkening gradient on the ActiveRaffleCard when set; gracefully falls back to gradient-only when not. Admin form `/back-office/voita` has a new "CARD IMAGE URL" field with inline preview.
+  - **Back-office sidebar** gained `VOITA HERO + QUIZ →` link (BackOfficeVoitaQuiz now edits both hero AND quiz in one save) and `DISPATCH PREVIEW →` link (was missing from index).
+  - **`seed_active_raffles.py`** — seeded 2 active OPEN raffles to demo the gamified flow: `kups-hjk-veikkausliiga-final-2026` (football, €400 pot, 72h kickoff) + `tappara-karpat-liiga-final-2026` (icehockey, €500 pot, 48h kickoff). Both pass all 3 gating flags.
+  - **57/57 pytest still green** after schema additions (voita_engine + voita_recent_winners + dispatch_preview). iter32 testing_agent: 100% backend (8/8 new test_sprint_voita_hero.py) + 100% frontend, zero issues, retest_needed=false.
+
 - **Two paid raffles seeded + light-mode color fixes** (2026-05-19)
   - **Seed script `seed_paid_raffles.py`** — creates two operationally-complete raffles so the social-proof palette (€ paid, recent winners strip, raffle-history page) has real data before the first live raffle runs:
     - `hjk-fclahti-2026-04` — HJK vs FC Lahti, Veikkausliiga, drawn 28 Apr / paid 30 Apr, **€300 single payout** to Jaakko L., 21 entries

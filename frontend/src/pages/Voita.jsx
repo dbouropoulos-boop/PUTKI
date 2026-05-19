@@ -119,10 +119,10 @@ const ActiveRaffleCard = ({ r, lang }) => {
       data-testid={`voita-active-card-${r.slug}`}
       data-status={r.status}
       style={{
-        position: 'relative', display: 'block',
+        position: 'relative', display: 'flex', flexDirection: 'column',
         background: grad, border: '1px solid var(--hairline)',
         padding: '24px 22px 22px', textDecoration: 'none',
-        overflow: 'hidden', minHeight: 360,
+        overflow: 'hidden', minHeight: 420,
         transition: 'transform 200ms cubic-bezier(.2,.7,.3,1), box-shadow 200ms',
       }}
       onMouseEnter={(e) => {
@@ -133,10 +133,26 @@ const ActiveRaffleCard = ({ r, lang }) => {
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = 'none';
       }}>
+      {/* Optional editorial photo overlay — sits between gradient and content. */}
+      {r.image_url && (
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, zIndex: 0,
+          backgroundImage: `url('${r.image_url}')`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          opacity: 0.55,
+        }} />
+      )}
+      {r.image_url && (
+        <div aria-hidden style={{
+          position: 'absolute', inset: 0, zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.75) 100%)',
+        }} />
+      )}
       {/* Giant ghost emoji watermark */}
       <span aria-hidden style={{
         position: 'absolute', right: -20, bottom: -40,
-        fontSize: 260, opacity: 0.07, lineHeight: 1, pointerEvents: 'none',
+        fontSize: 260, opacity: r.image_url ? 0.04 : 0.07,
+        lineHeight: 1, pointerEvents: 'none', zIndex: 0,
       }}>{emoji}</span>
 
       {/* Status row */}
