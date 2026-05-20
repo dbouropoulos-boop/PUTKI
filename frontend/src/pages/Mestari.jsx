@@ -21,31 +21,34 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sun, Moon } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// ── Design tokens (locked to mockup) ────────────────────────────────────
+// ── Design tokens (brand-aligned: uses Putki HQ CSS variables so the page
+// adapts to the user's chosen light/dark theme. Only the Mestari-signature
+// blue accent is held constant — it's the deliberate visual handshake
+// that says "this is the diagnostic", distinct from Mittari orange and
+// Voita red.) ──────────────────────────────────────────────────────────
 const T = {
-  bg0: '#0A0A0B',
-  bg1: '#111113',
-  bg2: '#18181B',
-  bg3: '#1F1F23',
-  border: '#26262B',
-  borderBright: '#3A3A40',
-  fg0: '#F5F0E8',
-  fg1: '#A8A39A',
-  fg2: '#6B6B6B',
-  fg3: '#4A4A4A',
+  bg: 'var(--bg)',
+  surface: 'var(--surface)',
+  surface2: 'var(--surface-2)',
+  ink: 'var(--ink)',
+  muted: 'var(--muted)',
+  border: 'var(--border)',
+  borderStrong: 'var(--border-strong)',
   accent: '#5B8DEE',
   accentBright: '#7BA5F5',
   accentGlow: 'rgba(91,141,238,0.16)',
-  success: '#6BB877',
-  warn: '#E8A848',
-  serif: "'Instrument Serif', Georgia, serif",
-  mono: "'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace",
-  sans: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+  success: '#6FA37D',
+  warn: '#C99A4A',
+  serif: 'Georgia, "Source Serif 4", serif',
+  mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace',
+  sans: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
 };
 
 // ── Copy bundle (Finnish primary, English mirror) ───────────────────────
@@ -266,10 +269,10 @@ const COPY = {
 const SectionLabel = ({ children }) => (
   <div style={{
     fontFamily: T.mono, fontSize: 10, letterSpacing: '0.18em',
-    textTransform: 'uppercase', color: T.fg2, marginBottom: 26,
+    textTransform: 'uppercase', color: T.muted, marginBottom: 26,
     display: 'flex', alignItems: 'center', gap: 12,
   }}>
-    <span style={{ display: 'inline-block', width: 24, height: 1, background: T.fg3 }} />
+    <span style={{ display: 'inline-block', width: 24, height: 1, background: T.muted }} />
     <span>{children}</span>
   </div>
 );
@@ -281,25 +284,25 @@ const HeroCTA = ({ children, onClick, testid }) => (
     onMouseLeave={(e) => { e.currentTarget.style.background = T.accent; }}
     style={{
       display: 'inline-flex', alignItems: 'center', gap: 12,
-      background: T.accent, color: T.bg0, border: 'none',
-      padding: '22px 44px', fontFamily: T.mono, fontSize: 13, fontWeight: 600,
-      letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer',
+      background: T.accent, color: T.bg, border: 'none',
+      padding: '16px 28px', fontFamily: T.mono, fontSize: 12.5, fontWeight: 700,
+      letterSpacing: '0.22em', textTransform: 'uppercase', cursor: 'pointer',
       transition: 'background 0.2s', textDecoration: 'none',
     }}>{children}</button>
 );
 
 // ── Landing page (intro state) ──────────────────────────────────────────
-const MestariLanding = ({ lang, toggleLang, onStart }) => {
+const MestariLanding = ({ lang, toggleLang, theme, toggleTheme, onStart }) => {
   const c = COPY[lang];
   return (
     <div data-testid="mestari-landing" style={{
-      background: T.bg0, color: T.fg0, fontFamily: T.sans, fontWeight: 300,
+      background: T.bg, color: T.ink, fontFamily: T.sans, fontWeight: 300,
       minHeight: '100vh',
     }}>
       {/* ── HEADER ─────────────────────────────────────────────────── */}
       <header style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'rgba(10,10,11,0.88)', backdropFilter: 'blur(20px)',
+        background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: `1px solid ${T.border}`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -307,25 +310,35 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
         fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
       }}>
         <Link to="/" data-testid="mestari-header-home"
-          style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: T.fg1 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: T.muted }}
           onMouseEnter={(e) => { e.currentTarget.style.color = T.accent; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = T.fg1; }}>
+          onMouseLeave={(e) => { e.currentTarget.style.color = T.muted; }}>
           <span>{c.header.backArrow}</span>
-          <span style={{ fontWeight: 600, letterSpacing: '0.15em', color: T.fg0 }}>
-            PUTKI<span style={{ color: T.fg2, marginLeft: 4 }}>HQ</span>
+          <span style={{ fontWeight: 600, letterSpacing: '0.15em', color: T.ink }}>
+            PUTKI<span style={{ color: T.muted, marginLeft: 4 }}>HQ</span>
           </span>
         </Link>
-        <div style={{ display: 'flex', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button type="button" onClick={toggleLang} data-testid="mestari-lang-toggle"
             style={{
-              color: T.fg1, padding: '4px 10px',
-              border: `1px solid ${T.border}`, borderRadius: 2,
+              color: T.ink, height: 34, padding: '0 12px',
+              border: `1px solid ${T.borderStrong}`, borderRadius: 999,
               cursor: 'pointer', background: 'transparent',
-              fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
+              fontFamily: T.mono, fontSize: 11, letterSpacing: '0.16em',
+              fontWeight: 600, textTransform: 'uppercase',
+              display: 'inline-flex', alignItems: 'center',
             }}>
-            {lang === 'fi'
-              ? (<><span>EN</span> / <strong style={{ color: T.fg0 }}>FI</strong></>)
-              : (<><strong style={{ color: T.fg0 }}>EN</strong> / <span>FI</span></>)}
+            {lang === 'fi' ? 'FI / EN' : 'EN / FI'}
+          </button>
+          <button type="button" onClick={toggleTheme} data-testid="mestari-theme-toggle"
+            aria-label="Toggle theme"
+            style={{
+              width: 34, height: 34, borderRadius: 999,
+              border: `1px solid ${T.borderStrong}`, background: 'transparent',
+              color: T.ink, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+            {theme === 'dark' ? <Sun strokeWidth={1.5} size={16} /> : <Moon strokeWidth={1.5} size={16} />}
           </button>
         </div>
       </header>
@@ -337,29 +350,29 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
           textTransform: 'uppercase', color: T.accent, marginBottom: 22,
         }}>{c.hero.eyebrow}</div>
         <h1 data-testid="mestari-hero-headline" style={{
-          fontFamily: T.serif, fontSize: 'clamp(44px, 7vw, 76px)', lineHeight: 1.0,
-          letterSpacing: '-0.025em', maxWidth: 820, marginBottom: 22, fontWeight: 400,
+          fontFamily: T.serif, fontSize: 'clamp(36px, 5.6vw, 56px)', lineHeight: 1.05,
+          letterSpacing: '-0.025em', maxWidth: 820, marginBottom: 22, fontWeight: 700,
         }}>{c.hero.headline}</h1>
         <p style={{
-          fontFamily: T.sans, fontSize: 17, lineHeight: 1.55, color: T.fg1,
+          fontFamily: T.sans, fontSize: 17, lineHeight: 1.55, color: T.muted,
           fontWeight: 300, maxWidth: 640, marginBottom: 14,
         }}>{c.hero.sub}</p>
         <div data-testid="mestari-hero-positioning" style={{
           fontFamily: T.mono, fontSize: 11, lineHeight: 1.7, letterSpacing: '0.03em',
-          color: T.fg2, maxWidth: 640, marginBottom: 34,
-          paddingLeft: 14, borderLeft: `2px solid ${T.borderBright}`,
+          color: T.muted, maxWidth: 640, marginBottom: 34,
+          paddingLeft: 14, borderLeft: `2px solid ${T.borderStrong}`,
         }}>
-          <strong style={{ color: T.fg1, fontWeight: 500 }}>{c.hero.positioningStrong}</strong>
+          <strong style={{ color: T.muted, fontWeight: 500 }}>{c.hero.positioningStrong}</strong>
           {c.hero.positioningRest}
         </div>
         <HeroCTA onClick={onStart} testid="mestari-hero-cta">{c.hero.cta}</HeroCTA>
         <div style={{
           marginTop: 16, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.1em',
-          color: T.fg2, textTransform: 'uppercase',
+          color: T.muted, textTransform: 'uppercase',
         }}>
           {c.hero.ctaMeta.map((m, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <span style={{ color: T.fg3, margin: '0 10px' }}>·</span>}
+              {i > 0 && <span style={{ color: T.muted, margin: '0 10px' }}>·</span>}
               {m}
             </React.Fragment>
           ))}
@@ -378,11 +391,11 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
             borderRight: i < c.cred.length - 1 ? `1px solid ${T.border}` : 'none',
             display: 'flex', flexDirection: 'column', gap: 8,
           }}>
-            <div style={{ fontFamily: T.serif, fontSize: 36, lineHeight: 1, color: T.fg0 }}>
-              {cell.num}<span style={{ fontSize: 18, color: T.fg2 }}>{cell.unit}</span>
+            <div style={{ fontFamily: T.serif, fontSize: 34, lineHeight: 1, color: T.ink, fontWeight: 700 }}>
+              {cell.num}<span style={{ fontSize: 18, color: T.muted }}>{cell.unit}</span>
             </div>
             <div style={{
-              fontFamily: T.mono, fontSize: 10, letterSpacing: '0.06em', color: T.fg2,
+              fontFamily: T.mono, fontSize: 10, letterSpacing: '0.06em', color: T.muted,
               textTransform: 'uppercase', lineHeight: 1.6,
             }}>{cell.desc}</div>
           </div>
@@ -393,11 +406,11 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
       <section style={{ maxWidth: 1140, margin: '0 auto', padding: '72px 24px' }}>
         <SectionLabel>{c.method.label}</SectionLabel>
         <p data-testid="mestari-method-intro" style={{
-          fontFamily: T.serif, fontSize: 30, lineHeight: 1.3, letterSpacing: '-0.01em',
-          maxWidth: 780, marginBottom: 44, color: T.fg0, fontWeight: 400,
+          fontFamily: T.serif, fontSize: 26, lineHeight: 1.3, letterSpacing: '-0.01em',
+          maxWidth: 780, marginBottom: 44, color: T.ink, fontWeight: 700,
         }}>
           {c.method.intro[0]}
-          <span style={{ color: T.accent, fontStyle: 'italic' }}>{c.method.intro[1]}</span>
+          <span style={{ color: T.accent, fontWeight: 700 }}>{c.method.intro[1]}</span>
           {c.method.intro[2]}
         </p>
         <div className="mestari-method-grid" style={{
@@ -406,23 +419,23 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
         }}>
           {c.method.cards.map((card, i) => (
             <div key={i} data-testid={`mestari-method-${i}`} style={{
-              background: T.bg0, padding: 32,
+              background: T.bg, padding: 32,
               display: 'flex', flexDirection: 'column', gap: 12,
             }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.14em', color: T.accent, textTransform: 'uppercase' }}>
                 {card.num}
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 24, color: T.fg0, letterSpacing: '-0.01em', fontWeight: 400 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 22, color: T.ink, letterSpacing: '-0.01em', fontWeight: 700 }}>
                 {card.title}
               </div>
-              <div style={{ fontFamily: T.sans, fontSize: 14, lineHeight: 1.6, color: T.fg1, fontWeight: 300 }}>
+              <div style={{ fontFamily: T.sans, fontSize: 14, lineHeight: 1.6, color: T.muted, fontWeight: 300 }}>
                 {card.body[0]}
                 <span style={{ color: T.accent }}>{card.body[1]}</span>
                 {card.body[2]}
               </div>
               <div style={{
                 marginTop: 'auto', paddingTop: 14, borderTop: `1px solid ${T.border}`,
-                fontFamily: T.mono, fontSize: 9, letterSpacing: '0.1em', color: T.fg3, textTransform: 'uppercase',
+                fontFamily: T.mono, fontSize: 9, letterSpacing: '0.1em', color: T.muted, textTransform: 'uppercase',
               }}>{card.tag}</div>
             </div>
           ))}
@@ -435,15 +448,15 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
         <div className="mestari-stack-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {c.stack.items.map((it, i) => (
             <div key={i} data-testid={`mestari-stack-${i}`} style={{
-              background: T.bg1, border: `1px solid ${T.border}`, padding: 24,
+              background: T.surface, border: `1px solid ${T.border}`, padding: 24,
             }}>
               <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.13em', color: T.accent, textTransform: 'uppercase', marginBottom: 12 }}>
                 {it.label}
               </div>
-              <div style={{ fontFamily: T.serif, fontSize: 20, color: T.fg0, marginBottom: 8, fontWeight: 400 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 19, color: T.ink, marginBottom: 8, fontWeight: 700 }}>
                 {it.title}
               </div>
-              <div style={{ fontFamily: T.sans, fontSize: 13, lineHeight: 1.55, color: T.fg1, fontWeight: 300 }}>
+              <div style={{ fontFamily: T.sans, fontSize: 13, lineHeight: 1.55, color: T.muted, fontWeight: 300 }}>
                 {it.body}
               </div>
             </div>
@@ -457,15 +470,15 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: T.border, border: `1px solid ${T.border}` }}>
           {c.steps.rows.map((row, i) => (
             <div key={i} data-testid={`mestari-step-${i}`} className="mestari-step-row" style={{
-              background: T.bg0, padding: '24px 28px',
+              background: T.bg, padding: '24px 28px',
               display: 'grid', gridTemplateColumns: '60px 1fr', gap: 24, alignItems: 'baseline',
             }}>
-              <div style={{ fontFamily: T.serif, fontSize: 32, color: T.accent, lineHeight: 1, fontWeight: 400 }}>
+              <div style={{ fontFamily: T.serif, fontSize: 30, color: T.accent, lineHeight: 1, fontWeight: 700 }}>
                 {row.num}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ fontFamily: T.serif, fontSize: 21, color: T.fg0, fontWeight: 400 }}>{row.title}</div>
-                <div style={{ fontFamily: T.sans, fontSize: 14, lineHeight: 1.55, color: T.fg1, fontWeight: 300 }}>{row.desc}</div>
+                <div style={{ fontFamily: T.serif, fontSize: 20, color: T.ink, fontWeight: 700 }}>{row.title}</div>
+                <div style={{ fontFamily: T.sans, fontSize: 14, lineHeight: 1.55, color: T.muted, fontWeight: 300 }}>{row.desc}</div>
               </div>
             </div>
           ))}
@@ -477,7 +490,7 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
         <SectionLabel>{c.clarity.label}</SectionLabel>
         <div className="mestari-clarity-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <div data-testid="mestari-clarity-is" style={{
-            border: '1px solid rgba(107,184,119,0.3)', padding: 30, background: T.bg1,
+            border: '1px solid rgba(107,184,119,0.3)', padding: 30, background: T.surface,
           }}>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase', marginBottom: 18, color: T.success }}>
               {c.clarity.is.head}
@@ -485,7 +498,7 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {c.clarity.is.items.map((it, i) => (
                 <div key={i} style={{
-                  fontFamily: T.sans, fontSize: 14, lineHeight: 1.5, color: T.fg1,
+                  fontFamily: T.sans, fontSize: 14, lineHeight: 1.5, color: T.muted,
                   fontWeight: 300, paddingLeft: 20, position: 'relative',
                 }}>
                   <span style={{ position: 'absolute', left: 0, color: T.success, fontFamily: T.mono }}>✓</span>
@@ -495,7 +508,7 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
             </div>
           </div>
           <div data-testid="mestari-clarity-isnt" style={{
-            border: '1px solid rgba(232,168,72,0.3)', padding: 30, background: T.bg1,
+            border: '1px solid rgba(232,168,72,0.3)', padding: 30, background: T.surface,
           }}>
             <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.13em', textTransform: 'uppercase', marginBottom: 18, color: T.warn }}>
               {c.clarity.isnt.head}
@@ -503,7 +516,7 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {c.clarity.isnt.items.map((it, i) => (
                 <div key={i} style={{
-                  fontFamily: T.sans, fontSize: 14, lineHeight: 1.5, color: T.fg1,
+                  fontFamily: T.sans, fontSize: 14, lineHeight: 1.5, color: T.muted,
                   fontWeight: 300, paddingLeft: 20, position: 'relative',
                 }}>
                   <span style={{ position: 'absolute', left: 0, color: T.warn, fontFamily: T.mono }}>✕</span>
@@ -519,28 +532,28 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
       <section style={{ maxWidth: 1140, margin: '0 auto', padding: '72px 24px' }}>
         <SectionLabel>{c.team.label}</SectionLabel>
         <div data-testid="mestari-team" className="mestari-team" style={{
-          background: T.bg1, border: `1px solid ${T.border}`, padding: 38,
+          background: T.surface, border: `1px solid ${T.border}`, padding: 38,
           display: 'grid', gridTemplateColumns: '110px 1fr', gap: 30,
         }}>
           <div style={{
             width: 110, height: 110, borderRadius: '50%',
-            background: T.bg2, border: `1px solid ${T.borderBright}`,
+            background: T.surface2, border: `1px solid ${T.borderStrong}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: T.serif, fontSize: 42, color: T.accent, fontStyle: 'italic',
+            fontFamily: T.serif, fontSize: 38, color: T.accent, fontWeight: 700, fontWeight: 700,
           }}>{c.team.initial}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.15em', color: T.fg2, textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.15em', color: T.muted, textTransform: 'uppercase' }}>
               {c.team.eyebrow}
             </div>
-            <div style={{ fontFamily: T.serif, fontSize: 23, lineHeight: 1.35, color: T.fg0, fontWeight: 400 }}>
+            <div style={{ fontFamily: T.serif, fontSize: 21, lineHeight: 1.4, color: T.ink, fontWeight: 700 }}>
               {c.team.quote[0]}
-              <span style={{ color: T.accent, fontStyle: 'italic' }}>{c.team.quote[1]}</span>
+              <span style={{ color: T.accent, fontWeight: 700 }}>{c.team.quote[1]}</span>
               {c.team.quote[2]}
             </div>
-            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.05em', color: T.fg1, textTransform: 'uppercase', paddingTop: 6 }}>
-              <span style={{ color: T.fg0, fontWeight: 500 }}>{c.team.signName}</span>{c.team.signRest}
+            <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.05em', color: T.muted, textTransform: 'uppercase', paddingTop: 6 }}>
+              <span style={{ color: T.ink, fontWeight: 500 }}>{c.team.signName}</span>{c.team.signRest}
             </div>
-            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.fg2, letterSpacing: '0.04em', lineHeight: 1.7 }}>
+            <div style={{ fontFamily: T.mono, fontSize: 10, color: T.muted, letterSpacing: '0.04em', lineHeight: 1.7 }}>
               {c.team.credPre}
               <a href="#" style={{ color: T.accent, textDecoration: 'none' }}>{c.team.credLink}</a>
             </div>
@@ -553,9 +566,9 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
         <SectionLabel>{c.faq.label}</SectionLabel>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 1, background: T.border, border: `1px solid ${T.border}` }}>
           {c.faq.items.map((it, i) => (
-            <div key={i} data-testid={`mestari-faq-${i}`} style={{ background: T.bg0, padding: '24px 28px' }}>
-              <div style={{ fontFamily: T.serif, fontSize: 19, color: T.fg0, marginBottom: 8, fontWeight: 400 }}>{it.q}</div>
-              <div style={{ fontFamily: T.sans, fontSize: 14, lineHeight: 1.6, color: T.fg1, fontWeight: 300 }}>{it.a}</div>
+            <div key={i} data-testid={`mestari-faq-${i}`} style={{ background: T.bg, padding: '24px 28px' }}>
+              <div style={{ fontFamily: T.serif, fontSize: 18, color: T.ink, marginBottom: 8, fontWeight: 700 }}>{it.q}</div>
+              <div style={{ fontFamily: T.sans, fontSize: 14, lineHeight: 1.6, color: T.muted, fontWeight: 300 }}>{it.a}</div>
             </div>
           ))}
         </div>
@@ -563,7 +576,7 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
 
       {/* ── FINAL CTA ──────────────────────────────────────────────── */}
       <section data-testid="mestari-final-cta" style={{
-        background: T.bg0, borderTop: `1px solid ${T.border}`,
+        background: T.bg, borderTop: `1px solid ${T.border}`,
         padding: '88px 24px', position: 'relative', overflow: 'hidden',
       }}>
         <div style={{
@@ -575,8 +588,8 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
             {c.final.eyebrow}
           </div>
           <h2 style={{
-            fontFamily: T.serif, fontSize: 'clamp(32px, 5vw, 50px)', lineHeight: 1.05,
-            letterSpacing: '-0.02em', marginBottom: 28, fontWeight: 400, color: T.fg0,
+            fontFamily: T.serif, fontSize: 'clamp(30px, 4.6vw, 44px)', lineHeight: 1.05,
+            letterSpacing: '-0.02em', marginBottom: 28, fontWeight: 700, color: T.ink,
           }}>
             {c.final.headlinePre}
             <span style={{ fontStyle: 'italic', color: T.accent }}>{c.final.headlineAccent}</span>
@@ -585,11 +598,11 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
           <HeroCTA onClick={onStart} testid="mestari-final-cta-btn">{c.final.cta}</HeroCTA>
           <div style={{
             marginTop: 16, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em',
-            color: T.fg2, textTransform: 'uppercase',
+            color: T.muted, textTransform: 'uppercase',
           }}>
             {c.final.meta.map((m, i) => (
               <React.Fragment key={i}>
-                {i > 0 && <span style={{ color: T.fg3, margin: '0 10px' }}>·</span>}
+                {i > 0 && <span style={{ color: T.muted, margin: '0 10px' }}>·</span>}
                 {m}
               </React.Fragment>
             ))}
@@ -607,11 +620,11 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
             fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em',
             color: T.accent, textTransform: 'uppercase', textDecoration: 'none',
           }}>{c.footer.home}</Link>
-          <div style={{ display: 'flex', gap: 28, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em', color: T.fg1, textTransform: 'uppercase' }}>
+          <div style={{ display: 'flex', gap: 28, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em', color: T.muted, textTransform: 'uppercase' }}>
             {c.footer.links.map((l, i) => (
               <a key={i} href={l.href} style={{ textDecoration: 'none', color: 'inherit' }}
                 onMouseEnter={(e) => { e.currentTarget.style.color = T.accent; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = T.fg1; }}>
+                onMouseLeave={(e) => { e.currentTarget.style.color = T.muted; }}>
                 {l.label}
               </a>
             ))}
@@ -620,7 +633,7 @@ const MestariLanding = ({ lang, toggleLang, onStart }) => {
         <div data-testid="mestari-footer-disclaimer" style={{
           maxWidth: 1140, margin: '24px auto 0', paddingTop: 20,
           borderTop: `1px solid ${T.border}`,
-          fontFamily: T.mono, fontSize: 10, lineHeight: 1.7, color: T.fg3, letterSpacing: '0.03em',
+          fontFamily: T.mono, fontSize: 10, lineHeight: 1.7, color: T.muted, letterSpacing: '0.03em',
         }}>
           {c.footer.disclaimer}
           <a href={c.footer.disclaimerLink.href} rel="noopener noreferrer" target="_blank"
@@ -664,11 +677,11 @@ const QuestionStep = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) =
         {lang === 'en' ? `QUESTION ${idx + 1} OF ${total}` : `KYSYMYS ${idx + 1} / ${total}`}
       </div>
       <h2 data-testid="mestari-q-title" style={{
-        fontFamily: T.serif, fontSize: 32, fontWeight: 400, color: T.fg0,
+        fontFamily: T.serif, fontSize: 28, fontWeight: 700, color: T.ink,
         margin: '0 0 12px', letterSpacing: '-0.015em', lineHeight: 1.2,
       }}>{title}</h2>
       {sub && (
-        <p style={{ color: T.fg1, fontSize: 14, margin: '0 0 24px', lineHeight: 1.55 }}>{sub}</p>
+        <p style={{ color: T.muted, fontSize: 14, margin: '0 0 24px', lineHeight: 1.55 }}>{sub}</p>
       )}
       <div style={{ display: 'grid', gap: 10 }}>
         {(q.options || []).map((o) => {
@@ -679,9 +692,9 @@ const QuestionStep = ({ q, idx, total, answers, setAnswers, onAdvance, lang }) =
               data-testid={`mestari-option-${q.key}-${o.v}`}
               style={{
                 padding: '16px 18px', textAlign: 'left',
-                background: selected ? 'rgba(91,141,238,0.12)' : T.bg1,
+                background: selected ? 'rgba(91,141,238,0.12)' : T.surface,
                 border: `1px solid ${selected ? T.accent : T.border}`,
-                color: T.fg0, fontSize: 14.5, lineHeight: 1.4,
+                color: T.ink, fontSize: 14.5, lineHeight: 1.4,
                 fontFamily: T.sans, fontWeight: 400, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 12,
               }}>
@@ -725,10 +738,10 @@ const Zinger = ({ q, answer, onContinue, lang, isLast }) => {
         {lang === 'en' ? 'INSIGHT' : 'OIVALLUS'}
       </div>
       <p data-testid="mestari-zinger-text" style={{
-        fontFamily: T.serif, fontSize: 26, fontWeight: 400, color: T.fg0,
+        fontFamily: T.serif, fontSize: 24, fontWeight: 700, color: T.ink,
         lineHeight: 1.3, letterSpacing: '-0.01em', margin: '0 0 22px',
       }}>{zinger}</p>
-      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: T.fg2, fontWeight: 700 }}>{cta}</div>
+      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: T.muted, fontWeight: 700 }}>{cta}</div>
     </div>
   );
 };
@@ -738,7 +751,7 @@ const Tease = ({ profile, loading, onContinue, lang }) => {
   if (loading || !profile) {
     return (
       <div data-testid="mestari-tease-loading" style={{ textAlign: 'center', padding: '40px 0' }}>
-        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.22em', color: T.fg2, fontWeight: 700 }}>
+        <div style={{ fontFamily: T.mono, fontSize: 11, letterSpacing: '0.22em', color: T.muted, fontWeight: 700 }}>
           {lang === 'en' ? 'COMPILING YOUR PROFILE…' : 'KOOSTAN PROFIILIASI…'}
         </div>
       </div>
@@ -752,11 +765,11 @@ const Tease = ({ profile, loading, onContinue, lang }) => {
         {lang === 'en' ? 'YOUR PROFILE' : 'PROFIILISI'}
       </div>
       <h2 data-testid="mestari-profile-name" style={{
-        fontFamily: T.serif, fontSize: 40, fontWeight: 400, color: T.fg0,
+        fontFamily: T.serif, fontSize: 34, fontWeight: 700, color: T.ink,
         margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.05,
       }}>{name}</h2>
       <p data-testid="mestari-tease-paragraph" style={{
-        color: T.fg0, fontSize: 15, lineHeight: 1.6, margin: '0 0 22px', opacity: 0.94,
+        color: T.ink, fontSize: 15, lineHeight: 1.6, margin: '0 0 22px', opacity: 0.94,
       }}>{tease}</p>
       <div style={{
         padding: '14px 16px', marginBottom: 28,
@@ -765,7 +778,7 @@ const Tease = ({ profile, loading, onContinue, lang }) => {
         <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: '0.22em', color: T.accent, fontWeight: 700, marginBottom: 6 }}>
           {lang === 'en' ? 'LOCKED — EMAIL UNLOCKS' : 'LUKITTU — SÄHKÖPOSTI AVAA'}
         </div>
-        <p style={{ color: T.fg0, fontSize: 13.5, lineHeight: 1.55, margin: 0, opacity: 0.9 }}>
+        <p style={{ color: T.ink, fontSize: 13.5, lineHeight: 1.55, margin: 0, opacity: 0.9 }}>
           {lang === 'en'
             ? "Full report: diagnosis · weakness · edge · what the method reveals · plus a 5-day primer on how betting markets behave, one chapter per day."
             : 'Täysi raportti: diagnoosi · heikkous · etu · mitä menetelmä paljastaa · sekä 5 päivän opas vedonlyöntimarkkinoiden lukemiseen, yksi luku päivässä.'}
@@ -775,7 +788,7 @@ const Tease = ({ profile, loading, onContinue, lang }) => {
         data-testid="mestari-tease-continue"
         style={{
           padding: '15px 22px', width: '100%',
-          background: T.accent, color: T.bg0, border: 0,
+          background: T.accent, color: T.bg, border: 0,
           fontFamily: T.mono, fontSize: 12,
           letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
         }}>{lang === 'en' ? 'SEND ME MY REPORT →' : 'LÄHETÄ RAPORTTINI →'}</motion.button>
@@ -791,10 +804,10 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang })
       <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: T.accent, fontWeight: 700, marginBottom: 8 }}>
         {lang === 'en' ? 'SEND ME MY REPORT' : 'LÄHETÄ RAPORTTINI'}
       </div>
-      <h2 style={{ fontFamily: T.serif, fontSize: 32, fontWeight: 400, color: T.fg0, margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15 }}>
+      <h2 style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 700, color: T.ink, margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15 }}>
         {lang === 'en' ? 'Where do we send your report?' : 'Mihin lähetämme raporttisi?'}
       </h2>
-      <p style={{ color: T.fg1, fontSize: 14, marginBottom: 22, lineHeight: 1.55 }}>
+      <p style={{ color: T.muted, fontSize: 14, marginBottom: 22, lineHeight: 1.55 }}>
         {lang === 'en'
           ? 'Full report in 5 minutes. The 5-day primer starts tomorrow at 09:00. No spam — unsubscribe anytime.'
           : 'Täysi raportti 5 minuutissa. 5 päivän opas alkaa huomenna klo 09. Ei spämmiä — peruuta milloin tahansa.'}
@@ -804,12 +817,12 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang })
           placeholder={lang === 'en' ? 'your@email.com' : 'sähköpostisi@osoite.fi'}
           data-testid="mestari-email-input"
           style={{
-            padding: '14px 16px', background: T.bg1,
-            border: `1px solid ${T.border}`, color: T.fg0,
+            padding: '14px 16px', background: T.surface,
+            border: `1px solid ${T.border}`, color: T.ink,
             fontFamily: T.mono, fontSize: 14, letterSpacing: '0.02em',
             outline: 'none',
           }} />
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: T.fg0, cursor: 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: T.ink, cursor: 'pointer' }}>
           <input type="checkbox" checked={rules} onChange={(e) => setRules(e.target.checked)}
             data-testid="mestari-rules-checkbox"
             style={{ marginTop: 2, width: 18, height: 18 }} />
@@ -829,8 +842,8 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang })
           data-testid="mestari-submit"
           style={{
             padding: '15px 22px',
-            background: canSubmit ? T.accent : T.bg1,
-            color: canSubmit ? T.bg0 : T.fg2,
+            background: canSubmit ? T.accent : T.surface,
+            color: canSubmit ? T.bg : T.muted,
             border: canSubmit ? 0 : `1px solid ${T.border}`,
             fontFamily: T.mono, fontSize: 12,
             letterSpacing: '0.22em', fontWeight: 800,
@@ -852,24 +865,24 @@ const Confirmation = ({ email, profileName, lang }) => (
       ✓ {lang === 'en' ? 'REPORT ON ITS WAY' : 'RAPORTTI MATKALLA'}
     </div>
     <h2 style={{
-      fontFamily: T.serif, fontSize: 40, fontWeight: 400, color: T.fg0,
+      fontFamily: T.serif, fontSize: 34, fontWeight: 700, color: T.ink,
       margin: '0 0 14px', letterSpacing: '-0.02em', lineHeight: 1.05,
     }}>{lang === 'en' ? 'Check your inbox.' : 'Tarkista sähköpostisi.'}</h2>
-    <p style={{ color: T.fg0, fontSize: 15, lineHeight: 1.6, margin: '0 0 6px', opacity: 0.94 }}>
+    <p style={{ color: T.ink, fontSize: 15, lineHeight: 1.6, margin: '0 0 6px', opacity: 0.94 }}>
       {lang === 'en' ? 'Your full report' : 'Täysi raporttisi'}
       {profileName && ` (${profileName})`}
       {lang === 'en' ? ' lands at ' : ' saapuu osoitteeseen '}
       <span style={{ fontFamily: T.mono, fontSize: 13, color: T.accent }}>{email}</span>
       {lang === 'en' ? ' within 5 minutes.' : ' 5 minuutin sisällä.'}
     </p>
-    <p style={{ color: T.fg1, fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>
+    <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>
       {lang === 'en'
         ? 'Day 1 of the 5-day primer arrives tomorrow at 09:00. One per day. Read at your pace.'
         : 'Päivä 1/5 oppaasta saapuu huomenna klo 09. Yksi per päivä. Lue omassa tahdissasi.'}
     </p>
     {/* The single allowed PS on cold-traffic — soft, link-only mention. */}
     <p data-testid="mestari-confirm-ps" style={{
-      color: T.fg2, fontSize: 13, lineHeight: 1.55, margin: '0 0 24px',
+      color: T.muted, fontSize: 13, lineHeight: 1.55, margin: '0 0 24px',
       fontFamily: T.sans, fontStyle: 'italic',
     }}>
       {lang === 'en' ? 'PS — Putki HQ also publishes daily market signals. ' : 'PS — Putki HQ julkaisee myös päivittäiset markkinasignaalit. '}
@@ -880,7 +893,7 @@ const Confirmation = ({ email, profileName, lang }) => (
     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
       <Link to="/" data-testid="mestari-confirm-home"
         style={{
-          padding: '13px 22px', background: 'transparent', color: T.fg1,
+          padding: '13px 22px', background: 'transparent', color: T.muted,
           border: `1px solid ${T.border}`, textDecoration: 'none',
           fontFamily: T.mono, fontSize: 11,
           letterSpacing: '0.22em', fontWeight: 700,
@@ -903,12 +916,12 @@ const QuizFlow = ({ children, onExit, lang, step, qIdx, total }) => {
 
   return (
     <div data-testid="mestari-quiz-shell" style={{
-      background: T.bg0, color: T.fg0, fontFamily: T.sans,
+      background: T.bg, color: T.ink, fontFamily: T.sans,
       minHeight: '100vh', paddingTop: 64,
     }}>
       <header style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'rgba(10,10,11,0.92)', backdropFilter: 'blur(20px)',
+        background: 'color-mix(in srgb, var(--bg) 92%, transparent)', backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: `1px solid ${T.border}`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -919,15 +932,15 @@ const QuizFlow = ({ children, onExit, lang, step, qIdx, total }) => {
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             background: 'transparent', border: 'none', cursor: 'pointer',
-            color: T.fg1, fontFamily: T.mono, fontSize: 11,
+            color: T.muted, fontFamily: T.mono, fontSize: 11,
             letterSpacing: '0.08em', textTransform: 'uppercase',
           }}>
           <span>←</span>
-          <span style={{ fontWeight: 600, letterSpacing: '0.15em', color: T.fg0 }}>
-            PUTKI<span style={{ color: T.fg2, marginLeft: 4 }}>HQ</span>
+          <span style={{ fontWeight: 600, letterSpacing: '0.15em', color: T.ink }}>
+            PUTKI<span style={{ color: T.muted, marginLeft: 4 }}>HQ</span>
           </span>
         </button>
-        <div style={{ color: T.fg2 }}>
+        <div style={{ color: T.muted }}>
           {step === 'confirm'
             ? (lang === 'en' ? '✓ DONE' : '✓ VALMIS')
             : (lang === 'en' ? 'DIAGNOSTIC' : 'DIAGNOSTIIKKA')}
@@ -959,6 +972,7 @@ const QuizFlow = ({ children, onExit, lang, step, qIdx, total }) => {
 // ── Main page ───────────────────────────────────────────────────────────
 const Mestari = () => {
   const { lang, toggle } = useLang();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [quiz, setQuiz] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [step, setStep] = useState('intro');
@@ -1073,7 +1087,9 @@ const Mestari = () => {
   if (step === 'intro') {
     return (
       <div data-testid="mestari-page">
-        <MestariLanding lang={lang} toggleLang={toggle} onStart={startQuiz} />
+        <MestariLanding lang={lang} toggleLang={toggle}
+          theme={theme} toggleTheme={toggleTheme}
+          onStart={startQuiz} />
       </div>
     );
   }
