@@ -334,86 +334,144 @@ const Voita = () => {
   const eyebrow = hero ? (lang === 'en' ? hero.eyebrow_en : hero.eyebrow_fi) : '';
   const title = hero ? (lang === 'en' ? hero.title_en : hero.title_fi) : '';
   const subtitle = hero ? (lang === 'en' ? hero.subtitle_en : hero.subtitle_fi) : '';
-  const heroImage = (hero && hero.image_url) || '/hero/voita.jpg';
-  const photoCredit = hero ? (hero.photo_credit || '') : '';
+
+  // Sport-driven hero accent: the *first* active raffle decides the
+  // hero's colour story (icehockey blue, football green, etc.) and the
+  // matchup ticker on the right. This earns ~60px of above-the-fold
+  // space vs the old photo backdrop and makes the hero feel current —
+  // it visibly changes the moment a new raffle goes live.
+  const featuredRaffle = (enabled && activeRaffles.length > 0) ? activeRaffles[0] : null;
+  const featuredSport = (featuredRaffle && featuredRaffle.sport) || 'football';
+  const sportGradient = SPORT_GRADIENT[featuredSport] || SPORT_GRADIENT.football;
+  const sportEmoji = SPORT_EMOJI[featuredSport] || '🎯';
+  const sportLabel = featuredRaffle
+    ? `${featuredSport}${featuredRaffle.league_label ? ` · ${featuredRaffle.league_label}` : ''}`.toUpperCase()
+    : (lang === 'en' ? 'AWAITING NEXT MATCH' : 'ODOTTAA SEURAAVAA OTTELUA');
 
   return (
     <div data-testid="voita-page" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
       {/* 1. HERO — compact band so the live raffles sit above the fold.
-          Photo stays as atmospheric backdrop, but height is capped and
-          the giant VOITA letterform is dialled way down so the headline
-          + a peek of the raffle grid is what catches the eye first. */}
+          The sport of the featured (first) active raffle now drives the
+          colour story (gradient + accent emoji + matchup ticker on the
+          right), so the hero visibly changes the moment a new raffle
+          goes live and the photo decoration is gone. */}
       <section data-testid={enabled && activeRaffles.length > 0 ? 'voita-hero-active' : 'voita-hero-gated'}
+        data-featured-sport={featuredSport}
         style={{ position: 'relative', padding: '40px 0 28px', minHeight: 240, overflow: 'hidden' }}>
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 0,
-          backgroundImage: `url('${heroImage}')`,
-          backgroundSize: 'cover', backgroundPosition: 'center 35%',
-          filter: 'saturate(0.8)',
+          background: sportGradient,
         }} />
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(90deg, rgba(11,10,9,0.96) 0%, rgba(11,10,9,0.88) 50%, rgba(11,10,9,0.55) 85%, rgba(11,10,9,0.35) 100%)',
+          background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.78) 45%, rgba(11,10,9,0.35) 80%, rgba(11,10,9,0.18) 100%)',
         }} />
+        {/* Decorative sport accent: a big, low-opacity emoji acts as a
+            silent watermark behind the matchup ticker on the right side.
+            Replaces the VOITA letterform — more "current product"
+            signal, less brand vanity. */}
         <span aria-hidden style={{
-          position: 'absolute', inset: 0, zIndex: 1,
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          paddingRight: '4%',
-          fontFamily: 'Georgia, serif', fontWeight: 900,
-          fontSize: 'clamp(100px, 14vw, 180px)',
-          letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.035)',
-          pointerEvents: 'none', userSelect: 'none', lineHeight: 1,
-        }}>VOITA</span>
+          position: 'absolute', top: '50%', right: '6%', zIndex: 1,
+          transform: 'translateY(-50%)',
+          fontSize: 'clamp(120px, 18vw, 220px)', lineHeight: 1,
+          opacity: 0.08, pointerEvents: 'none', userSelect: 'none',
+          filter: 'grayscale(0.3)',
+        }}>{sportEmoji}</span>
 
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 640 }}>
-          {!loaded ? (
-            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 32, margin: '8px 0', color: '#FFFFFF' }}>…</h1>
-          ) : enabled && activeRaffles.length > 0 ? (
-            <>
-              <span data-testid="voita-eyebrow" style={{
-                color: '#C13B2C', fontFamily: 'ui-monospace, monospace',
-                fontSize: 10, letterSpacing: '0.24em', fontWeight: 700,
-              }}>{eyebrow}</span>
-              <h1 data-testid="voita-active-title" style={{
-                fontFamily: 'Georgia, serif', fontWeight: 700,
-                fontSize: 'clamp(28px, 3.8vw, 42px)', lineHeight: 1.1,
-                letterSpacing: '-0.02em', color: '#FFFFFF', margin: '8px 0 12px',
-              }}>{title}</h1>
-              <p data-testid="voita-subtitle" style={{ color: 'rgba(236,230,216,0.88)', fontSize: 14.5, lineHeight: 1.5, maxWidth: 540, margin: 0 }}>
-                {subtitle}
-              </p>
-            </>
-          ) : (
-            <>
-              <span style={{
-                color: '#C13B2C', fontFamily: 'ui-monospace, monospace',
-                fontSize: 10, letterSpacing: '0.24em', fontWeight: 700,
-              }}>{lang === 'en' ? 'VOITA · COMING SOON' : 'VOITA · TULOSSA'}</span>
-              <h1 data-testid="voita-placeholder" style={{
-                fontFamily: 'Georgia, serif', fontWeight: 700,
-                fontSize: 'clamp(28px, 3.8vw, 42px)', lineHeight: 1.1,
-                letterSpacing: '-0.02em', color: '#FFFFFF', margin: '8px 0 12px',
-              }}>{lang === 'en' ? 'Coming soon' : 'Pian saatavilla'}</h1>
-              <p style={{ color: 'rgba(236,230,216,0.88)', fontSize: 14.5, lineHeight: 1.5, maxWidth: 540, margin: '0 0 14px' }}>
-                {lang === 'en'
-                  ? "Next raffle drops shortly. Free to enter, no deposit, no betting."
-                  : 'Seuraava arvonta julkaistaan pian. Ilmainen osallistua, ei talletusta, ei vedonlyöntiä.'}
-              </p>
-              <span data-testid="voita-disabled-cta" style={{
-                color: 'rgba(236,230,216,0.55)',
-                fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                letterSpacing: '0.18em', fontWeight: 700,
-              }}>{lang === 'en' ? 'AWAITING APPROVAL' : 'ODOTTAA HYVÄKSYNTÄÄ'}</span>
-            </>
+        <div style={{
+          position: 'relative', zIndex: 2,
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+          gap: 24, flexWrap: 'wrap',
+        }}>
+          {/* Left: headline column */}
+          <div style={{ maxWidth: 620, flex: '1 1 380px' }}>
+            {!loaded ? (
+              <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 32, margin: '8px 0', color: '#FFFFFF' }}>…</h1>
+            ) : enabled && activeRaffles.length > 0 ? (
+              <>
+                <span data-testid="voita-eyebrow" style={{
+                  color: '#C13B2C', fontFamily: 'ui-monospace, monospace',
+                  fontSize: 10, letterSpacing: '0.24em', fontWeight: 700,
+                }}>{eyebrow}</span>
+                <h1 data-testid="voita-active-title" style={{
+                  fontFamily: 'Georgia, serif', fontWeight: 700,
+                  fontSize: 'clamp(28px, 3.8vw, 42px)', lineHeight: 1.1,
+                  letterSpacing: '-0.02em', color: '#FFFFFF', margin: '8px 0 12px',
+                }}>{title}</h1>
+                <p data-testid="voita-subtitle" style={{ color: 'rgba(236,230,216,0.88)', fontSize: 14.5, lineHeight: 1.5, maxWidth: 540, margin: 0 }}>
+                  {subtitle}
+                </p>
+              </>
+            ) : (
+              <>
+                <span style={{
+                  color: '#C13B2C', fontFamily: 'ui-monospace, monospace',
+                  fontSize: 10, letterSpacing: '0.24em', fontWeight: 700,
+                }}>{lang === 'en' ? 'VOITA · COMING SOON' : 'VOITA · TULOSSA'}</span>
+                <h1 data-testid="voita-placeholder" style={{
+                  fontFamily: 'Georgia, serif', fontWeight: 700,
+                  fontSize: 'clamp(28px, 3.8vw, 42px)', lineHeight: 1.1,
+                  letterSpacing: '-0.02em', color: '#FFFFFF', margin: '8px 0 12px',
+                }}>{lang === 'en' ? 'Coming soon' : 'Pian saatavilla'}</h1>
+                <p style={{ color: 'rgba(236,230,216,0.88)', fontSize: 14.5, lineHeight: 1.5, maxWidth: 540, margin: '0 0 14px' }}>
+                  {lang === 'en'
+                    ? "Next raffle drops shortly. Free to enter, no deposit, no betting."
+                    : 'Seuraava arvonta julkaistaan pian. Ilmainen osallistua, ei talletusta, ei vedonlyöntiä.'}
+                </p>
+                <span data-testid="voita-disabled-cta" style={{
+                  color: 'rgba(236,230,216,0.55)',
+                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                  letterSpacing: '0.18em', fontWeight: 700,
+                }}>{lang === 'en' ? 'AWAITING APPROVAL' : 'ODOTTAA HYVÄKSYNTÄÄ'}</span>
+              </>
+            )}
+          </div>
+
+          {/* Right: featured-raffle matchup ticker — the sport accent.
+              Only shown when there's a featured raffle; otherwise the
+              empty-state copy already lives in the left column. */}
+          {featuredRaffle && (
+            <Link to={`/voita/${featuredRaffle.slug}`}
+              data-testid="voita-hero-featured"
+              data-featured-slug={featuredRaffle.slug}
+              style={{
+                flex: '0 0 auto', maxWidth: 320,
+                display: 'flex', flexDirection: 'column', gap: 8,
+                textDecoration: 'none',
+                padding: '12px 14px',
+                background: 'rgba(11,10,9,0.55)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(6px)',
+                WebkitBackdropFilter: 'blur(6px)',
+              }}>
+              <div style={{
+                fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                letterSpacing: '0.22em', color: 'rgba(255,255,255,0.55)',
+                fontWeight: 700, textTransform: 'uppercase',
+              }}>{lang === 'en' ? 'FEATURED · ' : 'PÄÄARVONTA · '}{sportLabel}</div>
+              <div style={{
+                fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.15,
+                fontWeight: 700, color: '#FFFFFF', letterSpacing: '-0.01em',
+              }}>
+                {featuredRaffle.home_team}{' '}
+                <span style={{ color: 'rgba(236,230,216,0.6)', fontWeight: 400, fontStyle: 'italic' }}>vs</span>{' '}
+                {featuredRaffle.away_team}
+              </div>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                gap: 10, marginTop: 2,
+                fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+                letterSpacing: '0.16em', color: '#E8C56F', fontWeight: 700,
+                textTransform: 'uppercase',
+              }}>
+                <span>{lang === 'en' ? 'ENTER →' : 'OSALLISTU →'}</span>
+                <span style={{ color: 'rgba(236,230,216,0.55)' }}>
+                  {featuredRaffle.entries_count || 0} {lang === 'en' ? 'in' : 'mukana'}
+                </span>
+              </div>
+            </Link>
           )}
         </div>
-        {photoCredit && (
-          <span aria-hidden style={{
-            position: 'absolute', right: 12, bottom: 8, zIndex: 2,
-            fontFamily: 'ui-monospace, monospace', fontSize: 9,
-            letterSpacing: '0.18em', color: 'rgba(255,255,255,0.4)',
-          }}>{photoCredit}</span>
-        )}
       </section>
 
       {/* 2. TRUST STRIP (real numbers from paid raffles) */}
