@@ -21,13 +21,14 @@
  * Smartico onWin callback per the script the partner supplied. If
  * Smartico ever changes the field name we patch one place (this file).
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, Mail, Bell, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import SmarticoGame from '../components/SmarticoGame';
+import ConfettiBurst from '../components/ConfettiBurst';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -93,6 +94,41 @@ const WEEK_1 = {
   ],
 };
 
+// ── Masthead ────────────────────────────────────────────────────────────
+// Fixed top strip so /voyager always feels like a Putki HQ surface, not
+// an ungrouped landing page. Mirrors the pattern used on /mestari.
+const Masthead = ({ lang }) => (
+  <header data-testid="voyager-masthead" style={{
+    position: 'sticky', top: 0, zIndex: 100,
+    background: 'color-mix(in srgb, var(--bg) 92%, transparent)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+    borderBottom: '1px solid var(--border)',
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '14px 24px',
+    fontFamily: 'ui-monospace, monospace', fontSize: 11,
+    letterSpacing: '0.08em', textTransform: 'uppercase',
+  }}>
+    <Link to="/" data-testid="voyager-masthead-home"
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        textDecoration: 'none', color: 'var(--muted)', fontWeight: 700,
+      }}>
+      <span>←</span>
+      <span style={{ color: 'var(--ink)', letterSpacing: '0.15em' }}>
+        PUTKI<span style={{ color: 'var(--muted)', marginLeft: 4 }}>HQ</span>
+      </span>
+    </Link>
+    <span style={{
+      color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.16em',
+    }}>
+      {lang === 'en'
+        ? 'VOYAGER · GAME OF THE WEEK'
+        : 'VOYAGER · VIIKON PELI'}
+    </span>
+  </header>
+);
+
 // ── Standfirst ──────────────────────────────────────────────────────────
 const Standfirst = ({ lang, rotationISO, week }) => {
   // The rotation countdown is REAL — it is the next editorial drop.
@@ -149,8 +185,8 @@ const Standfirst = ({ lang, rotationISO, week }) => {
           margin: '14px 0 12px',
         }}>
           {lang === 'en'
-            ? `This week we picked ${week.game.title_en} × ${week.operator.name}.`
-            : `Tällä viikolla valitsimme ${week.game.title_fi} × ${week.operator.name}.`}
+            ? `${week.game.title_en} × ${week.operator.name} × Putki HQ — pick of the week.`
+            : `${week.game.title_fi} × ${week.operator.name} × Putki HQ — viikon valinta.`}
         </h1>
         <p data-testid="voyager-verdict" style={{
           fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.55,
@@ -207,12 +243,18 @@ const GameBlock = ({ lang, onWin, game }) => (
 // — the variance feels earned, not announced. Pure CSS-driven; falls
 // straight to the final value if reduce-motion is on (or the component
 // re-renders mid-animation).
-const SlotFlipNumber = ({ target, min, max, durationMs = 1600 }) => {
+const SlotFlipNumber = ({ target, min, max, durationMs = 1600, onLock }) => {
   const [display, setDisplay] = useState(target);
+  const onLockRef = useRef(onLock);
+  useEffect(() => { onLockRef.current = onLock; }, [onLock]);
   useEffect(() => {
     const prefersReducedMotion = typeof window !== 'undefined'
       && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) { setDisplay(target); return undefined; }
+    if (prefersReducedMotion) {
+      setDisplay(target);
+      try { onLockRef.current && onLockRef.current(); } catch (e) { console.debug('[voyager] onLock failed', e); }
+      return undefined;
+    }
     const start = performance.now();
     let rafId = 0;
     let stopped = false;
@@ -230,6 +272,7 @@ const SlotFlipNumber = ({ target, min, max, durationMs = 1600 }) => {
         rafId = requestAnimationFrame(tick);
       } else {
         setDisplay(target);
+        try { onLockRef.current && onLockRef.current(); } catch (e) { console.debug('[voyager] onLock failed', e); }
       }
     };
     rafId = requestAnimationFrame(tick);
@@ -254,6 +297,13 @@ const Pass = ({ lang, prize, week }) => {
     const hi = Number(week.prize.max) || lo + 1;
     return lo + Math.floor(Math.random() * (hi - lo + 1));
   }, [supplied, week.prize.min, week.prize.max]);
+  // Confetti burst — re-rendered with a fresh key the moment the
+  // SlotFlipNumber locks on the final value. Keyed off a nonce so the
+  // canvas remounts and fires once. Hook stays above the early-return.
+  const [confettiKey, setConfettiKey] = useState(0);
+  const handleSlotLock = useCallback(() => {
+    setConfettiKey((n) => n + 1);
+  }, []);
   if (!prize) return null;
   const shortCode = (prize.visitor_win_uuid || '')
     .replace(/-/g, '').toUpperCase().slice(0, 8) || 'VOYAGER';
@@ -274,6 +324,7 @@ const Pass = ({ lang, prize, week }) => {
         position: 'absolute', inset: 0, pointerEvents: 'none',
         background: 'radial-gradient(ellipse 600px 200px at 80% 0%, rgba(255,191,107,0.15), transparent)',
       }} />
+      {confettiKey > 0 && <ConfettiBurst triggerKey={confettiKey} />}
       <div style={{ maxWidth: 720, margin: '0 auto', position: 'relative' }}>
         <div data-testid="voyager-pass-eyebrow" style={{
           fontFamily: 'ui-monospace, monospace', fontSize: 10,
@@ -285,7 +336,9 @@ const Pass = ({ lang, prize, week }) => {
           letterSpacing: '-0.02em', margin: '12px 0 10px',
           fontVariantNumeric: 'tabular-nums',
         }}>
-          <SlotFlipNumber target={target} min={week.prize.min} max={week.prize.max} />
+          <SlotFlipNumber target={target}
+            min={week.prize.min} max={week.prize.max}
+            onLock={handleSlotLock} />
           {' '}{label}
         </h2>
         <p style={{
@@ -575,6 +628,7 @@ const Voyager = () => {
 
   return (
     <div data-testid="voyager-page" style={{ background: 'var(--bg)' }}>
+      <Masthead lang={lang} />
       <Standfirst lang={lang} rotationISO={activeWeek.next_rotation_iso} week={activeWeek} />
       <GameBlock lang={lang} onWin={onWin} game={activeWeek.game} />
       <AnimatePresence>{prize && <Pass lang={lang} prize={prize} week={activeWeek} />}</AnimatePresence>
