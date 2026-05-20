@@ -250,6 +250,15 @@ const buildCopy = (lang, live) => {
   return {
     ...fb,
     sectionHero: hero.section_label ?? fb.sectionHero,
+    pageTitleLead: hero.page_title_lead ?? (lang === 'en' ? 'Scene meter +' : 'Skenelukema +'),
+    pageTitleEm: hero.page_title_em ?? (lang === 'en' ? 'predictive game signals' : 'ennustavat pelisignaalit'),
+    pageTitleTail: hero.page_title_tail ?? (lang === 'en' ? 'in one subscription.' : 'samalla tilauksella.'),
+    pageSubtitle: hero.page_subtitle ?? (lang === 'en'
+      ? 'Mittari reads the scene temperature in real time (0–100). Signals surface the five strongest plays from EU betting markets every morning at 09:00, Sharpness-scored.'
+      : 'Mittari kertoo skenen lämpötilan reaaliajassa (0–100). Signaalit nostavat esiin viisi vahvinta vetoa EU-vedonlyöntimarkkinoilta joka aamu klo 09:00, Sharpness-pisteytettyinä.'),
+    signalsPairingLead: ((live.signals && live.signals[L]) || {}).pairing_lead ?? (lang === 'en' ? 'The wheel reads the scene.' : 'Mittari lukee skenen.'),
+    signalsPairingEm: ((live.signals && live.signals[L]) || {}).pairing_em ?? (lang === 'en' ? 'The tips are the play.' : 'Signaalit kertovat mitä tehdä.'),
+    signalsPairingTail: ((live.signals && live.signals[L]) || {}).pairing_tail ?? (lang === 'en' ? 'One subscription, both.' : 'Yksi tilaus, molemmat.'),
     headlineLead: hero.headline_lead ?? fb.headlineLead,
     headlineEm: hero.headline_em ?? fb.headlineEm,
     headlineTail: hero.headline_tail ?? fb.headlineTail,
@@ -596,6 +605,7 @@ const Mittari = () => {
   const countdownStr = useCountdown();
   const heroRef = useRef(null);
   const signalsRef = useRef(null);
+  const gateRef = useRef(null);
 
   useDocumentMeta({
     title: lang === 'en'
@@ -678,33 +688,56 @@ const Mittari = () => {
 
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
 
-        {/* ╭─ HERO ─╮ */}
-        <section ref={heroRef} data-testid="mittari-hero" style={{ padding: '64px 0 24px' }}>
-          <div className="m-hero-grid" style={{
-            display: 'grid', gridTemplateColumns: '1.05fr 1fr',
-            gap: 48, alignItems: 'center',
+        {/* ╭─ HERO — the wheel + tips pairing (above the fold) ─╮ */}
+        <section ref={heroRef} data-testid="mittari-hero" style={{ padding: '40px 0 24px' }}>
+          {/* Eyebrow + countdown row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+            <SectionLabel color={stateColor}>{c.sectionHero}</SectionLabel>
+            <div data-testid="mittari-pill-countdown" style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 11,
+              color: 'var(--muted)', letterSpacing: '0.10em',
+            }}><strong style={{ color: 'var(--muted)' }}>{c.countdownLabel.toUpperCase()}</strong> · <span style={{ color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{countdownStr}</span></div>
+          </div>
+
+          {/* Page title — Mittari meter + predictive signals */}
+          <h1 data-testid="mittari-page-title" style={{
+            fontFamily: 'Georgia, serif', fontWeight: 400,
+            fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.05,
+            letterSpacing: '-0.02em', margin: '0 0 14px', maxWidth: 880,
           }}>
-            {/* Left: dial + signals-led copy beneath */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 22, minWidth: 0 }}>
-              <SectionLabel color={stateColor}>{c.sectionHero}</SectionLabel>
-              <h1 data-testid="mittari-headline" style={{
-                fontFamily: 'Georgia, serif', fontWeight: 400,
-                fontSize: 'clamp(30px, 3.8vw, 46px)', lineHeight: 1.05,
-                letterSpacing: '-0.02em', margin: 0,
-              }}>{c.headlineLead} <em style={{ color: '#E89248', fontStyle: 'italic', fontWeight: 700 }}>{c.headlineEm}</em> {c.headlineTail}</h1>
-              <p style={{
-                color: 'var(--muted)', fontSize: 14, lineHeight: 1.6, margin: 0,
-                fontFamily: 'ui-monospace, monospace', letterSpacing: '0.02em',
-              }}>{c.sublineLead}</p>
+            <span style={{ color: 'var(--ink)' }}>{c.pageTitleLead}</span>{' '}
+            <em style={{ color: '#E89248', fontStyle: 'italic', fontWeight: 700 }}>{c.pageTitleEm}</em>{' '}
+            <span style={{ color: 'var(--ink)' }}>{c.pageTitleTail}</span>
+          </h1>
+          <p data-testid="mittari-page-subtitle" style={{
+            fontFamily: 'ui-monospace, monospace', fontSize: 13,
+            color: 'var(--muted)', lineHeight: 1.55, letterSpacing: '0.02em',
+            margin: '0 0 24px', maxWidth: 760,
+          }}>{c.pageSubtitle}</p>
 
-              {/* Dial widget */}
-              <div data-testid="mittari-dial-slot" style={{ minWidth: 0, marginTop: 8 }}>
-                <DialCockpit state={stateKey} />
-              </div>
+          {/* Connective sentence — wheel reads scene, tips are play */}
+          <h2 data-testid="mittari-headline" style={{
+            fontFamily: 'Georgia, serif', fontWeight: 400,
+            fontSize: 'clamp(20px, 2.6vw, 28px)', lineHeight: 1.2,
+            letterSpacing: '-0.015em', margin: '0 0 22px', maxWidth: 760,
+          }}>
+            <span style={{ color: 'var(--ink)' }}>{c.signalsPairingLead}</span>{' '}
+            <em style={{ color: '#E89248', fontStyle: 'italic', fontWeight: 700 }}>{c.signalsPairingEm}</em>{' '}
+            <span style={{ color: 'var(--muted)' }}>{c.signalsPairingTail}</span>
+          </h2>
 
-              {/* Meter + composite + countdown — only render real values */}
+          {/* The pairing — wheel left, locked tips right (above the fold) */}
+          <div className="m-pairing-grid" style={{
+            display: 'grid', gridTemplateColumns: '1fr 1.15fr',
+            gap: 28, alignItems: 'stretch', marginBottom: 24,
+          }}>
+            {/* Left: the wheel + meter pill row */}
+            <div data-testid="mittari-dial-slot" style={{
+              minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14,
+            }}>
+              <DialCockpit state={stateKey} />
               <div className="m-hero-pills" style={{
-                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
+                display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1,
                 background: 'var(--hairline)', border: '1px solid var(--hairline)',
               }}>
                 <div data-testid="mittari-pill-state" style={{
@@ -716,7 +749,7 @@ const Mittari = () => {
                     marginBottom: 4,
                   }}>{c.meterStateLabel}</div>
                   <div style={{
-                    fontFamily: 'Georgia, serif', fontSize: 20, lineHeight: 1,
+                    fontFamily: 'Georgia, serif', fontSize: 22, lineHeight: 1,
                     color: stateColor, letterSpacing: '-0.01em',
                   }}>{stateLabel}</div>
                 </div>
@@ -727,98 +760,70 @@ const Mittari = () => {
                     fontFamily: 'ui-monospace, monospace', fontSize: 9,
                     letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
                     marginBottom: 4,
-                  }}>{lang === 'en' ? 'COMPOSITE' : 'YHDISTELMÄ'}</div>
+                  }}>{c.compositeLabel}</div>
                   <div style={{
-                    fontFamily: 'Georgia, serif', fontSize: 20, lineHeight: 1,
+                    fontFamily: 'Georgia, serif', fontSize: 22, lineHeight: 1,
                     color: 'var(--ink)', letterSpacing: '-0.01em',
                   }}>{Math.round(composite)}/100</div>
                 </div>
-                <div data-testid="mittari-pill-countdown" style={{
-                  background: 'var(--surface)', padding: '10px 14px',
-                }}>
-                  <div style={{
-                    fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                    letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
-                    marginBottom: 4,
-                  }}>{c.countdownLabel.toUpperCase()}</div>
-                  <div style={{
-                    fontFamily: 'ui-monospace, monospace', fontSize: 16,
-                    color: 'var(--ink)', fontVariantNumeric: 'tabular-nums',
-                  }}>{countdownStr}</div>
-                </div>
               </div>
-
-              {/* Killer stat — only render with real data */}
-              {hasLiveStats ? (
-                <div data-testid="mittari-killer-stat" style={{
-                  background: 'var(--surface)', border: '1px solid #E89248',
-                  padding: '14px 18px',
-                  display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 16,
-                  alignItems: 'center',
-                }}>
-                  <div style={{
-                    fontFamily: 'Georgia, serif', fontStyle: 'italic',
-                    fontSize: 44, lineHeight: 0.9, color: '#E89248',
-                    letterSpacing: '-0.03em',
-                  }}>{avgSharp}<span style={{ fontSize: 16, fontStyle: 'normal', color: 'var(--muted)' }}>/100</span></div>
-                  <div>
-                    <div style={{
-                      fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                      letterSpacing: '0.20em', color: '#E89248', fontWeight: 700,
-                      marginBottom: 4,
-                    }}>{c.killerEyebrow}</div>
-                    <div style={{
-                      fontFamily: 'ui-monospace, monospace', fontSize: 11.5,
-                      color: 'var(--ink)', lineHeight: 1.5, letterSpacing: '0.02em',
-                    }}>{c.killerSubLead} <strong style={{ color: '#E89248' }}>{avgSharp}/100</strong>{c.killerSubTail} <strong style={{ color: '#E89248' }}>{Math.round(topImpl)}%</strong>.</div>
-                    <div style={{
-                      marginTop: 4, fontFamily: 'ui-monospace, monospace',
-                      fontSize: 9.5, color: 'var(--muted)', letterSpacing: '0.04em',
-                    }}>{c.killerFoot}</div>
-                  </div>
-                </div>
-              ) : (
-                <div data-testid="mittari-killer-quiet" style={{
-                  background: 'var(--surface)', border: '1px dashed var(--hairline)',
-                  padding: '14px 18px',
-                  fontFamily: 'ui-monospace, monospace', fontSize: 12,
-                  color: 'var(--muted)', letterSpacing: '0.03em', lineHeight: 1.55,
-                }}>{c.killerQuiet}</div>
-              )}
             </div>
 
-            {/* Right: gate + (real) activity feed */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-              <Gate c={c} variant="hero" pendingId={pendingId}
-                onUnlock={unlock} tgUrl={tgUrl} />
-              {showCounter && (
-                <div data-testid="mittari-counter" style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 8,
-                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                  color: 'var(--muted)', letterSpacing: '0.06em', justifyContent: 'center',
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: 999, background: '#6FA37D' }} />
-                  <span><strong style={{ color: '#E89248' }}>{subscriberCount.toLocaleString('fi-FI')}</strong> {lang === 'en' ? 'connected' : 'kytkettynä'}</span>
-                </div>
-              )}
-              <LiveActivityFeed c={c} rows={signupRows} />
-              {unlocked && (
-                <div data-testid="mittari-reveal-hi" style={{
-                  background: 'var(--surface)', border: '1px solid #6FA37D',
-                  padding: '12px 14px',
-                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                  color: '#6FA37D', lineHeight: 1.5, letterSpacing: '0.02em',
-                }}>{c.revealedHi}</div>
-              )}
+            {/* Right: today's five tips (locked & visible — never an empty box) */}
+            <div data-testid="mittari-tips-slot" style={{
+              minWidth: 0, display: 'flex', flexDirection: 'column',
+              background: 'var(--surface)', border: '1px solid var(--hairline)',
+              padding: '16px 16px 14px',
+            }}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                marginBottom: 10, flexWrap: 'wrap', gap: 8,
+              }}>
+                <div style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                  letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
+                }}>{unlocked ? (c._signalsCopy?.head_unlocked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU')) : (c._signalsCopy?.head_locked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'))}</div>
+                {hasLiveStats && (
+                  <div style={{
+                    fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                    letterSpacing: '0.10em', color: 'var(--muted)',
+                  }}>{c.killerEyebrow}{' '}<strong style={{ color: '#E89248' }}>{avgSharp}/100</strong></div>
+                )}
+              </div>
+              <MittariSignals compact unlocked={unlocked}
+                onRevealRequest={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                copy={c._signalsCopy} lang={lang} />
             </div>
           </div>
-        </section>
 
-        {/* ╭─ PÄIVÄN SIGNAALIT — reveal target ─╮ */}
-        <div ref={signalsRef}>
-          <MittariSignals unlocked={unlocked} onRevealRequest={scrollToHero}
-            copy={c._signalsCopy} lang={lang} />
-        </div>
+          {/* Single hero gate — directly under the pairing */}
+          <div ref={gateRef} data-testid="mittari-hero-gate-wrap" style={{
+            display: 'grid', gridTemplateColumns: '1fr', gap: 14,
+            maxWidth: 760, margin: '0 auto',
+          }}>
+            <Gate c={c} variant="hero" pendingId={pendingId}
+              onUnlock={unlock} tgUrl={tgUrl} />
+            {showCounter && (
+              <div data-testid="mittari-counter" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                color: 'var(--muted)', letterSpacing: '0.06em', justifyContent: 'center',
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: 999, background: '#6FA37D' }} />
+                <span><strong style={{ color: '#E89248' }}>{subscriberCount.toLocaleString('fi-FI')}</strong> {lang === 'en' ? 'connected' : 'kytkettynä'}</span>
+              </div>
+            )}
+            {unlocked && (
+              <div data-testid="mittari-reveal-hi" style={{
+                background: 'var(--surface)', border: '1px solid #6FA37D',
+                padding: '12px 14px',
+                fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                color: '#6FA37D', lineHeight: 1.5, letterSpacing: '0.02em',
+              }}>{c.revealedHi}</div>
+            )}
+            <LiveActivityFeed c={c} rows={signupRows} />
+          </div>
+        </section>
 
         {/* ╭─ HOW IT WORKS ─╮ */}
         <section data-testid="mittari-explain" style={{
@@ -1077,6 +1082,11 @@ const Mittari = () => {
       </div>
 
       <style>{`
+        /* Pairing grid stacks earlier — at <=1024 the wheel + tips were
+           cramped (screenshot showed bleed). Stack at <=1024px instead. */
+        @media (max-width: 1024px) {
+          .m-pairing-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+        }
         @media (max-width: 900px) {
           .m-hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
           .m-hero-pills { grid-template-columns: 1fr 1fr !important; }
@@ -1095,6 +1105,26 @@ const Mittari = () => {
           /* Lift the back-home link above the sticky CTA bar */
           .m-back-home { bottom: 70px !important; }
           body { padding-bottom: 70px; }
+        }
+        @media (max-width: 640px) {
+          /* Compact signal rows shrink to 2 columns on phones (number +
+             pick text); confidence bar, implied %, and lock icon hide so
+             the row is readable at 360px */
+          [data-compact="1"] .ms-row {
+            grid-template-columns: 28px 1fr !important;
+            gap: 10px !important;
+            padding: 12px 12px !important;
+          }
+          [data-compact="1"] .ms-row > *:nth-child(3),
+          [data-compact="1"] .ms-row > *:nth-child(4),
+          [data-compact="1"] .ms-row > *:nth-child(5) { display: none !important; }
+          /* Reveal-teaser stays on a single line, never letter-wraps */
+          [data-testid="mittari-signal-reveal-teaser"] {
+            font-size: 9.5px !important;
+            white-space: normal !important;
+            line-height: 1.4 !important;
+            max-width: 100% !important;
+          }
         }
         @media (max-width: 480px) {
           .m-emailrow { flex-direction: column !important; }

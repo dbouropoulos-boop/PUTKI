@@ -22,6 +22,10 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
     "hero": {
         "fi": {
             "section_label": "PÄIVÄN SIGNAALIT · LIVE",
+            "page_title_lead": "Skenelukema +",
+            "page_title_em": "ennustavat pelisignaalit",
+            "page_title_tail": "samalla tilauksella.",
+            "page_subtitle": "Mittari kertoo skenen lämpötilan reaaliajassa (0–100). Signaalit nostavat esiin viisi vahvinta vetoa EU-vedonlyöntimarkkinoilta joka aamu klo 09:00, Sharpness-pisteytettyinä.",
             "headline_lead": "Viisi vahvinta poimintaa",
             "headline_em": "joka aamu klo 09:00",
             "headline_tail": "suoraan Telegramiin tai sähköpostiin.",
@@ -37,6 +41,10 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
         },
         "en": {
             "section_label": "DAILY SIGNALS · LIVE",
+            "page_title_lead": "Scene meter +",
+            "page_title_em": "predictive game signals",
+            "page_title_tail": "in one subscription.",
+            "page_subtitle": "Mittari reads the scene temperature in real time (0–100). Signals surface the five strongest plays from EU betting markets every morning at 09:00, Sharpness-scored.",
             "headline_lead": "Five strongest picks",
             "headline_em": "every morning at 09:00",
             "headline_tail": "straight to Telegram or email.",
@@ -216,12 +224,14 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
         "channel_email_fi": "sähköposti",
         "channel_email_en": "Email",
     },
-    "sticky": {
-        "text_fi": "Seuraavat signaalit",
-        "text_en": "Next signals",
-        "cta_fi": "AVAA",
-        "cta_en": "UNLOCK",
-    },
+        "sticky": {
+            "text_fi": "Seuraavat signaalit",
+            "text_en": "Next signals",
+            "cta_fi": "AVAA",
+            "cta_en": "UNLOCK",
+            "connected_fi": "kytkettynä",
+            "connected_en": "connected",
+        },
     "signals": {
         "fi": {
             "head_locked_eyebrow": "— PÄIVÄN SIGNAALIT · LUKITTU",
@@ -312,7 +322,10 @@ def _merge_strings(default: Dict[str, Any], override: Dict[str, Any], caps: Dict
 
 # Per-section field caps. Anything not listed here is ignored at sanitise time.
 _HERO_CAPS = {
-    "section_label": _SHORT, "headline_lead": _MED, "headline_em": _MED,
+    "section_label": _SHORT,
+    "page_title_lead": _MED, "page_title_em": _MED, "page_title_tail": _MED,
+    "page_subtitle": _PARA,
+    "headline_lead": _MED, "headline_em": _MED,
     "headline_tail": _MED, "subline": _PARA, "killer_eyebrow": _SHORT,
     "killer_sub_lead": _MED, "killer_sub_tail": _MED, "killer_foot": _MED,
     "killer_quiet": _LONG, "countdown_label": _SHORT, "meter_state_label": _SHORT,
@@ -372,6 +385,7 @@ _FEED_CAPS = {
 _STICKY_CAPS = {
     "text_fi": _MED, "text_en": _MED,
     "cta_fi": _SHORT, "cta_en": _SHORT,
+    "connected_fi": _SHORT, "connected_en": _SHORT,
 }
 _SIGNALS_CAPS = {
     "head_locked_eyebrow": _MED, "head_unlocked_eyebrow": _MED,

@@ -93,6 +93,10 @@ const LocaleBlock = ({ title, data, defaults, fields, onPatch, scope }) => (
 
 const HERO_FIELDS = [
   { key: 'section_label', label: 'Eyebrow' },
+  { key: 'page_title_lead', label: 'Page title — lead' },
+  { key: 'page_title_em', label: 'Page title — emphasised' },
+  { key: 'page_title_tail', label: 'Page title — tail' },
+  { key: 'page_subtitle', label: 'Page subtitle', multiline: true },
   { key: 'headline_lead', label: 'Headline lead' },
   { key: 'headline_em', label: 'Headline emphasised' },
   { key: 'headline_tail', label: 'Headline tail' },
@@ -126,6 +130,11 @@ const SIGNALS_FIELDS = [
   { key: 'head_unlocked_eyebrow', label: 'Unlocked eyebrow' },
   { key: 'title_lead', label: 'Title lead' },
   { key: 'title_em', label: 'Title emphasised' },
+  { key: 'pairing_lead', label: 'Pairing sentence — lead' },
+  { key: 'pairing_em', label: 'Pairing sentence — emphasised' },
+  { key: 'pairing_tail', label: 'Pairing sentence — tail' },
+  { key: 'preview_badge', label: 'Preview badge' },
+  { key: 'preview_explainer', label: 'Preview explainer', multiline: true },
   { key: 'market_quiet_eyebrow', label: 'Quiet eyebrow' },
   { key: 'market_quiet_body', label: 'Quiet body', multiline: true },
   { key: 'reveal_teaser', label: 'Reveal-teaser button' },
