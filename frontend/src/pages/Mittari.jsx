@@ -97,6 +97,7 @@ const COPY = {
     finalHeadlineEm: 'Mittari reaaliajassa.',
     feedTitle: 'TUOREIMMAT TILAUKSET',
     feedSubscribed: 'tilasi',
+    channelEmail: 'sähköposti',
     feedLive: 'Live',
     minute: 'min sitten',
     justNow: 'juuri nyt',
@@ -160,6 +161,7 @@ const COPY = {
     finalHeadlineEm: 'Mittari in real time.',
     feedTitle: 'RECENT SIGNUPS',
     feedSubscribed: 'subscribed via',
+    channelEmail: 'Email',
     feedLive: 'Live',
     minute: 'min ago',
     justNow: 'just now',
@@ -469,7 +471,7 @@ const LiveActivityFeed = ({ c, rows }) => {
             fontFamily: 'ui-monospace, monospace', fontSize: 11,
             padding: '4px 0', color: 'var(--muted)',
           }}>
-            <span><span style={{ color: 'var(--ink)' }}>{it.name}</span> {c.feedSubscribed} · <span style={{ color: isTg ? '#5BA0E8' : 'var(--muted)' }}>{isTg ? 'Telegram' : 'sähköposti'}</span></span>
+            <span><span style={{ color: 'var(--ink)' }}>{it.name}</span> {c.feedSubscribed} · <span style={{ color: isTg ? '#5BA0E8' : 'var(--muted)' }}>{isTg ? 'Telegram' : c.channelEmail}</span></span>
             <span style={{ color: 'var(--muted)', opacity: 0.7, fontSize: 10 }}>{mins === 0 ? c.justNow : `${mins} ${c.minute}`}</span>
           </div>
         );
