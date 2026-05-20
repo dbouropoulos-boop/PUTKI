@@ -45,12 +45,17 @@ async def _build(db) -> Dict[str, Any]:
     sports_latest = await _latest("sports_signals")
     sports_games = int(sports_latest.get("games_active", 0)) if sports_latest else 0
 
-    # News signals → matched articles in last 24h
+    # News today → distinct articles surfaced into the public ticker in
+    # the last 24h. We deliberately count from `news_ticker_items` rather
+    # than the legacy `news_signals.matched_count`, because matched_count
+    # only tallies the narrow gambling-keyword regex from the pre-iter50
+    # pipeline. The ticker is what the public actually reads, so the
+    # public metric should reflect the ticker.
     news_today = 0
     try:
-        cur = db.news_signals.find({"captured_at": {"$gte": last_24h}}, {"_id": 0})
-        async for doc in cur:
-            news_today += int(doc.get("matched_count", 0) or 0)
+        news_today = await db.news_ticker_items.count_documents(
+            {"captured_at": {"$gte": last_24h.isoformat()}},
+        )
     except Exception:
         pass
 

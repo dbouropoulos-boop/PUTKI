@@ -3651,124 +3651,28 @@ async def admin_voita_import_odds(raffle_id: str, _: bool = Depends(require_admi
 
 @app.on_event("startup")
 async def startup_event():
-    """Startup: seed data, ensure indexes, kick off background workers.
-    Previously this block was orphaned inside `admin_voita_import_odds`
-    (unreachable after the function's `return`) which silently killed all
-    Layer 2 pollers, the news scheduler, and the dispatch worker.
+    """Startup hook — delegates to the `bootstrap` package.
+
+    Iter50: the previous inline body (seeds + Layer 2 worker spawn +
+    dispatch + scheduler, ~120 LOC) was extracted to `bootstrap/seeds.py`
+    + `bootstrap/workers.py`. server.py only retains the wiring + the
+    server-local callables that `bootstrap.workers` injects back in
+    (`_layer2_on_tick` + `_signal_dial_worker`) because they close over
+    server-module state.
+
+    The iter48 ast-guard `tests/test_iter48_startup_workers.py` continues
+    to enforce that the bootstrap call lives in `startup_event` and
+    nowhere else (no more orphan-startup regressions possible).
     """
-    try:
-        await seed_default_guidelines(db)
-    except Exception:
-        logger.exception("Failed to seed editorial guidelines")
-    try:
-        await seed_tracked_sources(db)
-    except Exception:
-        logger.exception("Failed to seed tracked sources")
-    try:
-        await seed_operators(db)
-        await seed_streamers(db)
-    except Exception:
-        logger.exception("Failed to seed editorial rosters")
-    try:
-        result = await seed_foundational_research(db)
-        logger.info("Foundational research seed: %s", result)
-    except Exception:
-        logger.exception("Failed to seed foundational research")
-    try:
-        await seed_default_cadences(db)
-    except Exception:
-        logger.exception("Failed to seed editorial cadences")
-    try:
-        from webhooks import _ensure_replay_index
-        await _ensure_replay_index(db)
-    except Exception:
-        logger.exception("Failed to create webhook replay TTL index")
-    try:
-        await feed_ensure_indexes(db)
-    except Exception:
-        logger.exception("Failed to create feed_items indexes")
-    try:
-        await layer2_ensure_indexes(db)
-    except Exception:
-        logger.exception("Failed to create Layer 2 indexes")
-    try:
-        result = await seed_editorial_subjects(db)
-        logger.info("Editorial subjects seed: %s", result)
-    except Exception:
-        logger.exception("Failed to seed editorial subjects")
-    try:
-        await content_ensure_indexes(db)
-    except Exception:
-        logger.exception("Failed to create content_drafts indexes")
-    try:
-        from streamer_alerts import ensure_indexes as alerts_ensure_indexes
-        await alerts_ensure_indexes(db)
-    except Exception:
-        logger.exception("Failed to create streamer_alerts indexes")
-    try:
-        from og_image_fetcher import ensure_indexes as og_ensure_indexes
-        await og_ensure_indexes(db)
-    except Exception:
-        logger.exception("Failed to create og_image_fetcher indexes")
-    try:
-        from streamer_snapshots import ensure_indexes as snap_ensure
-        await snap_ensure(db)
-    except Exception:
-        logger.exception("Failed to create streamer_snapshots indexes")
-    try:
-        from streamer_meta_drafter import ensure_indexes as drafter_ensure
-        await drafter_ensure(db)
-    except Exception:
-        logger.exception("Failed to create streamer_meta_drafter indexes")
-    try:
-        from dispatch_daily import ensure_indexes as dispatch_ensure
-        await dispatch_ensure(db)
-    except Exception:
-        logger.exception("Failed to create dispatch_daily indexes")
-    try:
-        from voita_engine import ensure_indexes as voita_ensure
-        await voita_ensure(db)
-    except Exception:
-        logger.exception("Failed to create voita_engine indexes")
-    try:
-        from slot_registry import ensure_indexes as reg_ensure, seed_default_registry
-        await reg_ensure(db)
-        result = await seed_default_registry(db)
-        if result["inserted"]:
-            logger.info("slot_registry seeded: %s", result)
-    except Exception:
-        logger.exception("Failed to ensure/seed slot_registry")
+    from bootstrap import run_startup
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)
-    # Kick off background signal pipeline + dial recalc loop.
-    if os.environ.get("PUTKI_HQ_DISABLE_WORKERS", "0") != "1":
-        import asyncio as _aio
-        _aio.create_task(_signal_dial_worker())
-        if os.environ.get("PUTKI_HQ_DISABLE_FEED_WORKER", "0") != "1":
-            _aio.create_task(feed_worker_loop(db))
-        if os.environ.get("PUTKI_HQ_DISABLE_YT_LEASE_WORKER", "0") != "1":
-            from youtube_lease_worker import lease_worker_loop as _yt_lease_loop
-            _aio.create_task(_yt_lease_loop(db))
-        # Phase 4 Week 1: Layer 2 signal pollers (Twitch/Reddit/NHL/RSS) +
-        # dial recalc + SSE fan-out. Each worker tick triggers a dial
-        # recompute through the `on_tick` callback so connected SSE clients
-        # see updates instantly instead of on the legacy 90s cycle.
-        await start_layer2_workers(db, on_tick=_layer2_on_tick)
-        if os.environ.get("PUTKI_HQ_DISABLE_AUTO_DISCOVERY", "0") != "1":
-            from twitch_discovery import discovery_worker_loop as _disc_loop
-            _aio.create_task(_disc_loop(db))
-    # Kick off editorial seed scheduler + variant filler.
-    if os.environ.get("PUTKI_HQ_DISABLE_SCHEDULER", "0") != "1":
-        import asyncio as _aio
-        _aio.create_task(scheduler_worker_loop(db))
-        _aio.create_task(variant_filler_worker_loop(db))
-    # Daily dispatch worker (Email digest + SMS + Telegram). Dry-run by
-    # default until Resend / Twilio / Telegram keys land.
-    if os.environ.get("PUTKI_HQ_DISABLE_DISPATCH_WORKER", "0") != "1":
-        import asyncio as _aio
-        from dispatch_daily import dispatch_worker_loop
-        _aio.create_task(dispatch_worker_loop(db))
+    await run_startup(
+        db,
+        layer2_on_tick=_layer2_on_tick,
+        signal_dial_worker=_signal_dial_worker,
+    )
 
 
 _content_generator: Optional[ContentGenerator] = None

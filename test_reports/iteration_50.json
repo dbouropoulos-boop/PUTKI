@@ -1,0 +1,27 @@
+{
+  "summary": "Iter50 refactor + 1 small metric fix — fully verified. (1) AST-guard suite test_iter48_startup_workers.py: 6/6 PASS (startup_event top-level + @app.on_event('startup') decorator, delegates to bootstrap.run_startup, no bootstrap calls leak into admin_voita_import_odds, bootstrap/__init__.py owns run_startup → seeds + workers, bootstrap/seeds.py owns all 8 seeds + 11 ensure_indexes, bootstrap/workers.py owns all 8 worker spawns). (2) Regression suites all green: test_sprint_a_mestari_voita.py (9/9), test_iter46_backoffice_complete.py (12/12), test_iter47_notify_winner_funnel.py (5 pass + 1 expected skip). Total 33 passed, 1 skipped. (3) /api/data/live-stats returns news_articles_today=170 (was 0 pre-fix), articles_published_today=10, twitch_live=100, latest_update_at fresh (<5min, 2026-05-20T20:55:13). (4) Admin round-trip: GET/PUT /api/admin/mestari/copy persists data (TEST_PROBE_E2E_51147 typed in UI → GET shows raw.header.back_fi = 'TEST_PROBE_E2E_51147'); restored to {}. /api/admin/leads/funnel returns all 6 stages (signups/queued/sent/opened/clicked/returned) with sparkline buckets. /api/voita/raffles returns 2 active raffles. (5) Backend logs show clean bootstrap-driven startup: `bootstrap.seeds: seed_editorial_subjects ok`, `bootstrap.seeds: slot_registry.seed_default_registry ok`, then `layer2.nhl tick ok`, `layer2.twitch tick ok` (every 60s), `layer2.rss tick ok` (ticker_count=169, archive_count=109), `layer2.football tick ok`, `layer2.f1 tick ok`. (6) Frontend /back-office/mestari-copy: token gate works, editor renders with all 12 [data-testid='mec-section-{header,hero,cred,method,stack,steps,clarity,team,faq,final,trust,footer}'] sections, 258 input/textarea fields, typing updates state, SAVE button shows '✓ Saved · timestamp' and persists to backend. (7) /back-office index renders 3 groups (content/leads/ops) with 21 back-office-link-* tiles including back-office-link-mestari-copy. No console errors observed on either back-office page.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+  "test_report_links": [
+    "/app/backend/tests/test_iter48_startup_workers.py",
+    "/app/backend/tests/test_sprint_a_mestari_voita.py",
+    "/app/backend/tests/test_iter46_backoffice_complete.py",
+    "/app/backend/tests/test_iter47_notify_winner_funnel.py",
+    "/app/test_reports/pytest/iter50_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "bootstrap/__init__.py — run_startup currently takes layer2_on_tick + signal_dial_worker as kwargs to avoid a circular import with server.py. That's fine for now, but consider a small `bootstrap.runtime` module that holds the shared callback registry so server.py can register hooks without those kwargs leaking through the public API.",
+    "BackOfficeMestariCopy.jsx is down to 188 LOC and composes 2 sub-component files (top + bottom). Healthy. The two sub-files (mestariCopySectionsTop/Bottom) are still ~250 LOC each — if a 13th section is added, split them per-section instead of growing the existing files.",
+    "public_stats.py — news_articles_today now reads from news_ticker_items (TTL=7d, captured_at index). Counts distinct items in 24h window. Recommend logging the count alongside the existing layer2.rss tick log (it already prints ticker_count=169, archive_count=109) so the metric and the worker output stay aligned for debugging.",
+    "test_iter48_startup_workers.py — solid guard. Consider extending iter49's recommendation: also assert that the bootstrap module names referenced inside startup_event resolve via an actual call (ast.Call) and not e.g. `lambda: feed_worker_loop` style re-orphans. Same suggestion as iter49 — still not addressed, low priority."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "100% (33 passed, 1 expected skip)", "frontend": "100% (back-office mestari copy editor + index both verified)" },
+  "test_credentials": "X-Admin-Token: putki-hq-admin (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Live mongo state used. Touched /api/admin/mestari/copy.raw with TEST_PROBE_E2E_51147 then restored to {}.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "iter50 = pure refactor (server.py → bootstrap/ package) + news_articles_today metric fix. All regression suites green. ast-guard tests in test_iter48_startup_workers.py are the canonical insurance against re-monolithing — run them first on any future server.py edit. Bootstrap log markers to watch for in /var/log/supervisor/backend.err.log: `bootstrap.seeds: ... ok` and `layer2.{twitch,rss,nhl,football,f1} tick ok`. Workers tick at: twitch=60s, nhl=300s, football=900s, rss=900s, f1=300s.  Mocked: Resend email dispatch only.",
+  "rca_of_the_issue": "n/a — pure refactor iteration plus a metric source-of-truth fix (news_articles_today was reading the narrow gambling-keyword regex hits from news_signals.matched_count which was always 0; now reads from news_ticker_items with captured_at >= last_24h → returns 170)."
+}

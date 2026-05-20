@@ -495,6 +495,10 @@ async def rss_tick(db) -> Dict[str, Any]:
         "keywords": NEWS_KEYWORDS,
         "matched_count": len(matched_articles),
         "matched_articles": matched_articles,
+        # iter50: persist the classifier-side counters so analytics dashboards
+        # can distinguish legacy keyword hits from actual ticker surfacing.
+        "ticker_count":   len(ticker_buffer),
+        "archive_count":  len(archive_buffer),
     }
     await db.news_signals.insert_one(dict(doc))
     return {
