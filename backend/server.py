@@ -1610,6 +1610,37 @@ async def public_mittari_stats():
     }
 
 
+@api_router.get("/mittari/copy")
+async def public_mittari_copy():
+    """Returns the fully-merged Mittari page copy tree. Every field is
+    present (admin override layered on top of DEFAULT_MITTARI_COPY)."""
+    from mittari_copy import get_mittari_copy
+    return await get_mittari_copy(db)
+
+
+@api_router.get("/admin/mittari/copy")
+async def admin_get_mittari_copy(_: bool = Depends(require_admin)):
+    """Admin-only — returns raw override + merged + defaults for the editor."""
+    from mittari_copy import get_mittari_copy_raw
+    return await get_mittari_copy_raw(db)
+
+
+@api_router.put("/admin/mittari/copy")
+async def admin_save_mittari_copy(
+    payload: Dict[str, Any],
+    _: bool = Depends(require_admin),
+):
+    """Admin-only — persist a new override doc (deep-merge w/ defaults).
+    Empty/missing fields fall back to defaults; field-length caps applied
+    at read time, so a bad save self-recovers on the next reload."""
+    from mittari_copy import save_mittari_copy
+    try:
+        return await save_mittari_copy(db, payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+
 
 @api_router.get("/odds/market-watch")
 async def public_odds_market_watch():

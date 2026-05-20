@@ -32,6 +32,7 @@ import BackOfficeOptinSegments from "@/pages/BackOfficeOptinSegments";
 import BackOfficeDispatchPreview from "@/pages/BackOfficeDispatchPreview";
 import BackOfficeVoita from "@/pages/BackOfficeVoita";
 import BackOfficeVoitaQuiz from "@/pages/BackOfficeVoitaQuiz";
+import BackOfficeMittariCopy from "@/pages/BackOfficeMittariCopy";
 import Mittari from "@/pages/Mittari";
 import Pelisignaalit from "@/pages/Pelisignaalit";
 import Voita from "@/pages/Voita";
@@ -80,6 +81,7 @@ function App() {
           <Route path="/back-office/dispatch-preview" element={<BackOfficeDispatchPreview />} />
           <Route path="/back-office/voita" element={<BackOfficeVoita />} />
           <Route path="/back-office/voita-quiz" element={<BackOfficeVoitaQuiz />} />
+          <Route path="/back-office/mittari-copy" element={<BackOfficeMittariCopy />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
           <Route path="/striimaajat/:id" element={<TopicHubPage kind="streamers" />} />
           <Route path="/operaattorit/:id" element={<TopicHubPage kind="operators" />} />

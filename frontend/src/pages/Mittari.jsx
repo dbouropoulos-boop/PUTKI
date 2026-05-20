@@ -28,6 +28,7 @@ import DialCockpit from '../components/DialCockpit';
 import MittariSignals from '../components/MittariSignals';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import useMittariCopy from '../hooks/useMittariCopy';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TELEGRAM_BOT = 'Putkihq_bot';
@@ -175,50 +176,146 @@ const COPY = {
   },
 };
 
-// ── Static testimonials & receipts (real, sourced from past sessions) ──
+// ── Static testimonials & receipts (hardcoded fallback for offline state).
+// Shape mirrors the backend DEFAULT_MITTARI_COPY.testimonials.items so the
+// JSX can use the same lookup pattern whether data comes from /api or here.
 const TESTIMONIALS = [
-  { id: 't1', initials: 'JK', name: 'Jukka K.', detail: 'Espoo · 8 kk · Telegram',
-    fi: 'Päivän signaali #02 osui — Sharpness 81 oli täysin oikeassa. Tämä on parempi kuin foorumeilta haahuilu.',
-    en: 'Daily signal #02 hit — Sharpness 81 was spot-on. Better than chasing forum tips.',
-    receiptFi: 'Tilaaja 15.9.2025 · 12/14 signaalia osui viime kuussa',
-    receiptEn: 'Subscriber since 15.9.2025 · 12/14 signals hit last month' },
-  { id: 't2', initials: 'SR', name: 'Sami R.', detail: 'Tampere · 14 kk · Telegram + sähköposti',
-    fi: 'Sain Mittarista hälytyksen 23 minuuttia ennen kuin Mikä Mikko ehti livenä. Ehdin hyvin ensimmäisten joukkoon.',
-    en: 'Got the Mittari alert 23 min before Mikä Mikko went live. Plenty of time to be among the first viewers.',
-    receiptFi: 'Tilaaja 21.3.2025 · 94% hälytysten avausaste 30 pv',
-    receiptEn: 'Subscriber since 21.3.2025 · 94% alert open-rate over 30d' },
-  { id: 't3', initials: 'AL', name: 'Antti L.', detail: 'Helsinki · 6 kk · Telegram',
-    fi: 'Yksi tilaus — signaalit aamulla, mittari­hälytykset päivän mittaan. Ei kahta listaa, ei spämmiä.',
-    en: 'One subscription — signals in the morning, meter alerts through the day. No second list, no spam.',
-    receiptFi: 'Tilaaja 12.11.2025 · suositellut 4 ystävälle',
-    receiptEn: 'Subscriber since 12.11.2025 · referred 4 friends' },
+  { id: 't1', initials: 'JK', name: 'Jukka K.',
+    detail_fi: 'Espoo · 8 kk · Telegram', detail_en: 'Espoo · 8 mo · Telegram',
+    quote_fi: 'Päivän signaali #02 osui — Sharpness 81 oli täysin oikeassa. Tämä on parempi kuin foorumeilta haahuilu.',
+    quote_en: 'Daily signal #02 hit — Sharpness 81 was spot-on. Better than chasing forum tips.',
+    receipt_fi: 'Tilaaja 15.9.2025 · 12/14 signaalia osui viime kuussa',
+    receipt_en: 'Subscriber since 15.9.2025 · 12/14 signals hit last month' },
+  { id: 't2', initials: 'SR', name: 'Sami R.',
+    detail_fi: 'Tampere · 14 kk · Telegram + sähköposti', detail_en: 'Tampere · 14 mo · Telegram + email',
+    quote_fi: 'Sain Mittarista hälytyksen 23 minuuttia ennen kuin Mikä Mikko ehti livenä. Ehdin hyvin ensimmäisten joukkoon.',
+    quote_en: 'Got the Mittari alert 23 min before Mikä Mikko went live. Plenty of time to be among the first viewers.',
+    receipt_fi: 'Tilaaja 21.3.2025 · 94% hälytysten avausaste 30 pv',
+    receipt_en: 'Subscriber since 21.3.2025 · 94% alert open-rate over 30d' },
+  { id: 't3', initials: 'AL', name: 'Antti L.',
+    detail_fi: 'Helsinki · 6 kk · Telegram', detail_en: 'Helsinki · 6 mo · Telegram',
+    quote_fi: 'Yksi tilaus — signaalit aamulla, mittarihälytykset päivän mittaan. Ei kahta listaa, ei spämmiä.',
+    quote_en: 'One subscription — signals in the morning, meter alerts through the day. No second list, no spam.',
+    receipt_fi: 'Tilaaja 12.11.2025 · suositellut 4 ystävälle',
+    receipt_en: 'Subscriber since 12.11.2025 · referred 4 friends' },
 ];
 
 const RECEIPTS = [
-  { date: { fi: 'Eilen ma 18.5.', en: 'Yest Mon 18.5.' }, time: '09:00',
-    signal: { fi: 'Signaali #01 · Sharpness 84 · NHL', en: 'Signal #01 · Sharpness 84 · NHL' },
-    outcome: { fi: 'Osui kertoimella 1.42', en: 'Hit @ 1.42' }, status: 'hit' },
-  { date: { fi: 'Eilen ma 18.5.', en: 'Yest Mon 18.5.' }, time: '14:23',
-    signal: { fi: 'Mittari → MEININKI · striimaaja-tila', en: 'Mittari → ROLLING · streamer state' },
-    outcome: { fi: 'Tilanvaihdos vahvistui klo 14:55', en: 'State change confirmed at 14:55' }, status: 'hit' },
-  { date: { fi: 'Su 17.5.', en: 'Sun 17.5.' }, time: '09:00',
-    signal: { fi: 'Signaali #03 · Sharpness 71 · Valioliiga', en: 'Signal #03 · Sharpness 71 · EPL' },
-    outcome: { fi: 'Osui kertoimella 1.78', en: 'Hit @ 1.78' }, status: 'hit' },
-  { date: { fi: 'La 16.5.', en: 'Sat 16.5.' }, time: '09:00',
-    signal: { fi: 'Signaali #02 · Sharpness 68 · Liiga', en: 'Signal #02 · Sharpness 68 · Liiga' },
-    outcome: { fi: 'Päättyi tasapeliin · 8 min ennen ratkaisua', en: 'Ended in draw · 8 min early call' }, status: 'early' },
-  { date: { fi: 'La 16.5.', en: 'Sat 16.5.' }, time: '09:00',
-    signal: { fi: 'Signaali #05 · Sharpness 52 · MLS', en: 'Signal #05 · Sharpness 52 · MLS' },
-    outcome: { fi: 'Ei osunut · alhainen sharpness', en: 'Missed · low sharpness' }, status: 'miss' },
-  { date: { fi: 'Pe 15.5.', en: 'Fri 15.5.' }, time: '20:47',
-    signal: { fi: 'Mittari → KIIRASTULI · 3 lähdettä', en: 'Mittari → PERKELE · 3-source cluster' },
-    outcome: { fi: 'Tilanvaihdos toteutui klo 21:02', en: 'State change confirmed at 21:02' }, status: 'hit' },
-  { date: { fi: 'Pe 15.5.', en: 'Fri 15.5.' }, time: '09:00',
-    signal: { fi: 'Signaali #01 · Sharpness 89 · Mestarien liiga', en: 'Signal #01 · Sharpness 89 · UCL' },
-    outcome: { fi: 'Osui kertoimella 1.31', en: 'Hit @ 1.31' }, status: 'hit' },
+  { date_fi: 'Eilen ma 18.5.', date_en: 'Yest Mon 18.5.', time: '09:00',
+    signal_fi: 'Signaali #01 · Sharpness 84 · NHL', signal_en: 'Signal #01 · Sharpness 84 · NHL',
+    outcome_fi: 'Osui kertoimella 1.42', outcome_en: 'Hit @ 1.42', status: 'hit' },
+  { date_fi: 'Eilen ma 18.5.', date_en: 'Yest Mon 18.5.', time: '14:23',
+    signal_fi: 'Mittari → MEININKI · striimaaja-tila', signal_en: 'Mittari → ROLLING · streamer state',
+    outcome_fi: 'Tilanvaihdos vahvistui klo 14:55', outcome_en: 'State change confirmed at 14:55', status: 'hit' },
+  { date_fi: 'Su 17.5.', date_en: 'Sun 17.5.', time: '09:00',
+    signal_fi: 'Signaali #03 · Sharpness 71 · Valioliiga', signal_en: 'Signal #03 · Sharpness 71 · EPL',
+    outcome_fi: 'Osui kertoimella 1.78', outcome_en: 'Hit @ 1.78', status: 'hit' },
+  { date_fi: 'La 16.5.', date_en: 'Sat 16.5.', time: '09:00',
+    signal_fi: 'Signaali #02 · Sharpness 68 · Liiga', signal_en: 'Signal #02 · Sharpness 68 · Liiga',
+    outcome_fi: 'Päättyi tasapeliin · 8 min ennen ratkaisua', outcome_en: 'Ended in draw · 8 min early call', status: 'early' },
+  { date_fi: 'La 16.5.', date_en: 'Sat 16.5.', time: '09:00',
+    signal_fi: 'Signaali #05 · Sharpness 52 · MLS', signal_en: 'Signal #05 · Sharpness 52 · MLS',
+    outcome_fi: 'Ei osunut · alhainen sharpness', outcome_en: 'Missed · low sharpness', status: 'miss' },
+  { date_fi: 'Pe 15.5.', date_en: 'Fri 15.5.', time: '20:47',
+    signal_fi: 'Mittari → KIIRASTULI · 3 lähdettä', signal_en: 'Mittari → PERKELE · 3-source cluster',
+    outcome_fi: 'Tilanvaihdos toteutui klo 21:02', outcome_en: 'State change confirmed at 21:02', status: 'hit' },
+  { date_fi: 'Pe 15.5.', date_en: 'Fri 15.5.', time: '09:00',
+    signal_fi: 'Signaali #01 · Sharpness 89 · Mestarien liiga', signal_en: 'Signal #01 · Sharpness 89 · UCL',
+    outcome_fi: 'Osui kertoimella 1.31', outcome_en: 'Hit @ 1.31', status: 'hit' },
 ];
 
 const PRESS = ['Mikä Mikko Show', 'Sebsu.fi', 'Klubitsoni Podcast', 'Roni TV', 'Helsingin Striimi'];
+
+// ── Live-copy → flat c.X mapper (overlay on hardcoded COPY[lang]) ──────
+// Every field on /mittari is editable via PUT /api/admin/mittari/copy.
+// The backend deep-merges admin overrides onto DEFAULT_MITTARI_COPY; this
+// helper translates that tree into the flat keys the JSX already uses,
+// using the hardcoded COPY[lang] as the offline-fallback shape.
+const buildCopy = (lang, live) => {
+  const fb = COPY[lang === 'en' ? 'en' : 'fi'];
+  if (!live) return fb;
+  const L = lang === 'en' ? 'en' : 'fi';
+  const hero = (live.hero && live.hero[L]) || {};
+  const gate = (live.gate && live.gate[L]) || {};
+  const sig = (live.signals && live.signals[L]) || {};
+  const exp = (live.explain && live.explain[L]) || {};
+  const rcp = live.receipts || {};
+  const tst = live.testimonials || {};
+  const fnd = live.founder || {};
+  const prs = live.press || {};
+  const fin = live.final_gate || {};
+  const fd = live.feed || {};
+  const stk = live.sticky || {};
+  const bh = live.back_home || {};
+  return {
+    ...fb,
+    sectionHero: hero.section_label ?? fb.sectionHero,
+    headlineLead: hero.headline_lead ?? fb.headlineLead,
+    headlineEm: hero.headline_em ?? fb.headlineEm,
+    headlineTail: hero.headline_tail ?? fb.headlineTail,
+    sublineLead: hero.subline ?? fb.sublineLead,
+    killerEyebrow: hero.killer_eyebrow ?? fb.killerEyebrow,
+    killerSubLead: hero.killer_sub_lead ?? fb.killerSubLead,
+    killerSubTail: hero.killer_sub_tail ?? fb.killerSubTail,
+    killerFoot: hero.killer_foot ?? fb.killerFoot,
+    killerQuiet: hero.killer_quiet ?? fb.killerQuiet,
+    countdownLabel: hero.countdown_label ?? fb.countdownLabel,
+    meterStateLabel: hero.meter_state_label ?? fb.meterStateLabel,
+    compositeLabel: hero.composite_label ?? (lang === 'en' ? 'COMPOSITE' : 'YHDISTELMÄ'),
+    gateTitleTop: gate.title_top ?? fb.gateTitleTop,
+    gateLead: gate.lead ?? fb.gateLead,
+    gateOneTapInline: gate.one_tap_inline ?? fb.gateOneTapInline,
+    gateBadge: gate.badge ?? fb.gateBadge,
+    gateBullets: Array.isArray(gate.bullets) && gate.bullets.length ? gate.bullets : fb.gateBullets,
+    gateTgCta: gate.tg_cta ?? fb.gateTgCta,
+    gateTgSub: gate.tg_sub ?? fb.gateTgSub,
+    gateOr: gate.or_email ?? fb.gateOr,
+    gateEmailPlaceholder: gate.email_placeholder ?? fb.gateEmailPlaceholder,
+    gateEmailCta: gate.email_cta ?? fb.gateEmailCta,
+    gateFinePrint: gate.fine_print ?? fb.gateFinePrint,
+    revealedHi: gate.revealed_hi ?? fb.revealedHi,
+    formErr: gate.form_err ?? fb.formErr,
+    formSuccess: gate.form_success ?? fb.formSuccess,
+    explainTitle: exp.title ?? fb.explainTitle,
+    step1Title: (exp.steps && exp.steps[0] && exp.steps[0].title) ?? fb.step1Title,
+    step1Body:  (exp.steps && exp.steps[0] && exp.steps[0].body)  ?? fb.step1Body,
+    step2Title: (exp.steps && exp.steps[1] && exp.steps[1].title) ?? fb.step2Title,
+    step2Body:  (exp.steps && exp.steps[1] && exp.steps[1].body)  ?? fb.step2Body,
+    step3Title: (exp.steps && exp.steps[2] && exp.steps[2].title) ?? fb.step3Title,
+    step3Body:  (exp.steps && exp.steps[2] && exp.steps[2].body)  ?? fb.step3Body,
+    receiptsTitle: (lang === 'en' ? rcp.title_en : rcp.title_fi) ?? fb.receiptsTitle,
+    receiptsFoot7d: (lang === 'en' ? rcp.foot7d_en : rcp.foot7d_fi) ?? fb.receiptsFoot7d,
+    receiptsFoot30d: (lang === 'en' ? rcp.foot30d_en : rcp.foot30d_fi) ?? fb.receiptsFoot30d,
+    receiptsFoot7dValue: rcp.foot7d_value ?? '6/7 (86%)',
+    receiptsFoot30dValue: rcp.foot30d_value ?? '58%',
+    statusHit: (lang === 'en' ? rcp.status_hit_en : rcp.status_hit_fi) ?? fb.statusHit,
+    statusMiss: (lang === 'en' ? rcp.status_miss_en : rcp.status_miss_fi) ?? fb.statusMiss,
+    statusEarly: (lang === 'en' ? rcp.status_early_en : rcp.status_early_fi) ?? fb.statusEarly,
+    testimonialsTitle: (lang === 'en' ? tst.title_en : tst.title_fi) ?? fb.testimonialsTitle,
+    founderTitle: (lang === 'en' ? fnd.title_en : fnd.title_fi) ?? fb.founderTitle,
+    founderEyebrow: (lang === 'en' ? fnd.eyebrow_en : fnd.eyebrow_fi) ?? fb.founderEyebrow,
+    founderQuote: (lang === 'en' ? fnd.quote_en : fnd.quote_fi) ?? fb.founderQuote,
+    founderName: fnd.name ?? fb.founderName,
+    founderRole: (lang === 'en' ? fnd.role_en : fnd.role_fi) ?? fb.founderRole,
+    founderCreds: (lang === 'en' ? fnd.creds_en : fnd.creds_fi) ?? fb.founderCreds,
+    founderMethodLink: (lang === 'en' ? fnd.method_link_en : fnd.method_link_fi) ?? fb.founderMethodLink,
+    founderAvatarInitial: fnd.avatar_initial ?? 'D',
+    pressTitle: (lang === 'en' ? prs.title_en : prs.title_fi) ?? fb.pressTitle,
+    finalEyebrow: (lang === 'en' ? fin.eyebrow_en : fin.eyebrow_fi) ?? fb.finalEyebrow,
+    finalHeadlineLead: (lang === 'en' ? fin.headline_lead_en : fin.headline_lead_fi) ?? fb.finalHeadlineLead,
+    finalHeadlineEm: (lang === 'en' ? fin.headline_em_en : fin.headline_em_fi) ?? fb.finalHeadlineEm,
+    feedTitle: (lang === 'en' ? fd.title_en : fd.title_fi) ?? fb.feedTitle,
+    feedSubscribed: (lang === 'en' ? fd.subscribed_en : fd.subscribed_fi) ?? fb.feedSubscribed,
+    feedLive: (lang === 'en' ? fd.live_en : fd.live_fi) ?? fb.feedLive,
+    minute: (lang === 'en' ? fd.minute_en : fd.minute_fi) ?? fb.minute,
+    justNow: (lang === 'en' ? fd.just_now_en : fd.just_now_fi) ?? fb.justNow,
+    channelEmail: (lang === 'en' ? fd.channel_email_en : fd.channel_email_fi) ?? fb.channelEmail,
+    stickyText: (lang === 'en' ? stk.text_en : stk.text_fi) ?? fb.stickyText,
+    stickyCta: (lang === 'en' ? stk.cta_en : stk.cta_fi) ?? fb.stickyCta,
+    backHome: bh[L] ?? fb.backHome,
+    _signalsCopy: sig,
+  };
+};
 
 // ── Tiny helpers ───────────────────────────────────────────────────────
 const useCountdown = () => {
@@ -483,7 +580,8 @@ const LiveActivityFeed = ({ c, rows }) => {
 // ── Main page ──────────────────────────────────────────────────────────
 const Mittari = () => {
   const { lang } = useLang();
-  const c = COPY[lang === 'en' ? 'en' : 'fi'];
+  const liveCopy = useMittariCopy();
+  const c = useMemo(() => buildCopy(lang, liveCopy), [lang, liveCopy]);
   const pendingId = usePendingId();
   const tgUrl = `https://t.me/${TELEGRAM_BOT}?start=mittari_${pendingId}`;
 
@@ -545,6 +643,15 @@ const Mittari = () => {
   // Showing "12 connected" hurts more than it helps; <50 → hide the module.
   const showCounter = subscriberCount >= 50;
   const signupRows = (stats?.latest_signups || []).slice(0, 4);
+
+  // Editable lists — fall back to hardcoded constants when the live tree
+  // hasn't loaded yet (or returns empty arrays).
+  const testimonialsList = (liveCopy?.testimonials?.items && liveCopy.testimonials.items.length)
+    ? liveCopy.testimonials.items : TESTIMONIALS;
+  const receiptsList = (liveCopy?.receipts?.items && liveCopy.receipts.items.length)
+    ? liveCopy.receipts.items : RECEIPTS;
+  const pressList = (liveCopy?.press?.items && liveCopy.press.items.length)
+    ? liveCopy.press.items : PRESS;
 
   const unlock = useCallback(() => {
     setUnlocked(true);
@@ -708,7 +815,8 @@ const Mittari = () => {
 
         {/* ╭─ PÄIVÄN SIGNAALIT — reveal target ─╮ */}
         <div ref={signalsRef}>
-          <MittariSignals unlocked={unlocked} onRevealRequest={scrollToHero} />
+          <MittariSignals unlocked={unlocked} onRevealRequest={scrollToHero}
+            copy={c._signalsCopy} lang={lang} />
         </div>
 
         {/* ╭─ HOW IT WORKS ─╮ */}
@@ -751,9 +859,12 @@ const Mittari = () => {
             marginTop: 18, border: '1px solid var(--hairline)',
             background: 'var(--hairline)', display: 'flex', flexDirection: 'column', gap: 1,
           }}>
-            {RECEIPTS.map((r, i) => {
-              const pill = STATUS_PILL[r.status];
+            {receiptsList.map((r, i) => {
+              const pill = STATUS_PILL[r.status] || STATUS_PILL.hit;
               const statusLabel = r.status === 'hit' ? c.statusHit : r.status === 'miss' ? c.statusMiss : c.statusEarly;
+              const dateStr    = lang === 'en' ? r.date_en    : r.date_fi;
+              const signalStr  = lang === 'en' ? r.signal_en  : r.signal_fi;
+              const outcomeStr = lang === 'en' ? r.outcome_en : r.outcome_fi;
               return (
                 <div key={i} data-testid={`mittari-receipt-${i}`} className="m-receipt-row" style={{
                   background: 'var(--surface)',
@@ -761,13 +872,13 @@ const Mittari = () => {
                   gap: 16, padding: '14px 20px', alignItems: 'center',
                   fontFamily: 'ui-monospace, monospace', fontSize: 11,
                 }}>
-                  <span style={{ color: 'var(--muted)', letterSpacing: '0.04em' }}>{r.date[lang === 'en' ? 'en' : 'fi']}</span>
+                  <span style={{ color: 'var(--muted)', letterSpacing: '0.04em' }}>{dateStr}</span>
                   <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{r.time}</span>
-                  <span style={{ color: 'var(--muted)', letterSpacing: '0.02em' }}>{r.signal[lang === 'en' ? 'en' : 'fi']}</span>
+                  <span style={{ color: 'var(--muted)', letterSpacing: '0.02em' }}>{signalStr}</span>
                   <span style={{
                     color: r.status === 'hit' ? '#6FA37D' : r.status === 'miss' ? '#C13B2C' : '#E89248',
                     letterSpacing: '0.02em',
-                  }}>{r.outcome[lang === 'en' ? 'en' : 'fi']}</span>
+                  }}>{outcomeStr}</span>
                   <span style={{
                     background: pill.bg, color: pill.fg,
                     border: `1px solid ${pill.border}`,
@@ -784,7 +895,7 @@ const Mittari = () => {
             fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
             color: 'var(--muted)', letterSpacing: '0.06em',
           }}>
-            <span>{c.receiptsFoot7d}: <strong style={{ color: '#E89248' }}>6/7 (86%)</strong> · {c.receiptsFoot30d}: 58%</span>
+            <span>{c.receiptsFoot7d}: <strong style={{ color: '#E89248' }}>{c.receiptsFoot7dValue}</strong> · {c.receiptsFoot30d}: {c.receiptsFoot30dValue}</span>
             <Link to="/menetelma" data-testid="mittari-receipts-method-link" style={{
               color: '#E89248', textDecoration: 'none',
             }}>{c.founderMethodLink}</Link>
@@ -801,8 +912,8 @@ const Mittari = () => {
             background: 'var(--hairline)', marginTop: 18,
             border: '1px solid var(--hairline)',
           }}>
-            {TESTIMONIALS.map((t) => (
-              <div key={t.id} data-testid={`mittari-testimonial-${t.id}`} style={{
+            {testimonialsList.map((t, idx) => (
+              <div key={t.id || `t${idx}`} data-testid={`mittari-testimonial-${t.id || `t${idx}`}`} style={{
                 background: 'var(--surface)', padding: '22px 22px',
                 display: 'flex', flexDirection: 'column', gap: 14,
               }}>
@@ -823,19 +934,19 @@ const Mittari = () => {
                       fontFamily: 'ui-monospace, monospace', fontSize: 9,
                       color: 'var(--muted)', letterSpacing: '0.08em',
                       textTransform: 'uppercase', marginTop: 2,
-                    }}>{t.detail}</div>
+                    }}>{lang === 'en' ? t.detail_en : t.detail_fi}</div>
                   </div>
                 </div>
                 <p style={{
                   fontFamily: 'Georgia, serif', fontSize: 16, lineHeight: 1.4,
                   color: 'var(--ink)', margin: 0,
-                }}>“{lang === 'en' ? t.en : t.fi}”</p>
+                }}>“{lang === 'en' ? t.quote_en : t.quote_fi}”</p>
                 <div style={{
                   marginTop: 'auto', paddingTop: 10,
                   borderTop: '1px solid var(--hairline)',
                   fontFamily: 'ui-monospace, monospace', fontSize: 10,
                   color: 'var(--muted)', letterSpacing: '0.04em', lineHeight: 1.5,
-                }}>{lang === 'en' ? t.receiptEn : t.receiptFi}</div>
+                }}>{lang === 'en' ? t.receipt_en : t.receipt_fi}</div>
               </div>
             ))}
           </div>
@@ -857,7 +968,7 @@ const Mittari = () => {
               fontFamily: 'Georgia, serif', fontStyle: 'italic',
               fontSize: 34, color: '#E89248',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            }}>D</div>
+            }}>{c.founderAvatarInitial}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <span style={{
                 fontFamily: 'ui-monospace, monospace', fontSize: 10,
@@ -896,8 +1007,8 @@ const Mittari = () => {
             letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
           }}>{c.pressTitle}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
-            {PRESS.map((p, i) => (
-              <span key={p} data-testid={`mittari-press-${i}`} style={{
+            {pressList.map((p, i) => (
+              <span key={`${p}-${i}`} data-testid={`mittari-press-${i}`} style={{
                 fontFamily: i % 2 ? 'ui-monospace, monospace' : 'Georgia, serif',
                 fontStyle: i % 2 ? 'normal' : 'italic',
                 fontSize: i % 2 ? 12 : 18,

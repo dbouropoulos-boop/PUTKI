@@ -22,12 +22,12 @@ import { useLang } from '../context/LanguageContext';
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const ODDS_REFRESH_MS = 60_000;
 
-const sharpnessBand = (score, isEn) => {
-  if (score >= 90) return isEn ? 'tight' : 'tiukka';
-  if (score >= 75) return isEn ? 'clear' : 'selkeä';
-  if (score >= 60) return isEn ? 'mixed' : 'sekava';
-  if (score >= 40) return isEn ? 'loose' : 'löysä';
-  return isEn ? 'scattered' : 'hajanainen';
+const sharpnessBand = (score, sigCopy) => {
+  if (score >= 90) return sigCopy?.band_tight || 'tight';
+  if (score >= 75) return sigCopy?.band_clear || 'clear';
+  if (score >= 60) return sigCopy?.band_mixed || 'mixed';
+  if (score >= 40) return sigCopy?.band_loose || 'loose';
+  return sigCopy?.band_scattered || 'scattered';
 };
 
 const formatKickoff = (iso, isEn) => {
@@ -55,9 +55,34 @@ const LockIcon = ({ size = 16 }) => (
   </svg>
 );
 
-const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
-  const { lang } = useLang();
+const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLang }) => {
+  const { lang: ctxLang } = useLang();
+  const lang = propLang || ctxLang;
   const isEn = lang === 'en';
+  // Editable copy comes from the parent (Mittari.jsx fetches /api/mittari/copy
+  // and passes the per-locale signals subtree). Falls back to bundled defaults
+  // so this component still renders if the parent didn't pass anything.
+  const sc = copy || {};
+  const t = {
+    headLockedEyebrow: sc.head_locked_eyebrow || (isEn ? '— DAILY SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'),
+    headUnlockedEyebrow: sc.head_unlocked_eyebrow || (isEn ? '— DAILY SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU'),
+    titleLead: sc.title_lead || (isEn ? 'Today\u2019s' : 'Päivän'),
+    titleEm: sc.title_em || (isEn ? 'Signals' : 'Signaalit'),
+    marketQuietEyebrow: sc.market_quiet_eyebrow || (isEn ? 'MARKET QUIET RIGHT NOW' : 'MARKKINA HILJAINEN JUURI NYT'),
+    marketQuietBody: sc.market_quiet_body || (isEn
+      ? 'Tomorrow 09:00 we drop the next five. Subscribe and you\u2019ll get the first one the moment the market opens it up.'
+      : 'Huomenna klo 09:00 pudotamme seuraavat viisi. Tilaa ja saat ensimmäisen heti kun markkina avautuu.'),
+    revealTeaser: sc.reveal_teaser || (isEn ? '⌥ Tap → Signal 01 unlocks instantly' : '⌥ Napsauta → Signaali 01 avautuu heti'),
+    confidenceLabel: sc.confidence_label || 'Sharpness',
+    impliedLabel: sc.implied_label || (isEn ? 'implied prob.' : 'todennäköisyys'),
+    impliedInline: sc.implied_inline || (isEn ? 'implied' : 'todenn.'),
+    lockedFoot: sc.locked_foot || (isEn ? 'Locked · the full five drop every morning at' : 'Lukittu · viisi pudotusta joka aamu klo'),
+    unlockedFoot: sc.unlocked_foot || (isEn
+      ? '✓ Signal 01 unlocked · the rest land in your inbox in <3 seconds'
+      : '✓ Signaali 01 avattu · loput tippuvat sähköpostiisi alle 3 sekunnissa'),
+    drawLabel: sc.draw_label || (isEn ? 'draw' : 'tasapeli'),
+    vsLabel: sc.vs_label || 'vs',
+  };
 
   const [payload, setPayload] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -119,13 +144,11 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
             letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
             marginBottom: 12,
-          }}>{isEn ? 'MARKET QUIET RIGHT NOW' : 'MARKKINA HILJAINEN JUURI NYT'}</div>
+          }}>{t.marketQuietEyebrow}</div>
           <p style={{
             fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.4,
             color: 'var(--ink)', margin: 0, maxWidth: 520, marginInline: 'auto',
-          }}>{isEn
-              ? 'Tomorrow 09:00 we drop the next five. Subscribe and you\u2019ll get the first one the moment the market opens it up.'
-              : 'Huomenna klo 09:00 pudotamme seuraavat viisi. Tilaa ja saat ensimmäisen heti kun markkina avautuu.'}</p>
+          }}>{t.marketQuietBody}</p>
         </div>
       </section>
     );
@@ -142,14 +165,12 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
             letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
             marginBottom: 10,
-          }}>{unlocked
-              ? (isEn ? '— DAILY SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU')
-              : (isEn ? '— DAILY SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU')}</div>
+          }}>{unlocked ? t.headUnlockedEyebrow : t.headLockedEyebrow}</div>
           <h2 data-testid="mittari-signals-title" style={{
             fontFamily: 'Georgia, serif', fontSize: 'clamp(34px, 4.5vw, 48px)',
             lineHeight: 1, letterSpacing: '-0.02em', fontWeight: 400, margin: 0,
-          }}>{isEn ? 'Today\u2019s ' : 'Päivän '}
-            <em style={{ color: '#E89248', fontStyle: 'italic' }}>{isEn ? 'Signals' : 'Signaalit'}</em>
+          }}>{t.titleLead}{' '}
+            <em style={{ color: '#E89248', fontStyle: 'italic' }}>{t.titleEm}</em>
           </h2>
           <div style={{
             marginTop: 8, fontFamily: 'ui-monospace, monospace', fontSize: 11,
@@ -166,8 +187,8 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
         {picks.map((s) => {
           const opponent = s.side === 'home' ? s.away : s.side === 'away' ? s.home : `${s.home} – ${s.away}`;
           const pickText = s.side === 'draw'
-            ? `${s.home} – ${s.away} · ${isEn ? 'draw' : 'tasapeli'} @ ${s.odds.toFixed(2)}`
-            : `${s.pickTeam} · ${isEn ? 'vs' : 'vs'} ${opponent} @ ${s.odds.toFixed(2)}`;
+            ? `${s.home} – ${s.away} · ${t.drawLabel} @ ${s.odds.toFixed(2)}`
+            : `${s.pickTeam} · ${t.vsLabel} ${opponent} @ ${s.odds.toFixed(2)}`;
           // First row unlocks instantly on parent reveal; rows 2-5 require
           // bot confirmation (subsequent server-side flow).
           const rowUnlocked = unlocked && s.isFirst;
@@ -206,8 +227,8 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
                 }}>
                   <span style={{ color: '#E89248' }}>{s.sport}{s.sportIcon ? ' ' + s.sportIcon : ''}</span>
                   {' · '}
-                  <strong style={{ color: '#E89248' }}>{isEn ? 'Sharpness' : 'Sharpness'} {Math.round(s.sharpness)} ({sharpnessBand(s.sharpness, isEn)})</strong>
-                  {' · '}{isEn ? 'implied' : 'todenn.'} <strong style={{ color: '#E89248' }}>{Math.round(s.impliedProb)}%</strong>
+                  <strong style={{ color: '#E89248' }}>{t.confidenceLabel} {Math.round(s.sharpness)} ({sharpnessBand(s.sharpness, sc)})</strong>
+                  {' · '}{t.impliedInline} <strong style={{ color: '#E89248' }}>{Math.round(s.impliedProb)}%</strong>
                   {' · '}{formatKickoff(s.kickoff, isEn)}
                 </div>
                 {s.isFirst && !everUnlocked && (
@@ -219,7 +240,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
                       fontFamily: 'ui-monospace, monospace', fontSize: 10,
                       letterSpacing: '0.10em', color: '#E89248',
                       textTransform: 'uppercase',
-                    }}>⌥ {isEn ? 'Tap → Signal 01 unlocks instantly' : 'Napsauta → Signaali 01 avautuu heti'}</div>
+                    }}>{t.revealTeaser}</div>
                 )}
               </div>
 
@@ -229,7 +250,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
                   fontFamily: 'ui-monospace, monospace', fontSize: 9,
                   letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700,
                   textTransform: 'uppercase',
-                }}>{isEn ? 'Sharpness' : 'Sharpness'}</span>
+                }}>{t.confidenceLabel}</span>
                 <div style={{
                   height: 3, background: 'var(--bg)', position: 'relative',
                 }}>
@@ -254,7 +275,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
                   marginTop: 4, fontFamily: 'ui-monospace, monospace', fontSize: 9,
                   letterSpacing: '0.10em', color: 'var(--muted)',
                   textTransform: 'uppercase',
-                }}>{isEn ? 'implied prob.' : 'todennäköisyys'}</div>
+                }}>{t.impliedLabel}</div>
               </div>
 
               <div style={{
@@ -275,11 +296,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest }) => {
         fontFamily: 'ui-monospace, monospace', fontSize: 10,
         letterSpacing: '0.08em', color: 'var(--muted)',
       }}>
-        {unlocked
-          ? (isEn ? '✓ Signal 01 unlocked · the rest land in your inbox in <3 seconds'
-                  : '✓ Signaali 01 avattu · loput tippuvat sähköpostiisi alle 3 sekunnissa')
-          : (isEn ? 'Locked · the full five drop every morning at '
-                  : 'Lukittu · viisi pudotusta joka aamu klo ')}
+        {unlocked ? t.unlockedFoot : `${t.lockedFoot} `}
         {!unlocked && <span style={{ color: '#E89248' }}>09:00</span>}
       </div>
 

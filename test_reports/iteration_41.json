@@ -1,0 +1,42 @@
+{
+  "summary": "Iter41 — Full editable-copy system for /mittari verified. Backend: 9/9 new iter41 tests PASS (public GET /api/mittari/copy returns full merged tree with all 12 sections + nested fi/en + explain.steps[3]; admin GET without token returns 401/403; admin GET with X-Admin-Token=putki-hq-admin returns {raw,merged,defaults,updated_at}; partial PUT persists + reflected in next public GET; empty PUT resets to defaults; 5000-char value truncated to ≤240; blank receipts/testimonials dropped by sanitizer). Regression: 53 sprint tests PASS + 1 pre-existing skip (iter36 telegram + iter37 sprint_c + iter38 mittari_landing + iter40 mittari_optimization + sprint_a_mestari_voita). Frontend /back-office/mittari-copy: AuthGate accepts putki-hq-admin → editor renders (bo-mittari-copy-page visible). All major testids verified: bo-mc-save, bo-mc-save-bottom, bo-mc-reset-hero (and per-section reset for gate/signals/etc), bo-mc-testi-add, bo-mc-press-add, bo-mc-testi-0, bo-mc-receipt-0, bo-mc-receipt-0-status. Save round-trip VERIFIED: filled FI hero headline_lead='ITER41-SAVE-RT' → clicked bo-mc-save → status flips to '✓ Saved · live on /mittari now' → GET /api/mittari/copy returns hero.fi.headline_lead='ITER41-SAVE-RT' → cleanup PUT {} returns 200. /mittari public page renders hero, killer-stat, mittari dial, gate (Telegram primary + <3S DELIVERY badge), email fallback, ← PUTKI HQ backlink — all iter40 invariants hold. After cleanup PUT, defaults restored — no state pollution for future iterations.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "BackOfficeMittariCopy.jsx", "issue": "data-testid collision: the same id (e.g. mc-field-headline-lead) is used across 4 separate input rows (FI hero / EN hero / FI final-gate / EN final-gate). Multiple inputs share identical data-testid → automation can't uniquely target FI vs EN. Recommended convention: bo-mc-{section}-{lang}-{field} (e.g. bo-mc-hero-fi-headline-lead).", "selector": "[data-testid=\"mc-field-headline-lead\"]", "priority": "MEDIUM"},
+      {"component": "BackOfficeMittariCopy.jsx", "issue": "Status banner ('✓ Saved · live on /mittari now') is rendered but has no data-testid='bo-mc-status'. The page review_request lists bo-mc-status as expected but it's missing — code uses a non-testid'd div. Status is visible via text content, but adding the testid would harden tests.", "selector": "div text='✓ Saved · live on /mittari now'", "priority": "LOW"},
+      {"component": "BackOfficeMittariCopy.jsx", "issue": "Per-section reset testids in review_request used 'bo-mc-reset-hero' (matches), but add-buttons use 'bo-mc-testi-add' / 'bo-mc-press-add' instead of 'bo-mc-add-testimonial' / 'bo-mc-add-press' from review_request. Just naming drift — both styles are present, just inconsistent with the request brief.", "selector": "[data-testid=\"bo-mc-testi-add\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter41_mittari_copy.py",
+    "/app/test_reports/pytest/iter41.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (back-office). No app auth needed.",
+  "action_items": [
+    "(Optional/Code-quality) Make every data-testid in BackOfficeMittariCopy.jsx unique — current pattern of reusing `id` across FI/EN/section instances causes 4 inputs to share testid 'mc-field-headline-lead'. Recommended scheme: `bo-mc-{section}-{lang}-{field}` so automation can target unambiguously.",
+    "(Optional) Add data-testid='bo-mc-status' to the green Saved banner — currently only matchable by text content.",
+    "(Optional naming alignment) Rename 'bo-mc-testi-add' → 'bo-mc-add-testimonial' and 'bo-mc-press-add' → 'bo-mc-add-press' to match review_request naming, OR update the review_request docs to current code. Functional behaviour is correct either way."
+  ],
+  "critical_code_review_comments": [
+    "mittari_copy.py is clean (570 lines, well-structured, length caps + drop-blank semantics + 3-step explain padding). Solid sanitization pipeline. Field caps documented (_SHORT=80, _MED=240, _LONG=800, _PARA=2000).",
+    "BackOfficeMittariCopy.jsx is large (>750 lines per quick scan) — exceeds 700-line guideline. Recommend extracting SectionEditor / ResetButton / LocaleBlock subcomponents. Hero+Gates+Signals+Receipts+Testimonials all crammed into one file.",
+    "data-testid uniqueness issue noted above — affects test automation hygiene but not user-facing behaviour.",
+    "Save flow correctly does PUT → re-fetches admin doc → seeds form with merged result (verified by reload-and-rendered headline reflecting marker before cleanup).",
+    "Sanitizer correctly drops a receipts row that has BOTH signal_fi and signal_en blank (verified by test_blank_receipt_row_dropped) and drops testimonials with BOTH quote_fi+quote_en blank (test_blank_testimonial_dropped). Good defensive coding."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter41_mittari_copy.py (new — 9 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (9 new iter41 + 53 sprint regression PASS, 1 pre-existing skip)",
+    "frontend": "100% functional (save round-trip + auth + editor renders + cleanup all working) — 3 LOW/MED priority data-testid hygiene comments only"
+  },
+  "seed_data_creation": "None — only used the existing mittari_copy override doc, restored to defaults via empty PUT after every test (both pytest fixtures + post-UI cleanup).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter41 full-editable-copy system is functionally complete and verified. Backend sanitize_and_merge() in /app/backend/mittari_copy.py + 3 endpoints (public GET, admin GET, admin PUT) all working. Frontend /back-office/mittari-copy editor saves successfully and edits go live on /mittari immediately via useMittariCopy hook. Cleanup is consistent — every backend test class restores defaults; UI script also restores defaults after editing. Only non-blocking comments are data-testid uniqueness (FI vs EN inputs share testid) and the missing bo-mc-status testid. All iter40 invariants (2 gates, Telegram-primary, <3S badge, hidden counter <50, real signups feed, killer empty-state, no \\u2019 literal, ← PUTKI HQ backlink) confirmed intact.",
+  "rca of the issue": "n/a — no functional regressions. Only testid hygiene observations for the new editor."
+}
