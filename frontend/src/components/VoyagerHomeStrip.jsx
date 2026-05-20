@@ -199,7 +199,7 @@ const VoyagerHomeStrip = () => {
               fontFamily: 'ui-monospace, monospace', fontSize: 11,
               letterSpacing: '0.20em', fontWeight: 700,
               borderBottom: `1px solid ${gold}`, paddingBottom: 4,
-            }}>{lang === 'en' ? 'OPEN PICK  →' : 'AVAA VALINTA  →'}</span>
+            }}>{lang === 'en' ? 'OPEN PICK →' : 'AVAA VALINTA →'}</span>
           </div>
         </div>
       </Link>
