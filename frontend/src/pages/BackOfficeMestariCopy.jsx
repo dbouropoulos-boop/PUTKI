@@ -190,6 +190,10 @@ const BackOfficeMestariCopy = () => {
     setForm((f) => ({ ...f, footer: { ...f.footer, [key]: v } }));
   const setFooterLink = (idx, key, v) =>
     setForm((f) => ({ ...f, footer: { ...f.footer, links: f.footer.links.map((c, i) => i === idx ? { ...c, [key]: v } : c) } }));
+  const setTrustLang = (lang, key, v) =>
+    setForm((f) => ({ ...f, trust: { ...f.trust, [lang]: { ...((f.trust && f.trust[lang]) || {}), [key]: v } } }));
+  const setTrustLink = (idx, key, v) =>
+    setForm((f) => ({ ...f, trust: { ...f.trust, links: (f.trust && f.trust.links ? f.trust.links : []).map((c, i) => i === idx ? { ...c, [key]: v } : c) } }));
 
   // ── Auth gate ────────────────────────────────────────────────────
   if (!authed) {
@@ -589,6 +593,49 @@ const BackOfficeMestariCopy = () => {
           </Row>
         ))}
       </Card>
+
+      {/* TRUST STRIP — pills, GDPR note, accept-checkbox link wording, 3 external links */}
+      <SectionTitle sub="4 trust pills · plain-language GDPR note · checkbox label wording · 3 external links. Renders on the email-capture step right before submit."
+        testid="mec-section-trust" onReset={() => resetSection('trust')}>TRUST STRIP (EMAIL GATE)</SectionTitle>
+      {['fi', 'en'].map((lang) => {
+        const tLang = (form.trust && form.trust[lang]) || {};
+        return (
+          <Card key={`trust-${lang}`} label={lang === 'fi' ? 'FINNISH' : 'ENGLISH'} testid={`mec-trust-${lang}`}>
+            <Row cols={4}>
+              <Field label="Pill 1" value={tLang.pill_1}
+                onChange={(v) => setTrustLang(lang, 'pill_1', v)} idScope={`trust-${lang}`} />
+              <Field label="Pill 2" value={tLang.pill_2}
+                onChange={(v) => setTrustLang(lang, 'pill_2', v)} idScope={`trust-${lang}`} />
+              <Field label="Pill 3" value={tLang.pill_3}
+                onChange={(v) => setTrustLang(lang, 'pill_3', v)} idScope={`trust-${lang}`} />
+              <Field label="Pill 4" value={tLang.pill_4}
+                onChange={(v) => setTrustLang(lang, 'pill_4', v)} idScope={`trust-${lang}`} />
+            </Row>
+            <Field label="GDPR note (paragraph under the pills)" multiline value={tLang.note}
+              onChange={(v) => setTrustLang(lang, 'note', v)} idScope={`trust-${lang}-note`} />
+            <Row cols={3}>
+              <Field label="Checkbox prefix" value={tLang.accept_pre}
+                onChange={(v) => setTrustLang(lang, 'accept_pre', v)} idScope={`trust-${lang}-acc`} />
+              <Field label="Checkbox link label" value={tLang.accept_link}
+                onChange={(v) => setTrustLang(lang, 'accept_link', v)} idScope={`trust-${lang}-acc`} />
+              <Field label="Checkbox suffix" value={tLang.accept_post}
+                onChange={(v) => setTrustLang(lang, 'accept_post', v)} idScope={`trust-${lang}-acc`} />
+            </Row>
+          </Card>
+        );
+      })}
+      {(form.trust && form.trust.links ? form.trust.links : []).map((link, idx) => (
+        <Card key={`trust-link-${idx}`} label={`EXTERNAL LINK ${idx + 1}`} testid={`mec-trust-link-${idx}`}>
+          <Row cols={3}>
+            <Field label="Href (route or URL)" value={link.href}
+              onChange={(v) => setTrustLink(idx, 'href', v)} idScope={`trust-link-${idx}`} />
+            <Field label="Label (FI)" value={link.label_fi}
+              onChange={(v) => setTrustLink(idx, 'label_fi', v)} idScope={`trust-link-${idx}-fi`} />
+            <Field label="Label (EN)" value={link.label_en}
+              onChange={(v) => setTrustLink(idx, 'label_en', v)} idScope={`trust-link-${idx}-en`} />
+          </Row>
+        </Card>
+      ))}
 
       {/* FOOTER */}
       <SectionTitle sub="Back-link, 4 nav links, disclaimer + peluuri.fi link."

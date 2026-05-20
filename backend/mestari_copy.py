@@ -244,6 +244,33 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
         "meta_en_1": "Research tool", "meta_en_2": "No betting",
         "meta_en_3": "No deposit", "meta_en_4": "Email only", "meta_en_5": "GDPR",
     },
+    "trust": {
+        "fi": {
+            "pill_1": "GDPR",
+            "pill_2": "Ei spämmiä",
+            "pill_3": "Emme myy tietoja",
+            "pill_4": "Vain sähköposti",
+            "note": "Tietosi tallennetaan tämän raportin lähettämistä varten. Käytämme niitä vain raporttiin ja 5 päivän oppaaseen. Emme jaa, myy tai luovuta tietojasi kolmansille osapuolille. Peruuttamislinkki jokaisessa viestissä.",
+            "accept_pre": "Hyväksyn ",
+            "accept_link": "tietosuojaehdot",
+            "accept_post": " ja haluan vastaanottaa raportin + 5 päivän oppaan.",
+        },
+        "en": {
+            "pill_1": "GDPR",
+            "pill_2": "No spam",
+            "pill_3": "We never sell data",
+            "pill_4": "Email only",
+            "note": "Your email is stored to send this report. We use it only for the report and the 5-day primer. We never share, sell or pass on your data to third parties. An unsubscribe link sits in every message.",
+            "accept_pre": "I accept the ",
+            "accept_link": "privacy policy",
+            "accept_post": " and want to receive the report + 5-day primer.",
+        },
+        "links": [
+            {"href": "/ehdot", "label_fi": "Tietosuoja & GDPR", "label_en": "Privacy & GDPR"},
+            {"href": "/menetelma", "label_fi": "Miten viestimme", "label_en": "How we communicate"},
+            {"href": "/tietoa-meista", "label_fi": "Ota yhteyttä", "label_en": "Contact"},
+        ],
+    },
     "footer": {
         "home_fi": "← Takaisin Putki HQ:hun",
         "home_en": "← Back to Putki HQ",
@@ -353,6 +380,13 @@ _FOOTER_TOP_CAPS = {
     "disclaimer_tail_fi": _MED, "disclaimer_tail_en": _MED,
 }
 _FOOTER_LINK_CAPS = {"href": _MED, "label_fi": _MED, "label_en": _MED}
+_TRUST_LANG_CAPS = {
+    "pill_1": _SHORT, "pill_2": _SHORT, "pill_3": _SHORT, "pill_4": _SHORT,
+    "note": _PARA,
+    "accept_pre": _MED, "accept_link": _MED, "accept_post": _MED,
+}
+_TRUST_LINK_CAPS = {"href": _MED, "label_fi": _MED, "label_en": _MED}
+_TRUST_LINKS_N = 3
 
 # Locked array lengths — admin can edit each item but cannot add/remove
 # (preserves the layout grid which depends on N=4 cred, N=4 method, etc.).
@@ -468,6 +502,20 @@ def sanitize_and_merge(override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     # Final CTA
     out["final"] = _merge_strings(
         DEFAULT_MESTARI_COPY["final"], o.get("final") or {}, _FINAL_CAPS,
+    )
+
+    # Trust strip (per-locale + 3 link rows)
+    trust_base = DEFAULT_MESTARI_COPY["trust"]
+    trust_over = o.get("trust") if isinstance(o.get("trust"), dict) else {}
+    out["trust"] = {}
+    for lang in ("fi", "en"):
+        out["trust"][lang] = _merge_strings(
+            trust_base[lang],
+            (trust_over.get(lang) if isinstance(trust_over.get(lang), dict) else {}) or {},
+            _TRUST_LANG_CAPS,
+        )
+    out["trust"]["links"] = _merge_fixed_objects(
+        trust_base["links"], trust_over.get("links"), _TRUST_LINKS_N, _TRUST_LINK_CAPS,
     )
 
     # Footer (top + 4 links)

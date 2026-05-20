@@ -166,6 +166,18 @@ const COPY = {
       disclaimerLink: { href: 'https://peluuri.fi', label: 'peluuri.fi' },
       disclaimerTail: '. 18+.',
     },
+    trust: {
+      pills: ['GDPR', 'Ei spämmiä', 'Emme myy tietoja', 'Vain sähköposti'],
+      note: 'Tietosi tallennetaan tämän raportin lähettämistä varten. Käytämme niitä vain raporttiin ja 5 päivän oppaaseen. Emme jaa, myy tai luovuta tietojasi kolmansille osapuolille. Peruuttamislinkki jokaisessa viestissä.',
+      acceptPre: 'Hyväksyn ',
+      acceptLink: 'tietosuojaehdot',
+      acceptPost: ' ja haluan vastaanottaa raportin + 5 päivän oppaan.',
+      links: [
+        { href: '/ehdot', label: 'Tietosuoja & GDPR' },
+        { href: '/menetelma', label: 'Miten viestimme' },
+        { href: '/tietoa-meista', label: 'Ota yhteyttä' },
+      ],
+    },
   },
   en: {
     header: { back: 'PUTKIHQ', backArrow: '←' },
@@ -262,6 +274,18 @@ const COPY = {
       disclaimer: 'Mestari is an editorial research and analytics product by Putki HQ. It analyses publicly available betting-market data for educational purposes. Mestari does not provide betting advice, does not predict match outcomes and does not promote gambling or any operator. Nothing on this page is an invitation to gamble. If gambling is a concern, help is available — in Finland see ',
       disclaimerLink: { href: 'https://peluuri.fi', label: 'peluuri.fi' },
       disclaimerTail: '. 18+.',
+    },
+    trust: {
+      pills: ['GDPR', 'No spam', 'We never sell data', 'Email only'],
+      note: 'Your email is stored to send this report. We use it only for the report and the 5-day primer. We never share, sell or pass on your data to third parties. An unsubscribe link sits in every message.',
+      acceptPre: 'I accept the ',
+      acceptLink: 'privacy policy',
+      acceptPost: ' and want to receive the report + 5-day primer.',
+      links: [
+        { href: '/ehdot', label: 'Privacy & GDPR' },
+        { href: '/menetelma', label: 'How we communicate' },
+        { href: '/tietoa-meista', label: 'Contact' },
+      ],
     },
   },
 };
@@ -388,6 +412,19 @@ const buildLandingCopy = (lang, live) => {
         .map((i) => live.final[`meta_${lang}_${i}`])
         .filter(Boolean),
     },
+    trust: (() => {
+      const tBase = (live.trust && live.trust[lang]) || {};
+      return {
+        pills: [tBase.pill_1, tBase.pill_2, tBase.pill_3, tBase.pill_4].filter(Boolean),
+        note: tBase.note || '',
+        acceptPre: tBase.accept_pre || '',
+        acceptLink: tBase.accept_link || '',
+        acceptPost: tBase.accept_post || '',
+        links: ((live.trust && live.trust.links) || []).map((l) => ({
+          href: l.href, label: l[`label_${lang}`],
+        })),
+      };
+    })(),
     footer: {
       home: live.footer[k('home')],
       links: (live.footer.links || []).map((l) => ({
@@ -909,8 +946,71 @@ const Tease = ({ profile, loading, onContinue, lang }) => {
 };
 
 // ── Email gate ──────────────────────────────────────────────────────────
-const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang }) => {
+// Trust pills + a privacy/method link row sit above the submit button to
+// reassure cold-traffic visitors before they hand over their email. All
+// copy (pills, GDPR note, accept-link wording, link labels) lives in the
+// editable `trust` slice of the mestari copy tree, so any line can be
+// A/B-tested from /back-office/mestari-copy without code changes.
+const TrustStrip = ({ trust }) => {
+  if (!trust) return null;
+  return (
+    <div data-testid="mestari-trust-strip" style={{
+      marginTop: 10, padding: '16px 16px 14px',
+      background: 'color-mix(in srgb, var(--surface) 70%, transparent)',
+      border: `1px solid ${T.border}`,
+      display: 'flex', flexDirection: 'column', gap: 12,
+    }}>
+      {/* Trust pills row */}
+      <div data-testid="mestari-trust-pills" style={{
+        display: 'flex', flexWrap: 'wrap', gap: 8,
+      }}>
+        {(trust.pills || []).map((p, i) => (
+          <span key={i} data-testid={`mestari-trust-pill-${i}`} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '5px 10px', borderRadius: 999,
+            border: `1px solid ${T.border}`,
+            background: T.bg,
+            fontFamily: T.mono, fontSize: 10, fontWeight: 700,
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+            color: T.ink,
+          }}>
+            <span aria-hidden="true" style={{ color: T.accent }}>✓</span>{p}
+          </span>
+        ))}
+      </div>
+      {/* Plain-language note */}
+      <p style={{
+        margin: 0, color: T.muted, fontSize: 12.5, lineHeight: 1.55,
+        fontFamily: T.sans, fontWeight: 300,
+      }}>{trust.note}</p>
+      {/* Links row */}
+      <div data-testid="mestari-trust-links" style={{
+        display: 'flex', flexWrap: 'wrap', gap: '4px 18px',
+        fontFamily: T.mono, fontSize: 10.5, letterSpacing: '0.16em',
+        textTransform: 'uppercase', fontWeight: 700,
+      }}>
+        {(trust.links || []).map((l, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <span style={{ color: T.muted, opacity: 0.5 }}>·</span>}
+            <Link to={l.href} target="_blank" rel="noopener noreferrer"
+              data-testid={`mestari-trust-link-${i}`}
+              style={{ color: T.accent, textDecoration: 'none' }}>
+              {l.label} ↗
+            </Link>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, trust }) => {
   const canSubmit = !!email && rules && !busy;
+  const acceptPre = (trust && trust.acceptPre) || (lang === 'en' ? 'I accept the ' : 'Hyväksyn ');
+  const acceptLink = (trust && trust.acceptLink) || (lang === 'en' ? 'privacy policy' : 'tietosuojaehdot');
+  const acceptPost = (trust && trust.acceptPost) || (lang === 'en'
+    ? ' and want to receive the report + 5-day primer.'
+    : ' ja haluan vastaanottaa raportin + 5 päivän oppaan.');
   return (
     <div data-testid="mestari-gate">
       <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: T.accent, fontWeight: 700, marginBottom: 8 }}>
@@ -934,14 +1034,23 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang })
             fontFamily: T.mono, fontSize: 14, letterSpacing: '0.02em',
             outline: 'none',
           }} />
+
+        {/* Trust strip — pills, GDPR note, and external links */}
+        <TrustStrip trust={trust} />
+
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: T.ink, cursor: 'pointer' }}>
           <input type="checkbox" checked={rules} onChange={(e) => setRules(e.target.checked)}
             data-testid="mestari-rules-checkbox"
             style={{ marginTop: 2, width: 18, height: 18 }} />
           <span style={{ lineHeight: 1.5, opacity: 0.92 }}>
-            {lang === 'en'
-              ? 'I accept the privacy policy and want to receive the report + 5-day primer.'
-              : 'Hyväksyn tietosuojan ja haluan vastaanottaa raportin + 5 päivän oppaan.'}
+            {acceptPre}
+            <Link to="/ehdot" target="_blank" rel="noopener noreferrer"
+              data-testid="mestari-rules-privacy-link"
+              onClick={(e) => e.stopPropagation()}
+              style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+              {acceptLink}
+            </Link>
+            {acceptPost}
           </span>
         </label>
         {error && (
@@ -1241,6 +1350,7 @@ const Mestari = () => {
             <motion.div key="gate" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.32 }}>
               <Gate email={email} setEmail={setEmail}
                 rules={rules} setRules={setRules}
+                trust={landingCopy && landingCopy.trust}
                 onSubmit={submitLead} busy={busy} error={error} lang={lang} />
             </motion.div>
           )}

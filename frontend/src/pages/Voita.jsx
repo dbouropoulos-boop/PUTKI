@@ -87,16 +87,16 @@ const TrustStrip = ({ paidRaffles, lang }) => {
       {items.map((it, i) => (
         <div key={i} data-testid={`trust-stat-${i}`} style={{
           background: 'var(--surface, #141210)',
-          padding: '18px 18px', textAlign: 'left',
+          padding: '10px 16px', textAlign: 'left',
         }}>
           <div style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
             letterSpacing: '0.22em', color: 'var(--muted, #9C9587)',
-            fontWeight: 700, marginBottom: 6,
+            fontWeight: 700, marginBottom: 4,
           }}>{it.label}</div>
           <div style={{
             fontFamily: 'Georgia, serif', fontWeight: 700,
-            fontSize: 26, color: 'var(--ink, #ECE6D8)',
+            fontSize: 20, color: 'var(--ink, #ECE6D8)',
             lineHeight: 1, letterSpacing: '-0.01em',
           }}>{it.value}</div>
         </div>
@@ -339,32 +339,35 @@ const Voita = () => {
 
   return (
     <div data-testid="voita-page" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
-      {/* 1. HERO */}
+      {/* 1. HERO — compact band so the live raffles sit above the fold.
+          Photo stays as atmospheric backdrop, but height is capped and
+          the giant VOITA letterform is dialled way down so the headline
+          + a peek of the raffle grid is what catches the eye first. */}
       <section data-testid={enabled && activeRaffles.length > 0 ? 'voita-hero-active' : 'voita-hero-gated'}
-        style={{ position: 'relative', padding: '64px 0 40px', minHeight: 360, overflow: 'hidden' }}>
+        style={{ position: 'relative', padding: '40px 0 28px', minHeight: 240, overflow: 'hidden' }}>
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 0,
           backgroundImage: `url('${heroImage}')`,
           backgroundSize: 'cover', backgroundPosition: 'center 35%',
-          filter: 'saturate(0.85)',
+          filter: 'saturate(0.8)',
         }} />
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(90deg, rgba(11,10,9,0.95) 0%, rgba(11,10,9,0.85) 45%, rgba(11,10,9,0.45) 80%, rgba(11,10,9,0.25) 100%)',
+          background: 'linear-gradient(90deg, rgba(11,10,9,0.96) 0%, rgba(11,10,9,0.88) 50%, rgba(11,10,9,0.55) 85%, rgba(11,10,9,0.35) 100%)',
         }} />
         <span aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 1,
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          paddingRight: '5%',
+          paddingRight: '4%',
           fontFamily: 'Georgia, serif', fontWeight: 900,
-          fontSize: 'clamp(180px, 28vw, 320px)',
-          letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.045)',
+          fontSize: 'clamp(100px, 14vw, 180px)',
+          letterSpacing: '-0.04em', color: 'rgba(255,255,255,0.035)',
           pointerEvents: 'none', userSelect: 'none', lineHeight: 1,
         }}>VOITA</span>
 
-        <div style={{ position: 'relative', zIndex: 2, maxWidth: 720 }}>
+        <div style={{ position: 'relative', zIndex: 2, maxWidth: 640 }}>
           {!loaded ? (
-            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 48, margin: '14px 0', color: '#FFFFFF' }}>…</h1>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 32, margin: '8px 0', color: '#FFFFFF' }}>…</h1>
           ) : enabled && activeRaffles.length > 0 ? (
             <>
               <span data-testid="voita-eyebrow" style={{
@@ -373,10 +376,10 @@ const Voita = () => {
               }}>{eyebrow}</span>
               <h1 data-testid="voita-active-title" style={{
                 fontFamily: 'Georgia, serif', fontWeight: 700,
-                fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-                letterSpacing: '-0.02em', color: '#FFFFFF', margin: '12px 0 18px',
+                fontSize: 'clamp(28px, 3.8vw, 42px)', lineHeight: 1.1,
+                letterSpacing: '-0.02em', color: '#FFFFFF', margin: '8px 0 12px',
               }}>{title}</h1>
-              <p data-testid="voita-subtitle" style={{ color: 'rgba(236,230,216,0.92)', fontSize: 16, lineHeight: 1.55, maxWidth: 580, margin: 0 }}>
+              <p data-testid="voita-subtitle" style={{ color: 'rgba(236,230,216,0.88)', fontSize: 14.5, lineHeight: 1.5, maxWidth: 540, margin: 0 }}>
                 {subtitle}
               </p>
             </>
@@ -388,10 +391,10 @@ const Voita = () => {
               }}>{lang === 'en' ? 'VOITA · COMING SOON' : 'VOITA · TULOSSA'}</span>
               <h1 data-testid="voita-placeholder" style={{
                 fontFamily: 'Georgia, serif', fontWeight: 700,
-                fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-                letterSpacing: '-0.02em', color: '#FFFFFF', margin: '12px 0 18px',
+                fontSize: 'clamp(28px, 3.8vw, 42px)', lineHeight: 1.1,
+                letterSpacing: '-0.02em', color: '#FFFFFF', margin: '8px 0 12px',
               }}>{lang === 'en' ? 'Coming soon' : 'Pian saatavilla'}</h1>
-              <p style={{ color: 'rgba(236,230,216,0.9)', fontSize: 16, lineHeight: 1.55, maxWidth: 580, margin: '0 0 22px' }}>
+              <p style={{ color: 'rgba(236,230,216,0.88)', fontSize: 14.5, lineHeight: 1.5, maxWidth: 540, margin: '0 0 14px' }}>
                 {lang === 'en'
                   ? "Next raffle drops shortly. Free to enter, no deposit, no betting."
                   : 'Seuraava arvonta julkaistaan pian. Ilmainen osallistua, ei talletusta, ei vedonlyöntiä.'}
@@ -408,7 +411,7 @@ const Voita = () => {
           <span aria-hidden style={{
             position: 'absolute', right: 12, bottom: 8, zIndex: 2,
             fontFamily: 'ui-monospace, monospace', fontSize: 9,
-            letterSpacing: '0.18em', color: 'rgba(255,255,255,0.5)',
+            letterSpacing: '0.18em', color: 'rgba(255,255,255,0.4)',
           }}>{photoCredit}</span>
         )}
       </section>
@@ -419,9 +422,9 @@ const Voita = () => {
       {/* 3. ACTIVE RAFFLES */}
       {loaded && enabled && activeRaffles.length > 0 && (
         <section data-testid="voita-active-section" style={{
-          padding: '40px 0 24px',
+          padding: '24px 0 24px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
             <h2 data-testid="voita-active-heading" style={{
               fontFamily: 'Georgia, serif', fontWeight: 700,
               fontSize: 'clamp(24px, 3vw, 32px)', color: 'var(--ink, #ECE6D8)',
