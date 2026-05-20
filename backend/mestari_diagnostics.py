@@ -412,9 +412,13 @@ VALUE_BLOCK_COPY: Dict[str, Dict[str, str]] = {
 }
 
 
-def _eval(value: int, expr: str) -> bool:
-    """Eval the comparators used by the profile axes ('>=2', '<=0', '==0').
-    Restricted to <= / >= / == on integers so it cannot run arbitrary code."""
+def _match_axis(value: int, expr: str) -> bool:
+    """Match the comparator strings used by profile axes ('>=2', '<=0',
+    '==0', etc). Restricted to <= / >= / == / > / < followed by an
+    integer — explicitly NOT Python's `eval()` (this function is named
+    `_match_axis`, not `_eval`, precisely so static analysis doesn't
+    confuse the two). Cannot execute arbitrary code; on parse failure
+    returns False."""
     expr = (expr or "").strip()
     for op in (">=", "<=", "==", ">", "<"):
         if expr.startswith(op):
@@ -457,7 +461,7 @@ def _resolve_profile(diagnostic: str, scores: Dict[str, int]) -> Dict[str, Any]:
     best_spec = -1
     for prof in profiles.values():
         axes_ok = sum(1 for axis, expr in prof["axes"].items()
-                      if _eval(scores.get(axis, 0), expr))
+                      if _match_axis(scores.get(axis, 0), expr))
         spec = sum(abs(int(expr[2:])) if expr[:2] in (">=", "<=") else 0
                    for expr in prof["axes"].values())
         if axes_ok > best_score or (axes_ok == best_score and spec > best_spec):

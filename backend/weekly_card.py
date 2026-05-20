@@ -19,6 +19,7 @@ import logging
 import os
 import random
 import re
+import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Literal, Optional
@@ -337,7 +338,9 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
         for e in finalists:
             t = max(1, int(e.get("tickets") or 1))
             pool.extend([e] * t)
-        winner = random.choice(pool)
+        # Raffle winner pick — `secrets.choice` so the draw is
+        # cryptographically unbiased + not predictable from a seeded RNG.
+        winner = secrets.choice(pool)
         winner_doc = {
             "email_hash":     winner["email_hash"],
             "correct_count":  top,
