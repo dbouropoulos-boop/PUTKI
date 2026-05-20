@@ -32,8 +32,8 @@ const SectionTitle = ({ children, sub }) => (
   </div>
 );
 
-const Field = ({ label, value, onChange, multiline, placeholder }) => {
-  const id = `mc-field-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+const Field = ({ label, value, onChange, multiline, placeholder, idScope }) => {
+  const id = `mc-field-${(idScope ? `${idScope}-` : '')}${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   return (
     <label htmlFor={id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <span style={{
@@ -72,7 +72,7 @@ const Row = ({ children, cols = 2 }) => (
   }}>{children}</div>
 );
 
-const LocaleBlock = ({ title, data, defaults, fields, onPatch }) => (
+const LocaleBlock = ({ title, data, defaults, fields, onPatch, scope }) => (
   <div style={{
     background: 'var(--surface, #141210)', border: '1px solid var(--hairline)',
     padding: 18, display: 'flex', flexDirection: 'column', gap: 12,
@@ -83,6 +83,7 @@ const LocaleBlock = ({ title, data, defaults, fields, onPatch }) => (
     }}>{title}</div>
     {fields.map((f) => (
       <Field key={f.key} label={f.label} multiline={f.multiline}
+        idScope={scope}
         value={data?.[f.key] ?? ''}
         placeholder={defaults?.[f.key] ?? ''}
         onChange={(v) => onPatch(f.key, v)} />
@@ -322,9 +323,9 @@ const BackOfficeMittariCopy = () => {
       {/* HERO */}
       <SectionTitle sub="Signals-led headline, killer-stat band, pills, countdown label">HERO</SectionTitle>
       <Row>
-        <LocaleBlock title="FI" data={form.hero?.fi} defaults={D.hero?.fi}
+        <LocaleBlock title="FI" scope="hero-fi" data={form.hero?.fi} defaults={D.hero?.fi}
           fields={HERO_FIELDS} onPatch={(k, v) => patchLocale('hero', 'fi', k, v)} />
-        <LocaleBlock title="EN" data={form.hero?.en} defaults={D.hero?.en}
+        <LocaleBlock title="EN" scope="hero-en" data={form.hero?.en} defaults={D.hero?.en}
           fields={HERO_FIELDS} onPatch={(k, v) => patchLocale('hero', 'en', k, v)} />
       </Row>
       <ResetBtn onClick={() => resetSection('hero')} label="Reset hero to defaults" testid="bo-mc-reset-hero" />
@@ -332,9 +333,9 @@ const BackOfficeMittariCopy = () => {
       {/* GATE */}
       <SectionTitle sub="Both gates share these strings — Telegram primary + email fallback">GATES (hero + final)</SectionTitle>
       <Row>
-        <LocaleBlock title="FI" data={form.gate?.fi} defaults={D.gate?.fi}
+        <LocaleBlock title="FI" scope="gate-fi" data={form.gate?.fi} defaults={D.gate?.fi}
           fields={GATE_FIELDS} onPatch={(k, v) => patchLocale('gate', 'fi', k, v)} />
-        <LocaleBlock title="EN" data={form.gate?.en} defaults={D.gate?.en}
+        <LocaleBlock title="EN" scope="gate-en" data={form.gate?.en} defaults={D.gate?.en}
           fields={GATE_FIELDS} onPatch={(k, v) => patchLocale('gate', 'en', k, v)} />
       </Row>
       <Row>
@@ -352,9 +353,9 @@ const BackOfficeMittariCopy = () => {
       {/* SIGNALS */}
       <SectionTitle sub="The locked numbered list, reveal teaser, sharpness band labels">SIGNALS LIST</SectionTitle>
       <Row>
-        <LocaleBlock title="FI" data={form.signals?.fi} defaults={D.signals?.fi}
+        <LocaleBlock title="FI" scope="signals-fi" data={form.signals?.fi} defaults={D.signals?.fi}
           fields={SIGNALS_FIELDS} onPatch={(k, v) => patchLocale('signals', 'fi', k, v)} />
-        <LocaleBlock title="EN" data={form.signals?.en} defaults={D.signals?.en}
+        <LocaleBlock title="EN" scope="signals-en" data={form.signals?.en} defaults={D.signals?.en}
           fields={SIGNALS_FIELDS} onPatch={(k, v) => patchLocale('signals', 'en', k, v)} />
       </Row>
       <ResetBtn onClick={() => resetSection('signals')} label="Reset signals to defaults" testid="bo-mc-reset-signals" />
