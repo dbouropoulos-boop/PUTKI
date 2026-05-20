@@ -146,6 +146,43 @@ async def fetch_kick_live(db) -> Dict[str, Any]:
         return payload
 
 
+# Long-lived in-memory cache for @handle → UC channelId resolution.
+# YouTube channel IDs are immutable, so we cache forever per process.
+_youtube_handle_cache: Dict[str, Optional[str]] = {}
+
+
+async def _resolve_youtube_handle(handle_or_id: str, api_key: str) -> Optional[str]:
+    """Resolve a YouTube channel reference (UC… id, @handle, or legacy
+    username) to a canonical UC channelId. Returns None on miss.
+    Cached for the process lifetime since channel IDs don't change."""
+    if not handle_or_id:
+        return None
+    raw = handle_or_id.strip()
+    # Already a UC channel id — no resolution needed.
+    if raw.startswith("UC") and len(raw) >= 20:
+        return raw
+    if raw in _youtube_handle_cache:
+        return _youtube_handle_cache[raw]
+
+    handle = raw if raw.startswith("@") else f"@{raw.lstrip('@')}"
+    params = {"part": "id", "forHandle": handle, "key": api_key}
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as http:
+            r = await http.get("https://www.googleapis.com/youtube/v3/channels", params=params)
+            if r.status_code != 200:
+                _youtube_handle_cache[raw] = None
+                return None
+            data = r.json()
+    except Exception:
+        _youtube_handle_cache[raw] = None
+        return None
+
+    items = data.get("items") or []
+    cid = items[0].get("id") if items else None
+    _youtube_handle_cache[raw] = cid
+    return cid
+
+
 async def _fetch_youtube_live(channel_id: str, api_key: str) -> Optional[Dict[str, Any]]:
     try:
         async with httpx.AsyncClient(timeout=8.0) as http:
@@ -209,16 +246,30 @@ async def fetch_youtube_live(db) -> Dict[str, Any]:
         except Exception:
             streamers = []
 
-        channel_ids = [
-            (s.get("channel") or "")
+        # Collect every active YouTube streamer's `channel` field (UC… ids,
+        # @handles, and legacy usernames all accepted) and resolve @handles
+        # to canonical UC ids before hitting the live search endpoint.
+        raw_refs = [
+            (s.get("channel") or "").strip()
             for s in streamers
-            if (s.get("platform") or "").lower() == "youtube"
-            and (s.get("channel") or "").startswith("UC")
+            if (s.get("platform") or "").lower() == "youtube" and (s.get("channel") or "").strip()
         ]
+        if not raw_refs:
+            payload = {"streamers": [], "platform": "youtube", "count": 0,
+                       "dormant": False, "reason": "no_youtube_streamers_in_registry",
+                       "fetched_at": _now()}
+            _store("youtube", payload)
+            return payload
+
+        resolved = await asyncio.gather(
+            *[_resolve_youtube_handle(ref, api_key) for ref in raw_refs],
+            return_exceptions=True,
+        )
+        channel_ids = [c for c in resolved if isinstance(c, str) and c.startswith("UC")]
 
         if not channel_ids:
             payload = {"streamers": [], "platform": "youtube", "count": 0,
-                       "dormant": False, "reason": "no_youtube_streamers_in_registry",
+                       "dormant": True, "reason": "youtube_handles_unresolved",
                        "fetched_at": _now()}
             _store("youtube", payload)
             return payload

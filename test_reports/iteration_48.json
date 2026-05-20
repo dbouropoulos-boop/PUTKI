@@ -1,0 +1,22 @@
+{
+  "summary": "Iter48 verification of orphan-startup fix. All four data-pipeline regressions are RESOLVED. Background workers are running (live-stats: twitch_live=98, articles_published_today=10, latest_update_at ~3min fresh). Kick + YouTube degrade gracefully to dormant:true with correct reason codes (HTTP 200, no 5xx). /voita renders 2 active raffles (Tappara-Kärpät, KuPS-HJK) with the correct 'Bet smarter…' headline and Featured icehockey card. Homepage Voita explore block shows 'VOITA · LIVE / Predict the winner / PLAY →' (no 'Coming soon' fallback). Regression endpoints (notify-winner idempotent, /admin/leads/funnel 6-stage, /mestari copy + diagnostics) all healthy. iter48 ast-regression tests pass.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+  "test_report_links": [
+    "/app/backend/tests/test_iter48_startup_workers.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py is very large (>3600 lines). Consider modularising the startup-event bootstrap (seed_*, start_layer2_workers, dispatch loop, scheduler) into a dedicated bootstrap module — this kind of orphan-indent regression is exactly the failure mode that surfaces in monolithic files.",
+    "iter48 ast-based test_iter48_startup_workers.py is a solid regression lock; recommend extending the same guard to dispatch_worker_loop / scheduler_worker_loop owners so any future re-indent is caught immediately.",
+    "live-stats reports news_articles_today=0 while articles_published_today=10. Worth confirming the news_ticker poller is actually emitting into news_ticker_items today; either the metric label is misleading or the RSS classifier is not surfacing items above the relevance threshold. Not blocking iter48 but worth a glance."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "X-Admin-Token: putki-hq-admin (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None — used existing seeded raffles (HJK-Lahti paid, TPS-Ilves paid, Tappara-Kärpät open, KuPS-HJK open).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Verified endpoints: GET /api/data/live-stats (fresh), GET /api/streamers/live (Twitch live + ?platform=kick dormant:kick_api_blocked + ?platform=youtube dormant:youtube_handles_unresolved, all 200), GET /api/voita/raffles (5 items incl. 2 open), GET /api/settings/public (voita_feature_enabled:true), POST /api/admin/voita/raffles/{id}/notify-winner (idempotent — returns already_notified:true on second call), GET /api/admin/leads/funnel (6-stage funnel), GET /api/mestari/copy + /api/mestari/diagnostic/{poker|blackjack}/meta (200). Note: notify-winner lives at /api/admin/voita/... not /api/back-office/voita/... despite the review_request wording.",
+  "rca_of_the_issue": "Root cause (already fixed by main agent): the seed + Layer 2 worker spawn + dispatch + scheduler block was orphan-indented INSIDE admin_voita_import_odds() AFTER its return statement, making every background worker permanently unreachable. Fix: wrapped the block in a proper @app.on_event('startup') async function (server.py ~line 3653) and added @handle → UC channelId resolution in multi_platform_live.py:_resolve_youtube_handle. Reproduction lock landed in tests/test_iter48_startup_workers.py (AST asserts startup_event is top-level with the decorator and that the bootstrap calls do NOT leak into admin_voita_import_odds). Both regression tests PASS."
+}

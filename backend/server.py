@@ -3649,7 +3649,13 @@ async def admin_voita_import_odds(raffle_id: str, _: bool = Depends(require_admi
     return {"ok": True, "match_meta": meta}
 
 
-
+@app.on_event("startup")
+async def startup_event():
+    """Startup: seed data, ensure indexes, kick off background workers.
+    Previously this block was orphaned inside `admin_voita_import_odds`
+    (unreachable after the function's `return`) which silently killed all
+    Layer 2 pollers, the news scheduler, and the dispatch worker.
+    """
     try:
         await seed_default_guidelines(db)
     except Exception:
