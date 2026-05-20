@@ -1,0 +1,34 @@
+{
+  "summary": "Iter42 — /mestari rebuilt landing page fully verified. BACKEND: 9/9 sprint_a_mestari_voita regression PASS (source='mestari' tags surface=mestari_landing + consent_tag=mestari_lead; source missing/empty/invalid defaults to voita; raffle entry confidence/contact_channel/pending_id all persist & validate). FRONTEND: All 32 required data-testid attributes present on landing surface (mestari-landing, hero-eyebrow/headline/positioning/cta, cred-0..3, method-intro + method-0..3, stack-0..2, step-0..2, clarity-is/isnt, team, faq-0..3, final-cta, final-cta-btn, footer-disclaimer, footer-home, header-home, lang-toggle). FI/EN toggle flips headline between 'Millainen analyytikko sinä olet?' and 'What kind of analyst are you?' as required. Hero CTA + Final CTA both launch quiz shell (mestari-quiz-shell + mestari-q-title render). Quiz exit returns to mestari-landing. Full happy-path completed end-to-end: 5 questions answered with auto-advancing zinger (2s), tease renders with mestari-profile-name + locked-content card, tease-continue → gate → fill email TEST_iter42_e2e_<ts>@example.com + check rules → submit → confirm screen renders with mestari-confirm-ps (FI: 'PS — Putki HQ julkaisee myös päivittäiset markkinasignaalit. Katso tänään →') and mestari-confirm-home (href=/). peluuri.fi anchor present in footer disclaimer with https://peluuri.fi. Mobile @390px: horizontal overflow=0, cred-grid becomes 2x2 (195px × 2 per row), method-grid stacks to 1col (340px), no layout breakage observed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/mestari landing default language", "issues": ["After localStorage.clear() the page initialised in EN rather than FI, despite the brief stating 'page UI copy is Finnish primary'. This is shared LanguageContext behaviour (likely persists last-used lang from other routes / no FI-default-on-mestari). Not blocking — toggle works correctly. Consider forcing FI as the default for /mestari cold-traffic entry since Meta ads target FI audience."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint_a_mestari_voita.py",
+    "/app/test_reports/pytest/iter42_sprint_a.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (only used by sprint_a fixture to toggle voita_feature_enabled=true).",
+  "action_items": [
+    "(Optional/UX) Consider initialising LanguageContext to 'fi' on /mestari route for cold-traffic FI audience, OR rely on browser Accept-Language. Currently defaults to whatever was last persisted in localStorage (EN observed after clear). The toggle UX itself is correct."
+  ],
+  "critical_code_review_comments": [
+    "Mestari.jsx is 1130 lines — exceeds the 700-line guideline. Recommend extracting MestariLanding (lines 292-647), QuizFlow (lines 893-957), and the COPY bundle (lines 52-263) into separate files (e.g. /pages/Mestari/Landing.jsx, /pages/Mestari/QuizFlow.jsx, /pages/Mestari/copy.js). Current single-file is functionally correct but hurts maintainability.",
+    "Inline-style design tokens object T={...} is duplicated in spirit across the file. Could be hoisted to a small theme module that other Mestari sub-pages can share.",
+    "useDocumentMeta canonical uses BACKEND (REACT_APP_BACKEND_URL) — this is the API base URL, not a public site URL. The canonical should be the public site origin. Currently produces canonical=https://pelisignaali-fi.preview.emergentagent.com/mestari which works here because preview happens to share host, but in production with a split api host it would be wrong. Minor SEO concern.",
+    "Hero CTA + Final CTA share onClick={onStart} → identical behaviour (good DRY). Quiz exit fully resets state (qIdx, answers, profile, email, rules, error) — correct.",
+    "afterZinger() uses an async fetch but does not handle a hung resolve endpoint — only sets profile=null on catch. Profile-tease loading spinner has no timeout. Low risk since endpoint is stable, but a 10s timeout + retry would harden cold-traffic UX.",
+    "All 32 data-testids verified present and unique. Naming convention is consistent (mestari-*). Good test hygiene."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (9/9 sprint_a regression PASS)", "frontend": "100% (landing renders, all testids, toggle, both CTAs, quiz happy-path, mobile responsive — all PASS)"},
+  "seed_data_creation": "TEST_iter35_*@example.com (backend pytest) + TEST_iter42_e2e_<ts>@example.com (frontend submit). Both prefixed for cleanup. No production data touched.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter42 /mestari rebuilt landing is functionally complete. 8-section premium dark theme intro (hero/cred/method/stack/steps/clarity/team/faq/final-cta/footer) verified by 32 data-testids. Diagnostic quiz logic UNCHANGED — full happy path (5 questions → 5 zingers auto-advance @2s → tease → email gate → confirm with PS line + back-to-home) works. Backend source='mestari' lead capture persists to optin_consents with surface=mestari_landing/consent_tag=mestari_lead. peluuri.fi link present in footer disclaimer. Mobile @390px clean. Only non-blocking observation: page may default to EN on first visit due to shared LanguageContext (toggle still works).",
+  "rca of the issue": "n/a — no functional regressions."
+}
