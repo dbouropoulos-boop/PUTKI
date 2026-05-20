@@ -32,7 +32,8 @@ import hmac
 import json
 import logging
 import os
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: N817 — kept for ParseError type ref
+from defusedxml.ElementTree import fromstring as _safe_xml_fromstring
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
@@ -119,7 +120,9 @@ def _verify_youtube_pubsub(secret: str, request: Request, body: bytes) -> Tuple[
 def _extract_yt_video_ids(atom_xml: bytes) -> list:
     ns = {"atom": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015"}
     try:
-        root = ET.fromstring(atom_xml)
+        # defusedxml refuses billion-laugh / external-entity attacks before
+        # the parser ever sees the payload (bandit B314).
+        root = _safe_xml_fromstring(atom_xml)
     except ET.ParseError:
         return []
     out = []

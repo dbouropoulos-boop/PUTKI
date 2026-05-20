@@ -114,7 +114,9 @@ async def remove_from_blocklist(db, domain: str) -> bool:
 
 # ── Cache helpers ─────────────────────────────────────────────────────────
 def _cache_key(url: str) -> str:
-    return hashlib.sha1(url.encode("utf-8")).hexdigest()[:16]
+    # SHA1 used solely as a content-addressed cache key (URL → filename).
+    # Not security-sensitive — `usedforsecurity=False` silences bandit B324.
+    return hashlib.sha1(url.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
 
 
 def _public_url(cache_key: str) -> str:
