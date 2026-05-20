@@ -55,7 +55,7 @@ const LockIcon = ({ size = 16 }) => (
   </svg>
 );
 
-const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLang }) => {
+const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLang, compact = false }) => {
   const { lang: ctxLang } = useLang();
   const lang = propLang || ctxLang;
   const isEn = lang === 'en';
@@ -68,6 +68,10 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
     headUnlockedEyebrow: sc.head_unlocked_eyebrow || (isEn ? '— DAILY SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU'),
     titleLead: sc.title_lead || (isEn ? 'Today\u2019s' : 'Päivän'),
     titleEm: sc.title_em || (isEn ? 'Signals' : 'Signaalit'),
+    previewBadge: sc.preview_badge || (isEn ? 'PREVIEW' : 'ESIKATSELU'),
+    previewExplainer: sc.preview_explainer || (isEn
+      ? 'Example rows — real picks unlock for subscribers at 09:00.'
+      : 'Esimerkkirivit — todelliset poiminnat avautuvat tilaajille klo 09:00.'),
     marketQuietEyebrow: sc.market_quiet_eyebrow || (isEn ? 'MARKET QUIET RIGHT NOW' : 'MARKKINA HILJAINEN JUURI NYT'),
     marketQuietBody: sc.market_quiet_body || (isEn
       ? 'Tomorrow 09:00 we drop the next five. Subscribe and you\u2019ll get the first one the moment the market opens it up.'
@@ -100,7 +104,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
     return () => { stop = true; clearInterval(id); };
   }, []);
 
-  const picks = useMemo(() => {
+  const realPicks = useMemo(() => {
     const raw = (payload?.picks || []).slice(0, 5);
     return raw.map((p, i) => ({
       n: String(i + 1).padStart(2, '0'),
@@ -115,8 +119,25 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
       sharpness: (p.sharpness && p.sharpness.sharpness) || 0,
       kickoff: p.commence_time,
       isFirst: i === 0,
+      isPlaceholder: false,
     }));
   }, [payload]);
+
+  // Locked = visible shape, never an empty box. When the upstream Odds
+  // API has nothing for us right now (dormant key, between days, off-
+  // season), we still render 5 placeholder rows with PLAUSIBLE shape so
+  // the user reads "locked" — never "broken / empty". Subtle 'preview'
+  // badge keeps it honest. Replaced the moment real picks land.
+  const PLACEHOLDER_ROWS = useMemo(() => ([
+    { n: '01', sport: 'NHL',     sportIcon: '🏒', sharpness: 84, impliedProb: 71, kickoff: null, isFirst: true,  isPlaceholder: true },
+    { n: '02', sport: 'EPL',     sportIcon: '⚽', sharpness: 78, impliedProb: 64, kickoff: null, isFirst: false, isPlaceholder: true },
+    { n: '03', sport: 'UCL',     sportIcon: '⚽', sharpness: 71, impliedProb: 58, kickoff: null, isFirst: false, isPlaceholder: true },
+    { n: '04', sport: 'Liiga',   sportIcon: '🏒', sharpness: 65, impliedProb: 54, kickoff: null, isFirst: false, isPlaceholder: true },
+    { n: '05', sport: 'Bundesliga', sportIcon: '⚽', sharpness: 58, impliedProb: 49, kickoff: null, isFirst: false, isPlaceholder: true },
+  ]), []);
+
+  const picks = realPicks.length === 5 ? realPicks : PLACEHOLDER_ROWS;
+  const showPreviewBadge = picks === PLACEHOLDER_ROWS;
 
   const dateStr = useMemo(() => {
     const d = new Date();
@@ -130,89 +151,99 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
     return `${wd.charAt(0).toUpperCase() + wd.slice(1)} ${d.getDate()}. ${months[d.getMonth()]} · 09:00`;
   }, [isEn]);
 
-  // Show a quiet-market sentence rather than '—' placeholders when the
-  // upstream Odds API has nothing to show. Honesty principle.
-  if (!loading && picks.length === 0) {
-    return (
-      <section data-testid="mittari-signals" style={{ padding: '40px 0' }}>
-        <div data-testid="mittari-signals-empty" style={{
-          background: 'var(--surface, #141210)',
-          border: '1px dashed var(--hairline)',
-          padding: '40px 28px', textAlign: 'center',
-        }}>
-          <div style={{
-            fontFamily: 'ui-monospace, monospace', fontSize: 10,
-            letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
-            marginBottom: 12,
-          }}>{t.marketQuietEyebrow}</div>
-          <p style={{
-            fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.4,
-            color: 'var(--ink)', margin: 0, maxWidth: 520, marginInline: 'auto',
-          }}>{t.marketQuietBody}</p>
-        </div>
-      </section>
-    );
-  }
+  // (Empty state removed — placeholder rows above guarantee shape is
+  // always visible. The page never renders a bare "no picks" box.)
+
+  // Compact mode skips the standalone title block — the parent (hero)
+  // owns the connective sentence so the user sees wheel + tips paired
+  // in one eyeful.
+  const showHeader = !compact;
 
   return (
-    <section data-testid="mittari-signals" style={{ padding: '40px 0' }}>
-      <div className="ms-head" style={{
-        display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
-        gap: 24, marginBottom: 26, flexWrap: 'wrap',
-      }}>
-        <div>
-          <div style={{
-            fontFamily: 'ui-monospace, monospace', fontSize: 10,
-            letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
-            marginBottom: 10,
-          }}>{unlocked ? t.headUnlockedEyebrow : t.headLockedEyebrow}</div>
-          <h2 data-testid="mittari-signals-title" style={{
-            fontFamily: 'Georgia, serif', fontSize: 'clamp(34px, 4.5vw, 48px)',
-            lineHeight: 1, letterSpacing: '-0.02em', fontWeight: 400, margin: 0,
-          }}>{t.titleLead}{' '}
-            <em style={{ color: '#E89248', fontStyle: 'italic' }}>{t.titleEm}</em>
-          </h2>
-          <div style={{
-            marginTop: 8, fontFamily: 'ui-monospace, monospace', fontSize: 11,
-            letterSpacing: '0.10em', color: 'var(--muted)',
-            textTransform: 'uppercase',
-          }}>{dateStr}</div>
+    <section data-testid="mittari-signals" data-compact={compact ? '1' : '0'}
+      style={{ padding: compact ? 0 : '40px 0' }}>
+      {showHeader && (
+        <div className="ms-head" style={{
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+          gap: 24, marginBottom: 26, flexWrap: 'wrap',
+        }}>
+          <div>
+            <div style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
+              letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
+              marginBottom: 10,
+            }}>{unlocked ? t.headUnlockedEyebrow : t.headLockedEyebrow}</div>
+            <h2 data-testid="mittari-signals-title" style={{
+              fontFamily: 'Georgia, serif', fontSize: 'clamp(34px, 4.5vw, 48px)',
+              lineHeight: 1, letterSpacing: '-0.02em', fontWeight: 400, margin: 0,
+            }}>{t.titleLead}{' '}
+              <em style={{ color: '#E89248', fontStyle: 'italic' }}>{t.titleEm}</em>
+            </h2>
+            <div style={{
+              marginTop: 8, fontFamily: 'ui-monospace, monospace', fontSize: 11,
+              letterSpacing: '0.10em', color: 'var(--muted)',
+              textTransform: 'uppercase',
+            }}>{dateStr}</div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {showPreviewBadge && (
+        <div data-testid="mittari-signals-preview-badge" style={{
+          display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+          fontFamily: 'ui-monospace, monospace', fontSize: 10,
+          letterSpacing: '0.18em', color: 'var(--muted)',
+        }}>
+          <span style={{
+            background: 'rgba(232,146,72,0.12)', color: '#E89248',
+            border: '1px solid rgba(232,146,72,0.4)',
+            padding: '3px 9px', fontWeight: 800, letterSpacing: '0.22em',
+          }}>{t.previewBadge}</span>
+          <span style={{ flex: 1, minWidth: 0 }}>{t.previewExplainer}</span>
+        </div>
+      )}
 
       <div data-testid="mittari-signals-list" style={{
         display: 'flex', flexDirection: 'column', gap: 1,
         background: 'var(--hairline)', border: '1px solid var(--hairline)',
       }}>
         {picks.map((s) => {
-          const opponent = s.side === 'home' ? s.away : s.side === 'away' ? s.home : `${s.home} – ${s.away}`;
-          const pickText = s.side === 'draw'
-            ? `${s.home} – ${s.away} · ${t.drawLabel} @ ${s.odds.toFixed(2)}`
-            : `${s.pickTeam} · ${t.vsLabel} ${opponent} @ ${s.odds.toFixed(2)}`;
+          // Placeholder rows have no team strings; show a generic blurred
+          // pick line + the (real) sport + sharpness shape so it reads
+          // "locked", never "fake".
+          const pickText = s.isPlaceholder
+            ? (isEn ? 'Favourite vs Underdog @ ?.??' : 'Suosikki vs altavastaaja @ ?.??')
+            : (s.side === 'draw'
+                ? `${s.home} – ${s.away} · ${t.drawLabel} @ ${s.odds.toFixed(2)}`
+                : `${s.pickTeam} · ${t.vsLabel} ${s.side === 'home' ? s.away : s.home} @ ${s.odds.toFixed(2)}`);
           // First row unlocks instantly on parent reveal; rows 2-5 require
           // bot confirmation (subsequent server-side flow).
-          const rowUnlocked = unlocked && s.isFirst;
+          const rowUnlocked = unlocked && s.isFirst && !s.isPlaceholder;
           const everUnlocked = unlocked;
+          const rowPadding = compact ? '14px 16px' : '22px 24px';
+          const rowCols = compact
+            ? '36px 1fr 80px 60px 24px'
+            : '52px 1fr 180px 90px 36px';
           return (
             <div key={s.n} data-testid={`mittari-signal-row-${s.n}`} className="ms-row" style={{
               background: 'var(--surface, #141210)',
               display: 'grid',
-              gridTemplateColumns: '52px 1fr 180px 90px 36px',
-              gap: 22, padding: '22px 24px', alignItems: 'center',
+              gridTemplateColumns: rowCols,
+              gap: compact ? 12 : 22, padding: rowPadding, alignItems: 'center',
               ...(s.isFirst ? {
                 borderTop: '1px solid #E89248',
                 borderBottom: '1px solid #E89248',
               } : null),
             }}>
               <span style={{
-                fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                fontFamily: 'ui-monospace, monospace', fontSize: compact ? 10 : 11,
                 letterSpacing: '0.10em',
                 color: s.isFirst ? '#E89248' : 'var(--muted)',
               }}>{s.n}</span>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 4 : 8, minWidth: 0 }}>
                 <div data-testid={`mittari-signal-pick-${s.n}`} style={{
-                  fontFamily: 'Georgia, serif', fontSize: 21, lineHeight: 1.2,
+                  fontFamily: 'Georgia, serif', fontSize: compact ? 16 : 21, lineHeight: 1.2,
                   letterSpacing: '-0.01em',
                   color: rowUnlocked ? '#E89248' : 'var(--ink)',
                   filter: rowUnlocked ? 'none' : 'blur(8px)',
@@ -221,15 +252,17 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
                   overflowWrap: 'anywhere',
                 }}>{pickText}</div>
                 <div style={{
-                  fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                  fontFamily: 'ui-monospace, monospace', fontSize: compact ? 9 : 10,
                   letterSpacing: '0.05em', color: 'var(--muted)',
                   lineHeight: 1.6, textTransform: 'uppercase',
                 }}>
                   <span style={{ color: '#E89248' }}>{s.sport}{s.sportIcon ? ' ' + s.sportIcon : ''}</span>
                   {' · '}
                   <strong style={{ color: '#E89248' }}>{t.confidenceLabel} {Math.round(s.sharpness)} ({sharpnessBand(s.sharpness, sc)})</strong>
-                  {' · '}{t.impliedInline} <strong style={{ color: '#E89248' }}>{Math.round(s.impliedProb)}%</strong>
-                  {' · '}{formatKickoff(s.kickoff, isEn)}
+                  {!compact && (<>
+                    {' · '}{t.impliedInline} <strong style={{ color: '#E89248' }}>{Math.round(s.impliedProb)}%</strong>
+                    {s.kickoff && (<>{' · '}{formatKickoff(s.kickoff, isEn)}</>)}
+                  </>)}
                 </div>
                 {s.isFirst && !everUnlocked && (
                   <div data-testid="mittari-signal-reveal-teaser"
@@ -265,18 +298,20 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
                 }}>{Math.round(s.sharpness)}</span>
               </div>
 
-              <div data-testid={`mittari-signal-hr-${s.n}`}
-                style={{ textAlign: 'right' }}>
-                <div style={{
-                  fontFamily: 'Georgia, serif', fontSize: 21, lineHeight: 1,
-                  color: 'var(--ink)',
-                }}>{Math.round(s.impliedProb)}%</div>
-                <div style={{
-                  marginTop: 4, fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                  letterSpacing: '0.10em', color: 'var(--muted)',
-                  textTransform: 'uppercase',
-                }}>{t.impliedLabel}</div>
-              </div>
+              {!compact && (
+                <div data-testid={`mittari-signal-hr-${s.n}`}
+                  style={{ textAlign: 'right' }}>
+                  <div style={{
+                    fontFamily: 'Georgia, serif', fontSize: 21, lineHeight: 1,
+                    color: 'var(--ink)',
+                  }}>{Math.round(s.impliedProb)}%</div>
+                  <div style={{
+                    marginTop: 4, fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                    letterSpacing: '0.10em', color: 'var(--muted)',
+                    textTransform: 'uppercase',
+                  }}>{t.impliedLabel}</div>
+                </div>
+              )}
 
               <div style={{
                 display: 'flex', justifyContent: 'flex-end',
@@ -284,21 +319,23 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
               }}>
                 {rowUnlocked
                   ? <span style={{ color: '#6BB877', fontFamily: 'ui-monospace, monospace', fontSize: 11 }}>✓</span>
-                  : <LockIcon />}
+                  : <LockIcon size={compact ? 14 : 16} />}
               </div>
             </div>
           );
         })}
       </div>
 
-      <div style={{
-        marginTop: 16, textAlign: 'center',
-        fontFamily: 'ui-monospace, monospace', fontSize: 10,
-        letterSpacing: '0.08em', color: 'var(--muted)',
-      }}>
-        {unlocked ? t.unlockedFoot : `${t.lockedFoot} `}
-        {!unlocked && <span style={{ color: '#E89248' }}>09:00</span>}
-      </div>
+      {!compact && (
+        <div style={{
+          marginTop: 16, textAlign: 'center',
+          fontFamily: 'ui-monospace, monospace', fontSize: 10,
+          letterSpacing: '0.08em', color: 'var(--muted)',
+        }}>
+          {unlocked ? t.unlockedFoot : `${t.lockedFoot} `}
+          {!unlocked && <span style={{ color: '#E89248' }}>09:00</span>}
+        </div>
+      )}
 
       <style>{`
         @media (max-width: 720px) {
