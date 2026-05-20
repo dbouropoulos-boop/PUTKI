@@ -10,12 +10,32 @@
  *   • clear "for entertainment only · no betting" notice
  */
 import React, { useEffect, useState } from 'react';
-import { Gift, Shield, BadgeCheck, Trophy, ArrowDown, Loader2, CheckCircle2 } from 'lucide-react';
+import { Gift, Shield, BadgeCheck, Trophy, Loader2, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import { useLang } from '../context/LanguageContext';
+import SmarticoGame from '../components/SmarticoGame';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
+// Week-1 Smartico game embedded directly on /peli. Same brand/visitor-key
+// pair the user supplied — `template_id` 3383 = Weezy Rally. The win flow
+// hands the visitor straight to Weezybet registration carrying the UUID.
+const WEEZY_RALLY = {
+  template_id: 3383,
+  brand_key: '7f2db034',
+  visitor_key: '9250d6a7-1401-4205-a36b-14caba30b8d9-7',
+  redirect_base: 'https://weezybet.com/register?source=weezy-rally',
+};
+const onWeezyRallyWin = (prize) => {
+  try {
+    const uuid = prize && prize.visitor_win_uuid;
+    const url = uuid
+      ? `${WEEZY_RALLY.redirect_base}&_smartico_visitor_win_uuid=${encodeURIComponent(uuid)}`
+      : WEEZY_RALLY.redirect_base;
+    window.location.href = url;
+  } catch { /* fall back to no-op if window is gone */ }
+};
 
 const RaffleForm = ({ t, onSuccess, disabled }) => {
   const [name, setName] = useState('');
@@ -207,105 +227,66 @@ const Peli = () => {
     return () => { cancelled = true; };
   }, []);
 
-  const scrollToForm = () => {
-    const el = document.getElementById('peli-entry');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   const videos = config?.videos || [
     { id: 'v1' }, { id: 'v2' }, { id: 'v3' },
   ];
   const entryCount = config?.entry_count || 0;
   const enabled = config?.enabled !== false;
-  const prizeLabel = config?.prize_label || '';
-  const prizeAmount = config?.prize_amount;
-  const prizeCurrency = config?.prize_currency || 'EUR';
-  const prizeText = prizeAmount
-    ? `${prizeAmount} ${prizeCurrency === 'EUR' ? '€' : prizeCurrency}${prizeLabel ? ` · ${prizeLabel}` : ''}`
-    : (prizeLabel || (lang === 'en' ? 'To be announced' : 'Julkistetaan pian'));
+  // Raffle prize is now locked editorially to €100 to play on Weezybet —
+  // a clean side prize alongside the main Smartico game-win flow.
+  const prizeText = lang === 'en'
+    ? '€100 to play on Weezybet'
+    : '100 € pelattavaksi Weezybetillä';
 
   return (
     <div data-testid="peli-page">
-      {/* HERO — Phase 1 Final · Voyager-restyled */}
-      <section data-testid="peli-hero" style={{
-        position: 'relative', overflow: 'hidden',
+      {/* GAME-FIRST LANDING — no hero banner. The Weezy Rally Smartico
+          mini-game is the first thing a visitor sees and can play it
+          immediately. Winning redirects to Weezybet registration with
+          the visitor_win_uuid query param so the prize can be credited. */}
+      <section data-testid="peli-game-section" style={{
+        padding: '32px 16px 24px',
+        background: 'var(--bg)',
         borderBottom: '1px solid var(--hairline, #221E1B)',
       }}>
-        {/* Editorial hero photo — Nano Banana slot-reel macro */}
-        <div aria-hidden style={{
-          position: 'absolute', inset: 0, zIndex: 0,
-          backgroundImage: `url('/hero/peli.jpg')`,
-          backgroundSize: 'cover', backgroundPosition: 'right center',
-          filter: 'saturate(0.92)',
-        }} />
-        <div aria-hidden style={{
-          position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.82) 45%, rgba(11,10,9,0.55) 80%, rgba(11,10,9,0.40) 100%)',
-        }} />
-
-        <div style={{
-          position: 'relative', zIndex: 2,
-          maxWidth: 1180, margin: '0 auto', padding: '64px 32px 56px',
-        }}>
-          <div style={{ maxWidth: 760 }}>
-            <span data-testid="peli-eyebrow" style={{
-              color: '#6FA37D',
+        <div style={{ maxWidth: 920, margin: '0 auto' }}>
+          <div data-testid="peli-game-eyebrow" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 12, flexWrap: 'wrap', marginBottom: 14,
+          }}>
+            <span style={{
               fontFamily: 'ui-monospace, monospace', fontSize: 10,
-              letterSpacing: '0.24em', fontWeight: 700,
+              letterSpacing: '0.24em', fontWeight: 700, color: '#6FA37D',
               display: 'inline-flex', alignItems: 'center', gap: 8,
             }}>
               <Gift strokeWidth={1.5} size={12} />
-              PELI · VOYAGER
+              {lang === 'en' ? 'PELI · WEEZY RALLY · PLAY NOW' : 'PELI · WEEZY RALLY · PELAA NYT'}
             </span>
-            <h1 data-testid="peli-title" style={{
-              fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 700,
-              fontSize: 'clamp(40px, 6vw, 72px)', lineHeight: 1.04,
-              letterSpacing: '-0.025em', color: '#FFFFFF',
-              margin: '14px 0 14px',
-            }}>{prizeText}</h1>
-            <p style={{
-              color: 'var(--ink, #ECE6D8)', fontSize: 16, lineHeight: 1.55,
-              maxWidth: 620, margin: '0 0 22px', opacity: 0.92,
-            }}>{t('peli.raffle_subline')}</p>
-
-            <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginBottom: 22 }}>
-              <button
-                type="button"
-                onClick={scrollToForm}
-                data-testid="peli-hero-cta"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 10,
-                  padding: '13px 22px',
-                  background: '#FFFFFF', color: '#0B0A09',
-                  fontFamily: 'ui-monospace, monospace',
-                  fontSize: 11.5, letterSpacing: '0.22em', fontWeight: 700,
-                  border: 'none', cursor: 'pointer', borderRadius: 2,
-                }}
-              >
-                {t('peli.raffle_submit').toUpperCase()}
-                <ArrowDown strokeWidth={2} size={13} />
-              </button>
-              <span data-testid="peli-entry-count" style={{
-                color: 'var(--muted, #9C9587)',
-                fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
-                letterSpacing: '0.16em',
-              }}>
-                {entryCount > 0
-                  ? (lang === 'en' ? `${entryCount} ENTRIES` : `${entryCount} OSALLISTUJAA`)
-                  : (lang === 'en' ? 'OPEN NOW' : 'AUKI NYT')}
-              </span>
-            </div>
-
-            <p data-testid="peli-disclaimer-hero" style={{
-              display: 'inline-block', padding: '7px 12px',
-              fontFamily: 'ui-monospace, monospace',
-              fontSize: 10.5, letterSpacing: '0.20em', fontWeight: 700,
-              color: 'var(--ink, #ECE6D8)',
-              background: 'var(--surface, #141210)',
-              border: '1px solid var(--border-strong, #3A3530)',
-              borderRadius: 2, margin: 0,
-            }}>{t('peli.raffle_disclaimer')}</p>
+            <span style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
+              letterSpacing: '0.18em', fontWeight: 600, color: 'var(--muted)',
+            }}>
+              {lang === 'en' ? 'FREE · NO DEPOSIT · 18+' : 'ILMAINEN · EI TALLETUSTA · 18+'}
+            </span>
           </div>
+          <SmarticoGame
+            template_id={WEEZY_RALLY.template_id}
+            brand_key={WEEZY_RALLY.brand_key}
+            visitor_key={WEEZY_RALLY.visitor_key}
+            lang={(lang || 'fi').toUpperCase()}
+            frame_id="weezy-rally-frame"
+            onWin={onWeezyRallyWin}
+            testid="peli-smartico-frame"
+          />
+          <p data-testid="peli-game-disclaimer" style={{
+            margin: '14px auto 0', maxWidth: 800, textAlign: 'center',
+            fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+            letterSpacing: '0.16em', color: 'var(--muted)', lineHeight: 1.6,
+          }}>
+            {lang === 'en'
+              ? 'Editorial mini-game by Smartico × Weezybet. Win a prize, register at Weezybet to redeem.'
+              : 'Toimituksellinen mini-peli (Smartico × Weezybet). Voita palkinto, rekisteröidy Weezybetille lunastusta varten.'}
+          </p>
         </div>
       </section>
 

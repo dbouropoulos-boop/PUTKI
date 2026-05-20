@@ -13,6 +13,7 @@ import ColdEmailLanding from "@/pages/ColdEmailLanding";
 import Signup from "@/pages/Signup";
 import MiniGame from "@/pages/MiniGame";
 import Peli from "@/pages/Peli";
+import Voyager from "@/pages/Voyager";
 import TietoaMeista from "@/pages/TietoaMeista";
 import WeeklyCard from "@/pages/WeeklyCard";
 import BettingTipsHub from "@/pages/BettingTipsHub";
@@ -67,6 +68,7 @@ function App() {
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
           <Route path="/mestari" element={<Mestari />} />
+          <Route path="/voyager" element={<Voyager />} />
           <Route path="/back-office" element={<BackOffice />} />
           <Route path="/back-office/queue" element={<BackOfficeQueue />} />
           <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
