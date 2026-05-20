@@ -1,20 +1,97 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, X, Globe } from 'lucide-react';
 import StreamerCard from '../components/StreamerCard';
 import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
+const BACKEND = process.env.REACT_APP_BACKEND_URL;
+
 const StreamerIndex = () => {
   const navigate = useNavigate();
   const { t } = useLang();
   const { data: streamers } = useStreamers({ market: 'fi' });
-  // Live state is now sourced from real Twitch/Kick webhooks (Step 2). Until
-  // those are wired with API keys, no streamer is rendered as "live" in this
-  // surface — the entire roster shows as the editorial list and the dedicated
-  // /api/signals/live endpoint surfaces real live streams elsewhere.
-  const live = [];
-  const offline = streamers;
+
+  // Pull real live state across all three platforms. Each call hits the
+  // 60s-cached `/api/streamers/live?platform=...` endpoint so refreshing
+  // this page is cheap. Bogus + blocked platforms quietly contribute zero
+  // — we only surface streamers that are actually live RIGHT NOW.
+  const [livePlatforms, setLivePlatforms] = useState({
+    twitch: { items: [], dormant: false, reason: null },
+    kick:   { items: [], dormant: false, reason: null },
+    youtube:{ items: [], dormant: false, reason: null },
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPlatform = async (p) => {
+      try {
+        const url = p === 'twitch'
+          ? `${BACKEND}/api/streamers/live`
+          : `${BACKEND}/api/streamers/live?platform=${p}`;
+        const r = await fetch(url);
+        if (!r.ok) return;
+        const d = await r.json();
+        if (cancelled) return;
+        setLivePlatforms((prev) => ({
+          ...prev,
+          [p]: {
+            items: d.streamers || [],
+            dormant: !!d.dormant,
+            reason: d.reason || null,
+          },
+        }));
+      } catch { /* noop: live grid degrades to empty */ }
+    };
+    fetchPlatform('twitch');
+    fetchPlatform('kick');
+    fetchPlatform('youtube');
+    return () => { cancelled = true; };
+  }, []);
+
+  // Editorial roster — match liveness by ANY of channel / slug / name
+  // since Twitch login often diverges from our registered handle
+  // (e.g. registry `andypyro` ↔ live `officialandypyro`, registry
+  // `pact_` ↔ live `pact`). Permissive containment matching catches
+  // those without admin churn.
+  const rosterIds = streamers
+    .map((s) => ({
+      slug: (s.slug || '').toLowerCase(),
+      channel: (s.channel || '').toLowerCase(),
+      name: (s.name || '').toLowerCase(),
+    }))
+    .filter((r) => r.slug || r.channel || r.name);
+
+  const _matchRoster = (login, displayName) => {
+    const a = (login || '').toLowerCase().replace(/_+$/, '');
+    const b = (displayName || '').toLowerCase();
+    if (!a && !b) return false;
+    return rosterIds.some((r) => {
+      const cands = [r.slug, r.channel, r.name].filter(Boolean);
+      return cands.some((c) => {
+        const cc = c.replace(/_+$/, '');
+        return cc === a || cc === b || (cc.length >= 4 && (a.includes(cc) || b.includes(cc) || (a && cc.includes(a)) || (b && cc.includes(b))));
+      });
+    });
+  };
+
+  const liveAll = [
+    ...livePlatforms.twitch.items.map((it) => ({ ...it, _platform: 'twitch' })),
+    ...livePlatforms.kick.items.map((it) => ({ ...it, _platform: 'kick' })),
+    ...livePlatforms.youtube.items.map((it) => ({ ...it, _platform: 'youtube' })),
+  ];
+  const liveCovered = liveAll
+    .filter((it) => _matchRoster(it.user_login, it.user_name))
+    .sort((a, b) => (b.viewer_count || 0) - (a.viewer_count || 0));
+
+  // Build the offline list = registry minus what's currently live.
+  const liveLoginsSet = new Set(liveCovered.map((it) => (it.user_login || '').toLowerCase()));
+  const liveNamesSet = new Set(liveCovered.map((it) => (it.user_name || '').toLowerCase()));
+  const offline = streamers.filter((s) => {
+    const a = (s.channel || s.slug || '').toLowerCase();
+    const n = (s.name || '').toLowerCase();
+    return !liveLoginsSet.has(a) && !liveNamesSet.has(n);
+  });
 
   const [submitOpen, setSubmitOpen] = useState(false);
   const [submitDone, setSubmitDone] = useState(false);
@@ -37,6 +114,14 @@ const StreamerIndex = () => {
         <div className="max-w-3xl">
           <div className="eyebrow mb-4">
             {t('streamer.eyebrow')} · <span className="mono">{streamers.length}</span> {t('common.streamers').toUpperCase()}
+            {liveCovered.length > 0 && (
+              <>
+                {' · '}
+                <span className="mono" data-testid="streamer-index-live-count" style={{ color: '#C13B2C' }}>
+                  ● {liveCovered.length} LIVE NOW
+                </span>
+              </>
+            )}
           </div>
           <h1 className="display text-4xl sm:text-6xl mb-5">{t('streamer.title')}</h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
@@ -55,18 +140,51 @@ const StreamerIndex = () => {
         </div>
       </section>
 
-      {live.length > 0 && (
-        <section className="py-10 sm:py-12" style={{ borderTop: '1px solid var(--border)' }}>
+      {liveCovered.length > 0 && (
+        <section className="py-10 sm:py-12" style={{ borderTop: '1px solid var(--border)' }} data-testid="streamer-index-live-strip">
           <div className="container-wide">
             <div className="flex items-baseline gap-3 mb-6">
               <span className="led mt-1"></span>
               <h2 className="display text-2xl sm:text-3xl">
-                {t('common.live_now')} · <span className="mono" style={{ fontWeight: 500 }}>{live.length}</span>
+                {t('common.live_now')} · <span className="mono" style={{ fontWeight: 500 }}>{liveCovered.length}</span>
               </h2>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {live.map((s) => (
-                <StreamerCard key={s.slug} streamer={s} />
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: 12,
+            }}>
+              {liveCovered.map((it) => (
+                <a
+                  key={`${it._platform}-${it.user_login}`}
+                  href={it.profile_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid={`live-tile-${it._platform}-${it.user_login}`}
+                  style={{
+                    display: 'flex', flexDirection: 'column', gap: 6,
+                    padding: '12px 14px',
+                    border: '1px solid var(--border)',
+                    borderLeft: '3px solid #C13B2C',
+                    background: 'var(--surface)',
+                    textDecoration: 'none',
+                  }}
+                >
+                  <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase' }}>
+                    {it._platform} · {(it.game_name || '—').toString().slice(0, 24)}
+                  </div>
+                  <div className="display" style={{ color: 'var(--ink)', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>
+                    {it.user_name || it.user_login}
+                  </div>
+                  <div className="font-serif" style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {it.title || '—'}
+                  </div>
+                  {typeof it.viewer_count === 'number' && (
+                    <div className="mono" style={{ fontSize: 10, color: '#C13B2C', fontWeight: 700, letterSpacing: '0.12em', marginTop: 2 }}>
+                      ● {it.viewer_count.toLocaleString()} VIEWERS
+                    </div>
+                  )}
+                </a>
               ))}
             </div>
           </div>

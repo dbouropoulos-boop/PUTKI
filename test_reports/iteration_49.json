@@ -1,0 +1,26 @@
+{
+  "summary": "Iter49 polish verification — all 3 deliverables green. (1) Back-office grouped index renders 3 sections (content/leads/ops) with 21 tiles total, every tile carries label+description and preserves its original back-office-link-* testid. Settings form (back-office-settings-form) sits below the index and save button remains functional. (2) Extended iter48 ast-guard (must_be_in_startup now includes feed_worker_loop / dispatch_worker_loop / scheduler_worker_loop / variant_filler_worker_loop / seed_default_cadences / seed_tracked_sources) — both tests PASS. (3) /striimaajat wired to live /api/streamers/live × 3 platforms with permissive matching: live 'officialandypyro' correctly matched registry 'andypyro' → live strip shows '● 1 LIVE NOW' and renders [data-testid=live-tile-twitch-officialandypyro]. Offline grid shows 140 streamer cards (full roster). /uutiset still loads cleanly with load-more + no errors.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": { "ui_bugs": [], "integration_issues": [], "design_issues": [] },
+  "test_report_links": [
+    "/app/backend/tests/test_iter48_startup_workers.py",
+    "/app/backend/tests/test_iter46_backoffice_complete.py",
+    "/app/backend/tests/test_iter47_notify_winner_funnel.py",
+    "/app/backend/tests/test_sprint_a_mestari_voita.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BackOffice.jsx — INDEX_GROUPS is a static module-level constant; if more sections are added the grid `gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))'` will still scale, but consider extracting <BackOfficeIndex/> to its own file once a 4th group lands (file is ~370 lines today, still healthy).",
+    "StreamerIndex.jsx — `_matchRoster` containment check uses substring with `cc.length >= 4`. Edge case: a registry slug 'pact' (4 chars) will permissively match any live login containing 'pact' (e.g. hypothetical 'impactor'). Acceptable for current roster but worth a quick allow-list if false positives appear.",
+    "StreamerIndex.jsx — useEffect dependency array is empty so live data is only fetched on mount. If user keeps the tab open for hours, the LIVE strip will go stale until a navigation/refresh. Consider a 60s setInterval refresh to match the backend cache TTL.",
+    "Backend ast guard is solid; recommend one more assertion: also fail if any of the bootstrap symbols are referenced from a top-level expression statement (not a call). That would catch a 'lambda: feed_worker_loop' style re-orphan."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "100% (29 passed, 1 skipped)", "frontend": "100% (4/4 polish items verified)" },
+  "test_credentials": "X-Admin-Token: putki-hq-admin (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None — relied on live Twitch (officialandypyro live during run) + dormant kick/youtube.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Verified endpoints: GET/PUT /api/admin/settings 200, GET /api/streamers/live + ?platform=kick (dormant:kick_api_blocked) + ?platform=youtube (dormant:youtube_handles_unresolved) all 200. AST guard test_iter48_startup_workers.py 2/2 PASS with the extended must_be_in_startup set. Frontend /back-office grouped index uses data-testid back-office-group-{content|leads|ops}; all 21 original back-office-link-* testids preserved. /striimaajat live tile testid pattern is live-tile-{platform}-{user_login}. /uutiset unchanged & healthy. iter46+iter47+sprint_a+iter48 = 29 passed, 1 skipped (expected). Mocked: Resend email dispatch only.",
+  "rca_of_the_issue": "n/a — this iteration was 3 polish items, not a bug fix."
+}

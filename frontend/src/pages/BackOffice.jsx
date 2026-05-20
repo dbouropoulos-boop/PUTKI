@@ -131,34 +131,20 @@ const BackOffice = () => {
   return (
     <div className="min-h-screen px-5 py-12" style={{ background: 'var(--bg)' }}>
       <div className="container-narrow">
-        <div className="flex items-baseline justify-between mb-2">
+        <div className="flex items-baseline justify-between mb-2 gap-3 flex-wrap">
           <div className="eyebrow">PUTKI HQ · BACK OFFICE</div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link to="/back-office/queue" className="btn-ghost" data-testid="back-office-link-queue">QUEUE →</Link>
-            <Link to="/back-office/weekly" className="btn-ghost" data-testid="back-office-link-weekly">WEEKLY CARD →</Link>
-            <Link to="/back-office/peli" className="btn-ghost" data-testid="back-office-link-peli">PELI →</Link>
-            <Link to="/back-office/operators" className="btn-ghost" data-testid="back-office-link-operators">OPERATORS →</Link>
-            <Link to="/back-office/streamers" className="btn-ghost" data-testid="back-office-link-streamers">STREAMERS →</Link>
-            <Link to="/back-office/streamer-meta" className="btn-ghost" data-testid="back-office-link-streamer-meta">STREAMER META →</Link>
-            <Link to="/back-office/slot-registry" className="btn-ghost" data-testid="back-office-link-slot-registry">SLOT REGISTRY →</Link>
-            <Link to="/back-office/optin-segments" className="btn-ghost" data-testid="back-office-link-optin-segments">OPT-IN SEGMENTS →</Link>
-            <Link to="/back-office/voita" className="btn-ghost" data-testid="back-office-link-voita">VOITA RAFFLES →</Link>
-            <Link to="/back-office/voita-quiz" className="btn-ghost" data-testid="back-office-link-voita-quiz">VOITA HERO + QUIZ →</Link>
-            <Link to="/back-office/mittari-copy" className="btn-ghost" data-testid="back-office-link-mittari-copy">MITTARI COPY →</Link>
-            <Link to="/back-office/mestari-copy" className="btn-ghost" data-testid="back-office-link-mestari-copy">MESTARI COPY →</Link>
-            <Link to="/back-office/voyager" className="btn-ghost" data-testid="back-office-link-voyager">VOYAGER ROTATION →</Link>
-            <Link to="/back-office/playbook" className="btn-ghost" data-testid="back-office-link-playbook">PLAYBOOK + EMAIL QUEUE →</Link>
-            <Link to="/back-office/leads" className="btn-ghost" data-testid="back-office-link-leads">LEADS LIFECYCLE →</Link>
-            <Link to="/back-office/email-templates" className="btn-ghost" data-testid="back-office-link-email-templates">EMAIL + TG TEMPLATES →</Link>
-            <Link to="/back-office/mestari-diagnostics-copy" className="btn-ghost" data-testid="back-office-link-mestari-diag-copy">MESTARI DIAG. COPY →</Link>
-            <Link to="/back-office/dispatch-preview" className="btn-ghost" data-testid="back-office-link-dispatch-preview">DISPATCH PREVIEW →</Link>
-            <Link to="/back-office/webhooks" className="btn-ghost" data-testid="back-office-link-webhooks">WEBHOOKS →</Link>
-            <Link to="/back-office/telegram" className="btn-ghost" data-testid="back-office-link-telegram">TELEGRAM BOT →</Link>
-            <Link to="/back-office/foundational-research" className="btn-ghost" data-testid="back-office-link-research">RESEARCH →</Link>
-            <Link to="/" className="btn-ghost">← Back to site</Link>
-          </div>
+          <Link to="/" className="btn-ghost" data-testid="back-office-back-home">← Back to site</Link>
         </div>
-        <h1 className="display text-3xl sm:text-4xl mb-8" style={{ color: 'var(--ink)' }}>Site settings</h1>
+        <h1 className="display text-3xl sm:text-4xl mb-2" style={{ color: 'var(--ink)' }}>Operations</h1>
+        <p className="font-serif mb-10" style={{ color: 'var(--muted)', fontSize: 14.5, lineHeight: 1.55, maxWidth: 640 }}>
+          Compose, monitor and ship every public surface. Pick a section below — or scroll past the index for global site settings.
+        </p>
+
+        <BackOfficeIndex />
+
+        <div className="mt-14" style={{ borderTop: '1px solid var(--border)', paddingTop: 36 }}>
+          <div className="eyebrow mb-2">GLOBAL · SITE SETTINGS</div>
+          <h2 className="display text-2xl mb-6" style={{ color: 'var(--ink)' }}>Telegram channel + Smartico embed</h2>
 
         <form onSubmit={handleSave} className="panel p-7 space-y-5" data-testid="back-office-settings-form">
           <div>
@@ -264,6 +250,7 @@ const BackOffice = () => {
             )}
           </button>
         </form>
+        </div>
 
         <div className="mono mt-8" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 600 }}>
           P*RKELE-PISTE 100 / 100 · PUTKI HQ 2026
@@ -272,5 +259,114 @@ const BackOffice = () => {
     </div>
   );
 };
+
+// ── Back-office grouped index ─────────────────────────────────────────
+// 3 themed columns so admins can scan-find instead of scan-read.
+// Each tile preserves its original data-testid (`back-office-link-*`) so
+// regression tests and deep-links keep working.
+
+const INDEX_GROUPS = [
+  {
+    key: 'content',
+    title: 'Content',
+    eyebrow: 'COPY · DRAFTS · DISPATCH',
+    accent: '#5B8DEE',
+    tiles: [
+      { to: '/back-office/mittari-copy',              testid: 'back-office-link-mittari-copy',          label: 'Mittari copy',           desc: 'Every line on /mittari — hero, signals, founder, FAQ.' },
+      { to: '/back-office/mestari-copy',              testid: 'back-office-link-mestari-copy',          label: 'Mestari copy',           desc: 'Sports diagnostic landing — 8 sections, FI + EN.' },
+      { to: '/back-office/mestari-diagnostics-copy',  testid: 'back-office-link-mestari-diag-copy',     label: 'Mestari diagnostics',    desc: 'Hub chooser + poker + blackjack landings.' },
+      { to: '/back-office/voita-quiz',                testid: 'back-office-link-voita-quiz',            label: 'Voita hero + quiz',      desc: 'Banner + 5-question lesson set + profiles.' },
+      { to: '/back-office/voyager',                   testid: 'back-office-link-voyager',               label: 'Voyager rotation',       desc: '/game weekly partner + prize variance.' },
+      { to: '/back-office/email-templates',           testid: 'back-office-link-email-templates',       label: 'Email + TG templates',   desc: '20 templates — Voita / Mestari / Telegram welcome.' },
+      { to: '/back-office/queue',                     testid: 'back-office-link-queue',                 label: 'Editorial queue',        desc: 'Auto-generated drafts awaiting your green light.' },
+      { to: '/back-office/dispatch-preview',          testid: 'back-office-link-dispatch-preview',      label: 'Dispatch preview',       desc: 'Dry-run the daily digest before send.' },
+      { to: '/back-office/foundational-research',     testid: 'back-office-link-research',              label: 'Research',               desc: 'Foundational dataset · 305 subjects.' },
+    ],
+  },
+  {
+    key: 'leads',
+    title: 'Leads & raffles',
+    eyebrow: 'CAPTURE · LIFECYCLE · PAYOUTS',
+    accent: '#C13B2C',
+    tiles: [
+      { to: '/back-office/leads',                     testid: 'back-office-link-leads',                 label: 'Leads lifecycle',        desc: 'Every signup joined across email / TG / surfaces.' },
+      { to: '/back-office/playbook',                  testid: 'back-office-link-playbook',              label: 'Playbook + email queue', desc: 'Universal PDF + outbox status (per-row retry).' },
+      { to: '/back-office/optin-segments',            testid: 'back-office-link-optin-segments',        label: 'Opt-in segments',        desc: 'Subscriber tags + per-source counts.' },
+      { to: '/back-office/voita',                     testid: 'back-office-link-voita',                 label: 'Voita raffles',          desc: 'Create · draw · mark paid · notify winner.' },
+      { to: '/back-office/weekly',                    testid: 'back-office-link-weekly',                label: 'Weekly card',            desc: 'Five-pick prediction prize + leaderboard.' },
+      { to: '/back-office/peli',                      testid: 'back-office-link-peli',                  label: 'Peli',                   desc: 'Monthly Voyager raffle entries + partner config.' },
+      { to: '/back-office/telegram',                  testid: 'back-office-link-telegram',              label: 'Telegram bot',           desc: 'Webhook · bound chats · audit log.' },
+    ],
+  },
+  {
+    key: 'ops',
+    title: 'Ops & inventory',
+    eyebrow: 'ROSTERS · PLUMBING',
+    accent: '#6FA37D',
+    tiles: [
+      { to: '/back-office/operators',                 testid: 'back-office-link-operators',             label: 'Operators',              desc: 'Casino roster + partner flags + scores.' },
+      { to: '/back-office/streamers',                 testid: 'back-office-link-streamers',             label: 'Streamers',              desc: 'Editorial streamer roster (Twitch + Kick + YT).' },
+      { to: '/back-office/streamer-meta',             testid: 'back-office-link-streamer-meta',         label: 'Streamer meta',          desc: 'Per-streamer subtitles + meta lines.' },
+      { to: '/back-office/slot-registry',             testid: 'back-office-link-slot-registry',         label: 'Slot registry',          desc: 'Game inventory + provider tags.' },
+      { to: '/back-office/webhooks',                  testid: 'back-office-link-webhooks',              label: 'Webhooks',               desc: 'Twitch / Kick / YouTube subscription state.' },
+    ],
+  },
+];
+
+const BackOfficeIndex = () => (
+  <div className="space-y-10" data-testid="back-office-index">
+    {INDEX_GROUPS.map((group) => (
+      <section key={group.key} data-testid={`back-office-group-${group.key}`}>
+        <div className="flex items-baseline gap-3 mb-4">
+          <span aria-hidden style={{
+            display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+            background: group.accent, transform: 'translateY(-2px)',
+          }} />
+          <div>
+            <div className="mono" style={{
+              fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)',
+              fontWeight: 700, textTransform: 'uppercase',
+            }}>{group.eyebrow}</div>
+            <h2 className="display text-xl sm:text-2xl mt-1" style={{
+              color: 'var(--ink)', fontWeight: 700, letterSpacing: '-0.01em',
+            }}>{group.title}</h2>
+          </div>
+        </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+          gap: 12,
+        }}>
+          {group.tiles.map((tile) => (
+            <Link
+              key={tile.testid}
+              to={tile.to}
+              data-testid={tile.testid}
+              style={{
+                display: 'flex', flexDirection: 'column', gap: 6,
+                padding: '14px 16px',
+                border: '1px solid var(--border)',
+                borderLeft: `3px solid ${group.accent}`,
+                background: 'var(--surface)',
+                textDecoration: 'none',
+                transition: 'border-color 120ms ease, transform 120ms ease',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--border-strong)'; e.currentTarget.style.transform = 'translateX(2px)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateX(0)'; }}
+            >
+              <div className="display" style={{
+                color: 'var(--ink)', fontWeight: 700, fontSize: 15,
+                letterSpacing: '-0.005em', lineHeight: 1.2,
+              }}>{tile.label} <span style={{ color: group.accent, fontWeight: 600 }}>→</span></div>
+              <div className="font-serif" style={{
+                color: 'var(--muted)', fontSize: 13, lineHeight: 1.45,
+              }}>{tile.desc}</div>
+            </Link>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+);
 
 export default BackOffice;

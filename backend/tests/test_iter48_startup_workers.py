@@ -63,10 +63,14 @@ def test_startup_seed_calls_are_in_startup_event_not_in_admin_endpoint():
         "seed_default_guidelines",
         "seed_streamers",
         "seed_operators",
+        "seed_default_cadences",
+        "seed_tracked_sources",
         "start_layer2_workers",
         "_signal_dial_worker",
+        "feed_worker_loop",
         "dispatch_worker_loop",
         "scheduler_worker_loop",
+        "variant_filler_worker_loop",
     }
     startup_calls = _calls_within(startup)
     bad_calls = _calls_within(bad)
