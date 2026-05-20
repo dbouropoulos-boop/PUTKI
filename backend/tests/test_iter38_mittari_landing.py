@@ -19,7 +19,7 @@ if not BASE_URL:
     except Exception:
         pass
 
-ADMIN_TOKEN = "putki-hq-admin"
+ADMIN_TOKEN = os.environ.get("PUTKI_ADMIN_TOKEN", "putki-hq-admin")
 
 
 def _uniq(tag):

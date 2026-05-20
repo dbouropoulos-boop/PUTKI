@@ -10,7 +10,7 @@ import pytest
 import requests
 
 BASE_URL = (os.environ.get("REACT_APP_BACKEND_URL") or "https://pelisignaali-fi.preview.emergentagent.com").rstrip("/")
-ADMIN_TOKEN = "putki-hq-admin"
+ADMIN_TOKEN = os.environ.get("PUTKI_ADMIN_TOKEN", "putki-hq-admin")
 HEADERS = {"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"}
 
 TOP_KEYS = ["header", "hero", "cred", "method", "stack", "steps",

@@ -15,7 +15,7 @@ const setCookie = (name, value, days) => {
     d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
     document.cookie = `${name}=${encodeURIComponent(value)}; expires=${d.toUTCString()}; path=/; SameSite=Lax`;
     localStorage.setItem(name, value);
-  } catch {}
+  } catch (e) { console.warn('[voita-palkinto] cookie write failed', e); }
 };
 const getCookie = (name) => {
   try {
@@ -194,7 +194,7 @@ const VoitaPalkinto = () => {
     if (brandKey) s.dataset.smarticoBrandKey = brandKey;
     document.body.appendChild(s);
     return () => {
-      try { document.body.removeChild(s); } catch {}
+      try { document.body.removeChild(s); } catch (e) { console.debug('[voita-palkinto] script teardown noop', e); }
     };
   }, [templateId, loaderUrl, brandKey]);
 
@@ -205,7 +205,7 @@ const VoitaPalkinto = () => {
         ...payload,
         won_at: new Date().toISOString(),
       }));
-    } catch {}
+    } catch (e) { console.warn('[voita-palkinto] win persistence failed', e); }
     setWinRecord({ ...payload, won_at: new Date().toISOString() });
     setShowWinModal(true);
   };

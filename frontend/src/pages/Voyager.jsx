@@ -21,7 +21,7 @@
  * Smartico onWin callback per the script the partner supplied. If
  * Smartico ever changes the field name we patch one place (this file).
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BadgeCheck, Mail, Bell, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -94,7 +94,7 @@ const WEEK_1 = {
 };
 
 // ── Standfirst ──────────────────────────────────────────────────────────
-const Standfirst = ({ lang, rotationISO }) => {
+const Standfirst = ({ lang, rotationISO, week }) => {
   // The rotation countdown is REAL — it is the next editorial drop.
   const daysLeft = useMemo(() => {
     try {
@@ -127,7 +127,9 @@ const Standfirst = ({ lang, rotationISO }) => {
             display: 'inline-flex', alignItems: 'center', gap: 8,
           }}>
             <Sparkles strokeWidth={1.5} size={12} />
-            {lang === 'en' ? 'VIIKON VALINTA · WEEK 1' : 'VIIKON VALINTA · VIIKKO 1'}
+            {lang === 'en'
+              ? `VIIKON VALINTA · ${week.week_label_en || 'WEEK 1'}`
+              : `VIIKON VALINTA · ${week.week_label_fi || 'VIIKKO 1'}`}
           </span>
           {daysLeft !== null && (
             <span data-testid="voyager-rotation" style={{
@@ -147,26 +149,26 @@ const Standfirst = ({ lang, rotationISO }) => {
           margin: '14px 0 12px',
         }}>
           {lang === 'en'
-            ? `This week we picked ${WEEK_1.game.title_en} × ${WEEK_1.operator.name}.`
-            : `Tällä viikolla valitsimme ${WEEK_1.game.title_fi} × ${WEEK_1.operator.name}.`}
+            ? `This week we picked ${week.game.title_en} × ${week.operator.name}.`
+            : `Tällä viikolla valitsimme ${week.game.title_fi} × ${week.operator.name}.`}
         </h1>
         <p data-testid="voyager-verdict" style={{
           fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.55,
           color: 'var(--ink)', maxWidth: 720, margin: '0 0 12px',
           fontWeight: 400,
-        }}>{lang === 'en' ? WEEK_1.verdict.en : WEEK_1.verdict.fi}</p>
+        }}>{lang === 'en' ? week.verdict.en : week.verdict.fi}</p>
         <p data-testid="voyager-tried" style={{
           fontFamily: 'ui-monospace, monospace', fontSize: 12,
           letterSpacing: '0.08em', color: 'var(--muted)', fontWeight: 600,
           maxWidth: 720, margin: 0, lineHeight: 1.6,
-        }}>{lang === 'en' ? WEEK_1.tried.en : WEEK_1.tried.fi}</p>
+        }}>{lang === 'en' ? week.tried.en : week.tried.fi}</p>
       </div>
     </section>
   );
 };
 
 // ── The Game ────────────────────────────────────────────────────────────
-const GameBlock = ({ lang, onWin }) => (
+const GameBlock = ({ lang, onWin, game }) => (
   <section data-testid="voyager-game-block" style={{
     padding: '28px 16px',
     background: 'var(--bg)',
@@ -187,9 +189,9 @@ const GameBlock = ({ lang, onWin }) => (
         }}>{lang === 'en' ? 'FREE · NO ACCOUNT · 18+' : 'ILMAINEN · EI TILIÄ · 18+'}</span>
       </div>
       <SmarticoGame
-        template_id={WEEK_1.game.template_id}
-        brand_key={WEEK_1.game.brand_key}
-        visitor_key={WEEK_1.game.visitor_key}
+        template_id={game.template_id}
+        brand_key={game.brand_key}
+        visitor_key={game.visitor_key}
         lang={(lang || 'fi').toUpperCase()}
         frame_id="voyager-game-frame"
         onWin={onWin}
@@ -199,17 +201,64 @@ const GameBlock = ({ lang, onWin }) => (
   </section>
 );
 
+// ── Slot-flip reveal ────────────────────────────────────────────────────
+// 2-second number-roll: cycles through random values in the variance
+// range, then locks on the real prize. Gives the win a moment of weight
+// — the variance feels earned, not announced. Pure CSS-driven; falls
+// straight to the final value if reduce-motion is on (or the component
+// re-renders mid-animation).
+const SlotFlipNumber = ({ target, min, max, durationMs = 1600 }) => {
+  const [display, setDisplay] = useState(target);
+  useEffect(() => {
+    const prefersReducedMotion = typeof window !== 'undefined'
+      && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) { setDisplay(target); return undefined; }
+    const start = performance.now();
+    let rafId = 0;
+    let stopped = false;
+    const lo = Math.max(0, Number(min) || 0);
+    const hi = Math.max(lo, Number(max) || lo + 1);
+    const tick = (now) => {
+      if (stopped) return;
+      const t = Math.min(1, (now - start) / durationMs);
+      if (t < 1) {
+        // Frequency falls off cubically so it visibly slows down.
+        const step = Math.max(40, Math.round(40 + t * t * t * 240));
+        const phase = Math.floor((now - start) / step);
+        const rng = lo + Math.floor(((phase * 1103515245) % (hi - lo + 1)) + (hi - lo + 1)) % (hi - lo + 1);
+        setDisplay(rng);
+        rafId = requestAnimationFrame(tick);
+      } else {
+        setDisplay(target);
+      }
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => { stopped = true; cancelAnimationFrame(rafId); };
+  }, [target, min, max, durationMs]);
+  return <span data-testid="voyager-pass-flip">{display}</span>;
+};
+
 // ── The Pass (win → artifact) ───────────────────────────────────────────
 // Spec §4.3: the win becomes a visible thing the visitor *carries*, not
 // a marketing message. UUID is displayed as a short, copyable code; it
 // will travel with the visitor on redirect to the operator.
-const Pass = ({ lang, prize }) => {
+const Pass = ({ lang, prize, week }) => {
+  // Prize amount: use the operator-supplied value when present,
+  // otherwise pick a *real* random value inside the configured variance
+  // range. Either way the slot-flip animates to that value. Hook must
+  // run unconditionally — early-return guards are *below* this.
+  const supplied = prize ? (prize.amount ?? prize.spins ?? prize.value) : null;
+  const target = useMemo(() => {
+    if (Number.isFinite(Number(supplied))) return Number(supplied);
+    const lo = Number(week.prize.min) || 1;
+    const hi = Number(week.prize.max) || lo + 1;
+    return lo + Math.floor(Math.random() * (hi - lo + 1));
+  }, [supplied, week.prize.min, week.prize.max]);
   if (!prize) return null;
   const shortCode = (prize.visitor_win_uuid || '')
     .replace(/-/g, '').toUpperCase().slice(0, 8) || 'VOYAGER';
-  const amount = prize.amount || prize.spins || prize.value || `${WEEK_1.prize.min}–${WEEK_1.prize.max}`;
-  const label = lang === 'en' ? WEEK_1.prize.label_en : WEEK_1.prize.label_fi;
-  const slot = lang === 'en' ? WEEK_1.prize.slot_en : WEEK_1.prize.slot_fi;
+  const label = lang === 'en' ? week.prize.label_en : week.prize.label_fi;
+  const slot = lang === 'en' ? week.prize.slot_en : week.prize.slot_fi;
   return (
     <motion.section data-testid="voyager-pass" key="voyager-pass"
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
@@ -234,14 +283,18 @@ const Pass = ({ lang, prize }) => {
           fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 'clamp(32px, 4.4vw, 52px)', lineHeight: 1.05,
           letterSpacing: '-0.02em', margin: '12px 0 10px',
-        }}>{amount} {label}</h2>
+          fontVariantNumeric: 'tabular-nums',
+        }}>
+          <SlotFlipNumber target={target} min={week.prize.min} max={week.prize.max} />
+          {' '}{label}
+        </h2>
         <p style={{
           fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.5,
           color: 'rgba(255,255,255,0.86)', margin: '0 0 18px',
         }}>
           {lang === 'en'
-            ? `${slot}. This is yours. Redeem at ${WEEK_1.operator.name}.`
-            : `${slot}. Tämä on sinun. Lunasta ${WEEK_1.operator.name}illä.`}
+            ? `${slot}. This is yours. Redeem at ${week.operator.name}.`
+            : `${slot}. Tämä on sinun. Lunasta ${week.operator.name}illä.`}
         </p>
         <div data-testid="voyager-pass-code" style={{
           display: 'inline-flex', alignItems: 'center', gap: 14,
@@ -261,7 +314,7 @@ const Pass = ({ lang, prize }) => {
 };
 
 // ── Operator review card — the editorial bubble ─────────────────────────
-const Review = ({ lang }) => (
+const Review = ({ lang, week }) => (
   <section data-testid="voyager-review" style={{
     padding: '40px 24px',
     background: 'var(--surface)',
@@ -276,14 +329,14 @@ const Review = ({ lang }) => (
           fontFamily: 'ui-monospace, monospace', fontSize: 10,
           letterSpacing: '0.24em', fontWeight: 700, color: 'var(--muted)',
         }}>{lang === 'en' ? 'WHY WE LIKE THEM' : 'MIKSI PIDÄMME HEISTÄ'}</span>
-        {WEEK_1.operator.partnership_label && (
+        {week.operator.partnership_label && (
           <span data-testid="voyager-partnership" style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
             letterSpacing: '0.18em', color: '#6FA37D', fontWeight: 700,
           }}>
             {lang === 'en'
-              ? `EDITORIAL PARTNERSHIP · ${WEEK_1.operator.name.toUpperCase()}`
-              : `YHTEISTYÖSSÄ ${WEEK_1.operator.name.toUpperCase()}IN KANSSA`}
+              ? `EDITORIAL PARTNERSHIP · ${week.operator.name.toUpperCase()}`
+              : `YHTEISTYÖSSÄ ${week.operator.name.toUpperCase()}IN KANSSA`}
           </span>
         )}
       </div>
@@ -294,15 +347,16 @@ const Review = ({ lang }) => (
         margin: '0 0 22px', maxWidth: 720,
       }}>
         {lang === 'en'
-          ? `${WEEK_1.operator.name}, in four sentences.`
-          : `${WEEK_1.operator.name} neljässä lauseessa.`}
+          ? `${week.operator.name}, in four sentences.`
+          : `${week.operator.name} neljässä lauseessa.`}
       </h2>
       <div style={{
         display: 'grid', gap: 14,
         gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
       }}>
-        {WEEK_1.review_points.map((p, i) => (
-          <div key={i} data-testid={`voyager-review-${i}`} style={{
+        {week.review_points.map((p, i) => (
+          <div key={p.headline_fi || p.headline_en || `rp-${i}`}
+            data-testid={`voyager-review-${i}`} style={{
             background: 'var(--bg)', border: '1px solid var(--border)',
             padding: 20, display: 'flex', flexDirection: 'column', gap: 8,
           }}>
@@ -323,14 +377,14 @@ const Review = ({ lang }) => (
 );
 
 // ── Redeem CTA ──────────────────────────────────────────────────────────
-const Redeem = ({ lang, prize }) => {
+const Redeem = ({ lang, prize, week }) => {
   const uuid = (prize && prize.visitor_win_uuid) || '';
   const url = uuid
-    ? `${WEEK_1.operator.redirect_url}&_smartico_visitor_win_uuid=${encodeURIComponent(uuid)}`
-    : WEEK_1.operator.redirect_url;
+    ? `${week.operator.redirect_url}&_smartico_visitor_win_uuid=${encodeURIComponent(uuid)}`
+    : week.operator.redirect_url;
   const amount = (prize && (prize.amount || prize.spins || prize.value))
-    || `${WEEK_1.prize.min}–${WEEK_1.prize.max}`;
-  const label = lang === 'en' ? WEEK_1.prize.label_en : WEEK_1.prize.label_fi;
+    || `${week.prize.min}–${week.prize.max}`;
+  const label = lang === 'en' ? week.prize.label_en : week.prize.label_fi;
   return (
     <section data-testid="voyager-redeem" style={{
       padding: '48px 24px',
@@ -354,8 +408,8 @@ const Redeem = ({ lang, prize }) => {
           color: 'var(--muted)', margin: '0 0 24px',
         }}>
           {lang === 'en'
-            ? `Open a ${WEEK_1.operator.name} session — your pass travels with you.`
-            : `Avaa ${WEEK_1.operator.name}-istunto — passisi kulkee mukana.`}
+            ? `Open a ${week.operator.name} session — your pass travels with you.`
+            : `Avaa ${week.operator.name}-istunto — passisi kulkee mukana.`}
         </p>
         <a href={url} target="_blank" rel="noopener noreferrer"
           data-testid="voyager-redeem-cta"
@@ -369,8 +423,8 @@ const Redeem = ({ lang, prize }) => {
             borderRadius: 2,
           }}>
           {lang === 'en'
-            ? `REDEEM AT ${WEEK_1.operator.name.toUpperCase()}`
-            : `LUNASTA ${WEEK_1.operator.name.toUpperCase()}ILLÄ`}
+            ? `REDEEM AT ${week.operator.name.toUpperCase()}`
+            : `LUNASTA ${week.operator.name.toUpperCase()}ILLÄ`}
           <ArrowRight strokeWidth={2} size={14} />
         </a>
         <p style={{
@@ -464,14 +518,47 @@ const NextWeek = ({ lang, rotationISO }) => {
 const Voyager = () => {
   const { lang } = useLang();
   const [prize, setPrize] = useState(null);
+  // Active week from the back-office rotation calendar. Until the fetch
+  // resolves we render the locked WEEK_1 — that's the same DEFAULT_VOYAGER
+  // the backend would return anyway, so first paint is content-shift-free.
+  const [activeWeek, setActiveWeek] = useState(WEEK_1);
+
+  useEffect(() => {
+    let stop = false;
+    fetch(`${BACKEND}/api/voyager/active`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (stop || !d || !d.active) return;
+        // Adapter: the backend stores top-level flat keys (verdict_fi /
+        // tried_en / etc) whereas the JSX was originally written against
+        // nested {verdict:{fi,en}, tried:{fi,en}}. Translate once so we
+        // don't touch every consumer.
+        const a = d.active;
+        setActiveWeek({
+          ...WEEK_1,
+          ...a,
+          verdict: { fi: a.verdict_fi || WEEK_1.verdict.fi, en: a.verdict_en || WEEK_1.verdict.en },
+          tried: { fi: a.tried_fi || WEEK_1.tried.fi, en: a.tried_en || WEEK_1.tried.en },
+          // Defensive: the keys above might come back as empty strings
+          // when the editor cleared them; fall through to defaults.
+          game: { ...WEEK_1.game, ...(a.game || {}) },
+          operator: { ...WEEK_1.operator, ...(a.operator || {}) },
+          prize: { ...WEEK_1.prize, ...(a.prize || {}) },
+          review_points: (a.review_points && a.review_points.length)
+            ? a.review_points : WEEK_1.review_points,
+        });
+      })
+      .catch((e) => { console.warn('[voyager] fetch active failed', e); });
+    return () => { stop = true; };
+  }, []);
 
   useDocumentMeta({
     title: lang === 'en'
-      ? `Voyager · ${WEEK_1.game.title_en} × ${WEEK_1.operator.name} — PUTKI HQ`
-      : `Voyager · ${WEEK_1.game.title_fi} × ${WEEK_1.operator.name} — PUTKI HQ`,
+      ? `Voyager · ${activeWeek.game.title_en} × ${activeWeek.operator.name} — PUTKI HQ`
+      : `Voyager · ${activeWeek.game.title_fi} × ${activeWeek.operator.name} — PUTKI HQ`,
     description: lang === 'en'
-      ? `PUTKI HQ's pick of the week: play ${WEEK_1.game.title_en}, win free spins, redeem at ${WEEK_1.operator.name}. Editorial review attached.`
-      : `PUTKI HQ:n viikon valinta: pelaa ${WEEK_1.game.title_fi}, voita ilmaiskierroksia, lunasta ${WEEK_1.operator.name}illä. Toimituksellinen arvostelu mukana.`,
+      ? `PUTKI HQ's pick of the week: play ${activeWeek.game.title_en}, win free spins, redeem at ${activeWeek.operator.name}. Editorial review attached.`
+      : `PUTKI HQ:n viikon valinta: pelaa ${activeWeek.game.title_fi}, voita ilmaiskierroksia, lunasta ${activeWeek.operator.name}illä. Toimituksellinen arvostelu mukana.`,
     canonical: `${BACKEND}/voyager`,
   });
 
@@ -483,17 +570,17 @@ const Voyager = () => {
         const el = document.querySelector('[data-testid="voyager-pass"]');
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 280);
-    } catch { /* ignore */ }
+    } catch (e) { console.debug('[voyager] scroll to pass failed', e); }
   }, []);
 
   return (
     <div data-testid="voyager-page" style={{ background: 'var(--bg)' }}>
-      <Standfirst lang={lang} rotationISO={WEEK_1.next_rotation_iso} />
-      <GameBlock lang={lang} onWin={onWin} />
-      <AnimatePresence>{prize && <Pass lang={lang} prize={prize} />}</AnimatePresence>
-      <Review lang={lang} />
-      {prize && <Redeem lang={lang} prize={prize} />}
-      <NextWeek lang={lang} rotationISO={WEEK_1.next_rotation_iso} />
+      <Standfirst lang={lang} rotationISO={activeWeek.next_rotation_iso} week={activeWeek} />
+      <GameBlock lang={lang} onWin={onWin} game={activeWeek.game} />
+      <AnimatePresence>{prize && <Pass lang={lang} prize={prize} week={activeWeek} />}</AnimatePresence>
+      <Review lang={lang} week={activeWeek} />
+      {prize && <Redeem lang={lang} prize={prize} week={activeWeek} />}
+      <NextWeek lang={lang} rotationISO={activeWeek.next_rotation_iso} />
     </div>
   );
 };

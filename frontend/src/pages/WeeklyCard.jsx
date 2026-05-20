@@ -74,7 +74,7 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
       const sp = new URLSearchParams(window.location.search);
       const c = (sp.get('invite') || sp.get('ref') || '').toUpperCase().trim();
       if (c && /^[A-Z0-9]{6,12}$/.test(c)) setInviteCode(c);
-    } catch {}
+    } catch (e) { console.warn('[weekly] invite-code parse failed', e); }
   }, []);
 
   const ready = picks.length > 0 && Object.keys(predictions).length === picks.length;
@@ -118,7 +118,7 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
       await navigator.clipboard.writeText(inviteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {}
+    } catch (e) { console.warn('[weekly] clipboard copy failed', e); }
   };
 
   const shareInvite = async () => {
@@ -129,7 +129,7 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
           text: t('weekly.invite_help'),
           url: inviteUrl,
         });
-      } catch {}
+      } catch (e) { console.warn('[weekly] navigator.share failed', e); }
     } else {
       copyInvite();
     }

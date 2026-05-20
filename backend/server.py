@@ -1732,6 +1732,36 @@ async def admin_save_mestari_copy(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# ── Voyager rotation calendar ─────────────────────────────────────────
+
+@api_router.get("/voyager/active")
+async def public_voyager_active():
+    """Public — current week's voyager pick (game · operator · prize ·
+    review). Falls back to DEFAULT_VOYAGER when no override is saved."""
+    from voyager_rotation import get_active_voyager
+    return await get_active_voyager(db)
+
+
+@api_router.get("/admin/voyager/rotation")
+async def admin_get_voyager_rotation(_: bool = Depends(require_admin)):
+    """Admin — full rotation calendar with raw, sanitised, defaults."""
+    from voyager_rotation import get_voyager_rotation_raw
+    return await get_voyager_rotation_raw(db)
+
+
+@api_router.put("/admin/voyager/rotation")
+async def admin_save_voyager_rotation(
+    payload: Dict[str, Any],
+    _: bool = Depends(require_admin),
+):
+    """Admin — overwrite the rotation calendar. Sanitiser runs server-side."""
+    from voyager_rotation import save_voyager_rotation
+    try:
+        return await save_voyager_rotation(db, payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 
 
 @api_router.get("/odds/market-watch")
