@@ -37,6 +37,9 @@ import BackOfficeMittariCopy from "@/pages/BackOfficeMittariCopy";
 import BackOfficeMestariCopy from "@/pages/BackOfficeMestariCopy";
 import BackOfficeVoyagerRotation from "@/pages/BackOfficeVoyagerRotation";
 import BackOfficePlaybook from "@/pages/BackOfficePlaybook";
+import BackOfficeLeads from "@/pages/BackOfficeLeads";
+import BackOfficeEmailTemplates from "@/pages/BackOfficeEmailTemplates";
+import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosticsCopy";
 import Mittari from "@/pages/Mittari";
 import Pelisignaalit from "@/pages/Pelisignaalit";
 import Voita from "@/pages/Voita";
@@ -96,6 +99,9 @@ function App() {
           <Route path="/back-office/mestari-copy" element={<BackOfficeMestariCopy />} />
           <Route path="/back-office/voyager" element={<BackOfficeVoyagerRotation />} />
           <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
+          <Route path="/back-office/leads" element={<BackOfficeLeads />} />
+          <Route path="/back-office/email-templates" element={<BackOfficeEmailTemplates />} />
+          <Route path="/back-office/mestari-diagnostics-copy" element={<BackOfficeMestariDiagnosticsCopy />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
           <Route path="/striimaajat/:id" element={<TopicHubPage kind="streamers" />} />
           <Route path="/operaattorit/:id" element={<TopicHubPage kind="operators" />} />

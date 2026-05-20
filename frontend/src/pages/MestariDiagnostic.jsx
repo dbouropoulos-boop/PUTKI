@@ -365,11 +365,28 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
 // ── Landing → Quiz wrapper ───────────────────────────────────────────
 
 const MestariDiagnostic = ({ diagnostic }) => {
-  const c = COPY[diagnostic];
+  const fallback = COPY[diagnostic];
   const { lang, toggle: toggleLang } = useLang();
   const { theme, toggle: toggleTheme } = useTheme();
   const isDark = theme === 'dark';
   const [started, setStarted] = useState(false);
+  const [landing, setLanding] = useState(fallback);
+
+  // Fetch editable landing copy. Falls back to the hardcoded constants
+  // (zero content-shift on first paint, exact same UX as before).
+  useEffect(() => {
+    let stop = false;
+    fetch(`${BACKEND}/api/mestari/diagnostic/${diagnostic}/meta`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (stop || !d?.landing) return;
+        setLanding({ ...fallback, ...d.landing });
+      })
+      .catch(() => { /* keep fallback */ });
+    return () => { stop = true; };
+  }, [diagnostic, fallback]);
+
+  const c = landing;
 
   const stats = useMemo(() => [
     {

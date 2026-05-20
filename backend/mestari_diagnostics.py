@@ -525,6 +525,114 @@ def get_diagnostic_meta(diagnostic: str) -> Optional[Dict[str, Any]]:
     return None
 
 
+# ── Editable landing-copy overrides ──────────────────────────────────
+# Hub + poker/blackjack landing pages were originally hardcoded in the
+# JSX. The back-office "Mestari diagnostics copy" editor now feeds this
+# singleton, which the public meta endpoints surface to the frontend.
+_DEFAULT_LANDING_COPY: Dict[str, Dict[str, Any]] = {
+    "hub": {
+        "eyebrow_fi": "MESTARI · TOIMITUKSELLISIA DIAGNOSTIIKKOJA · TUTKIMUSTYÖKALUJA",
+        "eyebrow_en": "MESTARI · EDITORIAL DIAGNOSTICS · RESEARCH TOOLS",
+        "headline_fi": "Mikä diagnostiikka?",
+        "headline_en": "Which diagnostic?",
+        "subtitle_fi": "Mestari rakentaa tutkimukseen perustuvia työkaluja siihen, miten pelaajat ajattelevat. Valitse diagnostiikka — jokainen kestää noin 90 sekuntia ja päättyy henkilökohtaiseen profiiliin ja 5 päivän pelikirjaan.",
+        "subtitle_en": "Mestari builds research-grounded tools for understanding how players think. Pick a diagnostic — each takes about 90 seconds and ends with a personal profile and a 5-day playbook.",
+        "trust_line_fi": "Tutkimus- ja opetustyökaluja. Ei rahapelineuvontaa. Vain opetuskäyttöön.",
+        "trust_line_en": "Research and educational tools. Not gambling advice. For educational use only.",
+        "method_label_fi": "MENETELMÄ · MITEN MESTARI ANALYSOI",
+        "method_label_en": "METHOD · HOW MESTARI ANALYSES",
+        "method_body_fi": "Jokainen diagnostiikka soveltaa oman alansa vakiintunutta mallia — julkaistua tutkimusta vedonlyöntimarkkinoista, pokerityylin kaksiakselista mallia, blackjackin matematiikkaa — vastauksiisi. Deterministinen pisteytys: samat vastaukset, sama profiili, ei toimituksen vaikutusta.",
+        "method_body_en": "Each diagnostic applies an established framework from its domain — published research on betting markets, the two-axis model of poker style, the mathematics of blackjack — to your answers. Deterministic scoring: same answers, same profile, no editorial spin.",
+        "card_sports_kicker_fi": "URHEILUVEDONLYÖNTI", "card_sports_kicker_en": "SPORTS BETTING",
+        "card_sports_title_fi": "Millainen urheiluvedonlyöjä sinä olet?",
+        "card_sports_title_en": "What kind of sports bettor are you?",
+        "card_sports_oneliner_fi": "Miten luet ottelua ja markkinaa.",
+        "card_sports_oneliner_en": "How you read a match and the market.",
+        "card_poker_kicker_fi": "POKERI", "card_poker_kicker_en": "POKER",
+        "card_poker_title_fi": "Millainen pokeripelaaja sinä olet?",
+        "card_poker_title_en": "What kind of poker player are you?",
+        "card_poker_oneliner_fi": "Miten luet pöytää ja pelaajia.",
+        "card_poker_oneliner_en": "How you read a table and the players.",
+        "card_blackjack_kicker_fi": "BLACKJACK", "card_blackjack_kicker_en": "BLACKJACK",
+        "card_blackjack_title_fi": "Millainen blackjack-pelaaja sinä olet?",
+        "card_blackjack_title_en": "What kind of blackjack player are you?",
+        "card_blackjack_oneliner_fi": "Miten luet peliä ja sen todennäköisyyksiä.",
+        "card_blackjack_oneliner_en": "How you read the game and its odds.",
+    },
+    "poker": {
+        "hero_kicker_fi": "Mestari · Toimituksellinen diagnostiikka · Tutkimustyökalu",
+        "hero_kicker_en": "Mestari · Editorial diagnostic · Research tool",
+        "headline_fi": "Millainen pokeripelaaja sinä olet?",
+        "headline_en": "What kind of poker player are you?",
+        "sub_fi": "90 sekunnin diagnostiikka, joka perustuu vakiintuneeseen pokeriteoriaan. Vastaa viiteen kysymykseen siitä, miten pelaat pöydässä — saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten taitava pokeri on rakennettu.",
+        "sub_en": "A 90-second diagnostic grounded in established poker theory. Answer five questions about how you play a table — receive a personal player profile and a 5-day playbook on how skilled poker is structured.",
+        "disclaimer_strong_fi": "Tämä on tutkimus- ja opetustyökalu.",
+        "disclaimer_strong_en": "This is a research and educational tool.",
+        "disclaimer_rest_fi": " Mestari tutkii, miten pelaajat lähestyvät pokeria ja miten taitava pelaaminen on rakennettu. Se ei ole rahapelineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.",
+        "disclaimer_rest_en": " Mestari studies how players approach poker and how skilled play is structured. It is not gambling advice, it does not promote gambling, and it will never tell you what to wager. For educational use only.",
+        "hero_stat_num": "2",
+        "hero_stat_unit_fi": " akselia", "hero_stat_unit_en": " axes",
+        "hero_stat_desc_fi": "TYYLI KARTOITETTU VALIKOIVUUDEN JA AGGRESSION MUKAAN — VAKIINTUNUT POKERIN MALLI.",
+        "hero_stat_desc_en": "STYLE MAPPED ON SELECTIVITY AND AGGRESSION — THE ESTABLISHED MODEL OF POKER PLAY.",
+        "method_label_fi": "MENETELMÄ · MITEN MESTARI ANALYSOI",
+        "method_label_en": "METHOD · HOW MESTARI ANALYSES",
+        "method_body_fi": "Mestari soveltaa vakiintunutta kaksiakselista pokerityylin mallia — kuinka valikoivasti pelaaja käyttää käsiä ja kuinka aggressiivisesti hän panostaa — sijoittaakseen jokaisen pelaajan tunnistettuun profiiliin.",
+        "method_body_en": "Mestari applies the established two-axis model of poker style — how selective a player is with hands, and how aggressive they are with bets — to place each player on a recognised profile.",
+    },
+    "blackjack": {
+        "hero_kicker_fi": "Mestari · Toimituksellinen diagnostiikka · Tutkimustyökalu",
+        "hero_kicker_en": "Mestari · Editorial diagnostic · Research tool",
+        "headline_fi": "Millainen blackjack-pelaaja sinä olet?",
+        "headline_en": "What kind of blackjack player are you?",
+        "sub_fi": "90 sekunnin diagnostiikka, joka perustuu pelin matematiikkaan. Vastaa viiteen kysymykseen siitä, miten pelaat käden — saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten blackjack todella toimii.",
+        "sub_en": "A 90-second diagnostic grounded in the mathematics of the game. Answer five questions about how you play a hand — receive a personal player profile and a 5-day playbook on how blackjack actually works.",
+        "disclaimer_strong_fi": "Tämä on tutkimus- ja opetustyökalu.",
+        "disclaimer_strong_en": "This is a research and educational tool.",
+        "disclaimer_rest_fi": " Mestari tutkii, miten pelaajat lähestyvät blackjackia ja miten pelin matematiikka oikeasti toimii. Se ei ole rahapelineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.",
+        "disclaimer_rest_en": " Mestari studies how players approach blackjack and how the game's mathematics actually work. It is not gambling advice, it does not promote gambling, and it will never tell you what to wager. For educational use only.",
+        "hero_stat_num": "",
+        "hero_stat_unit_fi": "Ratkaistu", "hero_stat_unit_en": "Solved",
+        "hero_stat_desc_fi": "BLACKJACKIN PERUSSTRATEGIA ON JULKAISTU, MATEMAATTISESTI RATKAISTU TULOS — EI MIELIPIDE.",
+        "hero_stat_desc_en": "BLACKJACK BASIC STRATEGY IS A PUBLISHED, MATHEMATICALLY SOLVED RESULT — NOT OPINION.",
+        "method_label_fi": "MENETELMÄ · MITEN MESTARI ANALYSOI",
+        "method_label_en": "METHOD · HOW MESTARI ANALYSES",
+        "method_body_fi": "Mestari mittaa pelaajaa blackjackin tunnetun matematiikan — jokaisen käden julkaistun oikean pelitavan — mukaan, sijoittaakseen hänet tunnistettuun pelitiedon ja kurin profiiliin.",
+        "method_body_en": "Mestari measures a player against the known mathematics of blackjack — the published correct play for every hand — to place them on a recognised profile of game knowledge and discipline.",
+    },
+}
+
+
+async def get_landing_copy(db) -> Dict[str, Dict[str, Any]]:
+    """Merge persisted overrides on top of defaults — every field
+    guaranteed present."""
+    doc = await db.settings.find_one({"_id": "mestari_diagnostic_copy"}, {"_id": 0, "value": 1})
+    overrides = (doc or {}).get("value") or {}
+    out: Dict[str, Dict[str, Any]] = {}
+    for k, defaults in _DEFAULT_LANDING_COPY.items():
+        out[k] = {**defaults, **(overrides.get(k) or {})}
+    return out
+
+
+async def save_landing_copy(db, payload: Dict[str, Any]) -> None:
+    """Validate then persist. Only known sections + keys accepted."""
+    allowed: Dict[str, set] = {k: set(v.keys()) for k, v in _DEFAULT_LANDING_COPY.items()}
+    safe: Dict[str, Dict[str, Any]] = {}
+    for section, body in (payload or {}).items():
+        if section not in allowed or not isinstance(body, dict):
+            continue
+        safe[section] = {
+            k: (body.get(k) or "")[:2000]
+            for k in allowed[section]
+            if isinstance(body.get(k), str)
+        }
+    await db.settings.update_one(
+        {"_id": "mestari_diagnostic_copy"},
+        {"$set": {"value": safe, "updated_at": _now_iso()}},
+        upsert=True,
+    )
+
+
+
 # ── Lead capture ─────────────────────────────────────────────────────
 
 async def capture_diagnostic_lead(

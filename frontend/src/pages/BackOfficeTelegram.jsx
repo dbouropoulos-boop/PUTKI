@@ -183,6 +183,20 @@ const BackOfficeTelegram = () => {
           hint="active subscribers" tone="accent" />
       </div>
 
+      {/* Pointer to editable copy */}
+      <div data-testid="bo-tg-copy-pointer" style={{
+        marginTop: 14, padding: '10px 14px',
+        background: 'var(--surface)', border: '1px solid var(--border)',
+        fontFamily: 'ui-monospace, monospace', fontSize: 11,
+        color: 'var(--muted)', letterSpacing: '0.04em',
+      }}>
+        Welcome + post-bind copy is now templated.{' '}
+        <Link to="/back-office/email-templates" data-testid="bo-tg-copy-pointer-link"
+          style={{ color: '#5B8DEE', textDecoration: 'underline' }}>
+          Edit `telegram_welcome` + `telegram_bound` in the templates editor →
+        </Link>
+      </div>
+
       {/* Webhook info detail + reset */}
       <SectionTitle>Webhook registration</SectionTitle>
       <div style={{

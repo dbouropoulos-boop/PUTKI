@@ -1748,18 +1748,45 @@ async def admin_save_mittari_copy(
 
 
 # ── Mestari multi-diagnostic (poker + blackjack) ─────────────────────
-
 @api_router.get("/mestari/diagnostic/{diagnostic}/meta")
 async def public_diagnostic_meta(diagnostic: str):
     """Public — return the question + profile metadata for the named
     diagnostic so the frontend renders the quiz without duplicating
     constants. Sports diagnostic surfaces only its value block (questions
     live in voita_quiz_config)."""
-    from mestari_diagnostics import get_diagnostic_meta
+    from mestari_diagnostics import get_diagnostic_meta, get_landing_copy
     meta = get_diagnostic_meta(diagnostic)
     if not meta:
         raise HTTPException(status_code=404, detail="unknown_diagnostic")
+    landing = await get_landing_copy(db)
+    meta["landing"] = landing.get(diagnostic, {})
     return meta
+
+
+@api_router.get("/mestari/diagnostic/landing")
+async def public_landing_copy():
+    """Public — return the editable landing-copy tree (hub + poker +
+    blackjack landing text) so the hub renders editable strings."""
+    from mestari_diagnostics import get_landing_copy
+    return await get_landing_copy(db)
+
+
+@api_router.get("/admin/mestari/diagnostic-copy")
+async def admin_get_diagnostic_copy(_: bool = Depends(require_admin)):
+    from mestari_diagnostics import _DEFAULT_LANDING_COPY, get_landing_copy
+    return {
+        "merged": await get_landing_copy(db),
+        "defaults": _DEFAULT_LANDING_COPY,
+    }
+
+
+@api_router.put("/admin/mestari/diagnostic-copy")
+async def admin_save_diagnostic_copy(
+    payload: Dict[str, Any], _: bool = Depends(require_admin),
+):
+    from mestari_diagnostics import save_landing_copy
+    await save_landing_copy(db, payload.get("copy") or {})
+    return {"ok": True}
 
 
 @api_router.post("/mestari/diagnostic/{diagnostic}/resolve")
@@ -1793,6 +1820,64 @@ async def public_diagnostic_lead(payload: Dict[str, Any]):
     if not res.get("ok"):
         raise HTTPException(status_code=400, detail=res.get("error", "bad_request"))
     return res
+
+
+# ── Email templates (back-office) ─────────────────────────────────────
+
+@api_router.get("/admin/email-templates")
+async def admin_get_email_templates(_: bool = Depends(require_admin)):
+    """Single payload: catalogue (sidebar) + full template map (editor)."""
+    import email_templates as _et
+    return {
+        "catalogue": _et.template_catalogue(),
+        "templates": await _et.get_all_templates(db),
+        "dispatch_ready_flag": bool(_et.DISPATCH_READY),
+        "resend_configured": bool(os.environ.get("RESEND_API_KEY")
+                                  and os.environ.get("RESEND_FROM")),
+    }
+
+
+@api_router.put("/admin/email-templates")
+async def admin_save_email_templates(
+    payload: Dict[str, Any], _: bool = Depends(require_admin),
+):
+    from email_templates import save_templates
+    await save_templates(db, payload.get("templates") or {})
+    return {"ok": True}
+
+
+@api_router.post("/admin/email-templates/preview")
+async def admin_preview_email_template(
+    payload: Dict[str, Any], _: bool = Depends(require_admin),
+):
+    """Render a template against sample vars so the editor can preview
+    without dispatching anything."""
+    from email_templates import render_template
+    slug = (payload or {}).get("slug", "")
+    lang = (payload or {}).get("lang", "fi")
+    sample_vars = (payload or {}).get("vars") or {
+        "name": "Antti", "profile_name": "The Strategist",
+        "diagnostic": "poker", "raffle_title": "HJK vs Lahti",
+        "entry_position": "7", "prize_label": "€100 Weezybet credit",
+        "redeem_url": "https://putkihq.fi/redeem/EXAMPLE",
+        "magic_link": "https://putkihq.fi/bind/abc123",
+        "unsubscribe_url": "https://putkihq.fi/unsub/EXAMPLE",
+        "site_url": "https://putkihq.fi",
+    }
+    rendered = await render_template(db, slug, lang=lang, vars_=sample_vars)
+    if not rendered:
+        raise HTTPException(status_code=404, detail="unknown_template")
+    return rendered
+
+
+# ── Leads lifecycle (back-office) ─────────────────────────────────────
+
+@api_router.get("/admin/leads/timeline")
+async def admin_leads_timeline(
+    limit: int = 200, _: bool = Depends(require_admin),
+):
+    from leads_lifecycle import build_timeline
+    return await build_timeline(db, limit=max(10, min(500, limit)))
 
 
 # ── Mestari copy editor ───────────────────────────────────────────────

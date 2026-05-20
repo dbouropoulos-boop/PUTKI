@@ -183,18 +183,40 @@ async def handle_update(db, update: Dict[str, Any]) -> Dict[str, Any]:
         return {"handled": True, "kind": "help"}
 
     # Unknown / chitchat — minimal reply, no LLM here.
-    await send_message(chat_id,
+    fallback_text = await _resolve_welcome_text(db, fallback=(
         "Hei! Tämä on PUTKI HQ:n Voita-arvonnan vahvistus­botti.\n"
-        "Käytä nettisivun Telegram-painiketta osallistuaksesi: https://putkihq.fi/voita")
+        "Käytä nettisivun Telegram-painiketta osallistuaksesi: https://putkihq.fi/voita"
+    ))
+    await send_message(chat_id, fallback_text)
     return {"handled": True, "kind": "fallback"}
+
+
+async def _resolve_welcome_text(db, *, fallback: str) -> str:
+    """Resolve the editable `telegram_welcome` template, falling back to
+    the hardcoded Finnish welcome if the template is missing or the
+    template subsystem fails. Keeps the bot resilient even if templates
+    are misconfigured."""
+    try:
+        from email_templates import render_template
+        out = await render_template(db, "telegram_welcome", lang="fi", vars_={
+            "magic_link": "https://putkihq.fi/voita",
+            "site_url": "https://putkihq.fi",
+        })
+        if out and (out.get("body_text") or "").strip():
+            return out["body_text"]
+    except Exception:  # noqa: BLE001 — pure defensive
+        logger.exception("welcome template resolve failed (using fallback)")
+    return fallback
 
 
 async def _handle_start(db, *, chat_id: int | str, username: str,
                         pending_id: str) -> Dict[str, Any]:
     if not pending_id:
-        await send_message(chat_id,
+        text = await _resolve_welcome_text(db, fallback=(
             "👋 Tervetuloa! Käytä nettisivun Telegram-painiketta — saat henkilökohtaisen koodin, "
-            "joka linkittää osallistumisesi.\n\nhttps://putkihq.fi/voita")
+            "joka linkittää osallistumisesi.\n\nhttps://putkihq.fi/voita"
+        ))
+        await send_message(chat_id, text)
         return {"handled": True, "kind": "start_no_pending"}
 
     # Resolve entry by pending_id. We expect exactly one match per
