@@ -666,9 +666,10 @@ const Mittari = () => {
 
   return (
     <div data-testid="mittari-page" style={{ color: 'var(--ink, #ECE6D8)' }}>
-      {/* Persistent ← PUTKI HQ backlink */}
-      <Link to="/" data-testid="mittari-back-home" style={{
-        position: 'fixed', top: 16, left: 16, zIndex: 60,
+      {/* Persistent ← PUTKI HQ backlink (fixed bottom-left so it never
+          collides with the news ticker or site logo at top) */}
+      <Link to="/" data-testid="mittari-back-home" className="m-back-home" style={{
+        position: 'fixed', bottom: 16, left: 16, zIndex: 60,
         background: 'var(--surface, #141210)', border: '1px solid var(--hairline)',
         padding: '8px 14px', textDecoration: 'none',
         fontFamily: 'ui-monospace, monospace', fontSize: 11,
@@ -1091,6 +1092,8 @@ const Mittari = () => {
           .m-founder-grid { grid-template-columns: 1fr !important; text-align: center; }
           .m-founder-grid > div:first-child { margin: 0 auto; }
           .m-sticky { display: flex !important; }
+          /* Lift the back-home link above the sticky CTA bar */
+          .m-back-home { bottom: 70px !important; }
           body { padding-bottom: 70px; }
         }
         @media (max-width: 480px) {
