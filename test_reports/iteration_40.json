@@ -1,0 +1,39 @@
+{
+  "summary": "Iter40 /mittari lead-capture optimization — backend 53/53 PASS (8 new iter40 + 45 regression: iter36 telegram, iter37 sprint_c, iter38 mittari_landing, sprint_a_mestari_voita). New GET /api/mittari/stats endpoint returns clean contract {subscribers_count, fresh_24h, latest_signups:[{name,channel,created_at}]} — no _id leakage, no \\u2019 literal. Verified: subscribers_count=10, fresh_24h=10, 4 latest signups with capitalized first-names derived from email locals (e.g. 'Test'). POST /api/voita/lead w/ source='mittari' + quiz_tags.surface='mittari_gate_hero'|'mittari_gate_final' → 200 ok:true, lead persisted, fresh_24h counter advances. POST /api/mittari/subscribe {pending_id} → 200. Frontend /mittari at 1366x800: EXACTLY 2 gate containers ([data-testid=mittari-gate-hero] + [data-testid=mittari-gate-final]) — no third gate (MittariSignals embedded gate REMOVED). Both gates have big blue Telegram-primary CTA with [data-testid=mittari-gate-{hero|final}-telegram-cta] href='https://t.me/Putkihq_bot?start=mittari_<uuid>'. <3S DELIVERY badge ([data-testid=mittari-gate-{variant}-badge]) sits visually ON the Telegram block (blue border container) — NOT on email. Email fallback is small horizontal row with 'or use email' separator. Counter [data-testid=mittari-counter] CORRECTLY HIDDEN (subscribers_count=10 < 50). Activity feed [data-testid=mittari-activity-feed] RENDERS with 4 real signups from /api/mittari/stats. Killer empty-state working: [data-testid=mittari-killer-quiet] shown (odds API dormant → 0 picks), no bare '—' placeholders. [data-testid=mittari-signals-empty] shown w/ quiet-market sentence. NO \\u2019 literal anywhere in rendered DOM body.innerText. DOM order verified: hero(102)→signals(1367)→explain(1605)→receipts(1889)→testimonials(2431)→founder(2758)→press(3077)→final-gate-section(3153) — strict ascending. Reveal mechanic VERIFIED: submitted hero email TEST_iter40_ui_<ts>@example.com → success message + [data-testid=mittari-reveal-hi] appears in hero. ← PUTKI HQ backlink [data-testid=mittari-back-home] fixed top-left (x=16, y=16), href='/'. FI↔EN toggle works: EN renders 'AVAA TELEGRAMISSA →' for FI / 'OPEN IN TELEGRAM →' label confirmed in source + initial EN render. Mobile 390x844: scrollWidth=390 winW=390 delta=0 — zero overflow. Sticky [data-testid=mittari-sticky] computed display=flex, [data-testid=mittari-sticky-cta] href=telegram deep-link. Desktop 1366 delta=0.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter40_mittari_optimization.py",
+    "/app/backend/tests/test_iter38_mittari_landing.py",
+    "/app/backend/tests/test_iter37_sprint_c.py",
+    "/app/backend/tests/test_iter36_telegram_mittari.py",
+    "/app/backend/tests/test_sprint_a_mestari_voita.py",
+    "/app/test_reports/pytest/iter40.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (back-office). No app auth needed.",
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Mittari.jsx is now 998 lines (down from 1188 in iter39) — improvement, but still exceeds the 700-line guideline. The Gate sub-component is now properly extracted (lines 282-439). Recommend extracting LiveActivityFeed, the hero section, and the final-gate section into /app/frontend/src/components/mittari/* for further maintainability.",
+    "Gate testids now include variant suffix ({hero|final}) — testid collision from iter39 is FULLY RESOLVED. Clean.",
+    "MittariSignals with-picks branch (picks.length>0) still un-runtime-tested because Odds API is dormant. Code review shows per-row testids (mittari-signal-row-NN, mittari-signal-pick-NN, mittari-signal-reveal-teaser) and the unlocked-prop behaviour wired correctly. Recommend a fixture/mock test or live verification once ODDS_API_KEY is wired.",
+    "Activity feed shows channel label as Finnish 'sähköposti' even when lang='en' (line 472 in Mittari.jsx hardcodes the Finnish label for non-telegram channels). Minor i18n bleed — should be `isEn ? 'Email' : 'sähköposti'`. Not blocking.",
+    "Gate email form still uses input[type=email]+required → native HTML5 validation pre-empts JS submit on invalid email, so JS-side err state is unreachable for malformed addresses (same comment from iter39). Either drop the dead err branch or use noValidate + manual regex.",
+    "Telegram CTA href construction uses pendingId from localStorage — works as long as crypto.randomUUID() is available; fallback Math.random().toString(36).slice(2) on older browsers produces a non-UUID pending_id. Backend POST /api/mittari/subscribe accepts arbitrary strings so this is OK, but consider UUID polyfill for consistency."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter40_mittari_optimization.py (new — 8 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (53 passed, 1 pre-existing skip — includes 8 new iter40 + 45 regression iter36/iter37/iter38/sprint_a)",
+    "frontend": "100% (all 17 acceptance criteria pass — 2-gate count, telegram primary + <3S DELIVERY badge on telegram block, email fallback, counter hidden <50, real activity feed, killer-quiet empty-state, signals-empty branch, no \\u2019 literal, DOM order, reveal mechanic on hero submit, backlink top-left, FI↔EN toggle, mobile zero overflow, sticky bar with telegram deep-link)"
+  },
+  "seed_data_creation": "2 backend test leads (TEST_iter40_mittari_gate_hero_<uid>@example.com + TEST_iter40_mittari_gate_final_<uid>@example.com) + 1 UI test lead (TEST_iter40_ui_<ts>@example.com). TEST_ prefix marks them — safe to leave or admin-cleanup later.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter40 lead-capture optimization verified complete. All user-brief requirements met: Telegram visually primary in BOTH gates (blue button + <3S DELIVERY badge on telegram block), email small fallback, cut from 4→2 gates (MittariSignals capture-free), real /api/mittari/stats wired (count + signups), counter hidden <50, empty-state replaces bare '—' placeholders, reveal mechanic on hero submit, persistent ← PUTKI HQ backlink, \\u2019 literal eliminated. The signals with-picks runtime path remains untested only because upstream Odds API is dormant in this env. Telegram webhook is bound to preview URL in prod (admin action POST /api/admin/telegram/set-webhook needed post-deploy, explicitly out of scope per request).",
+  "rca of the issue": "n/a — no issues found this iteration."
+}

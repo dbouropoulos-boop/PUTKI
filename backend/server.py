@@ -1563,6 +1563,54 @@ async def public_odds_featured():
     return await get_featured_picks()
 
 
+@api_router.get("/mittari/stats")
+async def public_mittari_stats():
+    """Real subscriber stats for the /mittari social-proof modules.
+
+    Returns: subscribers_count (total leads with mittari_lead tag),
+    fresh_24h (leads in the last 24h), and the 4 most recent signups
+    anonymised to first-name + channel + iso timestamp. Returns zeroes /
+    empty list when no real data exists — front-end is expected to hide
+    the social-proof modules in that case rather than show a fake number.
+    """
+    now = datetime.now(timezone.utc)
+    cutoff_24h = (now - timedelta(hours=24)).isoformat()
+    base = {"consent_tag": "mittari_lead"}
+    total = await db.optin_consents.count_documents(base)
+    fresh_24h = await db.optin_consents.count_documents(
+        {**base, "created_at": {"$gte": cutoff_24h}}
+    )
+    cursor = db.optin_consents.find(
+        base,
+        {"_id": 0, "created_at": 1, "channel": 1, "email": 1,
+         "telegram_username": 1, "display_name": 1},
+    ).sort([("created_at", -1)]).limit(4)
+    rows: List[Dict[str, Any]] = []
+    async for d in cursor:
+        # Derive a friendly first-name without leaking PII.
+        name = (d.get("display_name") or "").strip().split(" ")[0][:24]
+        if not name:
+            email = (d.get("email") or "").strip()
+            if email and "@" in email:
+                local = email.split("@", 1)[0]
+                chunk = local.split(".")[0].split("_")[0].split("+")[0]
+                if chunk and chunk.isascii():
+                    name = chunk.capitalize()[:24]
+        if not name:
+            name = "Tilaaja"
+        rows.append({
+            "name": name,
+            "channel": d.get("channel") or "email",
+            "created_at": d.get("created_at"),
+        })
+    return {
+        "subscribers_count": total,
+        "fresh_24h": fresh_24h,
+        "latest_signups": rows,
+    }
+
+
+
 @api_router.get("/odds/market-watch")
 async def public_odds_market_watch():
     """Phase 1 (Section 7c) — Daily Market Watch Card payload.
