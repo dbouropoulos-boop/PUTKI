@@ -1747,8 +1747,55 @@ async def admin_save_mittari_copy(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# ── Mestari copy editor ───────────────────────────────────────────────
+# ── Mestari multi-diagnostic (poker + blackjack) ─────────────────────
 
+@api_router.get("/mestari/diagnostic/{diagnostic}/meta")
+async def public_diagnostic_meta(diagnostic: str):
+    """Public — return the question + profile metadata for the named
+    diagnostic so the frontend renders the quiz without duplicating
+    constants. Sports diagnostic surfaces only its value block (questions
+    live in voita_quiz_config)."""
+    from mestari_diagnostics import get_diagnostic_meta
+    meta = get_diagnostic_meta(diagnostic)
+    if not meta:
+        raise HTTPException(status_code=404, detail="unknown_diagnostic")
+    return meta
+
+
+@api_router.post("/mestari/diagnostic/{diagnostic}/resolve")
+async def public_diagnostic_resolve(diagnostic: str, payload: Dict[str, Any]):
+    """Public — resolve answers → profile for poker/blackjack. Sports
+    diagnostic continues to use POST /api/voita/profile/resolve."""
+    from mestari_diagnostics import resolve_blackjack, resolve_poker
+    answers = (payload or {}).get("answers") or []
+    if diagnostic == "poker":
+        return resolve_poker(answers)
+    if diagnostic == "blackjack":
+        return resolve_blackjack(answers)
+    raise HTTPException(status_code=404, detail="unknown_diagnostic")
+
+
+@api_router.post("/mestari/diagnostic/lead")
+async def public_diagnostic_lead(payload: Dict[str, Any]):
+    """Capture a poker / blackjack lead. Sports leads continue to flow
+    through POST /api/voita/lead (source='mestari') so the existing
+    Mestari sports diagnostic is unaffected."""
+    from mestari_diagnostics import capture_diagnostic_lead
+    res = await capture_diagnostic_lead(
+        db,
+        email=(payload or {}).get("email", ""),
+        name=(payload or {}).get("name"),
+        diagnostic=(payload or {}).get("diagnostic", ""),
+        profile_key=(payload or {}).get("profile_key"),
+        scores=(payload or {}).get("scores"),
+        lang=(payload or {}).get("lang", "fi"),
+    )
+    if not res.get("ok"):
+        raise HTTPException(status_code=400, detail=res.get("error", "bad_request"))
+    return res
+
+
+# ── Mestari copy editor ───────────────────────────────────────────────
 @api_router.get("/mestari/copy")
 async def public_mestari_copy():
     """Returns the fully-merged Mestari page copy tree (admin override

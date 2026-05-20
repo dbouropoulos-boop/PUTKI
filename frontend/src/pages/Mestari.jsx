@@ -58,8 +58,8 @@ const COPY = {
     header: { back: 'PUTKIHQ', backArrow: '←' },
     hero: {
       eyebrow: 'Mestari · Toimituksellinen diagnostiikka · Tutkimustyökalu',
-      headline: 'Millainen analyytikko sinä olet?',
-      sub: '90 sekunnin diagnostiikka, joka perustuu vedonlyöntimarkkinoiden tutkimukseen. Vastaa viiteen kysymykseen siitä, miten luet ottelua — saat henkilökohtaisen analyyttisen profiilin ja 5 päivän oppaan siihen, miten markkinat oikeasti käyttäytyvät.',
+      headline: 'Millainen urheiluvedonlyöjä sinä olet?',
+      sub: '90 sekunnin diagnostiikka, joka perustuu vedonlyöntimarkkinoiden tutkimukseen. Vastaa viiteen kysymykseen siitä, miten luet ottelua — saat henkilökohtaisen analyyttisen profiilin ja 5 päivän pelikirjan siihen, miten markkinat oikeasti käyttäytyvät.',
       positioningStrong: 'Tämä on tutkimus- ja analytiikkatyökalu.',
       positioningRest: ' Mestari tutkii, miten vedonlyöntimarkkinat liikkuvat ja miten ihmiset tulkitsevat niitä. Se ei ole vedonlyöntineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.',
       cta: 'Aloita diagnostiikka →',
@@ -110,7 +110,7 @@ const COPY = {
       rows: [
         { num: '1', title: 'Viisi kysymystä · noin 90 sekuntia', desc: 'Jokainen kysymys tutkii yhtä ulottuvuutta siinä, miten luet ottelua. Oikeita vastauksia ei ole — diagnostiikka mittaa analyyttistä tyyliäsi, ei tietämystäsi.' },
         { num: '2', title: 'Analyyttinen profiilisi', desc: 'Malli luokittelee vastauksesi yhdeksi tutkimuksessa määritellyistä ennustajaprofiileista, selkokielisellä selityksellä siitä, missä tyyli on vahva ja missä se taipuu harhaan.' },
-        { num: '3', title: 'Koko raportti + 5 päivän opas', desc: 'Anna sähköpostisi ja lähetämme täyden raportin sekä viiden päivän opetussarjan siitä, miten vedonlyöntimarkkinat käyttäytyvät. Vain sähköposti — muuta tietoa ei kerätä.' },
+        { num: '3', title: 'Koko raportti + 5 päivän pelikirja', desc: 'Anna sähköpostisi ja lähetämme täyden raportin sekä viiden päivän opetussarjan siitä, miten vedonlyöntimarkkinat käyttäytyvät. Vain sähköposti — muuta tietoa ei kerätä.' },
       ],
     },
     clarity: {
@@ -171,7 +171,7 @@ const COPY = {
       note: 'Tietosi tallennetaan tämän raportin lähettämistä varten. Käytämme niitä vain raporttiin ja 5 päivän oppaaseen. Emme jaa, myy tai luovuta tietojasi kolmansille osapuolille. Peruuttamislinkki jokaisessa viestissä.',
       acceptPre: 'Hyväksyn ',
       acceptLink: 'tietosuojaehdot',
-      acceptPost: ' ja haluan vastaanottaa raportin + 5 päivän oppaan.',
+      acceptPost: ' ja haluan vastaanottaa raportin + 5 päivän pelikirjan.',
       links: [
         { href: '/ehdot', label: 'Tietosuoja & GDPR' },
         { href: '/menetelma', label: 'Miten viestimme' },
@@ -183,8 +183,8 @@ const COPY = {
     header: { back: 'PUTKIHQ', backArrow: '←' },
     hero: {
       eyebrow: 'Mestari · Editorial diagnostic · Research tool',
-      headline: 'What kind of analyst are you?',
-      sub: 'A 90-second diagnostic grounded in betting-market research. Answer five questions about how you read a match — receive a personal analytical profile and a 5-day primer on how the markets actually behave.',
+      headline: 'What kind of sports bettor are you?',
+      sub: 'A 90-second diagnostic grounded in betting-market research. Answer five questions about how you read a match — receive a personal analytical profile and a 5-day playbook on how the markets actually behave.',
       positioningStrong: 'This is a research and analytics tool.',
       positioningRest: ' Mestari studies how betting markets move and how people interpret them. It is not betting advice, it does not promote gambling, and it will never tell you what to bet. For educational use only.',
       cta: 'Start the diagnostic →',
@@ -193,7 +193,7 @@ const COPY = {
     cred: [
       { num: '11', unit: ' sources', desc: 'Public market and scene data feeds analysed' },
       { num: '0', unit: ' overrides', desc: 'No editorial finger on the model. Same data, same output.' },
-      { num: '5', unit: ' days', desc: 'Structured primer on reading market behaviour' },
+      { num: '5', unit: ' days', desc: 'Structured playbook on reading market behaviour' },
       { num: '90', unit: ' sec', desc: 'Run time · 5 research-grounded questions' },
     ],
     method: {
@@ -219,7 +219,7 @@ const COPY = {
       rows: [
         { num: '1', title: 'Five questions · about 90 seconds', desc: 'Each question explores one dimension of how you read a match. There are no correct answers — the diagnostic measures analytical style, not knowledge.' },
         { num: '2', title: 'Your analytical profile', desc: 'The model classifies your answers into one of the predictor profiles defined in the research, with a plain-language read on where your style is strong and where it tends to bend.' },
-        { num: '3', title: 'Full report + 5-day primer', desc: 'Hand over your email and we send the full report plus a five-day teaching series on how betting markets behave. Email only — no other data is collected.' },
+        { num: '3', title: 'Full report + 5-day playbook', desc: 'Hand over your email and we send the full report plus a five-day teaching series on how betting markets behave. Email only — no other data is collected.' },
       ],
     },
     clarity: {
@@ -277,10 +277,10 @@ const COPY = {
     },
     trust: {
       pills: ['GDPR', 'No spam', 'We never sell data', 'Email only'],
-      note: 'Your email is stored to send this report. We use it only for the report and the 5-day primer. We never share, sell or pass on your data to third parties. An unsubscribe link sits in every message.',
+      note: 'Your email is stored to send this report. We use it only for the report and the 5-day playbook. We never share, sell or pass on your data to third parties. An unsubscribe link sits in every message.',
       acceptPre: 'I accept the ',
       acceptLink: 'privacy policy',
-      acceptPost: ' and want to receive the report + 5-day primer.',
+      acceptPost: ' and want to receive the report + 5-day playbook.',
       links: [
         { href: '/ehdot', label: 'Privacy & GDPR' },
         { href: '/menetelma', label: 'How we communicate' },
@@ -929,8 +929,8 @@ const Tease = ({ profile, loading, onContinue, lang }) => {
         </div>
         <p style={{ color: T.ink, fontSize: 13.5, lineHeight: 1.55, margin: 0, opacity: 0.9 }}>
           {lang === 'en'
-            ? "Full report: diagnosis · weakness · edge · what the method reveals · plus a 5-day primer on how betting markets behave, one chapter per day."
-            : 'Täysi raportti: diagnoosi · heikkous · etu · mitä menetelmä paljastaa · sekä 5 päivän opas vedonlyöntimarkkinoiden lukemiseen, yksi luku päivässä.'}
+            ? "Full report: diagnosis · weakness · edge · what the method reveals · plus a 5-day playbook on how betting markets behave, one chapter per day."
+            : 'Täysi raportti: diagnoosi · heikkous · etu · mitä menetelmä paljastaa · sekä 5 päivän pelikirja vedonlyöntimarkkinoiden lukemiseen, yksi luku päivässä.'}
         </p>
       </div>
       <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onContinue}
@@ -1009,8 +1009,8 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, t
   const acceptPre = (trust && trust.acceptPre) || (lang === 'en' ? 'I accept the ' : 'Hyväksyn ');
   const acceptLink = (trust && trust.acceptLink) || (lang === 'en' ? 'privacy policy' : 'tietosuojaehdot');
   const acceptPost = (trust && trust.acceptPost) || (lang === 'en'
-    ? ' and want to receive the report + 5-day primer.'
-    : ' ja haluan vastaanottaa raportin + 5 päivän oppaan.');
+    ? ' and want to receive the report + 5-day playbook.'
+    : ' ja haluan vastaanottaa raportin + 5 päivän pelikirjan.');
   return (
     <div data-testid="mestari-gate">
       <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: T.accent, fontWeight: 700, marginBottom: 8 }}>
@@ -1021,8 +1021,8 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, t
       </h2>
       <p style={{ color: T.muted, fontSize: 14, marginBottom: 22, lineHeight: 1.55 }}>
         {lang === 'en'
-          ? 'Full report in 5 minutes. The 5-day primer starts tomorrow at 09:00. No spam — unsubscribe anytime.'
-          : 'Täysi raportti 5 minuutissa. 5 päivän opas alkaa huomenna klo 09. Ei spämmiä — peruuta milloin tahansa.'}
+          ? 'Full report in 5 minutes. The 5-day playbook starts tomorrow at 09:00. No spam — unsubscribe anytime.'
+          : 'Täysi raportti 5 minuutissa. 5 päivän pelikirja alkaa huomenna klo 09. Ei spämmiä — peruuta milloin tahansa.'}
       </p>
       <div style={{ display: 'grid', gap: 14 }}>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
@@ -1098,9 +1098,25 @@ const Confirmation = ({ email, profileName, lang }) => (
     </p>
     <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>
       {lang === 'en'
-        ? 'Day 1 of the 5-day primer arrives tomorrow at 09:00. One per day. Read at your pace.'
-        : 'Päivä 1/5 oppaasta saapuu huomenna klo 09. Yksi per päivä. Lue omassa tahdissasi.'}
+        ? 'Day 1 of the 5-day playbook arrives tomorrow at 09:00. One per day. Read at your pace.'
+        : 'Päivä 1/5 pelikirjasta saapuu huomenna klo 09. Yksi per päivä. Lue omassa tahdissasi.'}
     </p>
+    {/* Section 7.3 value block — required on every diagnostic, verbatim. */}
+    <div data-testid="mestari-confirm-value-block" style={{
+      padding: '20px 20px', background: T.surface,
+      border: `1px solid ${T.border}`, marginBottom: 24,
+    }}>
+      <span data-testid="mestari-confirm-value-kicker" style={{
+        fontFamily: T.mono, fontSize: 10, letterSpacing: '0.24em',
+        fontWeight: 700, color: T.accent, textTransform: 'uppercase',
+      }}>{lang === 'en' ? 'WHAT THIS REPORT GIVES YOU' : 'MITÄ TÄMÄ RAPORTTI ANTAA'}</span>
+      <p data-testid="mestari-confirm-value-body" style={{
+        fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.65,
+        color: T.ink, margin: '12px 0 0',
+      }}>{lang === 'en'
+        ? "A read on how you actually approach a match — drawn from your answers, not from how you'd describe yourself. It's deterministic: the same answers always produce the same profile, with no editorial thumb on the scale. You get an honest account of where your approach is sharp and where it costs you, and a 5-day playbook on how betting markets genuinely behave. No tips, no picks — a clearer view of your own thinking, which is the thing most readers never get."
+        : "Lukeman siitä, miten oikeasti lähestyt ottelua — vastauksistasi, ei siitä miten kuvailisit itseäsi. Se on deterministinen: samat vastaukset tuottavat aina saman profiilin, ilman toimituksen peukaloa vaa'assa. Saat rehellisen kuvauksen siitä, missä lähestymistapasi on terävä ja missä se maksaa, sekä 5 päivän pelikirjan siitä, miten vedonlyöntimarkkinat aidosti käyttäytyvät. Ei vinkkejä, ei valintoja — selkeämpi näkymä omaan ajatteluusi, jota useimmat lukijat eivät koskaan saa."}</p>
+    </div>
     {/* The single allowed PS on cold-traffic — soft, link-only mention. */}
     <p data-testid="mestari-confirm-ps" style={{
       color: T.muted, fontSize: 13, lineHeight: 1.55, margin: '0 0 24px',
@@ -1209,10 +1225,10 @@ const Mestari = () => {
   const [error, setError] = useState('');
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Mestari — What kind of analyst are you?' : 'Mestari — Millainen analyytikko sinä olet?',
+    title: lang === 'en' ? 'Mestari — What kind of sports bettor are you?' : 'Mestari — Millainen urheiluvedonlyöjä sinä olet?',
     description: lang === 'en'
-      ? '90-second research-grounded diagnostic. Personal analytical profile + 5-day primer to your inbox. Free, no deposit, no betting.'
-      : '90-sekunnin tutkimuspohjainen diagnostiikka. Henkilökohtainen analyyttinen profiili + 5 päivän opas sähköpostiisi. Ilmainen, ei talletusta, ei vedonlyöntiä.',
+      ? '90-second research-grounded diagnostic. Personal analytical profile + 5-day playbook to your inbox. Free, no deposit, no betting.'
+      : '90-sekunnin tutkimuspohjainen diagnostiikka. Henkilökohtainen analyyttinen profiili + 5 päivän pelikirja sähköpostiisi. Ilmainen, ei talletusta, ei vedonlyöntiä.',
     canonical: `${BACKEND}/mestari`,
   });
 

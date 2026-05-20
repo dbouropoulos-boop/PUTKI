@@ -44,6 +44,8 @@ import VoitaRaffle from "@/pages/VoitaRaffle";
 import VoitaKiitos from "@/pages/VoitaKiitos";
 import VoitaSaannot from "@/pages/VoitaSaannot";
 import Mestari from "@/pages/Mestari";
+import MestariHub from "@/pages/MestariHub";
+import MestariDiagnostic from "@/pages/MestariDiagnostic";
 import RedirectWithQuery from "@/components/RedirectWithQuery";
 import TopicHubPage from "@/pages/TopicHubPage";
 import Article from "@/pages/Article";
@@ -68,7 +70,10 @@ function App() {
           {/* Standalone (no header/footer) */}
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
-          <Route path="/mestari" element={<Mestari />} />
+          <Route path="/mestari" element={<MestariHub />} />
+          <Route path="/mestari/sports" element={<Mestari />} />
+          <Route path="/mestari/poker" element={<MestariDiagnostic diagnostic="poker" />} />
+          <Route path="/mestari/blackjack" element={<MestariDiagnostic diagnostic="blackjack" />} />
           <Route path="/game" element={<Voyager />} />
           <Route path="/voyager" element={<Navigate to="/game" replace />} />
           <Route path="/back-office" element={<BackOffice />} />

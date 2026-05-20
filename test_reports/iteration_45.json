@@ -1,0 +1,35 @@
+{
+  "summary": "Iter45 — Mestari diagnostic suite (chooser hub + 3 diagnostics). Backend: 40/40 sprint pytest green (tests/test_sprint_mestari_multi.py 11 + test_sprint_email_tracking.py 10 + test_sprint_a_mestari_voita.py 13 + test_phase3_v2_voyager_rotation.py 6) plus 7/7 new public-URL pytest in tests/test_iter45_mestari_public.py = 47/47 backend tests pass. Public-URL verified: GET /api/mestari/diagnostic/poker/meta + /blackjack/meta return 200 with 5 questions + 4 profiles + 5-day playbook + value_block (kicker_fi/en + body_fi/en); /api/mestari/diagnostic/roulette/meta returns 404; POST /poker/resolve TAG combo → profile.key='strategist'; POST /blackjack/resolve folk-rule combo → profile.key='folk_rule'; POST /api/mestari/diagnostic/lead with qa+regression@example.com returns {ok:true, playbook_dispatch_ready:false}, idempotent on second submit, rejects bad email (400/422) + bad diagnostic. /api/track/o/anytoken.gif → 200 image/gif; /api/track/c/<tok>?u=<b64 weezybet.com> → 302. Frontend E2E (Playwright on public URL): /mestari hub renders mestari-hub + headline 'Which diagnostic?' + trust line + all 3 cards (sports/poker/blackjack with -title testid + START); clicking sports card routes to /mestari/sports (H1 fixed: 'What kind of sports bettor are you?', 0 occurrences of subject 'primer', 5 'playbook' instances, 1 'analyst' substring = the allowed 'research-and-analytics-tool' wording); clicking poker card routes to /mestari/poker with all stat block testids (2 axes / 0 overrides / 5 days / 90 sec), full quiz walked p1→p5 strategist path → mestari-diag-report shows 'The Strategist' + mestari-diag-playbook-outline, gate accepted qa+poker@example.com → mestari-diag-confirm + mestari-diag-value-block with kicker 'WHAT THIS REPORT GIVES YOU' + body 'honest placement on the established model of poker style'; blackjack disciplined path → 'The Disciplined Player' + value block containing 'against the known mathematics of blackjack'. Homepage Mestari card: kicker 'MESTARI · DIAGNOSTICS', headline 'What kind of player are you?', body mentions all 3 diagnostics. NO regressions found.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint_mestari_multi.py",
+    "/app/backend/tests/test_iter45_mestari_public.py",
+    "/app/test_reports/pytest/iter45_mestari_multi.xml",
+    "/app/test_reports/pytest/iter45_public.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "mestari_diagnostics.py resolver is fully deterministic and side-effect free — same answers always produce same profile + scores (verified by test_poker_resolver_is_deterministic). Good fit for the '0 overrides' marketing claim.",
+    "capture_diagnostic_lead correctly gates on PLAYBOOK_EMAIL_DISPATCH_READY env (defaults 0) — placeholder copy stays in DB but never enqueues to email_outbox. Idempotency on (email, diagnostic) verified at unit + public-URL level.",
+    "Public /api/mestari/diagnostic/{dx}/meta + /resolve + /lead routes correctly excluded MongoDB _id (no ObjectId leak in any tested response).",
+    "Sports diagnostic copy migration done cleanly: 0 occurrences of '>primer' as a content node, 'playbook' threaded through 5 places, only remaining 'analyst' substring matches 'research-and-analytics-tool' label (allowed per Section 8 lock).",
+    "Hub uses `grid-template-columns: repeat(auto-fit, minmax(260px, 1fr))` — verified on a 1920px viewport the 3 cards lay out without a half-empty 4th column gap. Ready for a 4th diagnostic when added.",
+    "Click-tracking allowlist in email_tracking.py contains weezybet.com (not weezybet.fi) — fine, but worth noting if any sports playbook copy ever links to a .fi variant it will 400. Documented for future agents."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter45_mestari_public.py (new — 7 public-URL regression tests)"
+  ],
+  "success_rate": { "backend": "100% (47/47)", "frontend": "100%" },
+  "test_credentials": "Admin: X-Admin-Token: putki-hq-admin. Test emails seeded: qa+regression@example.com (poker lead), qa+poker@example.com (poker lead), qa+blackjack@example.com (blackjack lead) — all in mestari_diagnostic_leads collection. Cleanup safe to delete.",
+  "seed_data_creation": "3 mestari_diagnostic_leads rows created via real public-URL POST /api/mestari/diagnostic/lead (qa+regression, qa+poker, qa+blackjack). All flagged playbook_dispatch_ready=false. Safe to delete.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Sprint is shippable. Backend pytest suite extended with /app/backend/tests/test_iter45_mestari_public.py (7 tests against public URL — set REACT_APP_BACKEND_URL in env before running). The placeholder-copy gate (playbook_dispatch_ready=false on poker/blackjack) is INTENTIONAL — do NOT report it as a bug until product signs off on real copy. Sports diagnostic question logic was deliberately NOT re-walked (Section 8 lock); only the H1 fix and value-block testid presence verified. If a 4th diagnostic is added the hub grid (`auto-fit minmax(260px,1fr)`) will reflow automatically.",
+  "mocked_api_status": "Resend email send-worker remains MOCKED (RESEND_API_KEY unset). Poker/blackjack playbook dispatch is GATED OFF (PLAYBOOK_EMAIL_DISPATCH_READY defaults to 0) — leads captured to mestari_diagnostic_leads but no email enqueue. Sports playbook flow unchanged.",
+  "rca of the issue": "No bugs found this iteration. Single test-side adjustment needed: tests/test_iter45_mestari_public.py initially used weezybet.fi for click-redirect — corrected to weezybet.com to match the actual _ALLOWED_HOSTS allowlist in email_tracking.py. Not a product bug."
+}

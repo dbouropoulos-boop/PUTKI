@@ -211,20 +211,20 @@ const MestariBlock = ({ lang }) => {
         background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.96) 100%)',
       }} />
 
-      <Anchor color={blue} label={lang === 'en' ? 'MESTARI · DIAGNOSTIC' : 'MESTARI · DIAGNOSTIIKKA'} />
+      <Anchor color={blue} label={lang === 'en' ? 'MESTARI · DIAGNOSTICS' : 'MESTARI · DIAGNOSTIIKKAA'} />
 
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
         <h3 data-testid="explore-mestari-headline" style={{
           color: '#F5F3EE', fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 24, lineHeight: 1.1, margin: '0 0 10px',
           letterSpacing: '-0.018em',
-        }}>{lang === 'en' ? 'What kind of bettor are you?' : 'Mikä bettaaja sinä olet?'}</h3>
+        }}>{lang === 'en' ? 'What kind of player are you?' : 'Millainen pelaaja sinä olet?'}</h3>
         <p style={{
           color: 'var(--ink, #ECE6D8)', fontSize: 12.5, lineHeight: 1.5,
           opacity: 0.86, maxWidth: 360, margin: 0,
         }}>{lang === 'en'
-          ? '90-second diagnostic. Personal report + 5-day playbook to your inbox. Free.'
-          : '90-sekunnin diagnostiikka. Henkilökohtainen raportti + 5 päivän pelikirja sähköpostiisi. Ilmainen.'}</p>
+          ? 'Three 90-second diagnostics — sports betting, poker, blackjack. Personal profile + 5-day playbook to your inbox. Free.'
+          : 'Kolme 90 sekunnin diagnostiikkaa — urheiluvedonlyönti, pokeri, blackjack. Henkilökohtainen profiili + 5 päivän pelikirja sähköpostiisi. Maksuton.'}</p>
       </div>
 
       <Cta label={lang === 'en' ? 'START →' : 'ALOITA →'} color={blue} />
