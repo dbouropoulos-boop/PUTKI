@@ -1,19 +1,27 @@
 /**
- * MittariSignals — Päivän Signaalit (rich numbered list).
+ * MittariSignals — Päivän Signaalit (live odds-derived signals).
  *
- * Mirrors the mockup: numbered rows 01–05, blurred pick (filter: blur 8px)
- * until subscribed, reasoning line, confidence bar, hit-rate, lock icon.
- * Row #01 has a "Kytke → Signaali 01 avautuu heti" reveal teaser.
- * Below the list: title block + meta + mini-gate (email primary, Telegram fallback).
+ * SOURCE OF TRUTH: GET /api/odds/featured (top-5 favourites by implied
+ * probability across NHL + select football leagues).
  *
- * Subscribe flow: email-primary via POST /api/voita/lead {source:'mittari'}.
- * Telegram path retained (deep-link `t.me/Putkihq_bot?start=mittari_<pending>`)
- * with the existing /api/mittari/subscribe + binding-status polling.
+ * Daily Signals are a SEPARATE product from the scene-meter (Mittari). The
+ * meter reads the scene; Signals are betting picks. This component does
+ * NOT reference streamer-spikes / forum-buzz / state names — every row is
+ * a real h2h favourite with decimal odds, implied probability, and a
+ * deterministic Sharpness score (computed server-side from bookmaker
+ * dispersion + recency momentum).
  *
- * Static signal data is deterministic — picks the existing
- * /api/odds/featured returns nothing useful in this env, and the editorial
- * value of these rows is the *narrative* (state-reasoning + hit-rate),
- * not real-time odds.
+ * Visual contract (HTML mock):
+ *   - Numbered rows 01–05
+ *   - Pick text blurred until unlocked
+ *   - Confidence bar = Sharpness 0–100
+ *   - Right column = implied probability %
+ *   - Lock icon on every row; row #01 has a reveal-teaser link to the gate
+ *   - Mini-gate (email primary, Telegram fallback)
+ *
+ * Empty-state: when the API has no qualifying picks (dormant key or
+ * no upcoming events) we render an honest "no signals today" message
+ * with the gate so the email/Telegram capture still works.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
@@ -22,50 +30,40 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TELEGRAM_BOT = 'Putkihq_bot';
 const STORAGE_KEY = 'putki_mittari_pending_id';
 const STORAGE_UNLOCK_KEY = 'putki_mittari_unlocked_at';
+const ODDS_REFRESH_MS = 60_000;
 
-// ── Static signal feed (deterministic, editorial value) ────────────────
-const SIGNALS = [
-  {
-    n: '01',
-    pickFi: 'Mikä Mikko · live PEAK-tilassa · 73% todennäköisyys korkealle katsojapiikille 2h sisällä',
-    pickEn: 'Mikä Mikko · live in PEAK state · 73% chance of high viewer spike within 2h',
-    reasonFi: ['Mittari', 'MEININKI 78', '· striimaaja-signaali korkea · Mikä Mikko livenä 2h 14m · historiallinen osumatarkkuus ', '73%'],
-    reasonEn: ['Mittari', 'ROLLING 78', '· streamer-signal high · Mikä Mikko live 2h 14m · historical hit rate ', '73%'],
-    confidence: 86, hitRate: 73, isFirst: true,
-  },
-  {
-    n: '02',
-    pickFi: 'Tappara–Kärpät · Liigan iltaottelu · foorumi-vipinä korreloi tasapelin kanssa',
-    pickEn: 'Tappara–Kärpät · Liiga evening match · forum-buzz correlates with draws',
-    reasonFi: ['Urheilusignaali', 'VIPINÄ 64', '· Liiga-ottelu 19:00 · foorumi-aktiivisuus nousussa · hit rate ', '61%'],
-    reasonEn: ['Sports signal', 'ACTIVE 64', '· Liiga match 19:00 · forum activity rising · hit rate ', '61%'],
-    confidence: 72, hitRate: 61,
-  },
-  {
-    n: '03',
-    pickFi: 'Sebsu · katsojakäyrä +12%/1h · ennakoi pidempää sessiota',
-    pickEn: 'Sebsu · viewer curve +12%/1h · signals longer session',
-    reasonFi: ['Mittari', 'ROLLING 70', '· Sebsu live 47m · katsojapiikki +12%/1h · hit rate ', '55%'],
-    reasonEn: ['Mittari', 'ROLLING 70', '· Sebsu live 47m · viewer spike +12%/1h · hit rate ', '55%'],
-    confidence: 65, hitRate: 55,
-  },
-  {
-    n: '04',
-    pickFi: 'Striimaaja-klusteri aktivoituu · foorumi-spike +47% ennakoi PEAKia 2.4h sisällä',
-    pickEn: 'Streamer-cluster activating · forum-spike +47% signals PEAK within 2.4h',
-    reasonFi: ['Foorumi-spike', '+47%', '· striimaaja-klusteri aktivoitumassa · avg lead time 2.4h · hit rate ', '68%'],
-    reasonEn: ['Forum-spike', '+47%', '· streamer-cluster activating · avg lead time 2.4h · hit rate ', '68%'],
-    confidence: 79, hitRate: 68,
-  },
-  {
-    n: '05',
-    pickFi: '7 päivän nouseva trendi · vahva korrelaatio striimaaja-PEAK ja foorumi-spike välillä',
-    pickEn: '7-day rising trend · strong correlation between streamer-PEAK and forum-spike',
-    reasonFi: ['Pitkän aikavälin signaali', 'Mittari-trendi 7 päivää nouseva', '· vahva korrelaatio striimaaja-PEAK ja foorumi-spike välillä · hit rate ', '49%'],
-    reasonEn: ['Long-horizon signal', 'Mittari trend 7 days rising', '· strong correlation between streamer-PEAK and forum-spike · hit rate ', '49%'],
-    confidence: 58, hitRate: 49,
-  },
-];
+// ── Sharpness bands (verbatim from /menetelma) ─────────────────────────
+const sharpnessBand = (score, isEn) => {
+  if (score >= 90) return isEn ? 'tight' : 'tiukka';
+  if (score >= 75) return isEn ? 'clear' : 'selkeä';
+  if (score >= 60) return isEn ? 'mixed' : 'sekava';
+  if (score >= 40) return isEn ? 'loose' : 'löysä';
+  return isEn ? 'scattered' : 'hajanainen';
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────
+const formatKickoff = (iso, isEn) => {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    if (isEn) {
+      return d.toLocaleString('en-GB', {
+        weekday: 'short', day: '2-digit', month: 'short',
+        hour: '2-digit', minute: '2-digit',
+      });
+    }
+    const days = ['su','ma','ti','ke','to','pe','la'];
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${days[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}. ${hh}:${mm}`;
+  } catch { return '—'; }
+};
+
+const sideLabel = (side, isEn) => {
+  if (side === 'home') return isEn ? 'home' : 'kotijoukkue';
+  if (side === 'away') return isEn ? 'away' : 'vierasjoukkue';
+  return isEn ? 'draw' : 'tasapeli';
+};
 
 // ── Small static UI parts ──────────────────────────────────────────────
 const LockIcon = ({ size = 16 }) => (
@@ -97,11 +95,47 @@ const MittariSignals = () => {
 
   const [unlocked, setUnlocked] = useState(() => {
     try { return !!window.localStorage.getItem(STORAGE_UNLOCK_KEY); }
-    catch { return false; /* storage unavailable */ }
+    catch { return false; }
   });
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+
+  // ── Odds-derived signals ─────────────────────────────────────────────
+  const [payload, setPayload] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let stop = false;
+    const load = () => {
+      fetch(`${BACKEND}/api/odds/featured`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((p) => { if (!stop) { setPayload(p); setLoading(false); } })
+        .catch(() => { if (!stop) setLoading(false); });
+    };
+    load();
+    const id = setInterval(load, ODDS_REFRESH_MS);
+    return () => { stop = true; clearInterval(id); };
+  }, []);
+
+  const picks = useMemo(() => {
+    const raw = (payload?.picks || []).slice(0, 5);
+    return raw.map((p, i) => ({
+      n: String(i + 1).padStart(2, '0'),
+      pickTeam: p.pick_team,
+      home: p.home_team,
+      away: p.away_team,
+      side: p.pick_side,
+      sport: p.sport_label || p.sport_key,
+      sportIcon: p.sport_icon || '',
+      odds: p.decimal_odds,
+      impliedProb: p.implied_probability,
+      sharpness: (p.sharpness && p.sharpness.sharpness) || 0,
+      kickoff: p.commence_time,
+      bookmaker: p.bookmaker,
+      isFirst: i === 0,
+    }));
+  }, [payload]);
 
   const submit = useCallback(async (e) => {
     e?.preventDefault?.();
@@ -129,19 +163,18 @@ const MittariSignals = () => {
   }, [email, isEn]);
 
   const onTelegram = useCallback(async () => {
-    // Pre-register the pending_id so the bot can resolve it on /start.
     try {
       await fetch(`${BACKEND}/api/mittari/subscribe`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pending_id: pendingId }),
       });
-    } catch { /* noop: bot binds without pre-register too */ }
+    } catch { /* noop: bot binds without pre-register */ }
     try { window.localStorage.setItem(STORAGE_UNLOCK_KEY, String(Date.now())); }
     catch { /* noop: storage unavailable */ }
     setUnlocked(true);
   }, [pendingId]);
 
-  // Today's date in Finnish or English format for the title block.
+  // ── Date string for the title block ──────────────────────────────────
   const dateStr = useMemo(() => {
     const d = new Date();
     if (isEn) {
@@ -153,6 +186,15 @@ const MittariSignals = () => {
     const months = ['tammikuuta','helmikuuta','maaliskuuta','huhtikuuta','toukokuuta','kesäkuuta','heinäkuuta','elokuuta','syyskuuta','lokakuuta','marraskuuta','joulukuuta'];
     return `${wd.charAt(0).toUpperCase() + wd.slice(1)} ${d.getDate()}. ${months[d.getMonth()]} · 09:00`;
   }, [isEn]);
+
+  // ── Aggregate meta from the live payload ─────────────────────────────
+  const avgSharpness = useMemo(() => {
+    if (!picks.length) return null;
+    const s = picks.reduce((a, p) => a + (p.sharpness || 0), 0) / picks.length;
+    return Math.round(s);
+  }, [picks]);
+
+  const topImplied = picks[0]?.impliedProb ?? null;
 
   return (
     <section data-testid="mittari-signals" style={{ padding: '40px 0' }}>
@@ -166,7 +208,7 @@ const MittariSignals = () => {
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
             letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
             marginBottom: 10,
-          }}>{isEn ? '— PÄIVÄN SIGNAALIT · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'}</div>
+          }}>{isEn ? '— DAILY SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'}</div>
           <h2 data-testid="mittari-signals-title" style={{
             fontFamily: 'Georgia, serif', fontSize: 'clamp(34px, 4.5vw, 48px)',
             lineHeight: 1, letterSpacing: '-0.02em', fontWeight: 400, margin: 0,
@@ -181,9 +223,21 @@ const MittariSignals = () => {
         </div>
         <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
           {[
-            { l: isEn ? 'METER NOW' : 'MITTARI NYT', v: 'ROLLING', tone: '#E89248' },
-            { l: isEn ? 'YESTERDAY HITS' : 'EILEN OSUMAT', v: '3/5', tone: '#6BB877' },
-            { l: isEn ? '30D' : '30 PÄIVÄN', v: '58%', tone: 'var(--ink)' },
+            {
+              l: isEn ? 'PICKS TODAY' : 'POIMINTOJA',
+              v: picks.length ? `${picks.length}/5` : '—',
+              tone: '#E89248',
+            },
+            {
+              l: isEn ? 'TOP IMPLIED' : 'KORKEIN TODENN.',
+              v: topImplied != null ? `${Math.round(topImplied)}%` : '—',
+              tone: '#6BB877',
+            },
+            {
+              l: isEn ? 'AVG SHARPNESS' : 'KESKI-SHARPNESS',
+              v: avgSharpness != null ? `${avgSharpness}` : '—',
+              tone: 'var(--ink)',
+            },
           ].map((m, i) => (
             <div key={i} data-testid={`mittari-signals-meta-${i}`} style={{
               display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4,
@@ -200,112 +254,144 @@ const MittariSignals = () => {
         </div>
       </div>
 
-      {/* Signal list */}
-      <div data-testid="mittari-signals-list" style={{
-        display: 'flex', flexDirection: 'column', gap: 1,
-        background: 'var(--hairline)', border: '1px solid var(--hairline)',
-      }}>
-        {SIGNALS.map((s, i) => {
-          const pick = isEn ? s.pickEn : s.pickFi;
-          const reason = isEn ? s.reasonEn : s.reasonFi;
-          return (
-            <div key={s.n} data-testid={`mittari-signal-row-${s.n}`} className="ms-row" style={{
-              background: 'var(--surface, #141210)',
-              display: 'grid',
-              gridTemplateColumns: '52px 1fr 180px 90px 36px',
-              gap: 22, padding: '22px 24px', alignItems: 'center',
-              ...(s.isFirst ? {
-                borderTop: '1px solid #E89248',
-                borderBottom: '1px solid #E89248',
-              } : null),
-            }}>
-              <span style={{
-                fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                letterSpacing: '0.10em',
-                color: s.isFirst ? '#E89248' : 'var(--muted)',
-              }}>{s.n}</span>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
-                <div data-testid={`mittari-signal-pick-${s.n}`} style={{
-                  fontFamily: 'Georgia, serif', fontSize: 21, lineHeight: 1.2,
-                  letterSpacing: '-0.01em',
-                  color: unlocked ? '#E89248' : 'var(--ink)',
-                  filter: unlocked ? 'none' : 'blur(8px)',
-                  userSelect: unlocked ? 'auto' : 'none',
-                  transition: 'filter 320ms ease',
-                  overflowWrap: 'anywhere',
-                }}>{pick}</div>
-                <div style={{
-                  fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                  letterSpacing: '0.05em', color: 'var(--muted)',
-                  lineHeight: 1.6, textTransform: 'uppercase',
-                }}>
-                  <span style={{ color: '#E89248' }}>{reason[0]}</span>{' '}
-                  <strong style={{ color: '#E89248' }}>{reason[1]}</strong>
-                  {reason[2]}
-                  <strong style={{ color: '#E89248' }}>{reason[3]}</strong>
-                </div>
-                {s.isFirst && !unlocked && (
-                  <div data-testid="mittari-signal-reveal-teaser" onClick={() => {
-                    document.querySelector('[data-testid="mittari-signals-mini-gate-input"]')?.focus();
-                    document.querySelector('[data-testid="mittari-signals-mini-gate"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }} style={{
-                    width: 'fit-content', cursor: 'pointer',
-                    padding: '6px 12px', marginTop: 4,
-                    background: 'var(--bg)', border: '1px dashed #E89248',
-                    fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                    letterSpacing: '0.10em', color: '#E89248',
-                    textTransform: 'uppercase',
-                  }}>⌥ {isEn ? 'Subscribe → Signal 01 opens instantly' : 'Tilaa → Signaali 01 avautuu heti'}</div>
-                )}
-              </div>
-
-              <div data-testid={`mittari-signal-conf-${s.n}`}
-                style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{
-                  fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                  letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700,
-                  textTransform: 'uppercase',
-                }}>{isEn ? 'Confidence' : 'Varmuus'}</span>
-                <div style={{
-                  height: 3, background: 'var(--bg)', position: 'relative',
-                }}>
-                  <div style={{
-                    width: `${s.confidence}%`, height: '100%',
-                    background: '#E89248',
-                  }} />
-                </div>
+      {/* Signal list — picks from /api/odds/featured */}
+      {picks.length > 0 ? (
+        <div data-testid="mittari-signals-list" style={{
+          display: 'flex', flexDirection: 'column', gap: 1,
+          background: 'var(--hairline)', border: '1px solid var(--hairline)',
+        }}>
+          {picks.map((s) => {
+            const opponent = s.side === 'home' ? s.away : s.side === 'away' ? s.home : `${s.home} – ${s.away}`;
+            const pickText = s.side === 'draw'
+              ? `${s.home} – ${s.away} · ${isEn ? 'draw' : 'tasapeli'} @ ${s.odds.toFixed(2)}`
+              : `${s.pickTeam} · ${isEn ? 'vs' : 'vs'} ${opponent} @ ${s.odds.toFixed(2)}`;
+            const reason = [
+              `${s.sport}${s.sportIcon ? ' ' + s.sportIcon : ''}`,
+              `${isEn ? 'Sharpness' : 'Sharpness'} ${Math.round(s.sharpness)} (${sharpnessBand(s.sharpness, isEn)})`,
+              `· ${isEn ? 'implied' : 'todenn.'} `,
+              `${Math.round(s.impliedProb)}%`,
+              ` · ${formatKickoff(s.kickoff, isEn)}`,
+            ];
+            return (
+              <div key={s.n} data-testid={`mittari-signal-row-${s.n}`} className="ms-row" style={{
+                background: 'var(--surface, #141210)',
+                display: 'grid',
+                gridTemplateColumns: '52px 1fr 180px 90px 36px',
+                gap: 22, padding: '22px 24px', alignItems: 'center',
+                ...(s.isFirst ? {
+                  borderTop: '1px solid #E89248',
+                  borderBottom: '1px solid #E89248',
+                } : null),
+              }}>
                 <span style={{
                   fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                  color: 'var(--ink)',
-                }}>{s.confidence}%</span>
-              </div>
+                  letterSpacing: '0.10em',
+                  color: s.isFirst ? '#E89248' : 'var(--muted)',
+                }}>{s.n}</span>
 
-              <div data-testid={`mittari-signal-hr-${s.n}`}
-                style={{ textAlign: 'right' }}>
-                <div style={{
-                  fontFamily: 'Georgia, serif', fontSize: 21, lineHeight: 1,
-                  color: 'var(--ink)',
-                }}>{s.hitRate}%</div>
-                <div style={{
-                  marginTop: 4, fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                  letterSpacing: '0.10em', color: 'var(--muted)',
-                  textTransform: 'uppercase',
-                }}>{isEn ? 'same setup' : 'samalla setupilla'}</div>
-              </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0 }}>
+                  <div data-testid={`mittari-signal-pick-${s.n}`} style={{
+                    fontFamily: 'Georgia, serif', fontSize: 21, lineHeight: 1.2,
+                    letterSpacing: '-0.01em',
+                    color: unlocked ? '#E89248' : 'var(--ink)',
+                    filter: unlocked ? 'none' : 'blur(8px)',
+                    userSelect: unlocked ? 'auto' : 'none',
+                    transition: 'filter 320ms ease',
+                    overflowWrap: 'anywhere',
+                  }}>{pickText}</div>
+                  <div style={{
+                    fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                    letterSpacing: '0.05em', color: 'var(--muted)',
+                    lineHeight: 1.6, textTransform: 'uppercase',
+                  }}>
+                    <span style={{ color: '#E89248' }}>{reason[0]}</span>{' · '}
+                    <strong style={{ color: '#E89248' }}>{reason[1]}</strong>
+                    {reason[2]}
+                    <strong style={{ color: '#E89248' }}>{reason[3]}</strong>
+                    {reason[4]}
+                  </div>
+                  {s.isFirst && !unlocked && (
+                    <div data-testid="mittari-signal-reveal-teaser" onClick={() => {
+                      document.querySelector('[data-testid="mittari-signals-mini-gate-input"]')?.focus();
+                      document.querySelector('[data-testid="mittari-signals-mini-gate"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }} style={{
+                      width: 'fit-content', cursor: 'pointer',
+                      padding: '6px 12px', marginTop: 4,
+                      background: 'var(--bg)', border: '1px dashed #E89248',
+                      fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                      letterSpacing: '0.10em', color: '#E89248',
+                      textTransform: 'uppercase',
+                    }}>⌥ {isEn ? 'Subscribe → Signal 01 opens instantly' : 'Tilaa → Signaali 01 avautuu heti'}</div>
+                  )}
+                </div>
 
-              <div style={{
-                display: 'flex', justifyContent: 'flex-end',
-                color: 'var(--muted)',
-              }}>
-                {unlocked
-                  ? <span style={{ color: '#6BB877', fontFamily: 'ui-monospace, monospace', fontSize: 11 }}>✓</span>
-                  : <LockIcon />}
+                <div data-testid={`mittari-signal-conf-${s.n}`}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{
+                    fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                    letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700,
+                    textTransform: 'uppercase',
+                  }}>{isEn ? 'Sharpness' : 'Sharpness'}</span>
+                  <div style={{
+                    height: 3, background: 'var(--bg)', position: 'relative',
+                  }}>
+                    <div style={{
+                      width: `${Math.max(0, Math.min(100, s.sharpness))}%`, height: '100%',
+                      background: '#E89248',
+                    }} />
+                  </div>
+                  <span style={{
+                    fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                    color: 'var(--ink)',
+                  }}>{Math.round(s.sharpness)}</span>
+                </div>
+
+                <div data-testid={`mittari-signal-hr-${s.n}`}
+                  style={{ textAlign: 'right' }}>
+                  <div style={{
+                    fontFamily: 'Georgia, serif', fontSize: 21, lineHeight: 1,
+                    color: 'var(--ink)',
+                  }}>{Math.round(s.impliedProb)}%</div>
+                  <div style={{
+                    marginTop: 4, fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                    letterSpacing: '0.10em', color: 'var(--muted)',
+                    textTransform: 'uppercase',
+                  }}>{isEn ? 'implied prob.' : 'todennäköisyys'}</div>
+                </div>
+
+                <div style={{
+                  display: 'flex', justifyContent: 'flex-end',
+                  color: 'var(--muted)',
+                }}>
+                  {unlocked
+                    ? <span style={{ color: '#6BB877', fontFamily: 'ui-monospace, monospace', fontSize: 11 }}>✓</span>
+                    : <LockIcon />}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div data-testid="mittari-signals-empty" style={{
+          background: 'var(--surface, #141210)',
+          border: '1px dashed var(--hairline)',
+          padding: '40px 28px', textAlign: 'center',
+        }}>
+          <div style={{
+            fontFamily: 'ui-monospace, monospace', fontSize: 10,
+            letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
+            marginBottom: 12,
+          }}>{loading
+              ? (isEn ? 'LOADING' : 'LADATAAN')
+              : (isEn ? 'NO QUALIFYING PICKS RIGHT NOW' : 'EI POIMINTOJA JUURI NYT')}</div>
+          <p style={{
+            fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.4,
+            color: 'var(--ink)', margin: 0, maxWidth: 520, marginInline: 'auto',
+          }}>{isEn
+              ? 'Subscribe and we\u2019ll send the first signal the moment the market opens it up.'
+              : 'Tilaa nyt — lähetämme ensimmäisen signaalin heti kun markkina avautuu.'}</p>
+        </div>
+      )}
 
       <div style={{
         marginTop: 20, textAlign: 'center',
@@ -342,8 +428,8 @@ const MittariSignals = () => {
             marginTop: 10, fontFamily: 'ui-monospace, monospace', fontSize: 11,
             letterSpacing: '0.08em', color: 'var(--muted)', textTransform: 'uppercase',
           }}>{isEn
-              ? 'Yesterday 3/5 hits · 7d streak · Free · GDPR'
-              : 'Eilen 3/5 osui · putki 7 päivää · maksuton · GDPR'}</div>
+              ? 'Sharpness-scored picks · daily 09:00 · Free · GDPR'
+              : 'Sharpness-pisteytetyt poiminnat · päivittäin klo 09 · maksuton · GDPR'}</div>
         </div>
         <form onSubmit={submit} className="ms-mini-form" style={{
           position: 'relative', zIndex: 1, display: 'flex', minWidth: 360, flex: 1, gap: 0,

@@ -1,0 +1,35 @@
+{
+  "summary": "Iter39 /mittari Signals-led rebuild — backend 45/45 PASS (regression incl. iter36/iter37/iter38/sprint_a), frontend GREEN on all acceptance criteria. /api/odds/featured returns clean {picks:[], dormant:false, reason:'no_upcoming_events', sport_summaries, sport_errors, fetched_at} contract — no 500. POST /api/voita/lead w/ source=mittari + quiz_tags.surface=mittari_landing|mittari_signals → 200, lead persisted (covered by test_iter38). POST /api/mittari/subscribe {pending_id} → 200 (stub binds). Frontend /mittari at 1366x800: ALL 14 required testids present (mittari-hero, killer-stat, hero-form, signals, bonus, explain, testimonials, receipts, press, founder, gate, state-pill, gate-primary, signals-empty). DOM order verified: hero(101)→signals(686)→bonus(1303)→explain(2335)→testimonials(2619)→receipts(2949)→press(3492)→founder(3567)→gate(3918) — strict ascending, Signals is now PRIMARY (right under hero) and Bonus·Mittari is SECONDARY (after signals). Headline EN='Five strongest picks every morning at 09:00 to your inbox.' (Signals-led, NOT scene-meter-led — matches spec). Killer stat shows em-dash '—/100' + 'Today\\'s five picks average sharpness —/100— top implied probability —%' when odds API returns 0 picks (correct empty-state handling). MittariSignals renders [data-testid=mittari-signals-empty] with copy 'NO QUALIFYING PICKS RIGHT NOW · Subscribe and we\\'ll send the first signal the moment the market opens it up.' — verified odds-derived empty branch (NOT streamer/forum narrative). mittari-state-pill text='METER NOW ROLLING COMPOSITE 70/100' — uses FRIENDLY label 'ROLLING' (mapped from MYRSKY enum), NO raw enum key leaks. Hero EmailForm submit: TEST_iter39_hero@example.com → success message renders. Gate EmailForm submit: TEST_iter39_gate@example.com → success message renders. Language toggle FI↔EN: headline swaps 'Five strongest picks…' ↔ 'Viisi vahvinta poimintaa…' — confirmed working. Mobile 390x844: scrollWidth=390 winW=390 delta=0 — PREVIOUS iter38 mobile overflow bug (delta=54px) IS FIXED. Sticky bar [data-testid=mittari-sticky] visible at bottom, AVAA → CTA renders. DialCockpit (bonus widget) renders without bleed; meter ROLLING colour applied. Press strip + Founder + Gate-primary all render cleanly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter38_mittari_landing.py",
+    "/app/backend/tests/test_iter37_sprint_c.py",
+    "/app/backend/tests/test_iter36_telegram_mittari.py",
+    "/app/backend/tests/test_sprint_a_mestari_voita.py",
+    "/app/test_reports/pytest/iter39.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (back-office). No app auth needed.",
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Mittari.jsx is 1188 lines — still exceeds 700-line guideline. Recommend extracting sub-components (EmailForm, LiveActivityFeed, Hero/Bonus/Explain/Testimonials/Receipts/Press/Founder/Gate sections) into /app/frontend/src/components/mittari/* for maintainability.",
+    "EmailForm uses size='big' for BOTH hero and gate instances — testids collide (mittari-email-input-big and mittari-email-submit-big each appear 2x in DOM). Tests had to scope via parent (mittari-hero-form vs mittari-gate-primary) using nested query_selector. Consider passing a unique slot id (e.g. size='hero' / 'gate') so testids resolve uniquely.",
+    "MittariSignals with-picks branch (picks.length>0) was code-reviewed only — odds API returns 0 picks in this env (no_upcoming_events from upstream). Per-row testids mittari-signal-row-01..05, mittari-signal-pick/conf/hr-NN exist in source and look correct (pickText composes pick_team/home/away + decimal_odds, sharpness bar uses Math.max(0,Math.min(100,sharpness)), implied prob is Math.round(impliedProb)%). Recommend a manual sanity check once ODDS_API_KEY is live.",
+    "EmailForm uses input[type=email]+required — native HTML5 validation pre-empts JS submit on invalid email, so the JS-side err state is effectively unreachable for invalid-format emails. Either drop the dead JS err branch or add noValidate + manual regex check so branded error UI actually surfaces.",
+    "mittari-gate-telegram-link onClick uses inline scrollIntoView with fallback chain (mittari-signals-telegram-cta → mittari-signals). Good — previous iter38 no-op issue is resolved because the fallback target (mittari-signals) always exists."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (45/45 incl. iter36 + iter37 + iter38 + sprint_a regression)",
+    "frontend": "100% (all 14 acceptance criteria pass — DOM order, state-pill friendly label, killer-stat em-dash, signals-empty branch, hero+gate form submits, FI↔EN toggle, mobile zero overflow, sticky visible)"
+  },
+  "seed_data_creation": "2 leads inserted via UI submit (TEST_iter39_hero@example.com, TEST_iter39_gate@example.com) — consent_tag=mittari_lead, source=mittari, surfaces mittari_landing + mittari_signals respectively. TEST_ prefix marks them — safe to leave.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter39 /mittari Signals-led rebuild is fully verified — every iter38 issue (mobile overflow, transparent primary-driver border, telegram-link no-op) is resolved. The with-picks branch of MittariSignals is unverified at runtime because the upstream Odds API is dormant in this env; code review of the row rendering looks correct. If ODDS_API_KEY gets wired or if a fixture/mock is added, re-test: per-row testids mittari-signal-row-01..05 with mittari-signal-pick-NN (blurred until unlocked), mittari-signal-conf-NN (sharpness bar), mittari-signal-hr-NN (implied prob %). Backend 45/45 green. No bugs to triage.",
+  "rca of the issue": "n/a — no issues found this iteration."
+}

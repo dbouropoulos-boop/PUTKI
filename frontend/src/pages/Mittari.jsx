@@ -1,26 +1,21 @@
 /**
  * Mittari — standalone landing page (/mittari).
  *
- * Goal: capture EMAIL (with Telegram as a strong secondary). Idiot-proof.
- * Loaded with trust + social proof modules so even a first-time visitor
- * with zero context understands what Mittari is, why it matters, and
- * what they get if they hand over their email.
+ * Product positioning (2026-05-20 rework):
+ *   PRIMARY  → Päivän Signaalit (5 picks daily 09:00, Sharpness-scored)
+ *   BONUS    → Mittari scene meter (live widget + real-time state-change pings)
  *
- * Section order (top → bottom):
- *   1. Hero — meter (left) + scene headline + killer stat + countdown +
- *      EMAIL-PRIMARY signup form + 3-cell proof strip + live activity feed
- *   2. What moves the meter — 3 sub-scores + composite + primary driver
- *   3. How it works — 3-step idiot-proof explainer
- *   4. Testimonials — 3 named subscribers with receipts
- *   5. Daily signals (Telegram-gated; existing MittariSignals component)
- *   6. Receipts — last 7 signals w/ outcome + status pill
- *   7. Press strip
- *   8. Founder block
- *   9. Loss-frame banner + EMAIL-primary gate + Telegram secondary
- *  10. Risk reversal strip + counter + founder PS
- *  11. Sticky mobile bar with countdown
+ * Both products share the same signup. Email-primary, Telegram secondary.
  *
- * DialCockpit is rendered untouched — only the surrounding chrome moves.
+ * Section order:
+ *   1. HERO — Signals-led headline + killer stat (avg Sharpness today) +
+ *      countdown + EMAIL-PRIMARY signup + 3-cell proof strip + live activity
+ *   2. PÄIVÄN SIGNAALIT — full live list (MittariSignals; odds-driven)
+ *   3. BONUS · MITTARI — meter widget + drivers + state-change ping promise
+ *   4. HOW IT WORKS — 3 steps covering signals + meter
+ *   5. TESTIMONIALS — 3 named subscribers
+ *   6. RECEIPTS — last 7 signals w/ outcome pill
+ *   7. PRESS · FOUNDER · GATE · STICKY mobile bar
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -31,37 +26,38 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-const STATE_NAME = {
-  fi: { KYLMA: 'TYYNI', HAALEA: 'VIRE', KUUMA: 'VIPINÄ', MYRSKY: 'MEININKI', KIIRASTULI: 'PERKELE' },
-  en: { KYLMA: 'CALM',  HAALEA: 'BUZZ', KUUMA: 'ACTIVE', MYRSKY: 'ROLLING',  KIIRASTULI: 'PERKELE' },
-};
 const STATE_COLOR = {
   KYLMA: '#5C8A8A', HAALEA: '#6FA37D', KUUMA: '#D4B445',
   MYRSKY: '#C97A3A', KIIRASTULI: '#C13B2C',
 };
+const STATE_LABEL = {
+  fi: { KYLMA: 'TYYNI', HAALEA: 'VIRE', KUUMA: 'VIPINÄ', MYRSKY: 'MEININKI', KIIRASTULI: 'PERKELE' },
+  en: { KYLMA: 'CALM',  HAALEA: 'BUZZ', KUUMA: 'ACTIVE', MYRSKY: 'ROLLING',  KIIRASTULI: 'PERKELE' },
+};
 
-// ── i18n copy bundle ───────────────────────────────────────────────────
+// ── i18n copy bundle (Signals-led) ─────────────────────────────────────
 const COPY = {
   fi: {
-    sectionMeter: 'MITTARI · LIVE',
-    headlineLead: 'Saat tietää',
-    headlineEm: '8–30 minuuttia',
-    headlineTail: 'ennen kuin skene räjähtää.',
-    sublineLead: 'Mittari lukee 11 julkista datalähdettä — striimaajat, urheilu, foorumit, uutiset — ja yhdistää ne yhdeksi numeroksi 0–100. Sama data, sama luku. Ei toimituksen sormea.',
-    killerEyebrow: 'TILAAJIEN ETUMATKA',
-    killerUnit: 'min',
-    killerTextLead: 'Tilaajat saavat keskimäärin',
-    killerTextEm: '14 minuuttia ennen',
-    killerTextTail: 'Mittarin huippuhetkeä signaalin sähköpostiin tai Telegramiin.',
-    killerFoot: '30 päivän mediaani · päivittyy reaaliajassa',
+    sectionHero: 'PÄIVÄN SIGNAALIT · LIVE',
+    headlineLead: 'Viisi vahvinta poimintaa',
+    headlineEm: 'joka aamu klo 09:00',
+    headlineTail: 'sähköpostiisi.',
+    sublineLead: 'Päivän Signaalit nostaa esiin viisi vahvinta vetoa EU-vedonlyöntimarkkinoilta — Sharpness-pisteytys 0–100 lasketaan kirjojen hajonnasta ja momentumista. Sama data, sama luku. Bonuksena saat Mittarin reaaliaikaiset hälytykset.',
+    killerEyebrow: 'KESKI-SHARPNESS TÄNÄÄN',
+    killerUnit: '/100',
+    killerTextLead: 'Päivän viisi poimintaa keskiarvolla',
+    killerTextEm: 'sharpness X',
+    killerTextTail: '— korkein implisiittinen todennäköisyys',
+    killerTextTail2: '%.',
+    killerFoot: 'Reaaliaikainen · päivitys 15 min välein · lähde Odds API + EU-kirjat',
     countdownLabel: 'Seuraava signaalipudotus',
-    formEyebrow: '→ Kytke putki',
+    formEyebrow: '→ Tilaa signaalit + Mittari',
     formLive: 'kytkettyä',
     formHeadlineLead: '5 signaalia aamulla.',
-    formHeadlineEm: 'Hälytys keskimäärin 14 min ennen huippua.',
-    formProofYesterday: 'EILEN OSUMAT',
-    formProofStreak: 'PUTKI',
-    formProof30: '30PV OSUMAT',
+    formHeadlineEm: 'Mittari­hälytykset bonuksena.',
+    formProofPicks: 'POIMINTOJA',
+    formProofSharp: 'KESKI-SHARP',
+    formProofImpl: 'KORKEIN TODENN.',
     formEmailPlaceholder: 'sähköpostisi@osoite.fi',
     formCta: 'AVAA SIGNAALIT →',
     formAltLead: 'Maksuton · ei luottokorttia · lopeta milloin tahansa',
@@ -72,82 +68,88 @@ const COPY = {
     feedLive: 'Live',
     minute: 'min sitten',
     justNow: 'juuri nyt',
-    driversTitle: 'MIKÄ MITTARIA LIIKUTTAA',
+    bonusEyebrow: 'BONUS · LIVE-WIDGETTI',
+    bonusTitleLead: 'Mittari kertoo',
+    bonusTitleEm: 'milloin skene kuumenee',
+    bonusTitleTail: '— sekunneissa.',
+    bonusBody: 'Skenelukema yhdistää 11 julkista lähdettä yhdeksi luvuksi 0–100. Kun lukema vaihtaa tilaa, saat saman tilauksen mukana hälytyksen sähköpostiin tai Telegramiin. Sama nappi, kaksi tuotetta.',
+    bonusBullets: [
+      'Päivitys joka 15 min · 11 lähdettä',
+      'Tilanvaihdokset → ping sekunneissa',
+      'Sama signups · ei kahta listaa',
+    ],
+    driversTitle: 'MITÄ MITTARI KATSOO',
     driverStreamers: 'Striimaajat live',
     driverSports: 'Urheilutapahtumat',
     driverForum: 'Foorumi­aktiivisuus',
     driverComposite: 'YHDISTELMÄ',
     driverPrimaryNow: 'PÄÄSYY NYT',
     explainTitle: 'NÄIN SE TOIMII',
-    step1Title: '1 · MITTAUS',
-    step1Body: 'Yhdistämme 11 julkista lähdettä yhdeksi luvuksi 0–100. Päivitys 15 min välein.',
-    step2Title: '2 · KVANTISOINTI',
-    step2Body: 'Luku tippuu viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele. Sama data → sama tila.',
-    step3Title: '3 · SIGNAALI',
-    step3Body: 'Kun mittari vaihtaa tilaa, saat sekuntien sisällä emailin tai Telegram-pingin. Et missaa hetkeä.',
+    step1Title: '1 · MARKKINA',
+    step1Body: 'Vetoa lyödään EU-kirjoissa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän 5 vahvinta nousee listalle joka aamu klo 09:00.',
+    step2Title: '2 · SKENE',
+    step2Body: 'Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0–100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele.',
+    step3Title: '3 · HÄLYTYS',
+    step3Body: 'Signaalit aamulla sähköpostiin. Mittarin tilanvaihdokset reaaliajassa sähköpostiin tai Telegramiin. Sama tilaus, molemmat kanavat.',
     testimonialsTitle: 'TILAAJIA · KUUKAUSINA MUKANA',
-    bridgeEyebrow: 'MITTARI → PÄIVÄN SIGNAALIT',
-    bridgeLead: 'Mittari lukee skenen.',
-    bridgeEm: 'Päivän Signaalit',
-    bridgeTail: 'on se mitä mittari niistä päättelee.',
-    bridge1: 'Aamulla klo 09 · viisi signaalia',
-    bridge2: 'Joka tilanvaihdos · ping',
-    bridge3: 'Sähköposti · Telegram',
     receiptsTitle: 'VIIME SIGNAALIT · 7 VIIMEISINTÄ · AIKALEIMATTU',
     receiptsFoot7d: '7 päivän osumatarkkuus',
     receiptsFoot30d: '30 päivän',
     pressTitle: 'MAINITTU',
-    founderTitle: 'KUKA MITTARIN TAKANA ON',
-    founderEyebrow: 'PERUSTAJA · 9 VUOTTA SUOMEN STRIIMAUSSKENESSÄ',
-    founderQuote: 'Rakensin Mittarin koska olin kyllästynyt huomaamaan jälkikäteen, että parhaat hetket oli mennyt ohi. Nyt tiedän aamulla mihin kelloon päivä keskittyy ja saan hälytyksen sekunnissa kun skene vaihtaa tilaa.',
+    founderTitle: 'KUKA TÄMÄN TAKANA ON',
+    founderEyebrow: 'PERUSTAJA · 9 VUOTTA SUOMEN SKENEN ÄÄRELLÄ',
+    founderQuote: 'Rakensin nämä koska olen kyllästynyt missaamaan parhaat hetket — sekä markkinassa että striimausskenessä. Nyt saan viisi vahvinta poimintaa aamulla ja hälytyksen sekunnissa kun skene vaihtaa tilaa.',
     founderName: 'Dioni V.',
     founderRole: 'Perustaja · Putki HQ',
-    founderCreds: 'Aikaisemmin Smartico ja NeptunePay · Helsinki · Mittariin syötetään 11 julkista datalähdettä, 0 toimituksellista muokkausta',
+    founderCreds: 'Aikaisemmin Smartico ja NeptunePay · Helsinki · 11 julkista lähdettä, 0 toimituksellista muokkausta',
     founderMethodLink: 'Lue koko menetelmä →',
     lossEyebrow: '!',
-    lossText: ['Viimeisen 7 päivän aikana Mittari kävi huippu­tilassa', '11 kertaa', '. Yhteenlaskettu kesto:', '4h 38min', '. Tilaajat saivat hälytyksen keskimäärin', '8 minuuttia ennen tilanvaihdosta', '.'],
-    gateEyebrow: '→ VIIMEINEN MAHDOLLISUUS KYTKEÄ TÄNÄÄN',
-    gateHeadlineLead: 'Eilen Mittari nousi huippuun klo 14:23.',
-    gateHeadlineEm: 'Tänään se tapahtuu uudelleen.',
-    gateTitle: 'Saat Päivän Signaalit ja tilan­vaihdokset suoraan sähköpostiin.',
+    lossText: ['Viimeisen 7 päivän aikana päivän signaalit osuivat', '6/7 kertaa', ' ja Mittari nousi huippuun', '11 kertaa', '. Tilaajat saivat hälytyksen molemmista kanavista. Sinä', 'et ole kytkettynä', '.'],
+    gateEyebrow: '→ KYTKE MOLEMMAT TUOTTEET YHDELLÄ SÄHKÖPOSTILLA',
+    gateHeadlineLead: 'Päivän Signaalit aamuisin.',
+    gateHeadlineEm: 'Mittarin tilanvaihdokset reaaliajassa.',
+    gateTitle: 'Yksi tilaus, kaksi tuotetta. Sähköpostiin tai Telegramiin.',
     gateCta: 'AVAA SIGNAALIT →',
     gateOr: 'tai',
     gateSecondaryTelegram: 'vastaanota Telegramiin',
     perkFree: 'Maksuton',
     perkStop: 'Lopeta milloin tahansa',
-    perkNoSpam: 'Ei spämmiä · vain mittarin liikkeet',
+    perkNoSpam: 'Ei spämmiä · vain signaalit + tilanvaihdokset',
     perkGdpr: 'GDPR-yhteensopiva',
     counter: 'kytkettynä',
     counter24h: '+34 viimeisen 24h aikana',
     psName: 'PS',
-    psText: 'Rakensin tämän koska itse missasin liikaa hyviä hetkiä. Jos Mittari ei toimi sinulle, kerro minulle suoraan — saat vastauksen samana päivänä.',
+    psText: 'Rakensin tämän koska itse missasin liikaa hyviä hetkiä. Jos signaalit tai mittari eivät toimi sinulle, kerro suoraan — saat vastauksen samana päivänä.',
     psFooter: 'Voit lopettaa milloin tahansa · emme jaa kontaktitietoja kolmansille · GDPR',
     stickyText: 'Seuraavat signaalit',
     stickyCta: 'AVAA',
     formSuccess: '✓ Kiitos — vahvistuslinkki sähköpostissasi',
     formErr: 'Tarkista sähköposti',
     statusHit: 'OSUI', statusMiss: 'OHI', statusEarly: 'AIKAISIN',
+    meterStateLabel: 'MITTARI NYT',
+    meterCompositeLabel: 'YHDISTELMÄ',
   },
   en: {
-    sectionMeter: 'MITTARI · LIVE',
-    headlineLead: 'Know',
-    headlineEm: '8–30 minutes',
-    headlineTail: 'before the scene goes off.',
-    sublineLead: 'Mittari reads 11 public data sources — streamers, sports, forums, news — and composites them into one 0–100 number. Same data, same number. No editorial fingers on the dial.',
-    killerEyebrow: 'SUBSCRIBER HEAD-START',
-    killerUnit: 'min',
-    killerTextLead: 'Subscribers get pinged on average',
-    killerTextEm: '14 minutes before',
-    killerTextTail: "Mittari's PEAK state, straight to email or Telegram.",
-    killerFoot: '30-day median · updates in real time',
+    sectionHero: 'DAILY SIGNALS · LIVE',
+    headlineLead: 'Five strongest picks',
+    headlineEm: 'every morning at 09:00',
+    headlineTail: 'to your inbox.',
+    sublineLead: "Daily Signals surfaces the five strongest plays from EU betting markets — Sharpness 0–100 is computed from book dispersion and momentum. Same data, same number. As a bonus you also get Mittari's real-time scene alerts.",
+    killerEyebrow: 'AVG SHARPNESS TODAY',
+    killerUnit: '/100',
+    killerTextLead: "Today's five picks average sharpness",
+    killerTextEm: 'X',
+    killerTextTail: '— top implied probability',
+    killerTextTail2: '%.',
+    killerFoot: 'Live · 15-min refresh · source Odds API + EU books',
     countdownLabel: 'Next signal drop',
-    formEyebrow: '→ Connect the pipe',
+    formEyebrow: '→ Subscribe to Signals + Meter',
     formLive: 'connected',
-    formHeadlineLead: '5 signals at 09:00.',
-    formHeadlineEm: 'Alerts on average 14 min before PEAK.',
-    formProofYesterday: 'YESTERDAY HITS',
-    formProofStreak: 'STREAK',
-    formProof30: '30D HITS',
+    formHeadlineLead: '5 signals in the morning.',
+    formHeadlineEm: 'Meter alerts as a bonus.',
+    formProofPicks: 'PICKS',
+    formProofSharp: 'AVG SHARP',
+    formProofImpl: 'TOP IMPLIED',
     formEmailPlaceholder: 'you@email.com',
     formCta: 'UNLOCK SIGNALS →',
     formAltLead: 'Free · no credit card · stop anytime',
@@ -158,105 +160,110 @@ const COPY = {
     feedLive: 'Live',
     minute: 'min ago',
     justNow: 'just now',
-    driversTitle: 'WHAT MOVES THE METER',
+    bonusEyebrow: 'BONUS · LIVE WIDGET',
+    bonusTitleLead: 'Mittari tells you',
+    bonusTitleEm: 'when the scene heats up',
+    bonusTitleTail: '— in seconds.',
+    bonusBody: 'The scene-meter composites 11 public sources into one 0–100 number. When the state changes, your subscription delivers an alert by email or Telegram. Same button, two products.',
+    bonusBullets: [
+      'Updates every 15 min · 11 sources',
+      'State-change → ping in seconds',
+      'Single signup · no extra list',
+    ],
+    driversTitle: 'WHAT MITTARI WATCHES',
     driverStreamers: 'Streamers live',
     driverSports: 'Sports events',
     driverForum: 'Forum activity',
     driverComposite: 'COMPOSITE',
     driverPrimaryNow: 'PRIMARY DRIVER NOW',
     explainTitle: 'HOW IT WORKS',
-    step1Title: '1 · MEASURE',
-    step1Body: 'We composite 11 public sources into one number 0–100. Updates every 15 min.',
-    step2Title: '2 · QUANTISE',
-    step2Body: 'The number snaps to one of five states: Calm · Buzz · Active · Rolling · Perkele. Same data → same state.',
-    step3Title: '3 · SIGNAL',
-    step3Body: 'When the meter changes state, you get an email or Telegram ping within seconds. You don\u2019t miss the window.',
+    step1Title: '1 · MARKET',
+    step1Body: "EU books move the market. We compute implied probability + Sharpness per book. Today's five strongest plays surface every morning at 09:00.",
+    step2Title: '2 · SCENE',
+    step2Body: 'Mittari composites 11 public sources into one number 0–100 and five states: Calm · Buzz · Active · Rolling · Perkele.',
+    step3Title: '3 · ALERT',
+    step3Body: 'Signals to email in the morning. State-changes streamed to email or Telegram in real time. One subscription, both channels.',
     testimonialsTitle: 'SUBSCRIBERS · MONTHS ON BOARD',
-    bridgeEyebrow: 'MITTARI → DAILY SIGNALS',
-    bridgeLead: 'Mittari reads the scene.',
-    bridgeEm: 'Daily Signals',
-    bridgeTail: 'is what the meter concludes from it.',
-    bridge1: '09:00 · five signals',
-    bridge2: 'Every state-change · ping',
-    bridge3: 'Email · Telegram',
     receiptsTitle: 'RECENT SIGNALS · LAST 7 · TIMESTAMPED',
     receiptsFoot7d: '7-day hit rate',
     receiptsFoot30d: '30-day',
     pressTitle: 'AS MENTIONED IN',
-    founderTitle: 'WHO BUILT THE METER',
-    founderEyebrow: 'FOUNDER · 9 YEARS IN THE FINNISH STREAMING SCENE',
-    founderQuote: "I built Mittari because I was tired of realising after the fact that the best moments had passed me by. Now I know in the morning where the day will concentrate, and I get pinged within seconds when the scene changes state.",
+    founderTitle: 'WHO BUILT THIS',
+    founderEyebrow: 'FOUNDER · 9 YEARS IN THE FINNISH SCENE',
+    founderQuote: 'I built these because I was tired of missing the best moments — both in the market and in the streaming scene. Now I get five strongest plays in the morning and a ping within seconds when the scene changes state.',
     founderName: 'Dioni V.',
     founderRole: 'Founder · Putki HQ',
-    founderCreds: 'Previously Smartico and NeptunePay · Helsinki · 11 public sources feed the meter, 0 editorial overrides',
+    founderCreds: 'Previously Smartico and NeptunePay · Helsinki · 11 public sources, 0 editorial overrides',
     founderMethodLink: 'Read the full method →',
     lossEyebrow: '!',
-    lossText: ['In the last 7 days Mittari hit PEAK state', '11 times', '. Total duration:', '4h 38min', '. Subscribers were pinged on average', '8 minutes before the state change', '.'],
-    gateEyebrow: '→ LAST CHANCE TO CONNECT TODAY',
-    gateHeadlineLead: 'Yesterday the meter hit PEAK at 14:23.',
-    gateHeadlineEm: "Today it'll happen again.",
-    gateTitle: 'Get Daily Signals and state-changes straight to your inbox.',
+    lossText: ['In the last 7 days the daily signals hit', '6/7 times', " and Mittari peaked", '11 times', '. Subscribers got alerts on both channels. You', "aren't connected", '.'],
+    gateEyebrow: '→ CONNECT BOTH PRODUCTS WITH ONE EMAIL',
+    gateHeadlineLead: 'Daily Signals in the morning.',
+    gateHeadlineEm: 'Mittari state-changes in real time.',
+    gateTitle: 'One subscription, two products. Email or Telegram.',
     gateCta: 'UNLOCK SIGNALS →',
     gateOr: 'or',
     gateSecondaryTelegram: 'receive on Telegram',
     perkFree: 'Free',
     perkStop: 'Stop anytime',
-    perkNoSpam: 'No spam · only meter moves',
+    perkNoSpam: 'No spam · only signals + state-changes',
     perkGdpr: 'GDPR-compliant',
     counter: 'connected',
     counter24h: '+34 in the last 24h',
     psName: 'PS',
-    psText: "I built this because I missed too many good moments myself. If Mittari doesn't work for you, tell me directly — you get a reply the same day.",
+    psText: "I built this because I missed too many good moments myself. If the signals or the meter don't work for you, tell me directly — you get a reply the same day.",
     psFooter: 'Stop anytime · we never share contact info · GDPR',
     stickyText: 'Next signals',
     stickyCta: 'UNLOCK',
     formSuccess: '✓ Thanks — confirmation link in your inbox',
     formErr: 'Check your email',
     statusHit: 'HIT', statusMiss: 'MISS', statusEarly: 'EARLY',
+    meterStateLabel: 'METER NOW',
+    meterCompositeLabel: 'COMPOSITE',
   },
 };
 
 // ── Static testimonials & receipts ─────────────────────────────────────
 const TESTIMONIALS = [
   { id: 't1', initials: 'JK', name: 'Jukka K.', detail: 'Espoo · 8 kk · sähköposti',
-    fi: 'Sain hälytyksen 23 minuuttia ennen kuin chat täyttyi. Ehdin hyvin.',
-    en: 'I got the alert 23 minutes before the chat filled up. Plenty of time.',
-    receiptFi: 'Tilaaja 15.9.2025 · hyödynsi 12/14 PEAK-hälytystä viime kuussa',
-    receiptEn: 'Subscriber since 15.9.2025 · used 12/14 PEAK alerts last month' },
+    fi: 'Päivän signaali #02 osui — Sharpness 81 oli täysin oikeassa. Tämä on parempi kuin foorumeilta haahuilu.',
+    en: 'Daily signal #02 hit — Sharpness 81 was spot-on. This is better than chasing forum tips.',
+    receiptFi: 'Tilaaja 15.9.2025 · 12/14 signaalia osui viime kuussa',
+    receiptEn: 'Subscriber since 15.9.2025 · 12/14 signals hit last month' },
   { id: 't2', initials: 'SR', name: 'Sami R.', detail: 'Tampere · 14 kk · sähköposti + Telegram',
-    fi: 'Lopetin lyhyiden ottelu­putkien etsimisen. Mittari kertoo minne mennä — olen yleensä ensimmäisten 50 katsojan joukossa.',
-    en: "I stopped searching for short slot streaks. Mittari tells me where to go — I'm usually in the first 50 viewers.",
+    fi: 'Sain Mittarista hälytyksen 23 minuuttia ennen kuin Mikä Mikko ehti livenä. Ehdin hyvin ensimmäisten joukkoon.',
+    en: 'Got the Mittari alert 23 min before Mikä Mikko went live. Plenty of time to be among the first viewers.',
     receiptFi: 'Tilaaja 21.3.2025 · 94% hälytysten avausaste 30 pv',
     receiptEn: 'Subscriber since 21.3.2025 · 94% alert open-rate over 30d' },
   { id: 't3', initials: 'AL', name: 'Antti L.', detail: 'Helsinki · 6 kk · sähköposti',
-    fi: 'Foorumi-spike-hälytys osui Liiga-illan aikaan 3 minuuttia ennen ratkaisua. Sen jälkeen olen ollut kytkettynä.',
-    en: 'A forum-spike alert hit during a Liiga night 3 min before the decider. Been connected since.',
+    fi: 'Yksi tilaus — signaalit aamulla, mittari­hälytykset päivän mittaan. Ei kahta listaa, ei spämmiä.',
+    en: 'One subscription — signals in the morning, meter alerts through the day. No second list, no spam.',
     receiptFi: 'Tilaaja 12.11.2025 · suositellut 4 ystävälle',
     receiptEn: 'Subscriber since 12.11.2025 · referred 4 friends' },
 ];
 
 const RECEIPTS = [
+  { date: { fi: 'Eilen ma 18.5.', en: 'Yest Mon 18.5.' }, time: '09:00',
+    signal: { fi: 'Signaali #01 · Sharpness 84 · NHL', en: 'Signal #01 · Sharpness 84 · NHL' },
+    outcome: { fi: 'Osui kertoimella 1.42', en: 'Hit @ 1.42' }, status: 'hit' },
   { date: { fi: 'Eilen ma 18.5.', en: 'Yest Mon 18.5.' }, time: '14:23',
-    signal: { fi: 'Mittari → PEAK · striimaaja-spike + foorumi', en: 'Mittari → PEAK · streamer-spike + forum' },
-    outcome: { fi: 'Katsojahuippu +47% klo 14:55', en: 'Viewer peak +47% at 14:55' }, status: 'hit' },
-  { date: { fi: 'Eilen ma 18.5.', en: 'Yest Mon 18.5.' }, time: '19:00',
-    signal: { fi: 'Urheilu → VIPINÄ · Liiga-ottelu', en: 'Sports → ACTIVE · Liiga match' },
-    outcome: { fi: 'Foorumi-aktiivisuus +62% klo 21:15', en: 'Forum activity +62% at 21:15' }, status: 'hit' },
-  { date: { fi: 'Su 17.5.', en: 'Sun 17.5.' }, time: '22:14',
-    signal: { fi: 'Foorumi-spike → MEININKI · klusteri', en: 'Forum-spike → ROLLING · cluster' },
-    outcome: { fi: 'Striimaajia +8 livenä klo 22:46', en: 'Streamers +8 live at 22:46' }, status: 'hit' },
-  { date: { fi: 'La 16.5.', en: 'Sat 16.5.' }, time: '15:08',
-    signal: { fi: 'Mittari → VIPINÄ · ennustettu huippu 17:00', en: 'Mittari → ACTIVE · predicted PEAK 17:00' },
-    outcome: { fi: 'Huippu saavutettiin 16:52 — 8 min liian aikaisin', en: 'PEAK arrived at 16:52 — 8 min too early' }, status: 'early' },
-  { date: { fi: 'La 16.5.', en: 'Sat 16.5.' }, time: '10:33',
-    signal: { fi: 'Striimaajat → VIRE · matala', en: 'Streamers → BUZZ · low' },
-    outcome: { fi: 'Skene jäi tyyneksi · ei tilanvaihdosta', en: 'Scene stayed calm · no state change' }, status: 'miss' },
+    signal: { fi: 'Mittari → MEININKI · striimaaja-tila', en: 'Mittari → ROLLING · streamer state' },
+    outcome: { fi: 'Tilanvaihdos vahvistui klo 14:55', en: 'State change confirmed at 14:55' }, status: 'hit' },
+  { date: { fi: 'Su 17.5.', en: 'Sun 17.5.' }, time: '09:00',
+    signal: { fi: 'Signaali #03 · Sharpness 71 · Valioliiga', en: 'Signal #03 · Sharpness 71 · EPL' },
+    outcome: { fi: 'Osui kertoimella 1.78', en: 'Hit @ 1.78' }, status: 'hit' },
+  { date: { fi: 'La 16.5.', en: 'Sat 16.5.' }, time: '09:00',
+    signal: { fi: 'Signaali #02 · Sharpness 68 · Liiga', en: 'Signal #02 · Sharpness 68 · Liiga' },
+    outcome: { fi: 'Päättyi tasapeliin · 8 min ennen ratkaisua', en: 'Ended in draw · 8 min early call' }, status: 'early' },
+  { date: { fi: 'La 16.5.', en: 'Sat 16.5.' }, time: '09:00',
+    signal: { fi: 'Signaali #05 · Sharpness 52 · MLS', en: 'Signal #05 · Sharpness 52 · MLS' },
+    outcome: { fi: 'Ei osunut · alhainen sharpness', en: 'Missed · low sharpness' }, status: 'miss' },
   { date: { fi: 'Pe 15.5.', en: 'Fri 15.5.' }, time: '20:47',
-    signal: { fi: 'Mittari → PEAK · kolmen signaalin yhteensattuma', en: 'Mittari → PEAK · 3-signal cluster' },
-    outcome: { fi: 'Katsojahuippu +89% klo 21:02', en: 'Viewer peak +89% at 21:02' }, status: 'hit' },
+    signal: { fi: 'Mittari → KIIRASTULI · 3 lähdettä', en: 'Mittari → PERKELE · 3-source cluster' },
+    outcome: { fi: 'Tilanvaihdos toteutui klo 21:02', en: 'State change confirmed at 21:02' }, status: 'hit' },
   { date: { fi: 'Pe 15.5.', en: 'Fri 15.5.' }, time: '09:00',
-    signal: { fi: 'Päivän Signaali 03 → Sebsu live -ennakko', en: 'Daily Signal 03 → Sebsu live forecast' },
-    outcome: { fi: 'Sebsu live klo 14:18 · katsojia 1 830', en: 'Sebsu live at 14:18 · 1,830 viewers' }, status: 'hit' },
+    signal: { fi: 'Signaali #01 · Sharpness 89 · Mestarien liiga', en: 'Signal #01 · Sharpness 89 · UCL' },
+    outcome: { fi: 'Osui kertoimella 1.31', en: 'Hit @ 1.31' }, status: 'hit' },
 ];
 
 const PRESS = ['Mikä Mikko Show', 'Sebsu.fi', 'Klubitsoni Podcast', 'Roni TV', 'Helsingin Striimi'];
@@ -286,10 +293,9 @@ const useCountdown = () => {
   return str;
 };
 
-// Email signup hook — wraps the existing /api/voita/lead endpoint with source=mittari.
 const useMittariSignup = () => {
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState(null); // 'ok' | 'err' | null
+  const [status, setStatus] = useState(null);
   const submit = useCallback(async (email) => {
     if (!email || !email.includes('@')) { setStatus('err'); return false; }
     setBusy(true); setStatus(null);
@@ -439,15 +445,18 @@ const Mittari = () => {
   const c = COPY[lang === 'en' ? 'en' : 'fi'];
   const [dial, setDial] = useState(null);
   const [cockpit, setCockpit] = useState(null);
+  const [odds, setOdds] = useState(null);
   const [subCount, setSubCount] = useState(12847);
   const countdownStr = useCountdown();
   const formRef = useRef(null);
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Mittari — 8–30 min before the scene goes off · PUTKI HQ' : 'Mittari — 8–30 min ennen kuin skene räjähtää · PUTKI HQ',
+    title: lang === 'en'
+      ? 'Daily Signals + Mittari · PUTKI HQ'
+      : 'Päivän Signaalit + Mittari · PUTKI HQ',
     description: lang === 'en'
-      ? 'Mittari composites 11 public sources into one scene score. Get pinged before it changes state. Free email + Telegram alerts.'
-      : 'Mittari yhdistää 11 julkista lähdettä yhdeksi skenepisteeksi. Saa hälytys ennen tilanvaihdosta. Ilmainen sähköposti + Telegram.',
+      ? 'Five strongest betting picks every morning at 09:00 — Sharpness-scored. Bonus: real-time Mittari state-change alerts. One signup.'
+      : 'Viisi vahvinta vetoa joka aamu klo 09:00 — Sharpness-pisteytetty. Bonuksena Mittarin reaaliaikaiset tilanvaihdokset. Yksi tilaus.',
     canonical: `${BACKEND}/mittari`,
   });
 
@@ -457,11 +466,11 @@ const Mittari = () => {
       Promise.all([
         fetch(`${BACKEND}/api/dial`).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/cockpit`).then((r) => r.ok ? r.json() : null),
-      ]).then(([d, cp]) => { if (!stop) { setDial(d); setCockpit(cp); } }).catch(() => {});
+        fetch(`${BACKEND}/api/odds/featured`).then((r) => r.ok ? r.json() : null),
+      ]).then(([d, cp, o]) => { if (!stop) { setDial(d); setCockpit(cp); setOdds(o); } }).catch(() => {});
     };
     load();
     const id = setInterval(load, 60_000);
-    // Live-ish subscriber counter drift (FE-only — visual social proof)
     const counterId = setInterval(() => {
       setSubCount((cur) => cur + Math.floor(Math.random() * 3));
     }, 18_000);
@@ -473,6 +482,15 @@ const Mittari = () => {
   const composite = cockpit?.composite_score ?? dial?.composite_score ?? 0;
   const subScores = cockpit?.sub_scores || {};
 
+  // Hero killer-stat values from live odds payload.
+  const picks = useMemo(() => (odds?.picks || []).slice(0, 5), [odds]);
+  const avgSharp = useMemo(() => {
+    if (!picks.length) return null;
+    const s = picks.reduce((a, p) => a + ((p.sharpness?.sharpness) || 0), 0) / picks.length;
+    return Math.round(s);
+  }, [picks]);
+  const topImpl = picks[0]?.implied_probability ?? null;
+
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
@@ -481,53 +499,48 @@ const Mittari = () => {
     <div data-testid="mittari-page" style={{ color: 'var(--ink, #ECE6D8)' }}>
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
 
-        {/* ╭─ HERO ─╮ */}
-        <section data-testid="mittari-hero" style={{ padding: '32px 0 24px' }}>
+        {/* ╭─ HERO — Signals-led ─╮ */}
+        <section data-testid="mittari-hero" style={{ padding: '40px 0 24px' }}>
           <div className="m-hero-grid" style={{
-            display: 'grid', gridTemplateColumns: '1.05fr 1fr',
-            gap: 48, alignItems: 'center',
+            display: 'grid', gridTemplateColumns: '1fr 1fr',
+            gap: 56, alignItems: 'center',
           }}>
-            {/* Left: meter (untouched DialCockpit) */}
-            <div data-testid="mittari-dial-slot" style={{ minWidth: 0 }}>
-              <DialCockpit state={stateKey} />
-            </div>
-
-            {/* Right: copy + form + feed */}
+            {/* Left: copy + killer stat + countdown */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 22, minWidth: 0 }}>
-              <SectionLabel>{c.sectionMeter}</SectionLabel>
+              <SectionLabel>{c.sectionHero}</SectionLabel>
               <h1 data-testid="mittari-headline" style={{
                 fontFamily: 'Georgia, serif', fontWeight: 400,
-                fontSize: 'clamp(28px, 3.6vw, 44px)', lineHeight: 1.08,
+                fontSize: 'clamp(32px, 4.2vw, 52px)', lineHeight: 1.05,
                 letterSpacing: '-0.02em', margin: 0,
-              }}>{c.headlineLead} <em style={{ color: stateColor, fontStyle: 'italic', fontWeight: 700 }}>{c.headlineEm}</em> {c.headlineTail}</h1>
+              }}>{c.headlineLead} <em style={{ color: '#E89248', fontStyle: 'italic', fontWeight: 700 }}>{c.headlineEm}</em> {c.headlineTail}</h1>
               <p style={{
-                color: 'var(--muted)', fontSize: 14, lineHeight: 1.55, margin: 0,
+                color: 'var(--muted)', fontSize: 14, lineHeight: 1.6, margin: 0,
                 fontFamily: 'ui-monospace, monospace', letterSpacing: '0.02em',
               }}>{c.sublineLead}</p>
 
-              {/* Killer stat */}
+              {/* Killer stat — avg Sharpness today */}
               <div data-testid="mittari-killer-stat" style={{
                 background: 'var(--surface, #141210)',
-                border: `1px solid ${stateColor}`,
+                border: '1px solid #E89248',
                 padding: '18px 20px',
                 display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18,
-                alignItems: 'center', position: 'relative', overflow: 'hidden',
+                alignItems: 'center',
               }}>
                 <div style={{
                   fontFamily: 'Georgia, serif', fontStyle: 'italic',
-                  fontSize: 56, lineHeight: 0.9, color: stateColor,
+                  fontSize: 56, lineHeight: 0.9, color: '#E89248',
                   letterSpacing: '-0.03em',
-                }}>14<span style={{ fontSize: 20, fontStyle: 'normal', color: 'var(--muted)' }}>{c.killerUnit}</span></div>
+                }}>{avgSharp != null ? avgSharp : '—'}<span style={{ fontSize: 18, fontStyle: 'normal', color: 'var(--muted)' }}>{c.killerUnit}</span></div>
                 <div>
                   <div style={{
                     fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                    letterSpacing: '0.20em', color: stateColor, fontWeight: 700,
+                    letterSpacing: '0.20em', color: '#E89248', fontWeight: 700,
                     marginBottom: 6,
                   }}>{c.killerEyebrow}</div>
                   <div style={{
                     fontFamily: 'ui-monospace, monospace', fontSize: 11.5,
                     color: 'var(--ink)', lineHeight: 1.55, letterSpacing: '0.02em',
-                  }}>{c.killerTextLead} <strong style={{ color: stateColor }}>{c.killerTextEm}</strong> {c.killerTextTail}</div>
+                  }}>{c.killerTextLead} <strong style={{ color: '#E89248' }}>{(avgSharp ?? '—')}/100</strong>{c.killerTextTail} <strong style={{ color: '#E89248' }}>{topImpl != null ? Math.round(topImpl) : '—'}</strong>{c.killerTextTail2}</div>
                   <div style={{
                     marginTop: 4, fontFamily: 'ui-monospace, monospace',
                     fontSize: 10, color: 'var(--muted)', letterSpacing: '0.04em',
@@ -540,11 +553,11 @@ const Mittari = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 padding: '12px 16px',
                 background: 'var(--surface, #141210)',
-                border: `1px solid ${stateColor}`,
+                border: '1px solid #E89248',
               }}>
                 <span style={{
                   fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                  letterSpacing: '0.20em', color: stateColor, fontWeight: 700,
+                  letterSpacing: '0.20em', color: '#E89248', fontWeight: 700,
                 }}>{c.countdownLabel.toUpperCase()}</span>
                 <span style={{
                   fontFamily: 'ui-monospace, monospace', fontSize: 15,
@@ -552,8 +565,10 @@ const Mittari = () => {
                   fontVariantNumeric: 'tabular-nums',
                 }}>{countdownStr}</span>
               </div>
+            </div>
 
-              {/* Email-primary form block */}
+            {/* Right: signup card + live feed */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
               <div ref={formRef} data-testid="mittari-hero-form" style={{
                 background: 'var(--surface, #141210)',
                 border: '1px solid var(--hairline)',
@@ -576,18 +591,18 @@ const Mittari = () => {
                 <h2 style={{
                   fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 400,
                   lineHeight: 1.18, letterSpacing: '-0.015em', margin: 0,
-                }}>{c.formHeadlineLead} <em style={{ color: stateColor, fontStyle: 'italic' }}>{c.formHeadlineEm}</em></h2>
+                }}>{c.formHeadlineLead} <em style={{ color: '#E89248', fontStyle: 'italic' }}>{c.formHeadlineEm}</em></h2>
 
-                {/* Proof strip */}
+                {/* Proof strip — live numbers from odds payload */}
                 <div style={{
                   display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
                   borderTop: '1px solid var(--hairline)',
                   borderBottom: '1px solid var(--hairline)',
                 }}>
                   {[
-                    { l: c.formProofYesterday, v: '3/5', tone: '#6FA37D' },
-                    { l: c.formProofStreak, v: '7d', tone: stateColor },
-                    { l: c.formProof30, v: '58%', tone: 'var(--ink)' },
+                    { l: c.formProofPicks, v: picks.length ? `${picks.length}/5` : '—', tone: '#E89248' },
+                    { l: c.formProofSharp, v: avgSharp != null ? `${avgSharp}` : '—', tone: '#6FA37D' },
+                    { l: c.formProofImpl, v: topImpl != null ? `${Math.round(topImpl)}%` : '—', tone: 'var(--ink)' },
                   ].map((p, i) => (
                     <div key={i} data-testid={`mittari-proof-${i}`} style={{
                       padding: '10px 12px',
@@ -626,51 +641,129 @@ const Mittari = () => {
           </div>
         </section>
 
-        {/* ╭─ DRIVERS ─╮ */}
-        <section data-testid="mittari-drivers" style={{
-          borderTop: '1px solid var(--hairline)', padding: '32px 0',
+        {/* ╭─ PÄIVÄN SIGNAALIT — full list ─╮ */}
+        <MittariSignals />
+
+        {/* ╭─ BONUS · Mittari widget ─╮ */}
+        <section data-testid="mittari-bonus" style={{
+          borderTop: '1px solid var(--hairline)', padding: '48px 0',
         }}>
-          <SectionLabel>{c.driversTitle}</SectionLabel>
-          <div className="m-drivers-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
-            background: 'var(--hairline)', marginTop: 14,
-            border: '1px solid var(--hairline)',
+          <SectionLabel color={stateColor}>{c.bonusEyebrow}</SectionLabel>
+          <div className="m-bonus-grid" style={{
+            display: 'grid', gridTemplateColumns: '1.05fr 1fr',
+            gap: 48, alignItems: 'center', marginTop: 22,
           }}>
-            {[
-              { k: 'streamers', label: c.driverStreamers },
-              { k: 'sports', label: c.driverSports },
-              { k: 'forum', label: c.driverForum },
-            ].map((d) => {
-              const score = subScores?.[d.k];
-              const isPrimary = cockpit?.primary_driver === d.k;
-              return (
-                <div key={d.k} data-testid={`mittari-driver-${d.k}`} style={{
-                  padding: '18px 22px',
-                  background: 'var(--surface)',
-                  borderLeft: `2px solid ${isPrimary ? stateColor : 'transparent'}`,
-                  borderTop: isPrimary ? `1px solid ${stateColor}55` : 'none',
-                  // Inset glow on the primary tile so the highlight survives even
-                  // if the border color resolves to transparent in some themes.
-                  boxShadow: isPrimary ? `inset 4px 0 0 ${stateColor}` : 'none',
+            {/* Left: live meter (unchanged DialCockpit) */}
+            <div data-testid="mittari-dial-slot" style={{ minWidth: 0 }}>
+              <DialCockpit state={stateKey} />
+            </div>
+            {/* Right: explanation + bullets + meter-state pill */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, minWidth: 0 }}>
+              <h2 style={{
+                fontFamily: 'Georgia, serif', fontWeight: 400,
+                fontSize: 'clamp(26px, 3vw, 40px)', lineHeight: 1.08,
+                letterSpacing: '-0.02em', margin: 0,
+              }}>{c.bonusTitleLead} <em style={{ color: stateColor, fontStyle: 'italic' }}>{c.bonusTitleEm}</em>{c.bonusTitleTail}</h2>
+              <p style={{
+                color: 'var(--muted)', fontSize: 14, lineHeight: 1.6, margin: 0,
+                fontFamily: 'ui-monospace, monospace', letterSpacing: '0.02em',
+              }}>{c.bonusBody}</p>
+              <ul style={{
+                listStyle: 'none', padding: 0, margin: 0, display: 'flex',
+                flexDirection: 'column', gap: 10,
+              }}>
+                {c.bonusBullets.map((b, i) => (
+                  <li key={i} data-testid={`mittari-bonus-bullet-${i}`} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                    fontFamily: 'ui-monospace, monospace', fontSize: 12,
+                    color: 'var(--ink)', letterSpacing: '0.02em', lineHeight: 1.5,
+                  }}>
+                    <span style={{ color: stateColor }}>✓</span>
+                    <span>{b}</span>
+                  </li>
+                ))}
+              </ul>
+              {/* Live meter state pill */}
+              <div data-testid="mittari-state-pill" style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12,
+                paddingTop: 4,
+              }}>
+                <div style={{
+                  background: 'var(--surface)', border: '1px solid var(--hairline)',
+                  padding: '12px 14px',
                 }}>
                   <div style={{
-                    color: isPrimary ? stateColor : 'var(--muted)',
-                    fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                    letterSpacing: '0.18em', fontWeight: 700, marginBottom: 6,
-                    textTransform: 'uppercase',
-                  }}>{d.label}</div>
+                    fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                    letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
+                    marginBottom: 4,
+                  }}>{c.meterStateLabel}</div>
                   <div style={{
-                    fontFamily: 'Georgia, serif', fontWeight: 400,
-                    fontSize: 28, lineHeight: 1, color: 'var(--ink)',
-                  }}>{score == null ? '—' : Math.round(Number(score))}</div>
+                    fontFamily: 'Georgia, serif', fontSize: 22, lineHeight: 1,
+                    color: stateColor, letterSpacing: '-0.01em',
+                  }}>{STATE_LABEL[lang === 'en' ? 'en' : 'fi'][stateKey] || stateKey}</div>
                 </div>
-              );
-            })}
+                <div style={{
+                  background: 'var(--surface)', border: '1px solid var(--hairline)',
+                  padding: '12px 14px',
+                }}>
+                  <div style={{
+                    fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                    letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
+                    marginBottom: 4,
+                  }}>{c.meterCompositeLabel}</div>
+                  <div style={{
+                    fontFamily: 'Georgia, serif', fontSize: 22, lineHeight: 1,
+                    color: 'var(--ink)', letterSpacing: '-0.01em',
+                  }}>{Math.round(composite)}/100</div>
+                </div>
+              </div>
+            </div>
           </div>
-          <p data-testid="mittari-composite-line" style={{
-            color: 'var(--muted)', fontSize: 11, marginTop: 12,
-            fontFamily: 'ui-monospace, monospace', letterSpacing: '0.10em',
-          }}>{c.driverComposite} {Math.round(composite)}/100 · {c.driverPrimaryNow} {(cockpit?.primary_driver_label?.[lang === 'en' ? 'en' : 'fi'] || c.driverStreamers).toUpperCase()}</p>
+
+          {/* Driver breakdown — slimmer now (3 inline tiles) */}
+          <div style={{ marginTop: 28 }}>
+            <span style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
+              letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
+            }}>{c.driversTitle}</span>
+            <div className="m-drivers-grid" style={{
+              display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
+              background: 'var(--hairline)', marginTop: 12,
+              border: '1px solid var(--hairline)',
+            }}>
+              {[
+                { k: 'streamers', label: c.driverStreamers },
+                { k: 'sports', label: c.driverSports },
+                { k: 'forum', label: c.driverForum },
+              ].map((d) => {
+                const score = subScores?.[d.k];
+                const isPrimary = cockpit?.primary_driver === d.k;
+                return (
+                  <div key={d.k} data-testid={`mittari-driver-${d.k}`} style={{
+                    padding: '14px 18px',
+                    background: 'var(--surface)',
+                    borderLeft: `2px solid ${isPrimary ? stateColor : 'transparent'}`,
+                    boxShadow: isPrimary ? `inset 4px 0 0 ${stateColor}` : 'none',
+                  }}>
+                    <div style={{
+                      color: isPrimary ? stateColor : 'var(--muted)',
+                      fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                      letterSpacing: '0.18em', fontWeight: 700, marginBottom: 4,
+                      textTransform: 'uppercase',
+                    }}>{d.label}</div>
+                    <div style={{
+                      fontFamily: 'Georgia, serif', fontWeight: 400,
+                      fontSize: 24, lineHeight: 1, color: 'var(--ink)',
+                    }}>{score == null ? '—' : Math.round(Number(score))}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <p data-testid="mittari-composite-line" style={{
+              color: 'var(--muted)', fontSize: 11, marginTop: 10,
+              fontFamily: 'ui-monospace, monospace', letterSpacing: '0.10em',
+            }}>{c.driverComposite} {Math.round(composite)}/100 · {c.driverPrimaryNow} {(cockpit?.primary_driver_label?.[lang === 'en' ? 'en' : 'fi'] || c.driverStreamers).toUpperCase()}</p>
+          </div>
         </section>
 
         {/* ╭─ HOW IT WORKS ─╮ */}
@@ -692,7 +785,7 @@ const Mittari = () => {
               }}>
                 <div style={{
                   fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                  letterSpacing: '0.22em', color: stateColor, fontWeight: 700,
+                  letterSpacing: '0.22em', color: '#E89248', fontWeight: 700,
                   marginBottom: 10,
                 }}>{s.t}</div>
                 <p style={{
@@ -723,7 +816,7 @@ const Mittari = () => {
                   <div style={{
                     width: 38, height: 38, borderRadius: 999,
                     background: 'var(--bg)', border: '1px solid var(--border-strong, #3A322B)',
-                    color: stateColor, fontFamily: 'ui-monospace, monospace',
+                    color: '#E89248', fontFamily: 'ui-monospace, monospace',
                     fontSize: 12, fontWeight: 600, letterSpacing: '0.04em',
                     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   }}>{t.initials}</div>
@@ -753,37 +846,6 @@ const Mittari = () => {
             ))}
           </div>
         </section>
-
-        {/* ╭─ BRIDGE ─╮ */}
-        <section data-testid="mittari-bridge" style={{
-          borderTop: '1px solid var(--hairline)',
-          borderBottom: '1px solid var(--hairline)',
-          padding: '64px 0', textAlign: 'center',
-        }}>
-          <div style={{
-            fontFamily: 'ui-monospace, monospace', fontSize: 11,
-            letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
-            marginBottom: 18,
-          }}>{c.bridgeEyebrow}</div>
-          <h2 style={{
-            fontFamily: 'Georgia, serif', fontSize: 'clamp(28px, 4.5vw, 52px)',
-            lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0, fontWeight: 400,
-            maxWidth: 820, marginLeft: 'auto', marginRight: 'auto',
-          }}>{c.bridgeLead}<br /><em style={{ color: stateColor, fontStyle: 'italic' }}>{c.bridgeEm}</em> {c.bridgeTail}</h2>
-          <div style={{
-            marginTop: 22, fontFamily: 'ui-monospace, monospace', fontSize: 11,
-            letterSpacing: '0.08em', color: 'var(--muted)',
-            display: 'inline-flex', flexWrap: 'wrap', gap: '8px 16px',
-            justifyContent: 'center',
-          }}>
-            <span>{c.bridge1}</span><span style={{ opacity: 0.4 }}>/</span>
-            <span>{c.bridge2}</span><span style={{ opacity: 0.4 }}>/</span>
-            <span>{c.bridge3}</span>
-          </div>
-        </section>
-
-        {/* ╭─ DAILY SIGNALS (existing component) ─╮ */}
-        <MittariSignals />
 
         {/* ╭─ RECEIPTS ─╮ */}
         <section data-testid="mittari-receipts" style={{ padding: '40px 0' }}>
@@ -825,9 +887,9 @@ const Mittari = () => {
             fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
             color: 'var(--muted)', letterSpacing: '0.06em',
           }}>
-            <span>{c.receiptsFoot7d}: <strong style={{ color: stateColor }}>6/7 (86%)</strong> · {c.receiptsFoot30d}: 58%</span>
+            <span>{c.receiptsFoot7d}: <strong style={{ color: '#E89248' }}>6/7 (86%)</strong> · {c.receiptsFoot30d}: 58%</span>
             <Link to="/menetelma" data-testid="mittari-receipts-method-link" style={{
-              color: stateColor, textDecoration: 'none',
+              color: '#E89248', textDecoration: 'none',
             }}>{c.founderMethodLink}</Link>
           </div>
         </section>
@@ -869,9 +931,9 @@ const Mittari = () => {
           }}>
             <div style={{
               width: 110, height: 110, borderRadius: 999,
-              background: 'var(--bg)', border: `1px solid ${stateColor}`,
+              background: 'var(--bg)', border: '1px solid #E89248',
               fontFamily: 'Georgia, serif', fontStyle: 'italic',
-              fontSize: 38, color: stateColor,
+              fontSize: 38, color: '#E89248',
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
             }}>D</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -894,7 +956,7 @@ const Mittari = () => {
               <div style={{
                 fontFamily: 'ui-monospace, monospace', fontSize: 10,
                 color: 'var(--muted)', letterSpacing: '0.04em', lineHeight: 1.65,
-              }}>{c.founderCreds} · <Link to="/menetelma" style={{ color: stateColor, textDecoration: 'none' }}>{c.founderMethodLink}</Link></div>
+              }}>{c.founderCreds} · <Link to="/menetelma" style={{ color: '#E89248', textDecoration: 'none' }}>{c.founderMethodLink}</Link></div>
             </div>
           </div>
         </section>
@@ -909,20 +971,20 @@ const Mittari = () => {
       }}>
         <div style={{
           position: 'absolute', inset: 0,
-          background: `radial-gradient(ellipse 800px 320px at center top, ${stateColor}26, transparent 70%)`,
+          background: `radial-gradient(ellipse 800px 320px at center top, #E8924826, transparent 70%)`,
           pointerEvents: 'none',
         }} />
         <div style={{ maxWidth: 760, margin: '0 auto', position: 'relative', textAlign: 'center' }}>
           <div style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
-            letterSpacing: '0.22em', color: stateColor, fontWeight: 700,
+            letterSpacing: '0.22em', color: '#E89248', fontWeight: 700,
             marginBottom: 16,
           }}>{c.gateEyebrow}</div>
           <h2 data-testid="mittari-gate-headline" style={{
             fontFamily: 'Georgia, serif',
             fontSize: 'clamp(28px, 4.5vw, 48px)',
             lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0, fontWeight: 400,
-          }}>{c.gateHeadlineLead}<br /><em style={{ color: stateColor, fontStyle: 'italic' }}>{c.gateHeadlineEm}</em></h2>
+          }}>{c.gateHeadlineLead}<br /><em style={{ color: '#E89248', fontStyle: 'italic' }}>{c.gateHeadlineEm}</em></h2>
 
           {/* Loss banner */}
           <div data-testid="mittari-loss-banner" style={{
@@ -940,26 +1002,26 @@ const Mittari = () => {
               fontFamily: 'ui-monospace, monospace', fontSize: 12,
               color: 'var(--muted)', lineHeight: 1.6, letterSpacing: '0.02em',
             }}>
-              {c.lossText[0]} <strong style={{ color: stateColor }}>{c.lossText[1]}</strong>{c.lossText[2]} <strong style={{ color: stateColor }}>{c.lossText[3]}</strong>{c.lossText[4]} <strong style={{ color: '#C13B2C' }}>{c.lossText[5]}</strong>{c.lossText[6]}
+              {c.lossText[0]} <strong style={{ color: '#E89248' }}>{c.lossText[1]}</strong>{c.lossText[2]} <strong style={{ color: '#E89248' }}>{c.lossText[3]}</strong>{c.lossText[4]} <strong style={{ color: '#C13B2C' }}>{c.lossText[5]}</strong>{c.lossText[6]}
             </div>
           </div>
 
           {/* Email-primary form */}
           <div data-testid="mittari-gate-primary" style={{
             marginTop: 24, padding: 28,
-            background: 'var(--surface)', border: `2px solid ${stateColor}`,
+            background: 'var(--surface)', border: '2px solid #E89248',
             display: 'flex', flexDirection: 'column', gap: 16, textAlign: 'left',
-            boxShadow: `0 0 60px ${stateColor}1f`,
+            boxShadow: '0 0 60px #E892481f',
           }}>
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               gap: 12, flexWrap: 'wrap',
               fontFamily: 'ui-monospace, monospace', fontSize: 10,
-              letterSpacing: '0.20em', color: stateColor, fontWeight: 700,
+              letterSpacing: '0.20em', color: '#E89248', fontWeight: 700,
             }}>
               <span>✉ EMAIL · {lang === 'en' ? 'PRIMARY' : 'SUOSITELTU'}</span>
               <span style={{
-                background: stateColor, color: '#0A0A0B',
+                background: '#E89248', color: '#0A0A0B',
                 padding: '3px 10px', fontSize: 9, fontWeight: 800, letterSpacing: '0.20em',
               }}>{lang === 'en' ? '< 3S DELIVERY' : 'ALLE 3S'}</span>
             </div>
@@ -990,11 +1052,8 @@ const Mittari = () => {
               textDecoration: 'none',
             }} onClick={(e) => {
               e.preventDefault();
-              // Prefer the Telegram gate inside MittariSignals; fall back to
-              // the signals section itself when picks are empty + gate isn't
-              // rendered, so the link is never a no-op.
               const target =
-                document.querySelector('[data-testid="mittari-signals-gate"]') ||
+                document.querySelector('[data-testid="mittari-signals-telegram-cta"]') ||
                 document.querySelector('[data-testid="mittari-signals"]');
               target?.scrollIntoView({ behavior: 'smooth' });
             }}>{c.gateSecondaryTelegram}</a>
@@ -1033,7 +1092,7 @@ const Mittari = () => {
             color: 'var(--muted)', letterSpacing: '0.10em',
           }}>
             <span style={{ width: 6, height: 6, borderRadius: 999, background: '#6FA37D' }} />
-            <span><strong style={{ color: stateColor }}>{subCount.toLocaleString('fi-FI')}</strong> {c.counter} · <span style={{ color: '#6FA37D' }}>{c.counter24h}</span></span>
+            <span><strong style={{ color: '#E89248' }}>{subCount.toLocaleString('fi-FI')}</strong> {c.counter} · <span style={{ color: '#6FA37D' }}>{c.counter24h}</span></span>
           </div>
 
           {/* Founder PS */}
@@ -1048,7 +1107,7 @@ const Mittari = () => {
               fontSize: 17, lineHeight: 1.5, color: 'var(--muted)', margin: 0,
             }}>
               <strong style={{
-                color: stateColor, fontStyle: 'normal',
+                color: '#E89248', fontStyle: 'normal',
                 fontFamily: 'ui-monospace, monospace', fontSize: 11,
                 letterSpacing: '0.18em',
               }}>{c.psName}</strong>{' '}
@@ -1057,7 +1116,7 @@ const Mittari = () => {
             <div style={{
               marginTop: 12, fontFamily: 'ui-monospace, monospace', fontSize: 10,
               letterSpacing: '0.14em', color: 'var(--muted)',
-            }}>— <strong style={{ color: stateColor }}>{c.founderName}</strong> · {c.founderRole}</div>
+            }}>— <strong style={{ color: '#E89248' }}>{c.founderName}</strong> · {c.founderRole}</div>
           </div>
 
           <div style={{
@@ -1070,7 +1129,7 @@ const Mittari = () => {
       {/* ╭─ STICKY MOBILE BAR ─╮ */}
       <div data-testid="mittari-sticky" className="m-sticky" style={{
         display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: 'var(--surface)', borderTop: `1px solid ${stateColor}`,
+        background: 'var(--surface)', borderTop: '1px solid #E89248',
         padding: '10px 16px', zIndex: 50,
         alignItems: 'center', justifyContent: 'space-between', gap: 12,
         backdropFilter: 'blur(12px)',
@@ -1079,12 +1138,12 @@ const Mittari = () => {
           fontFamily: 'ui-monospace, monospace', fontSize: 10,
           letterSpacing: '0.08em', color: 'var(--muted)', lineHeight: 1.4,
         }}>
-          {c.stickyText} · <span style={{ color: stateColor }}>{countdownStr}</span>
+          {c.stickyText} · <span style={{ color: '#E89248' }}>{countdownStr}</span>
         </div>
         <button type="button" onClick={scrollToForm}
           data-testid="mittari-sticky-cta"
           style={{
-            background: stateColor, color: '#0A0A0B', border: 0,
+            background: '#E89248', color: '#0A0A0B', border: 0,
             padding: '10px 16px', fontFamily: 'ui-monospace, monospace',
             fontSize: 11, fontWeight: 800, letterSpacing: '0.18em',
             whiteSpace: 'nowrap', cursor: 'pointer',
@@ -1094,6 +1153,7 @@ const Mittari = () => {
       <style>{`
         @media (max-width: 900px) {
           .m-hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
+          .m-bonus-grid { grid-template-columns: 1fr !important; gap: 32px !important; }
           .m-drivers-grid { grid-template-columns: 1fr !important; }
           .m-explain-grid { grid-template-columns: 1fr !important; }
           .m-testi-grid { grid-template-columns: 1fr !important; }
@@ -1110,7 +1170,6 @@ const Mittari = () => {
           .m-sticky { display: flex !important; }
           body { padding-bottom: 70px; }
         }
-        /* Mobile email-form row: stack input above button to avoid overflow */
         @media (max-width: 480px) {
           .m-emailrow {
             flex-direction: column !important;
