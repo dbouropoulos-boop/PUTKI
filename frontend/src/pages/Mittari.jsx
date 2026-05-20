@@ -333,13 +333,14 @@ const EmailForm = ({ size = 'normal', placeholder, cta, c, onSuccess }) => {
   return (
     <form onSubmit={onSubmit} data-testid={`mittari-email-form-${size}`}
       style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ display: 'flex', border: '1px solid var(--hairline, #221E1B)' }}>
+      <div style={{ display: 'flex', border: '1px solid var(--hairline, #221E1B)' }} className="m-emailrow">
         <input type="email" required value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder={placeholder}
           data-testid={`mittari-email-input-${size}`}
           style={{
-            flex: 1, background: 'var(--bg, #0B0A09)',
+            flex: 1, minWidth: 0,
+            background: 'var(--bg, #0B0A09)',
             border: 0, outline: 'none', color: 'var(--ink, #ECE6D8)',
             padding: big ? '18px 20px' : '15px 18px',
             fontFamily: 'ui-monospace, monospace', fontSize: big ? 14 : 13,
@@ -347,12 +348,14 @@ const EmailForm = ({ size = 'normal', placeholder, cta, c, onSuccess }) => {
           }} />
         <button type="submit" disabled={busy}
           data-testid={`mittari-email-submit-${size}`}
+          className="m-email-submit"
           style={{
-            padding: big ? '0 28px' : '0 22px',
+            padding: big ? '0 22px' : '0 18px',
             background: '#E89248', color: '#0A0A0B', border: 0,
             fontFamily: 'ui-monospace, monospace',
-            fontSize: big ? 12 : 11, letterSpacing: '0.22em', fontWeight: 800,
+            fontSize: big ? 11.5 : 10.5, letterSpacing: '0.18em', fontWeight: 800,
             cursor: busy ? 'wait' : 'pointer', whiteSpace: 'nowrap',
+            flexShrink: 0,
           }}>{busy ? '…' : cta}</button>
       </div>
       {status === 'ok' && (
@@ -644,7 +647,11 @@ const Mittari = () => {
                 <div key={d.k} data-testid={`mittari-driver-${d.k}`} style={{
                   padding: '18px 22px',
                   background: 'var(--surface)',
-                  borderLeft: isPrimary ? `2px solid ${stateColor}` : '2px solid transparent',
+                  borderLeft: `2px solid ${isPrimary ? stateColor : 'transparent'}`,
+                  borderTop: isPrimary ? `1px solid ${stateColor}55` : 'none',
+                  // Inset glow on the primary tile so the highlight survives even
+                  // if the border color resolves to transparent in some themes.
+                  boxShadow: isPrimary ? `inset 4px 0 0 ${stateColor}` : 'none',
                 }}>
                   <div style={{
                     color: isPrimary ? stateColor : 'var(--muted)',
@@ -981,7 +988,16 @@ const Mittari = () => {
             <a href="#" data-testid="mittari-gate-telegram-link" style={{
               color: 'var(--ink)', borderBottom: '1px dotted var(--muted)',
               textDecoration: 'none',
-            }} onClick={(e) => { e.preventDefault(); document.querySelector('[data-testid="mittari-signals-gate"]')?.scrollIntoView({ behavior: 'smooth' }); }}>{c.gateSecondaryTelegram}</a>
+            }} onClick={(e) => {
+              e.preventDefault();
+              // Prefer the Telegram gate inside MittariSignals; fall back to
+              // the signals section itself when picks are empty + gate isn't
+              // rendered, so the link is never a no-op.
+              const target =
+                document.querySelector('[data-testid="mittari-signals-gate"]') ||
+                document.querySelector('[data-testid="mittari-signals"]');
+              target?.scrollIntoView({ behavior: 'smooth' });
+            }}>{c.gateSecondaryTelegram}</a>
           </div>
 
           {/* Risk reversal strip */}
@@ -1093,6 +1109,17 @@ const Mittari = () => {
           .m-founder-grid > div:first-child { margin: 0 auto; }
           .m-sticky { display: flex !important; }
           body { padding-bottom: 70px; }
+        }
+        /* Mobile email-form row: stack input above button to avoid overflow */
+        @media (max-width: 480px) {
+          .m-emailrow {
+            flex-direction: column !important;
+          }
+          .m-emailrow .m-email-submit {
+            padding: 14px 22px !important;
+            width: 100% !important;
+            border-top: 1px solid var(--hairline, #221E1B) !important;
+          }
         }
       `}</style>
     </div>
