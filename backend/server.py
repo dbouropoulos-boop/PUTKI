@@ -1700,6 +1700,38 @@ async def admin_save_mittari_copy(
         raise HTTPException(status_code=400, detail=str(e))
 
 
+# ── Mestari copy editor ───────────────────────────────────────────────
+
+@api_router.get("/mestari/copy")
+async def public_mestari_copy():
+    """Returns the fully-merged Mestari page copy tree (admin override
+    layered on top of DEFAULT_MESTARI_COPY). Every field is present so
+    the frontend never sees `undefined`."""
+    from mestari_copy import get_mestari_copy
+    return await get_mestari_copy(db)
+
+
+@api_router.get("/admin/mestari/copy")
+async def admin_get_mestari_copy(_: bool = Depends(require_admin)):
+    """Admin-only — returns raw override + merged + defaults for the editor."""
+    from mestari_copy import get_mestari_copy_raw
+    return await get_mestari_copy_raw(db)
+
+
+@api_router.put("/admin/mestari/copy")
+async def admin_save_mestari_copy(
+    payload: Dict[str, Any],
+    _: bool = Depends(require_admin),
+):
+    """Admin-only — persist a new override doc (deep-merge w/ defaults).
+    Sanitiser re-runs on every read so a bad save self-recovers."""
+    from mestari_copy import save_mestari_copy
+    try:
+        return await save_mestari_copy(db, payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 
 
 @api_router.get("/odds/market-watch")

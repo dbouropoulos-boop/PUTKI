@@ -25,6 +25,7 @@ import { Sun, Moon } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import useMestariCopy from '../hooks/useMestariCopy';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -291,9 +292,120 @@ const HeroCTA = ({ children, onClick, testid }) => (
     }}>{children}</button>
 );
 
+// ── Adapter: backend tree → per-lang flat shape MestariLanding expects.
+// The backend stores fi/en variants on every field; this fans them out
+// into the shape the JSX was originally written against (so the editor
+// can override any field with zero JSX churn). Falls through to the
+// hardcoded COPY const when the network call hasn't returned yet.
+const buildLandingCopy = (lang, live) => {
+  if (!live) return COPY[lang];
+  const k = (key) => `${key}_${lang}`;
+  const h = (live.hero && live.hero[lang]) || COPY[lang].hero;
+  return {
+    header: {
+      back: (live.header && live.header[k('back')]) || COPY[lang].header.back,
+      backArrow: COPY[lang].header.backArrow,
+    },
+    hero: {
+      eyebrow: h.eyebrow,
+      headline: h.headline,
+      sub: h.sub,
+      positioningStrong: h.positioning_strong,
+      positioningRest: h.positioning_rest,
+      cta: h.cta,
+      ctaMeta: [h.meta_1, h.meta_2, h.meta_3, h.meta_4].filter(Boolean),
+    },
+    cred: (live.cred || []).map((cell) => ({
+      num: cell.num,
+      unit: cell[k('unit')],
+      desc: cell[k('desc')],
+    })),
+    method: {
+      label: live.method[k('label')],
+      intro: [
+        live.method[`intro_pre_${lang}`],
+        live.method[`intro_em_${lang}`],
+        live.method[`intro_post_${lang}`],
+      ],
+      cards: (live.method.cards || []).map((card) => ({
+        num: card[`num_${lang}`],
+        title: card[`title_${lang}`],
+        body: [card[`body_pre_${lang}`], card[`body_em_${lang}`], card[`body_post_${lang}`]],
+        tag: card[`tag_${lang}`],
+      })),
+    },
+    stack: {
+      label: live.stack[k('label')],
+      items: (live.stack.items || []).map((it) => ({
+        label: it[`label_${lang}`],
+        title: it[`title_${lang}`],
+        body: it[`body_${lang}`],
+      })),
+    },
+    steps: {
+      label: live.steps[k('label')],
+      rows: (live.steps.rows || []).map((r) => ({
+        num: r.num,
+        title: r[`title_${lang}`],
+        desc: r[`desc_${lang}`],
+      })),
+    },
+    clarity: {
+      label: live.clarity[k('label')],
+      is: {
+        head: live.clarity[`is_head_${lang}`],
+        items: live.clarity[`is_items_${lang}`] || [],
+      },
+      isnt: {
+        head: live.clarity[`isnt_head_${lang}`],
+        items: live.clarity[`isnt_items_${lang}`] || [],
+      },
+    },
+    team: {
+      label: live.team[k('label')],
+      initial: live.team.initial,
+      eyebrow: live.team[`eyebrow_${lang}`],
+      quote: [live.team[`quote_pre_${lang}`], live.team[`quote_em_${lang}`], live.team[`quote_post_${lang}`]],
+      signName: live.team.sign_name,
+      signRest: live.team[`sign_rest_${lang}`],
+      credPre: live.team[`cred_pre_${lang}`],
+      credLink: live.team[`cred_link_${lang}`],
+    },
+    faq: {
+      label: live.faq[k('label')],
+      items: (live.faq.items || []).map((it) => ({
+        q: it[`q_${lang}`],
+        a: it[`a_${lang}`],
+      })),
+    },
+    final: {
+      eyebrow: live.final[`eyebrow_${lang}`],
+      headlinePre: live.final[`headline_pre_${lang}`],
+      headlineAccent: live.final[`headline_em_${lang}`],
+      headlinePost: live.final[`headline_post_${lang}`],
+      cta: live.final[`cta_${lang}`],
+      meta: [1, 2, 3, 4, 5]
+        .map((i) => live.final[`meta_${lang}_${i}`])
+        .filter(Boolean),
+    },
+    footer: {
+      home: live.footer[k('home')],
+      links: (live.footer.links || []).map((l) => ({
+        href: l.href,
+        label: l[`label_${lang}`],
+      })),
+      disclaimer: live.footer[`disclaimer_${lang}`],
+      disclaimerLink: {
+        href: live.footer.disclaimer_link_href,
+        label: live.footer.disclaimer_link_label,
+      },
+      disclaimerTail: live.footer[`disclaimer_tail_${lang}`],
+    },
+  };
+};
+
 // ── Landing page (intro state) ──────────────────────────────────────────
-const MestariLanding = ({ lang, toggleLang, theme, toggleTheme, onStart }) => {
-  const c = COPY[lang];
+const MestariLanding = ({ lang, toggleLang, theme, toggleTheme, onStart, c }) => {
   return (
     <div data-testid="mestari-landing" style={{
       background: T.bg, color: T.ink, fontFamily: T.sans, fontWeight: 300,
@@ -973,6 +1085,8 @@ const QuizFlow = ({ children, onExit, lang, step, qIdx, total }) => {
 const Mestari = () => {
   const { lang, toggle } = useLang();
   const { theme, toggle: toggleTheme } = useTheme();
+  const liveCopy = useMestariCopy();
+  const landingCopy = useMemo(() => buildLandingCopy(lang, liveCopy), [lang, liveCopy]);
   const [quiz, setQuiz] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [step, setStep] = useState('intro');
@@ -1089,6 +1203,7 @@ const Mestari = () => {
       <div data-testid="mestari-page">
         <MestariLanding lang={lang} toggleLang={toggle}
           theme={theme} toggleTheme={toggleTheme}
+          c={landingCopy}
           onStart={startQuiz} />
       </div>
     );
