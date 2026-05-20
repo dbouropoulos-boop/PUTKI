@@ -333,14 +333,14 @@ const Mestari = () => {
 
   const advanceQ = useCallback(() => {
     setStep('zinger');
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
   }, []);
 
   const afterZinger = useCallback(async () => {
     if (qIdx + 1 < quiz.length) {
       setQIdx(qIdx + 1);
       setStep('quiz');
-      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
       return;
     }
     setProfileLoading(true);
@@ -375,7 +375,7 @@ const Mestari = () => {
         return;
       }
       setStep('confirm');
-      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
     } catch (e) {
       setError(e.message || 'Network');
     } finally { setBusy(false); }

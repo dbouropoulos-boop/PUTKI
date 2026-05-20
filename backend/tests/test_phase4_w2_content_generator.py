@@ -318,7 +318,7 @@ class TestSocialMeta:
         db = _MemDB()
         gen = cg.ContentGenerator(db, llm_callable=_fake_llm)
         long_title = "A" * 200
-        r = _run(gen.generate_from_signal("streamer_alert", {
+        _run(gen.generate_from_signal("streamer_alert", {
             "user_login": "longheadline", "user_name": long_title,
             "viewer_count": 1, "game_name": "X",
         }))

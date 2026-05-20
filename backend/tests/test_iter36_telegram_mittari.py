@@ -318,7 +318,8 @@ class TestAdminGating:
 
 class TestBroadcastImport:
     def test_module_exports(self):
-        import importlib, sys
+        import importlib
+        import sys
         # Ensure backend module path is reachable
         sys.path.insert(0, "/app/backend")
         tg = importlib.import_module("telegram_bot")

@@ -105,9 +105,12 @@ const MittariSignals = () => {
   const [picks, setPicks] = useState([]);
   const [loaded, setLoaded] = useState(false);
 
-  // Restore pending_id from localStorage (returning visitor) and stable
-  // generate a fresh one if none exists.
-  const [pendingId, setPendingId] = useState(() => {
+  // Stable per-browser pending_id for the Telegram deep-link binding.
+  // Stored in localStorage so a returning visitor reuses the same id
+  // (one tap binds the same browser permanently to the same Telegram
+  // chat). NOT a security secret — just an opaque correlation UUID
+  // bound to a public bot deep-link.
+  const [pendingId] = useState(() => {
     try {
       const existing = window.localStorage.getItem(STORAGE_KEY);
       if (existing) return existing;
@@ -123,7 +126,7 @@ const MittariSignals = () => {
   const [status, setStatus] = useState(() => {
     try {
       return window.localStorage.getItem(STORAGE_TS_KEY) ? 'unlocked' : 'locked';
-    } catch { return 'locked'; }
+    } catch { return 'locked'; /* storage unavailable */ }
   });
   const [bound, setBound] = useState(false);
   const pollRef = useRef(null);
@@ -155,7 +158,7 @@ const MittariSignals = () => {
           if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
           return;
         }
-      } catch {}
+      } catch { /* noop: polling — next tick will retry */ }
       if (Date.now() - startedAt > 60_000 && pollRef.current) {
         clearInterval(pollRef.current); pollRef.current = null;
       }
@@ -172,8 +175,8 @@ const MittariSignals = () => {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pending_id: pendingId }),
       });
-    } catch {}
-    try { window.localStorage.setItem(STORAGE_TS_KEY, String(Date.now())); } catch {}
+    } catch { /* noop: bot binding still works without server pre-register */ }
+    try { window.localStorage.setItem(STORAGE_TS_KEY, String(Date.now())); } catch { /* noop: storage unavailable */ }
     setStatus('unlocked');
   }, [pendingId]);
 

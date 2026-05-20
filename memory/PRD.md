@@ -2,6 +2,24 @@
 
 ## Phase History (latest first)
 
+- **Code review remediation — quick wins + lint hygiene** (2026-05-19)
+  - **Decoupled potential circular import** between `dial_engine.py` ↔ `telegram_bot.py`. Extracted shared `STATE_LABELS_FI` map into a new `mittari_state_labels.py` module. Both modules now import the constant from a neutral location; the remaining cross-module function calls (`telegram_bot → dial_engine.latest_snapshot` and `dial_engine → telegram_bot.broadcast_mittari_state_change`) are documented late-imports inside function bodies (the textbook fix the reviewer suggested).
+  - **Admin tokens moved out of test source.** `ADMIN_TOKEN = "putki-hq-admin"` → `ADMIN_TOKEN = os.environ.get("PUTKI_HQ_ADMIN_TOKEN", "putki-hq-admin")` across `test_sprint_voita_hero.py`, `test_sprint_a_mestari_voita.py`, `test_sprint_voita_lessons.py`, `test_sprint_voita_zinger.py`. Default preserved for local dev; CI/prod can inject the real token via env.
+  - **Admin auth storage → sessionStorage** (was localStorage). `useBackOfficeToken.js` now persists the X-Admin-Token in `sessionStorage` (cleared on tab close — reduces XSS-stolen-credential blast radius). Legacy localStorage entries are best-effort cleaned on every write. The httpOnly-cookie migration is tracked as ROADMAP P1.
+  - **Empty catch blocks documented** in code authored this sprint (`VoitaRaffle.jsx`, `MittariSignals.jsx`, `Mestari.jsx`, `BettingTipsHub.jsx`) — every `catch {}` now has a `/* noop: <reason> */` comment explaining why the failure is intentionally swallowed (scrollTo cosmetics, sessionStorage in Safari private mode, polling retries, etc.).
+  - **ESLint config wired for code-review compliance.** New `eslint.config.cjs` enables `react-hooks/exhaustive-deps` as a `warn` rule across the standalone CLI (CRA only reported these at build time before). Discovered finding: 3 real warnings (not 189 as flagged). All 3 fixed:
+    - `useOpsFacts.js:51` — removed unused `eslint-disable` directive.
+    - `BettingTipsHub.jsx:273` — removed unused `eslint-disable` directive.
+    - `BackOfficeDrafts.jsx:161` — documented the intentional draft.id-only dependency (preserves unsaved edits when parent mutates the same draft's body).
+  - **Backend ruff clean.** Fixed 3 minor issues flagged by ruff (`F841` unused local in `test_phase4_w2_content_generator.py:321`, plus 2 `E401` multi-imports auto-fixed in test files). Final state: 0 lint errors backend, 0 warnings frontend.
+  - **False-positive findings documented + dismissed with evidence:**
+    - "`is` vs `==` 200+ instances" → grep shows only 1 occurrence, and it's in a code comment. The 200 hits the reviewer counted were all `is None`/`is True`/`is False` (PEP 8-compliant).
+    - "189 missing hook deps" → ESLint with the actual `react-hooks/exhaustive-deps` rule surfaces 3 warnings, not 189. All 3 fixed above.
+    - "16 undefined variables" → ruff `--select F821` returns 0 hits.
+    - "29 array index keys" → covered by future component refactor sprints; many are intentional placeholder rows.
+    - "Circular import" → no top-level circular import existed; late imports are the standard fix. Hardened with the shared-constants module above.
+  - **Test pass: 80/80 sprint tests passing** (test_sprint_voita_hero, test_sprint_a_mestari_voita, test_sprint_voita_lessons, test_sprint_voita_zinger, test_iter36_telegram_mittari, test_iter37_sprint_c).
+
 - **Sprint C overnight build — Mobile sweep + Telegram monitor + Lead consolidation + Fixture-leak fix** (2026-05-19)
   - **Mobile UI audit & fix** across all routes (Home, Mestari, Mittari, Voita, Peli, Pelisignaalit + raffle slugs). At 390×844 viewport, all routes return `bodyScroll ≤ winW + 25`. Home is at 412 (22px delta = NewsTicker marquee, hard-clipped via `html { overflow-x: clip }` on iOS-Safari + all browsers). All other 7 routes: delta=0.
     - `index.css`: added `overflow-x: clip` on `html` + `body` as a global iOS-Safari horizontal-jiggle stopper.
@@ -191,6 +209,12 @@ PUTKI HQ pivots from a multi-purpose homepage into a focused, high-tech editoria
   - Voita post-match result email (parallel to the Telegram post-match ping)
 - Requires `RESEND_API_KEY` + `RESEND_FROM` + DNS verification on `putkihq.fi` (SPF/DKIM/DMARC)
 - **Lead table view consolidation**: `putki_lead` aggregate view across `optin_consents` rows where `consent_tag IN (mestari_lead, voita_lead, mittari_lead)`. `first_source` field already in place.
+
+### P1 — Code-review long-tail (deferred, multi-day work)
+- **Admin auth → httpOnly cookies**. Today the X-Admin-Token sits in `sessionStorage` (downgraded from localStorage as a stopgap). Real fix: backend issues a signed session cookie on token exchange; all admin pages drop the header-based auth in favor of credentials:'include'. Touches every admin page + middleware. 1-2 day refactor.
+- **Oversized-component refactor**. BackOfficeWebhooks (600 lines), BackOfficeOptinSegments (444), StreamerProfile (393), WeezyRally (386), Dial (302). Target: < 300 lines + complexity < 10. **DialCockpit explicitly OUT of scope per user mandate.**
+- **High-complexity Python refactor**. `content_generator.py::validate_content` (complexity 29), `generate_from_signal` (25), `_fingerprint_keys` (22), `_fetch_context` (20). Touches the editorial pipeline — requires heavy regression testing.
+- **Array index keys (29 instances)**. Mostly placeholder rows where index IS stable; selectively replace with stable IDs as those components get touched in normal feature work.
 
 ### P1 — Backlog
 - **/uutiset** full news archive with filters + search (deferred from Sprint C — context budget)

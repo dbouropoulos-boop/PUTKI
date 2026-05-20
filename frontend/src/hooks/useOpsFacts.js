@@ -48,7 +48,6 @@ export const useOpsFacts = () => {
     return () => {
       _subscribers.delete(cb);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return {
     counts: _cachedCounts || {},

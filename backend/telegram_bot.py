@@ -37,6 +37,8 @@ from typing import Any, Dict, Optional
 
 import httpx
 
+from mittari_state_labels import STATE_LABELS_FI, state_label_fi
+
 logger = logging.getLogger(__name__)
 
 _TG_API = "https://api.telegram.org"
@@ -330,13 +332,15 @@ async def _handle_mittari_start(db, *, chat_id: int | str, username: str,
 
     # Pull current Mittari state for the welcome card.
     try:
+        # Late import keeps `telegram_bot` independent of `dial_engine`
+        # at module-load time (see code-review: circular-import note).
         from dial_engine import latest_snapshot
         dial = await latest_snapshot(db) or {}
     except Exception:
         dial = {}
     state_key = ((dial.get("state") or {}).get("key") or "KYLMA").upper()
     score = dial.get("composite_score") or (dial.get("state") or {}).get("value") or 0
-    state_label = _STATE_LABEL_FI.get(state_key, state_key)
+    state_label = state_label_fi(state_key)
 
     header = ("🔁 <b>Tilaus jo vahvistettu</b>\n" if already
               else "✅ <b>MITTARI · SIGNAALIT AVATTU</b>\n")
@@ -353,10 +357,7 @@ async def _handle_mittari_start(db, *, chat_id: int | str, username: str,
     return {"handled": True, "kind": "mittari_bound", "already_bound": already}
 
 
-_STATE_LABEL_FI = {
-    "KYLMA": "TYYNI", "HAALEA": "VIRE", "KUUMA": "VIPINÄ",
-    "MYRSKY": "MEININKI", "KIIRASTULI": "PERKELE",
-}
+_STATE_LABEL_FI = STATE_LABELS_FI  # back-compat alias for any external callers
 
 
 async def broadcast_mittari_state_change(db, *, from_state: str, to_state: str,
@@ -364,8 +365,8 @@ async def broadcast_mittari_state_change(db, *, from_state: str, to_state: str,
     """Fan-out a state-change ping to every active Mittari subscriber.
     Called by `dial_engine.compute_and_store` whenever the quantised
     state flips."""
-    from_label = _STATE_LABEL_FI.get((from_state or "").upper(), from_state or "—")
-    to_label = _STATE_LABEL_FI.get((to_state or "").upper(), to_state or "—")
+    from_label = state_label_fi(from_state)
+    to_label = state_label_fi(to_state)
     text = (
         f"⚡ <b>MITTARI · TILANVAIHTO</b>\n\n"
         f"<b>{from_label} → {to_label}</b>\n"

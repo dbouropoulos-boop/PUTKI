@@ -239,7 +239,8 @@ class TestLayer2Ticks:
             return R()
 
         db = _StubDBLayer2()
-        import httpx, layer2_workers as lw
+        import httpx
+        import layer2_workers as lw
         with patch.object(httpx.AsyncClient, "get", new=_fake_get):
             result = _run(rss_tick(db))
         # New behaviour: each feed yields the same 2 matching items, but URL

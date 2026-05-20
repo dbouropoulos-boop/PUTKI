@@ -270,11 +270,11 @@ const TelegramConversionModal = ({ lang, t, viewedPicks }) => {
     const onKey = (e) => { if (e.key === 'Escape') close(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open]); // eslint-disable-line
+  }, [open]);
 
   const close = () => {
     setOpen(false);
-    try { localStorage.setItem(MODAL_DISMISSED_KEY, '1'); } catch {}
+    try { localStorage.setItem(MODAL_DISMISSED_KEY, '1'); } catch { /* noop: storage unavailable */ }
   };
 
   if (!open) return null;

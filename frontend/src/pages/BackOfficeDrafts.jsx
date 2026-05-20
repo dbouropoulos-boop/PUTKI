@@ -154,10 +154,14 @@ const PreviewModal = ({ draft, onClose, onSave, busy }) => {
   const [body, setBody] = useState(draft.body || '');
   const [editing, setEditing] = useState(false);
 
+  // Reset local edits when the user opens a *different* draft. We
+  // intentionally key only on `draft.id` — if the parent mutates the
+  // body of the same draft we don't want to clobber unsaved edits.
   useEffect(() => {
     setHeadline(draft.headline || '');
     setSubhead(draft.subhead || '');
     setBody(draft.body || '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.id]);
 
   const save = async () => {

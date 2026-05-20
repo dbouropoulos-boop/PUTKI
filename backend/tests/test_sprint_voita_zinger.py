@@ -16,7 +16,7 @@ import pytest
 import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-ADMIN_TOKEN = "putki-hq-admin"
+ADMIN_TOKEN = os.environ.get("PUTKI_HQ_ADMIN_TOKEN", "putki-hq-admin")
 ACTIVE_SLUG = "kups-hjk-veikkausliiga-final-2026"
 
 

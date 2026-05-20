@@ -17,7 +17,7 @@ import requests
 from pymongo import MongoClient
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://pelisignaali-fi.preview.emergentagent.com").rstrip("/")
-ADMIN_TOKEN = "putki-hq-admin"
+ADMIN_TOKEN = os.environ.get("PUTKI_HQ_ADMIN_TOKEN", "putki-hq-admin")
 SLUG = "kups-hjk-veikkausliiga-final-2026"
 
 _MONGO_URL = os.environ.get("MONGO_URL", "mongodb://localhost:27017")

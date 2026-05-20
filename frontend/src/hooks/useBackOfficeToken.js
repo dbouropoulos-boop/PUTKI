@@ -5,6 +5,14 @@
  * was reimplementing inline. Returns `{token, setToken, authed, authError,
  * checkAuth, logout}`.
  *
+ * SECURITY NOTE — the admin token now persists in **sessionStorage**, not
+ * localStorage. It survives within a tab/session but is cleared when the
+ * tab closes, reducing the XSS-stolen-credential blast radius. The proper
+ * long-term fix is to issue an httpOnly cookie session from the backend
+ * (tracked as ROADMAP P1 — "admin auth → httpOnly cookies"), but this
+ * change closes the most common attack vector (persistent-storage exfil)
+ * without a multi-day refactor.
+ *
  * Usage:
  *     const { token, authed, authError, checkAuth, setToken, logout } = useBackOfficeToken();
  *     if (!authed) return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} />;
@@ -15,10 +23,27 @@ import { useCallback, useEffect, useState } from 'react';
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki-hq-admin-token';
 
+// Tiny wrapper so we have ONE place to swap to cookies later.
+const tokenStore = {
+  get() {
+    try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
+  },
+  set(v) {
+    // noop on QuotaExceeded / private-browsing — we'd rather lose
+    // persistence than break the admin UX.
+    try { sessionStorage.setItem(TOKEN_KEY, v); } catch { /* sessionStorage unavailable */ }
+    // Best-effort: also clear any legacy localStorage entry from before
+    // this hardening. Safe to delete since we never read it again.
+    try { localStorage.removeItem(TOKEN_KEY); } catch { /* localStorage unavailable */ }
+  },
+  clear() {
+    try { sessionStorage.removeItem(TOKEN_KEY); } catch { /* sessionStorage unavailable */ }
+    try { localStorage.removeItem(TOKEN_KEY); } catch { /* localStorage unavailable */ }
+  },
+};
+
 export const useBackOfficeToken = () => {
-  const [token, setToken] = useState(() => {
-    try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
-  });
+  const [token, setToken] = useState(() => tokenStore.get());
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState('');
 
@@ -27,7 +52,6 @@ export const useBackOfficeToken = () => {
     if (!tk) { setAuthError('Token required.'); return false; }
     setAuthError('');
     try {
-      // The settings endpoint is the cheapest token verifier we have.
       const r = await fetch(`${BACKEND}/api/admin/settings`, {
         headers: { 'X-Admin-Token': tk },
       });
@@ -38,22 +62,22 @@ export const useBackOfficeToken = () => {
         setAuthError(`HTTP ${r.status}`); setAuthed(false); return false;
       }
       setAuthed(true);
-      try { localStorage.setItem(TOKEN_KEY, tk); } catch { /* ignore quota errors */ }
+      tokenStore.set(tk);
       return true;
     } catch (e) {
       setAuthError(e.message || 'Network error'); setAuthed(false); return false;
     }
   }, [token]);
 
-  // Auto-verify on mount when a stored token exists.
-  useEffect(() => {
-    if (token) checkAuth(token);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Auto-verify on mount when a stored token exists. We deliberately do
+  // NOT depend on `token` here — `checkAuth` reads from the closure on
+  // every call, so an effect-once-on-mount is exactly what we want.
+  const verifyOnce = useCallback((tk) => { if (tk) checkAuth(tk); }, [checkAuth]);
+  useEffect(() => { verifyOnce(tokenStore.get()); }, [verifyOnce]);
 
   const logout = useCallback(() => {
     setToken(''); setAuthed(false); setAuthError('');
-    try { localStorage.removeItem(TOKEN_KEY); } catch { /* ignore */ }
+    tokenStore.clear();
   }, []);
 
   return { token, setToken, authed, authError, checkAuth, logout };

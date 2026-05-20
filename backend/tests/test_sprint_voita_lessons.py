@@ -14,7 +14,7 @@ import pytest
 import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL").rstrip("/")
-ADMIN_TOKEN = "putki-hq-admin"
+ADMIN_TOKEN = os.environ.get("PUTKI_HQ_ADMIN_TOKEN", "putki-hq-admin")
 
 REQUIRED_LESSON_KEYS = [
     "bias_favorite", "read_consensus", "wrong_pattern",

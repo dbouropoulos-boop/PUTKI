@@ -653,7 +653,8 @@ const VoitaRaffle = () => {
 
   const advance = useCallback((next) => {
     setStep(next);
-    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+    // scrollTo can throw in some embedded WebViews; cosmetic only.
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
   }, []);
 
   const submitEntry = useCallback(async (viaChannel) => {
@@ -680,12 +681,15 @@ const VoitaRaffle = () => {
         return false;
       }
       try {
+        // Caching the entry locally lets us re-show the confirmation
+        // card if the user navigates back. sessionStorage throws in
+        // Safari private mode — non-critical, swallow.
         sessionStorage.setItem(`voita:${slug}:entry`, JSON.stringify({
           entry_id: j.entry_id, position: j.position,
           prediction: pick, home: homeGoals, away: awayGoals,
           confidence, channel: viaChannel, pending_id: pendingId,
         }));
-      } catch {}
+      } catch { /* noop: sessionStorage unavailable (Safari private) */ }
       setChannel(viaChannel);
       return true;
     } catch (e) {

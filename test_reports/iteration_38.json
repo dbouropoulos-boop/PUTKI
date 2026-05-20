@@ -1,0 +1,71 @@
+{
+  "summary": "Iter38 /mittari standalone landing rebuild — backend 6/6 PASS, frontend mostly OK with 3 real issues. Desktop 1366x900: clean 2-col layout (meter LEFT x=125, copy+form RIGHT x=720), NO duplicate ROLLING bleed (text appears 2x in DOM but visually only the single DialCockpit-owned one below meter — as designed), all 18 required testids present and populated, headline 'Know 8–30 minutes before the scene goes off.' (EN) renders, countdown 'Hh MMm SSs' updates every second, 3 step cards (mittari-step-1/2/3), 3 testimonials (t1/t2/t3), 7 receipts (0..6) with 6/7 (86%) footer hit-rate, 5 press logos (0..4), founder D-avatar block, PS italic serif. Hero email form: POST /api/voita/lead returns ok+consent_tag=mittari_lead, success message '✓ Thanks — confirmation link in your inbox' shows. Gate email form (same big-size testid): independent successful POST + success state. Both leads persisted in optin_consents with source=mittari, consent_tag=mittari_lead, surface=mittari_landing — verified via /api/admin/leads?source=mittari and pytest. Mobile 390x844: sticky bar visible (y=786, h=58), sticky CTA scrolls to hero form, dial centered, receipts/risk strip width=326 fits. ISSUES FOUND: (a) mobile horizontal overflow body.scrollWidth=444 vs innerWidth=390 (delta=54px > +25 tolerance) — root cause: mittari-email-submit-big button has whiteSpace:nowrap + padding 0 28px + letter-spacing 0.22em on 'UNLOCK SIGNALS →' / 'YHDISTÄ PUTKEEN →', width=200px doesn't fit alongside flex:1 input at 390px viewport; (b) primary-driver colored left border invisible: borderLeft computes to '2px solid rgba(0,0,0,0)' on ALL 3 drivers (transparent alpha), composite line text 'PRIMARY DRIVER NOW STREAMERS LIVE' still surfaces the data so functional but visual marker missing; (c) [data-testid=mittari-gate-telegram-link] click target [data-testid=mittari-signals-gate] does NOT exist in current empty-signals state (MittariSignals shows mittari-signals-empty instead) — link becomes a no-op until signals exist, should fall back to scrolling to [data-testid=mittari-signals].",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "EmailForm (size=big)",
+        "issue": "Mobile horizontal overflow +54px. Submit button mittari-email-submit-big has whiteSpace:nowrap + padding 0 28px + letterSpacing 0.22em forcing width=200px; combined with input it pushes row to 444px at viewport 390. Both hero and gate instances overflow.",
+        "selector": "[data-testid=mittari-email-submit-big]",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Drivers panel",
+        "issue": "Primary driver's left border color is transparent — getComputedStyle returns '2px solid rgba(0, 0, 0, 0)' on all 3 driver tiles. The primary-driver visual highlight (spec: 2px solid state color) is invisible. Composite line text still reads 'PRIMARY DRIVER NOW STREAMERS LIVE' so data flow is correct.",
+        "selector": "[data-testid^=mittari-driver-]",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Gate secondary 'or use Telegram' link",
+        "issue": "Click handler does document.querySelector('[data-testid=mittari-signals-gate]')?.scrollIntoView — but mittari-signals-gate only renders inside MittariSignals when picks.length>0 AND user is locked. In current/empty state only mittari-signals-empty exists, so click silently no-ops. Recommend falling back to [data-testid=mittari-signals] (always present).",
+        "affected_selectors": ["[data-testid=mittari-gate-telegram-link]", "[data-testid=mittari-signals-gate]"]
+      },
+      {
+        "flow": "EmailForm invalid-email UX",
+        "issue": "Input has HTML5 required + type=email — native browser validation blocks form submit on invalid email before the JS submit handler fires, so [data-testid=mittari-email-err-big] never appears. Functionally safe (no bad request sent) but the custom err copy never surfaces for invalid emails. Minor.",
+        "affected_selectors": ["[data-testid=mittari-email-err-big]"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "/mittari mobile 390x844",
+        "issues": ["Email form row (input+UNLOCK SIGNALS button) breaks out of viewport by 54px on mobile due to nowrap+letter-spacing on CTA text. User can horizontally scroll. Both hero form and gate form affected."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter38_mittari_landing.py",
+    "/app/test_reports/pytest/iter38.xml"
+  ],
+  "test_credentials": "X-Admin-Token: putki-hq-admin (used for /api/admin/leads persistence verification)",
+  "action_items": [
+    "[HIGH] Fix mobile overflow on EmailForm size=big: shorten CTA text on mobile (e.g. 'UNLOCK →' or 'AVAA →'), OR set whiteSpace:normal at <=480px, OR reduce padding/letter-spacing at small breakpoints, OR make button full-width on its own row on mobile.",
+    "[MEDIUM] Primary driver border color is transparent — pass the actual state color (or composite/state primary color) instead of an rgba with alpha=0. Verify the color resolution path in /app/frontend/src/pages/Mittari.jsx around the mittari-driver tile rendering (~lines 640-665).",
+    "[MEDIUM] Telegram secondary link scroll target fallback: when [data-testid=mittari-signals-gate] is absent (empty-state), scroll to [data-testid=mittari-signals] instead so the link is never a no-op.",
+    "[LOW] Surface custom invalid-email error UX (mittari-email-err-big) — currently native HTML5 validation pre-empts JS handler. Consider noValidate on form + manual regex check so the branded error copy actually appears."
+  ],
+  "critical_code_review_comments": [
+    "Mittari.jsx is 1102 lines — exceeds the 700-line guideline. Recommend extracting EmailForm, LiveActivityFeed, sections (Hero/Drivers/Explain/Testimonials/Receipts/Press/Founder/Gate) into /app/frontend/src/components/mittari/* for maintainability.",
+    "Two EmailForm instances share size='big' so testids collide (mittari-email-input-big and mittari-email-submit-big each appear 2x). Disambiguation works via parent (mittari-hero-form vs mittari-gate-primary), but better to take size or unique location prop (e.g. size='hero' / 'gate') for clean test IDs.",
+    "EmailForm relies on input[type=email]+required for client validation — that means the JS-side err state ('err') is effectively dead code for invalid-email cases. Either drop the JS err branch, OR add noValidate and do explicit JS check so error UI surfaces.",
+    "Driver primary-border color computes to transparent — likely the color lookup is returning an undefined/empty value, fallback should be explicit (e.g. a hardcoded accent like '#E89248' or composite state color).",
+    "mittari-gate-telegram-link onClick uses an inline scrollIntoView that silently swallows missing targets — add fallback chain ('signals-gate' → 'signals') and verify the target exists in current data state."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter38_mittari_landing.py (NEW — 6 tests: lead success/invalid-age/invalid-email/two-form-persistence/admin-summary/mittari-subscribe regression)"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 iter38 + prior iter37 still green)",
+    "frontend": "82% (15/18 acceptance criteria pass cleanly; 3 issues: mobile overflow, transparent primary-driver border, telegram-link no-op when signals empty)"
+  },
+  "seed_data_creation": "2 leads inserted with source=mittari (TEST_iter38_fe_hero_*@example.com, TEST_iter38_fe_gate_*@example.com) plus pytest test leads — all consent_tag=mittari_lead, surface=mittari_landing. Safe to leave (TEST_ prefix marks them).",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Desktop /mittari rebuild looks great — main agent's 2-col layout claim verified, no ROLLING bleed (the 2-count text occurrence is DialCockpit's design — intentional). Backend lead capture pipeline for source=mittari works end-to-end (FE POST → /api/voita/lead → optin_consents persistence → /api/admin/leads?source=mittari readback). Three concrete fixes pending: (1) mobile overflow on big CTA button — pure CSS fix; (2) transparent primary-driver border color — likely 1-line color lookup fix in Mittari.jsx ~L644-660; (3) telegram secondary link fallback when MittariSignals is in empty state. Re-test plan: (a) re-run mobile sweep at 390 → expect delta<=25; (b) inspect computed borderLeft on primary driver → expect non-transparent rgba; (c) click [data-testid=mittari-gate-telegram-link] in empty-signals state → expect smooth-scroll to mittari-signals.",
+  "rca of the issue": "Mobile overflow RCA: The EmailForm CTA button uses fontSize 12 + letterSpacing 0.22em + 'UNLOCK SIGNALS →' (16 chars) + padding 0 28px (56px) + whiteSpace:nowrap. Computed width ~200px. With input flex:1 inside a 326px-wide form container the row layout forces input to shrink, but at small enough viewport (and with form's outer min/max constraints) the rendered button right-edge lands at 444px against innerWidth 390. Mitigation: shorter CTA on mobile, or media query reducing letter-spacing/padding under 480px, or button stacks below input on mobile. Driver border RCA: color prop (likely something like state.color or driver.color) resolves to undefined/falsy at render → border-color falls back to transparent. Telegram-link RCA: tightly-coupled querySelector with no fallback when MittariSignals is in empty-state branch."
+}
