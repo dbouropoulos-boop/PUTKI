@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Header, Depends, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Header, Depends, Request, UploadFile, File
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -1616,6 +1616,66 @@ async def public_mittari_copy():
     present (admin override layered on top of DEFAULT_MITTARI_COPY)."""
     from mittari_copy import get_mittari_copy
     return await get_mittari_copy(db)
+
+
+# ── Playbook upload + send queue ───────────────────────────────────────
+
+@api_router.get("/admin/playbook")
+async def admin_get_playbook(_: bool = Depends(require_admin)):
+    """Returns current playbook metadata + outbox queue summary."""
+    from playbook import get_current_playbook, outbox_summary
+    return {
+        "current": await get_current_playbook(db),
+        "outbox": await outbox_summary(db),
+    }
+
+
+@api_router.post("/admin/playbook/upload")
+async def admin_upload_playbook(
+    file: UploadFile = File(...),
+    _: bool = Depends(require_admin),
+):
+    """Upload a new PDF playbook. PDF only, 5 MB cap. New entries
+    automatically get this attachment from the moment upload succeeds."""
+    from playbook import save_playbook, ALLOWED_MIME
+    data = await file.read()
+    ct = file.content_type or ALLOWED_MIME
+    try:
+        meta = await save_playbook(
+            db, data=data, filename=file.filename or "playbook.pdf",
+            content_type=ct, uploaded_by="back_office",
+        )
+        return {"ok": True, "current": meta}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@api_router.get("/admin/playbook/download")
+async def admin_download_playbook(_: bool = Depends(require_admin)):
+    """Stream the current PDF back to the admin for preview."""
+    from fastapi.responses import Response
+    from playbook import load_playbook_bytes
+    bundle = await load_playbook_bytes(db)
+    if not bundle:
+        raise HTTPException(status_code=404, detail="no_playbook_uploaded")
+    return Response(
+        content=bundle["data"], media_type=bundle["content_type"],
+        headers={
+            "Content-Disposition": f'inline; filename="{bundle["filename"]}"',
+        },
+    )
+
+
+@api_router.post("/admin/playbook/outbox/{outbox_id}/resend")
+async def admin_resend_playbook_email(
+    outbox_id: str, _: bool = Depends(require_admin),
+):
+    from playbook import manual_resend
+    ok = await manual_resend(db, outbox_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="not_found")
+    return {"ok": True}
+
 
 
 @api_router.get("/admin/mittari/copy")

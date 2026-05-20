@@ -522,6 +522,23 @@ async def submit_entry(
         })
     except Exception:
         position = None
+
+    # Enqueue the welcome + playbook email. Idempotent — if the entry
+    # ever gets resubmitted (or scaled to multi-node), the outbox row
+    # is deduped on (entry_id, source). Email-only branch: Telegram
+    # users get the playbook via the bot at /start.
+    if (entry.get("contact_channel") or "") == "email":
+        try:
+            from playbook import enqueue_playbook_email
+            raffle_title = (raffle.get("title_fi") or raffle.get("title_en") or "Voita").strip()
+            await enqueue_playbook_email(
+                db, email=email, display_name=entry["display_name"],
+                raffle_title=raffle_title, entry_id=entry["id"],
+                entry_position=position, lang="fi",
+            )
+        except Exception:
+            logger.exception("voita playbook enqueue failed (non-fatal)")
+
     return {
         "ok": True,
         "entry_id": entry["id"],

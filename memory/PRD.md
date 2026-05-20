@@ -2,6 +2,20 @@
 
 ## Phase History (latest first)
 
+- **Voita playbook bonus — universal PDF + outbound email queue** (2026-05-20)
+  - **User mandate**: "send a playbook on how to make better betting strategies + capacity to upload doc on the back office and send personalized email + update relevant copies."
+  - **Backend** (`/app/backend/playbook.py`): single-doc model (one universal PDF), content-addressed disk storage at `/app/storage/playbooks/<sha256>.pdf`, metadata in `settings._id='playbook_current'`. 5 MB cap, PDF magic-bytes verified, 10-file rollback retention. `enqueue_playbook_email` is idempotent on (entry_id, source) and writes to `email_outbox` with attachment ref. Bodies generated FI/EN with subject "Scout-pelikirjasi + osallistuminen lukittu" / "Your scout playbook + entry locked".
+  - **Personalization**: `display_name` (40-char field collected on entry form) → email local-part capitalised → `Pelaaja`/`Player` fallback. Subject + body include the name, raffle title, and entrant position.
+  - **New endpoints**: `GET /api/admin/playbook` (current + outbox summary), `POST /api/admin/playbook/upload` (multipart PDF, 5 MB cap), `GET /api/admin/playbook/download` (admin preview), `POST /api/admin/playbook/outbox/{id}/resend`.
+  - **Hook**: `voita_engine.submit_entry` now calls `enqueue_playbook_email` for email-channel entrants. Non-fatal try/except so a queue failure never blocks the entry. Telegram users get the playbook via bot at /start (separate path, not in scope this iteration).
+  - **Frontend**: `VoitaRaffle.jsx` contact gate gets a new "+ KAUPAN PÄÄLLE / FREE WITH YOUR ENTRY" disclosure card above the rules checkbox. Confirmation step copy updated to "tulos saapuu + scout-pelikirja PDF on jo matkalla".
+  - **Back-office page** `/back-office/playbook`: current PDF card (filename · size · sha · uploaded date · REPLACE + PREVIEW), file-picker upload (5 MB client check + PDF MIME check), email queue summary (PENDING/SENDING/SENT/FAILED counts), last-20 outbound rows with per-row RETRY, 15s auto-refresh.
+  - **Send worker** deferred: queue persists immediately; actual SMTP/Resend flush waits on `RESEND_API_KEY` (one worker file, ~1-2h once user provides the key).
+  - **End-to-end verified**: upload → entry submission → outbox row with attached PDF reference and personalized body in <1s.
+
+- **/voita copy reframed — game + scout reports, no "lesson"** (2026-05-20)
+  - User mandate: "they play the game, there is no lesson anymore" + keep the educative reveals. Stripped every user-facing "Lesson"/"Oppi" reference from `voita_quiz_config.py` (5 round headings, zingers, sub-copy → "Round X of 5 · Scout report" / "Kierros X/5 · Scout-raportti"). Kept educative reveal_fact / reveal_why / reveal_application body copy intact. `voita_profiles.py` Second-Guesser tease updated. Compliance linter still blocks outcome claims. Persisted admin override in `settings.voita_quiz_config` cleared so new defaults render. 9/9 sprint-A tests pass.
+
 - **/mittari full editable-copy system — every line user-editable** (2026-05-20)
   - **User mandate**: "make sure every single line is editable" — every visible string on /mittari now lives in `settings.mittari_copy`, edited via the new `/back-office/mittari-copy` editor and overlaid live on the page.
   - **Backend** (`/app/backend/mittari_copy.py`): full `DEFAULT_MITTARI_COPY` tree (FI+EN) covering hero, gates, signals, explainer, receipts, testimonials, founder, press, final-gate, feed labels, sticky bar, back-home. `sanitize_and_merge()` deep-merges admin overrides on top with per-field length caps (_SHORT=80, _MED=240, _LONG=800, _PARA=2000) — paste-bombs self-recover on next read. Blank receipt rows (no signal text in any locale) and blank testimonials (no quote) are dropped by the sanitiser. Explainer steps always padded to 3.

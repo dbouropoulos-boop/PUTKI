@@ -513,6 +513,35 @@ const ContactGate = ({ pendingId, email, setEmail, age, setAge, rules, setRules,
             style={{ marginTop: 2, width: 18, height: 18 }} />
           <span>{lang === 'en' ? 'I am 18 years or older.' : 'Olen 18 vuotta täyttänyt.'}</span>
         </label>
+        {/* Bonus disclosure — the playbook PDF goes out with the lock-in
+            confirmation email so the user can sharpen their reads before
+            kickoff. One ping, one PDF, no extra signup. */}
+        <div data-testid="contact-gate-playbook-bonus" style={{
+          background: 'var(--surface)',
+          border: '1px solid #E89248',
+          padding: '12px 14px',
+          display: 'grid', gridTemplateColumns: '36px 1fr', gap: 12, alignItems: 'center',
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 999,
+            background: 'rgba(232,146,72,0.12)', color: '#E89248',
+            fontFamily: 'Georgia, serif', fontStyle: 'italic', fontSize: 20,
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          }}>+</div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
+              letterSpacing: '0.18em', color: '#E89248', fontWeight: 700,
+              marginBottom: 2,
+            }}>{lang === 'en' ? 'FREE WITH YOUR ENTRY' : 'KAUPAN PÄÄLLE'}</div>
+            <div style={{
+              fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.45,
+              color: 'var(--ink)',
+            }}>{lang === 'en'
+              ? 'Scout playbook PDF lands in your inbox alongside the entry confirmation — the same patterns the daily five use.'
+              : 'Scout-pelikirja PDF saapuu vahvistuksen kanssa sähköpostiisi — samat kuviot, joita päivän viisi käyttää.'}</div>
+          </div>
+        </div>
         <label style={{ display: 'flex', gap: 10, fontSize: 12.5, color: 'var(--ink)', cursor: 'pointer', lineHeight: 1.5 }}>
           <input type="checkbox" checked={rules} onChange={(e) => setRules(e.target.checked)}
             data-testid="contact-gate-rules-checkbox"
@@ -565,8 +594,8 @@ const Confirmation = ({ raffle, channel, pendingId, lang }) => (
           ? `Open Telegram and press START on @${TELEGRAM_BOT} to confirm. We\u2019ll ping you the result after kickoff.`
           : `Avaa Telegram ja paina START botissa @${TELEGRAM_BOT} vahvistaaksesi. Ilmoitamme tuloksen ottelun jälkeen.`)
         : (lang === 'en'
-          ? 'Result lands in your inbox after kickoff. One ping. No spam.'
-          : 'Tulos saapuu sähköpostiisi ottelun jälkeen. Yksi viesti. Ei spämmiä.')}
+          ? 'Result lands in your inbox after kickoff. The scout playbook PDF is on its way right now. One ping per stage. No spam.'
+          : 'Tulos saapuu sähköpostiisi ottelun jälkeen. Scout-pelikirja PDF on jo matkalla. Yksi viesti vaiheessa. Ei spämmiä.')}
     </p>
     {channel === 'telegram' && pendingId && (
       <a href={`https://t.me/${TELEGRAM_BOT}?start=${pendingId}`} target="_blank" rel="noopener noreferrer"
