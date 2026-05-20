@@ -243,3 +243,140 @@ async def build_timeline(db, *, limit: int = 200) -> Dict[str, Any]:
     }
 
     return {"summary": summary, "rows": rows[:limit]}
+
+
+# ── 24h engagement funnel ────────────────────────────────────────────
+
+async def build_funnel(db, *, hours: int = 24) -> Dict[str, Any]:
+    """6-stage funnel for the last N hours. Each stage emits a `count`
+    plus a 24-bucket sparkline (per-hour totals, oldest first) so the
+    back-office can render it without a second query.
+
+    Stages:
+      signups   — distinct emails added to optin_consents
+      queued    — email_outbox rows created
+      sent      — email_outbox rows flipped to status=sent
+      opened    — outbox rows with first_opened_at in window
+      clicked   — outbox rows with first_clicked_at in window
+      returned  — distinct emails that received an email AND came back
+                  to voita / mestari AFTER receiving it
+    """
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(hours=hours)
+    cutoff_iso = cutoff.isoformat()
+    n_buckets = min(24, hours)
+    bucket_seconds = (hours * 3600) // max(1, n_buckets)
+
+    def _bucket_index(iso: str) -> Optional[int]:
+        if not iso:
+            return None
+        try:
+            ts = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+        except Exception:
+            return None
+        delta = (ts - cutoff).total_seconds()
+        if delta < 0 or delta > hours * 3600:
+            return None
+        idx = int(delta // bucket_seconds)
+        return min(max(0, idx), n_buckets - 1)
+
+    stage_def = [
+        ("signups", "blue"),
+        ("queued", "amber"),
+        ("sent", "green"),
+        ("opened", "green"),
+        ("clicked", "green"),
+        ("returned", "violet"),
+    ]
+    stages: Dict[str, Dict[str, Any]] = {
+        s: {"count": 0, "spark": [0] * n_buckets, "color": c}
+        for s, c in stage_def
+    }
+
+    def _hit(stage: str, iso: str, *, dedupe_key: Optional[str] = None,
+             dedupe_set: Optional[set] = None):
+        idx = _bucket_index(iso)
+        if idx is None:
+            return
+        if dedupe_set is not None and dedupe_key is not None:
+            if dedupe_key in dedupe_set:
+                return
+            dedupe_set.add(dedupe_key)
+        stages[stage]["count"] += 1
+        stages[stage]["spark"][idx] += 1
+
+    # ── signups: distinct emails from optin_consents created in window
+    signup_seen: set = set()
+    async for d in db.optin_consents.find(
+        {"$or": [
+            {"first_seen_at": {"$gte": cutoff_iso}},
+            {"created_at": {"$gte": cutoff_iso}},
+        ]},
+        {"_id": 0, "email": 1, "identifier": 1, "first_seen_at": 1, "created_at": 1},
+    ):
+        email = (d.get("email") or d.get("identifier") or "").lower().strip()
+        if not email or "@" not in email:
+            continue
+        ts = d.get("first_seen_at") or d.get("created_at")
+        _hit("signups", ts, dedupe_key=email, dedupe_set=signup_seen)
+
+    # ── queued / sent / opened / clicked from email_outbox
+    sent_emails_in_window: Dict[str, str] = {}   # email → max sent_at iso
+    async for d in db.email_outbox.find(
+        {"$or": [
+            {"created_at": {"$gte": cutoff_iso}},
+            {"sent_at": {"$gte": cutoff_iso}},
+            {"first_opened_at": {"$gte": cutoff_iso}},
+            {"first_clicked_at": {"$gte": cutoff_iso}},
+        ]},
+        {"_id": 0, "to": 1, "created_at": 1, "sent_at": 1,
+         "first_opened_at": 1, "first_clicked_at": 1, "status": 1},
+    ):
+        _hit("queued", d.get("created_at"))
+        if d.get("status") == "sent" and d.get("sent_at"):
+            _hit("sent", d.get("sent_at"))
+            em = (d.get("to") or "").lower()
+            if em and d["sent_at"] >= sent_emails_in_window.get(em, ""):
+                sent_emails_in_window[em] = d["sent_at"]
+        if d.get("first_opened_at"):
+            _hit("opened", d.get("first_opened_at"))
+        if d.get("first_clicked_at"):
+            _hit("clicked", d.get("first_clicked_at"))
+
+    # ── returned: a voita_entry or mestari_diagnostic_lead created
+    #    AFTER the recipient's most recent sent_at (engagement loop).
+    #    No sent_at history in window ⇒ no "returned" measurement.
+    returned_seen: set = set()
+    if sent_emails_in_window:
+        emails = list(sent_emails_in_window.keys())
+        async for d in db.voita_entries.find(
+            {"email_lower": {"$in": emails},
+             "created_at": {"$gte": cutoff_iso}},
+            {"_id": 0, "email_lower": 1, "created_at": 1},
+        ):
+            em = d.get("email_lower", "").lower()
+            anchor = sent_emails_in_window.get(em)
+            if anchor and d.get("created_at", "") > anchor:
+                _hit("returned", d["created_at"], dedupe_key=em, dedupe_set=returned_seen)
+        async for d in db.mestari_diagnostic_leads.find(
+            {"email": {"$in": emails},
+             "captured_at": {"$gte": cutoff_iso}},
+            {"_id": 0, "email": 1, "captured_at": 1},
+        ):
+            em = (d.get("email") or "").lower()
+            anchor = sent_emails_in_window.get(em)
+            if anchor and d.get("captured_at", "") > anchor:
+                _hit("returned", d["captured_at"], dedupe_key=em, dedupe_set=returned_seen)
+
+    return {
+        "hours": hours,
+        "buckets": n_buckets,
+        "bucket_seconds": bucket_seconds,
+        "since": cutoff_iso,
+        "until": now.isoformat(),
+        "stages": stages,
+        "order": [s for s, _ in stage_def],
+    }

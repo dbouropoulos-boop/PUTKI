@@ -3509,6 +3509,115 @@ async def admin_voita_mark_paid(raffle_id: str, _: bool = Depends(require_admin)
         raise HTTPException(status_code=400, detail=str(exc))
 
 
+@api_router.post("/admin/voita/raffles/{raffle_id}/notify-winner")
+async def admin_voita_notify_winner(
+    raffle_id: str, _: bool = Depends(require_admin),
+):
+    """Queue the `voita_winner` template against the raffle's drawn
+    winner. Pulls the winner's email + display_name + raffle title from
+    Mongo, renders the template once, writes to `email_outbox`. Returns
+    400 if the raffle isn't drawn yet, 409 if the winner has already
+    been notified (idempotent via `winner_notified_at`)."""
+    from email_templates import render_template
+    raffle = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
+    if not raffle:
+        raise HTTPException(status_code=404, detail="raffle_not_found")
+    result = raffle.get("result") or {}
+    winners = result.get("winners") or []
+    if not winners:
+        raise HTTPException(status_code=400, detail="raffle_not_drawn")
+    if raffle.get("winner_notified_at"):
+        return {"ok": True, "already_notified": True,
+                "notified_at": raffle["winner_notified_at"]}
+    winner = winners[0]
+    entry_id = winner.get("entry_id")
+    entry = await db.voita_entries.find_one(
+        {"id": entry_id}, {"_id": 0, "email_lower": 1, "display_name": 1, "lang": 1},
+    ) if entry_id else None
+    email = (entry or {}).get("email_lower")
+    if not email:
+        raise HTTPException(status_code=400, detail="winner_email_missing")
+    name = (entry or {}).get("display_name") or ""
+    lang = (entry or {}).get("lang", "fi")
+    raffle_title = raffle.get("title_fi") or raffle.get("title_en") or raffle.get("slug", "")
+    prize_label = (raffle.get("prize") or {}).get(
+        f"label_{lang}", raffle.get("prize_label", "€100 Weezybet credit"),
+    )
+    redeem_url = f"https://putkihq.fi/voita/{raffle.get('slug', '')}?winner={entry_id}"
+    rendered = await render_template(
+        db, "voita_winner", lang=lang,
+        vars_={
+            "name": name or ("Voittaja" if lang == "fi" else "Winner"),
+            "raffle_title": raffle_title,
+            "prize_label": prize_label,
+            "redeem_url": redeem_url,
+            "site_url": "https://putkihq.fi",
+            "unsubscribe_url": f"https://putkihq.fi/unsub?e={email}",
+        },
+    )
+    if not rendered:
+        raise HTTPException(status_code=500, detail="template_missing")
+    # Drop into the outbox so the existing send-worker picks it up.
+    now = datetime.now(timezone.utc).isoformat()
+    # Pixel injection happens at the email_templates level — track the
+    # winner email via the standard tracking pipeline too.
+    from email_tracking import inject_tracking_into_html, new_token, tracking_enabled
+    body_html = rendered["body_html"]
+    track_token = None
+    if tracking_enabled():
+        track_token = new_token()
+        body_html = inject_tracking_into_html(body_html, track_token)
+    outbox_doc = {
+        "to": email,
+        "to_name": name or None,
+        "subject": rendered["subject"],
+        "body_text": rendered["body_text"],
+        "body_html": body_html,
+        "attachments": [],
+        "status": "pending",
+        "attempts": 0,
+        "scheduled_at": now,
+        "sent_at": None,
+        "last_error": None,
+        "voita_entry_id": entry_id,
+        "raffle_id": raffle_id,
+        "source": "voita_winner_notify",
+        "lang": lang,
+        "created_at": now,
+        "open_count": 0,
+        "click_count": 0,
+    }
+    if track_token:
+        outbox_doc["track_token"] = track_token
+    await db.email_outbox.insert_one(outbox_doc)
+    await db.voita_raffles.update_one(
+        {"id": raffle_id},
+        {"$set": {"winner_notified_at": now, "winner_notified_to": email}},
+    )
+    return {"ok": True, "queued": True, "to": email,
+            "subject": rendered["subject"], "notified_at": now}
+
+
+# ── Leads 24h funnel (back-office) ────────────────────────────────────
+
+@api_router.get("/admin/leads/funnel")
+async def admin_leads_funnel(
+    hours: int = 24, _: bool = Depends(require_admin),
+):
+    """6-stage funnel over the last N hours:
+       1. signups       — distinct emails added to optin_consents
+       2. queued        — email_outbox rows created
+       3. sent          — email_outbox rows that flipped to status=sent
+       4. opened        — outbox rows with first_opened_at in window
+       5. clicked       — outbox rows with first_clicked_at in window
+       6. returned      — emails that received an email AND opened a new
+                          voita_entry OR mestari lead AFTER their last
+                          sent_at (engagement-loop estimate).
+    """
+    from leads_lifecycle import build_funnel
+    return await build_funnel(db, hours=max(1, min(168, hours)))
+
+
 @api_router.post("/admin/voita/raffles/{raffle_id}/import-odds")
 async def admin_voita_import_odds(raffle_id: str, _: bool = Depends(require_admin)):
     """Snapshot the current bookmaker consensus + team form on the

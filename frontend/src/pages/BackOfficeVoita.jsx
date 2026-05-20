@@ -127,6 +127,24 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     } finally { setBusy(false); }
   };
 
+  const notifyWinner = async () => {
+    if (!window.confirm('Send the winner email now? Renders the `voita_winner` template and queues an email_outbox row. Dispatches the moment RESEND_API_KEY is configured.')) return;
+    setBusy(true); setError(''); setInfo('');
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/notify-winner`, {
+        method: 'POST', headers: { 'X-Admin-Token': token },
+      });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) { setError(j.detail || `HTTP ${r.status}`); return; }
+      if (j.already_notified) {
+        setInfo(`ALREADY NOTIFIED at ${j.notified_at?.slice(0, 16).replace('T', ' ')}.`);
+      } else {
+        setInfo(`✉ QUEUED to ${j.to} · subject "${j.subject}".`);
+      }
+      onSaved && onSaved();
+    } finally { setBusy(false); }
+  };
+
   const save = async () => {
     setError(''); setInfo(''); setBusy(true);
     try {
@@ -348,6 +366,29 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
               }}>
               {busy ? '…' : '✓ MARK PAID'}
             </button>
+          )}
+          {/* Notify-winner — uses the editable `voita_winner` template
+              from /back-office/email-templates. Idempotent: backend
+              refuses the second call once winner_notified_at is set. */}
+          {!raffle.winner_notified_at ? (
+            <button type="button" onClick={notifyWinner} disabled={busy}
+              data-testid={`raffle-notify-winner-btn-${raffle.id}`}
+              style={{
+                marginLeft: 10,
+                padding: '8px 18px', background: '#5B8DEE', color: '#0B0A09',
+                border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+                letterSpacing: '0.18em', fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
+              }}>
+              {busy ? '…' : '✉ NOTIFY WINNER'}
+            </button>
+          ) : (
+            <span data-testid={`raffle-notified-${raffle.id}`} style={{
+              marginLeft: 10, color: '#6FA37D',
+              fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+              letterSpacing: '0.12em', fontWeight: 700,
+            }}>
+              ✓ NOTIFIED {raffle.winner_notified_at?.slice(0, 16).replace('T', ' ')}
+            </span>
           )}
         </div>
         {(raffle.result.winners || []).map((w) => (

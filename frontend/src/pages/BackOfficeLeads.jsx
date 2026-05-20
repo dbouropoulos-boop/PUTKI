@@ -36,6 +36,94 @@ const Pill = ({ label, value, color = '#5B8DEE', testid }) => (
   </div>
 );
 
+// ── 24h funnel sparkline ─────────────────────────────────────────────
+// Each stage renders as a column: count + horizontal sparkline of the
+// per-hour buckets. Stages laid out left→right in funnel order so the
+// drop-off between consecutive bars is visually immediate.
+const STAGE_PALETTE = {
+  blue: '#5B8DEE',
+  amber: '#E89248',
+  green: '#6FA37D',
+  violet: '#9C5DEE',
+};
+
+const Spark = ({ data, color }) => {
+  const max = Math.max(1, ...(data || []));
+  const w = 120;
+  const h = 28;
+  const bw = w / Math.max(1, data.length);
+  return (
+    <svg width={w} height={h} role="img" aria-hidden style={{ display: 'block' }}>
+      {(data || []).map((v, i) => {
+        const bh = Math.max(1, Math.round((v / max) * (h - 2)));
+        return (
+          <rect key={`bar-${i}-${v}`} x={i * bw + 0.5} y={h - bh}
+            width={Math.max(1, bw - 1)} height={bh}
+            fill={v > 0 ? color : 'currentColor'} opacity={v > 0 ? 0.95 : 0.18} />
+        );
+      })}
+    </svg>
+  );
+};
+
+const FunnelStrip = ({ funnel }) => {
+  if (!funnel) return null;
+  const order = funnel.order || [];
+  const stages = funnel.stages || {};
+  return (
+    <section data-testid="bo-leads-funnel" style={{
+      marginBottom: 22, padding: '16px 18px',
+      background: 'var(--surface)', border: '1px solid var(--border)',
+    }}>
+      <div style={{
+        display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12,
+        fontFamily: 'ui-monospace, monospace', fontSize: 10,
+        letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
+      }}>
+        <strong style={{ color: 'var(--ink)' }}>LAST 24H FUNNEL</strong>
+        <span>· {funnel.buckets}-HOUR BUCKETS</span>
+        <span style={{ marginLeft: 'auto', color: 'var(--muted)' }}>
+          {funnel.since?.slice(11, 16)} → {funnel.until?.slice(11, 16)} UTC
+        </span>
+      </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${order.length}, minmax(0, 1fr))`,
+        gap: 14, alignItems: 'end',
+      }}>
+        {order.map((stage, i) => {
+          const s = stages[stage] || { count: 0, spark: [], color: 'blue' };
+          const color = STAGE_PALETTE[s.color] || '#5B8DEE';
+          return (
+            <div key={stage} data-testid={`bo-leads-funnel-${stage}`} style={{
+              display: 'flex', flexDirection: 'column', gap: 6,
+              color: 'var(--muted)',
+            }}>
+              <div style={{
+                fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                letterSpacing: '0.18em', fontWeight: 700, color: 'var(--muted)',
+              }}>{`${i + 1}. ${stage.toUpperCase()}`}</div>
+              <div style={{
+                fontFamily: 'Georgia, serif', fontSize: 26, fontWeight: 700,
+                color, lineHeight: 1, letterSpacing: '-0.02em',
+              }}>{s.count}</div>
+              <Spark data={s.spark} color={color} />
+            </div>
+          );
+        })}
+      </div>
+      <p style={{
+        margin: '12px 0 0', color: 'var(--muted)',
+        fontFamily: 'ui-monospace, monospace', fontSize: 10,
+        letterSpacing: '0.04em', lineHeight: 1.55,
+      }}>
+        SIGNUPS = distinct emails captured · QUEUED/SENT = email outbox events · OPENED/CLICKED = tracking pixel ·
+        RETURNED = email recipient who created a new voita/mestari lead AFTER receiving an email.
+      </p>
+    </section>
+  );
+};
+
 const Chip = ({ children, color = 'var(--muted)' }) => (
   <span style={{
     display: 'inline-block', padding: '2px 8px',
@@ -50,6 +138,7 @@ const BackOfficeLeads = () => {
   const { token, authed, authError, checkAuth, setToken } = useBackOfficeToken();
   const headers = useMemo(() => ({ 'X-Admin-Token': token }), [token]);
   const [data, setData] = useState(null);
+  const [funnel, setFunnel] = useState(null);
   const [filter, setFilter] = useState('');
   const [surfaceFilter, setSurfaceFilter] = useState('all');
 
@@ -59,6 +148,10 @@ const BackOfficeLeads = () => {
       .then((r) => r.ok ? r.json() : null)
       .then(setData)
       .catch((e) => console.warn('[leads]', e));
+    fetch(`${BACKEND}/api/admin/leads/funnel?hours=24`, { headers })
+      .then((r) => r.ok ? r.json() : null)
+      .then(setFunnel)
+      .catch((e) => console.warn('[funnel]', e));
   }, [authed, headers]);
 
   const rows = useMemo(() => {
@@ -113,6 +206,9 @@ const BackOfficeLeads = () => {
         <div style={{ color: 'var(--muted)' }}>Loading…</div>
       ) : (
         <>
+          {/* 24h funnel */}
+          <FunnelStrip funnel={funnel} />
+
           {/* Summary band */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 22 }}>
             <Pill testid="bo-leads-total" label="UNIQUE LEADS" value={sum.rows_total} />
