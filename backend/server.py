@@ -1677,6 +1677,53 @@ async def admin_resend_playbook_email(
     return {"ok": True}
 
 
+# ── Email tracking (open pixel + click redirect) ─────────────────────
+
+@api_router.get("/track/o/{token}.gif")
+async def track_open_pixel(token: str, request: Request):
+    """1×1 transparent GIF that records an email-open event for the
+    outbox row matching `token`. Returns the pixel regardless so the
+    email client never shows a broken image."""
+    from fastapi.responses import Response
+    from email_tracking import (
+        TRANSPARENT_GIF_1x1, record_open, tracking_enabled,
+    )
+    if tracking_enabled():
+        try:
+            ua = request.headers.get("user-agent", "")
+            await record_open(db, token, user_agent=ua)
+        except Exception:
+            logger.exception("track_open_pixel record failed (non-fatal)")
+    return Response(
+        content=TRANSPARENT_GIF_1x1,
+        media_type="image/gif",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, private",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
+
+
+@api_router.get("/track/c/{token}")
+async def track_click_redirect(token: str, u: str, request: Request):
+    """302-redirects to the decoded target URL after recording the click.
+    Refuses anything that doesn't decode to an allowlisted host (so the
+    endpoint cannot be weaponised as an open redirect)."""
+    from fastapi.responses import RedirectResponse
+    from email_tracking import decode_target, record_click, tracking_enabled
+    target = decode_target(u)
+    if not target:
+        raise HTTPException(status_code=400, detail="invalid_target")
+    if tracking_enabled():
+        try:
+            ua = request.headers.get("user-agent", "")
+            await record_click(db, token, target, user_agent=ua)
+        except Exception:
+            logger.exception("track_click_redirect record failed (non-fatal)")
+    return RedirectResponse(url=target, status_code=302)
+
+
 
 @api_router.get("/admin/mittari/copy")
 async def admin_get_mittari_copy(_: bool = Depends(require_admin)):

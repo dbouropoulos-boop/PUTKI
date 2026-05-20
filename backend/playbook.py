@@ -31,6 +31,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from email_tracking import (
+    inject_tracking_into_html,
+    new_token as new_tracking_token,
+    tracking_enabled,
+)
+
 logger = logging.getLogger(__name__)
 
 # Storage dir is fixed; deployments mount /app/storage as a persistent
@@ -240,6 +246,12 @@ async def enqueue_playbook_email(db, *, email: str, display_name: Optional[str],
         "created_at": _now_iso(),
         "missing_attachment": attachment is None,
     }
+    if tracking_enabled():
+        token = new_tracking_token()
+        doc["track_token"] = token
+        doc["open_count"] = 0
+        doc["click_count"] = 0
+        doc["body_html"] = inject_tracking_into_html(doc["body_html"], token)
     res = await db.email_outbox.insert_one(doc)
     return str(res.inserted_id)
 
@@ -258,12 +270,22 @@ async def outbox_summary(db) -> Dict[str, Any]:
             "attempts": 1, "scheduled_at": 1, "sent_at": 1,
             "last_error": 1, "source": 1, "missing_attachment": 1,
             "voita_entry_id": 1,
+            "open_count": 1, "click_count": 1,
+            "first_opened_at": 1, "last_opened_at": 1,
+            "first_clicked_at": 1, "last_clicked_at": 1,
         },
     ).sort([("scheduled_at", -1)]).limit(20)
     async for d in cursor:
         d["id"] = str(d.pop("_id"))
         rows.append(d)
-    return {"counts": counts, "rows": rows}
+    # Aggregate tracking totals (cheap pipeline; one extra round-trip).
+    try:
+        from email_tracking import tracking_summary as _ts
+        n, opens, clicks = await _ts(db)
+        totals = {"outbox_total": n, "opens_total": opens, "clicks_total": clicks}
+    except Exception:
+        totals = {"outbox_total": 0, "opens_total": 0, "clicks_total": 0}
+    return {"counts": counts, "rows": rows, "tracking": totals}
 
 
 async def manual_resend(db, outbox_id: str) -> bool:

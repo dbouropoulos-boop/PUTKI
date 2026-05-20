@@ -69,7 +69,8 @@ function App() {
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
           <Route path="/mestari" element={<Mestari />} />
-          <Route path="/voyager" element={<Voyager />} />
+          <Route path="/game" element={<Voyager />} />
+          <Route path="/voyager" element={<Navigate to="/game" replace />} />
           <Route path="/back-office" element={<BackOffice />} />
           <Route path="/back-office/queue" element={<BackOfficeQueue />} />
           <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />

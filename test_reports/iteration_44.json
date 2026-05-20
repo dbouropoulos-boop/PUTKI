@@ -1,0 +1,35 @@
+{
+  "summary": "Sprint close-out review of: /voyager→/game redirect, VoyagerHomeStrip on Home, email open/click tracking pixel + redirect (Voita playbook), BackOfficePlaybook tracking columns, Voyager.jsx + BackOfficeMestariCopy.jsx refactors. Backend pytest tests/test_sprint_email_tracking.py = 10/10 PASS. Public-URL curl checks confirm /api/track/o/<token>.gif → 200 image/gif 43 B, /api/track/c/<token>?u=<base64 weezybet> → 302 Location=decoded, evil host → 400, /api/admin/playbook → outbox.tracking {outbox_total, opens_total, clicks_total}. Playwright verified /game renders all 7 testids (masthead/standfirst/game-block/review[0-3]/next[streamers,mestari]) with Pass+Redeem HIDDEN, /voyager redirects to /game, Home strip renders with all required testids and click navigates to /game, BackOfficePlaybook page exposes bo-pb-tracking-opens/clicks plus per-row bo-pb-row-tracking-<id>, BackOfficeMestariCopy auth-gates then renders FI/EN section panels (316 testids). Regression: /mestari /mittari /voita /peli /back-office all 200.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/game masthead", "issues": ["Visual order pushes top of viewport into solid black band; standfirst headline only visible after scroll on a 1920×1080 viewport. Cosmetic, not a defect — content is present at correct testids."]},
+      {"screen": "VoyagerHomeStrip CTA", "issues": ["CTA text rendered as 'OPEN PICK  →' (two spaces before arrow). Review spec writes single space — pure copy nit."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_sprint_email_tracking.py",
+    "/app/test_reports/pytest/iter44_tracking.xml"
+  ],
+  "action_items": [
+    "Naming note: review request referenced testid prefix 'mc-' (e.g. mc-save-top, mc-field-hero-fi-headline-lead) but the implemented prefix in BackOfficeMestariCopy + copyAtoms is 'mec-' (mec-save-top, mec-field-hero-fi-headline). Either rename the testids to match the documented contract or update the spec — current state works functionally but breaks any external test that follows the review's exact selectors.",
+    "Cosmetic: CTA copy in VoyagerHomeStrip has double space before the arrow ('OPEN PICK  →' / 'AVAA VALINTA  →')."
+  ],
+  "critical_code_review_comments": [
+    "Voyager.jsx refactor is clean — 103 LOC, single-purpose composition root with one effect for activeWeek and onWin scroll handler. Adapter for backend flat keys → nested {fi,en} is well-isolated.",
+    "VoyagerHomeStrip silently hides when /api/voyager/active returns nothing — good fail-closed default. Date math uses Math.ceil so 'NEXT PICK · 27 May · 7D' stays accurate even at midnight rollover.",
+    "/api/track/c/<token>?u=<base64> host-allowlist correctly rejects evil.example.com with 400 instead of redirecting; matches the spec.",
+    "copyAtoms extraction (SectionTitle/Field/Row/Card) reduced BackOfficeMestariCopy duplication but reintroduces a testid-prefix mismatch vs. the review brief (mec- vs mc-). Pick one and lock it.",
+    "BackOfficePlaybook tracking surface uses real /api/admin/playbook outbox.tracking shape — opens/clicks counters live-render even when value is 0, so QA can see the field exists pre-event."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "Admin: BACK_OFFICE_TOKEN=putki-hq-admin (sessionStorage key 'putki-hq-admin-token', X-Admin-Token header)",
+  "seed_data_creation": "None — used existing outbox rows (3) already in /api/admin/playbook.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All sprint deliverables verified at the public URL. test_sprint_email_tracking.py is green (10/10). The mc-/mec- testid prefix discrepancy is the only contract drift worth flagging — likely a documentation typo, not a regression. Mestari quiz flow itself was intentionally NOT re-tested (still validated in iter43).",
+  "rca of the issue": "No bugs found this iteration."
+}

@@ -218,7 +218,7 @@ const BackOfficeVoyagerRotation = () => {
             fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
             letterSpacing: '0.12em', color: 'var(--muted)',
           }} data-testid="voy-status">{status}</span>
-          <Link to="/voyager" target="_blank" rel="noopener noreferrer"
+          <Link to="/game" target="_blank" rel="noopener noreferrer"
             data-testid="voy-preview-link"
             style={{
               padding: '10px 16px', background: 'transparent', color: 'var(--ink)',

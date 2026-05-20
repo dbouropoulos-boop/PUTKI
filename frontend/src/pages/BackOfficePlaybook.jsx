@@ -212,6 +212,18 @@ const BackOfficePlaybook = () => {
                 <strong style={{ color: 'var(--ink)' }}>{counts[k] || 0}</strong>
               </span>
             ))}
+            {outbox.tracking && (
+              <>
+                <span data-testid="bo-pb-tracking-opens" style={{ color: 'var(--muted)' }}>
+                  <span style={{ letterSpacing: '0.18em' }}>OPENS</span>{' '}
+                  <strong style={{ color: '#6FA37D' }}>{outbox.tracking.opens_total || 0}</strong>
+                </span>
+                <span data-testid="bo-pb-tracking-clicks" style={{ color: 'var(--muted)' }}>
+                  <span style={{ letterSpacing: '0.18em' }}>CLICKS</span>{' '}
+                  <strong style={{ color: '#6FA37D' }}>{outbox.tracking.clicks_total || 0}</strong>
+                </span>
+              </>
+            )}
           </div>
         </div>
         <div style={{
@@ -228,7 +240,7 @@ const BackOfficePlaybook = () => {
           {outbox.rows.map((r) => (
             <div key={r.id} data-testid={`bo-pb-row-${r.id}`} style={{
               background: 'var(--surface)', padding: '14px 18px',
-              display: 'grid', gridTemplateColumns: '180px 1fr auto auto', gap: 18,
+              display: 'grid', gridTemplateColumns: '180px 1fr 90px auto auto', gap: 18,
               alignItems: 'center',
               fontFamily: 'ui-monospace, monospace', fontSize: 11,
             }}>
@@ -241,6 +253,13 @@ const BackOfficePlaybook = () => {
                   {r.subject}{r.missing_attachment ? ' · ⚠ awaits playbook' : ''}
                   {r.last_error ? ` · ${r.last_error}` : ''}
                 </div>
+              </div>
+              <div data-testid={`bo-pb-row-tracking-${r.id}`} style={{
+                color: 'var(--muted)', fontSize: 10, letterSpacing: '0.06em',
+                textAlign: 'right', lineHeight: 1.5,
+              }}>
+                <div>OPEN <strong style={{ color: (r.open_count || 0) > 0 ? '#6FA37D' : 'var(--muted)' }}>{r.open_count || 0}</strong></div>
+                <div>CLICK <strong style={{ color: (r.click_count || 0) > 0 ? '#6FA37D' : 'var(--muted)' }}>{r.click_count || 0}</strong></div>
               </div>
               <StatusPill status={r.status} />
               {r.status !== 'sent' && (

@@ -16,6 +16,7 @@ import NewsPortal from "../components/NewsPortal";
 import StreamersBand from "../components/StreamersBand";
 import NowPlayingTicker from "../components/NowPlayingTicker";
 import ExploreBlocks from "../components/ExploreBlocks";
+import VoyagerHomeStrip from "../components/VoyagerHomeStrip";
 import AboutStrip from "../components/AboutStrip";
 import EditorialFooter from "../components/EditorialFooter";
 import UTMBanner from "../components/UTMBanner";
@@ -55,7 +56,12 @@ const Home = () => {
         onSlotClick={(name) => setSlotFilter((cur) => cur === name ? null : name)}
       />
 
-      {/* Zone 5 — Explore preview blocks (Mittari · Mestari · Voita · Peli) */}
+      {/* Zone 5 — Voyager weekly pick strip → /game */}
+      <section className="home-zone home-zone--voyager">
+        <VoyagerHomeStrip />
+      </section>
+
+      {/* Zone 6 — Explore preview blocks (Mittari · Mestari · Voita · Peli) */}
       <section className="home-zone home-zone--explore">
         <ExploreBlocks />
       </section>
