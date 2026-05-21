@@ -385,14 +385,46 @@ async def _build_sms_alerts_payload(db) -> Dict[str, Any]:
 
 
 async def _build_telegram_alerts_payload(db) -> Dict[str, Any]:
-    """Telegram alerts = same picks as SMS plus a channel link.
+    """Telegram channel broadcast — today's 5 Mittari signals + a link.
 
-    Mirrors SMS deliberately. The split is consent-based, not content-based:
-    some readers want SMS, some want Telegram, some want both.
+    iter52: deliberately wider than SMS. SMS is a paid "high-confidence
+    only" channel (sharpness >= 75); Telegram is the public channel
+    broadcast that mirrors what readers see on /mittari at 09:00. We
+    surface ALL 5 picks (not just the 75+ band) because:
+      • Telegram is opt-in via a public channel, not paid SMS.
+      • The whole point is parity with the Mittari page.
+      • Channel followers self-curate; we don't.
     """
-    sms = await _build_sms_alerts_payload(db)
-    sms["telegram"] = True
-    return sms
+    payload: Dict[str, Any] = {"picks": [], "telegram": True}
+    try:
+        from odds_api import get_featured_picks
+        cached = await get_featured_picks()
+        picks = (cached or {}).get("picks") or []
+        for p in picks[:5]:
+            home = p.get("home_team") or ""
+            away = p.get("away_team") or ""
+            event = (
+                p.get("event_name")
+                or p.get("label")
+                or (f"{home} vs {away}" if home and away else "")
+            )
+            payload["picks"].append({
+                "event_name": event,
+                "pick": p.get("pick_team") or p.get("pick"),
+                "odds_decimal": p.get("odds_decimal") or p.get("decimal_odds"),
+                "bookmaker": p.get("bookmaker"),
+                "sharpness": (
+                    p.get("sharpness", {}).get("sharpness")
+                    if isinstance(p.get("sharpness"), dict)
+                    else p.get("sharpness") or 0
+                ),
+                "sport": p.get("sport") or p.get("sport_label") or p.get("league"),
+                "sport_icon": p.get("sport_icon"),
+                "kickoff_at": p.get("kickoff_at") or p.get("commence_time"),
+            })
+    except Exception:
+        logger.exception("telegram broadcast: picks lookup failed")
+    return payload
 
 
 # ── Recipient lookup ─────────────────────────────────────────────────────
@@ -476,7 +508,7 @@ async def _attempt_telegram_send(recipient: str, payload: Dict[str, Any]) -> Dic
         async with httpx.AsyncClient(timeout=15.0) as http:
             r = await http.post(
                 f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage",
-                json={"chat_id": recipient, "text": _render_sms_text(payload),
+                json={"chat_id": recipient, "text": _render_telegram_text(payload),
                       "parse_mode": "HTML", "disable_web_page_preview": True},
             )
         return {
@@ -520,6 +552,58 @@ def _render_sms_text(payload: Dict[str, Any]) -> str:
         odds = f"@{p['odds_decimal']:.2f}" if p.get("odds_decimal") else ""
         parts.append(f"{p.get('pick', '?')} {odds} · S{p.get('sharpness', 0)}")
     return " | ".join(parts)[:480]
+
+
+def _render_telegram_text(payload: Dict[str, Any]) -> str:
+    """Channel-broadcast formatting. HTML parse-mode (bold + monospace odds).
+
+    Mirrors the /mittari card stack: numbered list, sport eyebrow, pick +
+    odds + sharpness gauge per row, footer with one CTA. Kept under
+    Telegram's 4096-char hard cap by capping at 5 picks (the Mittari
+    cap) and trimming long event names.
+    """
+    picks = payload.get("picks", []) or []
+    from datetime import datetime
+
+    def _fmt_kickoff(s: str) -> str:
+        if not s:
+            return ""
+        try:
+            dt = datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+            return dt.strftime("%H:%M")
+        except Exception:
+            return ""
+
+    if not picks:
+        return (
+            "<b>PUTKI HQ · Päivän signaalit</b>\n\n"
+            "Ei tänään luotettavia signaaleja — palaamme huomenna klo 09:00.\n\n"
+            "→ https://putkihq.fi/mittari"
+        )
+
+    lines = [f"<b>PUTKI HQ · Päivän signaalit · {len(picks)}/5</b>", ""]
+    for i, p in enumerate(picks, 1):
+        sport = (p.get("sport") or "")[:24]
+        icon = p.get("sport_icon") or ""
+        event = (p.get("event_name") or "")[:60]
+        pick = (p.get("pick") or "?")[:40]
+        odds = p.get("odds_decimal")
+        odds_s = f"<code>@{odds:.2f}</code>" if isinstance(odds, (int, float)) and odds else "<code>@?.??</code>"
+        sharp = int(p.get("sharpness") or 0)
+        kickoff = _fmt_kickoff(p.get("kickoff_at"))
+        meta_bits = [b for b in [f"{icon} {sport}".strip(), kickoff] if b]
+        meta = " · ".join(meta_bits)
+
+        lines.append(f"<b>{i:02d}</b> · {meta}" if meta else f"<b>{i:02d}</b>")
+        if event:
+            lines.append(f"   {event}")
+        lines.append(f"   <b>{pick}</b> {odds_s} · Sharpness {sharp}")
+        lines.append("")
+
+    lines.append("→ https://putkihq.fi/mittari")
+    out = "\n".join(lines).strip()
+    # Telegram hard cap is 4096 chars; we're far under but trim defensively.
+    return out[:4000]
 
 
 # ── Per-channel dispatch ─────────────────────────────────────────────────

@@ -19,6 +19,7 @@ const SLOTS_PIXELS_PER_SECOND = 40;
 const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
   const { lang } = useLang();
   const [slots, setSlots] = useState([]);
+  const [categoryCount, setCategoryCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,6 +30,7 @@ const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
         .then((d) => {
           if (cancelled || !d) return;
           setSlots(d.slots || []);
+          setCategoryCount(d.slot_category_streams_count || 0);
           setLoading(false);
         })
         .catch(() => { if (!cancelled) setLoading(false); });
@@ -72,25 +74,36 @@ const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
     );
   }
 
-  // Empty state — pure scene mode
+  // Empty state — either pure scene mode (zero slot/casino streams) or
+  // "title not declared" mode (slot/casino streams live but their titles
+  // don't mention a specific registered slot — common on Kick where the
+  // stream title is marketing fluff and the actual slot is visible only
+  // in the video itself).
   if (slots.length === 0) {
+    const hasCategoryStreams = categoryCount > 0;
+    const copy = hasCategoryStreams
+      ? (lang === 'en'
+          ? `${categoryCount} slot stream${categoryCount === 1 ? '' : 's'} live · titles not declared`
+          : `${categoryCount} slottistriim${categoryCount === 1 ? 'i' : 'iä'} käynnissä · slotteja ei merkitty otsikkoon`)
+      : (lang === 'en'
+          ? 'No slot streams right now · Pure scene mode'
+          : 'Ei slottistriimejä juuri nyt · Puhdas skene -tila');
     return (
       <div
         data-testid="now-playing-ticker"
-        data-state="empty"
+        data-state={hasCategoryStreams ? 'category-only' : 'empty'}
+        data-category-count={categoryCount}
         style={{
           borderTop: '1px solid var(--hairline, #221E1B)',
           borderBottom: '1px solid var(--hairline, #221E1B)',
           padding: '9px 32px', fontFamily: 'ui-monospace, monospace',
           fontSize: 11, letterSpacing: '0.10em',
-          color: 'var(--muted, #9C9587)', opacity: 0.75,
+          color: 'var(--muted, #9C9587)', opacity: 0.85,
         }}
       >
         <span style={{ fontWeight: 700, marginRight: 12 }}>{label}</span>
         ·
-        <span style={{ marginLeft: 12 }}>
-          {lang === 'en' ? 'No slot streams right now · Pure scene mode' : 'Ei slottistriimejä juuri nyt · Puhdas skene -tila'}
-        </span>
+        <span style={{ marginLeft: 12 }}>{copy}</span>
       </div>
     );
   }

@@ -1220,10 +1220,26 @@ async def public_streamers_now_playing():
     using longest-match-wins, and returns the per-slot count table for the
     homepage "NOW PLAYING" ticker.
 
+    iter52: also reports `slot_category_streams_count` — the number of
+    live streams whose `game_name` is in the slot/casino category set
+    (Kick's "Slots & Casino", Twitch's "Slots", etc.) but whose stream
+    title doesn't mention a specific registered slot. Without this, a
+    Kick streamer running slots with a marketing-fluff title gets
+    rendered as "Pure scene mode" when in reality there's clearly a
+    slot stream live. Frontend shows an honest "N slot streams · titles
+    not declared" instead.
+
     Refresh cadence on the frontend: 60s.
     """
     from slot_registry import extract_now_playing
+    # Category labels we trust as "this stream IS slot/casino content"
+    # even when no specific slot title shows up in the metadata.
+    SLOT_CATEGORY_LABELS = {
+        "slots", "slot", "slots & casino", "slot & casino",
+        "casino", "virtual casino", "online casino",
+    }
     all_rows: List[Dict[str, Any]] = []
+    category_stream_count = 0
     for p in ("twitch", "kick", "youtube"):
         try:
             if p == "twitch":
@@ -1236,6 +1252,10 @@ async def public_streamers_now_playing():
                 from multi_platform_live import fetch_youtube_live
                 d = await fetch_youtube_live(db)
             items = d.get("streamers") or d.get("items") or []
+            for s in items:
+                cat = (s.get("game_name") or "").strip().lower()
+                if cat in SLOT_CATEGORY_LABELS:
+                    category_stream_count += 1
             rows = await extract_now_playing(db, items, platform=p)
             # merge into all_rows
             for r in rows:
@@ -1252,6 +1272,7 @@ async def public_streamers_now_playing():
     return {
         "slots": all_rows,
         "total_streams_matched": sum(r["count"] for r in all_rows),
+        "slot_category_streams_count": category_stream_count,
         "as_of": datetime.now(timezone.utc).isoformat(),
     }
 
