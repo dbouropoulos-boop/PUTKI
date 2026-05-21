@@ -406,11 +406,20 @@ async def rss_tick(db) -> Dict[str, Any]:
     layer 2 dial/signal-engine pipeline.
     """
     from news_classifier import classify_item, relevance_threshold, archive_min  # local import to avoid cycles
+    from news_watch import rejected_urls as _killed_urls  # iter51 editorial veto
 
     matched_articles: List[Dict[str, Any]] = []
     ticker_buffer: List[Dict[str, Any]] = []
     archive_buffer: List[Dict[str, Any]] = []
     seen_urls: set = set()
+
+    # iter51: pull the editorial veto list ONCE per tick. URLs in here
+    # were killed via /back-office/news-watch; the deterministic
+    # classifier would otherwise auto-resurface them on every poll.
+    try:
+        killed = set(await _killed_urls(db))
+    except Exception:
+        killed = set()
 
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS,
                                  headers={"User-Agent": REDDIT_USER_AGENT}) as http:
@@ -439,6 +448,9 @@ async def rss_tick(db) -> Dict[str, Any]:
                 if not url or url in seen_urls:
                     continue
                 seen_urls.add(url)
+                # iter51: never re-ingest a URL the editor permanently killed.
+                if url in killed:
+                    continue
                 title_l = (it.get("title") or "").lower()
 
                 # Classify everything — feed.category is a hint, classifier

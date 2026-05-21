@@ -2,6 +2,19 @@
 
 ## Phase History (latest first)
 
+- **Bootstrap extraction + Mestari editor split + news-metric fix** (2026-05-20, iter50 — 100% backend (33 passed, 1 skipped) + 100% frontend, 0 regressions)
+  - **`bootstrap/` package** — server.py's iter48 inline startup block (seeds + indexes + worker spawn) was extracted into a 3-file package:
+    - `bootstrap/__init__.py` exports `run_startup(db, *, layer2_on_tick, signal_dial_worker)`.
+    - `bootstrap/seeds.py` defines `run_all_seeds_and_indexes(db)` — every seed_* + ensure_indexes call wrapped in a `_safe(label, coro)` helper that logs failures without propagating. Structured logger output (e.g. `bootstrap.seeds: seed_editorial_subjects ok: {...}`) replaces the ad-hoc try/except blocks. 8 seeds + 11 ensure_indexes calls owned in one auditable list.
+    - `bootstrap/workers.py` defines `spawn_background_workers(db, ...)` — every `asyncio.create_task` for long-lived coroutines (signal-dial / feed / yt-lease / layer2 / discovery / scheduler / variant-filler / dispatch) plus the env-killswitch matrix preserved verbatim from server.py.
+    - `server.py:startup_event` is now a 6-line delegation that binds the `ContentGenerator` then calls `run_startup(db, ...)`. No more orphan-indent failure mode possible.
+  - **Extended ast-guard** — `tests/test_iter48_startup_workers.py` now contains 6 tests instead of 2: (a) startup_event is top-level + decorated, (b) startup_event delegates to `run_startup`, (c) bootstrap call names don't leak into `admin_voita_import_odds` (legacy regression check), (d) `run_startup` calls both `run_all_seeds_and_indexes` AND `spawn_background_workers`, (e) `bootstrap/seeds.py` owns all 19 seed/index calls, (f) `bootstrap/workers.py` owns all 8 worker spawns. Forces any future bootstrap work to land in the canonical module.
+  - **`BackOfficeMestariCopy.jsx` split** — page reduced 635 → 188 LOC. Section renderers moved into two sibling files under `/components/back-office/`:
+    - `mestariCopySectionsTop.jsx` (237 LOC) — HeaderHero + MethodStack (Cred + Method + Stack + Steps).
+    - `mestariCopySectionsBottom.jsx` (279 LOC) — ClarityTeam + FaqFinalFooter (FAQ + Final + Trust + Footer).
+    - Each section owns its own inline setters (closures over `setForm`) rather than threading 17 callbacks through props. All `mec-section-*` and `mec-*-{index}` data-testids preserved.
+  - **`news_articles_today` metric fix** — the public live-stats counter was reading `news_signals.matched_count` (the legacy gambling-keyword regex tally) instead of `news_ticker_items` (the modern classifier-surfaced count). Always read 0 even though the ticker had 170 fresh items in 24h. `public_stats.py` now counts distinct items from `news_ticker_items` with `captured_at >= last_24h`. Live read: `news_articles_today: 170` (was 0). `layer2_workers.rss_tick` also now persists `ticker_count` + `archive_count` on the `news_signals` doc for ops/analytics visibility.
+
 - **Back-office UX cleanup + extended startup guard + /striimaajat live wiring** (2026-05-20, iter49 — 100% backend (29 passed, 1 skipped) + 100% frontend, 0 regressions)
   - **`/back-office` reorganised** — the flat 21-link ribbon ("complicated and busy") is replaced with `<BackOfficeIndex>`: three grouped sections rendered as accent-bordered tile grids. Eyebrow + group title + auto-fit `minmax(260px, 1fr)` grid per section. Every tile shows label + 1-line description (the page no longer requires admins to recognise URLs by memory).
     - **Content** (blue · `#5B8DEE`, COPY · DRAFTS · DISPATCH): 9 tiles — mittari/mestari/mestari-diag/voita-quiz/voyager/email-templates/queue/dispatch-preview/research.

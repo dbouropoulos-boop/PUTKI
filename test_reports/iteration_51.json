@@ -1,0 +1,33 @@
+{
+  "summary": "iter51 News-watch editorial board — backend 10/10 PASS, frontend e2e flow fully verified. All regressions green.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter51_news_watch.py",
+    "/app/test_reports/pytest/iter51_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "news_watch.py:list_items — `before` filter sets `q['captured_at']['$lt'] = before` but if source/category/min_relevance not used, `q.setdefault('captured_at', {})` is fine. However, captured_at is stored as ISO string (per the codebase) so lexicographic `$lt` works only for canonical UTC isoformat strings — worth a code comment for future maintainers.",
+    "news_watch.py:stats — `ticker_24h`/`archive_24h` use string comparison on captured_at (ISO). Functional only if all writers use timezone-aware UTC isoformat. Currently consistent; a TTL/index sanity test in test_iter51 could lock this in.",
+    "news_watch.py:kill — reason is truncated to 200 chars (`.strip()[:200] or None`). Document this in the API spec / admin UI so editors aren't surprised by silent truncation.",
+    "BackOfficeNewsWatch.jsx — the `act()` function does not surface non-2xx error toasts when the body has no `detail` field; falls back to status code only. Consider catching `network error` too (currently silently sets busyUrl back to null on throw).",
+    "BackOfficeNewsWatch.jsx — KILL uses `window.confirm` (native dialog). Functional but inconsistent with the rest of the back-office which uses inline confirm UI. Low priority.",
+    "BackOfficeNewsWatch.jsx — minRelevance is sent as string via URLSearchParams which the backend coerces to int. Fine, but the input has no upper-bound validation client-side (backend accepts any int)."
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (10/10 iter51 + 33 regression passed, 1 expected skip)",
+    "frontend": "100% (auth, tabs, stats, filters, promote/demote round-trip, kill/unkill round-trip, index tile all verified)"
+  },
+  "test_credentials": "X-Admin-Token: putki-hq-admin (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "None. Live MongoDB used. Promoted+demoted one archive item (clean round-trip, state restored). Killed+unkilled one archive item (clean round-trip).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "iter51 fully verified. Backend tests at /app/backend/tests/test_iter51_news_watch.py (10/10). Frontend route: /back-office/news-watch with tabs archive|ticker|rejected. Stats observed: ticker_total=577 (+232/24h), archive_total=554 (+192/24h), rejected_total=0. Toast verified for promote+unkill. Optimistic row removal works. Back-office index tile [data-testid=back-office-link-news-watch] present in Content group with exact spec description. RSS skip behavior was code-reviewed only (per spec). Mocked: Resend email dispatch only.",
+  "rca_of_the_issue": "n/a — pure feature addition"
+}

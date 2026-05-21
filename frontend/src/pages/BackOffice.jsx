@@ -278,6 +278,7 @@ const INDEX_GROUPS = [
       { to: '/back-office/voita-quiz',                testid: 'back-office-link-voita-quiz',            label: 'Voita hero + quiz',      desc: 'Banner + 5-question lesson set + profiles.' },
       { to: '/back-office/voyager',                   testid: 'back-office-link-voyager',               label: 'Voyager rotation',       desc: '/game weekly partner + prize variance.' },
       { to: '/back-office/email-templates',           testid: 'back-office-link-email-templates',       label: 'Email + TG templates',   desc: '20 templates — Voita / Mestari / Telegram welcome.' },
+      { to: '/back-office/news-watch',                testid: 'back-office-link-news-watch',            label: 'News-watch',             desc: 'Promote · demote · kill — editor veto over the classifier.' },
       { to: '/back-office/queue',                     testid: 'back-office-link-queue',                 label: 'Editorial queue',        desc: 'Auto-generated drafts awaiting your green light.' },
       { to: '/back-office/dispatch-preview',          testid: 'back-office-link-dispatch-preview',      label: 'Dispatch preview',       desc: 'Dry-run the daily digest before send.' },
       { to: '/back-office/foundational-research',     testid: 'back-office-link-research',              label: 'Research',               desc: 'Foundational dataset · 305 subjects.' },

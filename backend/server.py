@@ -3649,6 +3649,102 @@ async def admin_voita_import_odds(raffle_id: str, _: bool = Depends(require_admi
     return {"ok": True, "match_meta": meta}
 
 
+# ── News-watch editorial board (iter51) ───────────────────────────────
+#
+# Editor's one-click veto over the deterministic news classifier. The
+# classifier auto-splits each ingested RSS item between the public
+# ticker (relevance ≥ 45), the editor-promotable archive (20–44), and
+# the silent-drop bin (< 20). These endpoints let an editor promote,
+# demote, or permanently kill any item. Killed URLs are stored in
+# `news_rejected_urls` and skipped on every subsequent RSS tick.
+
+@api_router.get("/admin/news-watch/feed")
+async def admin_news_watch_feed(
+    coll: str = "archive",
+    limit: int = 50,
+    before: Optional[str] = None,
+    source: Optional[str] = None,
+    category: Optional[str] = None,
+    min_relevance: Optional[int] = None,
+    _: bool = Depends(require_admin),
+):
+    """List items from either the public ticker (`coll=ticker`) or the
+    archive (`coll=archive`, default), newest first. Supports `before`
+    cursor + per-source + per-category + min_relevance filters."""
+    from news_watch import list_items, TICKER_COLL, ARCHIVE_COLL
+    target = TICKER_COLL if coll == "ticker" else ARCHIVE_COLL
+    items = await list_items(
+        db, target,
+        limit=limit, before=before, source=source,
+        category=category, min_relevance=min_relevance,
+    )
+    return {"coll": coll, "items": items, "count": len(items)}
+
+
+@api_router.get("/admin/news-watch/stats")
+async def admin_news_watch_stats(_: bool = Depends(require_admin)):
+    from news_watch import stats
+    return await stats(db)
+
+
+@api_router.get("/admin/news-watch/rejected")
+async def admin_news_watch_rejected(limit: int = 100, _: bool = Depends(require_admin)):
+    from news_watch import list_rejected
+    items = await list_rejected(db, limit=limit)
+    return {"items": items, "count": len(items)}
+
+
+@api_router.post("/admin/news-watch/promote")
+async def admin_news_watch_promote(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+    """Move an item from news_ticker_archive → news_ticker_items."""
+    url = (payload.get("url") or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url required")
+    from news_watch import promote
+    item = await promote(db, url)
+    if not item:
+        raise HTTPException(status_code=404, detail="not in archive")
+    return {"ok": True, "promoted": item}
+
+
+@api_router.post("/admin/news-watch/demote")
+async def admin_news_watch_demote(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+    """Move an item from news_ticker_items → news_ticker_archive."""
+    url = (payload.get("url") or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url required")
+    from news_watch import demote
+    item = await demote(db, url)
+    if not item:
+        raise HTTPException(status_code=404, detail="not in ticker")
+    return {"ok": True, "demoted": item}
+
+
+@api_router.post("/admin/news-watch/kill")
+async def admin_news_watch_kill(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+    """Permanently reject a URL. Idempotent — safe to retry. The next
+    RSS tick will skip this URL even if the deterministic classifier
+    would otherwise re-surface it."""
+    url = (payload.get("url") or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url required")
+    reason = (payload.get("reason") or "").strip()[:200] or None
+    from news_watch import kill
+    return {"ok": True, **(await kill(db, url, reason=reason))}
+
+
+@api_router.post("/admin/news-watch/unkill")
+async def admin_news_watch_unkill(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+    """Remove a URL from the rejection list (the next RSS tick may
+    re-ingest it via the deterministic classifier)."""
+    url = (payload.get("url") or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url required")
+    from news_watch import unkill
+    removed = await unkill(db, url)
+    return {"ok": True, "removed": removed}
+
+
 @app.on_event("startup")
 async def startup_event():
     """Startup hook — delegates to the `bootstrap` package.

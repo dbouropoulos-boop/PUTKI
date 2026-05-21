@@ -38,6 +38,7 @@ import BackOfficeMestariCopy from "@/pages/BackOfficeMestariCopy";
 import BackOfficeVoyagerRotation from "@/pages/BackOfficeVoyagerRotation";
 import BackOfficePlaybook from "@/pages/BackOfficePlaybook";
 import BackOfficeLeads from "@/pages/BackOfficeLeads";
+import BackOfficeNewsWatch from "@/pages/BackOfficeNewsWatch";
 import BackOfficeEmailTemplates from "@/pages/BackOfficeEmailTemplates";
 import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosticsCopy";
 import Mittari from "@/pages/Mittari";
@@ -100,6 +101,7 @@ function App() {
           <Route path="/back-office/voyager" element={<BackOfficeVoyagerRotation />} />
           <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
           <Route path="/back-office/leads" element={<BackOfficeLeads />} />
+          <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/email-templates" element={<BackOfficeEmailTemplates />} />
           <Route path="/back-office/mestari-diagnostics-copy" element={<BackOfficeMestariDiagnosticsCopy />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
