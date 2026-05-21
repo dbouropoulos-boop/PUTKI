@@ -2,6 +2,15 @@
 
 ## Phase History (latest first)
 
+- **News-watch editorial board** (2026-05-20, iter51 — 100% backend (10/10 new + 43/43 regression) + 100% frontend, retest_needed=false)
+  - **Editor veto over the deterministic classifier**: the classifier already auto-splits each ingested RSS item between `news_ticker_items` (relevance ≥45, public ticker), `news_ticker_archive` (20–44, held back), and silent-drop (<20). Iter51 adds a 4-action state machine on top: **promote** (archive → ticker), **demote** (ticker → archive), **kill** (permanent — recorded in `news_rejected_urls` + removed from both ticker and archive), **unkill** (allow re-ingestion).
+  - **`/app/backend/news_watch.py`** — pure logic module: `list_items`, `stats`, `promote`, `demote`, `kill` (idempotent, accepts optional `reason` ≤200 chars), `unkill`, `rejected_urls`, `list_rejected`, `ensure_indexes`. Uses url as the unique key. New `news_rejected_urls` collection with `url` unique-index + `rejected_at` index.
+  - **`layer2_workers.rss_tick`** now pulls the rejection list once per tick and skips matching URLs *before* classification — so the classifier won't auto-resurface what the editor permanently killed.
+  - **7 new admin endpoints**: `GET /api/admin/news-watch/{feed,stats,rejected}` + `POST /api/admin/news-watch/{promote,demote,kill,unkill}`. All require `X-Admin-Token`. Feed endpoint supports `coll=archive|ticker`, `limit`, `before` cursor, `source`, `category`, `min_relevance` filters.
+  - **Frontend `/back-office/news-watch`** — three-tab board (Archive promotable · Live ticker · Killed) with per-row PROMOTE/DEMOTE/KILL buttons. Filters: source, category, min relevance. Stats cards show ticker/archive/killed totals + 24h deltas. Optimistic UI on action — row disappears from current view immediately, toast confirms outcome. KILL is guarded by `window.confirm`. Tile added to back-office Content group with `data-testid=back-office-link-news-watch`.
+  - **Tests**: `tests/test_iter51_news_watch.py` covers stats shape, admin enforcement, feed filtering, the promote→demote round-trip, kill→unkill round-trip + idempotence, and validation (400/422 on missing URL).
+  - **Live read post-fix**: 577 items on the public ticker, 555 in the editor-promotable archive, 0 killed. Per-tick stats now also persist `ticker_count` + `archive_count` on each `news_signals` doc (iter50 carryover).
+
 - **Bootstrap extraction + Mestari editor split + news-metric fix** (2026-05-20, iter50 — 100% backend (33 passed, 1 skipped) + 100% frontend, 0 regressions)
   - **`bootstrap/` package** — server.py's iter48 inline startup block (seeds + indexes + worker spawn) was extracted into a 3-file package:
     - `bootstrap/__init__.py` exports `run_startup(db, *, layer2_on_tick, signal_dial_worker)`.
