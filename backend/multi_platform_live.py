@@ -97,7 +97,14 @@ async def _fetch_kick_channel(login: str) -> Optional[Dict[str, Any]]:
 
 async def fetch_kick_live(db) -> Dict[str, Any]:
     """Iterate the streamer registry's Kick channels and return only those
-    currently live. Caches per `CACHE_TTL`."""
+    currently live. Caches per `CACHE_TTL`.
+
+    iter52: now delegates to `kick_official.fetch_live` which uses Kick's
+    OAuth-gated public API (`api.kick.com/public/v1/...`). The legacy
+    `kick.com/api/v2/channels/{login}` scraping path is dead — it sat
+    behind Cloudflare bot-protection and returned 403 on every server-
+    side request. Real auth, real results, real dormant on real failure.
+    """
     if not _expired("kick"):
         return _cache["kick"]["payload"]
 
@@ -111,37 +118,17 @@ async def fetch_kick_live(db) -> Dict[str, Any]:
         except Exception:
             streamers = []
 
-        logins = [
-            (s.get("channel") or s.get("slug") or "").lower()
+        # Build slug list — prefer `channel` over `slug` so registry
+        # entries that override (`channel="natu"` vs slug="natu-fi") work.
+        slugs = [
+            (s.get("channel") or s.get("slug") or "").strip().lstrip("@").lower()
             for s in streamers
             if (s.get("platform") or "").lower() == "kick"
             and (s.get("channel") or s.get("slug"))
         ]
 
-        if not logins:
-            payload = {"streamers": [], "platform": "kick", "count": 0,
-                       "dormant": False, "reason": "no_kick_streamers_in_registry",
-                       "fetched_at": _now()}
-            _store("kick", payload)
-            return payload
-
-        results = await asyncio.gather(
-            *[_fetch_kick_channel(login) for login in logins],
-            return_exceptions=True,
-        )
-        # If all probes came back as "blocked", surface that as dormant so
-        # the UI can show an honest "Kick API unavailable" message instead
-        # of a silently empty grid.
-        all_blocked = bool(results) and all(r == "blocked" for r in results)
-        live = [r for r in results if isinstance(r, dict)]
-        live.sort(key=lambda r: -(r.get("viewer_count") or 0))
-        if all_blocked and not live:
-            payload = {"streamers": [], "platform": "kick", "count": 0,
-                       "dormant": True, "reason": "kick_api_blocked",
-                       "fetched_at": _now()}
-        else:
-            payload = {"streamers": live, "platform": "kick", "count": len(live),
-                       "dormant": False, "fetched_at": _now()}
+        from kick_official import fetch_live as _kick_live
+        payload = await _kick_live(db, slugs)
         _store("kick", payload)
         return payload
 

@@ -77,6 +77,12 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
       ? 'Tomorrow 09:00 we drop the next five. Subscribe and you\u2019ll get the first one the moment the market opens it up.'
       : 'Huomenna klo 09:00 pudotamme seuraavat viisi. Tilaa ja saat ensimmäisen heti kun markkina avautuu.'),
     revealTeaser: sc.reveal_teaser || (isEn ? '⌥ Tap → Signal 01 unlocks instantly' : '⌥ Napsauta → Signaali 01 avautuu heti'),
+    // iter52: copy shown when the user has unlocked but today's real
+    // pick hasn't dropped yet (placeholder row). Replaces the
+    // confusing "still-blurred-after-unlock" state.
+    pendingPickLine: sc.pending_pick_line || (isEn
+      ? 'Today\u2019s pick · dropping 09:00 — first to Telegram, then email'
+      : 'Päivän poiminta · pudotus klo 09:00 — ensin Telegramiin, sitten s\u00e4hk\u00f6postiin'),
     confidenceLabel: sc.confidence_label || 'Sharpness',
     impliedLabel: sc.implied_label || (isEn ? 'implied prob.' : 'todennäköisyys'),
     impliedInline: sc.implied_inline || (isEn ? 'implied' : 'todenn.'),
@@ -216,9 +222,12 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
             : (s.side === 'draw'
                 ? `${s.home} – ${s.away} · ${t.drawLabel} @ ${s.odds.toFixed(2)}`
                 : `${s.pickTeam} · ${t.vsLabel} ${s.side === 'home' ? s.away : s.home} @ ${s.odds.toFixed(2)}`);
-          // First row unlocks instantly on parent reveal; rows 2-5 require
-          // bot confirmation (subsequent server-side flow).
-          const rowUnlocked = unlocked && s.isFirst && !s.isPlaceholder;
+          // iter52: when the user has unlocked but today's pick is still
+          // a preview placeholder, swap the blurred text for an honest
+          // "dropping at 09:00 → Telegram first" line. Keeps the unlock
+          // event meaningful instead of looking broken.
+          const showPendingCopy = unlocked && s.isFirst && s.isPlaceholder;
+          const rowUnlocked = unlocked && s.isFirst;
           const everUnlocked = unlocked;
           const rowPadding = compact ? '14px 16px' : '22px 24px';
           const rowCols = compact
@@ -250,7 +259,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
                   userSelect: rowUnlocked ? 'auto' : 'none',
                   transition: 'filter 320ms ease',
                   overflowWrap: 'anywhere',
-                }}>{pickText}</div>
+                }}>{showPendingCopy ? t.pendingPickLine : pickText}</div>
                 <div style={{
                   fontFamily: 'ui-monospace, monospace', fontSize: compact ? 9 : 10,
                   letterSpacing: '0.05em', color: 'var(--muted)',
