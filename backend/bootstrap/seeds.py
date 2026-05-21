@@ -73,6 +73,8 @@ async def run_all_seeds_and_indexes(db) -> None:
     from slot_registry import ensure_indexes as reg_ensure, seed_default_registry
 
     await _safe("streamer_alerts.ensure_indexes", alerts_ensure_indexes(db))
+    from alert_sessions import ensure_indexes as alert_sessions_ensure
+    await _safe("alert_sessions.ensure_indexes", alert_sessions_ensure(db))
     await _safe("og_image_fetcher.ensure_indexes", og_ensure_indexes(db))
     await _safe("streamer_snapshots.ensure_indexes", snap_ensure(db))
     await _safe("streamer_meta_drafter.ensure_indexes", drafter_ensure(db))

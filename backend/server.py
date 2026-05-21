@@ -1567,6 +1567,105 @@ async def public_streamer_alert(payload: StreamerAlertIn):
     return result
 
 
+# ── Bell-icon alert manager: 6-digit code auth ───────────────────────
+#
+# Flow:
+#   1. POST /api/alerts/streamer/request-code  {email}
+#       → generates a 6-digit code, queues email via Resend (or
+#         email_outbox when no key). Returns {status, expires_at}.
+#   2. POST /api/alerts/streamer/verify-code   {email, code}
+#       → returns {token, expires_at} on success. Session lasts 30 days.
+#   3. GET    /api/alerts/streamer/subscriptions   (Bearer token)
+#       → list every streamer_alerts row for this email.
+#   4. DELETE /api/alerts/streamer/subscriptions/{sub_id}  (Bearer token)
+#       → remove one subscription.
+#   5. POST   /api/alerts/streamer/logout         (Bearer token)
+#       → revoke the session token.
+# (admin) GET /api/admin/alerts/preview-codes
+#       → see codes queued for delivery (preview hatch until Resend lands).
+
+class _CodeRequestIn(BaseModel):
+    email: str
+
+
+class _CodeVerifyIn(BaseModel):
+    email: str
+    code: str
+
+
+def _bearer_token(authorization: Optional[str]) -> Optional[str]:
+    if not authorization:
+        return None
+    parts = authorization.split(None, 1)
+    if len(parts) == 2 and parts[0].lower() == "bearer":
+        return parts[1].strip() or None
+    return None
+
+
+@api_router.post("/alerts/streamer/request-code")
+async def alerts_request_code(payload: _CodeRequestIn):
+    from alert_sessions import request_code
+    result = await request_code(db, payload.email)
+    if result.get("status") == "error":
+        raise HTTPException(status_code=400, detail=result.get("reason"))
+    return result
+
+
+@api_router.post("/alerts/streamer/verify-code")
+async def alerts_verify_code(payload: _CodeVerifyIn):
+    from alert_sessions import verify_code
+    result = await verify_code(db, payload.email, payload.code)
+    if result.get("status") == "error":
+        # 410 for expired so the UI can prompt "request a new code"
+        if result.get("reason") == "code_expired_or_unknown":
+            raise HTTPException(status_code=410, detail=result.get("reason"))
+        raise HTTPException(status_code=400, detail=result.get("reason"))
+    return result
+
+
+@api_router.get("/alerts/streamer/subscriptions")
+async def alerts_list_subscriptions(authorization: Optional[str] = Header(None)):
+    from alert_sessions import resolve_session, list_subscriptions
+    token = _bearer_token(authorization)
+    email = await resolve_session(db, token)
+    if not email:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    subs = await list_subscriptions(db, email)
+    return {"email": email, "items": subs, "count": len(subs)}
+
+
+@api_router.delete("/alerts/streamer/subscriptions/{sub_id}")
+async def alerts_delete_subscription(sub_id: str, authorization: Optional[str] = Header(None)):
+    from alert_sessions import resolve_session, delete_subscription
+    token = _bearer_token(authorization)
+    email = await resolve_session(db, token)
+    if not email:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    removed = await delete_subscription(db, email, sub_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="not_found")
+    return {"ok": True, "id": sub_id}
+
+
+@api_router.post("/alerts/streamer/logout")
+async def alerts_logout(authorization: Optional[str] = Header(None)):
+    from alert_sessions import revoke_session
+    token = _bearer_token(authorization)
+    if token:
+        await revoke_session(db, token)
+    return {"ok": True}
+
+
+@api_router.get("/admin/alerts/preview-codes")
+async def admin_alert_preview_codes(_: bool = Depends(require_admin)):
+    """Preview hatch — see queued login codes until Resend is wired.
+    Returns the latest 20 alert_login_code emails from `email_outbox`
+    with the 6-digit code extracted for easy testing."""
+    from alert_sessions import list_pending_codes
+    items = await list_pending_codes(db)
+    return {"items": items, "count": len(items)}
+
+
 @api_router.get("/data/live-stats")
 async def public_data_live_stats():
     """Homepage ticker — REAL aggregated counters across Layer 2 collections.

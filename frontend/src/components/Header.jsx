@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useLang } from '../context/LanguageContext';
+import { BellAlertManager } from './BellAlertManager';
 
 // Phase 1 (2026-05-19): No nav menu by design. Discovery happens through
 // contextual links inside sections + the temporary PhaseOneDiscoveryRow
@@ -31,6 +32,7 @@ export const Header = () => {
         </Link>
 
         <div className="flex items-center gap-2">
+          <BellAlertManager />
           <button
             onClick={toggleLang}
             aria-label="Toggle language"
