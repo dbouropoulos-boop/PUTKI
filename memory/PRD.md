@@ -2,6 +2,16 @@
 
 ## Phase History (latest first)
 
+- **Mini-game Phase 2 · VoyagerHomeStrip light-mode polish · CSV lead export** (2026-05-22, iter56 — 49/49 tests passing across 6 suites)
+  - **VoyagerHomeStrip light-mode fix** (`VoyagerHomeStrip.jsx`): the "Game of the week" banner rendered as a heavy dark gradient block on top of the cream `--bg` — the "black hole" effect the user flagged in iter53. Wired in `useTheme()`; in light mode the card now uses cream-on-paper surfaces, the brassy gold tint swaps to a deeper editorial amber (`#A0750F`), the V watermark drops to 8% opacity, and the left-right vignette becomes a no-op. Dark mode preserves the original brand gold-on-charcoal aesthetic.
+  - **Mini-game suite Phase 2** — 2 of 4 promised games shipped:
+    - **Scenario (Päätöspolku)** at `/peliareena/paatospolku`: 5 branching gambling-situation prompts, 3 options each (0/1/3 judgement points per option). After every pick the player sees the FULL trade-off analysis of all 3 options. Persona thresholds: ≥12 → "Kärsivällinen taktikko" · 7–11 → "Kasvava arvioija" · 0–6 → "Tuore pelaaja". Server holds option scores; client only sees them on finish.
+    - **Insight Reveal (Tietoraape)** at `/peliareena/tietoraape`: 6-tile scratch-card board, click to reveal each micro-lesson (RTP ≠ TAKUU · PROVISION KIERRE · BONUSEHDOT · AIKAVÄRÄHTELY · BANKROLL-MATEMATIIKKA · VEIKKAUS 2026). No wrong answers — payoff IS the revealed fact. Score = number of tiles revealed.
+    - Both games share the **`ConsentEmailGate` component** + the **`_unlock_for_game` backend helper** so the GDPR-compliant capture + leaderboard logic is DRY across the suite.
+    - Hub auto-promotes both from "Tulossa" to "Aktiivinen" → **3 of 5 games live**.
+  - **CSV lead export**: `GET /api/admin/mini-games/leads.csv?game=…&week=…` returns RFC-4180 CSV with consent metadata columns (`consent_at`, `consent_text_sha`, `privacy_url`) for CRM sync.
+  - **Tests**: `test_iter56_phase2_games.py` (7 tests). Total **49/49 passing** across 6 suites.
+
 - **Mini-game suite Phase 1 · Telegram throttling · Streamer Excel backfill · INTL roster expansion** (2026-05-22, iter55 — 53/53 tests passing across 5 suites)
   - **Educational mini-game suite Phase 1** (Build Brief v2 foundation):
     - `/peliareena` hub page with 5-game catalog (1 active "Tietoisuustesti" + 4 "Tulossa") + live tournament panel (week ISO, days/hours left, plays_this_week, ranked_players, top-5 leaderboard) + honest "Pieni printti" footer.

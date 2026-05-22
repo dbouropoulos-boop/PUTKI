@@ -65,6 +65,8 @@ import { Pelit, PelitBlackjack, PelitPoker, PelitSlotit, PelitCraps, PelitRulett
 import Pulssi from "@/pages/Pulssi";
 import PeliAreenaHub from "@/pages/PeliAreenaHub";
 import PeliAreenaQuiz from "@/pages/PeliAreenaQuiz";
+import PeliAreenaScenario from "@/pages/PeliAreenaScenario";
+import PeliAreenaInsight from "@/pages/PeliAreenaInsight";
 import { Korjaukset, Affiliaatti, Avoimuus, Lehdisto, Paivityslog } from "@/pages/Accountability";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -126,6 +128,8 @@ function App() {
             <Route path="peli/legacy" element={<MiniGame />} />
             <Route path="peliareena" element={<PeliAreenaHub />} />
             <Route path="peliareena/tietoisuustesti" element={<PeliAreenaQuiz />} />
+            <Route path="peliareena/paatospolku" element={<PeliAreenaScenario />} />
+            <Route path="peliareena/tietoraape" element={<PeliAreenaInsight />} />
             <Route path="tietoa-meista" element={<TietoaMeista />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
 

@@ -364,6 +364,35 @@ async def seed_quiz_questions(db) -> None:
         )
 
 
+async def seed_phase2_games(db) -> None:
+    """Iter56: seed Scenario + Insight Reveal content (idempotent)."""
+    from mini_games_phase2 import (
+        SCENARIO_GAME_SLUG, SCENARIO_SEED_FI,
+        INSIGHT_GAME_SLUG, INSIGHT_SEED_FI,
+    )
+    for game_slug, seed in [(SCENARIO_GAME_SLUG, SCENARIO_SEED_FI),
+                             (INSIGHT_GAME_SLUG, INSIGHT_SEED_FI)]:
+        for q in seed:
+            await db.mini_game_questions.update_one(
+                {"slug": game_slug, "order": q["order"]},
+                {"$setOnInsert": {
+                    "id": str(uuid.uuid4()),
+                    "slug": game_slug,
+                    "order": q["order"],
+                    "prompt_fi": q["prompt_fi"],
+                    "options": q["options"],
+                    "correct": q["correct"],
+                    # Scenario questions hold the explanation per OPTION;
+                    # only the insight tiles have a top-level explanation_fi.
+                    "explanation_fi": q.get("explanation_fi", ""),
+                    "topic_tag": q["topic_tag"],
+                    "active": True,
+                    "created_at": _now_iso(),
+                }},
+                upsert=True,
+            )
+
+
 # ─────────────────────────── play flow ───────────────────────────
 
 async def start_quiz(db) -> Dict[str, Any]:
@@ -648,19 +677,19 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "slug": "scenario_decisions",
             "kind": "scenario",
             "title_fi": "Päätöspolku",
-            "subtitle_fi": "Mitä tekisit? Oikeita pelitilanteita, oikeita seurauksia.",
+            "subtitle_fi": "5 oikeaa pelitilannetta — mitä päättäisit?",
             "duration_fi": "≈ 4 min",
-            "status": "coming_soon",
-            "play_url": None,
+            "status": "active",
+            "play_url": "/peliareena/paatospolku",
         },
         {
             "slug": "insight_reveal",
             "kind": "reveal",
             "title_fi": "Tietoraape",
-            "subtitle_fi": "Raaputa ja paljasta mikro-oppi — fakta kerrallaan.",
-            "duration_fi": "≈ 1 min",
-            "status": "coming_soon",
-            "play_url": None,
+            "subtitle_fi": "Raaputa kuusi mikro-oppia — yksi fakta kerrallaan.",
+            "duration_fi": "≈ 2 min",
+            "status": "active",
+            "play_url": "/peliareena/tietoraape",
         },
         {
             "slug": "arcade_snake",
@@ -694,4 +723,358 @@ async def get_hub_payload(db) -> Dict[str, Any]:
         "games": games,
         "consent_text_fi": CONSENT_TEXT_FI,
         "privacy_url": PRIVACY_URL,
+    }
+
+
+
+# ────────────────── Phase 2 — Scenario (branching) ──────────────────
+# Reuses the same `mini_game_plays` + `mini_game_leads` collections as
+# the quiz; `game_slug` discriminates and `score`/`pct` are normalised
+# so leaderboards can be compared on a 0..15 (scenario) basis.
+
+from mini_games_phase2 import (
+    SCENARIO_GAME_SLUG, INSIGHT_GAME_SLUG,
+    persona_for_scenario,
+)
+
+SCENARIO_MAX_SCORE = 15   # 5 scenarios × 3 points each
+INSIGHT_TILE_COUNT = 6    # tiles on the reveal board
+
+
+async def start_scenario(db) -> Dict[str, Any]:
+    cur = db.mini_game_questions.find(
+        {"slug": SCENARIO_GAME_SLUG, "active": True},
+        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "options": 1, "topic_tag": 1},
+    ).sort("order", 1)
+    scenarios = await cur.to_list(length=50)
+    for s in scenarios:
+        s["options"] = [{"key": o["key"], "label_fi": o["label_fi"]} for o in s["options"]]
+
+    anon_id = secrets.token_urlsafe(16)
+    play_id = str(uuid.uuid4())
+    await db.mini_game_plays.insert_one({
+        "id": play_id,
+        "game_slug": SCENARIO_GAME_SLUG,
+        "anon_id": anon_id,
+        "started_at": _now_iso(),
+        "week_iso": _week_iso(),
+        "status": "in_progress",
+    })
+    return {
+        "play_id": play_id,
+        "anon_id": anon_id,
+        "scenarios": scenarios,
+        "total": len(scenarios),
+        "max_score": SCENARIO_MAX_SCORE,
+    }
+
+
+async def finish_scenario(db, *, play_id: str, anon_id: str, answers: List[Dict[str, str]]) -> Dict[str, Any]:
+    play = await db.mini_game_plays.find_one(
+        {"id": play_id, "anon_id": anon_id, "game_slug": SCENARIO_GAME_SLUG},
+        {"_id": 0},
+    )
+    if not play:
+        return {"error": "play_not_found"}
+    if play.get("status") == "finished":
+        return play.get("preview_result") or {"error": "already_finished"}
+
+    cur = db.mini_game_questions.find(
+        {"slug": SCENARIO_GAME_SLUG, "active": True},
+        {"_id": 0, "id": 1, "order": 1, "options": 1, "topic_tag": 1, "correct": 1, "prompt_fi": 1},
+    ).sort("order", 1)
+    scenarios = await cur.to_list(length=50)
+    by_id = {s["id"]: s for s in scenarios}
+
+    scored: List[Dict[str, Any]] = []
+    total_score = 0
+    tag_scores: Dict[str, int] = {}
+    for a in answers or []:
+        sc = by_id.get(a.get("q_id"))
+        if not sc:
+            continue
+        picked = (a.get("picked") or "").lower()
+        opt = next((o for o in sc["options"] if o["key"] == picked), None)
+        pts = int(opt.get("score", 0)) if opt else 0
+        total_score += pts
+        tag_scores[sc["topic_tag"]] = tag_scores.get(sc["topic_tag"], 0) + pts
+        scored.append({
+            "q_id": sc["id"],
+            "order": sc["order"],
+            "prompt_fi": sc["prompt_fi"],
+            "picked": picked,
+            "picked_score": pts,
+            "options_resolved": [
+                {"key": o["key"], "label_fi": o["label_fi"], "score": o.get("score", 0),
+                 "explanation_fi": o.get("explanation_fi", "")}
+                for o in sc["options"]
+            ],
+        })
+
+    total = len(scenarios)
+    pct = (total_score / SCENARIO_MAX_SCORE * 100.0) if SCENARIO_MAX_SCORE else 0.0
+    persona = persona_for_scenario(total_score)
+
+    preview = {
+        "play_id": play_id,
+        "score": total_score,
+        "max_score": SCENARIO_MAX_SCORE,
+        "total": total,
+        "pct": round(pct, 1),
+        "persona_preview": {"key": persona["key"], "title": persona["title"]},
+        "answers": scored,
+        "personalized_locked": True,
+    }
+
+    await db.mini_game_plays.update_one(
+        {"id": play_id},
+        {"$set": {
+            "status": "finished",
+            "finished_at": _now_iso(),
+            "score": total_score,
+            "max_score": SCENARIO_MAX_SCORE,
+            "total": total,
+            "pct": round(pct, 1),
+            "answers": scored,
+            "tag_scores": tag_scores,
+            "persona_key": persona["key"],
+            "preview_result": preview,
+        }},
+    )
+    return preview
+
+
+async def unlock_scenario_result(db, *, play_id, anon_id, email, name=None, consent=False, ip=None):
+    return await _unlock_for_game(
+        db, game_slug=SCENARIO_GAME_SLUG,
+        play_id=play_id, anon_id=anon_id, email=email, name=name,
+        consent=consent, ip=ip,
+        persona_resolver=lambda play: {
+            "key": play.get("persona_key", "fresh_player"),
+            "title": persona_for_scenario(int(play.get("score") or 0))["title"],
+            "tagline": persona_for_scenario(int(play.get("score") or 0))["tagline"],
+        },
+    )
+
+
+# ────────────────── Phase 2 — Insight Reveal ──────────────────
+
+async def start_insight(db) -> Dict[str, Any]:
+    cur = db.mini_game_questions.find(
+        {"slug": INSIGHT_GAME_SLUG, "active": True},
+        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "topic_tag": 1},
+    ).sort("order", 1)
+    tiles = await cur.to_list(length=20)
+
+    anon_id = secrets.token_urlsafe(16)
+    play_id = str(uuid.uuid4())
+    await db.mini_game_plays.insert_one({
+        "id": play_id,
+        "game_slug": INSIGHT_GAME_SLUG,
+        "anon_id": anon_id,
+        "started_at": _now_iso(),
+        "week_iso": _week_iso(),
+        "status": "in_progress",
+        "tiles_revealed": [],
+    })
+    return {
+        "play_id": play_id,
+        "anon_id": anon_id,
+        "tiles": tiles,
+        "tile_count": len(tiles),
+    }
+
+
+async def reveal_insight_tile(db, *, play_id, anon_id, q_id) -> Dict[str, Any]:
+    play = await db.mini_game_plays.find_one(
+        {"id": play_id, "anon_id": anon_id, "game_slug": INSIGHT_GAME_SLUG},
+        {"_id": 0},
+    )
+    if not play:
+        return {"error": "play_not_found"}
+    tile = await db.mini_game_questions.find_one(
+        {"id": q_id, "slug": INSIGHT_GAME_SLUG, "active": True},
+        {"_id": 0, "id": 1, "prompt_fi": 1, "explanation_fi": 1, "topic_tag": 1},
+    )
+    if not tile:
+        return {"error": "tile_not_found"}
+
+    revealed = list(play.get("tiles_revealed") or [])
+    if q_id not in revealed:
+        revealed.append(q_id)
+        await db.mini_game_plays.update_one(
+            {"id": play_id},
+            {"$set": {"tiles_revealed": revealed, "score": len(revealed)}},
+        )
+    return {"tile": tile, "revealed_count": len(revealed)}
+
+
+async def finish_insight(db, *, play_id, anon_id) -> Dict[str, Any]:
+    play = await db.mini_game_plays.find_one(
+        {"id": play_id, "anon_id": anon_id, "game_slug": INSIGHT_GAME_SLUG},
+        {"_id": 0},
+    )
+    if not play:
+        return {"error": "play_not_found"}
+    if play.get("status") == "finished":
+        return play.get("preview_result") or {"error": "already_finished"}
+
+    revealed_ids = list(play.get("tiles_revealed") or [])
+    score = len(revealed_ids)
+    pct = (score / INSIGHT_TILE_COUNT * 100.0) if INSIGHT_TILE_COUNT else 0.0
+
+    revealed_tiles: List[Dict[str, Any]] = []
+    if revealed_ids:
+        cur = db.mini_game_questions.find(
+            {"id": {"$in": revealed_ids}, "slug": INSIGHT_GAME_SLUG},
+            {"_id": 0, "id": 1, "prompt_fi": 1, "explanation_fi": 1, "topic_tag": 1, "order": 1},
+        )
+        revealed_tiles = await cur.to_list(length=20)
+        revealed_tiles.sort(key=lambda t: t.get("order") or 99)
+
+    persona_title = "Tutkiva oppija" if score >= 4 else "Aloitteleva uteliainen"
+    persona_tagline = (
+        "Avaat tietoa tasaiseen tahtiin — oppimismoduuli on selvästi päällä."
+        if score >= 4 else
+        "Pieni alku — kannattaa palata viikolla tutkimaan loput tiilet."
+    )
+
+    preview = {
+        "play_id": play_id,
+        "score": score,
+        "max_score": INSIGHT_TILE_COUNT,
+        "pct": round(pct, 1),
+        "persona_preview": {"key": "explorer", "title": persona_title},
+        "revealed_tiles": revealed_tiles,
+        "personalized_locked": True,
+    }
+
+    await db.mini_game_plays.update_one(
+        {"id": play_id},
+        {"$set": {
+            "status": "finished",
+            "finished_at": _now_iso(),
+            "score": score,
+            "max_score": INSIGHT_TILE_COUNT,
+            "pct": round(pct, 1),
+            "persona_key": "explorer",
+            "persona_title": persona_title,
+            "persona_tagline": persona_tagline,
+            "revealed_tiles": revealed_tiles,
+            "preview_result": preview,
+        }},
+    )
+    return preview
+
+
+async def unlock_insight_result(db, *, play_id, anon_id, email, name=None, consent=False, ip=None):
+    return await _unlock_for_game(
+        db, game_slug=INSIGHT_GAME_SLUG,
+        play_id=play_id, anon_id=anon_id, email=email, name=name,
+        consent=consent, ip=ip,
+        persona_resolver=lambda play: {
+            "key": "explorer",
+            "title": play.get("persona_title", "Tutkiva oppija"),
+            "tagline": play.get("persona_tagline", ""),
+        },
+    )
+
+
+# ────────────────── Phase 2 shared unlock helper ──────────────────
+
+async def _unlock_for_game(
+    db, *, game_slug,
+    play_id, anon_id, email, name, consent, ip,
+    persona_resolver,
+) -> Dict[str, Any]:
+    """Shared email-gate unlock for Phase 2 games. Same GDPR contract +
+    leaderboard model as the quiz; per-game persona via callback."""
+    email = (email or "").strip().lower()
+    if not email or "@" not in email or "." not in email:
+        return {"error": "invalid_email"}
+    if not consent:
+        return {"error": "consent_required"}
+
+    play = await db.mini_game_plays.find_one(
+        {"id": play_id, "anon_id": anon_id, "game_slug": game_slug},
+        {"_id": 0},
+    )
+    if not play or play.get("status") != "finished":
+        return {"error": "play_not_finished"}
+
+    week = play.get("week_iso") or _week_iso()
+    score = int(play.get("score") or 0)
+    pct = float(play.get("pct") or 0)
+    persona = persona_resolver(play)
+
+    eh = _email_hash(email)
+    consent_at = _now_iso()
+    existing = await db.mini_game_leads.find_one(
+        {"email_hash": eh, "source_game": game_slug, "tournament_week_iso": week},
+        {"_id": 0, "id": 1, "score": 1},
+    )
+    if existing:
+        lead_id = existing["id"]
+        if score > int(existing.get("score") or 0):
+            await db.mini_game_leads.update_one(
+                {"id": lead_id},
+                {"$set": {"score": score, "pct": pct, "play_id": play_id}},
+            )
+    else:
+        lead_id = str(uuid.uuid4())
+        await db.mini_game_leads.insert_one({
+            "id": lead_id,
+            "email_hash": eh,
+            "email": email,
+            "name": name or "",
+            "source_game": game_slug,
+            "score": score,
+            "pct": pct,
+            "tournament_week_iso": week,
+            "consent_at": consent_at,
+            "consent_text_sha": _consent_text_sha(),
+            "privacy_url": PRIVACY_URL,
+            "locale": "fi",
+            "ip_hash": hashlib.sha256((ip or "").encode()).hexdigest()[:16] if ip else None,
+            "play_id": play_id,
+        })
+
+    await db.mini_game_plays.update_one(
+        {"id": play_id},
+        {"$set": {"lead_id": lead_id, "lead_captured_at": consent_at}},
+    )
+
+    cur = db.mini_game_leads.find(
+        {"source_game": game_slug, "tournament_week_iso": week},
+        {"_id": 0, "name": 1, "email": 1, "score": 1, "pct": 1, "consent_at": 1},
+    ).sort([("score", -1), ("pct", -1), ("consent_at", 1)]).limit(10)
+    rows = await cur.to_list(length=10)
+    leaderboard = []
+    for i, r in enumerate(rows, start=1):
+        display = (r.get("name") or "").strip()
+        if not display:
+            local = (r.get("email") or "").split("@")[0]
+            display = (local[:3] + "•••" + local[-1:]) if len(local) > 4 else (local or "pelaaja")
+        leaderboard.append({"rank": i, "display_name": display,
+                            "score": int(r.get("score") or 0),
+                            "pct": float(r.get("pct") or 0)})
+
+    better = await db.mini_game_leads.count_documents({
+        "source_game": game_slug,
+        "tournament_week_iso": week,
+        "$or": [{"score": {"$gt": score}}, {"score": score, "pct": {"$gt": pct}}],
+    })
+    rank = better + 1
+
+    return {
+        "play_id": play_id,
+        "lead_id": lead_id,
+        "score": score,
+        "max_score": int(play.get("max_score") or 0),
+        "pct": pct,
+        "persona": persona,
+        "tournament_week_iso": week,
+        "rank": rank,
+        "leaderboard": leaderboard,
+        "share_text": f"Pelasin Putki HQ:n pelin ja sain {score}/{int(play.get('max_score') or 0)}. Kokeile sinäkin!",
     }

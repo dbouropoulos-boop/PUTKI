@@ -20,6 +20,8 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const VoyagerHomeStrip = () => {
   const { lang } = useLang();
+  const { theme } = useTheme();
+  const isLight = theme === 'light';
   const [week, setWeek] = useState(null);
 
   useEffect(() => {
@@ -62,7 +64,12 @@ const VoyagerHomeStrip = () => {
   const prizeMax = week.prize?.max;
   const prizeLabel = lang === 'en' ? week.prize?.label_en : week.prize?.label_fi;
   const weekLabel = lang === 'en' ? week.week_label_en : week.week_label_fi;
-  const gold = '#D4B445';
+  // Light mode swaps the brassy gold for a more editorial deep-amber that
+  // reads correctly against cream. Dark mode keeps the original brand gold.
+  const gold = isLight ? '#A0750F' : '#D4B445';
+  const headlineColor = isLight ? 'var(--ink)' : '#F5F3EE';
+  const ctaColor = isLight ? 'var(--ink)' : '#FFFFFF';
+  const verdictColor = isLight ? 'var(--ink)' : 'var(--ink, #ECE6D8)';
 
   return (
     <section
@@ -101,15 +108,22 @@ const VoyagerHomeStrip = () => {
         style={{
           display: 'block', position: 'relative',
           padding: '28px 26px 24px',
-          background: 'var(--surface, #141210)',
+          background: isLight ? 'var(--surface)' : 'var(--surface, #141210)',
           textDecoration: 'none', color: 'inherit',
           overflow: 'hidden', isolation: 'isolate',
+          border: isLight ? '1px solid var(--border)' : 'none',
+          borderRadius: isLight ? 6 : 0,
         }}
       >
-        {/* Designed background — restrained editorial gradient + slot reel hint */}
+        {/* Designed background. Light mode: cream-on-paper with a soft amber
+            spotlight + a subtle topographic texture (no heavy gradient).
+            Dark mode: the original brass-on-charcoal editorial gradient. */}
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 0,
-          background: `
+          background: isLight ? `
+            radial-gradient(circle at 85% 30%, rgba(160,117,15,0.14) 0%, rgba(160,117,15,0) 50%),
+            linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%)`
+            : `
             radial-gradient(circle at 85% 30%, rgba(212,180,69,0.18) 0%, rgba(212,180,69,0) 55%),
             linear-gradient(135deg, #14110d 0%, #1a1612 100%)`,
           opacity: 0.92,
@@ -118,12 +132,14 @@ const VoyagerHomeStrip = () => {
           position: 'absolute', right: '-1%', bottom: '-22%',
           fontFamily: 'Georgia, serif', fontWeight: 900,
           fontSize: 240, lineHeight: 1, letterSpacing: '-0.06em',
-          color: 'rgba(212,180,69,0.10)',
+          color: isLight ? 'rgba(160,117,15,0.08)' : 'rgba(212,180,69,0.10)',
           pointerEvents: 'none', userSelect: 'none', zIndex: 1,
         }}>V</span>
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(90deg, rgba(11,10,9,0.86) 0%, rgba(11,10,9,0.58) 60%, rgba(11,10,9,0.86) 100%)',
+          background: isLight
+            ? 'linear-gradient(90deg, rgba(244,242,238,0.0) 0%, rgba(244,242,238,0.0) 60%, rgba(244,242,238,0.0) 100%)'
+            : 'linear-gradient(90deg, rgba(11,10,9,0.86) 0%, rgba(11,10,9,0.58) 60%, rgba(11,10,9,0.86) 100%)',
         }} />
 
         <div style={{
@@ -147,7 +163,7 @@ const VoyagerHomeStrip = () => {
             <h3 data-testid="voyager-home-strip-headline" style={{
               fontFamily: 'Georgia, serif', fontWeight: 700,
               fontSize: 'clamp(22px, 2.6vw, 32px)', lineHeight: 1.12,
-              letterSpacing: '-0.02em', color: '#F5F3EE',
+              letterSpacing: '-0.02em', color: headlineColor,
               margin: '0 0 10px',
             }}>
               {gameTitle} × {operator}
@@ -157,7 +173,7 @@ const VoyagerHomeStrip = () => {
             </h3>
             {verdict && (
               <p data-testid="voyager-home-strip-verdict" style={{
-                color: 'var(--ink, #ECE6D8)', fontSize: 13.5,
+                color: verdictColor, fontSize: 13.5,
                 lineHeight: 1.55, margin: '0 0 8px', maxWidth: 640,
                 fontFamily: 'Georgia, serif', fontWeight: 400,
                 display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
@@ -196,7 +212,7 @@ const VoyagerHomeStrip = () => {
               </div>
             )}
             <span data-testid="voyager-home-strip-cta" style={{
-              color: '#FFFFFF',
+              color: ctaColor,
               fontFamily: 'ui-monospace, monospace', fontSize: 11,
               letterSpacing: '0.20em', fontWeight: 700,
               borderBottom: `1px solid ${gold}`, paddingBottom: 4,

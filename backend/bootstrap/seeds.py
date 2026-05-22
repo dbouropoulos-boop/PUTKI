@@ -84,6 +84,7 @@ async def run_all_seeds_and_indexes(db) -> None:
     await _safe("slot_registry.seed_default_registry", seed_default_registry(db))
 
     # iter55 — mini-game suite (educational quiz + tournament backbone)
-    from mini_games import ensure_indexes as mg_ensure, seed_quiz_questions
+    from mini_games import ensure_indexes as mg_ensure, seed_quiz_questions, seed_phase2_games
     await _safe("mini_games.ensure_indexes", mg_ensure(db))
     await _safe("mini_games.seed_quiz_questions", seed_quiz_questions(db))
+    await _safe("mini_games.seed_phase2_games", seed_phase2_games(db))

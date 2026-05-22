@@ -2970,6 +2970,130 @@ async def admin_mini_games_leads(week: Optional[str] = None, _: bool = Depends(r
     return {"leads": await cur.to_list(length=5000)}
 
 
+@api_router.get("/admin/mini-games/leads.csv")
+async def admin_mini_games_leads_csv(
+    week: Optional[str] = None,
+    game: Optional[str] = None,
+    _: bool = Depends(require_admin),
+):
+    """CSV lead export. Filterable by source_game + tournament_week_iso.
+    Returns RFC-4180 CSV with explicit consent + score columns for CRM sync."""
+    import csv
+    import io
+    from fastapi.responses import Response
+    q: Dict[str, Any] = {}
+    if game:
+        q["source_game"] = game
+    if week:
+        q["tournament_week_iso"] = week
+    cur = db.mini_game_leads.find(q, {"_id": 0}).sort("consent_at", -1)
+    rows = await cur.to_list(length=10000)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf, quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(["email", "name", "source_game", "tournament_week_iso",
+                     "score", "pct", "consent_at", "consent_text_sha", "privacy_url"])
+    for r in rows:
+        writer.writerow([
+            r.get("email", ""), r.get("name", ""), r.get("source_game", ""),
+            r.get("tournament_week_iso", ""), r.get("score", 0),
+            f'{float(r.get("pct") or 0):.1f}',
+            r.get("consent_at", ""), r.get("consent_text_sha", ""),
+            r.get("privacy_url", ""),
+        ])
+    return Response(
+        content=buf.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=mini-game-leads-{week or 'all'}.csv"},
+    )
+
+
+# ── Phase 2 — Scenario (branching decisions) ─────────────────────────
+
+@api_router.post("/mini-games/scenario/start")
+async def mini_games_scenario_start():
+    return await _mg.start_scenario(db)
+
+
+@api_router.post("/mini-games/scenario/finish")
+async def mini_games_scenario_finish(payload: MiniGameFinishPayload):
+    result = await _mg.finish_scenario(
+        db,
+        play_id=payload.play_id,
+        anon_id=payload.anon_id,
+        answers=[a.dict() for a in payload.answers],
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@api_router.post("/mini-games/scenario/unlock")
+async def mini_games_scenario_unlock(payload: MiniGameUnlockPayload, request: Request):
+    ip = (request.client.host if request.client else None)
+    result = await _mg.unlock_scenario_result(
+        db,
+        play_id=payload.play_id, anon_id=payload.anon_id,
+        email=payload.email, name=payload.name,
+        consent=payload.consent, ip=ip,
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+# ── Phase 2 — Insight Reveal (scratch tiles) ─────────────────────────
+
+class MiniGameInsightRevealPayload(BaseModel):
+    play_id: str
+    anon_id: str
+    q_id: str
+
+
+class MiniGameInsightFinishPayload(BaseModel):
+    play_id: str
+    anon_id: str
+
+
+@api_router.post("/mini-games/insight/start")
+async def mini_games_insight_start():
+    return await _mg.start_insight(db)
+
+
+@api_router.post("/mini-games/insight/reveal")
+async def mini_games_insight_reveal(payload: MiniGameInsightRevealPayload):
+    result = await _mg.reveal_insight_tile(
+        db, play_id=payload.play_id, anon_id=payload.anon_id, q_id=payload.q_id,
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@api_router.post("/mini-games/insight/finish")
+async def mini_games_insight_finish(payload: MiniGameInsightFinishPayload):
+    result = await _mg.finish_insight(
+        db, play_id=payload.play_id, anon_id=payload.anon_id,
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@api_router.post("/mini-games/insight/unlock")
+async def mini_games_insight_unlock(payload: MiniGameUnlockPayload, request: Request):
+    ip = (request.client.host if request.client else None)
+    result = await _mg.unlock_insight_result(
+        db,
+        play_id=payload.play_id, anon_id=payload.anon_id,
+        email=payload.email, name=payload.name,
+        consent=payload.consent, ip=ip,
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
 # ── Phase 3 V2 Step 1+3 fold: Voyager rotation calendar ──
 class VoyagerWeekPayload(BaseModel):
     iso_week: str                                  # "YYYY-Www"
