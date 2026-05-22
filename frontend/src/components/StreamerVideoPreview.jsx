@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
+import StreamerAvatar from './StreamerAvatar';
 
 // Real Twitch/Kick muted-autoplay video preview.
 // - Desktop: starts muted on hover (saves bandwidth; Twitch parent param required)
 // - Mobile: IntersectionObserver triggers playback when tile enters viewport
-// - Falls back to streamer.photo if streamer is offline or iframe fails to load
+// - Falls back to a real-avatar block (iter54) when offline / iframe errors
 //
 // Twitch embed REQUIRES `parent` URL params for each domain it's served from.
 // Kick uses `https://player.kick.com/{channel}` and works without parent.
@@ -76,22 +77,34 @@ export const StreamerVideoPreview = ({
     <div
       ref={ref}
       className={`relative overflow-hidden ${className}`}
-      style={{ background: '#0A0A0A', ...style }}
+      style={{ background: 'var(--surface-2, #14110d)', ...style }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       data-testid={testId}
     >
-      {/* Photo always rendered as the fallback layer */}
-      <img
-        src={streamer.photo}
-        alt={streamer.name}
-        className="absolute inset-0 w-full h-full object-cover"
+      {/* Real-avatar block always rendered as the fallback layer (iter54).
+          No stock photos — when no avatar URL is available, an initials
+          block is shown via <StreamerAvatar>. */}
+      <div
+        className="absolute inset-0 flex items-center justify-center"
         style={{
-          filter: streamer.live ? 'brightness(0.55) saturate(1.05)' : 'brightness(0.7) grayscale(0.2)',
+          background: 'var(--surface-2, #14110d)',
           opacity: active && canEmbed ? 0 : 1,
           transition: 'opacity 220ms ease',
         }}
-      />
+      >
+        <StreamerAvatar
+          streamer={streamer}
+          size={140}
+          shape="circle"
+          style={{
+            boxShadow: streamer.live
+              ? '0 0 0 3px rgba(193,59,44,0.55)'
+              : '0 0 0 2px rgba(0,0,0,0.18)',
+            filter: streamer.live ? 'none' : 'grayscale(0.15)',
+          }}
+        />
+      </div>
 
       {canEmbed && active && (
         <iframe

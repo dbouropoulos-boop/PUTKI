@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Globe, Info } from 'lucide-react';
-import StreamerVideoPreview from '../components/StreamerVideoPreview';
+import StreamerAvatar from '../components/StreamerAvatar';
 import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
@@ -20,8 +20,8 @@ const IntlStreamerCard = ({ streamer, scenes }) => {
       style={{ background: scene.tint }}
       data-testid={`intl-streamer-${streamer.slug}`}
     >
-      <div className="relative aspect-[5/4] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
-        <img src={streamer.photo} alt={streamer.name} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.7) grayscale(0.2)' }} />
+      <div className="relative aspect-[5/4] overflow-hidden flex items-center justify-center" style={{ background: 'var(--surface-2)' }}>
+        <StreamerAvatar streamer={streamer} size={140} shape="circle" />
         <div
           className="absolute top-3 right-3 px-2 py-0.5 rounded-[2px] mono"
           style={{ background: 'rgba(10,10,10,0.85)', color: '#F5F3EE', fontSize: 9.5, letterSpacing: '0.22em', fontWeight: 700 }}

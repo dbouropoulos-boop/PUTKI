@@ -5,6 +5,7 @@ import Dial from '../components/Dial';
 import MomentCard from '../components/MomentCard';
 import ShareButton from '../components/ShareButton';
 import StreamerVideoPreview from '../components/StreamerVideoPreview';
+import StreamerAvatar from '../components/StreamerAvatar';
 import { useStreamers, useOperators } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
@@ -612,8 +613,8 @@ const StreamerProfile = () => {
                 style={{ width: 220, scrollSnapAlign: 'start' }}
                 data-testid={`profile-related-${s.slug}`}
               >
-                <div className="aspect-[5/4] relative">
-                  <img src={s.photo} alt={s.name} className="absolute inset-0 w-full h-full object-cover" />
+                <div className="aspect-[5/4] relative flex items-center justify-center" style={{ background: 'var(--surface-2)' }}>
+                  <StreamerAvatar streamer={s} size={88} shape="circle" />
                   {s.live && (
                     <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-[2px]" style={{ background: 'rgba(10,10,10,0.85)' }}>
                       <span className="led" />

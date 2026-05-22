@@ -2,6 +2,7 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Check, Minus, Shield, Clock, Globe, Smartphone } from 'lucide-react';
 import { OperatorTeaserCard, ScoreReadout, scoreColor } from '../components/OperatorCard';
+import StreamerAvatar from '../components/StreamerAvatar';
 import { useOperators, useStreamers } from '../hooks/useRegistry';
 import {
   Accordion,
@@ -311,7 +312,7 @@ const OperatorReview = () => {
           <div className="flex flex-wrap gap-4">
             {streamerSample.map((s) => (
               <div key={s.slug} className="flex items-center gap-3 editorial-card px-4 py-3" data-testid={`activity-${s.slug}`}>
-                <img src={s.photo} alt={s.name} className="w-9 h-9 rounded-full object-cover" />
+                <StreamerAvatar streamer={s} size={36} shape="circle" />
                 <div>
                   <div className="font-display text-[14px] font-semibold text-ink">{s.name}</div>
                   <div className="font-serif text-[12px] text-muted-text">pelasi {s.playing || 'aiemmin viikolla'}</div>

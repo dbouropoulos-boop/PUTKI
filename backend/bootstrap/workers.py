@@ -78,3 +78,8 @@ async def spawn_background_workers(
     if os.environ.get("PUTKI_HQ_DISABLE_DISPATCH_WORKER", "0") != "1":
         from dispatch_daily import dispatch_worker_loop
         asyncio.create_task(dispatch_worker_loop(db))
+
+    # ── Streamer avatar refresh (weekly cadence; one-shot on boot) ───
+    if os.environ.get("PUTKI_HQ_DISABLE_AVATAR_REFRESH", "0") != "1":
+        from streamer_avatars import avatar_refresh_worker_loop
+        asyncio.create_task(avatar_refresh_worker_loop(db))

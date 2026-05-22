@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Users, Bell } from 'lucide-react';
+import StreamerAvatar from '../components/StreamerAvatar';
 import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
@@ -68,7 +69,13 @@ const ColdEmailLanding = () => {
           <div className="mt-8 flex items-center gap-4">
             <div className="flex -space-x-2">
               {featuredStreamers.map((s) => (
-                <img key={s.slug} src={s.photo} alt={s.name} className="w-10 h-10 rounded-full border-2 object-cover" style={{ borderColor: 'var(--bg)' }} />
+                <StreamerAvatar
+                  key={s.slug}
+                  streamer={s}
+                  size={40}
+                  shape="circle"
+                  style={{ border: `2px solid var(--bg)` }}
+                />
               ))}
             </div>
             <div className="mono" style={{ fontSize: 13, letterSpacing: '0.04em', color: 'var(--ink)', fontWeight: 500 }}>

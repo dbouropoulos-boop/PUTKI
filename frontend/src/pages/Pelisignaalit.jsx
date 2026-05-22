@@ -155,7 +155,7 @@ const TrackRecordStrip = ({ points = [], lang = 'fi' }) => {
             letterSpacing: '0.18em', fontWeight: 700, marginBottom: 4,
           }}>{c.label}</div>
           <div style={{
-            color: c.isArrow ? c.subColor : '#FFFFFF',
+            color: c.isArrow ? c.subColor : 'var(--ink)',
             fontFamily: 'Georgia, serif',
             fontWeight: 700, fontSize: 26, lineHeight: 1,
           }}>{c.value}</div>
@@ -220,7 +220,7 @@ const Pelisignaalit = () => {
         <h1 data-testid="pelisignaalit-title" style={{
           fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-          letterSpacing: '-0.02em', color: '#FFFFFF',
+          letterSpacing: '-0.02em', color: 'var(--ink)',
           margin: '12px 0 18px', maxWidth: 720,
         }}>{lang === 'en'
           ? 'Five daily signals. Sharpness scored. 10:00 sharp.'
@@ -316,7 +316,7 @@ const Pelisignaalit = () => {
                   }}>#{i + 1}</span>
                   <div>
                     <div style={{
-                      color: '#FFFFFF', fontSize: 16, fontWeight: 600,
+                      color: 'var(--ink)', fontSize: 16, fontWeight: 600,
                       letterSpacing: '-0.005em', marginBottom: 4,
                     }}>{eventName}</div>
                     <div style={{

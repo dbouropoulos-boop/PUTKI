@@ -2552,6 +2552,14 @@ async def admin_twitch_discover(_: bool = Depends(require_admin)):
     return await discover_once(db)
 
 
+@api_router.post("/admin/streamers/refresh-avatars")
+async def admin_refresh_avatars(force: bool = True, _: bool = Depends(require_admin)):
+    """Re-resolve avatar URLs for every active streamer (Twitch/Kick/YouTube).
+    `force=true` (default) ignores the weekly freshness window."""
+    from streamer_avatars import refresh_all_avatars
+    return await refresh_all_avatars(db, force=force)
+
+
 class _PreviewBody(BaseModel):
     template_id: str
     signal_data: Dict[str, Any]

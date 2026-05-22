@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, RefreshCw, Plus, Save, Trash2 } from 'lucide-react';
+import { Lock, RefreshCw, Plus, Save, Trash2, Image } from 'lucide-react';
+import StreamerAvatar from '../components/StreamerAvatar';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -68,6 +69,27 @@ const StreamersAdmin = () => {
     refresh();
   };
 
+  const [refreshingAvatars, setRefreshingAvatars] = useState(false);
+  const [avatarSummary, setAvatarSummary] = useState(null);
+  const refreshAvatars = async () => {
+    if (refreshingAvatars) return;
+    if (!window.confirm('Re-fetch every streamer\'s profile picture from Twitch / Kick / YouTube? This takes ~5-10s.')) return;
+    setRefreshingAvatars(true);
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/streamers/refresh-avatars?force=true`, {
+        method: 'POST', headers: headers(),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const d = await r.json();
+      setAvatarSummary(d);
+      await refresh();
+    } catch (e) {
+      alert(`Refresh failed: ${e.message}`);
+    } finally {
+      setRefreshingAvatars(false);
+    }
+  };
+
   const filtered = sceneFilter ? streamers.filter((s) => s.scene === sceneFilter) : streamers;
 
   if (!authed) {
@@ -104,22 +126,35 @@ const StreamersAdmin = () => {
               {SCENES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
             <button onClick={refresh} className="btn-ghost" data-testid="str-refresh"><RefreshCw strokeWidth={1.5} size={13} className="mr-2" /> REFRESH</button>
+            <button onClick={refreshAvatars} disabled={refreshingAvatars} className="btn-ghost" data-testid="str-refresh-avatars" title="Re-fetch profile pics from Twitch/Kick/YouTube">
+              <Image strokeWidth={1.5} size={13} className="mr-2" /> {refreshingAvatars ? 'FETCHING…' : 'REFRESH AVATARS'}
+            </button>
             <button onClick={startNew} className="btn-primary" data-testid="str-new"><Plus strokeWidth={1.6} size={13} className="mr-2" /> NEW</button>
             <Link to="/back-office/operators" className="btn-ghost">← OPERATORS</Link>
           </div>
         </div>
+
+        {avatarSummary && (
+          <div className="mono text-[11px] mb-4" style={{ letterSpacing: '0.06em', color: 'var(--muted)' }} data-testid="str-avatar-summary">
+            avatars · resolved {avatarSummary.resolved} · failed {avatarSummary.failed} · twitch {avatarSummary.twitch_count} · kick {avatarSummary.kick_count} · youtube {avatarSummary.youtube_count}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="space-y-3" data-testid="str-list">
             {filtered.map((s) => (
               <div key={s.slug} className="panel p-4" data-testid={`str-row-${s.slug}`} style={{ borderColor: selected === s.slug ? 'var(--ink)' : 'var(--border)' }}>
                 <div className="flex items-start justify-between gap-3">
-                  <div style={{ minWidth: 0 }}>
-                    <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#5A7BB8', fontWeight: 700 }}>
-                      {s.platform.toUpperCase()} · T{s.tier} · {s.scene.toUpperCase()}
+                  <div className="flex items-start gap-3" style={{ minWidth: 0 }}>
+                    <StreamerAvatar streamer={s} size={44} shape="circle" />
+                    <div style={{ minWidth: 0 }}>
+                      <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#5A7BB8', fontWeight: 700 }}>
+                        {s.platform.toUpperCase()} · T{s.tier} · {s.scene.toUpperCase()}
+                        {s.avatar_failed && <span style={{ color: '#C8423C', marginLeft: 6 }} title={s.avatar_failure_reason || ''}>· AVATAR ?</span>}
+                      </div>
+                      <h3 className="font-display mt-1" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}>{s.name} · {s.followers || '—'}</h3>
+                      <p className="font-serif mt-1" style={{ fontSize: 13, color: 'var(--muted)' }}>{s.sub || '—'}</p>
                     </div>
-                    <h3 className="font-display mt-1" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}>{s.name} · {s.followers || '—'}</h3>
-                    <p className="font-serif mt-1" style={{ fontSize: 13, color: 'var(--muted)' }}>{s.sub || '—'}</p>
                   </div>
                   <div className="flex flex-col gap-1">
                     <button onClick={() => startEdit(s)} className="btn-ghost" data-testid={`str-edit-${s.slug}`}>EDIT</button>

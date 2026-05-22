@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, Mail, MessageCircle, Smartphone } from 'lucide-react';
 import Dial from '../components/Dial';
+import StreamerAvatar from '../components/StreamerAvatar';
 import { useStreamers } from '../hooks/useRegistry';
 import { DIAL_STATES } from '../constants/dial';
 
@@ -95,7 +96,7 @@ const Signup = () => {
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <img src={s.photo} alt={s.name} className="w-9 h-9 rounded-full object-cover" />
+                      <StreamerAvatar streamer={s} size={36} shape="circle" />
                       <div className="flex-1 min-w-0">
                         <div className="font-display text-sm font-semibold text-ink truncate">{s.name}</div>
                         <div className="font-display text-[11px] text-muted-text uppercase tracking-wider">{s.platform}</div>
