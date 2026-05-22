@@ -2896,6 +2896,80 @@ async def admin_delete_streamer(slug: str, _: bool = Depends(require_admin)):
     return {"deleted": slug}
 
 
+# ── Mini-game suite (iter55) — educational gambling-literacy games ───
+import mini_games as _mg
+
+class MiniGameAnswerPayload(BaseModel):
+    q_id: str
+    picked: str
+
+class MiniGameFinishPayload(BaseModel):
+    play_id: str
+    anon_id: str
+    answers: List[MiniGameAnswerPayload]
+
+class MiniGameUnlockPayload(BaseModel):
+    play_id: str
+    anon_id: str
+    email: str
+    name: Optional[str] = None
+    consent: bool = False
+
+@api_router.get("/mini-games/hub")
+async def mini_games_hub():
+    """Public hub payload — 5 game tiles + this week's tournament state."""
+    return await _mg.get_hub_payload(db)
+
+@api_router.post("/mini-games/quiz/start")
+async def mini_games_quiz_start():
+    """Anonymous play start — no email needed. Returns play_id + questions."""
+    return await _mg.start_quiz(db)
+
+@api_router.post("/mini-games/quiz/finish")
+async def mini_games_quiz_finish(payload: MiniGameFinishPayload):
+    """Score the player's answers. Returns preview score + per-question
+    explanations. Full personalized result is gated behind email."""
+    result = await _mg.finish_quiz(
+        db,
+        play_id=payload.play_id,
+        anon_id=payload.anon_id,
+        answers=[a.dict() for a in payload.answers],
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+@api_router.post("/mini-games/quiz/unlock")
+async def mini_games_quiz_unlock(payload: MiniGameUnlockPayload, request: Request):
+    """Email capture → unlock full personalized result + tournament rank."""
+    ip = (request.client.host if request.client else None)
+    result = await _mg.unlock_quiz_result(
+        db,
+        play_id=payload.play_id,
+        anon_id=payload.anon_id,
+        email=payload.email,
+        name=payload.name,
+        consent=payload.consent,
+        ip=ip,
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+@api_router.get("/mini-games/leaderboard")
+async def mini_games_leaderboard(week: Optional[str] = None, limit: int = 10):
+    return {"leaderboard": await _mg.get_leaderboard(db, week_iso=week, limit=min(limit, 50))}
+
+@api_router.get("/admin/mini-games/leads")
+async def admin_mini_games_leads(week: Optional[str] = None, _: bool = Depends(require_admin)):
+    """Lead export — full email + score for the given week (default: current)."""
+    q: Dict[str, Any] = {"source_game": _mg.QUIZ_GAME_SLUG}
+    if week:
+        q["tournament_week_iso"] = week
+    cur = db.mini_game_leads.find(q, {"_id": 0}).sort("consent_at", -1)
+    return {"leads": await cur.to_list(length=5000)}
+
+
 # ── Phase 3 V2 Step 1+3 fold: Voyager rotation calendar ──
 class VoyagerWeekPayload(BaseModel):
     iso_week: str                                  # "YYYY-Www"

@@ -63,6 +63,8 @@ import { Skene, SkeneTalous } from "@/pages/Skene";
 import { Raha, Kulttuuri, Sponsoroinnit, Saantely } from "@/pages/EditorialArchives";
 import { Pelit, PelitBlackjack, PelitPoker, PelitSlotit, PelitCraps, PelitRuletti, PelitLive, PelitBonusmatematiikka } from "@/pages/Pelit";
 import Pulssi from "@/pages/Pulssi";
+import PeliAreenaHub from "@/pages/PeliAreenaHub";
+import PeliAreenaQuiz from "@/pages/PeliAreenaQuiz";
 import { Korjaukset, Affiliaatti, Avoimuus, Lehdisto, Paivityslog } from "@/pages/Accountability";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -122,6 +124,8 @@ function App() {
             <Route path="toimitus" element={<Toimitus />} />
             <Route path="peli" element={<Peli />} />
             <Route path="peli/legacy" element={<MiniGame />} />
+            <Route path="peliareena" element={<PeliAreenaHub />} />
+            <Route path="peliareena/tietoisuustesti" element={<PeliAreenaQuiz />} />
             <Route path="tietoa-meista" element={<TietoaMeista />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
 

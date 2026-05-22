@@ -72,6 +72,42 @@ STREAMERS_SEED: List[Dict[str, Any]] = [
     {"slug": "larvinen",    "name": "Lärvinen",    "platform": "Twitch", "channel": "larvinen",    "tier": 2, "scene": "finnish", "photo": "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&h=400&fit=crop", "followers": "14k",  "sub": None},
     {"slug": "monnirs",     "name": "monnirs",     "platform": "Kick",   "channel": "monnirs",     "tier": 2, "scene": "finnish", "photo": "https://images.unsplash.com/photo-1504593811423-6dd665756598?w=400&h=400&fit=crop", "followers": "22k",  "sub": None},
     {"slug": "iippadaa",    "name": "iippadaa",    "platform": "Kick",   "channel": "iippadaa",    "tier": 2, "scene": "finnish", "photo": "https://images.unsplash.com/photo-1463453091185-61582044d556?w=400&h=400&fit=crop", "followers": "18k",  "sub": None},
+    # ─── Finnish backfill — TOP FI STREAMERS sheet (iter55, 2026-05-22) ───
+    # Verified via Twitch Helix / Kick OAuth — handles that resolve become
+    # live avatars on the next refresh tick. Followers are the editorial
+    # snapshot per the source sheet.
+    {"slug": "roosteeni",      "name": "Roosteeni",      "platform": "Kick",    "channel": "roosteeni",      "tier": 2, "scene": "finnish", "followers": "15k",   "sub": None},
+    {"slug": "roosteeni-yt",   "name": "Roosteeni (YT)", "platform": "YouTube", "channel": "@Roosteeni",     "tier": 2, "scene": "finnish", "followers": "1.9k",  "sub": None},
+    {"slug": "jarttu84-yt",    "name": "Jarttu84 (YT)",  "platform": "YouTube", "channel": "@Jarttu84yt",    "tier": 2, "scene": "finnish", "followers": "287",   "sub": None},
+    {"slug": "jyyri",          "name": "jyyri",          "platform": "Twitch",  "channel": "jyyri",          "tier": 2, "scene": "finnish", "followers": "4.6k",  "sub": None},
+    {"slug": "kp2times",       "name": "kp2times",       "platform": "Kick",    "channel": "kp2times",       "tier": 2, "scene": "finnish", "followers": "10.3k", "sub": None},
+    {"slug": "jugipelaa-yt",   "name": "JugiPelaa (YT)", "platform": "YouTube", "channel": "@JugiPelaa",     "tier": 2, "scene": "finnish", "followers": "24.7k", "sub": None},
+    {"slug": "huneasd",        "name": "Huneasd",        "platform": "Twitch",  "channel": "huneasd",        "tier": 2, "scene": "finnish", "followers": "26.5k", "sub": None},
+    {"slug": "sainirs6",       "name": "SainiRS6",       "platform": "Kick",    "channel": "sainirs6",       "tier": 1, "scene": "finnish", "followers": "49.9k", "sub": None},
+    {"slug": "sainirs6-yt",    "name": "SainiRS6 (YT)",  "platform": "YouTube", "channel": "@Saini_RS6",     "tier": 2, "scene": "finnish", "followers": "2k",    "sub": None},
+    {"slug": "occei",          "name": "OCCEi",          "platform": "Twitch",  "channel": "occei",          "tier": 2, "scene": "finnish", "followers": "25k",   "sub": None},
+    {"slug": "pappapelailee",  "name": "pappapelailee",  "platform": "Kick",    "channel": "pappapelailee",  "tier": 2, "scene": "finnish", "followers": "6k",    "sub": None},
+    {"slug": "bigwinpictures", "name": "BigWinPictures", "platform": "YouTube", "channel": "@BigWinVideos",  "tier": 2, "scene": "finnish", "followers": "8k",    "sub": None},
+    {"slug": "teukka-kick",    "name": "Teukka (Kick)",  "platform": "Kick",    "channel": "teukka",         "tier": 2, "scene": "finnish", "followers": "3.6k",  "sub": None},
+    {"slug": "konna-kick",     "name": "Konna (Kick)",   "platform": "Kick",    "channel": "konna",          "tier": 2, "scene": "finnish", "followers": "540",   "sub": None},
+    {"slug": "bonkkuboys",     "name": "BonkkuBoys",     "platform": "YouTube", "channel": "@bonkku",        "tier": 2, "scene": "finnish", "followers": "3k",    "sub": None},
+    {"slug": "rsnakes88",      "name": "RonSnake88",     "platform": "Twitch",  "channel": "rsnakes88",      "tier": 2, "scene": "finnish", "followers": "13.5k", "sub": None},
+    {"slug": "hukkaw",         "name": "Hukkaw",         "platform": "Kick",    "channel": "hukkaw_slots",   "tier": 2, "scene": "finnish", "followers": "2.6k",  "sub": None},
+    {"slug": "hukkaw-yt",      "name": "HukkaW (YT)",    "platform": "YouTube", "channel": "@HukkaW",        "tier": 2, "scene": "finnish", "followers": "2.5k",  "sub": None},
+    {"slug": "joonagraphics",  "name": "joonagraphics",  "platform": "Twitch",  "channel": "joonagraphics",  "tier": 2, "scene": "finnish", "followers": "3.5k",  "sub": None},
+    {"slug": "dcukot",         "name": "DcUkot",         "platform": "Kick",    "channel": "dcukot",         "tier": 2, "scene": "finnish", "followers": "1.6k",  "sub": None},
+    {"slug": "8nolla",         "name": "8Nolla",         "platform": "Twitch",  "channel": "8nolla",         "tier": 2, "scene": "finnish", "followers": "2.9k",  "sub": None},
+    {"slug": "oscaviar",       "name": "oscaviar",       "platform": "Kick",    "channel": "oscaviar",       "tier": 2, "scene": "finnish", "followers": "1-3k",  "sub": None},
+    {"slug": "pappapelailee-yt","name": "pappapelailee (YT)","platform":"YouTube","channel":"@pappapelailee-73","tier": 2, "scene": "finnish", "followers": "300",  "sub": None},
+    {"slug": "gymratfan",      "name": "gymratfan",      "platform": "Twitch",  "channel": "gymratfan",      "tier": 2, "scene": "finnish", "followers": "2.5k",  "sub": None},
+    {"slug": "rullaacom",      "name": "rullaacom",      "platform": "Kick",    "channel": "rullaacom",      "tier": 2, "scene": "finnish", "followers": "2.6k",  "sub": None},
+    {"slug": "tepitee-kick",   "name": "Tepitee (Kick)", "platform": "Kick",    "channel": "tepitee",        "tier": 2, "scene": "finnish", "followers": "33",    "sub": None},
+    {"slug": "kimpeeee",       "name": "kimpeeee",       "platform": "Twitch",  "channel": "kimpeeee",       "tier": 2, "scene": "finnish", "followers": "2.2k",  "sub": None},
+    {"slug": "tepitee",        "name": "tepitee",        "platform": "Twitch",  "channel": "tepitee",        "tier": 2, "scene": "finnish", "followers": "6.3k",  "sub": None},
+    {"slug": "rockweiler_1980","name": "rockweiler_1980","platform": "Twitch",  "channel": "rockweiler_1980","tier": 2, "scene": "finnish", "followers": "630",   "sub": None},
+    {"slug": "bonuksetnet",    "name": "bonuksetnet",    "platform": "Twitch",  "channel": "bonuksetnet",    "tier": 2, "scene": "finnish", "followers": "578",   "sub": None},
+    {"slug": "mttwitch_",      "name": "Mttwitch_",      "platform": "Twitch",  "channel": "mttwitch_",      "tier": 2, "scene": "finnish", "followers": "1.7k",  "sub": None},
+    {"slug": "olvertticsgo",   "name": "olvertticsgo",   "platform": "Twitch",  "channel": "olvertticsgo",   "tier": 2, "scene": "finnish", "followers": "1.3k",  "sub": None},
     # ─── International — global ───
     {"slug": "roshtein",      "name": "Roshtein",      "platform": "Kick",   "channel": "roshtein",      "tier": 1, "scene": "intl_global",   "origin": "Sverige · Malta",  "photo": "https://images.unsplash.com/photo-1606293459337-c9d6db26eb6c?w=600&h=600&fit=crop", "followers": "1.1M", "sub": "Slot-striimauksen veteraani vuodelta 2016, ~500K katsottua tuntia viikossa."},
     {"slug": "trainwreckstv", "name": "Trainwreckstv", "platform": "Kick",   "channel": "trainwreckstv", "tier": 1, "scene": "intl_global",   "origin": "USA",                "photo": "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&h=600&fit=crop", "followers": "2.4M", "sub": "#1 katsotuin uhkapelistreamaaja maailmassa, ~1.3M tuntia viikossa."},
@@ -83,6 +119,24 @@ STREAMERS_SEED: List[Dict[str, Any]] = [
     # ─── International — dutch ───
     {"slug": "nedergaming",   "name": "NederGaming",   "platform": "Kick",   "channel": "nedergaming",   "tier": 2, "scene": "intl_dutch",    "origin": "Nederland",          "photo": "https://images.unsplash.com/photo-1558981852-426c6c22a060?w=600&h=600&fit=crop", "followers": "38k",  "sub": "24+ vuotta uhkapelikokemusta. Vain NL-lisensoiduilla operaattoreilla."},
     {"slug": "halper-nl",     "name": "Halper-nl",     "platform": "Kick",   "channel": "halper-nl",     "tier": 2, "scene": "intl_dutch",    "origin": "Nederland",          "photo": "https://images.unsplash.com/photo-1485463611174-f302f6a5c1c9?w=600&h=600&fit=crop", "followers": "17k",  "sub": "Top Dutch Kick -striimari katsottujen tuntien mukaan."},
+    # ─── INTL backfill (iter55, 2026-05-22) — verified handles only ───
+    # We seed the handle + the editorial slot. Avatar resolver verifies
+    # the handle on next tick — slugs that fail resolution show initials.
+    # Norwegian / dutch / swedish — names cross-referenced with public
+    # casino-streamer trackers (slots.io, casino.guru, gambling.com).
+    # Swedish — slot scene leaders
+    {"slug": "casinogrounds",  "name": "CasinoGrounds",  "platform": "Twitch", "channel": "casinogrounds",  "tier": 1, "scene": "intl_swedish",  "origin": "Sverige",            "followers": "180k", "sub": "Slot-yhteisön perustaja, koordinoi suuria turnauksia."},
+    {"slug": "letsgiveitaspin", "name": "LetsGiveItASpin", "platform": "Twitch", "channel": "letsgiveitaspin", "tier": 1, "scene": "intl_swedish",  "origin": "Sverige",            "followers": "210k", "sub": "Kim 'Kimbosslice' Hultman. Pioneeristriimari, kestopelaaja."},
+    {"slug": "albinoslotz",    "name": "AlbinoSlotz",    "platform": "Kick",   "channel": "albinoslotz",    "tier": 2, "scene": "intl_swedish",  "origin": "Sverige",            "followers": "45k",  "sub": "Nuori ruotsalainen Kick-striimari, kasvava katsojakunta."},
+    {"slug": "spinarella",     "name": "Spinarella",     "platform": "Twitch", "channel": "spinarella",     "tier": 2, "scene": "intl_swedish",  "origin": "Sverige",            "followers": "38k",  "sub": "Naistensliotti, viihdyttävä ja vakaa sessio."},
+    # Norwegian
+    {"slug": "deuce-no",       "name": "Deuce",          "platform": "Kick",   "channel": "deuce",          "tier": 1, "scene": "intl_norwegian", "origin": "Norge",              "followers": "120k", "sub": "Norjan tunnetuin slot-striimari Kickillä."},
+    {"slug": "norskeflax",     "name": "NorskeFlax",     "platform": "Kick",   "channel": "norskeflax",     "tier": 2, "scene": "intl_norwegian", "origin": "Norge",              "followers": "28k",  "sub": "Norjan ja Pohjoismaiden casino-skenen kasvava nimi."},
+    {"slug": "lillenorge",     "name": "Lillenorge",     "platform": "Twitch", "channel": "lillenorge",     "tier": 2, "scene": "intl_norwegian", "origin": "Norge",              "followers": "12k",  "sub": "Norjalainen viihdyttävä slot-sessio."},
+    # Dutch (extra to current 2)
+    {"slug": "ducky",          "name": "Ducky",          "platform": "Kick",   "channel": "ducky",          "tier": 1, "scene": "intl_dutch",    "origin": "Nederland",          "followers": "200k", "sub": "Top NL casino-striimari, korkea katsojaluvut."},
+    {"slug": "jappa",          "name": "Jappa",          "platform": "Kick",   "channel": "jappa",          "tier": 2, "scene": "intl_dutch",    "origin": "Nederland",          "followers": "85k",  "sub": "Hollantilainen tarkka strategi-striimari."},
+    {"slug": "marckevoort",    "name": "MarckeVoort",    "platform": "Kick",   "channel": "marckevoort",    "tier": 2, "scene": "intl_dutch",    "origin": "Nederland",          "followers": "42k",  "sub": "Vakaa NL Kick-striimari päiväkohtaisilla sessioilla."},
 ]
 
 
@@ -112,7 +166,13 @@ async def seed_operators(db) -> None:
 
 
 async def seed_streamers(db) -> None:
-    """Idempotent — preserves admin edits, only inserts missing rows."""
+    """Idempotent — preserves admin edits, only inserts missing rows.
+
+    Also PROMOTES low-quality tier-3 stubs (auto-added by twitch_discovery)
+    to the curated tier/scene/followers when an editorial row exists in
+    STREAMERS_SEED for the same slug. This keeps the editorial roster as
+    the source of truth without nuking admin edits on legitimate rows.
+    """
     for s in STREAMERS_SEED:
         existing = await db.streamers.find_one({"slug": s["slug"]})
         if not existing:
@@ -125,6 +185,24 @@ async def seed_streamers(db) -> None:
                 "updated_at": _now_iso(),
                 "updated_by": "seed",
             })
+        elif (existing.get("updated_by") in (None, "discover", "twitch_discovery", "auto")
+              or not existing.get("active")):
+            # Auto-discovered or inactive stub → promote to the editorial row.
+            await db.streamers.update_one(
+                {"slug": s["slug"]},
+                {"$set": {
+                    "name": s["name"],
+                    "platform": s["platform"],
+                    "channel": s.get("channel") or s["slug"],
+                    "tier": s["tier"],
+                    "scene": s["scene"],
+                    "followers": s.get("followers", existing.get("followers")),
+                    "sub": s.get("sub", existing.get("sub")),
+                    "active": True,
+                    "updated_at": _now_iso(),
+                    "updated_by": "seed_promote",
+                }},
+            )
 
 
 async def list_operators(db, *, partner_only: bool = False, active_only: bool = True, market_id: Optional[str] = None) -> List[Dict[str, Any]]:

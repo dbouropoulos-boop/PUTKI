@@ -72,6 +72,29 @@ TELEGRAM_CHANNEL_ID = os.environ.get("TELEGRAM_CHANNEL_ID") or ""
 # Worker kill switch — set to "1" in test/preview to keep the loop quiet.
 DISABLE_WORKER = os.environ.get("PUTKI_HQ_DISABLE_DISPATCH_WORKER", "0") == "1"
 
+# ── Telegram throttling (iter55) ─────────────────────────────────────────
+#
+# Two gates control whether the daily Telegram broadcast fires:
+#
+#   1. SHARPNESS THRESHOLD — at least one of today's 5 picks must exceed
+#      `TELEGRAM_BROADCAST_SHARPNESS_MIN`. Default 70 — keeps Telegram
+#      readers from getting low-conviction noise on quiet market days.
+#
+#   2. ONCE PER DAY — the broadcast is idempotent per UTC date. A new
+#      `telegram_broadcasts` collection records `{date_ymd, fired_at,
+#      payload_picks_count, top_sharpness}`. If today's entry already
+#      exists, we skip — even manual `run_daily_dispatch` calls won't
+#      double-fire. Both the scheduled cycle and manual triggers share
+#      this lock.
+#
+# Both gates are skippable via env (`TELEGRAM_THROTTLE_DISABLED=1`) for
+# preview / QA. The cycle audit row still records the throttle outcome
+# (fired vs. throttled-low-sharpness vs. throttled-already-sent).
+TELEGRAM_BROADCAST_SHARPNESS_MIN = int(
+    os.environ.get("TELEGRAM_BROADCAST_SHARPNESS_MIN", "70")
+)
+TELEGRAM_THROTTLE_DISABLED = os.environ.get("TELEGRAM_THROTTLE_DISABLED", "0") == "1"
+
 
 # ── Indexes ──────────────────────────────────────────────────────────────
 
@@ -85,8 +108,70 @@ async def ensure_indexes(db) -> None:
         await db.dispatch_segment_overrides.create_index(
             [("channel", 1), ("consent_tag", 1)], unique=True,
         )
+        # iter55: one row per UTC date — guarantees a Telegram broadcast
+        # fires AT MOST once per day even across worker restarts + manual
+        # POSTs to /api/admin/dispatch/run.
+        await db.telegram_broadcasts.create_index("date_ymd", unique=True)
     except Exception:
         logger.exception("dispatch_daily.ensure_indexes failed")
+
+
+# ── Telegram throttle helpers (iter55) ───────────────────────────────────
+
+def _today_ymd() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+async def _telegram_already_sent_today(db) -> bool:
+    """True if a row exists in `telegram_broadcasts` for today's UTC date.
+    Disabled via env TELEGRAM_THROTTLE_DISABLED=1 (preview/QA only)."""
+    if TELEGRAM_THROTTLE_DISABLED:
+        return False
+    try:
+        return bool(await db.telegram_broadcasts.find_one(
+            {"date_ymd": _today_ymd()}, {"_id": 1}
+        ))
+    except Exception:
+        logger.exception("telegram throttle check failed; allowing broadcast")
+        return False
+
+
+def _meets_sharpness_threshold(picks: List[Dict[str, Any]]) -> Tuple[bool, int]:
+    """Return (meets_threshold, top_sharpness). Picks list = the
+    rendered Telegram payload entries (each with `sharpness` int).
+    When TELEGRAM_THROTTLE_DISABLED=1, meets_threshold is always True."""
+    top = 0
+    for p in picks:
+        try:
+            s = int(p.get("sharpness") or 0)
+        except (TypeError, ValueError):
+            s = 0
+        if s > top:
+            top = s
+    if TELEGRAM_THROTTLE_DISABLED:
+        return True, top
+    return top >= TELEGRAM_BROADCAST_SHARPNESS_MIN, top
+
+
+async def _record_telegram_broadcast(
+    db, *, picks_count: int, top_sharpness: int, mode: str,
+) -> None:
+    """Idempotent insert of today's broadcast row. Unique index on
+    date_ymd absorbs duplicate-insert races silently."""
+    try:
+        await db.telegram_broadcasts.update_one(
+            {"date_ymd": _today_ymd()},
+            {"$setOnInsert": {
+                "date_ymd": _today_ymd(),
+                "fired_at": datetime.now(timezone.utc).isoformat(),
+                "payload_picks_count": picks_count,
+                "top_sharpness": top_sharpness,
+                "mode": mode,
+            }},
+            upsert=True,
+        )
+    except Exception:
+        logger.exception("telegram broadcast record failed")
 
 
 # ── Segment-channel mode overrides ───────────────────────────────────────
@@ -823,6 +908,37 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
     sms_payload = await _build_sms_alerts_payload(db) if "sms" in channels else None
     telegram_payload = await _build_telegram_alerts_payload(db) if "telegram" in channels else None
 
+    # iter55 — Telegram broadcast throttling. Two gates:
+    #   • Sharpness threshold (top pick must beat TELEGRAM_BROADCAST_SHARPNESS_MIN)
+    #   • Once per UTC day (unique index on telegram_broadcasts.date_ymd)
+    # Manual test sends with `recipients_override` bypass BOTH gates (it's
+    # an admin-initiated direct DM, not the public-channel broadcast).
+    telegram_throttle: Dict[str, Any] = {"throttled": False, "reason": None,
+                                         "top_sharpness": 0,
+                                         "threshold": TELEGRAM_BROADCAST_SHARPNESS_MIN}
+    if "telegram" in channels and not recipients_override:
+        picks_list = (telegram_payload or {}).get("picks") or []
+        meets, top = _meets_sharpness_threshold(picks_list)
+        telegram_throttle["top_sharpness"] = top
+        if not meets:
+            telegram_throttle.update({
+                "throttled": True,
+                "reason": f"top_sharpness_{top}_below_min_{TELEGRAM_BROADCAST_SHARPNESS_MIN}",
+            })
+            channels = [c for c in channels if c != "telegram"]
+        elif await _telegram_already_sent_today(db):
+            telegram_throttle.update({"throttled": True, "reason": "already_sent_today"})
+            channels = [c for c in channels if c != "telegram"]
+        else:
+            # Record BEFORE the send fires so a crash mid-dispatch still
+            # blocks a duplicate retry. Unique index makes this idempotent.
+            await _record_telegram_broadcast(
+                db,
+                picks_count=len(picks_list),
+                top_sharpness=top,
+                mode="dry_run" if dry_run else "live",
+            )
+
     tasks = []
     if "email" in channels:
         tasks.append(_dispatch_segment(
@@ -859,6 +975,7 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
         "test_send": bool(recipients_override),
         "recipients_override_count": len(recipients_override) if recipients_override else 0,
         "channels": channels,
+        "telegram_throttle": telegram_throttle,
     }
     try:
         await db.dispatch_log.insert_one(cycle_doc)

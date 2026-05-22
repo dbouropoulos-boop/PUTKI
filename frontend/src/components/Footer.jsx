@@ -23,6 +23,7 @@ export const Footer = () => {
               <li><Link to="/striimaajat" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.streamers').toUpperCase()}</Link></li>
               <li><Link to="/mittari" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-mittari-link">MITTARI</Link></li>
               <li><Link to="/pelisignaalit" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-pelisignaalit-link">PELISIGNAALIT</Link></li>
+              <li><Link to="/peliareena" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-peliareena-link">PELIAREENA</Link></li>
               <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.about').toUpperCase()}</Link></li>
               <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.methodology').toUpperCase()}</Link></li>
             </ul>
