@@ -36,9 +36,11 @@ const STATE_NAME_EN = {
 };
 
 // shared block shell — vertical content stack, equal weight.
-// iter53: hover micro-motion (lift + accent edge), brand-coloured edge
-// glow on hover, pulse dot animation on the anchor. All CSS-only so we
-// stay on-brand (calm + monospace + serif) without casino glitter.
+// iter54: theme-aware. Both modes render the same visual structure
+// (designed background → veil → content), but light mode swaps the
+// dark rgba veil for a cream-white veil + flips the headline/body
+// colours to dark on light. Accent colours stay the same in both
+// themes — they're brand identifiers, not chrome.
 const Block = ({ to, dataTestId, accent, children }) => (
   <Link
     to={to}
@@ -46,19 +48,53 @@ const Block = ({ to, dataTestId, accent, children }) => (
     className="explore-block"
     style={{
       position: 'relative', minHeight: 220,
-      background: 'var(--surface, #141210)',
+      background: 'var(--surface)',
       overflow: 'hidden',
       display: 'flex', flexDirection: 'column',
       padding: '22px 24px 20px',
       textDecoration: 'none', color: 'inherit',
       isolation: 'isolate',
       transition: 'transform 240ms ease, box-shadow 240ms ease',
-      // accent threaded through to CSS via custom property so the
-      // ::after edge glow + corner accent pick up each block's colour
       '--block-accent': accent || '#9C9587',
     }}
   >{children}</Link>
 );
+
+// Build a theme-aware veil gradient.
+// Dark theme: nearly-black wash so the decorative bg is just a glow.
+// Light theme: cream-white wash so the decorative bg stays as a tint
+// without nuking the underlying paper.
+const veilGradient = (theme, opacity = [0.78, 0.84, 0.96]) => {
+  if (theme === 'light') {
+    return `linear-gradient(135deg,
+      rgba(251,250,248,${opacity[0]}) 0%,
+      rgba(251,250,248,${opacity[1]}) 60%,
+      rgba(251,250,248,${opacity[2]}) 100%)`;
+  }
+  return `linear-gradient(135deg,
+    rgba(11,10,9,${opacity[0]}) 0%,
+    rgba(11,10,9,${opacity[1]}) 60%,
+    rgba(11,10,9,${opacity[2]}) 100%)`;
+};
+
+// Horizontal flavour of the veil (Mestari + Voita use this).
+const veilGradientHoriz = (theme, stops) => {
+  const s = stops || [0.94, 0.74, 0.96];
+  if (theme === 'light') {
+    return `linear-gradient(90deg,
+      rgba(251,250,248,${s[0]}) 0%,
+      rgba(251,250,248,${s[1]}) 55%,
+      rgba(251,250,248,${s[2]}) 100%)`;
+  }
+  return `linear-gradient(90deg,
+    rgba(11,10,9,${s[0]}) 0%,
+    rgba(11,10,9,${s[1]}) 55%,
+    rgba(11,10,9,${s[2]}) 100%)`;
+};
+
+// Theme-aware "primary on dark / dark on light" colour for headlines.
+const inkFor = (theme) => (theme === 'light' ? '#0A0A0A' : '#F5F3EE');
+const bodyFor = (theme) => (theme === 'light' ? '#3A3833' : 'rgba(245,243,238,0.86)');
 
 // Inject the explore-block keyframes + hover styles ONCE. Plain CSS in
 // a single <style> tag so we don't add a CSS-in-JS library and so the
@@ -99,15 +135,21 @@ const ExploreBlockStyles = () => (
       letter-spacing: 0.12em; line-height: 1;
     }
     .explore-block-stat .num {
-      color: var(--ink, #F5F2EA);
+      color: var(--ink);
       font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
       font-family: Georgia, serif;
     }
     .explore-block-stat .lab {
-      color: var(--muted, #9C9587);
+      color: var(--muted);
       font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
       text-transform: uppercase; margin-top: 2px;
     }
+    /* Light-mode tweaks: softer shadow, lighter base accent overlay. */
+    :root:not(.dark) .explore-block:hover {
+      box-shadow: 0 10px 30px -16px var(--block-accent);
+    }
+    :root:not(.dark) .explore-block::before { opacity: 0.10; }
+    :root:not(.dark) .explore-block:hover::before { opacity: 0.20; }
   `}</style>
 );
 
@@ -145,7 +187,7 @@ const Cta = ({ label, color, disabled }) => (
     position: 'relative', zIndex: 2,
   }}>
     <span data-testid="explore-cta" style={{
-      color: disabled ? 'var(--muted, #9C9587)' : '#FFFFFF',
+      color: disabled ? 'var(--muted)' : 'var(--ink)',
       fontFamily: 'ui-monospace, monospace', fontSize: 11,
       letterSpacing: '0.20em', fontWeight: 700,
       display: 'inline-flex', alignItems: 'baseline', gap: 6,
@@ -170,6 +212,7 @@ const Cta = ({ label, color, disabled }) => (
 
 // ── MITTARI — full mini-dial in left column, state name + reading right ──
 const MittariBlock = ({ lang }) => {
+  const { theme } = useTheme();
   const [dial, setDial] = useState(null);
   const [liveStats, setLiveStats] = useState(null);
   const [news, setNews] = useState(null);
@@ -203,14 +246,16 @@ const MittariBlock = ({ lang }) => {
       {/* designed background — instrument dial */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background:
-          `radial-gradient(circle at 22% 55%, ${color}33 0%, ${color}00 50%),
-           conic-gradient(from 220deg, #1f1b18 0deg, #3a2e23 70deg, ${color}66 95deg, ${color} 140deg, #3a2e23 200deg, #1f1b18 360deg)`,
-        opacity: 0.30, filter: 'contrast(1.05)',
+        background: theme === 'light'
+          ? `radial-gradient(circle at 22% 55%, ${color}26 0%, ${color}00 55%),
+             conic-gradient(from 220deg, #EFEAE2 0deg, #E2D8C8 70deg, ${color}55 95deg, ${color}88 140deg, #E2D8C8 200deg, #EFEAE2 360deg)`
+          : `radial-gradient(circle at 22% 55%, ${color}33 0%, ${color}00 50%),
+             conic-gradient(from 220deg, #1f1b18 0deg, #3a2e23 70deg, ${color}66 95deg, ${color} 140deg, #3a2e23 200deg, #1f1b18 360deg)`,
+        opacity: theme === 'light' ? 0.42 : 0.30, filter: 'contrast(1.05)',
       }} />
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(135deg, rgba(11,10,9,0.78) 0%, rgba(11,10,9,0.84) 60%, rgba(11,10,9,0.96) 100%)',
+        background: veilGradient(theme),
       }} />
 
       <BlockStat
@@ -227,19 +272,20 @@ const MittariBlock = ({ lang }) => {
       }}>
         {/* Full mini-dial — proper size, not a sliver */}
         <svg width="88" height="88" viewBox="0 0 100 100" style={{ display: 'block', overflow: 'visible' }}>
-          <circle cx="50" cy="50" r="40" fill="none" stroke="#2A2522" strokeWidth="6" />
+          <circle cx="50" cy="50" r="40" fill="none"
+            stroke={theme === 'light' ? '#E2D8C8' : '#2A2522'} strokeWidth="6" />
           <circle cx="50" cy="50" r="40" fill="none" stroke={color} strokeWidth="6"
             strokeDasharray={`${(dashLen / 264) * 251.3} 251.3`}
             strokeLinecap="round"
             transform="rotate(-90 50 50)" />
           <text x="50" y="56" textAnchor="middle"
             fontFamily="ui-monospace, monospace" fontSize="14" fontWeight="700"
-            fill="#FFFFFF" letterSpacing="-0.02em">{Math.round(score)}</text>
+            fill={inkFor(theme)} letterSpacing="-0.02em">{Math.round(score)}</text>
         </svg>
         <div style={{ minWidth: 0 }}>
           <h3 data-testid="explore-mittari-state" style={{
             fontFamily: 'Georgia, serif', fontWeight: 700,
-            fontSize: 28, lineHeight: 1.02, color: '#F5F3EE',
+            fontSize: 28, lineHeight: 1.02, color: inkFor(theme),
             letterSpacing: '-0.02em', margin: '0 0 6px',
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{name}</h3>
@@ -264,8 +310,8 @@ const MittariBlock = ({ lang }) => {
             </div>
           )}
           <p style={{
-            color: 'var(--ink, #ECE6D8)', fontSize: 12.5,
-            lineHeight: 1.5, opacity: 0.88, margin: 0,
+            color: bodyFor(theme), fontSize: 12.5,
+            lineHeight: 1.5, opacity: 0.92, margin: 0,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
           }}>{reading}</p>
@@ -279,19 +325,22 @@ const MittariBlock = ({ lang }) => {
 
 // ── MESTARI — diagnostic quiz with editorial framing ──
 const MestariBlock = ({ lang }) => {
+  const { theme } = useTheme();
   const blue = '#5B8DEE';
   return (
     <Block to="/mestari" dataTestId="explore-block-mestari" accent={blue}>
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background: `
-          radial-gradient(circle at 28% 32%, rgba(91,141,238,0.22) 0%, rgba(91,141,238,0) 55%),
-          linear-gradient(135deg, #10141c 0%, #161b25 100%)`,
+        background: theme === 'light'
+          ? `radial-gradient(circle at 28% 32%, rgba(91,141,238,0.15) 0%, rgba(91,141,238,0) 55%),
+             linear-gradient(135deg, #EDF1F8 0%, #DDE3F0 100%)`
+          : `radial-gradient(circle at 28% 32%, rgba(91,141,238,0.22) 0%, rgba(91,141,238,0) 55%),
+             linear-gradient(135deg, #10141c 0%, #161b25 100%)`,
         opacity: 0.85,
       }} />
       <svg viewBox="0 0 240 80" preserveAspectRatio="none" aria-hidden style={{
         position: 'absolute', right: 0, top: '50%', width: '55%', height: 80,
-        transform: 'translateY(-50%)', opacity: 0.3, zIndex: 1,
+        transform: 'translateY(-50%)', opacity: theme === 'light' ? 0.55 : 0.3, zIndex: 1,
       }}>
         <text x="0" y="22" fill={blue} fontFamily="ui-monospace, monospace" fontSize="9" letterSpacing="2">Q1</text>
         <text x="0" y="44" fill={blue} fontFamily="ui-monospace, monospace" fontSize="9" letterSpacing="2">Q2</text>
@@ -302,7 +351,7 @@ const MestariBlock = ({ lang }) => {
       </svg>
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.96) 100%)',
+        background: veilGradientHoriz(theme),
       }} />
 
       <BlockStat value="3" label={lang === 'en' ? 'Diagnostics' : 'Testit'} />
@@ -311,13 +360,13 @@ const MestariBlock = ({ lang }) => {
 
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
         <h3 data-testid="explore-mestari-headline" style={{
-          color: '#F5F3EE', fontFamily: 'Georgia, serif', fontWeight: 700,
+          color: inkFor(theme), fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 24, lineHeight: 1.1, margin: '0 0 10px',
           letterSpacing: '-0.018em',
         }}>{lang === 'en' ? 'What kind of player are you?' : 'Millainen pelaaja sinä olet?'}</h3>
         <p style={{
-          color: 'var(--ink, #ECE6D8)', fontSize: 12.5, lineHeight: 1.5,
-          opacity: 0.86, maxWidth: 360, margin: 0,
+          color: bodyFor(theme), fontSize: 12.5, lineHeight: 1.5,
+          opacity: 0.92, maxWidth: 360, margin: 0,
         }}>{lang === 'en'
           ? 'Three 90-second diagnostics — sports betting, poker, blackjack. Personal profile + 5-day playbook to your inbox. Free.'
           : 'Kolme 90 sekunnin diagnostiikkaa — urheiluvedonlyönti, pokeri, blackjack. Henkilökohtainen profiili + 5 päivän pelikirja sähköpostiisi. Maksuton.'}</p>
@@ -459,6 +508,7 @@ const PelisignaalitBlock = ({ lang }) => {
 
 // ── VOITA — large editorial typographic treatment, gated state ──
 const VoitaBlock = ({ lang }) => {
+  const { theme } = useTheme();
   const [enabled, setEnabled] = useState(false);
   const [activeRaffleCount, setActiveRaffleCount] = useState(0);
   useEffect(() => {
@@ -484,9 +534,11 @@ const VoitaBlock = ({ lang }) => {
       {/* designed background — editorial gradient with crimson glow */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background: `
-          radial-gradient(circle at 80% 40%, rgba(193,59,44,0.18) 0%, rgba(193,59,44,0) 55%),
-          linear-gradient(135deg, #1a1310 0%, #14100e 100%)`,
+        background: theme === 'light'
+          ? `radial-gradient(circle at 80% 40%, rgba(193,59,44,0.12) 0%, rgba(193,59,44,0) 55%),
+             linear-gradient(135deg, #FBF3F0 0%, #F5E7E2 100%)`
+          : `radial-gradient(circle at 80% 40%, rgba(193,59,44,0.18) 0%, rgba(193,59,44,0) 55%),
+             linear-gradient(135deg, #1a1310 0%, #14100e 100%)`,
         opacity: 0.85,
       }} />
       {/* Decorative serif "V" as a fixed background element, positioned cleanly */}
@@ -495,12 +547,12 @@ const VoitaBlock = ({ lang }) => {
         fontFamily: 'Georgia, serif', fontWeight: 900,
         fontSize: 240, lineHeight: 1,
         letterSpacing: '-0.06em',
-        color: 'rgba(193,59,44,0.10)',
+        color: theme === 'light' ? 'rgba(193,59,44,0.07)' : 'rgba(193,59,44,0.10)',
         pointerEvents: 'none', userSelect: 'none', zIndex: 1,
       }}>V</span>
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(90deg, rgba(11,10,9,0.85) 0%, rgba(11,10,9,0.55) 60%, rgba(11,10,9,0.85) 100%)',
+        background: veilGradientHoriz(theme, [0.85, 0.55, 0.85]),
       }} />
 
       {enabled && activeRaffleCount > 0 && (
@@ -519,15 +571,15 @@ const VoitaBlock = ({ lang }) => {
 
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
         <h3 data-testid="explore-voita-placeholder" style={{
-          color: '#F5F3EE', fontFamily: 'Georgia, serif', fontWeight: 700,
+          color: inkFor(theme), fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 26, lineHeight: 1.1, margin: '0 0 10px',
           letterSpacing: '-0.015em',
         }}>{enabled
           ? (lang === 'en' ? 'Predict the winner.' : 'Arvaa voittaja.')
           : (lang === 'en' ? 'Coming soon' : 'Pian saatavilla')}</h3>
         <p style={{
-          color: 'var(--ink, #ECE6D8)', fontSize: 12.5, lineHeight: 1.5,
-          opacity: 0.82, maxWidth: 360, margin: 0,
+          color: bodyFor(theme), fontSize: 12.5, lineHeight: 1.5,
+          opacity: 0.92, maxWidth: 360, margin: 0,
           display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}>{enabled
@@ -548,6 +600,7 @@ const VoitaBlock = ({ lang }) => {
 
 // ── PELI — restrained slot-reel macro ──
 const PeliBlock = ({ lang }) => {
+  const { theme } = useTheme();
   const [week, setWeek] = useState(null);
   useEffect(() => {
     let cancelled = false;
@@ -568,19 +621,26 @@ const PeliBlock = ({ lang }) => {
       {/* designed background — restrained slot reel macro */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        background: `
-          radial-gradient(circle at 80% 50%, rgba(212,180,69,0.16) 0%, rgba(212,180,69,0) 50%),
-          repeating-linear-gradient(90deg,
-            #1a1612 0%, #1a1612 28%,
-            #221d18 28%, #221d18 33%,
-            #1a1612 33%, #1a1612 66%,
-            #221d18 66%, #221d18 71%,
-            #1a1612 71%, #1a1612 100%)`,
-        opacity: 0.55, filter: 'blur(0.4px)',
+        background: theme === 'light'
+          ? `radial-gradient(circle at 80% 50%, rgba(212,180,69,0.14) 0%, rgba(212,180,69,0) 50%),
+             repeating-linear-gradient(90deg,
+              #F4EFE5 0%, #F4EFE5 28%,
+              #EAE2D2 28%, #EAE2D2 33%,
+              #F4EFE5 33%, #F4EFE5 66%,
+              #EAE2D2 66%, #EAE2D2 71%,
+              #F4EFE5 71%, #F4EFE5 100%)`
+          : `radial-gradient(circle at 80% 50%, rgba(212,180,69,0.16) 0%, rgba(212,180,69,0) 50%),
+             repeating-linear-gradient(90deg,
+              #1a1612 0%, #1a1612 28%,
+              #221d18 28%, #221d18 33%,
+              #1a1612 33%, #1a1612 66%,
+              #221d18 66%, #221d18 71%,
+              #1a1612 71%, #1a1612 100%)`,
+        opacity: theme === 'light' ? 0.7 : 0.55, filter: 'blur(0.4px)',
       }} />
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(135deg, rgba(11,10,9,0.88) 0%, rgba(11,10,9,0.78) 60%, rgba(11,10,9,0.94) 100%)',
+        background: veilGradient(theme, [0.88, 0.78, 0.94]),
       }} />
 
       <BlockStat value="25" label={lang === 'en' ? 'Free spins' : 'Ilmaiskierrosta'} />
@@ -589,15 +649,15 @@ const PeliBlock = ({ lang }) => {
 
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
         <h3 data-testid="explore-peli-campaign" style={{
-          color: '#F5F3EE', fontFamily: 'Georgia, serif', fontWeight: 700,
+          color: inkFor(theme), fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 22, lineHeight: 1.15, margin: '0 0 10px',
           letterSpacing: '-0.015em',
           display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}>{campaign}</h3>
         <p style={{
-          color: 'var(--ink, #ECE6D8)', fontSize: 12.5, lineHeight: 1.5,
-          opacity: 0.86, maxWidth: 360, margin: 0,
+          color: bodyFor(theme), fontSize: 12.5, lineHeight: 1.5,
+          opacity: 0.92, maxWidth: 360, margin: 0,
           display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
         }}>{reward}</p>
