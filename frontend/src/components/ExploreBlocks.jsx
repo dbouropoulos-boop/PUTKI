@@ -34,11 +34,15 @@ const STATE_NAME_EN = {
   MYRSKY: 'ROLLING', KIIRASTULI: 'PERKELE',
 };
 
-// shared block shell — vertical content stack, equal weight
-const Block = ({ to, dataTestId, children }) => (
+// shared block shell — vertical content stack, equal weight.
+// iter53: hover micro-motion (lift + accent edge), brand-coloured edge
+// glow on hover, pulse dot animation on the anchor. All CSS-only so we
+// stay on-brand (calm + monospace + serif) without casino glitter.
+const Block = ({ to, dataTestId, accent, children }) => (
   <Link
     to={to}
     data-testid={dataTestId}
+    className="explore-block"
     style={{
       position: 'relative', minHeight: 220,
       background: 'var(--surface, #141210)',
@@ -47,13 +51,71 @@ const Block = ({ to, dataTestId, children }) => (
       padding: '22px 24px 20px',
       textDecoration: 'none', color: 'inherit',
       isolation: 'isolate',
+      transition: 'transform 240ms ease, box-shadow 240ms ease',
+      // accent threaded through to CSS via custom property so the
+      // ::after edge glow + corner accent pick up each block's colour
+      '--block-accent': accent || '#9C9587',
     }}
   >{children}</Link>
 );
 
-const Anchor = ({ color, label }) => (
+// Inject the explore-block keyframes + hover styles ONCE. Plain CSS in
+// a single <style> tag so we don't add a CSS-in-JS library and so the
+// rules are scoped via the `.explore-block` class.
+const ExploreBlockStyles = () => (
+  <style>{`
+    @keyframes putki-anchor-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.95; }
+      50%      { transform: scale(1.35); opacity: 0.55; }
+    }
+    .explore-block { will-change: transform; }
+    .explore-block::after {
+      content: ""; position: absolute; inset: 0;
+      pointer-events: none; z-index: 5;
+      border: 1px solid transparent;
+      transition: border-color 240ms ease;
+    }
+    .explore-block::before {
+      content: ""; position: absolute; top: 0; right: 0;
+      width: 80px; height: 80px; pointer-events: none; z-index: 1;
+      background: radial-gradient(circle at top right,
+        var(--block-accent) 0%,
+        transparent 70%);
+      opacity: 0.18;
+      transition: opacity 320ms ease;
+    }
+    .explore-block:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px -12px var(--block-accent);
+    }
+    .explore-block:hover::after { border-color: var(--block-accent); }
+    .explore-block:hover::before { opacity: 0.35; }
+    .explore-block:hover .explore-cta-arrow { transform: translateX(4px); }
+    .explore-block-stat {
+      position: absolute; top: 18px; right: 22px;
+      z-index: 3; text-align: right; pointer-events: none;
+      font-family: ui-monospace, monospace;
+      letter-spacing: 0.12em; line-height: 1;
+    }
+    .explore-block-stat .num {
+      color: var(--ink, #F5F2EA);
+      font-size: 22px; font-weight: 700; letter-spacing: -0.01em;
+      font-family: Georgia, serif;
+    }
+    .explore-block-stat .lab {
+      color: var(--muted, #9C9587);
+      font-size: 9px; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; margin-top: 2px;
+    }
+  `}</style>
+);
+
+const Anchor = ({ color, label, pulse = true }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, position: 'relative', zIndex: 2 }}>
-    <span style={{ width: 6, height: 6, borderRadius: 999, background: color }} />
+    <span style={{
+      width: 6, height: 6, borderRadius: 999, background: color,
+      animation: pulse ? 'putki-anchor-pulse 2.4s ease-in-out infinite' : undefined,
+    }} />
     <span style={{
       fontFamily: 'ui-monospace, monospace', fontSize: 10,
       letterSpacing: '0.22em', fontWeight: 700, color,
@@ -61,6 +123,19 @@ const Anchor = ({ color, label }) => (
     }}>{label}</span>
   </div>
 );
+
+// Top-right live-stat callout — appears only when there's a real value.
+// Number is large serif (matches the brand typography); label is tiny
+// monospace eyebrow underneath.
+const BlockStat = ({ value, label }) => {
+  if (value === null || value === undefined || value === '') return null;
+  return (
+    <div className="explore-block-stat" aria-hidden>
+      <div className="num">{value}</div>
+      <div className="lab">{label}</div>
+    </div>
+  );
+};
 
 const Cta = ({ label, color, disabled }) => (
   <div style={{
@@ -72,7 +147,20 @@ const Cta = ({ label, color, disabled }) => (
       color: disabled ? 'var(--muted, #9C9587)' : '#FFFFFF',
       fontFamily: 'ui-monospace, monospace', fontSize: 11,
       letterSpacing: '0.20em', fontWeight: 700,
-    }}>{label}{!disabled && '  →'}</span>
+      display: 'inline-flex', alignItems: 'baseline', gap: 6,
+    }}>
+      {label}
+      {!disabled && (
+        <span
+          className="explore-cta-arrow"
+          aria-hidden
+          style={{
+            display: 'inline-block',
+            transition: 'transform 240ms ease',
+          }}
+        >→</span>
+      )}
+    </span>
     <span style={{
       width: 24, height: 1, background: color, opacity: disabled ? 0.4 : 0.7,
     }} aria-hidden />
@@ -110,7 +198,7 @@ const MittariBlock = ({ lang }) => {
   const dashLen = Math.max(0, Math.min(264, Math.round(score * 2.64)));
 
   return (
-    <Block to="/mittari" dataTestId="explore-block-mittari">
+    <Block to="/mittari" dataTestId="explore-block-mittari" accent={color}>
       {/* designed background — instrument dial */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
@@ -123,6 +211,11 @@ const MittariBlock = ({ lang }) => {
         position: 'absolute', inset: 0, zIndex: 1,
         background: 'linear-gradient(135deg, rgba(11,10,9,0.78) 0%, rgba(11,10,9,0.84) 60%, rgba(11,10,9,0.96) 100%)',
       }} />
+
+      <BlockStat
+        value={Number.isFinite(score) ? Math.round(score) : null}
+        label={lang === 'en' ? 'Score' : 'Lukema'}
+      />
 
       <Anchor color={color} label={lang === 'en' ? 'MITTARI · NOW' : 'MITTARI · NYT'} />
 
@@ -187,7 +280,7 @@ const MittariBlock = ({ lang }) => {
 const MestariBlock = ({ lang }) => {
   const blue = '#5B8DEE';
   return (
-    <Block to="/mestari" dataTestId="explore-block-mestari">
+    <Block to="/mestari" dataTestId="explore-block-mestari" accent={blue}>
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
         background: `
@@ -210,6 +303,8 @@ const MestariBlock = ({ lang }) => {
         position: 'absolute', inset: 0, zIndex: 1,
         background: 'linear-gradient(90deg, rgba(11,10,9,0.94) 0%, rgba(11,10,9,0.74) 55%, rgba(11,10,9,0.96) 100%)',
       }} />
+
+      <BlockStat value="3" label={lang === 'en' ? 'Diagnostics' : 'Testit'} />
 
       <Anchor color={blue} label={lang === 'en' ? 'MESTARI · DIAGNOSTICS' : 'MESTARI · DIAGNOSTIIKKAA'} />
 
@@ -364,19 +459,27 @@ const PelisignaalitBlock = ({ lang }) => {
 // ── VOITA — large editorial typographic treatment, gated state ──
 const VoitaBlock = ({ lang }) => {
   const [enabled, setEnabled] = useState(false);
+  const [activeRaffleCount, setActiveRaffleCount] = useState(0);
   useEffect(() => {
     let cancelled = false;
     fetch(`${BACKEND}/api/settings/public`)
       .then((r) => r.ok ? r.json() : {})
       .then((d) => { if (!cancelled) setEnabled(!!d.voita_feature_enabled); })
       .catch(() => {});
+    fetch(`${BACKEND}/api/voita/raffles?status=open`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => {
+        if (cancelled || !d) return;
+        const open = (d.items || []).filter((it) => it.status === 'open');
+        setActiveRaffleCount(open.length);
+      }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
 
   const red = '#C13B2C';
 
   return (
-    <Block to="/voita" dataTestId="explore-block-voita">
+    <Block to="/voita" dataTestId="explore-block-voita" accent={red}>
       {/* designed background — editorial gradient with crimson glow */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
@@ -399,9 +502,19 @@ const VoitaBlock = ({ lang }) => {
         background: 'linear-gradient(90deg, rgba(11,10,9,0.85) 0%, rgba(11,10,9,0.55) 60%, rgba(11,10,9,0.85) 100%)',
       }} />
 
+      {enabled && activeRaffleCount > 0 && (
+        <BlockStat
+          value={activeRaffleCount}
+          label={lang === 'en'
+            ? (activeRaffleCount === 1 ? 'Raffle live' : 'Raffles live')
+            : (activeRaffleCount === 1 ? 'Arvonta auki' : 'Arvontaa auki')}
+        />
+      )}
+
       <Anchor color={red} label={enabled
         ? (lang === 'en' ? 'VOITA · LIVE' : 'VOITA · KÄYNNISSÄ')
-        : (lang === 'en' ? 'VOITA · COMING SOON' : 'VOITA · TULOSSA')} />
+        : (lang === 'en' ? 'VOITA · COMING SOON' : 'VOITA · TULOSSA')}
+        pulse={enabled} />
 
       <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
         <h3 data-testid="explore-voita-placeholder" style={{
@@ -447,9 +560,10 @@ const PeliBlock = ({ lang }) => {
   const reward = week?.prize_summary
     || (lang === 'en' ? 'Play 30 seconds, win 25 free spins.' : 'Pelaa 30 sekuntia, voita 25 ilmais­kierrosta.');
   const green = '#6FA37D';
+  const yellow = '#D4B445';
 
   return (
-    <Block to="/peli" dataTestId="explore-block-peli">
+    <Block to="/peli" dataTestId="explore-block-peli" accent={yellow}>
       {/* designed background — restrained slot reel macro */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
@@ -467,6 +581,8 @@ const PeliBlock = ({ lang }) => {
         position: 'absolute', inset: 0, zIndex: 1,
         background: 'linear-gradient(135deg, rgba(11,10,9,0.88) 0%, rgba(11,10,9,0.78) 60%, rgba(11,10,9,0.94) 100%)',
       }} />
+
+      <BlockStat value="25" label={lang === 'en' ? 'Free spins' : 'Ilmaiskierrosta'} />
 
       <Anchor color={green} label="PELI · VOYAGER" />
 
@@ -501,6 +617,7 @@ const ExploreBlocks = () => {
         marginTop: 28, padding: '22px 0 12px',
       }}
     >
+      <ExploreBlockStyles />
       <div style={{
         display: 'flex', alignItems: 'baseline',
         justifyContent: 'space-between', paddingBottom: 14,
