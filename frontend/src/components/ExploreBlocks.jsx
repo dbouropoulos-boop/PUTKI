@@ -17,6 +17,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLang } from '../context/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 import { dialReading } from '../constants/dial';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
