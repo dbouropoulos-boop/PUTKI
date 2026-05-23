@@ -5,12 +5,25 @@ const LanguageContext = createContext({ lang: 'fi', setLang: () => {}, t: (k) =>
 
 const getInitial = () => {
   if (typeof window === 'undefined') return 'fi';
-  const stored = window.localStorage.getItem('mittari-lang');
-  if (stored === 'fi' || stored === 'en') return stored;
-  // Default to Finnish; if browser is English-only, default English
-  const nav = (typeof navigator !== 'undefined' && navigator.language) || 'fi-FI';
-  if (nav.startsWith('en')) return 'en';
-  return 'fi';
+  // Explicit user choice (from a prior visit or URL ?lang=) always wins.
+  try {
+    const stored = window.localStorage.getItem('mittari-lang');
+    if (stored === 'fi' || stored === 'en') return stored;
+    const url = new URL(window.location.href);
+    const q = (url.searchParams.get('lang') || '').toLowerCase();
+    if (q === 'fi' || q === 'en') return q;
+  } catch {}
+  // Auto-detect on first visit: any non-Finnish browser defaults to English.
+  // Finnish browsers stay on Finnish (the home market). This serves streamer
+  // affiliate traffic from outside Finland a usable experience by default.
+  const langs = (typeof navigator !== 'undefined' && (navigator.languages || [navigator.language])) || ['fi-FI'];
+  for (const l of langs) {
+    const low = String(l || '').toLowerCase();
+    if (low.startsWith('fi')) return 'fi';
+    if (low.startsWith('en')) return 'en';
+  }
+  // Other languages — default to English (it's the wider fallback).
+  return 'en';
 };
 
 export const LanguageProvider = ({ children }) => {

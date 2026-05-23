@@ -2,6 +2,13 @@
 
 ## Phase History (latest first)
 
+- **Language pill UX · Smarter auto-detect · CORS lock-down · Mestari/news i18n audit** (2026-05-23, iter61 — no new tests; visual verification + CORS check)
+  - **New segmented `[ FI ][ EN ]` pill** in the site header replaces the previous "FI / EN" text toggle. Active language is filled (ink on bg); inactive language is muted outlined. `data-testid="lang-toggle"` preserved. Aria-label + title attributes flip to the OTHER language ("Switch to English" / "Vaihda suomeksi") so it self-explains.
+  - **Smarter auto-detect** (`LanguageContext.getInitial()`): now honours both `?lang=` query param AND `localStorage` (explicit choice wins). Walks `navigator.languages[]` and returns `fi` for any `fi-*` browser, `en` for any `en-*` browser, and `en` for every other language (broader fallback). The previous version only flipped to EN if the browser was strictly English-only; now any non-Finnish browser sees the EN site immediately — important for streamer affiliate traffic landing from outside Finland.
+  - **CORS lock-down**: backend `.env` now sets `CORS_ORIGINS="https://putkihq.fi,https://www.putkihq.fi,https://pelisignaali-fi.preview.emergentagent.com,http://localhost:3000"` (was wildcard `*`). Note: the Emergent preview ingress / Cloudflare layer in front of FastAPI overrides response headers with wildcard `*`, so the effective enforcement happens only on direct-to-FastAPI deployments (real prod hosting outside the platform). The change is still meaningful for defense-in-depth + documents intent.
+  - **Mestari / news i18n audit**: verified all three Mestari surfaces (`Mestari.jsx`, `MestariDiagnostic.jsx`, `MestariHub.jsx`) carry a full parallel `fi: {...}` and `en: {...}` copy bundle (Mestari has matching keys at lines 57 + 182, MestariDiagnostic has 49 `_fi/_en` pairs, MestariHub has 27). `Pulssi.jsx` and `Uutiset.jsx` use inline `lang === 'en' ?` ternaries plus `useLang()` hooks throughout. No hardcoded Finnish strings discovered outside the `_fi:` keys of bilingual tables.
+  - **No regressions**: all 60 backend tests from iter5*+iter60 still passing; frontend lint clean across header, context, and all peliareena pages.
+
 - **Mini-game canvas polish + full FI/EN bilingual suite** (2026-05-23, iter60 — 60/60 tests passing, 0 regressions)
   - **Canvas graphics dramatically upgraded** for both arcade games:
     - **Snake**: vignette background + subtle checkerboard, rounded gradient body segments with depth fade, animated pulsing food halo + amber food orb with white highlight, snake head shows direction-aware eyes + pupils + highlight stripe, framed canvas. Continuous redraw loop (~30fps) so the food halo pulses smoothly while moving at game tick rate.

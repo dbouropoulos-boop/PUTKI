@@ -35,12 +35,32 @@ export const Header = () => {
           <BellAlertManager />
           <button
             onClick={toggleLang}
-            aria-label="Toggle language"
+            aria-label="Toggle language · FI / EN"
             data-testid="lang-toggle"
-            className="mono text-[11px] font-semibold tracking-[0.16em] uppercase px-3 h-9 rounded-full border flex items-center"
-            style={{ borderColor: 'var(--border-strong)', color: 'var(--ink)' }}
+            title={lang === 'fi' ? 'Switch to English' : 'Vaihda suomeksi'}
+            className="mono text-[11px] font-semibold tracking-[0.16em] uppercase h-9 rounded-full border flex items-center overflow-hidden"
+            style={{ borderColor: 'var(--border-strong)' }}
           >
-            {lang === 'fi' ? 'FI / EN' : 'EN / FI'}
+            <span
+              data-active={lang === 'fi'}
+              className="px-2.5 h-full flex items-center transition-colors"
+              style={{
+                background: lang === 'fi' ? 'var(--ink)' : 'transparent',
+                color: lang === 'fi' ? 'var(--bg)' : 'var(--muted)',
+              }}
+            >
+              FI
+            </span>
+            <span
+              data-active={lang === 'en'}
+              className="px-2.5 h-full flex items-center transition-colors"
+              style={{
+                background: lang === 'en' ? 'var(--ink)' : 'transparent',
+                color: lang === 'en' ? 'var(--bg)' : 'var(--muted)',
+              }}
+            >
+              EN
+            </span>
           </button>
           <button
             onClick={toggle}
