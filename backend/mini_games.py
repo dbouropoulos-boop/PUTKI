@@ -522,6 +522,13 @@ async def finish_quiz(db, *, play_id: str, anon_id: str, answers: List[Dict[str,
     pct = (correct_count / total * 100.0) if total else 0.0
     persona = _persona_for(pct, tag_scores)
 
+    from mini_game_card import build_quiz_card
+    week_iso = play.get("week_iso") or _week_iso()
+    card = await build_quiz_card(
+        db, persona=persona, score=correct_count, total=total, pct=pct,
+        tag_scores=tag_scores, week_iso=week_iso,
+    )
+
     finished_at = _now_iso()
     preview = {
         "play_id": play_id,
@@ -532,6 +539,8 @@ async def finish_quiz(db, *, play_id: str, anon_id: str, answers: List[Dict[str,
                             "title_en": persona.get("title_en", "")},
         "answers": scored,                  # full per-question feedback
         "personalized_locked": True,        # the FULL persona analysis is gated
+        "card": card,                       # iter63 Identity Card payload
+        "week_iso": week_iso,
     }
 
     await db.mini_game_plays.update_one(
@@ -897,6 +906,13 @@ async def finish_scenario(db, *, play_id: str, anon_id: str, answers: List[Dict[
     pct = (total_score / SCENARIO_MAX_SCORE * 100.0) if SCENARIO_MAX_SCORE else 0.0
     persona = persona_for_scenario(total_score)
 
+    from mini_game_card import build_scenario_card
+    week_iso = play.get("week_iso") or _week_iso()
+    card = await build_scenario_card(
+        db, persona=persona, score=total_score, max_score=SCENARIO_MAX_SCORE,
+        pct=pct, tag_scores=tag_scores, week_iso=week_iso,
+    )
+
     preview = {
         "play_id": play_id,
         "score": total_score,
@@ -907,6 +923,8 @@ async def finish_scenario(db, *, play_id: str, anon_id: str, answers: List[Dict[
                             "title_en": persona.get("title_en", "")},
         "answers": scored,
         "personalized_locked": True,
+        "card": card,
+        "week_iso": week_iso,
     }
 
     await db.mini_game_plays.update_one(
@@ -1032,6 +1050,16 @@ async def finish_insight(db, *, play_id, anon_id) -> Dict[str, Any]:
         "A small start — come back this week to uncover the rest of the tiles."
     )
 
+    from mini_game_card import build_insight_card
+    week_iso = play.get("week_iso") or _week_iso()
+    revealed_topic_tags = list({t.get("topic_tag") for t in revealed_tiles if t.get("topic_tag")})
+    card = await build_insight_card(
+        db, persona_title=persona_title, persona_title_en=persona_title_en,
+        persona_tagline=persona_tagline, persona_tagline_en=persona_tagline_en,
+        revealed_count=score, total_tiles=INSIGHT_TILE_COUNT,
+        week_iso=week_iso, revealed_topic_tags=revealed_topic_tags,
+    )
+
     preview = {
         "play_id": play_id,
         "score": score,
@@ -1041,6 +1069,8 @@ async def finish_insight(db, *, play_id, anon_id) -> Dict[str, Any]:
                             "title_en": persona_title_en},
         "revealed_tiles": revealed_tiles,
         "personalized_locked": True,
+        "card": card,
+        "week_iso": week_iso,
     }
 
     await db.mini_game_plays.update_one(
@@ -1256,16 +1286,29 @@ async def submit_arcade_score(db, *, play_id: str, anon_id: str, score: int) -> 
     valid_for_leaderboard = not cheat_suspected
     max_score_for_pct = max(max_score, 100)  # avoid div-by-zero edge
 
+    from mini_game_card import build_arcade_card
+    week_iso = play.get("week_iso") or _week_iso()
+    persona_title = "Aikatappo-pelaaja" if score >= 10 else "Aloitteleva napauttaja"
+    persona_title_en = "Timekiller Player" if score >= 10 else "Beginning Tapper"
+    card = await build_arcade_card(
+        db, game_slug=game_slug, score=score, max_score=max_score,
+        week_iso=week_iso, persona_title=persona_title,
+        persona_title_en=persona_title_en,
+    )
+
     preview = {
         "play_id": play_id,
         "score": score,
         "max_score": max_score,
         "pct": round((score / max_score_for_pct) * 100.0, 1),
         "persona_preview": {"key": "arcade_player",
-                            "title": "Aikatappo-pelaaja" if score >= 10 else "Aloitteleva napauttaja"},
+                            "title": persona_title,
+                            "title_en": persona_title_en},
         "elapsed_seconds": round(elapsed, 1),
         "valid_for_leaderboard": valid_for_leaderboard,
         "personalized_locked": True,
+        "card": card,
+        "week_iso": week_iso,
     }
 
     await db.mini_game_plays.update_one(

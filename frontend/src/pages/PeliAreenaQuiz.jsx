@@ -18,6 +18,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, X, Lock, Trophy, Share2, ChevronRight } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
+import IdentityCardFlow from '../components/peliareena/IdentityCardFlow';
 import { useLang } from '../context/LanguageContext';
 import { pickPA, interpolate, langField } from '../i18n/peliareena';
 
@@ -267,29 +268,19 @@ const RevealCard = ({ lang, onNext, index, total }) => (
 // ── Preview ────────────────────────────────────────────────────
 
 const Preview = ({ lang, result, session, onUnlocked }) => {
-  const pct = result.pct;
-  const right = result.score;
-  const total = result.total;
-  const personaTitle = (lang === 'en' && result.persona_preview.title_en) || result.persona_preview.title;
   return (
     <div data-testid="quiz-preview">
-      <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-        {pickPA(lang, 'quiz.preview.eyebrow')}
-      </div>
-      <h1 style={{
-        fontFamily: 'Georgia, serif', fontWeight: 700,
-        fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-        letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
-      }}>
-        {right}<span style={{ color: 'var(--muted)' }}>/{total}</span>
-      </h1>
-      <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
-        {interpolate(pickPA(lang, 'quiz.preview.lead'), { pct: pct.toFixed(0) })}
-        <strong style={{ color: 'var(--ink)' }}>{personaTitle}</strong>.
-      </p>
+      {/* iter63 — Identity-first reveal + Micro-Yes ladder */}
+      <IdentityCardFlow
+        preview={result}
+        session={session}
+        gameSlug="quiz"
+        unlockPath="/api/mini-games/quiz/unlock"
+        onUnlocked={onUnlocked}
+      />
 
-      {/* Per-question feedback (this is the educational payoff that's free) */}
-      <div style={{ marginBottom: 32 }}>
+      {/* Per-question feedback retained as free educational payoff */}
+      <div style={{ marginTop: 36, marginBottom: 32 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
           {pickPA(lang, 'quiz.preview.feedbackHeading')}
         </div>
@@ -299,15 +290,6 @@ const Preview = ({ lang, result, session, onUnlocked }) => {
           ))}
         </div>
       </div>
-
-      {/* Email gate */}
-      <EmailGate
-        lang={lang}
-        session={session}
-        score={right}
-        total={total}
-        onUnlocked={onUnlocked}
-      />
 
       <div style={{ marginTop: 24 }}>
         <Link to="/peliareena" data-testid="quiz-preview-back" style={{

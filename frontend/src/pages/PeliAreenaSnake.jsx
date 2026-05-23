@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Share2 } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
+import IdentityCardFlow from '../components/peliareena/IdentityCardFlow';
 import { useLang } from '../context/LanguageContext';
 import { pickPA, interpolate } from '../i18n/peliareena';
 
@@ -358,34 +359,21 @@ const PeliAreenaSnake = () => {
 
 export const ArcadePreview = ({ preview, session, sport, onUnlocked }) => {
   const { lang } = useLang();
-  const personaTitle = (lang === 'en' && preview.persona_preview.title_en) || preview.persona_preview.title;
   return (
     <div data-testid={`${sport}-preview`}>
-      <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-        {pickPA(lang, 'ar.preview.eyebrow')}
-      </div>
-      <h1 style={{
-        fontFamily: 'Georgia, serif', fontWeight: 700,
-        fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-        letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
-      }}>
-        {preview.score}<span style={{ color: 'var(--muted)', fontSize: '0.5em' }}>{pickPA(lang, 'ar.points.short')}</span>
-      </h1>
       {!preview.valid_for_leaderboard && (
         <p data-testid={`${sport}-invalid-warn`} style={{
           background: 'rgba(200,66,60,0.10)', border: '1px solid #C8423C',
           padding: 12, borderRadius: 4, fontFamily: 'Georgia, serif', fontSize: 13,
-          color: '#C8423C', margin: '0 0 24px',
+          color: '#C8423C', margin: '0 0 18px',
         }}>
           {pickPA(lang, 'ar.preview.invalid')}
         </p>
       )}
-      <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
-        {interpolate(pickPA(lang, 'ar.preview.detail'), { persona: personaTitle, seconds: preview.elapsed_seconds })}
-      </p>
-      <ConsentEmailGate
-        gameSlug={sport}
+      <IdentityCardFlow
+        preview={preview}
         session={session}
+        gameSlug={sport}
         unlockPath={`/api/mini-games/arcade/${sport}/unlock`}
         onUnlocked={onUnlocked}
       />

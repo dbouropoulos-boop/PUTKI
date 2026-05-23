@@ -10,6 +10,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Share2 } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
+import IdentityCardFlow from '../components/peliareena/IdentityCardFlow';
 import { useLang } from '../context/LanguageContext';
 import { pickPA, interpolate, langField } from '../i18n/peliareena';
 
@@ -171,25 +172,17 @@ const PeliAreenaInsight = () => {
 };
 
 const InsightPreview = ({ lang, preview, session, onUnlocked }) => {
-  const personaTitle = (lang === 'en' && preview.persona_preview.title_en) || preview.persona_preview.title;
   return (
     <div data-testid="insight-preview">
-      <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-        {pickPA(lang, 'sc.preview.eyebrow')}
-      </div>
-      <h1 style={{
-        fontFamily: 'Georgia, serif', fontWeight: 700,
-        fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-        letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
-      }}>
-        {preview.score}<span style={{ color: 'var(--muted)' }}>/{preview.max_score}</span>
-      </h1>
-      <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
-        {lang === 'en' ? 'Micro-lessons revealed. Preview: ' : 'Mikro-oppia avattu. Esikatselu: '}
-        <strong style={{ color: 'var(--ink)' }}>{personaTitle}</strong>.
-      </p>
+      <IdentityCardFlow
+        preview={preview}
+        session={session}
+        gameSlug="insight"
+        unlockPath="/api/mini-games/insight/unlock"
+        onUnlocked={onUnlocked}
+      />
 
-      <div style={{ marginBottom: 32 }}>
+      <div style={{ marginTop: 36, marginBottom: 32 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
           {lang === 'en' ? 'REVEALED LESSONS' : 'AVATUT OPIT'}
         </div>
@@ -209,13 +202,6 @@ const InsightPreview = ({ lang, preview, session, onUnlocked }) => {
           ))}
         </div>
       </div>
-
-      <ConsentEmailGate
-        gameSlug="insight"
-        session={session}
-        unlockPath="/api/mini-games/insight/unlock"
-        onUnlocked={onUnlocked}
-      />
 
       <div style={{ marginTop: 24 }}>
         <Link to="/peliareena" data-testid="insight-preview-back" style={btnGhost}>

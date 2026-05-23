@@ -1,0 +1,65 @@
+{
+  "summary": "iter63 Identity Result Card — Backend 6/6 PASS across all 5 game finish endpoints (quiz, scenario, insight, snake, tap). Frontend: identity card + micro-yes flow renders correctly with all required testids, BUT after successful POST /unlock (200 OK) the UI bypasses the new [data-testid=micro-yes-success] block entirely and jumps straight to the legacy strengths/weaknesses/leaderboard panels — the Telegram CTA (card-tg-cta) is never reached.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "MicroYesGate (quiz Preview) / IdentityCardFlow",
+        "issue": "After /api/mini-games/quiz/unlock returns 200, the success block [data-testid='micro-yes-success'] is NEVER rendered. The identity card + gate unmount and the legacy deep-result panels (Your Strengths / Areas to Improve / Weekly Tournament Top 10) take over the screen. card-tg-cta is therefore unreachable in the normal flow. Spec requires: identity-card → micro-yes-btn → micro-yes-gate → micro-yes-submit → micro-yes-success WITH card-tg-cta to https://t.me/putkihq, and legacy panels BELOW that block.",
+        "selector": "[data-testid='micro-yes-success'], [data-testid='card-tg-cta']",
+        "priority": "CRITICAL"
+      },
+      {
+        "component": "Language default / FI page route",
+        "issue": "Visiting /peliareena/tietoisuustesti (Finnish path) renders the identity card in English by default (AWARENESS INDEX, 'Higher than 0% of players this week', 'Fresh Learner'). Clicking the FI pill in the header did not visibly switch the active card copy back to FI in our test (card had already been replaced by legacy panels by then — we could not isolate whether the toggle works on the card itself).",
+        "selector": "header FI/EN pills",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Quiz email gate → success",
+        "issue": "/api/mini-games/quiz/unlock returns 200 with full lead payload, but the frontend transitions to the legacy view instead of showing micro-yes-success + Telegram CTA. The new success state appears to never mount.",
+        "affected_selectors": ["[data-testid='micro-yes-success']", "[data-testid='card-tg-cta']"]
+      }
+    ],
+    "design_issues": [
+      {
+        "screen": "Quiz result page",
+        "issues": ["A floating 'Manage your streamer alerts' modal appears anchored top-right while the result page renders (likely the bell-icon alert popover) — visually clutters the result. Either auto-dismiss on /peliareena/* routes or move it out of the result viewport."]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter63_identity_card.py",
+    "/app/test_reports/pytest/iter63_results.xml"
+  ],
+  "action_items": [
+    "FIX (CRITICAL): In the Quiz Preview / IdentityCardFlow wrapper, after a successful unlock response, keep the IdentityCardFlow mounted and switch its internal state to 'success' so the [data-testid=micro-yes-success] block with [data-testid=card-tg-cta] (href=https://t.me/putkihq) renders. Move the legacy 'Your strengths / Areas to improve / Weekly tournament top 10' panels BELOW the success block, not as a replacement. Repeat the same fix in Scenario / Insight / Snake / Tap Preview components since they all use the shared IdentityCardFlow.",
+    "FIX (HIGH): Verify the FI/EN pill toggle correctly re-renders the identity card copy (verdict_fi/_en, hook_text_fi/_en, read_line_fi/_en, stat_label_fi/_en, stat_footnote_fi/_en) when toggled while the card is mounted. Default language for /peliareena/* should likely be FI (the FI URL slugs imply a FI-first audience), not whatever localStorage held.",
+    "INVESTIGATE: Streamer-alert popover appearing on top of the quiz result page — consider hiding it on game result screens."
+  ],
+  "critical_code_review_comments": [
+    "mini_game_card.py:113 _percentile — when weekly_scores is empty the default returns 75 which would print 'Higher than 75% of players this week.' for the very first player. Backend test currently confirms a digit pattern but a fresh player on a fresh week could see a misleadingly high 75% — consider returning a more honest default (e.g. 50 or omit the line until ≥3 plays exist).",
+    "mini_game_card.py:178+ — `from mini_game_card import build_quiz_card` is done inline inside finish_quiz/finish_scenario/finish_insight/submit_arcade_score in mini_games.py instead of at module top. Works but adds a per-request import cost. Promote to module-level imports.",
+    "mini_game_card.py:294 _fetch_weekly_scores — silently returns [] on exception. Wrap with logger.warning so a broken weekly_scores collection doesn't go unnoticed (the percentile copy will quietly degrade to the 75-default for every player).",
+    "PeliAreenaQuiz.jsx / IdentityCardFlow.jsx (not viewed directly but inferred from runtime): the success-state transition is being missed. Likely either (a) the parent re-rendering the legacy result on prop change after unlock, or (b) IdentityCardFlow's internal `step` state machine is conditionally unmounted by an outer `if (unlocked) <LegacyResult/> else <IdentityCardFlow/>` pattern. The correct pattern is to render IdentityCardFlow ALWAYS and let it own the success step; legacy panels live below as sibling components.",
+    "5 game pages share the new IdentityCardFlow wrapper — but the bug in the Quiz Preview will almost certainly repeat in Scenario/Insight/Snake/Tap unless the fix is applied at the shared component (or in each Preview's wiring uniformly)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter63_identity_card.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (6/6 iter63 tests passed)",
+    "frontend": "~60% — identity card renders fully with all expected testids and copy (incl. <em> markup); micro-yes button + email gate work; gate fields (micro-yes-email, micro-yes-consent, micro-yes-submit) all present and submission posts /unlock successfully; BUT post-unlock success block (micro-yes-success + card-tg-cta) is never shown — legacy panels render instead."
+  },
+  "test_credentials": "n/a — public endpoints + visitor cookie",
+  "seed_data_creation": "Test plays seeded to MongoDB via real POST /start + /finish flow (anon_id prefixed TEST_iter63_*). Quiz, scenario, insight, arcade_snake, arcade_tap each produced 1 finished play + (quiz only) 1 lead via /unlock with email test+iter63@putkihq.fi.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend `card` payload contract is locked in by /app/backend/tests/test_iter63_identity_card.py (all 6 PASS). Reuse this file for regression. For frontend retest: open /peliareena/tietoisuustesti, answer all 10 questions (use [data-testid^=quiz-option-] selectors and [data-testid=quiz-next-btn]/[data-testid=quiz-submit-btn]), then verify the FULL ladder: identity-result-card → micro-yes-btn → micro-yes-gate → micro-yes-email + micro-yes-consent + micro-yes-submit → micro-yes-success → card-tg-cta. After fix, also re-verify scenario (/peliareena/paatospolku), insight (/peliareena/tietoraape), snake (/peliareena/aikatappo-mato), tap (/peliareena/aikatappo-napautus) since they all share IdentityCardFlow. Also re-check FI/EN pill toggle on the identity card itself.",
+  "rca of the issue": "The /api/mini-games/quiz/unlock call returns 200 with the full unlocked payload (persona, lead_id, etc.). The frontend appears to switch its top-level rendering away from IdentityCardFlow → to the legacy DeepResult panels (Your Strengths / Areas to improve / Weekly Tournament Top 10 / Share/Back-to-Arena buttons) as soon as `unlocked` becomes true. This bypasses IdentityCardFlow's internal step='success' state where [data-testid=micro-yes-success] + [data-testid=card-tg-cta] live. Fix: keep IdentityCardFlow rendered through the success step and place legacy panels below it (or remove the conditional swap entirely, since iter63 spec says the new flow REPLACES the old preview but the legacy per-question feedback + leaderboard panels remain BELOW the new card)."
+}
