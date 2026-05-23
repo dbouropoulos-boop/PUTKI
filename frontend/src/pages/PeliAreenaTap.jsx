@@ -292,10 +292,8 @@ const PeliAreenaTap = () => {
 
       {stage === 'preview' && preview && (
         <ArcadePreview preview={preview} session={session} sport="tap"
-                       onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
-      )}
-      {stage === 'unlocked' && full && (
-        <ArcadeUnlocked result={full} gameSlug="arcade_tap" />
+                       fullResult={full} gameSlug="arcade_tap"
+                       onUnlocked={(r) => { setFull(r); }} />
       )}
     </div>
   );

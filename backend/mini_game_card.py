@@ -112,9 +112,13 @@ def _persona_index_str(persona_key: str) -> str:
 
 def _percentile(player_score: int, weekly_scores: List[int]) -> int:
     """Return integer 0..99 percentile vs the rest of the week. Uses
-    "lower-or-equal" so the player always lands ≥0 even on first play."""
-    if not weekly_scores:
-        return 75  # Honest default for the very first player of the week.
+    "lower-or-equal" so the player always lands ≥0 even on first play.
+
+    When the week has < 3 finished plays the percentile copy is
+    statistically meaningless, so we fall back to an honest 50 (median)
+    instead of an optimistic-but-fake number."""
+    if len(weekly_scores) < 3:
+        return 50
     below = sum(1 for s in weekly_scores if s < player_score)
     pct = round((below / max(1, len(weekly_scores))) * 100)
     return max(0, min(99, pct))
@@ -294,6 +298,8 @@ async def build_arcade_card(
 async def _fetch_weekly_scores(db, game_slug: str, week_iso: str) -> List[int]:
     """Return the list of finished play scores for the given game + week.
     Used for the "Higher than X%" copy and (arcade) percentile compute."""
+    import logging
+    logger = logging.getLogger(__name__)
     try:
         cur = db.mini_game_plays.find(
             {"game_slug": game_slug, "week_iso": week_iso, "status": "finished"},
@@ -302,4 +308,5 @@ async def _fetch_weekly_scores(db, game_slug: str, week_iso: str) -> List[int]:
         rows = await cur.to_list(length=1000)
         return [int(r.get("score") or 0) for r in rows]
     except Exception:
+        logger.warning("mini_game_card._fetch_weekly_scores failed for %s/%s — falling back to []", game_slug, week_iso, exc_info=True)
         return []

@@ -127,10 +127,10 @@ const PeliAreenaQuiz = () => {
           lang={lang}
           result={previewResult}
           session={session}
-          onUnlocked={(full) => { setFullResult(full); setStage('unlocked'); }}
+          fullResult={fullResult}
+          onUnlocked={(full) => { setFullResult(full); }}
         />
       )}
-      {stage === 'unlocked' && fullResult && <Unlocked lang={lang} result={fullResult} previewResult={previewResult} />}
     </div>
   );
 };
@@ -267,7 +267,7 @@ const RevealCard = ({ lang, onNext, index, total }) => (
 
 // ── Preview ────────────────────────────────────────────────────
 
-const Preview = ({ lang, result, session, onUnlocked }) => {
+const Preview = ({ lang, result, session, onUnlocked, fullResult }) => {
   return (
     <div data-testid="quiz-preview">
       {/* iter63 — Identity-first reveal + Micro-Yes ladder */}
@@ -278,6 +278,13 @@ const Preview = ({ lang, result, session, onUnlocked }) => {
         unlockPath="/api/mini-games/quiz/unlock"
         onUnlocked={onUnlocked}
       />
+
+      {/* Full unlocked detail panels render below after successful unlock */}
+      {fullResult && (
+        <div style={{ marginTop: 36 }}>
+          <Unlocked lang={lang} result={fullResult} previewResult={result} />
+        </div>
+      )}
 
       {/* Per-question feedback retained as free educational payoff */}
       <div style={{ marginTop: 36, marginBottom: 32 }}>

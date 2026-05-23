@@ -161,17 +161,15 @@ const PeliAreenaInsight = () => {
       )}
 
       {stage === 'preview' && preview && (
-        <InsightPreview lang={lang} preview={preview} session={session} onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
-      )}
-
-      {stage === 'unlocked' && full && (
-        <InsightUnlocked lang={lang} result={full} />
+        <InsightPreview lang={lang} preview={preview} session={session}
+          fullResult={full}
+          onUnlocked={(r) => { setFull(r); }} />
       )}
     </div>
   );
 };
 
-const InsightPreview = ({ lang, preview, session, onUnlocked }) => {
+const InsightPreview = ({ lang, preview, session, onUnlocked, fullResult }) => {
   return (
     <div data-testid="insight-preview">
       <IdentityCardFlow
@@ -181,6 +179,12 @@ const InsightPreview = ({ lang, preview, session, onUnlocked }) => {
         unlockPath="/api/mini-games/insight/unlock"
         onUnlocked={onUnlocked}
       />
+
+      {fullResult && (
+        <div style={{ marginTop: 36 }}>
+          <InsightUnlocked lang={lang} result={fullResult} />
+        </div>
+      )}
 
       <div style={{ marginTop: 36, marginBottom: 32 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>

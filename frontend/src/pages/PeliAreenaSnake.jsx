@@ -346,10 +346,8 @@ const PeliAreenaSnake = () => {
 
       {stage === 'preview' && preview && (
         <ArcadePreview preview={preview} session={session} sport="snake"
-                       onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
-      )}
-      {stage === 'unlocked' && full && (
-        <ArcadeUnlocked result={full} preview={preview} gameSlug="arcade_snake" />
+                       fullResult={full} gameSlug="arcade_snake"
+                       onUnlocked={(r) => { setFull(r); }} />
       )}
     </div>
   );
@@ -357,7 +355,7 @@ const PeliAreenaSnake = () => {
 
 // ─── Shared preview + unlocked (used by snake + tap) ───
 
-export const ArcadePreview = ({ preview, session, sport, onUnlocked }) => {
+export const ArcadePreview = ({ preview, session, sport, onUnlocked, fullResult, gameSlug }) => {
   const { lang } = useLang();
   return (
     <div data-testid={`${sport}-preview`}>
@@ -377,6 +375,11 @@ export const ArcadePreview = ({ preview, session, sport, onUnlocked }) => {
         unlockPath={`/api/mini-games/arcade/${sport}/unlock`}
         onUnlocked={onUnlocked}
       />
+      {fullResult && (
+        <div style={{ marginTop: 36 }}>
+          <ArcadeUnlocked result={fullResult} preview={preview} gameSlug={gameSlug || `arcade_${sport}`} />
+        </div>
+      )}
       <div style={{ marginTop: 24 }}>
         <Link to="/peliareena" data-testid={`${sport}-preview-back`} style={btnGhost}>
           {pickPA(lang, 'quiz.back')}

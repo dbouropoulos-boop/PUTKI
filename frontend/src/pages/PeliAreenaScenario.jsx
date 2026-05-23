@@ -144,17 +144,15 @@ const PeliAreenaScenario = () => {
       )}
 
       {stage === 'preview' && preview && (
-        <ScenarioPreview lang={lang} preview={preview} session={session} onUnlocked={(r) => { setFullResult(r); setStage('unlocked'); }} />
-      )}
-
-      {stage === 'unlocked' && fullResult && (
-        <ScenarioUnlocked lang={lang} result={fullResult} />
+        <ScenarioPreview lang={lang} preview={preview} session={session}
+          fullResult={fullResult}
+          onUnlocked={(r) => { setFullResult(r); }} />
       )}
     </div>
   );
 };
 
-const ScenarioPreview = ({ lang, preview, session, onUnlocked }) => {
+const ScenarioPreview = ({ lang, preview, session, onUnlocked, fullResult }) => {
   return (
     <div data-testid="scenario-preview">
       {/* iter63 — Identity-first reveal + Micro-Yes ladder */}
@@ -166,6 +164,11 @@ const ScenarioPreview = ({ lang, preview, session, onUnlocked }) => {
         onUnlocked={onUnlocked}
       />
 
+      {fullResult && (
+        <div style={{ marginTop: 36 }}>
+          <ScenarioUnlocked lang={lang} result={fullResult} />
+        </div>
+      )}
       <div style={{ marginTop: 36, marginBottom: 32 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
           {pickPA(lang, 'sc.preview.optionsHeading')}
