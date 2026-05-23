@@ -8,9 +8,11 @@
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronRight, Share2, Trophy } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Share2 } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
+import { useLang } from '../context/LanguageContext';
+import { pickPA, interpolate } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const GRID = 20;       // cells per side
@@ -33,7 +35,32 @@ const randCell = (occupied) => {
   }
 };
 
+// Canvas helpers
+const roundRect = (ctx, x, y, w, h, r) => {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+};
+export const mix = (hex1, hex2, t) => {
+  const p = (h) => {
+    h = h.replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  };
+  const [r1, g1, b1] = p(hex1);
+  const [r2, g2, b2] = p(hex2);
+  const r = Math.round(r1 + (r2 - r1) * t);
+  const g = Math.round(g1 + (g2 - g1) * t);
+  const b = Math.round(b1 + (b2 - b1) * t);
+  return `rgb(${r},${g},${b})`;
+};
+
 const PeliAreenaSnake = () => {
+  const { lang } = useLang();
   const canvasRef = useRef(null);
   const stateRef = useRef({
     snake: [{ x: 10, y: 10 }], dir: { x: 1, y: 0 }, nextDir: { x: 1, y: 0 },
@@ -45,6 +72,7 @@ const PeliAreenaSnake = () => {
   const [preview, setPreview] = useState(null);
   const [full, setFull] = useState(null);
   const tickRef = useRef(null);
+  const animRef = useRef(null);
   const touchRef = useRef(null);
 
   const draw = useCallback(() => {
@@ -54,33 +82,103 @@ const PeliAreenaSnake = () => {
     const st = stateRef.current;
     const cs = getComputedStyle(document.documentElement);
     const bg = cs.getPropertyValue('--surface').trim() || '#14110d';
+    const bg2 = cs.getPropertyValue('--surface-2').trim() || '#1B1814';
     const grid = cs.getPropertyValue('--border').trim() || '#221E1B';
     const ink = cs.getPropertyValue('--ink').trim() || '#ECE6D8';
 
-    ctx.fillStyle = bg;
+    // Subtle vignette background
+    const g = ctx.createRadialGradient(
+      (GRID * CELL) / 2, (GRID * CELL) / 2, 40,
+      (GRID * CELL) / 2, (GRID * CELL) / 2, GRID * CELL * 0.75,
+    );
+    g.addColorStop(0, bg2);
+    g.addColorStop(1, bg);
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, cv.width, cv.height);
 
-    // Light grid texture
-    ctx.strokeStyle = grid;
-    ctx.lineWidth = 0.5;
-    for (let i = 0; i <= GRID; i++) {
-      ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, GRID * CELL); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(GRID * CELL, i * CELL); ctx.stroke();
+    // Checkerboard grid (chess board, very subtle)
+    for (let x = 0; x < GRID; x++) {
+      for (let y = 0; y < GRID; y++) {
+        if ((x + y) % 2 === 0) continue;
+        ctx.fillStyle = grid;
+        ctx.globalAlpha = 0.18;
+        ctx.fillRect(x * CELL, y * CELL, CELL, CELL);
+      }
     }
+    ctx.globalAlpha = 1;
 
-    // Food (amber)
+    // Food — pulsing amber glow
+    const pulse = 0.85 + 0.15 * Math.sin(Date.now() / 180);
+    const fx = st.food.x * CELL + CELL / 2;
+    const fy = st.food.y * CELL + CELL / 2;
+    const halo = ctx.createRadialGradient(fx, fy, 1, fx, fy, CELL * 0.9);
+    halo.addColorStop(0, 'rgba(212,180,69,0.65)');
+    halo.addColorStop(0.6, 'rgba(212,180,69,0.15)');
+    halo.addColorStop(1, 'rgba(212,180,69,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(fx - CELL, fy - CELL, CELL * 2, CELL * 2);
     ctx.fillStyle = '#D4B445';
     ctx.beginPath();
-    ctx.arc(st.food.x * CELL + CELL / 2, st.food.y * CELL + CELL / 2, CELL * 0.35, 0, Math.PI * 2);
+    ctx.arc(fx, fy, CELL * 0.36 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.arc(fx - CELL * 0.10, fy - CELL * 0.10, CELL * 0.10, 0, Math.PI * 2);
     ctx.fill();
 
-    // Snake
+    // Snake — rounded segments + gradient + glow on head
     st.snake.forEach((seg, i) => {
-      ctx.fillStyle = i === 0 ? ink : ink;
-      ctx.globalAlpha = i === 0 ? 1 : Math.max(0.3, 1 - i * 0.04);
-      ctx.fillRect(seg.x * CELL + 2, seg.y * CELL + 2, CELL - 4, CELL - 4);
+      const isHead = i === 0;
+      const px = seg.x * CELL;
+      const py = seg.y * CELL;
+      const inset = 3;
+      const w = CELL - inset * 2;
+      const r = isHead ? 8 : 6;
+      // Body shadow
+      if (!isHead) {
+        ctx.fillStyle = `rgba(0,0,0,${Math.max(0.05, 0.18 - i * 0.005)})`;
+        roundRect(ctx, px + inset, py + inset + 1, w, w, r);
+        ctx.fill();
+      }
+      // Segment fill
+      const lin = ctx.createLinearGradient(px, py, px, py + CELL);
+      const fade = Math.max(0.55, 1 - i * 0.035);
+      lin.addColorStop(0, mix(ink, '#000000', 1 - fade * 0.85));
+      lin.addColorStop(1, mix(ink, '#000000', 1 - fade * 0.55));
+      ctx.fillStyle = lin;
+      roundRect(ctx, px + inset, py + inset, w, w, r);
+      ctx.fill();
+      // Head highlight + eyes
+      if (isHead) {
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        roundRect(ctx, px + inset + 2, py + inset + 2, w - 4, w / 2 - 1, r - 2);
+        ctx.fill();
+        // Eyes oriented by direction
+        const dirX = st.dir.x;
+        const dirY = st.dir.y;
+        const eyeR = 2.4;
+        const cx = px + CELL / 2;
+        const cy = py + CELL / 2;
+        // Eye positions perpendicular to direction
+        const offX = dirY === 0 ? 0 : 4 * (dirY > 0 ? 1 : -1) - dirY * 3;
+        const offY = dirX === 0 ? 0 : 4 * (dirX > 0 ? 1 : -1) - dirX * 3;
+        const e1 = { x: cx + dirX * 4 - (dirY ? 4 : 0), y: cy + dirY * 4 - (dirX ? 4 : 0) };
+        const e2 = { x: cx + dirX * 4 + (dirY ? 4 : 0), y: cy + dirY * 4 + (dirX ? 4 : 0) };
+        ctx.fillStyle = '#0A0A0A';
+        ctx.beginPath(); ctx.arc(e1.x, e1.y, eyeR, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(e2.x, e2.y, eyeR, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath(); ctx.arc(e1.x + dirX, e1.y + dirY, 0.9, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(e2.x + dirX, e2.y + dirY, 0.9, 0, Math.PI * 2); ctx.fill();
+        // Suppress lint for unused offX/offY (debug positioning helpers)
+        void offX; void offY;
+      }
     });
-    ctx.globalAlpha = 1;
+
+    // Edge frame
+    ctx.strokeStyle = grid;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, GRID * CELL - 1, GRID * CELL - 1);
   }, []);
 
   const tick = useCallback(() => {
@@ -108,6 +206,7 @@ const PeliAreenaSnake = () => {
   const finishGame = async (finalScore) => {
     if (!session) return;
     if (tickRef.current) clearInterval(tickRef.current);
+    if (animRef.current) clearInterval(animRef.current);
     try {
       const r = await post(`/api/mini-games/arcade/snake/submit`, {
         play_id: session.play_id, anon_id: session.anon_id, score: finalScore,
@@ -180,10 +279,16 @@ const PeliAreenaSnake = () => {
     setTimeout(() => {
       draw();
       tickRef.current = setInterval(tick, TICK_MS);
+      // Continuous redraw at ~30fps so the food halo pulses smoothly
+      const anim = setInterval(() => { if (stateRef.current?.alive) draw(); }, 33);
+      animRef.current = anim;
     }, 50);
   };
 
-  useEffect(() => () => { if (tickRef.current) clearInterval(tickRef.current); }, []);
+  useEffect(() => () => {
+    if (tickRef.current) clearInterval(tickRef.current);
+    if (animRef.current) clearInterval(animRef.current);
+  }, []);
 
   return (
     <div data-testid="peliareena-snake" style={{ padding: '32px 24px 80px', maxWidth: 760, margin: '0 auto' }}>
@@ -192,29 +297,21 @@ const PeliAreenaSnake = () => {
         color: 'var(--muted)', textDecoration: 'none', fontSize: 13,
         fontFamily: 'Georgia, serif', marginBottom: 24,
       }}>
-        <ArrowLeft size={14} strokeWidth={1.6} /> Takaisin Peliareenaan
+        <ArrowLeft size={14} strokeWidth={1.6} /> {pickPA(lang, 'hub.back')}
       </Link>
 
       {stage === 'intro' && (
         <GameIntroPanel
           gameSlug="arcade_snake"
-          eyebrow="AIKATAPPO · MATO"
-          headline={<>Yksi mato.<br />Niin pitkä kuin ehdit.</>}
-          tagline="Klassinen 20×20 Mato kohtuullisella nopeudella. Jokainen syöty palanen kasvattaa matoa yhdellä ruudulla. Älä osu seinään tai itseesi — viikon paras pisteytys palkitaan tunnustuksella."
-          howToPlay={[
-            'Aloita peli ja ohjaa matoa nuolinäppäimillä (desktop), WASD:llä tai mobiilissa pyyhkäisemällä.',
-            'Syö amber-väriset palaset kasvattaaksesi matoa ja kerätäksesi pisteitä.',
-            'Peli päättyy seinään tai omaan häntään osumiseen — pisteet tallentuvat automaattisesti.',
-          ]}
-          scoring={[
-            '1 piste per syöty palanen.',
-            'Liian nopeat pelisessiot eivät pääse leaderboardille (anti-cheat).',
-            'Sähköpostin antaminen on vapaaehtoista — sillä lukitset paikan turnauksessa.',
-          ]}
-          ctaLabel="Aloita peli"
+          eyebrow={pickPA(lang, 'sn.eyebrow')}
+          headline={pickPA(lang, 'sn.headline')}
+          tagline={pickPA(lang, 'sn.tagline')}
+          howToPlay={[pickPA(lang, 'sn.howTo.1'), pickPA(lang, 'sn.howTo.2'), pickPA(lang, 'sn.howTo.3')]}
+          scoring={[pickPA(lang, 'sn.score.1'), pickPA(lang, 'sn.score.2'), pickPA(lang, 'sn.score.3')]}
+          ctaLabel={pickPA(lang, 'sn.cta.start')}
           startTestId="snake-start-btn"
           onStart={start}
-          controlsHint="OHJAUS · ↑ ↓ ← → · TAI W A S D · MOBIILI: PYYHKÄISE"
+          controlsHint={pickPA(lang, 'sn.controls')}
         />
       )}
 
@@ -222,7 +319,7 @@ const PeliAreenaSnake = () => {
         <div data-testid="snake-board">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
             <span className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)' }}>
-              PISTEET
+              {pickPA(lang, 'sn.points')}
             </span>
             <span style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: 'var(--ink)' }}>
               {score}
@@ -259,48 +356,53 @@ const PeliAreenaSnake = () => {
 
 // ─── Shared preview + unlocked (used by snake + tap) ───
 
-export const ArcadePreview = ({ preview, session, sport, onUnlocked }) => (
-  <div data-testid={`${sport}-preview`}>
-    <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-      PELI PÄÄTTYI · TULOKSESI
-    </div>
-    <h1 style={{
-      fontFamily: 'Georgia, serif', fontWeight: 700,
-      fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-      letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
-    }}>
-      {preview.score}<span style={{ color: 'var(--muted)', fontSize: '0.5em' }}> pistettä</span>
-    </h1>
-    {!preview.valid_for_leaderboard && (
-      <p data-testid={`${sport}-invalid-warn`} style={{
-        background: 'rgba(200,66,60,0.10)', border: '1px solid #C8423C',
-        padding: 12, borderRadius: 4, fontFamily: 'Georgia, serif', fontSize: 13,
-        color: '#C8423C', margin: '0 0 24px',
+export const ArcadePreview = ({ preview, session, sport, onUnlocked }) => {
+  const { lang } = useLang();
+  const personaTitle = (lang === 'en' && preview.persona_preview.title_en) || preview.persona_preview.title;
+  return (
+    <div data-testid={`${sport}-preview`}>
+      <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
+        {pickPA(lang, 'ar.preview.eyebrow')}
+      </div>
+      <h1 style={{
+        fontFamily: 'Georgia, serif', fontWeight: 700,
+        fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
+        letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
       }}>
-        Pelisessio oli liian lyhyt — tämä pisteytys ei pääse leaderboardille.
-        Voit silti tallentaa sähköpostisi turnausuutiskirjeeseen.
+        {preview.score}<span style={{ color: 'var(--muted)', fontSize: '0.5em' }}>{pickPA(lang, 'ar.points.short')}</span>
+      </h1>
+      {!preview.valid_for_leaderboard && (
+        <p data-testid={`${sport}-invalid-warn`} style={{
+          background: 'rgba(200,66,60,0.10)', border: '1px solid #C8423C',
+          padding: 12, borderRadius: 4, fontFamily: 'Georgia, serif', fontSize: 13,
+          color: '#C8423C', margin: '0 0 24px',
+        }}>
+          {pickPA(lang, 'ar.preview.invalid')}
+        </p>
+      )}
+      <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
+        {interpolate(pickPA(lang, 'ar.preview.detail'), { persona: personaTitle, seconds: preview.elapsed_seconds })}
       </p>
-    )}
-    <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
-      Esikatselu: <strong style={{ color: 'var(--ink)' }}>{preview.persona_preview.title}</strong>.
-      Aikaa: {preview.elapsed_seconds}s.
-    </p>
-    <ConsentEmailGate
-      gameSlug={sport}
-      session={session}
-      unlockPath={`/api/mini-games/arcade/${sport}/unlock`}
-      onUnlocked={onUnlocked}
-      headline="Liity turnaukseen ja saa viikon tulokset sähköpostiin"
-    />
-    <div style={{ marginTop: 24 }}>
-      <Link to="/peliareena" data-testid={`${sport}-preview-back`} style={btnGhost}>
-        ← Palaa Peliareenaan
-      </Link>
+      <ConsentEmailGate
+        gameSlug={sport}
+        session={session}
+        unlockPath={`/api/mini-games/arcade/${sport}/unlock`}
+        onUnlocked={onUnlocked}
+      />
+      <div style={{ marginTop: 24 }}>
+        <Link to="/peliareena" data-testid={`${sport}-preview-back`} style={btnGhost}>
+          {pickPA(lang, 'quiz.back')}
+        </Link>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
-export const ArcadeUnlocked = ({ result, preview, gameSlug }) => {
+export const ArcadeUnlocked = ({ result, gameSlug }) => {
+  const { lang } = useLang();
+  const title = (lang === 'en' && result.persona.title_en) || result.persona.title;
+  const tagline = (lang === 'en' && result.persona.tagline_en) || result.persona.tagline;
+  const shareText = (lang === 'en' && result.share_text_en) || result.share_text;
   const share = () => {
     if (gameSlug) {
       fetch(`${BACKEND}/api/mini-games/share/track`, {
@@ -308,30 +410,31 @@ export const ArcadeUnlocked = ({ result, preview, gameSlug }) => {
         body: JSON.stringify({ game_slug: gameSlug, play_id: result.play_id }),
       }).catch(() => {});
     }
-    if (navigator.share) navigator.share({ text: result.share_text, url: window.location.href });
-    else { navigator.clipboard.writeText(`${result.share_text} ${window.location.href}`); alert('Jakoteksti kopioitu.'); }
+    if (navigator.share) navigator.share({ text: shareText, url: window.location.href });
+    else { navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+           alert(lang === 'en' ? 'Share text copied.' : 'Jakoteksti kopioitu.'); }
   };
   return (
     <div data-testid="arcade-unlocked">
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#3F8A4D', fontWeight: 700, marginBottom: 12 }}>
-        TURNAUSPAIKKA VARATTU
+        {pickPA(lang, 'ar.unlocked.eyebrow')}
       </div>
       <h1 style={{
         fontFamily: 'Georgia, serif', fontWeight: 700,
         fontSize: 'clamp(36px, 5vw, 56px)', lineHeight: 1.05,
         letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 8px',
-      }}>{result.persona.title}</h1>
+      }}>{title}</h1>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 24px' }}>
-        {result.persona.tagline}
+        {tagline}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 28 }}>
-        <StatBox label="PISTEET" value={result.score} />
-        <StatBox label={`SIJA · ${result.tournament_week_iso}`} value={`#${result.rank}`} />
+        <StatBox label={pickPA(lang, 'ar.unlocked.points')} value={result.score} />
+        <StatBox label={interpolate(pickPA(lang, 'ar.unlocked.rank'), { week: result.tournament_week_iso })} value={`#${result.rank}`} />
       </div>
 
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
-        VIIKON TOP 10
+        {pickPA(lang, 'ar.unlocked.boardTitle')}
       </div>
       <ol style={{ margin: 0, padding: 0, listStyle: 'none', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
         {result.leaderboard.map(row => (
@@ -345,17 +448,17 @@ export const ArcadeUnlocked = ({ result, preview, gameSlug }) => {
               <span className="mono" style={{ fontSize: 11, color: 'var(--muted)', marginRight: 10 }}>#{row.rank}</span>
               {row.display_name}
             </span>
-            <span className="mono" style={{ fontSize: 12, color: 'var(--ink)', fontWeight: 700 }}>{row.score} pistettä</span>
+            <span className="mono" style={{ fontSize: 12, color: 'var(--ink)', fontWeight: 700 }}>{row.score}{pickPA(lang, 'ar.points.short')}</span>
           </li>
         ))}
       </ol>
 
       <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
         <button onClick={share} style={btnPrimary}>
-          <Share2 size={14} strokeWidth={1.8} /> Jaa tulos
+          <Share2 size={14} strokeWidth={1.8} /> {pickPA(lang, 'quiz.share')}
         </button>
         <Link to="/peliareena" data-testid={`${gameSlug}-unlocked-back`} style={btnGhost}>
-          ← Palaa Peliareenaan
+          {pickPA(lang, 'quiz.back')}
         </Link>
       </div>
     </div>

@@ -7,9 +7,11 @@
  */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
-import { ArcadePreview, ArcadeUnlocked } from './PeliAreenaSnake';
+import { ArcadePreview, ArcadeUnlocked, mix } from './PeliAreenaSnake';
+import { useLang } from '../context/LanguageContext';
+import { pickPA } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const W = 360, H = 520;
@@ -30,6 +32,7 @@ const post = async (path, body) => {
 };
 
 const PeliAreenaTap = () => {
+  const { lang } = useLang();
   const canvasRef = useRef(null);
   const rafRef = useRef(null);
   const stateRef = useRef(null);
@@ -56,35 +59,109 @@ const PeliAreenaTap = () => {
     if (!st) return;
     const cs = getComputedStyle(document.documentElement);
     const bg = cs.getPropertyValue('--surface').trim() || '#14110d';
+    const bg2 = cs.getPropertyValue('--surface-2').trim() || '#1B1814';
     const ink = cs.getPropertyValue('--ink').trim() || '#ECE6D8';
     const border = cs.getPropertyValue('--border').trim() || '#221E1B';
 
-    ctx.fillStyle = bg;
+    // Sky vignette
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, bg2);
+    sky.addColorStop(1, bg);
+    ctx.fillStyle = sky;
     ctx.fillRect(0, 0, W, H);
 
-    // Faint cross-hatch
+    // Faint horizontal scanlines for depth
     ctx.strokeStyle = border;
     ctx.lineWidth = 0.5;
-    for (let i = 0; i < W; i += 40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
-    for (let j = 0; j < H; j += 40) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke(); }
+    ctx.globalAlpha = 0.35;
+    for (let j = 0; j < H; j += 20) {
+      ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
 
-    // Pipes (amber gates)
-    ctx.fillStyle = '#D4B445';
+    // Pipes — amber with cap detail + 3D shadow
     st.pipes.forEach(p => {
-      ctx.fillRect(p.x, 0, PIPE_W, p.gapY - PIPE_GAP / 2);
-      ctx.fillRect(p.x, p.gapY + PIPE_GAP / 2, PIPE_W, H - (p.gapY + PIPE_GAP / 2));
+      const topH = p.gapY - PIPE_GAP / 2;
+      const bottomY = p.gapY + PIPE_GAP / 2;
+      const bottomH = H - bottomY;
+      const drawPipe = (px, py, pw, ph) => {
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(px + 3, py + (py === 0 ? 0 : 3), pw, ph);
+        // Body gradient
+        const lin = ctx.createLinearGradient(px, py, px + pw, py);
+        lin.addColorStop(0, '#A88A2D');
+        lin.addColorStop(0.5, '#D4B445');
+        lin.addColorStop(1, '#A88A2D');
+        ctx.fillStyle = lin;
+        ctx.fillRect(px, py, pw, ph);
+        // Inner highlight stripe
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(px + 6, py, 4, ph);
+      };
+      const drawCap = (px, py, pw, ph) => {
+        ctx.fillStyle = 'rgba(0,0,0,0.30)';
+        ctx.fillRect(px - 4 + 3, py + 3, pw + 8, ph);
+        const lin = ctx.createLinearGradient(px, py, px + pw + 8, py);
+        lin.addColorStop(0, '#8E711F');
+        lin.addColorStop(0.5, '#E4C24F');
+        lin.addColorStop(1, '#8E711F');
+        ctx.fillStyle = lin;
+        ctx.fillRect(px - 4, py, pw + 8, ph);
+        ctx.fillStyle = 'rgba(255,255,255,0.22)';
+        ctx.fillRect(px - 4, py + 2, pw + 8, 3);
+      };
+      drawPipe(p.x, 0, PIPE_W, topH);
+      drawCap(p.x, topH - 18, PIPE_W, 18);
+      drawPipe(p.x, bottomY, PIPE_W, bottomH);
+      drawCap(p.x, bottomY, PIPE_W, 18);
     });
 
-    // Bird (chip token)
+    // Bird (chip token) — rotates with velocity
+    const b = st.bird;
+    const rot = Math.max(-0.5, Math.min(1.1, b.vy / 16));
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.rotate(rot);
+    // Outer ring (coin edge)
+    const ring = ctx.createRadialGradient(0, 0, b.r - 4, 0, 0, b.r + 2);
+    ring.addColorStop(0, ink);
+    ring.addColorStop(1, mix(ink, '#000000', 0.45));
+    ctx.fillStyle = ring;
+    ctx.beginPath(); ctx.arc(0, 0, b.r + 1, 0, Math.PI * 2); ctx.fill();
+    // Inner coin face
+    const face = ctx.createRadialGradient(-3, -3, 1, 0, 0, b.r);
+    face.addColorStop(0, '#FFFFFF');
+    face.addColorStop(0.5, ink);
+    face.addColorStop(1, mix(ink, '#000000', 0.3));
+    ctx.fillStyle = face;
+    ctx.beginPath(); ctx.arc(0, 0, b.r - 2, 0, Math.PI * 2); ctx.fill();
+    // Center € symbol
+    ctx.fillStyle = mix(bg, '#000000', 0.25);
+    ctx.font = 'bold 16px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('€', 0, 1);
+    ctx.restore();
+
+    // Score HUD — top center
+    ctx.font = 'bold 36px Georgia, serif';
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(st.score), W / 2 + 1, 50 + 1);
     ctx.fillStyle = ink;
-    ctx.beginPath();
-    ctx.arc(st.bird.x, st.bird.y, st.bird.r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = bg;
-    ctx.beginPath();
-    ctx.arc(st.bird.x, st.bird.y, st.bird.r * 0.55, 0, Math.PI * 2);
-    ctx.fill();
-  }, []);
+    ctx.fillText(String(st.score), W / 2, 50);
+
+    // Pre-start tap-to-fly overlay
+    if (!st.started) {
+      ctx.fillStyle = 'rgba(0,0,0,0.55)';
+      ctx.fillRect(0, H / 2 - 30, W, 60);
+      ctx.font = 'bold 14px ui-monospace, monospace';
+      ctx.fillStyle = ink;
+      ctx.textAlign = 'center';
+      ctx.fillText(lang === 'en' ? 'TAP TO START' : 'NAPAUTA ALOITTAAKSESI', W / 2, H / 2 + 5);
+    }
+  }, [lang]);
 
   const finishGame = useCallback(async (finalScore) => {
     if (!session) return;
@@ -169,29 +246,21 @@ const PeliAreenaTap = () => {
         color: 'var(--muted)', textDecoration: 'none', fontSize: 13,
         fontFamily: 'Georgia, serif', marginBottom: 24,
       }}>
-        <ArrowLeft size={14} strokeWidth={1.6} /> Takaisin Peliareenaan
+        <ArrowLeft size={14} strokeWidth={1.6} /> {pickPA(lang, 'hub.back')}
       </Link>
 
       {stage === 'intro' && (
         <GameIntroPanel
           gameSlug="arcade_tap"
-          eyebrow="AIKATAPPO · NAPAUTUS"
-          headline={<>Yksi napautus.<br />Älä osu mihinkään.</>}
-          tagline="Yksinkertaisin mahdollinen ohjaus — yksi näppäin, koko peli. Pidä token-kolikko ilmassa ja kuljeta se amber-värisistä porteista läpi. Mitä useamman portin ohitat, sitä korkeammat pisteet."
-          howToPlay={[
-            'Napauta peliä tai paina välilyöntiä lentääksesi.',
-            'Pysy ilmassa ja kuljeta token porttien välistä.',
-            'Yhteen porttiin osuminen tai putoaminen päättää pelin.',
-          ]}
-          scoring={[
-            '1 piste per ohitettu portti.',
-            'Liian nopeat pelisessiot eivät pääse leaderboardille (anti-cheat).',
-            'Tasapelissä nopeampi peliaika sijoittuu paremmin.',
-          ]}
-          ctaLabel="Aloita peli"
+          eyebrow={pickPA(lang, 'tp.eyebrow')}
+          headline={pickPA(lang, 'tp.headline')}
+          tagline={pickPA(lang, 'tp.tagline')}
+          howToPlay={[pickPA(lang, 'tp.howTo.1'), pickPA(lang, 'tp.howTo.2'), pickPA(lang, 'tp.howTo.3')]}
+          scoring={[pickPA(lang, 'tp.score.1'), pickPA(lang, 'tp.score.2'), pickPA(lang, 'tp.score.3')]}
+          ctaLabel={pickPA(lang, 'tp.cta.start')}
           startTestId="tap-start-btn"
           onStart={start}
-          controlsHint="OHJAUS · NAPAUTA RUUTUA · TAI PAINA VÄLILYÖNTIÄ"
+          controlsHint={pickPA(lang, 'tp.controls')}
         />
       )}
 
@@ -199,7 +268,7 @@ const PeliAreenaTap = () => {
         <div data-testid="tap-board">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
             <span className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)' }}>
-              PISTEET
+              {pickPA(lang, 'sn.points')}
             </span>
             <span style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: 'var(--ink)' }}>
               {score}
@@ -216,7 +285,7 @@ const PeliAreenaTap = () => {
                      touchAction: 'none', cursor: 'pointer' }}
           />
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: 'var(--muted)', textAlign: 'center', marginTop: 10 }}>
-            Napauta peliä tai paina välilyöntiä lentääksesi
+            {pickPA(lang, 'tp.hint')}
           </p>
         </div>
       )}
@@ -226,18 +295,12 @@ const PeliAreenaTap = () => {
                        onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
       )}
       {stage === 'unlocked' && full && (
-        <ArcadeUnlocked result={full} preview={preview} gameSlug="arcade_tap" />
+        <ArcadeUnlocked result={full} gameSlug="arcade_tap" />
       )}
     </div>
   );
 };
 
-const btnPrimary = {
-  padding: '14px 28px', background: 'var(--ink)', color: 'var(--bg)',
-  border: 'none', borderRadius: 4, cursor: 'pointer',
-  fontFamily: 'inherit', fontSize: 12, fontWeight: 700,
-  letterSpacing: '0.18em', textTransform: 'uppercase',
-  display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 24,
-};
+// btnPrimary removed (unused after i18n cleanup)
 
 export default PeliAreenaTap;

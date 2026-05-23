@@ -14,8 +14,10 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Sparkles, ChevronRight, Lock, Clock, BookOpen, Zap, GitBranch } from 'lucide-react';
+import { Sparkles, ChevronRight, Lock, Clock, BookOpen, Zap, GitBranch } from 'lucide-react';
 import GameTileArt from '../components/GameTileArt';
+import { useLang } from '../context/LanguageContext';
+import { pickPA, interpolate, langField } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -27,6 +29,7 @@ const GAME_ICONS = {
 };
 
 const PeliAreenaHub = () => {
+  const { lang } = useLang();
   const [hub, setHub] = useState(null);
   const [error, setError] = useState(null);
 
@@ -40,7 +43,7 @@ const PeliAreenaHub = () => {
   }, []);
 
   if (error) return <div className="p-8 mono text-sm" style={{ color: 'var(--ink)' }}>VIRHE: {error}</div>;
-  if (!hub) return <div className="p-8 mono text-sm" style={{ color: 'var(--muted)' }}>Ladataan…</div>;
+  if (!hub) return <div className="p-8 mono text-sm" style={{ color: 'var(--muted)' }}>{pickPA(lang, 'common.loading')}</div>;
 
   const t = hub.tournament;
 
@@ -49,39 +52,37 @@ const PeliAreenaHub = () => {
       {/* Hero */}
       <div style={{ marginBottom: 32 }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-          PUTKI HQ · PELIAREENA
+          {pickPA(lang, 'hub.eyebrow')}
         </div>
         <h1 style={{
           fontFamily: 'Georgia, serif', fontWeight: 700,
           fontSize: 'clamp(36px, 5.5vw, 56px)', lineHeight: 1.05,
           letterSpacing: '-0.02em', color: 'var(--ink)', maxWidth: 780,
         }}>
-          Viisi pientä peliä. Yksi viikkoturnaus. Opi pelaamalla.
+          {pickPA(lang, 'hub.headline')}
         </h1>
         <p style={{
           fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.6,
           color: 'var(--muted)', maxWidth: 640, marginTop: 16,
         }}>
-          Pelaa ilman sähköpostia. Kun haluat henkilökohtaiset tuloksesi ja paikan
-          viikon turnauksessa, anna sähköpostisi — siitä alkaa oikea palaute.
-          Palkinnot ovat tunnustuksia ja pääsyjä, ei rahaa.
+          {pickPA(lang, 'hub.tagline')}
         </p>
       </div>
 
       {/* Tournament state */}
-      <TournamentPanel t={t} />
+      <TournamentPanel t={t} lang={lang} />
 
       {/* Game grid */}
       <h2 className="mono" style={{
         fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)',
         fontWeight: 700, margin: '40px 0 16px',
-      }}>VIIKON 5 PELIÄ</h2>
+      }}>{pickPA(lang, 'hub.games.heading')}</h2>
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
         gap: 16,
       }}>
-        {hub.games.map(g => <GameTile key={g.slug} game={g} />)}
+        {hub.games.map(g => <GameTile key={g.slug} game={g} lang={lang} />)}
       </div>
 
       {/* Brand-trust honest footer */}
@@ -92,26 +93,24 @@ const PeliAreenaHub = () => {
         borderRadius: 4,
       }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 8 }}>
-          REHELLINEN PIENI PRINTTI
+          {pickPA(lang, 'hub.smallprint.title')}
         </div>
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', lineHeight: 1.6, margin: 0 }}>
-          Palkinnot: viikon mestaruus + pääsy laajempiin sisältöihin. Ei rahaa, ei rahanarvoista.
-          Pelin pelaaminen ei vaadi ostoa. Sähköpostin antaminen on vapaaehtoista —
-          se on vaatimus vain turnauksen rankaukseen ja täysiin tuloksiin.
-          Voit perua tilauksesi koska tahansa.
-          {' '}<a href={hub.privacy_url} style={{ color: 'var(--ink)', textDecoration: 'underline' }}>Tietosuojaseloste</a>.
+          {pickPA(lang, 'hub.smallprint.body')}
+          {' '}<a href={hub.privacy_url} style={{ color: 'var(--ink)', textDecoration: 'underline' }}>{pickPA(lang, 'hub.smallprint.privacyLink')}</a>.
         </p>
       </div>
     </div>
   );
 };
 
-const TournamentPanel = ({ t }) => {
+const TournamentPanel = ({ t, lang }) => {
   const closes = new Date(t.closes_at);
   const now = new Date();
   const hoursLeft = Math.max(0, Math.round((closes - now) / (3600 * 1000)));
   const daysLeft = Math.floor(hoursLeft / 24);
   const hoursRem = hoursLeft % 24;
+  const daysSuffix = lang === 'en' ? 'd' : 'p';
 
   return (
     <div data-testid="peliareena-tournament-panel" style={{
@@ -126,28 +125,28 @@ const TournamentPanel = ({ t }) => {
       }}>
         <div style={{ minWidth: 0, flex: '1 1 200px' }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700 }}>
-            VIIKKO {t.week_iso} · AKTIIVINEN
+            {pickPA(lang, 'intro.weekLabel')} {t.week_iso} · {pickPA(lang, 'hub.tournament.active')}
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 4, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
               <Clock size={14} strokeWidth={1.6} style={{ color: 'var(--muted)' }} />
               <span style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: 'var(--ink)' }}>
-                {daysLeft}p {hoursRem}h
+                {daysLeft}{daysSuffix} {hoursRem}h
               </span>
-              <span className="mono" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}>JÄLJELLÄ</span>
+              <span className="mono" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}>{pickPA(lang, 'hub.tournament.timeLeft')}</span>
             </div>
             <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.06em' }}>
-              {t.plays_this_week} suoritettua pelitestiä · {t.ranked_players_this_week} ranattua pelaajaa
+              {interpolate(pickPA(lang, 'hub.tournament.playsLine'), { plays: t.plays_this_week, players: t.ranked_players_this_week })}
             </div>
           </div>
         </div>
         <div style={{ minWidth: 240, flex: '1 1 240px' }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 6 }}>
-            VIIKON JOHTO
+            {pickPA(lang, 'hub.tournament.leaderboardTitle')}
           </div>
           {(t.leaderboard_top || []).length === 0 ? (
             <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-              Olisitko sinä viikon ensimmäinen pelaaja?
+              {pickPA(lang, 'hub.tournament.empty')}
             </p>
           ) : (
             <ol style={{ margin: 0, padding: 0, listStyle: 'none' }}>
@@ -174,11 +173,14 @@ const TournamentPanel = ({ t }) => {
   );
 };
 
-const GameTile = ({ game }) => {
+const GameTile = ({ game, lang }) => {
   const Icon = GAME_ICONS[game.kind] || BookOpen;
   const active = game.status === 'active';
   const Wrapper = active ? Link : 'div';
   const wrapperProps = active ? { to: game.play_url } : {};
+  const title = langField(game, 'title', lang) || game.title_fi;
+  const subtitle = langField(game, 'subtitle', lang) || game.subtitle_fi;
+  const duration = langField(game, 'duration', lang) || game.duration_fi;
 
   return (
     <Wrapper
@@ -221,7 +223,7 @@ const GameTile = ({ game }) => {
           }}>
             <Lock size={14} strokeWidth={1.6} style={{ color: '#F5F3EE' }} />
             <span className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#F5F3EE', fontWeight: 700 }}>
-              TULOSSA
+              {pickPA(lang, 'hub.coming')}
             </span>
           </div>
         )}
@@ -232,32 +234,32 @@ const GameTile = ({ game }) => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
           <Icon size={16} strokeWidth={1.7} style={{ color: 'var(--ink)' }} />
           <span className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700 }}>
-            {game.kind.toUpperCase()} · {game.duration_fi}
+            {game.kind.toUpperCase()} · {duration}
           </span>
         </div>
         <h3 style={{
           fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--ink)',
           margin: '0 0 8px', letterSpacing: '-0.01em',
         }}>
-          {game.title_fi}
+          {title}
         </h3>
         <p style={{
           fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)',
           lineHeight: 1.5, margin: 0, minHeight: 42,
         }}>
-          {game.subtitle_fi}
+          {subtitle}
         </p>
         <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
           {active ? (
             <>
               <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--ink)', fontWeight: 700 }}>
-                PELAA NYT
+                {pickPA(lang, 'hub.playNow')}
               </span>
               <ChevronRight size={14} strokeWidth={2} style={{ color: 'var(--ink)' }} />
             </>
           ) : (
             <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--muted)' }}>
-              TULOSSA
+              {pickPA(lang, 'hub.coming')}
             </span>
           )}
         </div>

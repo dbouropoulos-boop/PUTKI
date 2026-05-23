@@ -11,10 +11,13 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Trophy, Users, Play } from 'lucide-react';
+import { useLang } from '../context/LanguageContext';
+import { pickPA } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const GameStatsStrip = ({ gameSlug }) => {
+  const { lang } = useLang();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
@@ -43,14 +46,14 @@ const GameStatsStrip = ({ gameSlug }) => {
       }}
     >
       <Stat icon={<Play size={13} strokeWidth={1.7} />}
-            label="PELATTU TÄLLÄ VIIKOLLA"
+            label={pickPA(lang, 'stats.playsThisWeek')}
             value={stats.plays_finished} />
       <Stat icon={<Users size={13} strokeWidth={1.7} />}
-            label="RANATTUA PELAAJAA"
+            label={pickPA(lang, 'stats.rankedPlayers')}
             value={stats.ranked_players} />
       {stats.top_score > 0 && (
         <Stat icon={<Trophy size={13} strokeWidth={1.7} />}
-              label="VIIKON JOHTO"
+              label={pickPA(lang, 'stats.weeklyLeader')}
               value={`${stats.top_player} · ${stats.top_score}p`} />
       )}
     </div>

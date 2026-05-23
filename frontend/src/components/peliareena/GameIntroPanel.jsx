@@ -18,14 +18,16 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronRight, Trophy, Shield, ClockAlert, BadgeEuro, Sparkles } from 'lucide-react';
 import GameStatsStrip from '../GameStatsStrip';
+import { useLang } from '../../context/LanguageContext';
+import { pickPA, interpolate } from '../../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-const TRUST_CHIPS = [
-  { icon: Sparkles,    label: 'Pelaa ilman sähköpostia' },
-  { icon: Shield,      label: 'GDPR · vapaaehtoinen liittyminen' },
-  { icon: ClockAlert,  label: 'Viikkoturnaus · nollautuu maanantaina' },
-  { icon: BadgeEuro,   label: 'Ei rahaa · ei korttitietoja' },
+const TRUST_CHIPS_TOKENS = [
+  { icon: Sparkles,    token: 'intro.trust.noEmail' },
+  { icon: Shield,      token: 'intro.trust.gdpr' },
+  { icon: ClockAlert,  token: 'intro.trust.weekly' },
+  { icon: BadgeEuro,   token: 'intro.trust.noMoney' },
 ];
 
 const GameIntroPanel = ({
@@ -40,6 +42,7 @@ const GameIntroPanel = ({
   startTestId,
   controlsHint,
 }) => {
+  const { lang } = useLang();
   const [board, setBoard] = useState(null);
 
   useEffect(() => {
@@ -84,8 +87,8 @@ const GameIntroPanel = ({
           margin: '0 0 28px',
         }}
       >
-        {TRUST_CHIPS.map(({ icon: Icon, label }) => (
-          <span key={label} style={{
+        {TRUST_CHIPS_TOKENS.map(({ icon: Icon, token }) => (
+          <span key={token} style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             padding: '6px 10px',
             border: '1px solid var(--border)',
@@ -95,7 +98,7 @@ const GameIntroPanel = ({
             color: 'var(--ink)', lineHeight: 1.2,
           }}>
             <Icon size={12} strokeWidth={1.8} style={{ color: 'var(--muted)' }} />
-            {label}
+            {pickPA(lang, token)}
           </span>
         ))}
       </div>
@@ -114,7 +117,7 @@ const GameIntroPanel = ({
           margin: '0 0 36px',
         }}
       >
-        {ctaLabel || 'Aloita peli'} <ChevronRight size={14} strokeWidth={2.5} />
+        {ctaLabel || pickPA(lang, 'quiz.cta.start')} <ChevronRight size={14} strokeWidth={2.5} />
       </button>
 
       {/* How to play + Scoring (2-up on desktop) */}
@@ -123,7 +126,7 @@ const GameIntroPanel = ({
         gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
         gap: 14, margin: '0 0 32px',
       }}>
-        <Panel title="MITEN PELATAAN" accent="var(--ink)">
+        <Panel title={pickPA(lang, 'intro.howToPlay')} accent="var(--ink)">
           <ol style={{
             margin: 0, padding: 0, listStyle: 'none',
             counterReset: 'how 0',
@@ -156,7 +159,7 @@ const GameIntroPanel = ({
           )}
         </Panel>
 
-        <Panel title="PISTEYTYS" accent="#A0750F">
+        <Panel title={pickPA(lang, 'intro.scoring')} accent="#A0750F">
           <ul style={{
             margin: 0, padding: 0, listStyle: 'none',
           }}>
@@ -183,7 +186,7 @@ const GameIntroPanel = ({
       </div>
 
       {/* Live leaderboard */}
-      <LeaderboardBlock gameSlug={gameSlug} board={board} />
+      <LeaderboardBlock gameSlug={gameSlug} board={board} lang={lang} />
 
       {/* Footer disclaimer */}
       <p style={{
@@ -192,9 +195,7 @@ const GameIntroPanel = ({
         color: 'var(--muted)', lineHeight: 1.55,
         maxWidth: 620,
       }}>
-        Pelin pelaaminen ei vaadi sähköpostia. Tulokset ja viikon turnaus avautuvat,
-        kun annat sähköpostisi vapaaehtoisesti. Viikon mestaruus on tunnustus —
-        ei rahaa eikä rahanarvoista palkintoa.
+        {pickPA(lang, 'intro.footer')}
       </p>
     </div>
   );
@@ -218,7 +219,7 @@ const Panel = ({ title, accent, children }) => (
   </div>
 );
 
-const LeaderboardBlock = ({ gameSlug, board }) => {
+const LeaderboardBlock = ({ gameSlug, board, lang }) => {
   const rows = (board && board.leaderboard) || [];
   const ranked = (board && board.ranked_players) || 0;
   return (
@@ -233,12 +234,12 @@ const LeaderboardBlock = ({ gameSlug, board }) => {
           fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 8,
         }}>
           <Trophy size={13} strokeWidth={1.8} style={{ color: '#A0750F' }} />
-          VIIKON TOP 10
+          {pickPA(lang, 'intro.weeklyTop10')}
         </div>
         <span className="mono" style={{
           fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)',
         }}>
-          {board?.week_iso ? `VIIKKO ${board.week_iso}` : '—'} · {ranked} pelaajaa
+          {board?.week_iso ? `${pickPA(lang, 'intro.weekLabel')} ${board.week_iso}` : '—'} · {ranked} {pickPA(lang, 'intro.players')}
         </span>
       </div>
 
@@ -256,7 +257,7 @@ const LeaderboardBlock = ({ gameSlug, board }) => {
             fontFamily: 'Georgia, serif', fontSize: 14.5,
             color: 'var(--muted)', margin: 0, lineHeight: 1.5,
           }}>
-            Tämä viikko on vielä pisteyttämättä. Olisitko sinä viikon ensimmäinen pelaaja?
+            {pickPA(lang, 'intro.empty')}
           </p>
         </div>
       ) : (

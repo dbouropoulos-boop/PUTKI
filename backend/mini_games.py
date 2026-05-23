@@ -298,19 +298,27 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
 PERSONA_LABELS = {
     "math_strong": {
         "title": "Numero­matemaatikko",
+        "title_en": "The Numbers Reader",
         "tagline": "Vahva matematiikan ja todennäköisyyksien hallinta.",
+        "tagline_en": "Strong grip on math and probability.",
     },
     "responsibility_strong": {
         "title": "Vastuun­hallitsija",
+        "title_en": "The Steady Hand",
         "tagline": "Tunnet vastuullisen pelaamisen periaatteet hyvin.",
+        "tagline_en": "You understand responsible-play fundamentals well.",
     },
     "balanced": {
         "title": "Tasapainoinen aloittelija",
+        "title_en": "Balanced Beginner",
         "tagline": "Hyvä pohja — sekä numerot että hallinta ovat kunnossa.",
+        "tagline_en": "Good foundation — both numbers and self-control in shape.",
     },
     "needs_basics": {
         "title": "Aloitteleva oppija",
+        "title_en": "Fresh Learner",
         "tagline": "Suosittelemme kertaamaan perusteet ennen kuin pelaat oikealla rahalla.",
+        "tagline_en": "We recommend revisiting the basics before playing for real money.",
     },
 }
 
@@ -345,51 +353,91 @@ async def ensure_indexes(db) -> None:
 
 
 async def seed_quiz_questions(db) -> None:
-    """Idempotent — only inserts missing question orders."""
+    """Idempotent — seeds (or backfills) FI + EN for every question."""
+    from mini_games_i18n import quiz_en_by_order
+    en_map = quiz_en_by_order()
     for q in QUIZ_SEED_QUESTIONS_FI:
+        en = en_map.get(q["order"]) or {}
+        # Merge per-option EN labels by key
+        opts = []
+        en_opts_by_key = {o["key"]: o for o in (en.get("options") or [])}
+        for o in q["options"]:
+            merged = dict(o)
+            eo = en_opts_by_key.get(o["key"]) or {}
+            if eo.get("label_en"):
+                merged["label_en"] = eo["label_en"]
+            opts.append(merged)
         await db.mini_game_questions.update_one(
             {"slug": QUIZ_GAME_SLUG, "order": q["order"]},
-            {"$setOnInsert": {
-                "id": str(uuid.uuid4()),
-                "slug": QUIZ_GAME_SLUG,
-                "order": q["order"],
-                "prompt_fi": q["prompt_fi"],
-                "options": q["options"],
-                "correct": q["correct"],
-                "explanation_fi": q["explanation_fi"],
-                "topic_tag": q["topic_tag"],
-                "active": True,
-                "created_at": _now_iso(),
-            }},
+            {
+                "$setOnInsert": {
+                    "id": str(uuid.uuid4()),
+                    "slug": QUIZ_GAME_SLUG,
+                    "order": q["order"],
+                    "correct": q["correct"],
+                    "topic_tag": q["topic_tag"],
+                    "active": True,
+                    "created_at": _now_iso(),
+                },
+                "$set": {
+                    "prompt_fi": q["prompt_fi"],
+                    "prompt_en": en.get("prompt_en", ""),
+                    "options": opts,
+                    "explanation_fi": q["explanation_fi"],
+                    "explanation_en": en.get("explanation_en", ""),
+                },
+            },
             upsert=True,
         )
 
 
 async def seed_phase2_games(db) -> None:
-    """Iter56: seed Scenario + Insight Reveal content (idempotent)."""
+    """Iter56: seed Scenario + Insight Reveal content (idempotent).
+    Iter60: also merges EN translations for every question/option."""
     from mini_games_phase2 import (
         SCENARIO_GAME_SLUG, SCENARIO_SEED_FI,
         INSIGHT_GAME_SLUG, INSIGHT_SEED_FI,
     )
+    from mini_games_i18n import scenario_en_by_order, insight_en_by_order
+    sc_en = scenario_en_by_order()
+    in_en = insight_en_by_order()
+    en_maps = {SCENARIO_GAME_SLUG: sc_en, INSIGHT_GAME_SLUG: in_en}
     for game_slug, seed in [(SCENARIO_GAME_SLUG, SCENARIO_SEED_FI),
                              (INSIGHT_GAME_SLUG, INSIGHT_SEED_FI)]:
+        en_map = en_maps[game_slug]
         for q in seed:
+            en = en_map.get(q["order"]) or {}
+            opts = []
+            en_opts_by_key = {o["key"]: o for o in (en.get("options") or [])}
+            for o in q["options"]:
+                merged = dict(o)
+                eo = en_opts_by_key.get(o["key"]) or {}
+                if eo.get("label_en"):
+                    merged["label_en"] = eo["label_en"]
+                if eo.get("explanation_en"):
+                    merged["explanation_en"] = eo["explanation_en"]
+                opts.append(merged)
             await db.mini_game_questions.update_one(
                 {"slug": game_slug, "order": q["order"]},
-                {"$setOnInsert": {
-                    "id": str(uuid.uuid4()),
-                    "slug": game_slug,
-                    "order": q["order"],
-                    "prompt_fi": q["prompt_fi"],
-                    "options": q["options"],
-                    "correct": q["correct"],
-                    # Scenario questions hold the explanation per OPTION;
-                    # only the insight tiles have a top-level explanation_fi.
-                    "explanation_fi": q.get("explanation_fi", ""),
-                    "topic_tag": q["topic_tag"],
-                    "active": True,
-                    "created_at": _now_iso(),
-                }},
+                {
+                    "$setOnInsert": {
+                        "id": str(uuid.uuid4()),
+                        "slug": game_slug,
+                        "order": q["order"],
+                        "correct": q["correct"],
+                        "topic_tag": q["topic_tag"],
+                        "active": True,
+                        "created_at": _now_iso(),
+                    },
+                    "$set": {
+                        "prompt_fi": q["prompt_fi"],
+                        "prompt_en": en.get("prompt_en", ""),
+                        "options": opts,
+                        # Scenario per-option explanation; insight uses top-level.
+                        "explanation_fi": q.get("explanation_fi", ""),
+                        "explanation_en": en.get("explanation_en", ""),
+                    },
+                },
                 upsert=True,
             )
 
@@ -402,7 +450,8 @@ async def start_quiz(db) -> Dict[str, Any]:
     + audit even abandoned sessions."""
     cur = db.mini_game_questions.find(
         {"slug": QUIZ_GAME_SLUG, "active": True},
-        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "options": 1, "topic_tag": 1},
+        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "prompt_en": 1,
+         "options": 1, "topic_tag": 1},
     ).sort("order", 1)
     questions = await cur.to_list(length=50)
 
@@ -440,7 +489,8 @@ async def finish_quiz(db, *, play_id: str, anon_id: str, answers: List[Dict[str,
 
     cur = db.mini_game_questions.find(
         {"slug": QUIZ_GAME_SLUG, "active": True},
-        {"_id": 0, "id": 1, "order": 1, "correct": 1, "topic_tag": 1, "explanation_fi": 1},
+        {"_id": 0, "id": 1, "order": 1, "correct": 1, "topic_tag": 1,
+         "explanation_fi": 1, "explanation_en": 1},
     ).sort("order", 1)
     questions = await cur.to_list(length=50)
     by_id = {q["id"]: q for q in questions}
@@ -464,6 +514,7 @@ async def finish_quiz(db, *, play_id: str, anon_id: str, answers: List[Dict[str,
             "correct": q["correct"],
             "is_correct": ok,
             "explanation_fi": q["explanation_fi"],
+            "explanation_en": q.get("explanation_en", ""),
             "topic_tag": q["topic_tag"],
         })
 
@@ -477,7 +528,8 @@ async def finish_quiz(db, *, play_id: str, anon_id: str, answers: List[Dict[str,
         "score": correct_count,
         "total": total,
         "pct": round(pct, 1),
-        "persona_preview": {"key": persona["key"], "title": persona["title"]},
+        "persona_preview": {"key": persona["key"], "title": persona["title"],
+                            "title_en": persona.get("title_en", "")},
         "answers": scored,                  # full per-question feedback
         "personalized_locked": True,        # the FULL persona analysis is gated
     }
@@ -577,37 +629,44 @@ async def unlock_quiz_result(
     # Personalized analysis — strengths/gaps from tag_scores.
     strengths: List[str] = []
     gaps: List[str] = []
-    for tag, label in [
-        ("math", "matematiikka & RTP"),
-        ("bankroll", "bankroll-hallinta"),
-        ("bonus", "bonusehdot"),
-        ("psychology", "pelipsykologia"),
-        ("responsibility", "vastuullinen pelaaminen"),
-        ("regulation", "Suomen lainsäädäntö"),
+    strengths_en: List[str] = []
+    gaps_en: List[str] = []
+    for tag, label, label_en in [
+        ("math", "matematiikka & RTP", "math & RTP"),
+        ("bankroll", "bankroll-hallinta", "bankroll management"),
+        ("bonus", "bonusehdot", "bonus terms"),
+        ("psychology", "pelipsykologia", "play psychology"),
+        ("responsibility", "vastuullinen pelaaminen", "responsible play"),
+        ("regulation", "Suomen lainsäädäntö", "Finnish regulation"),
     ]:
         sc = tag_scores.get(tag, 0)
-        # Each tag has 1-2 questions; >=1 correct = OK.
         if sc >= 1:
             strengths.append(label)
+            strengths_en.append(label_en)
         else:
             gaps.append(label)
+            gaps_en.append(label_en)
 
     leaderboard = await get_leaderboard(db, week_iso=week, limit=10)
     rank = await _rank_for_score(db, week_iso=week, score=score, pct=pct)
 
+    total = int(play.get("total") or QUIZ_QUESTION_COUNT)
     return {
         "play_id": play_id,
         "lead_id": lead_id,
         "score": score,
-        "total": int(play.get("total") or QUIZ_QUESTION_COUNT),
+        "total": total,
         "pct": pct,
         "persona": persona,
         "strengths": strengths,
+        "strengths_en": strengths_en,
         "gaps": gaps,
+        "gaps_en": gaps_en,
         "tournament_week_iso": week,
         "rank": rank,
         "leaderboard": leaderboard,
-        "share_text": f"Sain {score}/{int(play.get('total') or QUIZ_QUESTION_COUNT)} Putki HQ:n rahapelitietoisuus-testissä. Kokeile sinäkin!",
+        "share_text": f"Sain {score}/{total} Putki HQ:n rahapelitietoisuus-testissä. Kokeile sinäkin!",
+        "share_text_en": f"I scored {score}/{total} on the Putki HQ gambling-literacy quiz. Try it yourself!",
     }
 
 
@@ -669,8 +728,11 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "slug": QUIZ_GAME_SLUG,
             "kind": "quiz",
             "title_fi": "Tietoisuustesti",
+            "title_en": "Awareness Test",
             "subtitle_fi": "10 kysymystä rahapelimatematiikasta ja vastuullisuudesta",
+            "subtitle_en": "10 questions on slot math and responsible play",
             "duration_fi": "≈ 3 min",
+            "duration_en": "≈ 3 min",
             "status": "active",
             "play_url": "/peliareena/tietoisuustesti",
         },
@@ -678,8 +740,11 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "slug": "scenario_decisions",
             "kind": "scenario",
             "title_fi": "Päätöspolku",
+            "title_en": "Decision Path",
             "subtitle_fi": "5 oikeaa pelitilannetta — mitä päättäisit?",
+            "subtitle_en": "5 real gambling situations — what would you decide?",
             "duration_fi": "≈ 4 min",
+            "duration_en": "≈ 4 min",
             "status": "active",
             "play_url": "/peliareena/paatospolku",
         },
@@ -687,8 +752,11 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "slug": "insight_reveal",
             "kind": "reveal",
             "title_fi": "Tietoraape",
+            "title_en": "Insight Reveal",
             "subtitle_fi": "Raaputa kuusi mikro-oppia — yksi fakta kerrallaan.",
+            "subtitle_en": "Scratch six micro-lessons — one fact at a time.",
             "duration_fi": "≈ 2 min",
+            "duration_en": "≈ 2 min",
             "status": "active",
             "play_url": "/peliareena/tietoraape",
         },
@@ -696,8 +764,11 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "slug": "arcade_snake",
             "kind": "arcade",
             "title_fi": "Aikatappo · Mato",
+            "title_en": "Timekiller · Snake",
             "subtitle_fi": "Klassinen mato — viikon korkein pisteytys palkitaan.",
+            "subtitle_en": "Classic snake — the week's top score is recognised.",
             "duration_fi": "≈ 2 min",
+            "duration_en": "≈ 2 min",
             "status": "active",
             "play_url": "/peliareena/aikatappo-mato",
         },
@@ -705,8 +776,11 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "slug": "arcade_tap",
             "kind": "arcade",
             "title_fi": "Aikatappo · Napautus",
+            "title_en": "Timekiller · Tap",
             "subtitle_fi": "Yhden napautuksen flappy-tyyli.",
+            "subtitle_en": "One-tap flappy-style arcade.",
             "duration_fi": "≈ 1 min",
+            "duration_en": "≈ 1 min",
             "status": "active",
             "play_url": "/peliareena/aikatappo-napautus",
         },
@@ -745,11 +819,13 @@ INSIGHT_TILE_COUNT = 6    # tiles on the reveal board
 async def start_scenario(db) -> Dict[str, Any]:
     cur = db.mini_game_questions.find(
         {"slug": SCENARIO_GAME_SLUG, "active": True},
-        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "options": 1, "topic_tag": 1},
+        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "prompt_en": 1,
+         "options": 1, "topic_tag": 1},
     ).sort("order", 1)
     scenarios = await cur.to_list(length=50)
     for s in scenarios:
-        s["options"] = [{"key": o["key"], "label_fi": o["label_fi"]} for o in s["options"]]
+        s["options"] = [{"key": o["key"], "label_fi": o["label_fi"],
+                         "label_en": o.get("label_en", "")} for o in s["options"]]
 
     anon_id = secrets.token_urlsafe(16)
     play_id = str(uuid.uuid4())
@@ -782,7 +858,8 @@ async def finish_scenario(db, *, play_id: str, anon_id: str, answers: List[Dict[
 
     cur = db.mini_game_questions.find(
         {"slug": SCENARIO_GAME_SLUG, "active": True},
-        {"_id": 0, "id": 1, "order": 1, "options": 1, "topic_tag": 1, "correct": 1, "prompt_fi": 1},
+        {"_id": 0, "id": 1, "order": 1, "options": 1, "topic_tag": 1,
+         "correct": 1, "prompt_fi": 1, "prompt_en": 1},
     ).sort("order", 1)
     scenarios = await cur.to_list(length=50)
     by_id = {s["id"]: s for s in scenarios}
@@ -803,11 +880,15 @@ async def finish_scenario(db, *, play_id: str, anon_id: str, answers: List[Dict[
             "q_id": sc["id"],
             "order": sc["order"],
             "prompt_fi": sc["prompt_fi"],
+            "prompt_en": sc.get("prompt_en", ""),
             "picked": picked,
             "picked_score": pts,
             "options_resolved": [
-                {"key": o["key"], "label_fi": o["label_fi"], "score": o.get("score", 0),
-                 "explanation_fi": o.get("explanation_fi", "")}
+                {"key": o["key"], "label_fi": o["label_fi"],
+                 "label_en": o.get("label_en", ""),
+                 "score": o.get("score", 0),
+                 "explanation_fi": o.get("explanation_fi", ""),
+                 "explanation_en": o.get("explanation_en", "")}
                 for o in sc["options"]
             ],
         })
@@ -822,7 +903,8 @@ async def finish_scenario(db, *, play_id: str, anon_id: str, answers: List[Dict[
         "max_score": SCENARIO_MAX_SCORE,
         "total": total,
         "pct": round(pct, 1),
-        "persona_preview": {"key": persona["key"], "title": persona["title"]},
+        "persona_preview": {"key": persona["key"], "title": persona["title"],
+                            "title_en": persona.get("title_en", "")},
         "answers": scored,
         "personalized_locked": True,
     }
@@ -853,7 +935,9 @@ async def unlock_scenario_result(db, *, play_id, anon_id, email, name=None, cons
         persona_resolver=lambda play: {
             "key": play.get("persona_key", "fresh_player"),
             "title": persona_for_scenario(int(play.get("score") or 0))["title"],
+            "title_en": persona_for_scenario(int(play.get("score") or 0))["title_en"],
             "tagline": persona_for_scenario(int(play.get("score") or 0))["tagline"],
+            "tagline_en": persona_for_scenario(int(play.get("score") or 0))["tagline_en"],
         },
     )
 
@@ -863,7 +947,7 @@ async def unlock_scenario_result(db, *, play_id, anon_id, email, name=None, cons
 async def start_insight(db) -> Dict[str, Any]:
     cur = db.mini_game_questions.find(
         {"slug": INSIGHT_GAME_SLUG, "active": True},
-        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "topic_tag": 1},
+        {"_id": 0, "id": 1, "order": 1, "prompt_fi": 1, "prompt_en": 1, "topic_tag": 1},
     ).sort("order", 1)
     tiles = await cur.to_list(length=20)
 
@@ -895,7 +979,8 @@ async def reveal_insight_tile(db, *, play_id, anon_id, q_id) -> Dict[str, Any]:
         return {"error": "play_not_found"}
     tile = await db.mini_game_questions.find_one(
         {"id": q_id, "slug": INSIGHT_GAME_SLUG, "active": True},
-        {"_id": 0, "id": 1, "prompt_fi": 1, "explanation_fi": 1, "topic_tag": 1},
+        {"_id": 0, "id": 1, "prompt_fi": 1, "prompt_en": 1,
+         "explanation_fi": 1, "explanation_en": 1, "topic_tag": 1},
     )
     if not tile:
         return {"error": "tile_not_found"}
@@ -928,16 +1013,23 @@ async def finish_insight(db, *, play_id, anon_id) -> Dict[str, Any]:
     if revealed_ids:
         cur = db.mini_game_questions.find(
             {"id": {"$in": revealed_ids}, "slug": INSIGHT_GAME_SLUG},
-            {"_id": 0, "id": 1, "prompt_fi": 1, "explanation_fi": 1, "topic_tag": 1, "order": 1},
+            {"_id": 0, "id": 1, "prompt_fi": 1, "prompt_en": 1,
+             "explanation_fi": 1, "explanation_en": 1, "topic_tag": 1, "order": 1},
         )
         revealed_tiles = await cur.to_list(length=20)
         revealed_tiles.sort(key=lambda t: t.get("order") or 99)
 
     persona_title = "Tutkiva oppija" if score >= 4 else "Aloitteleva uteliainen"
+    persona_title_en = "The Curious Learner" if score >= 4 else "The Beginning Explorer"
     persona_tagline = (
         "Avaat tietoa tasaiseen tahtiin — oppimismoduuli on selvästi päällä."
         if score >= 4 else
         "Pieni alku — kannattaa palata viikolla tutkimaan loput tiilet."
+    )
+    persona_tagline_en = (
+        "You're steadily unlocking knowledge — the learning module is clearly on."
+        if score >= 4 else
+        "A small start — come back this week to uncover the rest of the tiles."
     )
 
     preview = {
@@ -945,7 +1037,8 @@ async def finish_insight(db, *, play_id, anon_id) -> Dict[str, Any]:
         "score": score,
         "max_score": INSIGHT_TILE_COUNT,
         "pct": round(pct, 1),
-        "persona_preview": {"key": "explorer", "title": persona_title},
+        "persona_preview": {"key": "explorer", "title": persona_title,
+                            "title_en": persona_title_en},
         "revealed_tiles": revealed_tiles,
         "personalized_locked": True,
     }
@@ -960,7 +1053,9 @@ async def finish_insight(db, *, play_id, anon_id) -> Dict[str, Any]:
             "pct": round(pct, 1),
             "persona_key": "explorer",
             "persona_title": persona_title,
+            "persona_title_en": persona_title_en,
             "persona_tagline": persona_tagline,
+            "persona_tagline_en": persona_tagline_en,
             "revealed_tiles": revealed_tiles,
             "preview_result": preview,
         }},
@@ -976,7 +1071,9 @@ async def unlock_insight_result(db, *, play_id, anon_id, email, name=None, conse
         persona_resolver=lambda play: {
             "key": "explorer",
             "title": play.get("persona_title", "Tutkiva oppija"),
+            "title_en": play.get("persona_title_en", "The Curious Learner"),
             "tagline": play.get("persona_tagline", ""),
+            "tagline_en": play.get("persona_tagline_en", ""),
         },
     )
 
@@ -1078,6 +1175,7 @@ async def _unlock_for_game(
         "rank": rank,
         "leaderboard": leaderboard,
         "share_text": f"Pelasin Putki HQ:n pelin ja sain {score}/{int(play.get('max_score') or 0)}. Kokeile sinäkin!",
+        "share_text_en": f"I played Putki HQ's game and scored {score}/{int(play.get('max_score') or 0)}. Try it yourself!",
     }
 
 

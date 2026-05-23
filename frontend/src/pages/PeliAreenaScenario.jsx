@@ -1,17 +1,17 @@
 /**
- * PUTKI HQ — /peliareena/paatospolku (Scenario · iter56)
+ * PUTKI HQ — /peliareena/paatospolku (Scenario · iter56, i18n iter60)
  *
  * Branching decisions game. 5 real gambling scenarios with 3 options each.
  * Each option carries a hidden judgement score (0..3) which we surface
  * only AFTER the player picks — they learn the trade-off of every choice.
- * Email gate unlocks persona ("Kärsivällinen taktikko" / "Kasvava arvioija"
- * / "Tuore pelaaja") + tournament rank.
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Check, Trophy, ChevronRight, Share2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, Share2 } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
+import { useLang } from '../context/LanguageContext';
+import { pickPA, interpolate, langField } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -25,6 +25,7 @@ const post = async (path, body) => {
 };
 
 const PeliAreenaScenario = () => {
+  const { lang } = useLang();
   const [stage, setStage] = useState('intro');
   const [session, setSession] = useState(null);
   const [answers, setAnswers] = useState([]);
@@ -61,26 +62,18 @@ const PeliAreenaScenario = () => {
         color: 'var(--muted)', textDecoration: 'none', fontSize: 13,
         fontFamily: 'Georgia, serif', marginBottom: 24,
       }}>
-        <ArrowLeft size={14} strokeWidth={1.6} /> Takaisin Peliareenaan
+        <ArrowLeft size={14} strokeWidth={1.6} /> {pickPA(lang, 'hub.back')}
       </Link>
 
       {stage === 'intro' && (
         <GameIntroPanel
           gameSlug="scenario_decisions"
-          eyebrow="PÄÄTÖSPOLKU · ALOITTELIJA"
-          headline={<>5 oikeaa pelitilannetta.<br />Mitä päättäisit?</>}
-          tagline="Jokainen skenaario tarjoaa kolme vaihtoehtoa. Valinta tehdään ennen kuin seuraukset näkyvät — silloin todellinen arviointikyky punnitaan. Lopussa saat profiilisi: Kärsivällinen taktikko, Kasvava arvioija vai Tuore pelaaja."
-          howToPlay={[
-            'Lue skenaario ja valitse yksi kolmesta vaihtoehdosta.',
-            'Valinta lukittuu — saat täydet analyysit kaikista vaihtoehdoista lopussa.',
-            'Yhteensä 5 päätöstä. Loppupisteet tuottavat profiilin ja sijoituksen viikolla.',
-          ]}
-          scoring={[
-            'Jokainen vaihtoehto on arvioitu 0/1/3 pisteen asteikolla.',
-            'Maksimi = 15 pistettä. ≥12 = Kärsivällinen taktikko, 7–11 = Kasvava arvioija, 0–6 = Tuore pelaaja.',
-            'Tasapelissä nopeampi peliaika sijoittuu paremmin.',
-          ]}
-          ctaLabel="Aloita päätöspolku"
+          eyebrow={pickPA(lang, 'sc.eyebrow')}
+          headline={pickPA(lang, 'sc.headline')}
+          tagline={pickPA(lang, 'sc.tagline')}
+          howToPlay={[pickPA(lang, 'sc.howTo.1'), pickPA(lang, 'sc.howTo.2'), pickPA(lang, 'sc.howTo.3')]}
+          scoring={[pickPA(lang, 'sc.score.1'), pickPA(lang, 'sc.score.2'), pickPA(lang, 'sc.score.3')]}
+          ctaLabel={pickPA(lang, 'sc.cta.start')}
           startTestId="scenario-start-btn"
           onStart={start}
         />
@@ -90,7 +83,7 @@ const PeliAreenaScenario = () => {
         <div data-testid={`scenario-q-${currentIdx + 1}`}>
           <div style={{ marginBottom: 24 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', marginBottom: 8 }}>
-              SKENAARIO {currentIdx + 1} / {total}
+              {interpolate(pickPA(lang, 'sc.progress'), { n: currentIdx + 1, total })}
             </div>
             <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${((currentIdx + (pickedNow ? 1 : 0)) / total) * 100}%`, background: 'var(--ink)', transition: 'width 220ms ease' }} />
@@ -101,7 +94,7 @@ const PeliAreenaScenario = () => {
             fontSize: 'clamp(20px, 3vw, 26px)', lineHeight: 1.35,
             letterSpacing: '-0.01em', color: 'var(--ink)', margin: '0 0 20px',
           }}>
-            {currentSc.prompt_fi}
+            {langField(currentSc, 'prompt', lang) || currentSc.prompt_fi}
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {currentSc.options.map(opt => {
@@ -127,7 +120,7 @@ const PeliAreenaScenario = () => {
                   }}
                 >
                   <span className="mono" style={{ fontSize: 11, color: '#5A7BB8', fontWeight: 700, flexShrink: 0 }}>{opt.key.toUpperCase()}</span>
-                  <span>{opt.label_fi}</span>
+                  <span>{langField(opt, 'label', lang) || opt.label_fi}</span>
                 </button>
               );
             })}
@@ -139,10 +132,10 @@ const PeliAreenaScenario = () => {
               border: '1px solid var(--border)',
             }}>
               <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-                Valinta lukittu. Saat täydet analyysit jokaisesta vaihtoehdosta lopussa.
+                {pickPA(lang, 'sc.locked')}
               </p>
               <button onClick={next} data-testid="scenario-next-btn" style={{ ...btnPrimary, marginTop: 12, padding: '10px 20px' }}>
-                {currentIdx + 1 >= total ? 'Näytä tulos' : 'Seuraava skenaario'} <ChevronRight size={12} strokeWidth={2.5} />
+                {currentIdx + 1 >= total ? pickPA(lang, 'sc.showResult') : pickPA(lang, 'sc.next')} <ChevronRight size={12} strokeWidth={2.5} />
               </button>
             </div>
           )}
@@ -150,118 +143,125 @@ const PeliAreenaScenario = () => {
       )}
 
       {stage === 'preview' && preview && (
-        <ScenarioPreview preview={preview} session={session} onUnlocked={(r) => { setFullResult(r); setStage('unlocked'); }} />
+        <ScenarioPreview lang={lang} preview={preview} session={session} onUnlocked={(r) => { setFullResult(r); setStage('unlocked'); }} />
       )}
 
       {stage === 'unlocked' && fullResult && (
-        <ScenarioUnlocked result={fullResult} preview={preview} />
+        <ScenarioUnlocked lang={lang} result={fullResult} />
       )}
     </div>
   );
 };
 
-const ScenarioPreview = ({ preview, session, onUnlocked }) => (
-  <div data-testid="scenario-preview">
-    <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-      TULOKSESI · ESIKATSELU
-    </div>
-    <h1 style={{
-      fontFamily: 'Georgia, serif', fontWeight: 700,
-      fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-      letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
-    }}>
-      {preview.score}<span style={{ color: 'var(--muted)' }}>/{preview.max_score}</span>
-    </h1>
-    <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
-      Arviointipisteesi yhteensä. Esikatselu: <strong style={{ color: 'var(--ink)' }}>{preview.persona_preview.title}</strong>.
-    </p>
-
-    <div style={{ marginBottom: 32 }}>
-      <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
-        VAIHTOEHTOJEN ARVIOINTI
+const ScenarioPreview = ({ lang, preview, session, onUnlocked }) => {
+  const personaTitle = (lang === 'en' && preview.persona_preview.title_en) || preview.persona_preview.title;
+  return (
+    <div data-testid="scenario-preview">
+      <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
+        {pickPA(lang, 'sc.preview.eyebrow')}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        {preview.answers.map(a => (
-          <div key={a.q_id} style={{ padding: 14, border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 4 }}>
-            <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#5A7BB8', fontWeight: 700, marginBottom: 8 }}>
-              SKENAARIO {a.order} · VALITSIT {a.picked.toUpperCase()} ({a.picked_score}/3)
-            </div>
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--ink)', margin: '0 0 12px', lineHeight: 1.5 }}>
-              {a.prompt_fi}
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {a.options_resolved.map(o => {
-                const wasPicked = o.key === a.picked;
-                return (
-                  <div key={o.key} style={{
-                    padding: '8px 12px',
-                    background: wasPicked ? 'var(--surface-2)' : 'transparent',
-                    borderLeft: `3px solid ${o.score === 3 ? '#3F8A4D' : o.score === 0 ? '#C8423C' : '#9C9587'}`,
-                    fontFamily: 'Georgia, serif', fontSize: 13,
-                  }}>
-                    <div style={{ color: 'var(--ink)', marginBottom: 4 }}>
-                      <span className="mono" style={{ fontSize: 10, color: '#5A7BB8', marginRight: 8, fontWeight: 700 }}>{o.key.toUpperCase()} · {o.score}/3</span>
-                      {o.label_fi}
-                      {wasPicked && <Check size={12} strokeWidth={2} style={{ display: 'inline', marginLeft: 6, color: 'var(--ink)' }} />}
+      <h1 style={{
+        fontFamily: 'Georgia, serif', fontWeight: 700,
+        fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
+        letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
+      }}>
+        {preview.score}<span style={{ color: 'var(--muted)' }}>/{preview.max_score}</span>
+      </h1>
+      <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
+        {pickPA(lang, 'sc.preview.lead')}
+        <strong style={{ color: 'var(--ink)' }}>{personaTitle}</strong>.
+      </p>
+
+      <div style={{ marginBottom: 32 }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
+          {pickPA(lang, 'sc.preview.optionsHeading')}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {preview.answers.map(a => (
+            <div key={a.q_id} style={{ padding: 14, border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 4 }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#5A7BB8', fontWeight: 700, marginBottom: 8 }}>
+                {interpolate(pickPA(lang, 'sc.preview.youPicked'), { n: a.order, key: a.picked.toUpperCase(), score: a.picked_score })}
+              </div>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--ink)', margin: '0 0 12px', lineHeight: 1.5 }}>
+                {langField(a, 'prompt', lang) || a.prompt_fi}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {a.options_resolved.map(o => {
+                  const wasPicked = o.key === a.picked;
+                  return (
+                    <div key={o.key} style={{
+                      padding: '8px 12px',
+                      background: wasPicked ? 'var(--surface-2)' : 'transparent',
+                      borderLeft: `3px solid ${o.score === 3 ? '#3F8A4D' : o.score === 0 ? '#C8423C' : '#9C9587'}`,
+                      fontFamily: 'Georgia, serif', fontSize: 13,
+                    }}>
+                      <div style={{ color: 'var(--ink)', marginBottom: 4 }}>
+                        <span className="mono" style={{ fontSize: 10, color: '#5A7BB8', marginRight: 8, fontWeight: 700 }}>{o.key.toUpperCase()} · {o.score}/3</span>
+                        {langField(o, 'label', lang) || o.label_fi}
+                        {wasPicked && <Check size={12} strokeWidth={2} style={{ display: 'inline', marginLeft: 6, color: 'var(--ink)' }} />}
+                      </div>
+                      <div style={{ color: 'var(--muted)', fontSize: 12.5, lineHeight: 1.45 }}>{langField(o, 'explanation', lang) || o.explanation_fi}</div>
                     </div>
-                    <div style={{ color: 'var(--muted)', fontSize: 12.5, lineHeight: 1.45 }}>{o.explanation_fi}</div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
+
+      <ConsentEmailGate
+        gameSlug="scenario"
+        session={session}
+        unlockPath="/api/mini-games/scenario/unlock"
+        onUnlocked={onUnlocked}
+      />
+
+      <div style={{ marginTop: 24 }}>
+        <Link to="/peliareena" data-testid="scenario-preview-back" style={btnGhost}>
+          {pickPA(lang, 'quiz.back')}
+        </Link>
       </div>
     </div>
+  );
+};
 
-    <ConsentEmailGate
-      gameSlug="scenario"
-      session={session}
-      unlockPath="/api/mini-games/scenario/unlock"
-      onUnlocked={onUnlocked}
-      headline="Saat profiilisi, vahvuutesi ja paikan viikolla"
-    />
-
-    <div style={{ marginTop: 24 }}>
-      <Link to="/peliareena" data-testid="scenario-preview-back" style={btnGhost}>
-        ← Palaa Peliareenaan
-      </Link>
-    </div>
-  </div>
-);
-
-const ScenarioUnlocked = ({ result, preview }) => {
+const ScenarioUnlocked = ({ lang, result }) => {
+  const title = (lang === 'en' && result.persona.title_en) || result.persona.title;
+  const tagline = (lang === 'en' && result.persona.tagline_en) || result.persona.tagline;
+  const shareText = (lang === 'en' && result.share_text_en) || result.share_text;
   const share = () => {
     fetch(`${BACKEND}/api/mini-games/share/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ game_slug: 'scenario_decisions', play_id: result.play_id }),
     }).catch(() => {});
-    if (navigator.share) navigator.share({ text: result.share_text, url: window.location.href });
-    else { navigator.clipboard.writeText(`${result.share_text} ${window.location.href}`); alert('Jakoteksti kopioitu.'); }
+    if (navigator.share) navigator.share({ text: shareText, url: window.location.href });
+    else { navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+           alert(lang === 'en' ? 'Share text copied.' : 'Jakoteksti kopioitu.'); }
   };
   return (
     <div data-testid="scenario-unlocked">
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#3F8A4D', fontWeight: 700, marginBottom: 12 }}>
-        TÄYSI PROFIILI · TURNAUSPAIKKA VARATTU
+        {pickPA(lang, 'sc.unlocked.eyebrow')}
       </div>
       <h1 style={{
         fontFamily: 'Georgia, serif', fontWeight: 700,
         fontSize: 'clamp(36px, 5vw, 56px)', lineHeight: 1.05,
         letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 8px',
-      }}>{result.persona.title}</h1>
+      }}>{title}</h1>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 24px' }}>
-        {result.persona.tagline}
+        {tagline}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 28 }}>
-        <StatBox label="ARVIOINTI" value={`${result.score}/${result.max_score}`} />
-        <StatBox label="TULOS-%" value={`${result.pct.toFixed(0)}%`} />
-        <StatBox label={`SIJA · ${result.tournament_week_iso}`} value={`#${result.rank}`} />
+        <StatBox label={pickPA(lang, 'sc.unlocked.score')} value={`${result.score}/${result.max_score}`} />
+        <StatBox label={pickPA(lang, 'sc.unlocked.pct')} value={`${result.pct.toFixed(0)}%`} />
+        <StatBox label={interpolate(pickPA(lang, 'sc.unlocked.rank'), { week: result.tournament_week_iso })} value={`#${result.rank}`} />
       </div>
 
       <div style={{ marginTop: 8 }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
-          PÄÄTÖSPOLKU · VIIKON TOP 10
+          {pickPA(lang, 'sc.unlocked.boardTitle')}
         </div>
         <ol style={{ margin: 0, padding: 0, listStyle: 'none', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
           {result.leaderboard.map(row => (
@@ -283,9 +283,9 @@ const ScenarioUnlocked = ({ result, preview }) => {
 
       <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
         <button onClick={share} data-testid="scenario-share-btn" style={btnPrimary}>
-          <Share2 size={14} strokeWidth={1.8} /> Jaa tulos
+          <Share2 size={14} strokeWidth={1.8} /> {pickPA(lang, 'quiz.share')}
         </button>
-        <Link to="/peliareena" data-testid="scenario-unlocked-back" style={btnGhost}>← Palaa Peliareenaan</Link>
+        <Link to="/peliareena" data-testid="scenario-unlocked-back" style={btnGhost}>{pickPA(lang, 'quiz.back')}</Link>
       </div>
     </div>
   );

@@ -1,17 +1,16 @@
 /**
  * PUTKI HQ — Shared email-gate component for Phase 2 mini-games · iter56
- *
- * Extracted from the quiz to avoid duplicating GDPR consent UX across
- * scenario + insight unlock flows. Mirrors the contract baked into the
- * backend `_unlock_for_game` helper: consent checkbox is mandatory,
- * email is validated, full personalized result returns from the server.
+ * iter60: full FI/EN via useLang() + i18n dict.
  */
 import React, { useState } from 'react';
 import { Trophy } from 'lucide-react';
+import { useLang } from '../context/LanguageContext';
+import { pickPA, interpolate } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 export const ConsentEmailGate = ({ session, unlockPath, onUnlocked, headline, gameSlug = 'mini' }) => {
+  const { lang } = useLang();
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [consent, setConsent] = useState(false);
@@ -21,8 +20,8 @@ export const ConsentEmailGate = ({ session, unlockPath, onUnlocked, headline, ga
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!consent) { setError('Suostumus vaaditaan turnauksen rankaukseen.'); return; }
-    if (!email.includes('@')) { setError('Anna kelvollinen sähköposti.'); return; }
+    if (!consent) { setError(pickPA(lang, 'gate.consent.required')); return; }
+    if (!email.includes('@')) { setError(pickPA(lang, 'gate.email.invalid')); return; }
     setSubmitting(true);
     try {
       const r = await fetch(`${BACKEND}${unlockPath}`, {
@@ -35,7 +34,7 @@ export const ConsentEmailGate = ({ session, unlockPath, onUnlocked, headline, ga
       if (!r.ok) throw new Error(await r.text());
       onUnlocked(await r.json());
     } catch (e2) {
-      setError(`Tallennus epäonnistui: ${e2.message}`);
+      setError(interpolate(pickPA(lang, 'gate.error.save'), { message: e2.message }));
     } finally {
       setSubmitting(false);
     }
@@ -48,22 +47,21 @@ export const ConsentEmailGate = ({ session, unlockPath, onUnlocked, headline, ga
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <Trophy size={16} strokeWidth={1.8} style={{ color: 'var(--ink)' }} />
         <span className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700 }}>
-          AVAA TÄYDET TULOKSET · LIITY TURNAUKSEEN
+          {pickPA(lang, 'gate.eyebrow')}
         </span>
       </div>
       <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--ink)', margin: '0 0 8px', letterSpacing: '-0.01em' }}>
-        {headline}
+        {headline || pickPA(lang, 'gate.defaultHeadline')}
       </h2>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', lineHeight: 1.5, margin: '0 0 16px' }}>
-        Annetulla sähköpostilla saat: täydellisen profiilin, viikon turnauspaikan, ja viikkokirjeen
-        (4 viestiä/viikko: avajaiset, väliaika, sulkemisilmoitus, tulokset).
+        {pickPA(lang, 'gate.body')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 12 }}>
         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-          placeholder="sinun.sahkoposti@esimerkki.fi" data-testid={`${gameSlug}-email-input`}
+          placeholder={pickPA(lang, 'gate.email.placeholder')} data-testid={`${gameSlug}-email-input`}
           style={inputStyle} />
         <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-          placeholder="Etunimi (vapaaehtoinen — käytetään leaderboardissa)" data-testid={`${gameSlug}-name-input`}
+          placeholder={pickPA(lang, 'gate.name.placeholder')} data-testid={`${gameSlug}-name-input`}
           style={inputStyle} />
       </div>
       <label style={{
@@ -74,11 +72,9 @@ export const ConsentEmailGate = ({ session, unlockPath, onUnlocked, headline, ga
         <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
           data-testid={`${gameSlug}-consent-checkbox`} style={{ marginTop: 3, flexShrink: 0 }} />
         <span>
-          Hyväksyn, että Putki HQ tallentaa sähköpostini ja pelin tuloksen voidakseen lähettää
-          henkilökohtaiset tulokset ja viikoittaisen turnauksen päivitykset. Voin perua tilauksen
-          koska tahansa.{' '}
+          {pickPA(lang, 'gate.consent')}{' '}
           <a href="/tietosuoja" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>
-            Tietosuojaseloste
+            {pickPA(lang, 'gate.consent.privacy')}
           </a>.
         </span>
       </label>
@@ -91,10 +87,10 @@ export const ConsentEmailGate = ({ session, unlockPath, onUnlocked, headline, ga
         letterSpacing: '0.18em', textTransform: 'uppercase',
         width: '100%', opacity: submitting ? 0.6 : 1,
       }}>
-        {submitting ? 'Tallennetaan…' : 'Avaa tulokset + Liity turnaukseen'}
+        {submitting ? pickPA(lang, 'gate.submitting') : pickPA(lang, 'gate.submit')}
       </button>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: 'var(--muted)', textAlign: 'center', margin: '10px 0 0' }}>
-        Ei rahaa, ei kortteja, ei ostopakkoa. Voit perua koska tahansa.
+        {pickPA(lang, 'gate.smallprint')}
       </p>
     </form>
   );

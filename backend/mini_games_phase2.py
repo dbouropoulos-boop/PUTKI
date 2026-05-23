@@ -136,17 +136,23 @@ SCENARIO_PERSONAS = {
     "patient_tactician": {
         "min": 12,
         "title": "Kärsivällinen taktikko",
+        "title_en": "The Patient Tactician",
         "tagline": "Tunnistat tunnesäätelyn ja pidät pään kylmänä paineessa.",
+        "tagline_en": "You recognise emotional regulation and keep a cool head under pressure.",
     },
     "growing_judge": {
         "min": 7,
         "title": "Kasvava arvioija",
+        "title_en": "The Growing Judge",
         "tagline": "Sinulla on hyvät perusteet — vahvista bankroll-ajattelua.",
+        "tagline_en": "Solid foundation — reinforce your bankroll thinking.",
     },
     "fresh_player": {
         "min": 0,
         "title": "Tuore pelaaja",
+        "title_en": "The Fresh Player",
         "tagline": "Suosittelemme käymään läpi vastuullisuuden perusteet ennen rahapelipäätöksiä.",
+        "tagline_en": "We recommend reviewing the responsible-play basics before making real-money decisions.",
     },
 }
 
@@ -155,8 +161,11 @@ def persona_for_scenario(total_score: int) -> Dict[str, Any]:
     for key in ["patient_tactician", "growing_judge", "fresh_player"]:
         p = SCENARIO_PERSONAS[key]
         if total_score >= p["min"]:
-            return {"key": key, "title": p["title"], "tagline": p["tagline"]}
-    return {"key": "fresh_player", **SCENARIO_PERSONAS["fresh_player"]}
+            return {"key": key, "title": p["title"], "title_en": p["title_en"],
+                    "tagline": p["tagline"], "tagline_en": p["tagline_en"]}
+    p = SCENARIO_PERSONAS["fresh_player"]
+    return {"key": "fresh_player", "title": p["title"], "title_en": p["title_en"],
+            "tagline": p["tagline"], "tagline_en": p["tagline_en"]}
 
 
 # ─────────────────────── Insight Reveal content ──────────────────────

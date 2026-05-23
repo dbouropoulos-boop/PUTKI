@@ -1,16 +1,17 @@
 /**
- * PUTKI HQ — /peliareena/tietoraape (Insight Reveal · iter56)
+ * PUTKI HQ — /peliareena/tietoraape (Insight Reveal · iter56, i18n iter60)
  *
  * Scratch-card style game. 6 tiles on a board, each hides one micro-
  * lesson about gambling literacy. Click to reveal — no wrong answers,
- * the educational payoff IS the revealed fact. "Finish" closes out the
- * session; email gate unlocks tournament rank + full revealed-tiles set.
+ * the educational payoff IS the revealed fact.
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Sparkles, ChevronRight, Share2, Trophy } from 'lucide-react';
+import { ArrowLeft, Sparkles, Share2 } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
+import { useLang } from '../context/LanguageContext';
+import { pickPA, interpolate, langField } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const post = async (path, body) => {
@@ -23,9 +24,9 @@ const post = async (path, body) => {
 };
 
 const PeliAreenaInsight = () => {
+  const { lang } = useLang();
   const [stage, setStage] = useState('intro');
   const [session, setSession] = useState(null);
-  // revealedMap: { q_id: { prompt_fi, explanation_fi, topic_tag } }
   const [revealed, setRevealed] = useState({});
   const [preview, setPreview] = useState(null);
   const [full, setFull] = useState(null);
@@ -60,26 +61,18 @@ const PeliAreenaInsight = () => {
         color: 'var(--muted)', textDecoration: 'none', fontSize: 13,
         fontFamily: 'Georgia, serif', marginBottom: 24,
       }}>
-        <ArrowLeft size={14} strokeWidth={1.6} /> Takaisin Peliareenaan
+        <ArrowLeft size={14} strokeWidth={1.6} /> {pickPA(lang, 'hub.back')}
       </Link>
 
       {stage === 'intro' && (
         <GameIntroPanel
           gameSlug="insight_reveal"
-          eyebrow="TIETORAAPE · 6 LAATTAA"
-          headline={<>Raaputa kuusi mikro-oppia.<br />Yksi fakta kerrallaan.</>}
-          tagline="Ei oikeita tai vääriä vastauksia — palkinto on jokaisessa laatassa oleva tieto. Raaputa niin monta laattaa kuin haluat; mitä useamman avaat, sitä paremmin sijoitut viikon turnauksessa."
-          howToPlay={[
-            'Klikkaa laattaa avataksesi mikro-opin (esim. RTP, bonusehdot, bankroll-matematiikka).',
-            'Jokainen avattu laatta lisää yhden pisteen — voit avata kaikki kuusi.',
-            'Päätä peli, kun haluat lukita pisteesi ja siirtyä turnauspaikkaan.',
-          ]}
-          scoring={[
-            '1 piste per avattu laatta. Maksimi 6 pistettä.',
-            'Tasapelissä nopeampi peliaika sijoittuu paremmin.',
-            'Saat täydet selitykset ja lähdeviitteet, kun viimeistelet pelin.',
-          ]}
-          ctaLabel="Avaa lauta"
+          eyebrow={pickPA(lang, 'in.eyebrow')}
+          headline={pickPA(lang, 'in.headline')}
+          tagline={pickPA(lang, 'in.tagline')}
+          howToPlay={[pickPA(lang, 'in.howTo.1'), pickPA(lang, 'in.howTo.2'), pickPA(lang, 'in.howTo.3')]}
+          scoring={[pickPA(lang, 'in.score.1'), pickPA(lang, 'in.score.2'), pickPA(lang, 'in.score.3')]}
+          ctaLabel={pickPA(lang, 'in.cta.start')}
           startTestId="insight-start-btn"
           onStart={start}
         />
@@ -89,7 +82,7 @@ const PeliAreenaInsight = () => {
         <div data-testid="insight-board">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
             <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)' }}>
-              AVATTU {revealedCount} / {total}
+              {interpolate(pickPA(lang, 'in.opened'), { n: revealedCount, total })}
             </div>
             <button
               onClick={finish}
@@ -105,7 +98,7 @@ const PeliAreenaInsight = () => {
                 borderRadius: 4,
               }}
             >
-              Päätä peli →
+              {pickPA(lang, 'in.finish')}
             </button>
           </div>
 
@@ -137,10 +130,10 @@ const PeliAreenaInsight = () => {
                         fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18,
                         color: 'var(--muted)', letterSpacing: '-0.01em',
                       }}>
-                        Laatta {i + 1}
+                        {lang === 'en' ? `Tile ${i + 1}` : `Laatta ${i + 1}`}
                       </div>
                       <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)' }}>
-                        KLIKKAA AVATAKSESI
+                        {lang === 'en' ? 'CLICK TO REVEAL' : 'KLIKKAA AVATAKSESI'}
                       </div>
                     </>
                   ) : (
@@ -152,10 +145,10 @@ const PeliAreenaInsight = () => {
                         fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 20,
                         color: 'var(--ink)', letterSpacing: '-0.01em',
                       }}>
-                        {r.prompt_fi}
+                        {langField(r, 'prompt', lang) || r.prompt_fi}
                       </div>
                       <p style={{ fontFamily: 'Georgia, serif', fontSize: 13.5, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-                        {r.explanation_fi}
+                        {langField(r, 'explanation', lang) || r.explanation_fi}
                       </p>
                     </>
                   )}
@@ -167,101 +160,108 @@ const PeliAreenaInsight = () => {
       )}
 
       {stage === 'preview' && preview && (
-        <InsightPreview preview={preview} session={session} onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
+        <InsightPreview lang={lang} preview={preview} session={session} onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
       )}
 
       {stage === 'unlocked' && full && (
-        <InsightUnlocked result={full} preview={preview} />
+        <InsightUnlocked lang={lang} result={full} />
       )}
     </div>
   );
 };
 
-const InsightPreview = ({ preview, session, onUnlocked }) => (
-  <div data-testid="insight-preview">
-    <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-      TULOKSESI · ESIKATSELU
-    </div>
-    <h1 style={{
-      fontFamily: 'Georgia, serif', fontWeight: 700,
-      fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
-      letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
-    }}>
-      {preview.score}<span style={{ color: 'var(--muted)' }}>/{preview.max_score}</span>
-    </h1>
-    <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
-      Mikro-oppia avattu. Esikatselu: <strong style={{ color: 'var(--ink)' }}>{preview.persona_preview.title}</strong>.
-    </p>
-
-    <div style={{ marginBottom: 32 }}>
-      <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
-        AVATUT OPIT
+const InsightPreview = ({ lang, preview, session, onUnlocked }) => {
+  const personaTitle = (lang === 'en' && preview.persona_preview.title_en) || preview.persona_preview.title;
+  return (
+    <div data-testid="insight-preview">
+      <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
+        {pickPA(lang, 'sc.preview.eyebrow')}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {preview.revealed_tiles.map(t => (
-          <div key={t.id} style={{ padding: 14, border: '1px solid var(--border)', borderLeft: '4px solid #3F8A4D', background: 'var(--surface)', borderRadius: 4 }}>
-            <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#3F8A4D', fontWeight: 700, marginBottom: 6 }}>
-              {t.topic_tag?.toUpperCase()}
+      <h1 style={{
+        fontFamily: 'Georgia, serif', fontWeight: 700,
+        fontSize: 'clamp(40px, 6vw, 64px)', lineHeight: 1.05,
+        letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 12px',
+      }}>
+        {preview.score}<span style={{ color: 'var(--muted)' }}>/{preview.max_score}</span>
+      </h1>
+      <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
+        {lang === 'en' ? 'Micro-lessons revealed. Preview: ' : 'Mikro-oppia avattu. Esikatselu: '}
+        <strong style={{ color: 'var(--ink)' }}>{personaTitle}</strong>.
+      </p>
+
+      <div style={{ marginBottom: 32 }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
+          {lang === 'en' ? 'REVEALED LESSONS' : 'AVATUT OPIT'}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {preview.revealed_tiles.map(t => (
+            <div key={t.id} style={{ padding: 14, border: '1px solid var(--border)', borderLeft: '4px solid #3F8A4D', background: 'var(--surface)', borderRadius: 4 }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#3F8A4D', fontWeight: 700, marginBottom: 6 }}>
+                {t.topic_tag?.toUpperCase()}
+              </div>
+              <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: 'var(--ink)', marginBottom: 6 }}>
+                {langField(t, 'prompt', lang) || t.prompt_fi}
+              </div>
+              <p style={{ fontFamily: 'Georgia, serif', fontSize: 13.5, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
+                {langField(t, 'explanation', lang) || t.explanation_fi}
+              </p>
             </div>
-            <div style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 18, color: 'var(--ink)', marginBottom: 6 }}>
-              {t.prompt_fi}
-            </div>
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: 13.5, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-              {t.explanation_fi}
-            </p>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
+
+      <ConsentEmailGate
+        gameSlug="insight"
+        session={session}
+        unlockPath="/api/mini-games/insight/unlock"
+        onUnlocked={onUnlocked}
+      />
+
+      <div style={{ marginTop: 24 }}>
+        <Link to="/peliareena" data-testid="insight-preview-back" style={btnGhost}>
+          {pickPA(lang, 'quiz.back')}
+        </Link>
       </div>
     </div>
+  );
+};
 
-    <ConsentEmailGate
-      gameSlug="insight"
-      session={session}
-      unlockPath="/api/mini-games/insight/unlock"
-      onUnlocked={onUnlocked}
-      headline="Saat täyden oppipaketin + paikan viikon turnauksessa"
-    />
-
-    <div style={{ marginTop: 24 }}>
-      <Link to="/peliareena" data-testid="insight-preview-back" style={btnGhost}>
-        ← Palaa Peliareenaan
-      </Link>
-    </div>
-  </div>
-);
-
-const InsightUnlocked = ({ result, preview }) => {
+const InsightUnlocked = ({ lang, result }) => {
+  const title = (lang === 'en' && result.persona.title_en) || result.persona.title;
+  const tagline = (lang === 'en' && result.persona.tagline_en) || result.persona.tagline;
+  const shareText = (lang === 'en' && result.share_text_en) || result.share_text;
   const share = () => {
     fetch(`${BACKEND}/api/mini-games/share/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ game_slug: 'insight_reveal', play_id: result.play_id }),
     }).catch(() => {});
-    if (navigator.share) navigator.share({ text: result.share_text, url: window.location.href });
-    else { navigator.clipboard.writeText(`${result.share_text} ${window.location.href}`); alert('Jakoteksti kopioitu.'); }
+    if (navigator.share) navigator.share({ text: shareText, url: window.location.href });
+    else { navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+           alert(lang === 'en' ? 'Share text copied.' : 'Jakoteksti kopioitu.'); }
   };
   return (
     <div data-testid="insight-unlocked">
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#3F8A4D', fontWeight: 700, marginBottom: 12 }}>
-        TÄYSI PROFIILI · TURNAUSPAIKKA VARATTU
+        {pickPA(lang, 'in.unlocked.eyebrow')}
       </div>
       <h1 style={{
         fontFamily: 'Georgia, serif', fontWeight: 700,
         fontSize: 'clamp(36px, 5vw, 56px)', lineHeight: 1.05,
         letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 8px',
-      }}>{result.persona.title}</h1>
+      }}>{title}</h1>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 24px' }}>
-        {result.persona.tagline}
+        {tagline}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 28 }}>
-        <StatBox label="AVATTU" value={`${result.score}/${result.max_score}`} />
-        <StatBox label="TULOS-%" value={`${result.pct.toFixed(0)}%`} />
-        <StatBox label={`SIJA · ${result.tournament_week_iso}`} value={`#${result.rank}`} />
+        <StatBox label={pickPA(lang, 'in.unlocked.score')} value={`${result.score}/${result.max_score}`} />
+        <StatBox label={pickPA(lang, 'in.unlocked.pct')} value={`${result.pct.toFixed(0)}%`} />
+        <StatBox label={interpolate(pickPA(lang, 'in.unlocked.rank'), { week: result.tournament_week_iso })} value={`#${result.rank}`} />
       </div>
 
       <div style={{ marginTop: 8 }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
-          TIETORAAPE · VIIKON TOP 10
+          {pickPA(lang, 'in.unlocked.boardTitle')}
         </div>
         <ol style={{ margin: 0, padding: 0, listStyle: 'none', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
           {result.leaderboard.map(row => (
@@ -283,9 +283,9 @@ const InsightUnlocked = ({ result, preview }) => {
 
       <div style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap' }}>
         <button onClick={share} data-testid="insight-share-btn" style={btnPrimary}>
-          <Share2 size={14} strokeWidth={1.8} /> Jaa tulos
+          <Share2 size={14} strokeWidth={1.8} /> {pickPA(lang, 'quiz.share')}
         </button>
-        <Link to="/peliareena" data-testid="insight-unlocked-back" style={btnGhost}>← Palaa Peliareenaan</Link>
+        <Link to="/peliareena" data-testid="insight-unlocked-back" style={btnGhost}>{pickPA(lang, 'quiz.back')}</Link>
       </div>
     </div>
   );

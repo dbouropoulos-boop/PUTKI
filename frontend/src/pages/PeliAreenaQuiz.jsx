@@ -18,6 +18,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, X, Lock, Trophy, Share2, ChevronRight } from 'lucide-react';
 import GameIntroPanel from '../components/peliareena/GameIntroPanel';
+import { useLang } from '../context/LanguageContext';
+import { pickPA, interpolate, langField } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -34,6 +36,7 @@ const post = async (path, body) => {
 };
 
 const PeliAreenaQuiz = () => {
+  const { lang } = useLang();
   const [stage, setStage] = useState('intro'); // intro · playing · preview · unlocked
   const [session, setSession] = useState(null); // { play_id, anon_id, questions, total }
   const [answers, setAnswers] = useState([]);   // [{ q_id, picked }]
@@ -91,32 +94,25 @@ const PeliAreenaQuiz = () => {
         color: 'var(--muted)', textDecoration: 'none', fontSize: 13,
         fontFamily: 'Georgia, serif', marginBottom: 24,
       }}>
-        <ArrowLeft size={14} strokeWidth={1.6} /> Takaisin Peliareenaan
+        <ArrowLeft size={14} strokeWidth={1.6} /> {pickPA(lang, 'hub.back')}
       </Link>
 
       {stage === 'intro' && (
         <GameIntroPanel
           gameSlug="quiz_gambling_literacy"
-          eyebrow="TIETOISUUSTESTI · ALOITTELIJA"
-          headline={<>10 kysymystä. ~3 minuuttia.<br />Saat heti tietää, missä olet.</>}
-          tagline="Testaa rahapelimatematiikan perusteet (RTP, volatiliteetti, house edge), bankroll-hallinnan, pelipsykologian ja vastuullisuuden. Pelaa ilman sähköpostia — jokainen vastaus selitetään, joten opit silloinkin, kun vastaat väärin."
-          howToPlay={[
-            'Vastaa 10 kysymykseen omalla tahdillasi — voit ottaa aikalisän milloin tahansa.',
-            'Lukitset vastauksen klikkaamalla vaihtoehtoa. Selityksen näet, kun siirryt eteenpäin.',
-            'Lopussa näet oikeat vastaukset, profiilisi sekä paikkasi viikon turnauksessa.',
-          ]}
-          scoring={[
-            'Jokainen oikein vastattu kysymys = 1 piste (max 10).',
-            'Tasapelissä nopeampi pelaaja sijoittuu paremmin.',
-            'Viikon paras pisteytys julkaistaan etunimellä — sähköpostia ei näytetä.',
-          ]}
-          ctaLabel="Aloita testi"
+          eyebrow={pickPA(lang, 'quiz.eyebrow')}
+          headline={pickPA(lang, 'quiz.headline')}
+          tagline={pickPA(lang, 'quiz.tagline')}
+          howToPlay={[pickPA(lang, 'quiz.howTo.1'), pickPA(lang, 'quiz.howTo.2'), pickPA(lang, 'quiz.howTo.3')]}
+          scoring={[pickPA(lang, 'quiz.score.1'), pickPA(lang, 'quiz.score.2'), pickPA(lang, 'quiz.score.3')]}
+          ctaLabel={pickPA(lang, 'quiz.cta.start')}
           startTestId="quiz-start-btn"
           onStart={start}
         />
       )}
       {stage === 'playing' && currentQ && (
         <Playing
+          lang={lang}
           q={currentQ}
           index={currentIdx}
           total={total}
@@ -127,12 +123,13 @@ const PeliAreenaQuiz = () => {
       )}
       {stage === 'preview' && previewResult && (
         <Preview
+          lang={lang}
           result={previewResult}
           session={session}
           onUnlocked={(full) => { setFullResult(full); setStage('unlocked'); }}
         />
       )}
-      {stage === 'unlocked' && fullResult && <Unlocked result={fullResult} previewResult={previewResult} />}
+      {stage === 'unlocked' && fullResult && <Unlocked lang={lang} result={fullResult} previewResult={previewResult} />}
     </div>
   );
 };
@@ -175,14 +172,14 @@ const Intro = ({ onStart }) => (
 
 // ── Playing ────────────────────────────────────────────────────
 
-const Playing = ({ q, index, total, pickedNow, onPick, onNext }) => {
+const Playing = ({ lang, q, index, total, pickedNow, onPick, onNext }) => {
   const progress = ((index + (pickedNow ? 1 : 0)) / total) * 100;
   return (
     <div data-testid={`quiz-question-${index + 1}`}>
       {/* Progress */}
       <div style={{ marginBottom: 24 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', marginBottom: 8 }}>
-          KYSYMYS {index + 1} / {total}
+          {interpolate(pickPA(lang, 'quiz.progress'), { n: index + 1, total })}
         </div>
         <div style={{ height: 4, background: 'var(--surface-2)', borderRadius: 2, overflow: 'hidden' }}>
           <div style={{ height: '100%', width: `${progress}%`, background: 'var(--ink)', transition: 'width 220ms ease' }} />
@@ -194,7 +191,7 @@ const Playing = ({ q, index, total, pickedNow, onPick, onNext }) => {
         fontSize: 'clamp(22px, 3.5vw, 28px)', lineHeight: 1.3,
         letterSpacing: '-0.01em', color: 'var(--ink)', margin: '0 0 20px',
       }}>
-        {q.prompt_fi}
+        {langField(q, 'prompt', lang) || q.prompt_fi}
       </h2>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -223,7 +220,7 @@ const Playing = ({ q, index, total, pickedNow, onPick, onNext }) => {
               }}
             >
               <span className="mono" style={{ fontSize: 11, color: '#5A7BB8', fontWeight: 700, flexShrink: 0 }}>{opt.key.toUpperCase()}</span>
-              <span>{opt.label_fi}</span>
+              <span>{langField(opt, 'label', lang) || opt.label_fi}</span>
             </button>
           );
         })}
@@ -231,10 +228,7 @@ const Playing = ({ q, index, total, pickedNow, onPick, onNext }) => {
 
       {pickedNow && (
         <RevealCard
-          // We don't know the correct answer until finish — show neutral
-          // "thank you, here's the explanation" UX via the playing screen.
-          // The actual right/wrong reveal happens on the Preview stage with
-          // full per-question feedback. (Keeps server as source of truth.)
+          lang={lang}
           onNext={onNext}
           index={index}
           total={total}
@@ -244,14 +238,14 @@ const Playing = ({ q, index, total, pickedNow, onPick, onNext }) => {
   );
 };
 
-const RevealCard = ({ onNext, index, total }) => (
+const RevealCard = ({ lang, onNext, index, total }) => (
   <div style={{
     marginTop: 24, padding: 16,
     background: 'var(--surface-2)', borderRadius: 4,
     border: '1px solid var(--border)',
   }}>
     <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-      Vastaus tallennettu. Saat täydet selitykset kunkin kysymyksen kohdalta lopussa.
+      {pickPA(lang, 'quiz.recorded')}
     </p>
     <button
       onClick={onNext}
@@ -265,21 +259,22 @@ const RevealCard = ({ onNext, index, total }) => (
         display: 'inline-flex', alignItems: 'center', gap: 8,
       }}
     >
-      {index + 1 >= total ? 'Näytä tulos' : 'Seuraava kysymys'} <ChevronRight size={12} strokeWidth={2.5} />
+      {index + 1 >= total ? pickPA(lang, 'quiz.showResult') : pickPA(lang, 'quiz.next')} <ChevronRight size={12} strokeWidth={2.5} />
     </button>
   </div>
 );
 
 // ── Preview ────────────────────────────────────────────────────
 
-const Preview = ({ result, session, onUnlocked }) => {
+const Preview = ({ lang, result, session, onUnlocked }) => {
   const pct = result.pct;
   const right = result.score;
   const total = result.total;
+  const personaTitle = (lang === 'en' && result.persona_preview.title_en) || result.persona_preview.title;
   return (
     <div data-testid="quiz-preview">
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-        TULOKSESI · ESIKATSELU
+        {pickPA(lang, 'quiz.preview.eyebrow')}
       </div>
       <h1 style={{
         fontFamily: 'Georgia, serif', fontWeight: 700,
@@ -289,24 +284,25 @@ const Preview = ({ result, session, onUnlocked }) => {
         {right}<span style={{ color: 'var(--muted)' }}>/{total}</span>
       </h1>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 32px' }}>
-        Oikeissa vastauksissa olit {pct.toFixed(0)}%:n tasolla.
-        Esikatsellaan profiili: <strong style={{ color: 'var(--ink)' }}>{result.persona_preview.title}</strong>.
+        {interpolate(pickPA(lang, 'quiz.preview.lead'), { pct: pct.toFixed(0) })}
+        <strong style={{ color: 'var(--ink)' }}>{personaTitle}</strong>.
       </p>
 
       {/* Per-question feedback (this is the educational payoff that's free) */}
       <div style={{ marginBottom: 32 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
-          KYSYMYSKOHTAINEN SELITYS
+          {pickPA(lang, 'quiz.preview.feedbackHeading')}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {result.answers.map((a) => (
-            <AnswerFeedback key={a.q_id} a={a} />
+            <AnswerFeedback key={a.q_id} a={a} lang={lang} />
           ))}
         </div>
       </div>
 
       {/* Email gate */}
       <EmailGate
+        lang={lang}
         session={session}
         score={right}
         total={total}
@@ -323,15 +319,16 @@ const Preview = ({ result, session, onUnlocked }) => {
           textDecoration: 'none',
           display: 'inline-flex', alignItems: 'center', gap: 8,
         }}>
-          ← Palaa Peliareenaan
+          {pickPA(lang, 'quiz.back')}
         </Link>
       </div>
     </div>
   );
 };
 
-const AnswerFeedback = ({ a }) => {
+const AnswerFeedback = ({ a, lang }) => {
   const ok = a.is_correct;
+  const explanation = langField(a, 'explanation', lang) || a.explanation_fi;
   return (
     <div
       data-testid={`quiz-feedback-${a.order}`}
@@ -346,11 +343,13 @@ const AnswerFeedback = ({ a }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         {ok ? <Check size={14} strokeWidth={2} style={{ color: '#3F8A4D' }} /> : <X size={14} strokeWidth={2} style={{ color: '#C8423C' }} />}
         <span className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: ok ? '#3F8A4D' : '#C8423C', fontWeight: 700 }}>
-          KYSYMYS {a.order} · {ok ? 'OIKEIN' : `VÄÄRIN (oikea: ${a.correct.toUpperCase()})`}
+          {interpolate(pickPA(lang, 'quiz.preview.qLabel'), { n: a.order })} · {ok
+            ? pickPA(lang, 'quiz.preview.correct')
+            : interpolate(pickPA(lang, 'quiz.preview.wrong'), { key: a.correct.toUpperCase() })}
         </span>
       </div>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--ink)', lineHeight: 1.55, margin: 0 }}>
-        {a.explanation_fi}
+        {explanation}
       </p>
     </div>
   );
@@ -358,7 +357,7 @@ const AnswerFeedback = ({ a }) => {
 
 // ── Email gate ─────────────────────────────────────────────────
 
-const EmailGate = ({ session, score, total, onUnlocked }) => {
+const EmailGate = ({ lang, session, score, total, onUnlocked }) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [consent, setConsent] = useState(false);
@@ -368,8 +367,8 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!consent) { setError('Suostumus vaaditaan turnauksen rankaukseen.'); return; }
-    if (!email.includes('@')) { setError('Anna kelvollinen sähköposti.'); return; }
+    if (!consent) { setError(pickPA(lang, 'gate.consent.required')); return; }
+    if (!email.includes('@')) { setError(pickPA(lang, 'gate.email.invalid')); return; }
     setSubmitting(true);
     try {
       const r = await post('/api/mini-games/quiz/unlock', {
@@ -379,7 +378,7 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
       });
       onUnlocked(r);
     } catch (e2) {
-      setError(`Tallennus epäonnistui: ${e2.message}`);
+      setError(interpolate(pickPA(lang, 'gate.error.save'), { message: e2.message }));
     } finally {
       setSubmitting(false);
     }
@@ -394,15 +393,14 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <Trophy size={16} strokeWidth={1.8} style={{ color: 'var(--ink)' }} />
         <span className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700 }}>
-          AVAA TÄYDET TULOKSET · LIITY TURNAUKSEEN
+          {pickPA(lang, 'gate.eyebrow')}
         </span>
       </div>
       <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--ink)', margin: '0 0 8px', letterSpacing: '-0.01em' }}>
-        Saat henkilökohtaiset vahvuudet, kuilut ja sijoituksen viikolla
+        {pickPA(lang, 'gate.defaultHeadline')}
       </h2>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', lineHeight: 1.5, margin: '0 0 16px' }}>
-        Annetulla sähköpostilla saat: täydellisen profiilisi, sen mihin kannattaa keskittyä, sekä
-        viikon turnaussi sijoituksen ja viikkokirjeet (4 viestiä/viikko: avajaiset, väliaika, sulkemisilmoitus, tulokset).
+        {pickPA(lang, 'gate.body')}
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10, marginBottom: 12 }}>
@@ -411,7 +409,7 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="sinun.sahkoposti@esimerkki.fi"
+          placeholder={pickPA(lang, 'gate.email.placeholder')}
           data-testid="quiz-email-input"
           style={{
             padding: '12px 14px',
@@ -425,7 +423,7 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Etunimi (ei pakollinen — käytetään leaderboardissa)"
+          placeholder={pickPA(lang, 'gate.name.placeholder')}
           data-testid="quiz-name-input"
           style={{
             padding: '12px 14px',
@@ -450,12 +448,9 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
           style={{ marginTop: 3, flexShrink: 0 }}
         />
         <span>
-          Hyväksyn, että Putki HQ tallentaa sähköpostini ja pelin tuloksen
-          voidakseen lähettää minulle henkilökohtaiset tulokset ja
-          viikoittaisen turnauksen päivitykset. Voin perua tilauksen
-          koska tahansa. Lue lisää{' '}
+          {pickPA(lang, 'gate.consent')}{' '}
           <a href="/tietosuoja" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--ink)', textDecoration: 'underline' }}>
-            tietosuojaselosteesta
+            {pickPA(lang, 'gate.consent.privacy')}
           </a>.
         </span>
       </label>
@@ -476,10 +471,10 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
           opacity: submitting ? 0.6 : 1,
         }}
       >
-        {submitting ? 'Tallennetaan…' : 'Avaa tulokset + Liity turnaukseen'}
+        {submitting ? pickPA(lang, 'gate.submitting') : pickPA(lang, 'gate.submit')}
       </button>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 12, color: 'var(--muted)', textAlign: 'center', margin: '10px 0 0' }}>
-        Ei rahaa, ei kortteja, ei ostopakkoa. Voit perua koska tahansa.
+        {pickPA(lang, 'gate.smallprint')}
       </p>
     </form>
   );
@@ -487,53 +482,58 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
 
 // ── Unlocked ───────────────────────────────────────────────────
 
-const Unlocked = ({ result, previewResult }) => {
+const Unlocked = ({ lang, result, previewResult }) => {
   const share = () => {
     fetch(`${BACKEND}/api/mini-games/share/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ game_slug: 'quiz_gambling_literacy', play_id: result.play_id }),
     }).catch(() => {});
+    const shareText = (lang === 'en' && result.share_text_en) || result.share_text;
     if (navigator.share) {
-      navigator.share({ text: result.share_text, url: window.location.href });
+      navigator.share({ text: shareText, url: window.location.href });
     } else {
-      navigator.clipboard.writeText(`${result.share_text} ${window.location.href}`);
-      alert('Jakoteksti kopioitu leikepöydälle.');
+      navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+      alert(lang === 'en' ? 'Share text copied to clipboard.' : 'Jakoteksti kopioitu leikepöydälle.');
     }
   };
+  const title = (lang === 'en' && result.persona.title_en) || result.persona.title;
+  const tagline = (lang === 'en' && result.persona.tagline_en) || result.persona.tagline;
+  const strengths = (lang === 'en' && result.strengths_en) || result.strengths;
+  const gaps = (lang === 'en' && result.gaps_en) || result.gaps;
   return (
     <div data-testid="quiz-unlocked">
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#3F8A4D', fontWeight: 700, marginBottom: 12 }}>
-        TÄYSI PROFIILI · TURNAUS PAIKAN VARATTU
+        {pickPA(lang, 'quiz.unlocked.eyebrow')}
       </div>
       <h1 style={{
         fontFamily: 'Georgia, serif', fontWeight: 700,
         fontSize: 'clamp(36px, 5vw, 56px)', lineHeight: 1.05,
         letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 8px',
       }}>
-        {result.persona.title}
+        {title}
       </h1>
       <p style={{ fontFamily: 'Georgia, serif', fontSize: 18, lineHeight: 1.5, color: 'var(--muted)', margin: '0 0 24px' }}>
-        {result.persona.tagline}
+        {tagline}
       </p>
 
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12, marginBottom: 28,
       }}>
-        <StatCard label="OIKEIN" value={`${result.score}/${result.total}`} />
-        <StatCard label="TULOS-%" value={`${result.pct.toFixed(0)}%`} />
-        <StatCard label={`SIJA · ${result.tournament_week_iso}`} value={`#${result.rank}`} />
+        <StatCard label={pickPA(lang, 'quiz.unlocked.correct')} value={`${result.score}/${result.total}`} />
+        <StatCard label={pickPA(lang, 'quiz.unlocked.pct')} value={`${result.pct.toFixed(0)}%`} />
+        <StatCard label={interpolate(pickPA(lang, 'quiz.unlocked.rank'), { week: result.tournament_week_iso })} value={`#${result.rank}`} />
       </div>
 
       <PanelTwoCol
-        leftTitle="VAHVUUTESI"
-        leftItems={result.strengths}
-        rightTitle="KEHITETTÄVÄT KOHDAT"
-        rightItems={result.gaps}
+        leftTitle={pickPA(lang, 'quiz.unlocked.strengths')}
+        leftItems={strengths}
+        rightTitle={pickPA(lang, 'quiz.unlocked.gaps')}
+        rightItems={gaps}
       />
 
       <div style={{ marginTop: 32 }}>
         <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)', fontWeight: 700, marginBottom: 12 }}>
-          VIIKON TURNAUS · TOP 10
+          {pickPA(lang, 'quiz.unlocked.boardTitle')}
         </div>
         <ol style={{ margin: 0, padding: 0, listStyle: 'none', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
           {result.leaderboard.map((row) => (
@@ -569,7 +569,7 @@ const Unlocked = ({ result, previewResult }) => {
             display: 'inline-flex', alignItems: 'center', gap: 8,
           }}
         >
-          <Share2 size={14} strokeWidth={1.8} /> Jaa tulos
+          <Share2 size={14} strokeWidth={1.8} /> {pickPA(lang, 'quiz.share')}
         </button>
         <Link
           to="/peliareena"
@@ -584,7 +584,7 @@ const Unlocked = ({ result, previewResult }) => {
             display: 'inline-flex', alignItems: 'center', gap: 8,
           }}
         >
-          ← Palaa Peliareenaan
+          {pickPA(lang, 'quiz.back')}
         </Link>
       </div>
     </div>
