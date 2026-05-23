@@ -22,11 +22,9 @@ const PLATFORM_TINT = {
   youtube: '#FF0033',
 };
 
-const PLATFORM_GLYPH = {
-  twitch:  'tw',
-  kick:    'kk',
-  youtube: 'yt',
-};
+// Removed iter62.1: PLATFORM_GLYPH was rendering "kk"/"tw"/"yt" letters
+// in giant Mono font on the fallback, which looked too much like initials
+// of the streamer's actual name. Replaced with a silent diagonal weave.
 
 export const StreamerAvatar = ({
   streamer,
@@ -42,7 +40,6 @@ export const StreamerAvatar = ({
   const showImage = !!url && !errored;
   const platform = (streamer?.platform || '').toLowerCase();
   const tint = PLATFORM_TINT[platform] || '#9C9587';
-  const glyph = PLATFORM_GLYPH[platform] || '··';
 
   const radius = shape === 'circle' ? '999px' : '4px';
   const baseStyle = {
@@ -81,32 +78,43 @@ export const StreamerAvatar = ({
     );
   }
 
-  // No-initials fallback (iter62): platform-tinted gradient + tiny platform
-  // glyph. Editors should refresh the avatar via the back-office to fetch
-  // a real image — initials are intentionally never rendered.
+  // iter62.1: TRUE no-initials fallback — when all 4 stages fail we render
+  // a soft platform-tinted block with a faint diagonal weave pattern. NO
+  // letters of any kind. Editors should click ⟳ in the back-office to
+  // run the fallback cascade again.
   return (
     <div
       className={className}
       style={{
         ...baseStyle,
-        background: `radial-gradient(circle at 30% 30%, ${tint}55, var(--surface-2, #1A1814) 70%)`,
+        background: `
+          linear-gradient(135deg, ${tint}22 0%, transparent 60%),
+          radial-gradient(circle at 70% 30%, ${tint}14, transparent 70%),
+          var(--surface-2, #1A1814)
+        `,
       }}
       data-testid={testId || `streamer-avatar-${streamer?.slug || 'unknown'}`}
-      data-fallback="platform-gradient"
+      data-fallback="silent"
       title={name}
     >
-      <span style={{
-        fontFamily: 'ui-monospace, monospace',
-        fontWeight: 700,
-        fontSize: Math.round(size * 0.26),
-        letterSpacing: '0.08em',
-        color: tint,
-        lineHeight: 1,
-        textTransform: 'uppercase',
-      }}>{glyph}</span>
+      {/* Faint diagonal weave so the block isn't dead-flat */}
+      <svg
+        aria-hidden
+        width={size}
+        height={size}
+        style={{ position: 'absolute', inset: 0, opacity: 0.18 }}
+      >
+        <defs>
+          <pattern id={`avwv-${size}`} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke={tint} strokeWidth="0.6" />
+          </pattern>
+        </defs>
+        <rect width={size} height={size} fill={`url(#avwv-${size})`} />
+      </svg>
+      {/* Tiny platform tint line at the bottom — the ONLY identifier */}
       <span aria-hidden style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
-        height: 2, background: tint, opacity: 0.85,
+        height: 2, background: tint, opacity: 0.55,
       }} />
     </div>
   );

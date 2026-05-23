@@ -46,6 +46,10 @@ TRUSTED_IMAGE_HOSTS = {
 
 def _is_trusted_image(url: str) -> bool:
     try:
+        # Reject obvious placeholder URLs even if hosted on a trusted CDN.
+        if any(bad in url for bad in ("default-banner", "default-avatar",
+                                      "default_profile", "_normal.jpg")):
+            return False
         host = urlparse(url).netloc.lower()
         # Strip any port
         host = host.split(":")[0]

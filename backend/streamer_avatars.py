@@ -136,8 +136,12 @@ async def _fetch_kick_avatars(slugs: List[str]) -> Dict[str, str]:
             continue
         for entry in data:
             slug = (entry.get("slug") or "").lower()
-            # Kick public v1 returns `profile_picture` on each channel.
-            pic = entry.get("profile_picture") or entry.get("banner_picture") or ""
+            # Kick v1 returns `profile_picture`. iter62.1: NEVER fall back to
+            # the banner_picture — those are giant 1920x480 hero images, not
+            # profile pics. Also reject default-banner placeholders.
+            pic = (entry.get("profile_picture") or "").strip()
+            if "default-banner" in pic or "default-avatar" in pic:
+                pic = ""
             if slug and pic:
                 out[slug] = pic
     return out

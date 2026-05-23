@@ -2654,6 +2654,96 @@ async def admin_refresh_one_avatar(slug: str, _: bool = Depends(require_admin)):
             "ok": bool(url)}
 
 
+@api_router.post("/admin/streamers/refresh-failed-avatars")
+async def admin_refresh_failed_avatars(request: Request,
+                                         limit: int = 30,
+                                         _: bool = Depends(require_admin)):
+    """iter62.1: Re-run the full 4-stage avatar cascade for streamers
+    currently flagged `avatar_failed=true` OR with no `avatar_url`.
+
+    Runs streamers in parallel batches (concurrency=6) to stay under the
+    60s ingress timeout. Caller can paginate with `?limit=`."""
+    import asyncio
+    from streamer_avatars import _fetch_twitch_avatars, _fetch_kick_avatars, _fetch_youtube_avatars
+    from streamer_avatar_fallback import resolve_avatar_with_fallback
+    from datetime import datetime, timezone
+    import time as _t
+
+    cur = db.streamers.find(
+        {"$or": [
+            {"avatar_failed": True},
+            {"avatar_url": {"$in": [None, ""]}},
+            {"avatar_url": {"$exists": False}},
+        ]},
+        {"_id": 0, "slug": 1, "platform": 1, "channel": 1, "name": 1, "name_en": 1},
+    ).limit(max(1, min(limit, 100)))
+    targets = await cur.to_list(length=100)
+
+    async def _resolve_one(s):
+        platform = (s.get("platform") or "").lower()
+        channel = (s.get("channel") or s.get("slug") or "").strip().lstrip("@")
+        primary = None
+        try:
+            if platform == "twitch":
+                res = await _fetch_twitch_avatars([channel.lower()])
+                primary = res.get(channel.lower())
+            elif platform == "kick":
+                res = await _fetch_kick_avatars([channel.lower()])
+                primary = res.get(channel.lower())
+            elif platform == "youtube":
+                res = await _fetch_youtube_avatars([s.get("channel") or channel])
+                primary = res.get(s.get("channel") or channel)
+        except Exception:
+            pass
+        name = (s.get("name") or s.get("name_en") or s.get("slug") or "").strip()
+        url, source = await resolve_avatar_with_fallback(
+            name=name, platform=platform, channel=channel, primary_url=primary,
+        )
+        now_iso = datetime.now(timezone.utc).isoformat()
+        if url:
+            await db.streamers.update_one(
+                {"slug": s["slug"]},
+                {"$set": {"avatar_url": url, "avatar_source": source,
+                          "avatar_resolved_at": now_iso,
+                          "avatar_resolved_at_unix": _t.time(),
+                          "avatar_failed": False},
+                 "$unset": {"avatar_failure_reason": ""}},
+            )
+        else:
+            await db.streamers.update_one(
+                {"slug": s["slug"]},
+                {"$set": {"avatar_source": "exhausted_all_fallbacks",
+                          "avatar_resolved_at": now_iso,
+                          "avatar_resolved_at_unix": _t.time(),
+                          "avatar_failed": True,
+                          "avatar_failure_reason": "all_4_stages_failed"}},
+            )
+        return {"slug": s["slug"], "name": name, "source": source, "ok": bool(url)}
+
+    # Concurrency: 6 streamers in flight at once. Cascade itself is sync inside.
+    sem = asyncio.Semaphore(6)
+    async def _bounded(s):
+        async with sem:
+            return await _resolve_one(s)
+    results = await asyncio.gather(*[_bounded(s) for s in targets],
+                                    return_exceptions=False)
+
+    actor = request.state.admin_actor
+    from admin_auth import write_audit
+    await write_audit(db, actor=actor["actor"], role=actor["role"],
+                       action="streamer.refresh_failed_avatars",
+                       resource="streamers:*",
+                       meta={"attempted": len(results),
+                             "succeeded": sum(1 for r in results if r["ok"])})
+
+    return {
+        "attempted": len(results),
+        "succeeded": sum(1 for r in results if r["ok"]),
+        "still_failed": sum(1 for r in results if not r["ok"]),
+        "results": results,
+    }
+
+
 # ─── Admin users + audit log (iter62, P3) ────────────────────────────
 
 class _AdminUserCreate(BaseModel):

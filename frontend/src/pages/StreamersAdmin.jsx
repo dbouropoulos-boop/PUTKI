@@ -91,6 +91,37 @@ const StreamersAdmin = () => {
     }
   };
 
+  const [refreshingFailed, setRefreshingFailed] = useState(false);
+  const refreshFailedAvatars = async () => {
+    if (refreshingFailed) return;
+    if (!window.confirm('Re-run the FULL fallback cascade (platform → channel OG → DDG search → Wikipedia) on every streamer currently flagged avatar_failed=true. Can take 30–60s.')) return;
+    setRefreshingFailed(true);
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/streamers/refresh-failed-avatars`, {
+        method: 'POST', headers: headers(),
+      });
+      if (!r.ok) throw new Error(await r.text());
+      const j = await r.json();
+      const lines = [
+        `Attempted: ${j.attempted}`,
+        `Succeeded: ${j.succeeded}`,
+        `Still failed: ${j.still_failed}`,
+      ];
+      if (j.succeeded > 0) {
+        lines.push('', 'Resolved:');
+        j.results.filter(x => x.ok).slice(0, 15).forEach(x => {
+          lines.push(`  • ${x.name || x.slug} (${x.source})`);
+        });
+      }
+      alert(lines.join('\n'));
+      await refresh();
+    } catch (e) {
+      alert(`Refresh failed: ${e.message}`);
+    } finally {
+      setRefreshingFailed(false);
+    }
+  };
+
   const filtered = sceneFilter ? streamers.filter((s) => s.scene === sceneFilter) : streamers;
 
   if (!authed) {
@@ -146,6 +177,11 @@ const StreamersAdmin = () => {
             <button onClick={refresh} className="btn-ghost" data-testid="str-refresh"><RefreshCw strokeWidth={1.5} size={13} className="mr-2" /> REFRESH</button>
             <button onClick={refreshAvatars} disabled={refreshingAvatars} className="btn-ghost" data-testid="str-refresh-avatars" title="Re-fetch profile pics from Twitch/Kick/YouTube">
               <Image strokeWidth={1.5} size={13} className="mr-2" /> {refreshingAvatars ? 'FETCHING…' : 'REFRESH AVATARS'}
+            </button>
+            <button onClick={refreshFailedAvatars} disabled={refreshingFailed} className="btn-ghost" data-testid="str-refresh-failed-avatars"
+                    title="Run the full 4-stage cascade (platform → OG → DDG → Wikipedia) on streamers whose avatar is currently missing or marked failed"
+                    style={{ borderColor: '#A0750F', color: '#A0750F' }}>
+              <RefreshCw strokeWidth={1.5} size={13} className="mr-2" /> {refreshingFailed ? 'CASCADING…' : 'REFRESH FAILED'}
             </button>
             <button onClick={startNew} className="btn-primary" data-testid="str-new"><Plus strokeWidth={1.6} size={13} className="mr-2" /> NEW</button>
             <Link to="/back-office/operators" className="btn-ghost">← OPERATORS</Link>
