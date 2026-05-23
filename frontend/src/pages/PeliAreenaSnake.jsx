@@ -292,6 +292,11 @@ export const ArcadePreview = ({ preview, session, sport, onUnlocked }) => (
       onUnlocked={onUnlocked}
       headline="Liity turnaukseen ja saa viikon tulokset sähköpostiin"
     />
+    <div style={{ marginTop: 24 }}>
+      <Link to="/peliareena" data-testid={`${sport}-preview-back`} style={btnGhost}>
+        ← Palaa Peliareenaan
+      </Link>
+    </div>
   </div>
 );
 
@@ -349,7 +354,9 @@ export const ArcadeUnlocked = ({ result, preview, gameSlug }) => {
         <button onClick={share} style={btnPrimary}>
           <Share2 size={14} strokeWidth={1.8} /> Jaa tulos
         </button>
-        <Link to="/peliareena" style={btnGhost}>Peliareenaan</Link>
+        <Link to="/peliareena" data-testid={`${gameSlug}-unlocked-back`} style={btnGhost}>
+          ← Palaa Peliareenaan
+        </Link>
       </div>
     </div>
   );
