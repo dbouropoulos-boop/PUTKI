@@ -221,6 +221,12 @@ const InsightPreview = ({ preview, session, onUnlocked }) => (
       onUnlocked={onUnlocked}
       headline="Saat täyden oppipaketin + paikan viikon turnauksessa"
     />
+
+    <div style={{ marginTop: 24 }}>
+      <Link to="/peliareena" data-testid="insight-preview-back" style={btnGhost}>
+        ← Palaa Peliareenaan
+      </Link>
+    </div>
   </div>
 );
 
@@ -279,7 +285,7 @@ const InsightUnlocked = ({ result, preview }) => {
         <button onClick={share} data-testid="insight-share-btn" style={btnPrimary}>
           <Share2 size={14} strokeWidth={1.8} /> Jaa tulos
         </button>
-        <Link to="/peliareena" style={btnGhost}>Peliareenaan</Link>
+        <Link to="/peliareena" data-testid="insight-unlocked-back" style={btnGhost}>← Palaa Peliareenaan</Link>
       </div>
     </div>
   );

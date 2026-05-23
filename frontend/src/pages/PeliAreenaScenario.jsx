@@ -221,6 +221,12 @@ const ScenarioPreview = ({ preview, session, onUnlocked }) => (
       onUnlocked={onUnlocked}
       headline="Saat profiilisi, vahvuutesi ja paikan viikolla"
     />
+
+    <div style={{ marginTop: 24 }}>
+      <Link to="/peliareena" data-testid="scenario-preview-back" style={btnGhost}>
+        ← Palaa Peliareenaan
+      </Link>
+    </div>
   </div>
 );
 
@@ -279,7 +285,7 @@ const ScenarioUnlocked = ({ result, preview }) => {
         <button onClick={share} data-testid="scenario-share-btn" style={btnPrimary}>
           <Share2 size={14} strokeWidth={1.8} /> Jaa tulos
         </button>
-        <Link to="/peliareena" style={btnGhost}>Peliareenaan</Link>
+        <Link to="/peliareena" data-testid="scenario-unlocked-back" style={btnGhost}>← Palaa Peliareenaan</Link>
       </div>
     </div>
   );

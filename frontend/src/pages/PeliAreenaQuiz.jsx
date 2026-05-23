@@ -312,6 +312,20 @@ const Preview = ({ result, session, onUnlocked }) => {
         total={total}
         onUnlocked={onUnlocked}
       />
+
+      <div style={{ marginTop: 24 }}>
+        <Link to="/peliareena" data-testid="quiz-preview-back" style={{
+          padding: '12px 20px',
+          background: 'transparent', color: 'var(--ink)',
+          border: '1px solid var(--ink)', borderRadius: 4,
+          fontFamily: 'inherit', fontSize: 11, fontWeight: 700,
+          letterSpacing: '0.18em', textTransform: 'uppercase',
+          textDecoration: 'none',
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+        }}>
+          ← Palaa Peliareenaan
+        </Link>
+      </div>
     </div>
   );
 };
@@ -559,6 +573,7 @@ const Unlocked = ({ result, previewResult }) => {
         </button>
         <Link
           to="/peliareena"
+          data-testid="quiz-unlocked-back"
           style={{
             padding: '12px 20px',
             background: 'transparent', color: 'var(--ink)',
@@ -569,7 +584,7 @@ const Unlocked = ({ result, previewResult }) => {
             display: 'inline-flex', alignItems: 'center', gap: 8,
           }}
         >
-          Peliareenaan
+          ← Palaa Peliareenaan
         </Link>
       </div>
     </div>
