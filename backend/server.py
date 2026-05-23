@@ -3094,6 +3094,123 @@ async def mini_games_insight_unlock(payload: MiniGameUnlockPayload, request: Req
     return result
 
 
+# ── Phase 2.5 — Arcade games (Snake + Tap) ─────────────────────────────
+
+class MiniGameArcadeScorePayload(BaseModel):
+    play_id: str
+    anon_id: str
+    score: int
+
+
+@api_router.post("/mini-games/arcade/{game}/start")
+async def mini_games_arcade_start(game: str):
+    slug = f"arcade_{game}" if not game.startswith("arcade_") else game
+    if slug not in ("arcade_snake", "arcade_tap"):
+        raise HTTPException(400, "unknown_game")
+    result = await _mg.start_arcade(db, game_slug=slug)
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@api_router.post("/mini-games/arcade/{game}/submit")
+async def mini_games_arcade_submit(game: str, payload: MiniGameArcadeScorePayload):
+    result = await _mg.submit_arcade_score(
+        db, play_id=payload.play_id, anon_id=payload.anon_id, score=payload.score,
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@api_router.post("/mini-games/arcade/{game}/unlock")
+async def mini_games_arcade_unlock(game: str, payload: MiniGameUnlockPayload, request: Request):
+    ip = (request.client.host if request.client else None)
+    result = await _mg.unlock_arcade_result(
+        db,
+        play_id=payload.play_id, anon_id=payload.anon_id,
+        email=payload.email, name=payload.name,
+        consent=payload.consent, ip=ip,
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@api_router.get("/mini-games/champions")
+async def mini_games_champions(week: Optional[str] = None):
+    """Public homepage social-proof endpoint — one rank-1 per active game."""
+    return await _mg.get_weekly_champions(db, week_iso=week)
+
+
+# ── Admin · Mini-game content editor (iter57) ─────────────────────────
+
+class MiniGameQuestionPayload(BaseModel):
+    slug: str           # game slug (e.g. quiz_gambling_literacy)
+    order: int
+    prompt_fi: str
+    options: List[Dict[str, Any]] = []
+    correct: str = ""
+    explanation_fi: str = ""
+    topic_tag: str = ""
+    active: bool = True
+
+
+@api_router.get("/admin/mini-games/questions")
+async def admin_mg_questions_list(
+    slug: Optional[str] = None,
+    _: bool = Depends(require_admin),
+):
+    q: Dict[str, Any] = {}
+    if slug:
+        q["slug"] = slug
+    cur = db.mini_game_questions.find(q, {"_id": 0}).sort([("slug", 1), ("order", 1)])
+    return {"questions": await cur.to_list(length=500)}
+
+
+@api_router.post("/admin/mini-games/questions")
+async def admin_mg_questions_upsert(payload: MiniGameQuestionPayload, _: bool = Depends(require_admin)):
+    """Create or update a question. Idempotent by (slug, order)."""
+    import uuid as _uuid
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    existing = await db.mini_game_questions.find_one(
+        {"slug": payload.slug, "order": payload.order}, {"_id": 0, "id": 1},
+    )
+    if existing:
+        await db.mini_game_questions.update_one(
+            {"slug": payload.slug, "order": payload.order},
+            {"$set": {
+                "prompt_fi": payload.prompt_fi,
+                "options": payload.options,
+                "correct": payload.correct,
+                "explanation_fi": payload.explanation_fi,
+                "topic_tag": payload.topic_tag,
+                "active": payload.active,
+                "updated_at": now,
+                "updated_by": "admin",
+            }},
+        )
+        return {"updated": True, "id": existing["id"]}
+    new_id = str(_uuid.uuid4())
+    await db.mini_game_questions.insert_one({
+        "id": new_id, "slug": payload.slug, "order": payload.order,
+        "prompt_fi": payload.prompt_fi, "options": payload.options,
+        "correct": payload.correct, "explanation_fi": payload.explanation_fi,
+        "topic_tag": payload.topic_tag, "active": payload.active,
+        "created_at": now, "updated_by": "admin",
+    })
+    return {"created": True, "id": new_id}
+
+
+@api_router.delete("/admin/mini-games/questions/{question_id}")
+async def admin_mg_questions_delete(question_id: str, _: bool = Depends(require_admin)):
+    r = await db.mini_game_questions.delete_one({"id": question_id})
+    if r.deleted_count == 0:
+        raise HTTPException(404, "not_found")
+    return {"deleted": question_id}
+
+
 # ── Phase 3 V2 Step 1+3 fold: Voyager rotation calendar ──
 class VoyagerWeekPayload(BaseModel):
     iso_week: str                                  # "YYYY-Www"

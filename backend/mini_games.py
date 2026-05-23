@@ -47,6 +47,7 @@ import hashlib
 import logging
 import os
 import secrets
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -697,8 +698,8 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "title_fi": "Aikatappo · Mato",
             "subtitle_fi": "Klassinen mato — viikon korkein pisteytys palkitaan.",
             "duration_fi": "≈ 2 min",
-            "status": "coming_soon",
-            "play_url": None,
+            "status": "active",
+            "play_url": "/peliareena/aikatappo-mato",
         },
         {
             "slug": "arcade_tap",
@@ -706,8 +707,8 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "title_fi": "Aikatappo · Napautus",
             "subtitle_fi": "Yhden napautuksen flappy-tyyli.",
             "duration_fi": "≈ 1 min",
-            "status": "coming_soon",
-            "play_url": None,
+            "status": "active",
+            "play_url": "/peliareena/aikatappo-napautus",
         },
     ]
 
@@ -1078,3 +1079,199 @@ async def _unlock_for_game(
         "leaderboard": leaderboard,
         "share_text": f"Pelasin Putki HQ:n pelin ja sain {score}/{int(play.get('max_score') or 0)}. Kokeile sinäkin!",
     }
+
+
+# ────────────────── Phase 2.5 — Arcade games (Snake / Tap) ──────────────────
+# Arcade games are simpler than the educational games — no questions list,
+# no per-answer feedback. The frontend runs the game loop, validates score
+# integrity server-side via a simple time/score sanity check, and reuses
+# the same email-gate + leaderboard plumbing.
+
+ARCADE_SNAKE_SLUG = "arcade_snake"
+ARCADE_TAP_SLUG = "arcade_tap"
+ARCADE_MAX_REASONABLE_SCORE = {
+    ARCADE_SNAKE_SLUG: 999,   # 999 cells eaten — physically improbable but generous
+    ARCADE_TAP_SLUG: 999,     # 999 pipes — same
+}
+ARCADE_MIN_SECONDS_PER_POINT = {
+    ARCADE_SNAKE_SLUG: 0.4,   # at least 0.4s per cell eaten (snake grows -> harder)
+    ARCADE_TAP_SLUG: 0.6,     # at least 0.6s per pipe passed
+}
+
+
+async def start_arcade(db, *, game_slug: str) -> Dict[str, Any]:
+    if game_slug not in (ARCADE_SNAKE_SLUG, ARCADE_TAP_SLUG):
+        return {"error": "unknown_game"}
+    anon_id = secrets.token_urlsafe(16)
+    play_id = str(uuid.uuid4())
+    await db.mini_game_plays.insert_one({
+        "id": play_id,
+        "game_slug": game_slug,
+        "anon_id": anon_id,
+        "started_at": _now_iso(),
+        "started_at_unix": time.time(),
+        "week_iso": _week_iso(),
+        "status": "in_progress",
+    })
+    return {"play_id": play_id, "anon_id": anon_id, "started_at_unix": time.time()}
+
+
+async def submit_arcade_score(db, *, play_id: str, anon_id: str, score: int) -> Dict[str, Any]:
+    """Submit the end-of-session score. Server validates:
+      • play row exists + matches anon_id
+      • score within sane bounds for the game
+      • elapsed seconds ≥ score × min_seconds_per_point (anti-cheat)
+    Failures return error but DO NOT crash — we just refuse to record
+    leaderboard-eligible plays."""
+    play = await db.mini_game_plays.find_one(
+        {"id": play_id, "anon_id": anon_id},
+        {"_id": 0},
+    )
+    if not play:
+        return {"error": "play_not_found"}
+    if play.get("status") == "finished":
+        return play.get("preview_result") or {"error": "already_finished"}
+
+    game_slug = play.get("game_slug")
+    if game_slug not in (ARCADE_SNAKE_SLUG, ARCADE_TAP_SLUG):
+        return {"error": "not_an_arcade_play"}
+
+    try:
+        score = max(0, int(score))
+    except (TypeError, ValueError):
+        return {"error": "invalid_score"}
+
+    max_score = ARCADE_MAX_REASONABLE_SCORE[game_slug]
+    if score > max_score:
+        # Silently clamp — gameplay glitches do happen; we DON'T accuse
+        # the player, we just cap the score.
+        score = max_score
+
+    started = float(play.get("started_at_unix") or 0)
+    elapsed = max(0.0, time.time() - started) if started else 0.0
+    min_time = score * ARCADE_MIN_SECONDS_PER_POINT[game_slug]
+    cheat_suspected = bool(score > 5 and elapsed < min_time * 0.5)
+
+    # `valid_for_leaderboard` is the honest gate. We still RECORD every
+    # play in the audit collection — but only valid plays carry forward
+    # into the leaderboard via the email unlock.
+    valid_for_leaderboard = not cheat_suspected
+    max_score_for_pct = max(max_score, 100)  # avoid div-by-zero edge
+
+    preview = {
+        "play_id": play_id,
+        "score": score,
+        "max_score": max_score,
+        "pct": round((score / max_score_for_pct) * 100.0, 1),
+        "persona_preview": {"key": "arcade_player",
+                            "title": "Aikatappo-pelaaja" if score >= 10 else "Aloitteleva napauttaja"},
+        "elapsed_seconds": round(elapsed, 1),
+        "valid_for_leaderboard": valid_for_leaderboard,
+        "personalized_locked": True,
+    }
+
+    await db.mini_game_plays.update_one(
+        {"id": play_id},
+        {"$set": {
+            "status": "finished",
+            "finished_at": _now_iso(),
+            "score": score,
+            "max_score": max_score,
+            "pct": preview["pct"],
+            "elapsed_seconds": elapsed,
+            "valid_for_leaderboard": valid_for_leaderboard,
+            "cheat_suspected": cheat_suspected,
+            "preview_result": preview,
+        }},
+    )
+    return preview
+
+
+async def unlock_arcade_result(db, *, play_id, anon_id, email, name=None, consent=False, ip=None):
+    """Email gate for arcade plays. Refuses cheat-suspected scores from
+    entering the leaderboard but still captures the email lead (the
+    player still gave consent, the relationship is honest)."""
+    play = await db.mini_game_plays.find_one(
+        {"id": play_id, "anon_id": anon_id},
+        {"_id": 0, "game_slug": 1, "valid_for_leaderboard": 1, "score": 1},
+    )
+    if not play:
+        return {"error": "play_not_found"}
+    game_slug = play.get("game_slug")
+    if game_slug not in (ARCADE_SNAKE_SLUG, ARCADE_TAP_SLUG):
+        return {"error": "not_an_arcade_play"}
+    # Cheat-suspected → still capture lead but flag the row so it can't
+    # surface on the leaderboard. We achieve that by zeroing the score
+    # for the leaderboard purpose only.
+    if not play.get("valid_for_leaderboard", True):
+        # Force the unlock's persisted score to 0 so the lead doesn't
+        # poison the leaderboard. We do this by patching the play first.
+        await db.mini_game_plays.update_one(
+            {"id": play_id},
+            {"$set": {"score": 0, "pct": 0}},
+        )
+    return await _unlock_for_game(
+        db, game_slug=game_slug,
+        play_id=play_id, anon_id=anon_id, email=email, name=name,
+        consent=consent, ip=ip,
+        persona_resolver=lambda p: {
+            "key": "arcade_player",
+            "title": ("Aikatappo-mestari" if int(p.get("score") or 0) >= 20
+                      else "Aikatappo-pelaaja" if int(p.get("score") or 0) >= 10
+                      else "Aloitteleva napauttaja"),
+            "tagline": "Viikon korkein pisteytys palkitaan tunnustuksella, ei rahalla.",
+        },
+    )
+
+
+# ────────────────── Weekly champions (homepage banner) ──────────────────
+
+async def get_weekly_champions(db, *, week_iso: Optional[str] = None) -> Dict[str, Any]:
+    """Return ONE top scorer per active game for the given ISO week.
+    Used by the homepage social-proof banner. Returns rank-1 only — we
+    intentionally avoid surfacing full leaderboards on the homepage to
+    keep the banner restrained and editorial."""
+    week = week_iso or _week_iso()
+    champions: List[Dict[str, Any]] = []
+    game_meta = {
+        QUIZ_GAME_SLUG: {"title_fi": "Tietoisuustesti", "path": "/peliareena/tietoisuustesti",
+                         "max_label": "/10"},
+        SCENARIO_GAME_SLUG: {"title_fi": "Päätöspolku", "path": "/peliareena/paatospolku",
+                             "max_label": "/15"},
+        INSIGHT_GAME_SLUG: {"title_fi": "Tietoraape", "path": "/peliareena/tietoraape",
+                            "max_label": "/6"},
+        ARCADE_SNAKE_SLUG: {"title_fi": "Aikatappo · Mato", "path": "/peliareena/aikatappo-mato",
+                            "max_label": " pistettä"},
+        ARCADE_TAP_SLUG: {"title_fi": "Aikatappo · Napautus", "path": "/peliareena/aikatappo-napautus",
+                          "max_label": " pistettä"},
+    }
+    for slug, meta in game_meta.items():
+        top = await db.mini_game_leads.find_one(
+            {"source_game": slug, "tournament_week_iso": week, "score": {"$gt": 0}},
+            {"_id": 0, "name": 1, "email": 1, "score": 1, "pct": 1, "consent_at": 1},
+            sort=[("score", -1), ("pct", -1), ("consent_at", 1)],
+        )
+        if not top:
+            continue
+        display = (top.get("name") or "").strip()
+        if not display:
+            local = (top.get("email") or "").split("@")[0]
+            display = (local[:3] + "•••" + local[-1:]) if len(local) > 4 else (local or "pelaaja")
+        champions.append({
+            "game_slug": slug,
+            "game_title_fi": meta["title_fi"],
+            "play_url": meta["path"],
+            "champion_name": display,
+            "champion_score": int(top.get("score") or 0),
+            "score_label": f"{int(top.get('score') or 0)}{meta['max_label']}",
+        })
+
+    return {
+        "week_iso": week,
+        "champions": champions,
+        "has_data": bool(champions),
+    }
+
+
+# Module-level imports kept at top.
+

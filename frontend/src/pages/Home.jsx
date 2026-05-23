@@ -16,6 +16,7 @@ import NewsPortal from "../components/NewsPortal";
 import StreamersBand from "../components/StreamersBand";
 import NowPlayingTicker from "../components/NowPlayingTicker";
 import ExploreBlocks from "../components/ExploreBlocks";
+import WeeklyChampionsBanner from "../components/WeeklyChampionsBanner";
 import VoyagerHomeStrip from "../components/VoyagerHomeStrip";
 import AboutStrip from "../components/AboutStrip";
 import EditorialFooter from "../components/EditorialFooter";
@@ -59,6 +60,11 @@ const Home = () => {
       {/* Zone 5 — Voyager weekly pick strip → /game */}
       <section className="home-zone home-zone--voyager">
         <VoyagerHomeStrip />
+      </section>
+
+      {/* Zone 5.5 — Weekly champions banner (mini-game tournament) */}
+      <section className="home-zone home-zone--champions">
+        <WeeklyChampionsBanner />
       </section>
 
       {/* Zone 6 — Explore preview blocks (Mittari · Mestari · Voita · Peli) */}

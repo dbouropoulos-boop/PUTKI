@@ -14,15 +14,16 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Trophy, Sparkles, ChevronRight, Lock, Clock, BookOpen } from 'lucide-react';
+import { Trophy, Sparkles, ChevronRight, Lock, Clock, BookOpen, Zap, GitBranch } from 'lucide-react';
+import GameTileArt from '../components/GameTileArt';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const GAME_ICONS = {
   quiz: BookOpen,
-  scenario: Sparkles,
+  scenario: GitBranch,
   reveal: Sparkles,
-  arcade: Trophy,
+  arcade: Zap,
 };
 
 const PeliAreenaHub = () => {
@@ -119,8 +120,11 @@ const TournamentPanel = ({ t }) => {
       padding: '20px 24px',
       borderRadius: 6,
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
-        <div>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap',
+        gap: 16, alignItems: 'flex-start',
+      }}>
+        <div style={{ minWidth: 0, flex: '1 1 200px' }}>
           <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700 }}>
             VIIKKO {t.week_iso} · AKTIIVINEN
           </div>
@@ -184,41 +188,79 @@ const GameTile = ({ game }) => {
         display: 'block',
         border: '1px solid var(--border)',
         background: 'var(--surface)',
-        padding: 20,
         borderRadius: 6,
         textDecoration: 'none',
         position: 'relative',
-        opacity: active ? 1 : 0.6,
-        transition: 'transform 180ms ease, border-color 180ms ease',
+        opacity: active ? 1 : 0.55,
+        transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
         cursor: active ? 'pointer' : 'default',
+        overflow: 'hidden',
       }}
-      onMouseEnter={(e) => active && (e.currentTarget.style.transform = 'translateY(-2px)') && (e.currentTarget.style.borderColor = 'var(--ink)')}
-      onMouseLeave={(e) => active && (e.currentTarget.style.transform = 'translateY(0)') && (e.currentTarget.style.borderColor = 'var(--border)')}
+      onMouseEnter={(e) => {
+        if (!active) return;
+        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.borderColor = 'var(--ink)';
+        e.currentTarget.style.boxShadow = '0 12px 24px -12px rgba(0,0,0,0.18)';
+      }}
+      onMouseLeave={(e) => {
+        if (!active) return;
+        e.currentTarget.style.transform = 'translateY(0)';
+        e.currentTarget.style.borderColor = 'var(--border)';
+        e.currentTarget.style.boxShadow = 'none';
+      }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-        <Icon size={20} strokeWidth={1.6} style={{ color: active ? 'var(--ink)' : 'var(--muted)' }} />
-        <span className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700 }}>
-          {game.kind.toUpperCase()} · {game.duration_fi}
-        </span>
-      </div>
-      <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--ink)', margin: '0 0 8px', letterSpacing: '-0.01em' }}>
-        {game.title_fi}
-      </h3>
-      <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', lineHeight: 1.5, margin: 0 }}>
-        {game.subtitle_fi}
-      </p>
-      <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 6 }}>
-        {active ? (
-          <>
-            <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--ink)', fontWeight: 700 }}>PELAA NYT</span>
-            <ChevronRight size={14} strokeWidth={2} style={{ color: 'var(--ink)' }} />
-          </>
-        ) : (
-          <>
-            <Lock size={12} strokeWidth={1.6} style={{ color: 'var(--muted)' }} />
-            <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--muted)' }}>TULOSSA</span>
-          </>
+      {/* Tile illustration */}
+      <div style={{ position: 'relative', borderBottom: '1px solid var(--border)' }}>
+        <GameTileArt kind={game.kind} slug={game.slug} />
+        {!active && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            gap: 8,
+          }}>
+            <Lock size={14} strokeWidth={1.6} style={{ color: '#F5F3EE' }} />
+            <span className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#F5F3EE', fontWeight: 700 }}>
+              TULOSSA
+            </span>
+          </div>
         )}
+      </div>
+
+      {/* Tile body */}
+      <div style={{ padding: 18 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <Icon size={16} strokeWidth={1.7} style={{ color: 'var(--ink)' }} />
+          <span className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700 }}>
+            {game.kind.toUpperCase()} · {game.duration_fi}
+          </span>
+        </div>
+        <h3 style={{
+          fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--ink)',
+          margin: '0 0 8px', letterSpacing: '-0.01em',
+        }}>
+          {game.title_fi}
+        </h3>
+        <p style={{
+          fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)',
+          lineHeight: 1.5, margin: 0, minHeight: 42,
+        }}>
+          {game.subtitle_fi}
+        </p>
+        <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+          {active ? (
+            <>
+              <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--ink)', fontWeight: 700 }}>
+                PELAA NYT
+              </span>
+              <ChevronRight size={14} strokeWidth={2} style={{ color: 'var(--ink)' }} />
+            </>
+          ) : (
+            <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--muted)' }}>
+              TULOSSA
+            </span>
+          )}
+        </div>
       </div>
     </Wrapper>
   );

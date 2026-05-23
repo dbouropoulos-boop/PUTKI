@@ -67,6 +67,9 @@ import PeliAreenaHub from "@/pages/PeliAreenaHub";
 import PeliAreenaQuiz from "@/pages/PeliAreenaQuiz";
 import PeliAreenaScenario from "@/pages/PeliAreenaScenario";
 import PeliAreenaInsight from "@/pages/PeliAreenaInsight";
+import PeliAreenaSnake from "@/pages/PeliAreenaSnake";
+import PeliAreenaTap from "@/pages/PeliAreenaTap";
+import BackOfficeMiniGames from "@/pages/BackOfficeMiniGames";
 import { Korjaukset, Affiliaatti, Avoimuus, Lehdisto, Paivityslog } from "@/pages/Accountability";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -106,6 +109,7 @@ function App() {
           <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
           <Route path="/back-office/leads" element={<BackOfficeLeads />} />
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
+          <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
           <Route path="/back-office/email-templates" element={<BackOfficeEmailTemplates />} />
           <Route path="/back-office/mestari-diagnostics-copy" element={<BackOfficeMestariDiagnosticsCopy />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
@@ -130,6 +134,8 @@ function App() {
             <Route path="peliareena/tietoisuustesti" element={<PeliAreenaQuiz />} />
             <Route path="peliareena/paatospolku" element={<PeliAreenaScenario />} />
             <Route path="peliareena/tietoraape" element={<PeliAreenaInsight />} />
+            <Route path="peliareena/aikatappo-mato" element={<PeliAreenaSnake />} />
+            <Route path="peliareena/aikatappo-napautus" element={<PeliAreenaTap />} />
             <Route path="tietoa-meista" element={<TietoaMeista />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
 

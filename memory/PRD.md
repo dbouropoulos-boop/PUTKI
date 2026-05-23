@@ -2,6 +2,17 @@
 
 ## Phase History (latest first)
 
+- **Mini-game Phase 2.5 · Arcade games · Tile visuals · Champions banner · Admin editor** (2026-05-23, iter57 — 58/58 tests passing across 7 suites)
+  - **Game tile visuals** (the "terrible without images" fix): every game tile in `/peliareena` now has a hand-built SVG illustration (`components/GameTileArt.jsx`) instead of bare icons — quiz: question card with green option dot + amber "96%" RTP corner; scenario: 3 branching paths to green/grey/red endpoints with `3p/1p/0p` labels; insight: 6-tile grid with 2 revealed; snake: coiled serpent on grid with food dot; tap: chip token (€) with amber pipes. Theme-aware via CSS variables.
+  - **2 arcade games shipped (canvas-based)**:
+    - **Aikatappo · Mato** (`/peliareena/aikatappo-mato`): 20×20 Snake, rAF game loop, arrow keys + WASD + mobile swipe + on-screen D-pad. Server-side anti-cheat (`min_seconds_per_point=0.4`) refuses leaderboard entry on impossible scores but still captures the lead (consent honoured even when score zeroed).
+    - **Aikatappo · Napautus** (`/peliareena/aikatappo-napautus`): Flappy-style one-tap (gravity 0.55, flap −8.4, pipe spacing 230 px, anti-cheat min_seconds_per_point=0.6). Tap on canvas / Space on desktop / touch on mobile.
+    - Both reuse shared `ConsentEmailGate` + `_unlock_for_game` + `ArcadePreview` / `ArcadeUnlocked`. **Hub now has all 5 games active.**
+  - **Tämän viikon mestarit homepage banner** (`components/WeeklyChampionsBanner.jsx`): pulls rank-1 from each of the 5 active games for the current ISO week via `GET /api/mini-games/champions`, renders only when at least one game has a ranked player. Sits between `VoyagerHomeStrip` and `ExploreBlocks`. 4–5 columns of `GAME TITLE · ChampionName · Score` with amber accent.
+  - **Admin question editor** (`/back-office/mini-games`): full CRUD for quiz / scenario / insight question banks. 3 game tabs, inline edit form with multiline + JSON option editor (scenario options carry `score` + per-option `explanation_fi`). New endpoints: `GET /api/admin/mini-games/questions?slug=…`, `POST /api/admin/mini-games/questions` (upsert by `slug+order`), `DELETE /api/admin/mini-games/questions/{id}`. Linked from back-office home.
+  - **Tests**: `test_iter57_arcade_and_admin.py` (9 tests — hub arcade promotion, snake full flow, cheat-detection score zeroing, tap flow, unknown-game rejection, champions endpoint shape, admin auth gate, seeded question count, question CRUD lifecycle). **58/58 passing across 7 suites**.
+
+
 - **Mini-game Phase 2 · VoyagerHomeStrip light-mode polish · CSV lead export** (2026-05-22, iter56 — 49/49 tests passing across 6 suites)
   - **VoyagerHomeStrip light-mode fix** (`VoyagerHomeStrip.jsx`): the "Game of the week" banner rendered as a heavy dark gradient block on top of the cream `--bg` — the "black hole" effect the user flagged in iter53. Wired in `useTheme()`; in light mode the card now uses cream-on-paper surfaces, the brassy gold tint swaps to a deeper editorial amber (`#A0750F`), the V watermark drops to 8% opacity, and the left-right vignette becomes a no-op. Dark mode preserves the original brand gold-on-charcoal aesthetic.
   - **Mini-game suite Phase 2** — 2 of 4 promised games shipped:
