@@ -2,6 +2,30 @@
 
 ## Phase History (latest first)
 
+- **Per-user admin tokens · Audit log · Avatar refresh (no initials) · Classifier Tier 2** (2026-05-23, iter62 — 67/67 tests passing across iter5*+iter6*, 0 regressions)
+  - **Per-user admin tokens + audit log (P3)** — new `admin_auth.py` module:
+    - `admin_users` collection: `{id, username, token_hash (sha256), role:[owner|editor|reviewer], active, created_at, created_by, last_used_at}`. Tokens generated via `secrets.token_urlsafe(32)`, hashed at rest, shown to operator ONCE on creation.
+    - `admin_audit_log` collection: append-only `{ts, actor, role, action, resource, meta, ip}`. Wraps in a try/except so audit failures never break a request.
+    - `require_admin` now resolves the `X-Admin-Token` header against the collection first, falls back to the legacy `BACK_OFFICE_TOKEN` env var (back-compat for existing tooling). Constant-time `secrets.compare_digest()` for the legacy path.
+    - On startup, `seed_root_user_from_env` upserts a `root` admin user from the existing `BACK_OFFICE_TOKEN` so the migration is automatic.
+    - New endpoints (all `owner`-gated where appropriate): `GET /api/admin/users`, `POST /api/admin/users`, `DELETE /api/admin/users/{user_id}`, `GET /api/admin/audit-log?limit=100&actor=`.
+  - **REFRESH MY AVATAR (P3) — multi-stage cascade, NO initials** — new `streamer_avatar_fallback.py`:
+    - Stage 1: platform API (Twitch/Kick/YouTube — pre-existing).
+    - Stage 2: scrape the public channel page and parse `<meta property="og:image">` (works without auth).
+    - Stage 3: DuckDuckGo image search HTML scrape — no API key needed; only accepts images from a strict allowlist of trusted CDN hosts (Twitch CDN, Kick, YouTube, Wikipedia, Twitter, Imgur, DDG proxied).
+    - Stage 4: Wikipedia REST `page/summary` endpoint — finds thumbnails for famous athletes/artists (Bottas, Barkov, Rovanperä).
+    - New endpoint `POST /api/admin/streamers/{slug}/refresh-avatar` runs the full cascade, persists `avatar_url` + `avatar_source` + `avatar_resolved_at`, and writes an audit-log row.
+    - **`StreamerAvatar.jsx` rewritten** to remove letter-initials fallback per user demand. When all 4 stages fail, renders a platform-tinted radial gradient with a tiny mono platform glyph (`tw` / `kk` / `yt`) — NEVER letters of the streamer's name.
+    - **Back-office row** now shows a per-streamer ⟳ refresh button (next to EDIT/DELETE) and an amber provenance pill (e.g. `· CHANNEL OG` / `· DDG SEARCH` / `· WIKIPEDIA`) so editors can spot avatars that needed a fallback.
+  - **Classifier Tier 2 — Haiku 4.5 fallback (P2)** — extended `news_classifier.py`:
+    - New `classify_item_tier2(title, source)` calls `claude-haiku-4-5-20251001` via the Emergent LLM key with a strict JSON-only system prompt. Hard 12s timeout. Validates response against enum sets (category ∈ {news, regulation, sports, gambling, streamers, business}, severity ∈ {high, medium, low}, relevance ∈ 0-100). Returns None on any failure → caller cascades back to Tier 1.
+    - New `classify_item_with_fallback()` wrapper: runs Tier 1 first, escalates to Tier 2 ONLY for items in the 20-44 relevance band ("ambiguous") AND when the `NEWS_CLASSIFIER_AI_FALLBACK_ENABLED=1` env flag is set (default off — cost-bound).
+    - `layer2_workers.py` ingestion pipeline now calls the wrapper; documents stamped with `tier2_used: true/false` for editorial review.
+  - **Mobile audit** — captured hub, quiz intro, and snake intro at iPhone-13 viewport. All responsive layouts (auto-fit grids, trust-chip wrapping, stacked How-to-play + Scoring panels, mobile-touchable CTAs, mobile-readable controls hints) verified clean. No layout breaks discovered.
+  - **Security re-audit** — every new endpoint gated with `Depends(require_admin)`; tokens always sha256-hashed; audit log NEVER stores raw tokens; avatar fallback URLs restricted to trusted-host allowlist (prevents arbitrary URL injection through DDG scrape); LLM responses validated against strict enums before persisting; `_id` stripped from every Mongo response.
+  - **Deferred**: P3 `server.py` modularisation (~4000 LOC → `routes/`). Would touch 122 admin endpoints + risk breaking 67 tests + the hand-off summary already flags this as high-risk. Recommended as its own dedicated session with the testing agent looped in for end-to-end validation after each chunk of route extraction.
+  - **Tests**: `tests/test_iter62_admin_auth_avatar_classifier.py` (7 tests). Cross-suite regression: **67/67 passing · 0 regressions**.
+
 - **Language pill UX · Smarter auto-detect · CORS lock-down · Mestari/news i18n audit** (2026-05-23, iter61 — no new tests; visual verification + CORS check)
   - **New segmented `[ FI ][ EN ]` pill** in the site header replaces the previous "FI / EN" text toggle. Active language is filled (ink on bg); inactive language is muted outlined. `data-testid="lang-toggle"` preserved. Aria-label + title attributes flip to the OTHER language ("Switch to English" / "Vaihda suomeksi") so it self-explains.
   - **Smarter auto-detect** (`LanguageContext.getInitial()`): now honours both `?lang=` query param AND `localStorage` (explicit choice wins). Walks `navigator.languages[]` and returns `fi` for any `fi-*` browser, `en` for any `en-*` browser, and `en` for every other language (broader fallback). The previous version only flipped to EN if the browser was strictly English-only; now any non-Finnish browser sees the EN site immediately — important for streamer affiliate traffic landing from outside Finland.

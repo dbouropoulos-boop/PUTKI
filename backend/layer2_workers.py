@@ -405,7 +405,7 @@ async def rss_tick(db) -> Dict[str, Any]:
     Legacy `news_signals` summary doc preserved for the existing
     layer 2 dial/signal-engine pipeline.
     """
-    from news_classifier import classify_item, relevance_threshold, archive_min  # local import to avoid cycles
+    from news_classifier import classify_item, classify_item_with_fallback, relevance_threshold, archive_min  # local import to avoid cycles
     from news_watch import rejected_urls as _killed_urls  # iter51 editorial veto
 
     matched_articles: List[Dict[str, Any]] = []
@@ -454,8 +454,10 @@ async def rss_tick(db) -> Dict[str, Any]:
                 title_l = (it.get("title") or "").lower()
 
                 # Classify everything — feed.category is a hint, classifier
-                # may override based on title content.
-                classified = classify_item(
+                # may override based on title content. iter62: when the
+                # AI fallback flag is on, items in the ambiguous band are
+                # re-scored by Haiku 4.5.
+                classified = await classify_item_with_fallback(
                     title=it.get("title") or "",
                     source=feed["source"],
                     source_tier=feed.get("tier", 3),
@@ -473,6 +475,7 @@ async def rss_tick(db) -> Dict[str, Any]:
                     "severity":     classified["severity"],
                     "relevance":    classified["relevance"],
                     "entity_tags":  classified["entity_tags"],
+                    "tier2_used":   bool(classified.get("_tier2")),
                     "verified":     False,
                 }
 

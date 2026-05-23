@@ -11,11 +11,37 @@ import uuid
 from datetime import datetime, timezone, timedelta
 
 
-async def require_admin(x_admin_token: Optional[str] = Header(None, alias='X-Admin-Token')):
-    expected = os.environ.get('BACK_OFFICE_TOKEN', 'putki-hq-admin')
-    if not x_admin_token or x_admin_token != expected:
+async def require_admin(request: Request,
+                         x_admin_token: Optional[str] = Header(None, alias='X-Admin-Token')):
+    """iter62: per-user admin tokens + audit logging.
+
+    Resolves the X-Admin-Token via the `admin_users` collection. Legacy
+    env-based BACK_OFFICE_TOKEN still works (back-compat) — both paths
+    return an actor record that handlers can pass to `_audit_log`.
+
+    `_audit_log` is a thin wrapper around `admin_auth.write_audit` that
+    pulls actor metadata from `request.state` (populated here)."""
+    from admin_auth import resolve_admin_token
+    if not x_admin_token:
+        raise HTTPException(status_code=401, detail='Missing admin token')
+    actor = await resolve_admin_token(db, x_admin_token)
+    if not actor:
         raise HTTPException(status_code=401, detail='Invalid admin token')
+    # Stash on the request so endpoints can use it without re-resolving.
+    request.state.admin_actor = actor
     return True
+
+
+async def _audit_log(db_arg, *, action: str, resource: str,
+                      actor: str = "unknown", role: str = "editor",
+                      meta: Optional[Dict[str, Any]] = None,
+                      ip: Optional[str] = None) -> None:
+    """Thin convenience wrapper for legacy callers that don't have the
+    Request handy. Most handlers should pull `request.state.admin_actor`
+    and log explicitly via `admin_auth.write_audit`."""
+    from admin_auth import write_audit
+    await write_audit(db_arg, actor=actor, role=role, action=action,
+                       resource=resource, meta=meta, ip=ip)
 
 
 ROOT_DIR = Path(__file__).parent
@@ -2560,6 +2586,129 @@ async def admin_refresh_avatars(force: bool = True, _: bool = Depends(require_ad
     return await refresh_all_avatars(db, force=force)
 
 
+@api_router.post("/admin/streamers/{slug}/refresh-avatar")
+async def admin_refresh_one_avatar(slug: str, _: bool = Depends(require_admin)):
+    """iter62: Force-refresh a single streamer's avatar with the FULL
+    multi-stage cascade — platform API → channel OG image → DDG image
+    search → Wikipedia. No initials placeholder ever. Returns the URL +
+    resolution source."""
+    s = await db.streamers.find_one(
+        {"slug": slug},
+        {"_id": 0, "slug": 1, "platform": 1, "channel": 1, "name": 1, "name_en": 1},
+    )
+    if not s:
+        raise HTTPException(404, "streamer_not_found")
+
+    from streamer_avatars import _fetch_twitch_avatars, _fetch_kick_avatars, _fetch_youtube_avatars
+    from streamer_avatar_fallback import resolve_avatar_with_fallback
+
+    platform = (s.get("platform") or "").lower()
+    channel = (s.get("channel") or s.get("slug") or "").strip().lstrip("@")
+    primary = None
+    try:
+        if platform == "twitch":
+            res = await _fetch_twitch_avatars([channel.lower()])
+            primary = res.get(channel.lower())
+        elif platform == "kick":
+            res = await _fetch_kick_avatars([channel.lower()])
+            primary = res.get(channel.lower())
+        elif platform == "youtube":
+            res = await _fetch_youtube_avatars([s.get("channel") or channel])
+            primary = res.get(s.get("channel") or channel)
+    except Exception as e:
+        logger.warning("primary avatar fetch failed for %s: %s", slug, e)
+
+    name_for_search = (s.get("name") or s.get("name_en") or s.get("slug") or "").strip()
+    url, source = await resolve_avatar_with_fallback(
+        name=name_for_search, platform=platform, channel=channel,
+        primary_url=primary,
+    )
+
+    from datetime import datetime, timezone
+    import time as _t
+    now_iso = datetime.now(timezone.utc).isoformat()
+    if url:
+        await db.streamers.update_one(
+            {"slug": slug},
+            {"$set": {"avatar_url": url, "avatar_source": source,
+                      "avatar_resolved_at": now_iso,
+                      "avatar_resolved_at_unix": _t.time(),
+                      "avatar_failed": False},
+             "$unset": {"avatar_failure_reason": ""}},
+        )
+    else:
+        await db.streamers.update_one(
+            {"slug": slug},
+            {"$set": {"avatar_source": "exhausted_all_fallbacks",
+                      "avatar_resolved_at": now_iso,
+                      "avatar_resolved_at_unix": _t.time(),
+                      "avatar_failed": True,
+                      "avatar_failure_reason": "all_4_stages_failed"}},
+        )
+
+    await _audit_log(db, actor="admin", action="streamer.refresh_avatar",
+                     resource=f"streamer:{slug}",
+                     meta={"source": source, "ok": bool(url)})
+
+    return {"slug": slug, "avatar_url": url, "avatar_source": source,
+            "ok": bool(url)}
+
+
+# ─── Admin users + audit log (iter62, P3) ────────────────────────────
+
+class _AdminUserCreate(BaseModel):
+    username: str
+    role: str = "editor"
+
+
+@api_router.get("/admin/users")
+async def admin_list_users(_: bool = Depends(require_admin)):
+    from admin_auth import list_admin_users
+    return {"users": await list_admin_users(db)}
+
+
+@api_router.post("/admin/users")
+async def admin_create_user(payload: _AdminUserCreate, request: Request,
+                              _: bool = Depends(require_admin)):
+    from admin_auth import create_admin_user, write_audit
+    actor = request.state.admin_actor
+    if actor.get("role") != "owner":
+        raise HTTPException(403, "owner_role_required")
+    try:
+        u = await create_admin_user(
+            db, username=payload.username, role=payload.role,
+            created_by=actor["actor"],
+        )
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    await write_audit(db, actor=actor["actor"], role=actor["role"],
+                       action="admin_user.create",
+                       resource=f"admin_user:{u['id']}",
+                       meta={"username": u["username"], "role": u["role"]})
+    return u  # token_plain shown once.
+
+
+@api_router.delete("/admin/users/{user_id}")
+async def admin_deactivate_user(user_id: str, request: Request,
+                                  _: bool = Depends(require_admin)):
+    from admin_auth import deactivate_admin_user, write_audit
+    actor = request.state.admin_actor
+    if actor.get("role") != "owner":
+        raise HTTPException(403, "owner_role_required")
+    ok = await deactivate_admin_user(db, user_id=user_id)
+    await write_audit(db, actor=actor["actor"], role=actor["role"],
+                       action="admin_user.deactivate",
+                       resource=f"admin_user:{user_id}")
+    return {"deactivated": ok}
+
+
+@api_router.get("/admin/audit-log")
+async def admin_get_audit_log(limit: int = 100, actor: Optional[str] = None,
+                                _: bool = Depends(require_admin)):
+    from admin_auth import read_audit_log
+    return {"rows": await read_audit_log(db, limit=limit, actor=actor)}
+
+
 class _PreviewBody(BaseModel):
     template_id: str
     signal_data: Dict[str, Any]
@@ -4273,6 +4422,14 @@ async def startup_event():
     nowhere else (no more orphan-startup regressions possible).
     """
     from bootstrap import run_startup
+    # iter62: ensure admin_users + audit_log indexes exist and bootstrap
+    # a `root` user from BACK_OFFICE_TOKEN if no users exist yet.
+    from admin_auth import ensure_indexes as _ensure_admin_indexes, seed_root_user_from_env
+    try:
+        await _ensure_admin_indexes(db)
+        await seed_root_user_from_env(db)
+    except Exception:
+        logger.exception("admin_auth: bootstrap failed (non-fatal)")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)

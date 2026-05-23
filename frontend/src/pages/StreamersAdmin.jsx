@@ -28,6 +28,7 @@ const StreamersAdmin = () => {
   const [draft, setDraft] = useState(emptyStr());
   const [saving, setSaving] = useState(false);
   const [sceneFilter, setSceneFilter] = useState('');
+  const [refreshingOne, setRefreshingOne] = useState(null);
 
   const headers = useCallback(() => ({ 'Content-Type': 'application/json', 'X-Admin-Token': token }), [token]);
 
@@ -112,6 +113,23 @@ const StreamersAdmin = () => {
     );
   }
 
+  const refreshOneAvatar = async (slug) => {
+    setRefreshingOne(slug);
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/streamers/${encodeURIComponent(slug)}/refresh-avatar`, {
+        method: 'POST', headers: { 'X-Admin-Token': token },
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || 'failed');
+      await load();
+      alert(`Avatar resolved via "${j.avatar_source}".${j.avatar_url ? '\n\n' + j.avatar_url : '\n\nNo image found across all 4 stages.'}`);
+    } catch (e) {
+      alert(`Refresh failed: ${e.message}`);
+    } finally {
+      setRefreshingOne(null);
+    }
+  };
+
   return (
     <div className="min-h-screen px-5 py-10" style={{ background: 'var(--bg)' }} data-testid="streamers-admin-page">
       <div className="container-wide">
@@ -151,6 +169,11 @@ const StreamersAdmin = () => {
                       <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#5A7BB8', fontWeight: 700 }}>
                         {s.platform.toUpperCase()} · T{s.tier} · {s.scene.toUpperCase()}
                         {s.avatar_failed && <span style={{ color: '#C8423C', marginLeft: 6 }} title={s.avatar_failure_reason || ''}>· AVATAR ?</span>}
+                        {s.avatar_source && s.avatar_source !== 'platform_api' && !s.avatar_failed && (
+                          <span style={{ color: '#E8C26E', marginLeft: 6 }} title={`Resolved via ${s.avatar_source}`}>
+                            · {s.avatar_source.toUpperCase().replace('_', ' ')}
+                          </span>
+                        )}
                       </div>
                       <h3 className="font-display mt-1" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}>{s.name} · {s.followers || '—'}</h3>
                       <p className="font-serif mt-1" style={{ fontSize: 13, color: 'var(--muted)' }}>{s.sub || '—'}</p>
@@ -158,6 +181,16 @@ const StreamersAdmin = () => {
                   </div>
                   <div className="flex flex-col gap-1">
                     <button onClick={() => startEdit(s)} className="btn-ghost" data-testid={`str-edit-${s.slug}`}>EDIT</button>
+                    <button
+                      onClick={() => refreshOneAvatar(s.slug)}
+                      disabled={refreshingOne === s.slug}
+                      className="btn-ghost"
+                      data-testid={`str-refresh-avatar-${s.slug}`}
+                      title="Re-fetch avatar via platform API → channel OG → DDG image search → Wikipedia"
+                      style={{ opacity: refreshingOne === s.slug ? 0.5 : 1 }}
+                    >
+                      <RefreshCw strokeWidth={1.5} size={13} />
+                    </button>
                     <button onClick={() => remove(s.slug)} className="btn-ghost" data-testid={`str-delete-${s.slug}`} style={{ color: '#C8423C' }}><Trash2 strokeWidth={1.5} size={13} /></button>
                   </div>
                 </div>

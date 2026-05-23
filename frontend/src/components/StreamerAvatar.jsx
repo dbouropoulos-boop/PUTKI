@@ -1,14 +1,14 @@
 /**
- * PUTKI HQ — StreamerAvatar (iter54)
+ * PUTKI HQ — StreamerAvatar (iter54, iter62 no-initials policy)
  *
  * Renders the streamer's REAL profile picture (pulled from Twitch / Kick /
- * YouTube and persisted on the streamer doc as `avatar_url`). Falls back
- * to initials on a neutral block when no image is available — no stock
- * photos, ever.
+ * YouTube → channel OG → DDG image search → Wikipedia and persisted on
+ * the streamer doc as `avatar_url`). When ALL stages fail we render a
+ * platform-tinted gradient block with a platform glyph — explicitly NOT
+ * letter initials (operator preference, iter62).
  *
  * Props:
- *   streamer  — streamer doc with `name`, `slug`, `avatar_url?`, `photo?`
- *               (legacy stock URL is INTENTIONALLY ignored — see iter54)
+ *   streamer  — streamer doc with `name`, `slug`, `avatar_url?`, `platform?`
  *   size      — pixel size of the avatar (square)
  *   shape     — 'circle' (default) | 'square'
  *   className — extra classes
@@ -22,12 +22,10 @@ const PLATFORM_TINT = {
   youtube: '#FF0033',
 };
 
-const initialsOf = (name = '') => {
-  const trimmed = String(name).trim();
-  if (!trimmed) return '?';
-  const parts = trimmed.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+const PLATFORM_GLYPH = {
+  twitch:  'tw',
+  kick:    'kk',
+  youtube: 'yt',
 };
 
 export const StreamerAvatar = ({
@@ -44,6 +42,7 @@ export const StreamerAvatar = ({
   const showImage = !!url && !errored;
   const platform = (streamer?.platform || '').toLowerCase();
   const tint = PLATFORM_TINT[platform] || '#9C9587';
+  const glyph = PLATFORM_GLYPH[platform] || '··';
 
   const radius = shape === 'circle' ? '999px' : '4px';
   const baseStyle = {
@@ -82,26 +81,32 @@ export const StreamerAvatar = ({
     );
   }
 
-  // Fallback: initials on a neutral block, with a tiny platform-tinted
-  // bottom strip so the block doesn't feel anonymous.
+  // No-initials fallback (iter62): platform-tinted gradient + tiny platform
+  // glyph. Editors should refresh the avatar via the back-office to fetch
+  // a real image — initials are intentionally never rendered.
   return (
     <div
       className={className}
-      style={baseStyle}
+      style={{
+        ...baseStyle,
+        background: `radial-gradient(circle at 30% 30%, ${tint}55, var(--surface-2, #1A1814) 70%)`,
+      }}
       data-testid={testId || `streamer-avatar-${streamer?.slug || 'unknown'}`}
-      data-fallback="initials"
+      data-fallback="platform-gradient"
+      title={name}
     >
       <span style={{
-        fontFamily: 'Georgia, serif',
+        fontFamily: 'ui-monospace, monospace',
         fontWeight: 700,
-        fontSize: Math.round(size * 0.4),
-        letterSpacing: '-0.02em',
-        color: 'var(--ink, #ECE6D8)',
+        fontSize: Math.round(size * 0.26),
+        letterSpacing: '0.08em',
+        color: tint,
         lineHeight: 1,
-      }}>{initialsOf(name)}</span>
+        textTransform: 'uppercase',
+      }}>{glyph}</span>
       <span aria-hidden style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
-        height: 2, background: tint, opacity: 0.7,
+        height: 2, background: tint, opacity: 0.85,
       }} />
     </div>
   );
