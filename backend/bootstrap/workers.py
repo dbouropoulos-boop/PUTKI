@@ -83,3 +83,8 @@ async def spawn_background_workers(
     if os.environ.get("PUTKI_HQ_DISABLE_AVATAR_REFRESH", "0") != "1":
         from streamer_avatars import avatar_refresh_worker_loop
         asyncio.create_task(avatar_refresh_worker_loop(db))
+
+    # ── Tournament closing Telegram bot (Monday recap, iter58) ───────
+    if os.environ.get("PUTKI_HQ_DISABLE_TOURNAMENT_CLOSING", "0") != "1":
+        from mini_game_tournament import tournament_closing_worker_loop
+        asyncio.create_task(tournament_closing_worker_loop(db))

@@ -10,6 +10,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, Trophy, ChevronRight, Share2 } from 'lucide-react';
+import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -64,28 +65,25 @@ const PeliAreenaScenario = () => {
       </Link>
 
       {stage === 'intro' && (
-        <div data-testid="scenario-intro">
-          <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-            PÄÄTÖSPOLKU · ALOITTELIJA
-          </div>
-          <h1 style={{
-            fontFamily: 'Georgia, serif', fontWeight: 700,
-            fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1,
-            letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 16px',
-          }}>
-            5 oikeaa pelitilannetta.<br />Mitä päättäisit?
-          </h1>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.6, color: 'var(--muted)', maxWidth: 600 }}>
-            Jokaisessa skenaariossa on 3 vaihtoehtoa. Valinta tehdään ennen kuin
-            seuraukset näkyvät — silloin todellinen arviointi mitataan.
-            Lopussa saat profiilisi: <strong style={{ color: 'var(--ink)' }}>Kärsivällinen taktikko</strong>,
-            <strong style={{ color: 'var(--ink)' }}> Kasvava arvioija</strong>, vai
-            <strong style={{ color: 'var(--ink)' }}> Tuore pelaaja</strong>.
-          </p>
-          <button onClick={start} data-testid="scenario-start-btn" style={btnPrimary}>
-            Aloita päätöspolku <ChevronRight size={14} strokeWidth={2.5} />
-          </button>
-        </div>
+        <GameIntroPanel
+          gameSlug="scenario_decisions"
+          eyebrow="PÄÄTÖSPOLKU · ALOITTELIJA"
+          headline={<>5 oikeaa pelitilannetta.<br />Mitä päättäisit?</>}
+          tagline="Jokainen skenaario tarjoaa kolme vaihtoehtoa. Valinta tehdään ennen kuin seuraukset näkyvät — silloin todellinen arviointikyky punnitaan. Lopussa saat profiilisi: Kärsivällinen taktikko, Kasvava arvioija vai Tuore pelaaja."
+          howToPlay={[
+            'Lue skenaario ja valitse yksi kolmesta vaihtoehdosta.',
+            'Valinta lukittuu — saat täydet analyysit kaikista vaihtoehdoista lopussa.',
+            'Yhteensä 5 päätöstä. Loppupisteet tuottavat profiilin ja sijoituksen viikolla.',
+          ]}
+          scoring={[
+            'Jokainen vaihtoehto on arvioitu 0/1/3 pisteen asteikolla.',
+            'Maksimi = 15 pistettä. ≥12 = Kärsivällinen taktikko, 7–11 = Kasvava arvioija, 0–6 = Tuore pelaaja.',
+            'Tasapelissä nopeampi peliaika sijoittuu paremmin.',
+          ]}
+          ctaLabel="Aloita päätöspolku"
+          startTestId="scenario-start-btn"
+          onStart={start}
+        />
       )}
 
       {stage === 'playing' && currentSc && (
@@ -228,6 +226,10 @@ const ScenarioPreview = ({ preview, session, onUnlocked }) => (
 
 const ScenarioUnlocked = ({ result, preview }) => {
   const share = () => {
+    fetch(`${BACKEND}/api/mini-games/share/track`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_slug: 'scenario_decisions', play_id: result.play_id }),
+    }).catch(() => {});
     if (navigator.share) navigator.share({ text: result.share_text, url: window.location.href });
     else { navigator.clipboard.writeText(`${result.share_text} ${window.location.href}`); alert('Jakoteksti kopioitu.'); }
   };

@@ -88,3 +88,7 @@ async def run_all_seeds_and_indexes(db) -> None:
     await _safe("mini_games.ensure_indexes", mg_ensure(db))
     await _safe("mini_games.seed_quiz_questions", seed_quiz_questions(db))
     await _safe("mini_games.seed_phase2_games", seed_phase2_games(db))
+
+    # iter58 — tournament closing + analytics indexes
+    from mini_game_tournament import ensure_indexes as mgt_ensure
+    await _safe("mini_game_tournament.ensure_indexes", mgt_ensure(db))

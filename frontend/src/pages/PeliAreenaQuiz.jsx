@@ -17,6 +17,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Check, X, Lock, Trophy, Share2, ChevronRight } from 'lucide-react';
+import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -93,7 +94,27 @@ const PeliAreenaQuiz = () => {
         <ArrowLeft size={14} strokeWidth={1.6} /> Takaisin Peliareenaan
       </Link>
 
-      {stage === 'intro' && <Intro onStart={start} />}
+      {stage === 'intro' && (
+        <GameIntroPanel
+          gameSlug="quiz_gambling_literacy"
+          eyebrow="TIETOISUUSTESTI · ALOITTELIJA"
+          headline={<>10 kysymystä. ~3 minuuttia.<br />Saat heti tietää, missä olet.</>}
+          tagline="Testaa rahapelimatematiikan perusteet (RTP, volatiliteetti, house edge), bankroll-hallinnan, pelipsykologian ja vastuullisuuden. Pelaa ilman sähköpostia — jokainen vastaus selitetään, joten opit silloinkin, kun vastaat väärin."
+          howToPlay={[
+            'Vastaa 10 kysymykseen omalla tahdillasi — voit ottaa aikalisän milloin tahansa.',
+            'Lukitset vastauksen klikkaamalla vaihtoehtoa. Selityksen näet, kun siirryt eteenpäin.',
+            'Lopussa näet oikeat vastaukset, profiilisi sekä paikkasi viikon turnauksessa.',
+          ]}
+          scoring={[
+            'Jokainen oikein vastattu kysymys = 1 piste (max 10).',
+            'Tasapelissä nopeampi pelaaja sijoittuu paremmin.',
+            'Viikon paras pisteytys julkaistaan etunimellä — sähköpostia ei näytetä.',
+          ]}
+          ctaLabel="Aloita testi"
+          startTestId="quiz-start-btn"
+          onStart={start}
+        />
+      )}
       {stage === 'playing' && currentQ && (
         <Playing
           q={currentQ}
@@ -454,6 +475,10 @@ const EmailGate = ({ session, score, total, onUnlocked }) => {
 
 const Unlocked = ({ result, previewResult }) => {
   const share = () => {
+    fetch(`${BACKEND}/api/mini-games/share/track`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_slug: 'quiz_gambling_literacy', play_id: result.play_id }),
+    }).catch(() => {});
     if (navigator.share) {
       navigator.share({ text: result.share_text, url: window.location.href });
     } else {

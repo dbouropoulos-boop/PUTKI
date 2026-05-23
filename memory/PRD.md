@@ -2,6 +2,20 @@
 
 ## Phase History (latest first)
 
+- **Mini-game standalone intros · Per-game leaderboard · Analytics wiring** (2026-05-23, iter59 — 13/13 targeted + 52/52 cross-suite regression, 0 regressions)
+  - **Each game subpage now reads as a standalone game-page with built-in trust signals.** User feedback: the 5 mini-game intros were thin (eyebrow + title + paragraph + button) — too transactional for a gaming product. Iter59 reframes every intro screen around the gaming-first conversion pattern: stats strip → branded eyebrow → big editorial headline → tagline → trust chips → CTA → 2-up How-to-play + Scoring panels → live weekly Top-10 leaderboard → honest small-print.
+  - **New shared component** `components/peliareena/GameIntroPanel.jsx`:
+    - 4 trust chips (`Pelaa ilman sähköpostia` · `GDPR · vapaaehtoinen liittyminen` · `Viikkoturnaus · nollautuu maanantaina` · `Ei rahaa · ei korttitietoja`)
+    - "MITEN PELATAAN" panel — 3 numbered steps with `0X.` mono labels
+    - "PISTEYTYS" panel — bullet list of scoring rules with amber dots
+    - Live leaderboard via the new endpoint — top-10 with rank-1 highlighted (amber `#A0750F`), week ISO + ranked-player count surfaced, anonymised display names only
+    - Empty-state ("Olisitko sinä viikon ensimmäinen pelaaja?") when no entrants yet — no fake placeholder rows
+    - Optional `controlsHint` slot (used by Snake/Tap to surface `↑ ↓ ← → · WASD · MOBIILI: PYYHKÄISE` and `NAPAUTA RUUTUA · TAI PAINA VÄLILYÖNTIÄ`)
+  - **New backend endpoint** `GET /api/mini-games/leaderboard/{game_slug}?limit=10` (clamped to 50) — returns `{game_slug, week_iso, leaderboard:[{rank, display_name, score, pct}], ranked_players}`. 404 on unknown slugs. Anonymises emails to `xxx•••x` shape. Helper: `mini_games.get_game_leaderboard(db, *, game_slug, week_iso=None, limit=10)`.
+  - **All 5 game intros rewritten** with game-specific copy: Quiz (10 kysymystä · ~3 min · RTP / bankroll / vastuullisuus), Scenario (5 päätöstä · Kärsivällinen taktikko / Kasvava arvioija / Tuore pelaaja · 0/1/3 pisteet), Insight (6 mikro-oppia · 1p per laatta · max 6), Snake (`AIKATAPPO · MATO` · klassinen 20×20 · syö palaset · anti-cheat), Tap (`AIKATAPPO · NAPAUTUS` · token-kolikko · token läpi porteista · anti-cheat).
+  - **Back-office wiring**: `BackOfficeMiniGameAnalytics` (created iter58 but never routed) now wired at `/back-office/analytics/mini-games` + new `back-office-link-mini-games-analytics` tile in the Ops & inventory group. Pulls live `/api/admin/mini-games/analytics`; surfaces totals (Aloitetut · Valmistuneet · Leadit · Konversio% · Jakamiset) + per-game table (plays / leads / conversion / returning / shares / top player). Inline ILMOITA VIIKKO button calls `POST /api/admin/mini-games/announce-closing`.
+  - **Tests**: `tests/test_iter59_per_game_leaderboard.py` (4 tests — contract shape, all 5 slugs resolve, 404 on unknown, limit clamp at 50). Cross-suite regression on iter5*: **52/52 passing**.
+
 - **Mini-game Phase 2.5 · Arcade games · Tile visuals · Champions banner · Admin editor** (2026-05-23, iter57 — 58/58 tests passing across 7 suites)
   - **Game tile visuals** (the "terrible without images" fix): every game tile in `/peliareena` now has a hand-built SVG illustration (`components/GameTileArt.jsx`) instead of bare icons — quiz: question card with green option dot + amber "96%" RTP corner; scenario: 3 branching paths to green/grey/red endpoints with `3p/1p/0p` labels; insight: 6-tile grid with 2 revealed; snake: coiled serpent on grid with food dot; tap: chip token (€) with amber pipes. Theme-aware via CSS variables.
   - **2 arcade games shipped (canvas-based)**:

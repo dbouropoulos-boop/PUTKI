@@ -9,6 +9,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronRight, Share2, Trophy } from 'lucide-react';
+import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -195,25 +196,26 @@ const PeliAreenaSnake = () => {
       </Link>
 
       {stage === 'intro' && (
-        <div data-testid="snake-intro">
-          <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-            AIKATAPPO · MATO
-          </div>
-          <h1 style={{
-            fontFamily: 'Georgia, serif', fontWeight: 700,
-            fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1,
-            letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 16px',
-          }}>
-            Yksi mato.<br />Niin pitkä kuin ehdit.
-          </h1>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.6, color: 'var(--muted)', maxWidth: 600 }}>
-            Käytä nuolinäppäimiä tai WASDia desktopilla. Mobiilissa pyyhkäise.
-            Älä osu seinään tai itseesi. Viikon korkein pisteytys palkitaan tunnustuksella.
-          </p>
-          <button onClick={start} data-testid="snake-start-btn" style={btnPrimary}>
-            Aloita peli <ChevronRight size={14} strokeWidth={2.5} />
-          </button>
-        </div>
+        <GameIntroPanel
+          gameSlug="arcade_snake"
+          eyebrow="AIKATAPPO · MATO"
+          headline={<>Yksi mato.<br />Niin pitkä kuin ehdit.</>}
+          tagline="Klassinen 20×20 Mato kohtuullisella nopeudella. Jokainen syöty palanen kasvattaa matoa yhdellä ruudulla. Älä osu seinään tai itseesi — viikon paras pisteytys palkitaan tunnustuksella."
+          howToPlay={[
+            'Aloita peli ja ohjaa matoa nuolinäppäimillä (desktop), WASD:llä tai mobiilissa pyyhkäisemällä.',
+            'Syö amber-väriset palaset kasvattaaksesi matoa ja kerätäksesi pisteitä.',
+            'Peli päättyy seinään tai omaan häntään osumiseen — pisteet tallentuvat automaattisesti.',
+          ]}
+          scoring={[
+            '1 piste per syöty palanen.',
+            'Liian nopeat pelisessiot eivät pääse leaderboardille (anti-cheat).',
+            'Sähköpostin antaminen on vapaaehtoista — sillä lukitset paikan turnauksessa.',
+          ]}
+          ctaLabel="Aloita peli"
+          startTestId="snake-start-btn"
+          onStart={start}
+          controlsHint="OHJAUS · ↑ ↓ ← → · TAI W A S D · MOBIILI: PYYHKÄISE"
+        />
       )}
 
       {stage === 'playing' && (
@@ -249,7 +251,7 @@ const PeliAreenaSnake = () => {
                        onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
       )}
       {stage === 'unlocked' && full && (
-        <ArcadeUnlocked result={full} preview={preview} />
+        <ArcadeUnlocked result={full} preview={preview} gameSlug="arcade_snake" />
       )}
     </div>
   );
@@ -293,8 +295,14 @@ export const ArcadePreview = ({ preview, session, sport, onUnlocked }) => (
   </div>
 );
 
-export const ArcadeUnlocked = ({ result, preview }) => {
+export const ArcadeUnlocked = ({ result, preview, gameSlug }) => {
   const share = () => {
+    if (gameSlug) {
+      fetch(`${BACKEND}/api/mini-games/share/track`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game_slug: gameSlug, play_id: result.play_id }),
+      }).catch(() => {});
+    }
     if (navigator.share) navigator.share({ text: result.share_text, url: window.location.href });
     else { navigator.clipboard.writeText(`${result.share_text} ${window.location.href}`); alert('Jakoteksti kopioitu.'); }
   };

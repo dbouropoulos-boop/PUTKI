@@ -8,6 +8,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
+import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ArcadePreview, ArcadeUnlocked } from './PeliAreenaSnake';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -172,24 +173,26 @@ const PeliAreenaTap = () => {
       </Link>
 
       {stage === 'intro' && (
-        <div data-testid="tap-intro">
-          <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-            AIKATAPPO · NAPAUTUS
-          </div>
-          <h1 style={{
-            fontFamily: 'Georgia, serif', fontWeight: 700,
-            fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1,
-            letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 16px',
-          }}>
-            Yksi napautus.<br />Älä osu mihinkään.
-          </h1>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.6, color: 'var(--muted)', maxWidth: 600 }}>
-            Napauta tai paina välilyöntiä lentääksesi. Mitä useamman portin ohitat, sitä korkeammat pisteet.
-          </p>
-          <button onClick={start} data-testid="tap-start-btn" style={btnPrimary}>
-            Aloita peli <ChevronRight size={14} strokeWidth={2.5} />
-          </button>
-        </div>
+        <GameIntroPanel
+          gameSlug="arcade_tap"
+          eyebrow="AIKATAPPO · NAPAUTUS"
+          headline={<>Yksi napautus.<br />Älä osu mihinkään.</>}
+          tagline="Yksinkertaisin mahdollinen ohjaus — yksi näppäin, koko peli. Pidä token-kolikko ilmassa ja kuljeta se amber-värisistä porteista läpi. Mitä useamman portin ohitat, sitä korkeammat pisteet."
+          howToPlay={[
+            'Napauta peliä tai paina välilyöntiä lentääksesi.',
+            'Pysy ilmassa ja kuljeta token porttien välistä.',
+            'Yhteen porttiin osuminen tai putoaminen päättää pelin.',
+          ]}
+          scoring={[
+            '1 piste per ohitettu portti.',
+            'Liian nopeat pelisessiot eivät pääse leaderboardille (anti-cheat).',
+            'Tasapelissä nopeampi peliaika sijoittuu paremmin.',
+          ]}
+          ctaLabel="Aloita peli"
+          startTestId="tap-start-btn"
+          onStart={start}
+          controlsHint="OHJAUS · NAPAUTA RUUTUA · TAI PAINA VÄLILYÖNTIÄ"
+        />
       )}
 
       {stage === 'playing' && (
@@ -223,7 +226,7 @@ const PeliAreenaTap = () => {
                        onUnlocked={(r) => { setFull(r); setStage('unlocked'); }} />
       )}
       {stage === 'unlocked' && full && (
-        <ArcadeUnlocked result={full} preview={preview} />
+        <ArcadeUnlocked result={full} preview={preview} gameSlug="arcade_tap" />
       )}
     </div>
   );

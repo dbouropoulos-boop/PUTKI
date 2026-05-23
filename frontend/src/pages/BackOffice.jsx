@@ -308,6 +308,7 @@ const INDEX_GROUPS = [
       { to: '/back-office/operators',                 testid: 'back-office-link-operators',             label: 'Operators',              desc: 'Casino roster + partner flags + scores.' },
       { to: '/back-office/streamers',                 testid: 'back-office-link-streamers',             label: 'Streamers',              desc: 'Editorial streamer roster (Twitch + Kick + YT).' },
       { to: '/back-office/mini-games',                testid: 'back-office-link-mini-games',            label: 'Mini-games',             desc: 'CRUD for quiz / scenario / insight question banks.' },
+      { to: '/back-office/analytics/mini-games',      testid: 'back-office-link-mini-games-analytics',  label: 'Mini-games analytics',   desc: 'Per-game plays · conversion · returning · top players.' },
       { to: '/back-office/streamer-meta',             testid: 'back-office-link-streamer-meta',         label: 'Streamer meta',          desc: 'Per-streamer subtitles + meta lines.' },
       { to: '/back-office/slot-registry',             testid: 'back-office-link-slot-registry',         label: 'Slot registry',          desc: 'Game inventory + provider tags.' },
       { to: '/back-office/webhooks',                  testid: 'back-office-link-webhooks',              label: 'Webhooks',               desc: 'Twitch / Kick / YouTube subscription state.' },

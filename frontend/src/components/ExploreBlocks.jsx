@@ -668,6 +668,74 @@ const PeliBlock = ({ lang }) => {
   );
 };
 
+// ── PeliAreena block (iter58) — mini-game suite product tile ──
+const PeliAreenaBlock = ({ lang }) => {
+  const { theme } = useTheme();
+  const [hub, setHub] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    fetch(`${BACKEND}/api/mini-games/hub`).then(r => r.json())
+      .then(d => { if (alive) setHub(d); }).catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const amber = '#A0750F';
+  const teal = '#3A6E7E';
+  const activeCount = (hub?.games || []).filter(g => g.status === 'active').length;
+  const rankedThisWeek = hub?.tournament?.ranked_players_this_week || 0;
+
+  return (
+    <Block to="/peliareena" dataTestId="explore-block-peliareena" accent={amber}>
+      {/* designed background — geometric tile pattern hint */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        background: theme === 'light'
+          ? `radial-gradient(circle at 25% 70%, rgba(160,117,15,0.10) 0%, rgba(160,117,15,0) 55%),
+             repeating-linear-gradient(45deg, #F4EFE5 0 28px, #EFE9DC 28px 30px)`
+          : `radial-gradient(circle at 25% 70%, rgba(212,180,69,0.13) 0%, rgba(212,180,69,0) 55%),
+             repeating-linear-gradient(45deg, #14110d 0 28px, #1A1612 28px 30px)`,
+        opacity: theme === 'light' ? 0.85 : 0.65,
+      }} />
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 1,
+        background: veilGradient(theme, [0.88, 0.78, 0.92]),
+      }} />
+
+      <BlockStat
+        value={activeCount > 0 ? `${activeCount}/5` : '—'}
+        label={lang === 'en' ? 'Games live' : 'Peliä auki'}
+      />
+
+      <Anchor color={teal} label="PELIAREENA · TURNAUS" />
+
+      <div style={{ position: 'relative', zIndex: 2, minWidth: 0 }}>
+        <h3 data-testid="explore-peliareena-headline" style={{
+          color: inkFor(theme), fontFamily: 'Georgia, serif', fontWeight: 700,
+          fontSize: 22, lineHeight: 1.15, margin: '0 0 10px',
+          letterSpacing: '-0.015em',
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}>
+          {lang === 'en'
+            ? 'Five mini-games. One weekly tournament.'
+            : 'Viisi pientä peliä. Yksi viikkoturnaus.'}
+        </h3>
+        <p style={{
+          color: bodyFor(theme), fontSize: 12.5, lineHeight: 1.5,
+          opacity: 0.92, maxWidth: 360, margin: 0,
+          display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+        }}>
+          {lang === 'en'
+            ? `Play instantly, no email needed. Email unlocks your full result + tournament rank. ${rankedThisWeek > 0 ? `${rankedThisWeek} ranked this week.` : 'Be the first ranked.'}`
+            : `Pelaa heti, ilman sähköpostia. Sähköpostilla saat täydet tulokset + turnauspaikan. ${rankedThisWeek > 0 ? `${rankedThisWeek} ranattua tällä viikolla.` : 'Ole viikon ensimmäinen.'}`}
+        </p>
+      </div>
+
+      <Cta label={lang === 'en' ? 'OPEN' : 'AVAA'} color={teal} />
+    </Block>
+  );
+};
+
 const ExploreBlocks = () => {
   const { lang } = useLang();
   return (
@@ -694,11 +762,11 @@ const ExploreBlocks = () => {
         <span style={{
           color: 'var(--muted, #9C9587)', letterSpacing: '0.18em',
           fontSize: 10, fontFamily: 'ui-monospace, monospace', opacity: 0.7,
-        }}>4 PRODUCTS</span>
+        }}>5 PRODUCTS</span>
       </div>
       <div className="explore-grid" style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
+        gridTemplateColumns: '1fr 1fr 1fr',
         gridAutoRows: '1fr',
         gap: 1,
         background: 'var(--hairline, #221E1B)',
@@ -707,8 +775,12 @@ const ExploreBlocks = () => {
         <MestariBlock lang={lang} />
         <VoitaBlock lang={lang} />
         <PeliBlock lang={lang} />
+        <PeliAreenaBlock lang={lang} />
       </div>
       <style>{`
+        @media (max-width: 1080px) {
+          .explore-grid { grid-template-columns: 1fr 1fr !important; }
+        }
         @media (max-width: 720px) {
           .explore-grid { grid-template-columns: 1fr !important; }
         }

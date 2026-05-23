@@ -2960,6 +2960,16 @@ async def mini_games_quiz_unlock(payload: MiniGameUnlockPayload, request: Reques
 async def mini_games_leaderboard(week: Optional[str] = None, limit: int = 10):
     return {"leaderboard": await _mg.get_leaderboard(db, week_iso=week, limit=min(limit, 50))}
 
+
+@api_router.get("/mini-games/leaderboard/{game_slug}")
+async def mini_games_leaderboard_per_game(game_slug: str, week: Optional[str] = None, limit: int = 10):
+    """Per-game weekly leaderboard surfaced on each game's intro screen.
+
+    404 on unknown slugs so the frontend doesn't render bogus boards."""
+    if game_slug not in _mgt.ACTIVE_GAME_SLUGS:
+        raise HTTPException(404, "unknown_game")
+    return await _mg.get_game_leaderboard(db, game_slug=game_slug, week_iso=week, limit=limit)
+
 @api_router.get("/admin/mini-games/leads")
 async def admin_mini_games_leads(week: Optional[str] = None, _: bool = Depends(require_admin)):
     """Lead export — full email + score for the given week (default: current)."""
@@ -3141,6 +3151,65 @@ async def mini_games_arcade_unlock(game: str, payload: MiniGameUnlockPayload, re
 async def mini_games_champions(week: Optional[str] = None):
     """Public homepage social-proof endpoint — one rank-1 per active game."""
     return await _mg.get_weekly_champions(db, week_iso=week)
+
+
+# ── Iter58 · Analytics + Tournament closing + Social proof ────────────
+import mini_game_tournament as _mgt
+
+class MiniGameShareTrackPayload(BaseModel):
+    game_slug: str
+    play_id: Optional[str] = None
+
+
+@api_router.post("/mini-games/share/track")
+async def mini_games_share_track(payload: MiniGameShareTrackPayload):
+    """Fire-and-forget telemetry — increments share count per game.
+    Returns 204-equivalent immediately; failures are absorbed."""
+    await _mgt.track_share(db, game_slug=payload.game_slug, play_id=payload.play_id)
+    return {"tracked": True}
+
+
+@api_router.get("/mini-games/stats/{game_slug}")
+async def mini_games_stats(game_slug: str, week: Optional[str] = None):
+    """Per-game public social-proof stats — used on each game's subpage.
+    Returns a SAFE subset of the analytics payload (no individual emails)."""
+    if game_slug not in _mgt.ACTIVE_GAME_SLUGS:
+        raise HTTPException(404, "unknown_game")
+    metrics = await _mgt.aggregate_metrics(db, week_iso=week)
+    row = next((r for r in metrics["rows"] if r["game_slug"] == game_slug), None)
+    if not row:
+        raise HTTPException(404, "no_stats")
+    # Strip total-board fields; expose ONLY the per-game public ones.
+    return {
+        "game_slug": row["game_slug"],
+        "game_title_fi": row["game_title_fi"],
+        "week_iso": metrics["week_iso"] or _mgt._week_iso(_mgt._now()),
+        "plays_started": row["plays_started"],
+        "plays_finished": row["plays_finished"],
+        "ranked_players": row["leads_captured"],
+        "shares": row["shares"],
+        "top_player": row["top_player"],
+        "top_score": row["top_score"],
+    }
+
+
+@api_router.get("/admin/mini-games/analytics")
+async def admin_mini_games_analytics(week: Optional[str] = None, _: bool = Depends(require_admin)):
+    """Full back-office analytics: per-game + totals + return rate.
+    `week` filters to a specific ISO week (e.g. 2026-W21); omit for all-time."""
+    return await _mgt.aggregate_metrics(db, week_iso=week)
+
+
+@api_router.post("/admin/mini-games/announce-closing")
+async def admin_announce_closing(
+    week: Optional[str] = None,
+    force: bool = False,
+    _: bool = Depends(require_admin),
+):
+    """Manual override for the weekly tournament closing announcement.
+    `week` defaults to the just-closed ISO week; `force=true` overrides
+    the idempotency guard."""
+    return await _mgt.announce_tournament_closing(db, week_iso=week, force=force)
 
 
 # ── Admin · Mini-game content editor (iter57) ─────────────────────────

@@ -1273,5 +1273,42 @@ async def get_weekly_champions(db, *, week_iso: Optional[str] = None) -> Dict[st
     }
 
 
+async def get_game_leaderboard(db, *, game_slug: str, week_iso: Optional[str] = None, limit: int = 10) -> Dict[str, Any]:
+    """Per-game weekly leaderboard for the public game intro pages.
+
+    Pulls the top N ranked leads for `game_slug` in the given ISO week
+    (defaults to the current week). Displays anonymised first-names
+    only, identical to the unlock-time response. Empty list when the
+    game has no entrants yet (the UI shows an editorial empty state).
+    """
+    week = week_iso or _week_iso()
+    cur = db.mini_game_leads.find(
+        {"source_game": game_slug, "tournament_week_iso": week, "score": {"$gt": 0}},
+        {"_id": 0, "name": 1, "email": 1, "score": 1, "pct": 1, "consent_at": 1},
+    ).sort([("score", -1), ("pct", -1), ("consent_at", 1)]).limit(min(limit, 50))
+    rows = await cur.to_list(length=min(limit, 50))
+    out: List[Dict[str, Any]] = []
+    for i, r in enumerate(rows, start=1):
+        display = (r.get("name") or "").strip()
+        if not display:
+            local = (r.get("email") or "").split("@")[0]
+            display = (local[:3] + "•••" + local[-1:]) if len(local) > 4 else (local or "pelaaja")
+        out.append({
+            "rank": i,
+            "display_name": display,
+            "score": int(r.get("score") or 0),
+            "pct": float(r.get("pct") or 0),
+        })
+    ranked_total = await db.mini_game_leads.count_documents(
+        {"source_game": game_slug, "tournament_week_iso": week, "score": {"$gt": 0}}
+    )
+    return {
+        "game_slug": game_slug,
+        "week_iso": week,
+        "leaderboard": out,
+        "ranked_players": ranked_total,
+    }
+
+
 # Module-level imports kept at top.
 

@@ -70,6 +70,7 @@ import PeliAreenaInsight from "@/pages/PeliAreenaInsight";
 import PeliAreenaSnake from "@/pages/PeliAreenaSnake";
 import PeliAreenaTap from "@/pages/PeliAreenaTap";
 import BackOfficeMiniGames from "@/pages/BackOfficeMiniGames";
+import BackOfficeMiniGameAnalytics from "@/pages/BackOfficeMiniGameAnalytics";
 import { Korjaukset, Affiliaatti, Avoimuus, Lehdisto, Paivityslog } from "@/pages/Accountability";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -110,6 +111,7 @@ function App() {
           <Route path="/back-office/leads" element={<BackOfficeLeads />} />
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
+          <Route path="/back-office/analytics/mini-games" element={<BackOfficeMiniGameAnalytics />} />
           <Route path="/back-office/email-templates" element={<BackOfficeEmailTemplates />} />
           <Route path="/back-office/mestari-diagnostics-copy" element={<BackOfficeMestariDiagnosticsCopy />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />

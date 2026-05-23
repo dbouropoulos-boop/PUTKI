@@ -9,6 +9,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Sparkles, ChevronRight, Share2, Trophy } from 'lucide-react';
+import GameIntroPanel from '../components/peliareena/GameIntroPanel';
 import { ConsentEmailGate } from './PeliAreenaSharedGate';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -63,25 +64,25 @@ const PeliAreenaInsight = () => {
       </Link>
 
       {stage === 'intro' && (
-        <div data-testid="insight-intro">
-          <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-            TIETORAAPE · 6 LAATTAA
-          </div>
-          <h1 style={{
-            fontFamily: 'Georgia, serif', fontWeight: 700,
-            fontSize: 'clamp(32px, 5vw, 48px)', lineHeight: 1.1,
-            letterSpacing: '-0.02em', color: 'var(--ink)', margin: '0 0 16px',
-          }}>
-            Raaputa kuusi mikro-oppia.<br />Yksi fakta kerrallaan.
-          </h1>
-          <p style={{ fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.6, color: 'var(--muted)', maxWidth: 600 }}>
-            Ei oikeita tai vääriä vastauksia — payoff on jokaisessa laatassa oleva tieto.
-            Raaputa niin monta kuin haluat; mitä useamman avaat, sitä paremmin sijoitut viikon turnauksessa.
-          </p>
-          <button onClick={start} data-testid="insight-start-btn" style={btnPrimary}>
-            Avaa lauta <ChevronRight size={14} strokeWidth={2.5} />
-          </button>
-        </div>
+        <GameIntroPanel
+          gameSlug="insight_reveal"
+          eyebrow="TIETORAAPE · 6 LAATTAA"
+          headline={<>Raaputa kuusi mikro-oppia.<br />Yksi fakta kerrallaan.</>}
+          tagline="Ei oikeita tai vääriä vastauksia — palkinto on jokaisessa laatassa oleva tieto. Raaputa niin monta laattaa kuin haluat; mitä useamman avaat, sitä paremmin sijoitut viikon turnauksessa."
+          howToPlay={[
+            'Klikkaa laattaa avataksesi mikro-opin (esim. RTP, bonusehdot, bankroll-matematiikka).',
+            'Jokainen avattu laatta lisää yhden pisteen — voit avata kaikki kuusi.',
+            'Päätä peli, kun haluat lukita pisteesi ja siirtyä turnauspaikkaan.',
+          ]}
+          scoring={[
+            '1 piste per avattu laatta. Maksimi 6 pistettä.',
+            'Tasapelissä nopeampi peliaika sijoittuu paremmin.',
+            'Saat täydet selitykset ja lähdeviitteet, kun viimeistelet pelin.',
+          ]}
+          ctaLabel="Avaa lauta"
+          startTestId="insight-start-btn"
+          onStart={start}
+        />
       )}
 
       {stage === 'playing' && session && (
@@ -225,6 +226,10 @@ const InsightPreview = ({ preview, session, onUnlocked }) => (
 
 const InsightUnlocked = ({ result, preview }) => {
   const share = () => {
+    fetch(`${BACKEND}/api/mini-games/share/track`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_slug: 'insight_reveal', play_id: result.play_id }),
+    }).catch(() => {});
     if (navigator.share) navigator.share({ text: result.share_text, url: window.location.href });
     else { navigator.clipboard.writeText(`${result.share_text} ${window.location.href}`); alert('Jakoteksti kopioitu.'); }
   };
