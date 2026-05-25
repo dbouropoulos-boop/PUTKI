@@ -2,6 +2,20 @@
 
 ## Phase History (latest first)
 
+- **iter65 · Inline share preview + Resend welcome email (feature-flagged)** (2026-05-25, +6 tests · 40/41 iter6X passing — 1 unrelated iter62 avatar-API flake)
+  - **Inline share preview** (`components/peliareena/InlineSharePreview.jsx`) renders below the Telegram CTA on the success screen — shows the actual OG identity card (live `/api/profiler/share/og.png`) + 4 one-tap social buttons (Telegram via `t.me/share/url`, X via `twitter.com/intent/tweet`, WhatsApp via `wa.me/`, Copy-link). Each button click fires `share_click` to `/api/profiler/event` with `meta.platform` so /back-office/profiler-funnel can A/B which channel converts. Theme-aware colour (uses `var(--ink)` / `var(--bg)`) so dark mode stays readable.
+  - **Resend welcome email** (`backend/resend_email.py`) — feature-flagged dispatcher:
+    - `RESEND_API_KEY` env empty → MOCKED mode (logs only + stamps lead with `mocked:<uuid>`)
+    - `RESEND_API_KEY` env set → live Resend SDK call via `asyncio.to_thread` (non-blocking)
+    - Per-lead idempotency via `mini_game_leads.welcome_email_sent_at`/`welcome_email_id`
+    - Bilingual HTML template (FI/EN) with persona title + blind_spot + 3 traps + Telegram CTA
+    - OG identity card embedded inline as CID PNG attachment (`cid:putki-profile`) — no hot-link
+    - Reads `RESEND_SENDER_EMAIL` (defaults to `onboarding@resend.dev`) + `TELEGRAM_BOT_URL` (defaults to `https://t.me/Putkihq_bot`)
+  - **Wired into** `POST /api/mini-games/scenario/unlock` as `asyncio.create_task` so unlock latency is unaffected. Lang chosen via `X-Lang` request header (defaults to `fi`).
+  - **Telegram bot URL** updated from `t.me/putkihq` → `t.me/Putkihq_bot` (frontend + email template default + env var fallback).
+  - **Dependency**: `resend>=2.0.0` added to requirements.txt (pip-installed to 2.30.1).
+  - **Tests**: `tests/test_iter65_inline_share_resend.py` (6 tests): MOCKED stamping, lang-default fallback, idempotency, OG round-trip, share_click platform meta. **All passing.**
+
 - **iter64 Phase 4 · Tournament re-scope + OG share-card unfurl** (2026-05-25, +12 tests · 28/28 iter64 passing)
   - **Tournament worker re-scoped** to profiler only — `mini_game_tournament.ACTIVE_GAME_SLUGS = ["scenario_decisions"]`. Snake/Tap/Insight/Quiz moved to `_LEGACY_GAME_SLUGS` (kept for historical analytics; never enter weekly closing).
   - **Closing message rewritten** — was a 5-game "VIIKON MESTARIT" recap; now a focused profiler note "VIIKON PROFILOIJA · {week}" with the top scenario_decisions performer + their profile label (Kylmä laskija / Kärsivällinen taktikko / etc.). Explicit framing: "Tämä ei ole tappiokisa eikä rahaa pelaava turnaus — se on rehellinen kuukauden snapshot omasta profiilistasi."

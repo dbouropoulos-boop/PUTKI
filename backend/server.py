@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import asyncio
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
@@ -3288,6 +3289,33 @@ async def mini_games_scenario_unlock(payload: MiniGameUnlockPayload, request: Re
     )
     if result.get("error"):
         raise HTTPException(400, result["error"])
+
+    # iter65 — fire-and-forget welcome email (live if RESEND_API_KEY set,
+    # MOCKED otherwise). Never block the unlock response on email.
+    try:
+        from resend_email import send_welcome_email
+        from mini_games import _email_hash  # internal sha256 helper
+        persona = result.get("persona") or {}
+        lang_pref = (request.headers.get("x-lang") or "fi").lower()
+        if lang_pref not in ("fi", "en"):
+            lang_pref = "fi"
+        asyncio.create_task(send_welcome_email(
+            db=db,
+            email=payload.email,
+            email_hash=_email_hash(payload.email),
+            source_game="scenario_decisions",
+            persona_key=persona.get("key", "patient_tactician"),
+            persona_title_fi=persona.get("title", ""),
+            persona_title_en=persona.get("title_en", ""),
+            blind_spot_fi=persona.get("blind_spot_fi", ""),
+            blind_spot_en=persona.get("blind_spot_en", ""),
+            three_traps_fi=persona.get("three_traps_fi") or [],
+            three_traps_en=persona.get("three_traps_en") or [],
+            lang=lang_pref,
+        ))
+    except Exception:
+        logger.exception("scenario_unlock: welcome email scheduling failed (non-fatal)")
+
     return result
 
 

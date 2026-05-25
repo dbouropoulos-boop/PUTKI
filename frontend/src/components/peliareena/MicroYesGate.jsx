@@ -16,6 +16,7 @@
 import React, { useState } from 'react';
 import { useLang } from '../../context/LanguageContext';
 import { pickPA, interpolate } from '../../i18n/peliareena';
+import InlineSharePreview from './InlineSharePreview';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -349,7 +350,7 @@ const MicroYesGate = ({
               {pickPA(lang, 'card.tg.body')}
             </p>
             <a
-              href="https://t.me/putkihq"
+              href="https://t.me/Putkihq_bot"
               target="_blank"
               rel="noopener noreferrer"
               data-testid="card-tg-cta"
@@ -376,6 +377,16 @@ const MicroYesGate = ({
             fontSize: 9.5, lineHeight: 1.7, color: 'var(--muted)',
             marginTop: 14, textAlign: 'center',
           }}>{pickPA(lang, 'card.success.footnote')}</p>
+
+          {/* iter65 — Inline share preview: shows the actual OG card +
+              one-tap social buttons. Closes the "what am I sharing?" gap. */}
+          {personaKey && (
+            <InlineSharePreview
+              personaKey={personaKey}
+              profileTitle={profileTitle}
+              onShare={(platform) => fireEvent('share_click', { platform, persona_key: personaKey })}
+            />
+          )}
         </div>
       )}
     </div>
