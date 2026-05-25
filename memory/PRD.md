@@ -2,6 +2,25 @@
 
 ## Phase History (latest first)
 
+- **iter71 · Diagnostic questions audit + social-proof bands on result cards** (2026-05-25, 43/45 tests passing · screenshot-verified end-to-end poker flow)
+  - **Audited all 3 diagnostic question sets**: discovered the Sports diagnostic uses `voita_quiz_config.py` (a 5-round educative game funnel), while Poker + Blackjack use `mestari_diagnostics.py` 5-question sets. Sports questions were intentionally left untouched (different product surface).
+  - **Tightened 2 weakly-worded poker/blackjack options**:
+    - Poker `p4_position` option "I don't really adjust for position" -> **"Position doesn't change my hand range"** (direct, declarative).
+    - Blackjack `b3_bet_size` "By the feel of the session" -> **"By feel - hot table, bigger bet"** (concrete behavior, not vague mood).
+  - **Confirmed remaining question prompts read clean**: "How many starting hands do you play?" / "Does your hand range change between early and late position?" / "How do you decide your bet size?" - all already iGaming-native, zero academic noise.
+  - **NEW `social_proof_fi/en` field** on every Poker + Blackjack profile (8 profiles total). Pulls trust elements that aren't possible to fake into the result card:
+    - Poker Rock: "About one in four poker players land here. The common challenge: caution turns into a locked-in style."
+    - Poker Calling Station: "The most common amateur profile. About two in five new players land here - and this is exactly where skilled players make their money."
+    - Poker Maniac: "A small but visible profile - about one in ten players. Aggression is raw material; without selection it burns out fast."
+    - Poker Strategist (TAG): "The rarest profile - fewer than one in six players. Established poker theory rates this as the economically strongest baseline."
+    - Blackjack Hunch: "The most common beginner profile. About one in three players - and the path to basic strategy is the shortest from this point."
+    - Blackjack Folk-Rule: "About one in four players. The discipline is already there; what's left is swapping the wrong rules for the right ones."
+    - Blackjack Book: "About one in five players. The knowledge is there; the percentage points left to win are in consistency."
+    - Blackjack Disciplined: "The rarest profile - fewer than one in eight players. From here the house edge is near its mathematical minimum at 0.5%."
+  - **Frontend renders social-proof band** inside the result card between desc + email gate. Blue accent left border + subtle background tint + italic Georgia serif - reads as substance, not marketing copy. `data-testid="mestari-diag-social-proof"`. Hidden if the field is empty so back-office can still strip it per-profile if needed.
+  - **Updated `CONSTANT_STATS[2]` desc** in `MestariDiagnostic.jsx`: "5 research-grounded questions" -> "5 questions. One result. Playbook to your inbox." (concrete, results-focused).
+  - **Screenshot-verified end-to-end**: ran a full 5-question poker quiz via Playwright, landed on "The Maniac" result card with the new social-proof band rendering correctly. Flow works in production.
+
 - **iter70 · Diagnostics copy audit + iGaming reframe** (2026-05-25, 46/46 tests passing · screenshot-verified all 4 surfaces)
   - **Audited all 4 diagnostic surfaces** (/mestari hub, sports-betting, poker, blackjack) for academic over-formality, disclaimer-stacking, and missing concrete proof. Found same 4 issues per page: triple-stamped "Research tool" eyebrow, 2-3x disclaimer blocks, zero social proof, cryptic hero stats.
   - **Trimmed all eyebrows** to crisp format: "SPORTS BETTING · 90 SECONDS · FREE" / "POKER · 90 SECONDS · FREE" / "BLACKJACK · 90 SECONDS · FREE" / "MESTARI · EDITORIAL DIAGNOSTICS". Removes "Research tool · Editorial diagnostic" repetition. Eyebrow now sells time + price + topic in 5 words.

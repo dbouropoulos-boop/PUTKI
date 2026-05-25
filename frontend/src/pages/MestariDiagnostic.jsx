@@ -78,8 +78,8 @@ const CONSTANT_STATS = [
     desc_fi: 'Strukturoitu pelikirja sähköpostiisi.',
     desc_en: 'Structured playbook to your inbox.' },
   { num: '90', unit_fi: ' sek', unit_en: ' sec',
-    desc_fi: '5 tutkimukseen perustuvaa kysymystä.',
-    desc_en: '5 research-grounded questions.' },
+    desc_fi: '5 kysymystä. Yksi tulos. Pelikirja sähköpostiisi.',
+    desc_en: '5 questions. One result. Playbook to your inbox.' },
 ];
 
 // ── Quiz flow ───────────────────────────────────────────────────────
@@ -232,8 +232,24 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
         }}>{lang === 'en' ? profile.tagline_en : profile.tagline_fi}</p>
         <p data-testid="mestari-diag-report-desc" style={{
           fontFamily: 'Georgia, serif', fontSize: 16, lineHeight: 1.6,
-          color: 'var(--ink)', margin: '0 0 28px',
+          color: 'var(--ink)', margin: '0 0 18px',
         }}>{lang === 'en' ? profile.desc_en : profile.desc_fi}</p>
+
+        {/* Social-proof line - "where you sit in the distribution".
+            Pulled from the profile doc so back-office can edit per profile.
+            Rendered as a left-bordered subtle band so it reads as
+            substance (a real stat) rather than marketing. */}
+        {(profile.social_proof_en || profile.social_proof_fi) && (
+          <div data-testid="mestari-diag-social-proof" style={{
+            borderLeft: '2px solid #5BA0E8',
+            padding: '8px 14px', marginBottom: 28,
+            background: 'rgba(91,160,232,0.04)',
+            fontFamily: 'Georgia, serif', fontSize: 14.5,
+            lineHeight: 1.5, color: 'var(--muted)', fontStyle: 'italic',
+          }}>
+            {lang === 'en' ? profile.social_proof_en : profile.social_proof_fi}
+          </div>
+        )}
 
         {/* Email gate */}
         <div data-testid="mestari-diag-gate" style={{
