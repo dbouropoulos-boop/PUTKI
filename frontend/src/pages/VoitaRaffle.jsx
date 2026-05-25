@@ -751,6 +751,92 @@ const VoitaRaffle = () => {
     );
   }
 
+  // Guard: entries are only accepted while status === 'open'. The
+  // public API auto-closes raffles whose kickoff has passed, so we
+  // surface a calm "entries closed" state instead of the funnel CTA.
+  const entriesOpen = raffle.status === 'open';
+  if (!entriesOpen) {
+    const kickoffStr = raffle.kickoff_at
+      ? new Date(raffle.kickoff_at).toLocaleString(lang === 'en' ? 'en-GB' : 'fi-FI', {
+          weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+        })
+      : null;
+    const statusLabel = (() => {
+      if (raffle.status === 'paid') return lang === 'en' ? 'WINNERS PAID' : 'VOITTAJAT MAKSETTU';
+      if (raffle.status === 'drawn') return lang === 'en' ? 'DRAWN - AWAITING PAYOUT' : 'ARVOTTU - ODOTTAA MAKSUA';
+      return lang === 'en' ? 'ENTRIES CLOSED' : 'OSALLISTUMINEN SULJETTU';
+    })();
+    return (
+      <div data-testid="voita-raffle-page" style={{ color: 'var(--ink)' }}>
+        <BackToHome lang={lang} />
+        <div data-testid="voita-raffle-closed" style={{ maxWidth: 560, margin: '0 auto', padding: '12px 24px 64px' }}>
+          <RecentWinnersStrip />
+          <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#9C8B6B', fontWeight: 700, marginBottom: 12 }}>
+            {(raffle.league || raffle.sport || '').toUpperCase()} · {statusLabel}
+          </div>
+          <h1 style={{
+            fontFamily: 'Georgia, serif', fontSize: 38, fontWeight: 700,
+            color: 'var(--ink)', margin: '0 0 6px',
+            letterSpacing: '-0.025em', lineHeight: 1.05,
+          }}>{raffle.home_team} <span style={{ color: 'var(--muted)' }}>vs</span> {raffle.away_team}</h1>
+          {kickoffStr && (
+            <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, color: 'var(--muted)', letterSpacing: '0.10em', margin: '8px 0 22px' }}>
+              {lang === 'en' ? 'KICKOFF · ' : 'ALKUSOITTO · '}{kickoffStr}
+            </div>
+          )}
+          <p style={{ color: 'var(--muted)', fontSize: 14.5, lineHeight: 1.55, margin: '6px 0 24px' }}>
+            {raffle.status === 'paid'
+              ? (lang === 'en'
+                  ? 'This raffle has been drawn and prizes have been paid. See the result below or jump back to the next live match.'
+                  : 'Tämä arvonta on suoritettu ja palkinnot maksettu. Katso tulos alla tai siirry seuraavaan käynnissä olevaan otteluun.')
+              : raffle.status === 'drawn'
+                ? (lang === 'en'
+                    ? 'Entries are closed and winners have been drawn. Payout is being processed.'
+                    : 'Osallistuminen on suljettu ja voittajat arvottu. Maksu on käsittelyssä.')
+                : (lang === 'en'
+                    ? 'Entries are closed - kickoff has already started. Jump back to PUTKI HQ for the next live raffle.'
+                    : 'Osallistuminen on suljettu - ottelu on jo alkanut. Palaa PUTKI HQ -etusivulle seuraavaan arvontaan.')}
+          </p>
+          {raffle.result && raffle.result.winners && raffle.result.winners.length > 0 && (
+            <div data-testid="voita-raffle-closed-result" style={{
+              padding: '14px 16px', marginBottom: 20,
+              background: 'var(--surface)', border: '1px solid var(--hairline)',
+            }}>
+              <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, marginBottom: 8 }}>
+                {lang === 'en' ? 'FINAL · WINNERS' : 'LOPPUTULOS · VOITTAJAT'}
+              </div>
+              <div style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, marginBottom: 10 }}>
+                {raffle.home_team} {raffle.result.home_goals}-{raffle.result.away_goals} {raffle.away_team}
+              </div>
+              <div style={{ display: 'grid', gap: 4 }}>
+                {raffle.result.winners.map((w, idx) => (
+                  <div key={idx} data-testid={`voita-raffle-closed-winner-${w.position}`}
+                    style={{
+                      display: 'grid', gridTemplateColumns: '24px 1fr auto',
+                      gap: 10, alignItems: 'baseline',
+                      padding: '4px 0', fontFamily: 'ui-monospace, monospace', fontSize: 12,
+                      borderBottom: '1px dashed var(--hairline)',
+                    }}>
+                    <span style={{ color: '#E8C26E', fontWeight: 700 }}>#{w.position}</span>
+                    <span style={{ color: 'var(--ink)' }}>{w.display_name || w.email_masked || '-'}</span>
+                    <span style={{ color: 'var(--ink)', fontWeight: 700 }}>€{w.amount_eur}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <Link to="/voita" data-testid="voita-raffle-closed-back" style={{
+            display: 'inline-block', padding: '13px 22px',
+            background: 'transparent', color: 'var(--ink)',
+            border: '1px solid var(--hairline)', textDecoration: 'none',
+            fontFamily: 'ui-monospace, monospace', fontSize: 11,
+            letterSpacing: '0.22em', fontWeight: 700,
+          }}>{lang === 'en' ? '← BACK TO PUTKI HQ' : '← TAKAISIN PUTKI HQ'}</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div data-testid="voita-raffle-page" style={{ color: 'var(--ink)' }}>
       <BackToHome lang={lang} />

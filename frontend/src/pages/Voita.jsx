@@ -113,6 +113,19 @@ const ActiveRaffleCard = ({ r, lang }) => {
   const entries = r.entries_count || 0;
   const countdown = fmtCountdown(r.entries_close_at, lang);
   const closingSoon = countdown && /^\d+m$/.test(countdown);
+  const entriesClosed = r.status === 'closed';
+  // Pill style: red-ish for closed, amber for closing soon, green for open.
+  const pillBg = entriesClosed ? '#1a0e0e' : (closingSoon ? '#2b0e0e' : '#0e1a14');
+  const pillFg = entriesClosed ? '#9C8B6B' : (closingSoon ? '#FF8A7F' : '#9ad4a9');
+  const pillBorder = entriesClosed ? '#3a3028' : (closingSoon ? '#5a2b2b' : '#1f3a2a');
+  const pillLabel = entriesClosed
+    ? (lang === 'en' ? 'ENTRIES CLOSED' : 'OSALLISTUMINEN SULJETTU')
+    : closingSoon
+      ? (lang === 'en' ? 'CLOSING SOON' : 'SULKEUTUU PIAN')
+      : (lang === 'en' ? 'ENTRY OPEN' : 'AVOIN');
+  const ctaLabel = entriesClosed
+    ? (lang === 'en' ? 'VIEW →' : 'KATSO →')
+    : (lang === 'en' ? 'PLAY NOW →' : 'PELAA NYT →');
 
   return (
     <Link to={`/voita/${r.slug}`}
@@ -158,22 +171,22 @@ const ActiveRaffleCard = ({ r, lang }) => {
       {/* Status row */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 22, flexWrap: 'wrap', position: 'relative' }}>
         <span data-testid={`voita-status-${r.slug}`} style={{
-          background: closingSoon ? '#2b0e0e' : '#0e1a14',
-          color: closingSoon ? '#FF8A7F' : '#9ad4a9',
+          background: pillBg,
+          color: pillFg,
           fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
           letterSpacing: '0.22em', fontWeight: 700,
           padding: '4px 8px',
-          border: `1px solid ${closingSoon ? '#5a2b2b' : '#1f3a2a'}`,
+          border: `1px solid ${pillBorder}`,
           display: 'inline-flex', alignItems: 'center', gap: 6,
         }}>
-          <span style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: closingSoon ? '#FF8A7F' : '#9ad4a9',
-            animation: 'pulse 1.8s ease-in-out infinite',
-          }} />
-          {closingSoon
-            ? (lang === 'en' ? 'CLOSING SOON' : 'SULKEUTUU PIAN')
-            : (lang === 'en' ? 'ENTRY OPEN' : 'AVOIN')}
+          {!entriesClosed && (
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: pillFg,
+              animation: 'pulse 1.8s ease-in-out infinite',
+            }} />
+          )}
+          {pillLabel}
         </span>
         <span style={{
           background: 'rgba(0,0,0,0.4)', color: '#FFFFFF',
@@ -230,8 +243,8 @@ const ActiveRaffleCard = ({ r, lang }) => {
         <div style={{
           fontFamily: 'ui-monospace, monospace', fontSize: 11,
           letterSpacing: '0.22em', fontWeight: 800, color: '#0B0A09',
-          background: '#E8C26E', padding: '13px 18px',
-        }}>{lang === 'en' ? 'PLAY NOW →' : 'PELAA NYT →'}</div>
+          background: entriesClosed ? '#9C8B6B' : '#E8C26E', padding: '13px 18px',
+        }}>{ctaLabel}</div>
       </div>
     </Link>
   );

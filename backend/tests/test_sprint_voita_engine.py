@@ -166,7 +166,7 @@ class TestPublicListingGating:
         assert "items" in d and "feature_enabled" in d
 
     def test_raffle_without_gates_not_public(self, admin, public, voita_enabled):
-        slug = f"pytest-gates-{uuid.uuid4().hex[:8]}"
+        slug = f"qa-gates-{uuid.uuid4().hex[:8]}"
         # Create with no gates set → no rules_url_set, no prize_distribution_locked
         admin.post(f"{BASE_URL}/api/admin/voita/raffles", json={
             "slug": slug, "home_team": "HJK", "away_team": "Inter",
@@ -190,7 +190,7 @@ class TestAdminCrudAndEntry:
 
     @pytest.fixture
     def open_raffle(self, admin, voita_enabled):
-        slug = f"pytest-open-{uuid.uuid4().hex[:8]}"
+        slug = f"qa-open-{uuid.uuid4().hex[:8]}"
         r = admin.post(f"{BASE_URL}/api/admin/voita/raffles", json={
             "slug": slug,
             "home_team": "HJK", "away_team": "FC Inter",

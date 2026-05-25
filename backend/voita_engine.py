@@ -190,7 +190,7 @@ def _public_raffle_view(d: Dict[str, Any]) -> Dict[str, Any]:
             "prize_distribution_locked": bool(gating.get("prize_distribution_locked")),
             "match_populated": bool(gating.get("match_populated")),
         },
-        "status": d.get("status"),
+        "status": _effective_public_status(d),
         "result": d.get("result") or None,
         "entries_count": d.get("entries_count") or 0,
         "editorial_pick": d.get("editorial_pick") or None,
@@ -200,7 +200,16 @@ def _public_raffle_view(d: Dict[str, Any]) -> Dict[str, Any]:
 
 def _is_publicly_visible(d: Dict[str, Any]) -> bool:
     """All three gates plus the global feature flag must be true for a
-    raffle to surface on the public listing."""
+    raffle to surface on the public listing.
+
+    Additionally:
+      - Slugs prefixed with ``pytest-`` are integration-test residue and
+        MUST NEVER surface to real users, even if their gating flags
+        accidentally pass.
+    """
+    slug = (d.get("slug") or "").lower()
+    if slug.startswith("pytest-") or slug.startswith("test-"):
+        return False
     gating = d.get("gating") or {}
     return (
         bool(gating.get("rules_url_set"))
@@ -208,6 +217,32 @@ def _is_publicly_visible(d: Dict[str, Any]) -> bool:
         and bool(gating.get("match_populated"))
         and d.get("status") in ("open", "closed", "drawn", "paid")
     )
+
+
+def _effective_public_status(d: Dict[str, Any]) -> str:
+    """Auto-close stale 'open' raffles whose kickoff has passed.
+
+    Public surfaces (listing / detail / entry submission) read the
+    effective status, not the persisted one. A raffle whose kickoff is
+    in the past but status is still ``open`` is presented as ``closed``
+    so the UI hides the PLAY CTA and prevents post-kickoff entries.
+    Authors can still see the raw ``status`` in the admin surface.
+    """
+    raw = d.get("status")
+    if raw != "open":
+        return raw or "open"
+    kickoff = d.get("kickoff_at")
+    if not kickoff:
+        return raw
+    try:
+        ko_dt = datetime.fromisoformat(str(kickoff).replace("Z", "+00:00"))
+        if ko_dt.tzinfo is None:
+            ko_dt = ko_dt.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) >= ko_dt:
+            return "closed"
+    except (ValueError, AttributeError):
+        pass
+    return raw
 
 
 # ── Raffle CRUD (admin) ──────────────────────────────────────────────────
@@ -435,6 +470,10 @@ async def submit_entry(
     if raffle.get("status") not in {"open"}:
         # Only "open" status accepts entries. "closed" / "drawn" reject.
         raise ValueError(f"raffle status is {raffle.get('status')}; not accepting entries")
+    # Belt-and-suspenders: even if status is still 'open' in the DB,
+    # reject entries once kickoff has passed (mirrors public auto-close).
+    if _effective_public_status(raffle) != "open":
+        raise ValueError("entries are closed for this raffle")
 
     close_at = raffle.get("entries_close_at")
     if close_at:

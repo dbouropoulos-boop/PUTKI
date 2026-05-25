@@ -92,7 +92,7 @@ class TestMaskEmail:
 class TestDisplayName:
     @pytest.fixture
     def open_raffle(self, admin):
-        slug = f"pytest-displayname-{uuid.uuid4().hex[:8]}"
+        slug = f"qa-displayname-{uuid.uuid4().hex[:8]}"
         r = admin.post(f"{BASE_URL}/api/admin/voita/raffles", json={
             "slug": slug, "home_team": "HJK", "away_team": "Inter",
             "sport": "football",
@@ -153,7 +153,7 @@ class TestDisplayName:
 class TestPaidStatusAndRecentWinners:
     @pytest.fixture
     def drawn_raffle(self, admin, public):
-        slug = f"pytest-paid-{uuid.uuid4().hex[:8]}"
+        slug = f"qa-paid-{uuid.uuid4().hex[:8]}"
         r = admin.post(f"{BASE_URL}/api/admin/voita/raffles", json={
             "slug": slug, "home_team": "Pelicans", "away_team": "Tappara",
             "sport": "hockey", "league": "Liiga",
@@ -214,7 +214,7 @@ class TestPaidStatusAndRecentWinners:
         assert ours[0]["paid_at"]
 
     def test_drawn_but_not_paid_NOT_in_paid_filter(self, admin, public):
-        slug = f"pytest-not-paid-{uuid.uuid4().hex[:8]}"
+        slug = f"qa-not-paid-{uuid.uuid4().hex[:8]}"
         r = admin.post(f"{BASE_URL}/api/admin/voita/raffles", json={
             "slug": slug, "home_team": "HJK", "away_team": "Inter",
             "kickoff_at": _future_iso(60),

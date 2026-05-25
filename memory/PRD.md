@@ -2,6 +2,20 @@
 
 ## Phase History (latest first)
 
+- **iter72 · Putki HQ data hygiene + stale-raffle guard** (2026-05-25, 61/61 tests passing · screenshot-verified listing + open detail + closed detail)
+  - **Root cause**: `/voita` (Putki HQ) listing was polluted with 14 `pytest-*` raffles leaked from the test suite. The "Recently paid" strip showed "Alice K. · Pelicans 2-1 Tappara · €250" duplicated 3x (pytest seed data, same email, same fake match). Both seeded "active" raffles (Tappara vs Kärpät, KuPS vs HJK) had kickoffs in the past but status was still `open`, so the listing showed "ENTRY OPEN · PLAY - 60 SECONDS" on stale matches.
+  - **`voita_engine._is_publicly_visible`** now hard-rejects any slug prefixed with `pytest-` or `test-` (defense-in-depth, even if gating flags are set).
+  - **`voita_engine._effective_public_status`** (new) auto-closes raffles whose `kickoff_at < now()`: returns `closed` in `_public_raffle_view` even if DB still says `open`. Mirrored in `submit_entry` so post-kickoff entries are rejected even via direct API.
+  - **`VoitaRaffle.jsx` closed-state hero**: when `raffle.status !== 'open'`, render an "ENTRIES CLOSED / WINNERS PAID" hero with the result card + winners list instead of the 60-second funnel. No more "PLAY" on past games. Testids: `voita-raffle-closed`, `voita-raffle-closed-result`, `voita-raffle-closed-winner-{position}`.
+  - **`Voita.jsx` ActiveRaffleCard pill**: now reads `r.status === 'closed'` and renders "ENTRIES CLOSED" pill (grey) + "VIEW →" CTA (muted gold) instead of green "ENTRY OPEN" + amber "PLAY NOW →".
+  - **One-shot DB cleanup** (`backend/scripts/cleanup_voita_putki.py`): dropped 17 `pytest-*` raffles + 18 entries, scrubbed em-dashes from 4 seeded raffle title/payout fields, refreshed kickoff timestamps on both demo active raffles (+48h / +72h).
+  - **Test residue fix**: created `backend/tests/conftest.py` with session-scope teardown that nukes any `pytest-*` / `test-*` / `qa-*` slug residue + their entries via direct pymongo (bypasses the engine's drawn/paid guard). Also loads frontend `.env` so tests that read `REACT_APP_BACKEND_URL` at import time (e.g. `test_iter45_mestari_public.py`) collect cleanly.
+  - **Test slug rename**: renamed `pytest-open/gates/paid/not-paid/displayname-*` -> `qa-*` across `test_sprint_voita_engine.py` + `test_sprint_voita_recent_winners.py` so the prod filter doesn't bury the test fixtures.
+  - **Pre-existing aggregate bleed fix**: `/api/admin/optin/stats` crashed with `KeyError: 'channel'` on legacy/partial documents. Now uses `.get()` chains; landing-pages test suite goes from 12/13 to 13/13.
+  - **Verified**: public listing now shows exactly 4 raffles (2 active with future kickoffs, 2 paid with real seed winners). Recent-winners strip shows 4 diverse named winners (Miika V., satu.koskinen, Petteri M., Jaakko L.) across 2 real matches.
+
+
+
 - **iter71 · Diagnostic questions audit + social-proof bands on result cards** (2026-05-25, 43/45 tests passing · screenshot-verified end-to-end poker flow)
   - **Audited all 3 diagnostic question sets**: discovered the Sports diagnostic uses `voita_quiz_config.py` (a 5-round educative game funnel), while Poker + Blackjack use `mestari_diagnostics.py` 5-question sets. Sports questions were intentionally left untouched (different product surface).
   - **Tightened 2 weakly-worded poker/blackjack options**:

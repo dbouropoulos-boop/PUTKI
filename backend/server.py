@@ -494,9 +494,15 @@ async def admin_optin_stats(_: bool = Depends(require_admin)):
     ]
     rows = []
     async for r in db.optin_consents.aggregate(pipeline):
+        # Legacy / partial documents may be missing channel / surface;
+        # surface them as empty strings rather than 500-ing the whole
+        # endpoint.
+        key = r.get("_id") or {}
         rows.append({
-            "channel": r["_id"]["channel"], "surface": r["_id"]["surface"],
-            "consent_tag": r["_id"]["tag"], "count": r["count"],
+            "channel": key.get("channel") or "",
+            "surface": key.get("surface") or "",
+            "consent_tag": key.get("tag") or "",
+            "count": r.get("count") or 0,
         })
     total = await db.optin_consents.count_documents({})
     return {"by_segment": rows, "total": total}
