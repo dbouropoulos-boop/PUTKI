@@ -3439,6 +3439,98 @@ async def admin_profiler_funnel(since_days: int = 7, _: bool = Depends(require_a
     return await _pf.funnel_summary(db, since_days=since_days)
 
 
+# iter64 Phase 4 — auto-generated OG share image
+import profiler_og as _og
+from fastapi.responses import Response
+
+
+@api_router.get("/profiler/share/og.png")
+async def profiler_share_og(persona_key: Optional[str] = None,
+                            play_id: Optional[str] = None,
+                            lang: str = "fi"):
+    """Return a 1200×630 PNG identity card suitable for Twitter/Telegram/
+    Discord unfurl previews. Either `persona_key` or `play_id` works —
+    `play_id` looks up the stored persona automatically."""
+    chosen_key = persona_key
+    if not chosen_key and play_id:
+        play = await db.mini_game_plays.find_one(
+            {"play_id": play_id}, {"_id": 0, "persona_key": 1, "persona": 1},
+        )
+        if play:
+            chosen_key = (play.get("persona") or {}).get("key") or play.get("persona_key")
+    if not chosen_key:
+        chosen_key = "patient_tactician"  # honest neutral fallback
+    png = _og.render_from_persona_key(chosen_key, lang=lang if lang in ("fi", "en") else "fi")
+    return Response(
+        content=png,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "public, max-age=86400, immutable",
+            "Content-Disposition": 'inline; filename="putki-profile.png"',
+        },
+    )
+
+
+@app.get("/api/profiler/share/u/{persona_key}", response_class=Response)
+async def profiler_share_landing(persona_key: str, lang: str = "fi"):
+    """Server-rendered share landing page with og:image meta tags. Social
+    crawlers (Twitterbot, Slackbot, Telegrambot, Discordbot, etc.) fetch
+    this URL when a user shares the link — they read the meta tags and
+    render the unfurl card. Real human visitors get auto-redirected to
+    /peliareena after a 0.5s delay (gives the JS-disabled fallback path
+    a graceful land)."""
+    # Resolve display title in both langs for og:title/twitter:title
+    fi_name, en_name, idx = _og.PROFILE_DISPLAY.get(
+        persona_key, ("Pelaajaprofiili", "Your Player Profile", "01 / 05"),
+    )
+    display = en_name if lang == "en" else fi_name
+    if lang == "en":
+        title = f"I'm {display} — what are you?"
+        desc  = (f"PUTKI HQ behavioral profiler · {idx}. "
+                 "Six honest decisions. No trivia. Take it free.")
+    else:
+        title = f"Olen {display} — mikä sinä olet?"
+        desc  = (f"PUTKI HQ pelaajaprofiili · {idx}. "
+                 "Kuusi rehellistä päätöstä. Ei tietovisaa. Tee se ilmaiseksi.")
+    og_image = f"/api/profiler/share/og.png?persona_key={persona_key}&lang={lang}"
+    redirect_to = f"/peliareena?profile={persona_key}"
+
+    html = f"""<!doctype html>
+<html lang="{lang}">
+<head>
+<meta charset="utf-8">
+<title>{title}</title>
+<meta name="description" content="{desc}">
+<meta property="og:type"        content="website">
+<meta property="og:title"       content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:image"       content="{og_image}">
+<meta property="og:image:width"  content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url"         content="https://putkihq.fi{redirect_to}">
+<meta property="og:site_name"   content="PUTKI HQ">
+<meta name="twitter:card"        content="summary_large_image">
+<meta name="twitter:title"       content="{title}">
+<meta name="twitter:description" content="{desc}">
+<meta name="twitter:image"       content="{og_image}">
+<meta http-equiv="refresh" content="0; url={redirect_to}">
+<style>
+  body {{ font-family: Georgia, serif; background: #fbfaf8; color: #1c1a18;
+          margin: 0; padding: 60px 24px; text-align: center; }}
+  h1 {{ font-size: 28px; margin: 0 0 12px; }}
+  p  {{ color: #6b665f; font-size: 16px; }}
+  a  {{ color: #b07d18; }}
+</style>
+</head>
+<body>
+  <h1>{title}</h1>
+  <p>{desc}</p>
+  <p><a href="{redirect_to}">→ {("Continue" if lang == "en" else "Jatka")}</a></p>
+</body>
+</html>"""
+    return Response(content=html, media_type="text/html; charset=utf-8")
+
+
 @api_router.get("/mini-games/stats/{game_slug}")
 async def mini_games_stats(game_slug: str, week: Optional[str] = None):
     """Per-game public social-proof stats — used on each game's subpage.

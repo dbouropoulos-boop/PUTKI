@@ -2,6 +2,14 @@
 
 ## Phase History (latest first)
 
+- **iter64 Phase 4 · Tournament re-scope + OG share-card unfurl** (2026-05-25, +12 tests · 28/28 iter64 passing)
+  - **Tournament worker re-scoped** to profiler only — `mini_game_tournament.ACTIVE_GAME_SLUGS = ["scenario_decisions"]`. Snake/Tap/Insight/Quiz moved to `_LEGACY_GAME_SLUGS` (kept for historical analytics; never enter weekly closing).
+  - **Closing message rewritten** — was a 5-game "VIIKON MESTARIT" recap; now a focused profiler note "VIIKON PROFILOIJA · {week}" with the top scenario_decisions performer + their profile label (Kylmä laskija / Kärsivällinen taktikko / etc.). Explicit framing: "Tämä ei ole tappiokisa eikä rahaa pelaava turnaus — se on rehellinen kuukauden snapshot omasta profiilistasi."
+  - **OG image renderer** (`profiler_og.py`, Pillow): 1200×630 PNG identity card. Off-white paper bg, amber accent stripes, DejaVu Serif title (auto-shrinks if persona name overflows), mono kicker, persona index pill, provocation line, putkihq.fi/peliareena URL. Brand palette pinned to the same CSS vars the frontend uses (--bg / --ink / --muted / --amber).
+  - **Endpoints**: `GET /api/profiler/share/og.png?persona_key=X[&lang=fi|en]` returns the PNG (24h cache); `GET /api/profiler/share/u/{persona_key}?lang=fi|en` returns an SSR HTML unfurl-landing page with og:image / og:title / og:description / twitter:card meta tags + a `<meta http-equiv="refresh">` redirect to /peliareena for real human visitors. Route order fixed so og.png doesn't collide with the {persona_key} parametric route.
+  - **Frontend share button updated** — `MicroYesGate.shareIt` now composes `${BACKEND}/api/profiler/share/u/${personaKey}?lang=${lang}` as the share URL so Twitter/Telegram/Discord/Threads/WhatsApp all fetch the unfurl page and render the OG card. Clipboard fallback writes the full link.
+  - **Tests**: `tests/test_iter64_phase4_og_image.py` (6 tests): tournament slug set scope, PNG dims for all 5 personas, HTML meta presence (fi+en), route precedence regression.
+
 - **PIVOT · /peliareena → capture-first behavioral profiler · 5-profile spectrum · Funnel analytics** (2026-05-25, iter64 — 16/16 new tests · all iter63 tests updated and passing · pivot per user strategic brief)
   - **Strategic shift**: 5-game arcade KILLED from UI. Snake / Tap / Insight / Quiz hidden from the hub (routes still alive for any inbound links; collections preserved as audit history per user choice).
   - **Scenario (`/peliareena/paatospolku`) becomes THE flagship** — single behavioral profiler. Expanded from 5 → 6 scenarios with a new 1:47am stop-loss / chasing visceral scenario. Max score 18.

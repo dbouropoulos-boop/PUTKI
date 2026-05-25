@@ -50,16 +50,24 @@ async def ensure_indexes(db) -> None:
 
 # ─────────────────────── Analytics aggregation ────────────────────────
 
+# ─── iter64 pivot — Snake/Tap/Insight/Quiz killed from the active set.
+# `scenario_decisions` is now the sole profiler. Snake/Tap/Insight/Quiz
+# slugs remain registered in `_LEGACY_GAME_SLUGS` so the analytics
+# endpoint can still surface historical data when the user opts to
+# inspect a past week, but the tournament closing worker only awards
+# the scenario winner.
 ACTIVE_GAME_SLUGS = [
-    "quiz_gambling_literacy",
     "scenario_decisions",
+]
+_LEGACY_GAME_SLUGS = [
+    "quiz_gambling_literacy",
     "insight_reveal",
     "arcade_snake",
     "arcade_tap",
 ]
 GAME_TITLES_FI = {
+    "scenario_decisions":     "Pelaajaprofiili",
     "quiz_gambling_literacy": "Tietoisuustesti",
-    "scenario_decisions":     "Päätöspolku",
     "insight_reveal":         "Tietoraape",
     "arcade_snake":           "Aikatappo · Mato",
     "arcade_tap":             "Aikatappo · Napautus",
@@ -202,39 +210,41 @@ async def track_share(db, *, game_slug: str, play_id: Optional[str] = None) -> N
 # ─────────────────── Tournament closing telegram bot ────────────────────
 
 async def _build_closing_message(db, *, week_iso: str) -> Optional[str]:
-    """Compose the Finnish "viikon mestarit" Telegram message for the
-    just-closed week. Returns None when no winners exist (the worker
-    silently skips that week — we don't spam an empty announcement)."""
-    lines = [
-        f"🏆 *VIIKON MESTARIT · {week_iso}*",
-        "",
-        "Putki HQ:n peliareenan viikkoturnaus on suljettu. Onnittelut sijoittuneille — pelataan taas tällä viikolla.",
-        "",
-    ]
-    any_winner = False
-    for slug in ACTIVE_GAME_SLUGS:
-        top = await db.mini_game_leads.find_one(
-            {"source_game": slug, "tournament_week_iso": week_iso, "score": {"$gt": 0}},
-            {"_id": 0, "name": 1, "email": 1, "score": 1, "consent_at": 1},
-            sort=[("score", -1), ("pct", -1), ("consent_at", 1)],
-        )
-        if not top:
-            continue
-        any_winner = True
-        score = int(top.get("score") or 0)
-        name = (top.get("name") or "").strip()
-        if not name:
-            local = (top.get("email") or "").split("@")[0]
-            name = (local[:3] + "•••" + local[-1:]) if len(local) > 4 else (local or "pelaaja")
-        lines.append(f"• *{GAME_TITLES_FI[slug]}* — {name} ({score} p.)")
-
-    if not any_winner:
+    """Compose the Finnish weekly profiler recap for the just-closed week.
+    iter64 pivot: this no longer ranks across 5 games — it surfaces only
+    the top scenario_decisions performer. Returns None when no winner
+    exists (the worker silently skips empty weeks)."""
+    top = await db.mini_game_leads.find_one(
+        {"source_game": "scenario_decisions", "tournament_week_iso": week_iso, "score": {"$gt": 0}},
+        {"_id": 0, "name": 1, "email": 1, "score": 1, "consent_at": 1, "persona_key": 1},
+        sort=[("score", -1), ("pct", -1), ("consent_at", 1)],
+    )
+    if not top:
         return None
-
-    lines.extend([
+    score = int(top.get("score") or 0)
+    name = (top.get("name") or "").strip()
+    if not name:
+        local = (top.get("email") or "").split("@")[0]
+        name = (local[:3] + "•••" + local[-1:]) if len(local) > 4 else (local or "pelaaja")
+    persona_key = top.get("persona_key") or ""
+    profile_label = {
+        "cold_calculator": "Kylmä laskija",
+        "patient_tactician": "Kärsivällinen taktikko",
+        "streak_chaser": "Putken jahti",
+        "comeback_believer": "Comeback-uskoja",
+        "tilt_risk": "Tilt-riski",
+    }.get(persona_key, "")
+    lines = [
+        f"🎯 *VIIKON PROFILOIJA · {week_iso}*",
         "",
-        "👉 Pelaa tällä viikolla: putkihq.fi/peliareena",
-    ])
+        "Putki HQ:n pelaajaprofiilin viikkokierros on suljettu.",
+        "",
+        f"• *{name}* — {score} / 18 p." + (f" · _{profile_label}_" if profile_label else ""),
+        "",
+        "Tämä ei ole tappiokisa eikä rahaa pelaava turnaus — se on rehellinen kuukauden snapshot omasta profiilistasi.",
+        "",
+        "👉 Tee profilointi tällä viikolla: putkihq.fi/peliareena",
+    ]
     return "\n".join(lines)
 
 

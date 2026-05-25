@@ -25,6 +25,7 @@ const MicroYesGate = ({
   unlockPath,         // e.g. "/api/mini-games/quiz/unlock"
   session,            // { play_id, anon_id }
   profileTitle,       // "The Tactician"
+  personaKey,         // e.g. "cold_calculator" — drives OG share image
   readLine,           // sentence shown above the micro-yes CTA
   onUnlocked,         // (full_result) => void
 }) => {
@@ -96,17 +97,27 @@ const MicroYesGate = ({
   };
 
   const shareIt = () => {
+    // iter64 Phase 4 — bake the OG image URL into the share URL so
+    // Twitter/Telegram/Discord/Threads/WhatsApp render the identity
+    // card preview on unfurl. The OG image is auto-rendered by the
+    // backend at /api/profiler/share/og.png and cached for 24h.
+    const ogParam = personaKey ? `?persona_key=${encodeURIComponent(personaKey)}&lang=${lang}`
+                                : `?lang=${lang}`;
+    const ogUrl = `${BACKEND}/api/profiler/share/og.png${ogParam}`;
     const shareText = lang === 'en'
       ? `I'm ${profileTitle} — what are you?`
       : `Olen ${profileTitle} — mikä sinä olet?`;
+    const fullUrl = personaKey
+      ? `${BACKEND}/api/profiler/share/u/${encodeURIComponent(personaKey)}?lang=${lang}`
+      : `${window.location.origin}/peliareena`;
     if (navigator.share) {
-      navigator.share({ text: shareText, url: window.location.href });
+      navigator.share({ text: shareText, url: fullUrl });
     } else {
-      navigator.clipboard.writeText(`${shareText} ${window.location.href}`);
+      navigator.clipboard.writeText(`${shareText}\n${fullUrl}\n${ogUrl}`);
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 1800);
     }
-    fireEvent('share_click');
+    fireEvent('share_click', { persona_key: personaKey });
     fetch(`${BACKEND}/api/mini-games/share/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ game_slug: gameSlug, play_id: session.play_id }),

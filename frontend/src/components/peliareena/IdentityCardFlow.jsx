@@ -59,6 +59,7 @@ const IdentityCardFlow = ({
         unlockPath={unlockPath}
         session={session}
         profileTitle={profileTitle}
+        personaKey={persona.key || ''}
         readLine={pickLang(card, 'read_line', lang)}
         onUnlocked={onUnlocked}
       />
