@@ -36,8 +36,22 @@ const MicroYesGate = ({
   const [error, setError] = useState(null);
   const [shareCopied, setShareCopied] = useState(false);
 
+  // iter64 — funnel beacon (fire-and-forget; never blocks UX)
+  const fireEvent = (event, meta) => {
+    if (!session?.play_id) return;
+    try {
+      fetch(`${BACKEND}/api/profiler/event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: session.play_id, event, meta: meta || {} }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch { /* swallow */ }
+  };
+
   const openGate = () => {
     setStage('gate');
+    fireEvent('gate_view');
     // Smooth-scroll to gate after it animates in
     setTimeout(() => {
       const el = document.querySelector('[data-testid="micro-yes-gate"]');
@@ -57,6 +71,7 @@ const MicroYesGate = ({
       return;
     }
     setSubmitting(true);
+    fireEvent('gate_submit_attempt');
     try {
       const r = await fetch(`${BACKEND}${unlockPath}`, {
         method: 'POST',
@@ -72,6 +87,7 @@ const MicroYesGate = ({
       const full = await r.json();
       onUnlocked(full);
       setStage('success');
+      fireEvent('gate_unlocked', { profile_key: full?.persona?.key });
     } catch (e2) {
       setError(interpolate(pickPA(lang, 'gate.error.save'), { message: e2.message }));
     } finally {
@@ -90,6 +106,7 @@ const MicroYesGate = ({
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 1800);
     }
+    fireEvent('share_click');
     fetch(`${BACKEND}/api/mini-games/share/track`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ game_slug: gameSlug, play_id: session.play_id }),
@@ -325,6 +342,7 @@ const MicroYesGate = ({
               target="_blank"
               rel="noopener noreferrer"
               data-testid="card-tg-cta"
+              onClick={() => fireEvent('tg_click')}
               style={{
                 display: 'block', textAlign: 'center',
                 background: '#2c2c2c', color: 'var(--bg)',

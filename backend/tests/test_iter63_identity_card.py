@@ -115,7 +115,7 @@ class TestScenarioCard:
         body = finish.json()
         assert "card" in body, f"missing 'card' in: {list(body.keys())}"
         _assert_card_shape(body["card"])
-        assert body["card"]["stat_label_fi"] == "Päätös-indeksi"
+        assert body["card"]["stat_label_fi"] == "Kurin indeksi"
 
 
 # ─────────────── Insight ───────────────

@@ -3408,6 +3408,37 @@ async def mini_games_share_track(payload: MiniGameShareTrackPayload):
     return {"tracked": True}
 
 
+# ── iter64 · Profiler Funnel telemetry ──────────────────────────────
+import profiler_funnel as _pf
+
+class ProfilerEventPayload(BaseModel):
+    session_id: str
+    event: str
+    meta: Optional[Dict[str, Any]] = None
+
+
+@api_router.post("/profiler/event")
+async def profiler_event(payload: ProfilerEventPayload):
+    """Fire-and-forget funnel beacon. Frontend posts at each funnel step
+    (session_start → session_complete → reveal_view → gate_view →
+    gate_submit_attempt → gate_unlocked → share_click / tg_click).
+    All events live in `profiler_events` with a 30-day TTL."""
+    result = await _pf.record_event(
+        db, event=payload.event, session_id=payload.session_id,
+        meta=payload.meta or {},
+    )
+    if result.get("error"):
+        raise HTTPException(400, result["error"])
+    return result
+
+
+@api_router.get("/admin/profiler/funnel")
+async def admin_profiler_funnel(since_days: int = 7, _: bool = Depends(require_admin)):
+    """Back-office funnel dashboard widget data — aggregate counts +
+    step-to-step conversion rates over the trailing `since_days`."""
+    return await _pf.funnel_summary(db, since_days=since_days)
+
+
 @api_router.get("/mini-games/stats/{game_slug}")
 async def mini_games_stats(game_slug: str, week: Optional[str] = None):
     """Per-game public social-proof stats — used on each game's subpage.
@@ -4520,6 +4551,12 @@ async def startup_event():
         await seed_root_user_from_env(db)
     except Exception:
         logger.exception("admin_auth: bootstrap failed (non-fatal)")
+    # iter64: ensure profiler_events indexes (funnel analytics TTL)
+    try:
+        from profiler_funnel import ensure_funnel_indexes as _ensure_funnel_indexes
+        await _ensure_funnel_indexes(db)
+    except Exception:
+        logger.exception("profiler_funnel: bootstrap failed (non-fatal)")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)

@@ -2,6 +2,32 @@
 
 ## Phase History (latest first)
 
+- **PIVOT · /peliareena → capture-first behavioral profiler · 5-profile spectrum · Funnel analytics** (2026-05-25, iter64 — 16/16 new tests · all iter63 tests updated and passing · pivot per user strategic brief)
+  - **Strategic shift**: 5-game arcade KILLED from UI. Snake / Tap / Insight / Quiz hidden from the hub (routes still alive for any inbound links; collections preserved as audit history per user choice).
+  - **Scenario (`/peliareena/paatospolku`) becomes THE flagship** — single behavioral profiler. Expanded from 5 → 6 scenarios with a new 1:47am stop-loss / chasing visceral scenario. Max score 18.
+  - **NEW 5-profile spectrum** replaces the old 3-tier persona system:
+    - `cold_calculator` (≥16) — Kylmä laskija / The Cold Calculator
+    - `patient_tactician` (≥12) — Kärsivällinen taktikko / The Patient Tactician
+    - `streak_chaser` (≥8) — Putken jahti / The Streak Chaser
+    - `comeback_believer` (≥4) — Comeback-uskoja / The Comeback Believer
+    - `tilt_risk` (≥0) — Tilt-riski / The Tilt Risk
+    - Each profile carries `blind_spot_fi/_en` (one-liner, free on the identity card) AND `three_traps_fi/_en` (three specific traps — the gated value-exchange).
+  - **Capture-first hub**: `PeliAreenaHub.jsx` rewritten as a single-entry-point page with hero ("Millainen pelaaja olet oikeasti? / What kind of gambler are you really?"), one bold START CTA, inline trust signals row, and a 5-profile spectrum preview strip. Social proof hidden until ≥50 plays this week (no "0 ranked players" honesty).
+  - **Gate copy flipped** to value-promise: "Saa täysi profiilisi + 3 ansaa, joihin todennäköisimmin sorrut" / "Get your full profile + the 3 traps you're most likely to fall for". Submit button: AVAA PROFIILI + 3 ANSAA / OPEN PROFILE + 3 TRAPS.
+  - **Three-traps panel** added at the TOP of `ScenarioUnlocked` — the post-unlock value the gate promised. Numbered list, amber accent, ≤3 sentences each, profile-specific copy.
+  - **Telegram CTA reframed** away from "live signals 6/week" → "Sunday gut-check · 30 seconds" (one Sunday question per week, no offers, no campaigns).
+  - **Funnel analytics** (`profiler_funnel.py`):
+    - New `profiler_events` collection with 30-day TTL.
+    - 7 event types: `session_start`, `scenario_view`, `scenario_pick`, `session_complete`, `reveal_view`, `gate_view`, `gate_submit_attempt`, `gate_unlocked`, `share_click`, `tg_click`.
+    - `POST /api/profiler/event` — fire-and-forget beacon (`keepalive: true`).
+    - `GET /api/admin/profiler/funnel?since_days=N` — aggregate counts + step-to-step conversion rates.
+    - Frontend wires beacons at every funnel beat inside `PeliAreenaScenario.jsx` + `MicroYesGate.jsx`.
+  - **Back-office widget** `/back-office/profiler-funnel` (`BackOfficeProfilerFunnel.jsx`): 7-step funnel table with absolute counts + step-to-step conversion percentages + summary cards for end-to-end conversion, share rate, tg rate. 1d / 7d / 30d range selector.
+  - **Backend card builder** (`mini_game_card.py::build_scenario_card`): now reads persona's `blind_spot_*` directly and emphasises the post-em-dash fragment with `<em>...</em>` for the amber accent. Profile index uses the new 5-profile map.
+  - **Percentile honesty fix**: `_percentile` now returns 50 (median) when < 3 weekly plays — no more "Higher than 75% of players" lies on a cold week.
+  - **Tests**: `tests/test_iter64_profiler_pivot.py` (7 tests). Updated `test_iter63_identity_card.py` (stat label change) + `test_iter60_bilingual_content.py` (scenario count 5→6).
+  - **Deferred** (Phase 4): auto-generated OG share image (`I'm The Cold Calculator — what are you?`). Needs an image-render service (Pillow/Satori). Today's share mechanic = native Share API + clipboard fallback with profile-name baked in. Resend email dispatch still MOCKED pending API keys.
+
 - **Per-user admin tokens · Audit log · Avatar refresh (no initials) · Classifier Tier 2** (2026-05-23, iter62 — 67/67 tests passing across iter5*+iter6*, 0 regressions)
   - **Per-user admin tokens + audit log (P3)** — new `admin_auth.py` module:
     - `admin_users` collection: `{id, username, token_hash (sha256), role:[owner|editor|reviewer], active, created_at, created_by, last_used_at}`. Tokens generated via `secrets.token_urlsafe(32)`, hashed at rest, shown to operator ONCE on creation.

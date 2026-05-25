@@ -287,6 +287,22 @@ SCENARIO_EN: List[Dict[str, Any]] = [
              "explanation_en": "Old solid advice for physical casinos, but in online play it doesn't directly help. A deposit limit is more effective."},
         ],
     },
+    {
+        "order": 6,
+        "prompt_en": (
+            "It's 01:47am. You've been playing for 3 hours straight and your "
+            "original €50 stop-loss has been hit — but a feeling says \"just one "
+            "more spin\" and you're fine. What do you do?"
+        ),
+        "options": [
+            {"key": "a", "label_en": "One more spin — small stake, original plan broken only briefly",
+             "explanation_en": "A stop-loss is a stop-loss. Every \"just one more\" spin late at night is documented to lead to a point where rational decision-making is already gone. 70% of problem gamblers describe this exact moment."},
+            {"key": "b", "label_en": "Close the app and go to bed",
+             "explanation_en": "Strongest possible decision. Respecting the stop-loss at the cost of sleep is one of the most recognised signs of discipline."},
+            {"key": "c", "label_en": "Deposit €20 — just a small one, I have to try once more",
+             "explanation_en": "This is chasing. A small \"just\" amount at night is statistically the same as a large amount — because on average you don't stop after it."},
+        ],
+    },
 ]
 
 

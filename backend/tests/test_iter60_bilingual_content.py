@@ -37,7 +37,7 @@ def test_scenario_start_returns_fi_and_en():
     r = httpx.post(f"{BASE}/api/mini-games/scenario/start", json={}, timeout=15.0)
     assert r.status_code == 200
     qs = r.json()["scenarios"]
-    assert len(qs) == 5
+    assert len(qs) == 6  # iter64 pivot: scenario expanded from 5 → 6 (added 1am stop-loss)
     for q in qs:
         assert q.get("prompt_fi") and q.get("prompt_en")
         for o in q["options"]:

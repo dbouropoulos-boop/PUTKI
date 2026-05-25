@@ -203,8 +203,12 @@ async def build_scenario_card(
     db, *, persona: Dict[str, Any], score: int, max_score: int, pct: float,
     tag_scores: Dict[str, int], week_iso: str,
 ) -> Dict[str, Any]:
-    weekly_scores = await _fetch_weekly_scores(db, "scenario_decision_path", week_iso)
-    return _build_card_text(
+    """iter64 pivot — Scenario is now the flagship behavioral profiler.
+    The card uses persona-level `blind_spot` copy when available
+    (richer than the topic-tag fallback) and surfaces the discipline
+    index as the headline stat."""
+    weekly_scores = await _fetch_weekly_scores(db, "scenario_decisions", week_iso)
+    base = _build_card_text(
         persona_key=persona["key"],
         stat_pct=pct,
         tag_scores=tag_scores or {},
@@ -213,9 +217,36 @@ async def build_scenario_card(
         player_score=score,
         persona_tagline_fi=persona.get("tagline") or "",
         persona_tagline_en=persona.get("tagline_en") or "",
-        stat_label_fi="Päätös-indeksi",
-        stat_label_en="Judgement index",
+        stat_label_fi="Kurin indeksi",
+        stat_label_en="Discipline index",
     )
+    # Override hook + profile_index with the new 5-profile spectrum copy
+    blind_fi = persona.get("blind_spot_fi") or base["hook_text_fi"]
+    blind_en = persona.get("blind_spot_en") or base["hook_text_en"]
+    # Bold-italicise the first short fragment of the blind-spot for the
+    # amber accent — keeps the editorial voice consistent with iter63.
+    def _emphasise(s: str) -> str:
+        if not s or "<em>" in s:
+            return s
+        # Wrap the part after the first em-dash in <em>...</em>
+        if " — " in s:
+            head, _, tail = s.partition(" — ")
+            return f"{head} — <em>{tail.split('.')[0]}</em>" + (
+                "." + ".".join(tail.split('.')[1:]) if "." in tail else ""
+            )
+        return s
+    base["hook_text_fi"] = _emphasise(blind_fi)
+    base["hook_text_en"] = _emphasise(blind_en)
+    # Map the 5-profile spectrum index for the eyebrow
+    PROFILE_INDEX_5 = {
+        "cold_calculator": "01 / 05",
+        "patient_tactician": "02 / 05",
+        "streak_chaser": "03 / 05",
+        "comeback_believer": "04 / 05",
+        "tilt_risk": "05 / 05",
+    }
+    base["profile_index"] = PROFILE_INDEX_5.get(persona["key"], base["profile_index"])
+    return base
 
 
 async def build_insight_card(

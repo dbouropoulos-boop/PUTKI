@@ -128,44 +128,156 @@ SCENARIO_SEED_FI: List[Dict[str, Any]] = [
         "correct": "b",
         "topic_tag": "responsibility",
     },
+    {
+        "order": 6,
+        "prompt_fi": (
+            "Kello on 01:47. Olet pelannut 3 tuntia putkeen ja "
+            "alkuperäinen stop-loss 50 € on saavutettu — mutta tunne sanoo "
+            "että \"yksi spin enää\" ja olet kunnossa. Mitä teet?"
+        ),
+        "options": [
+            {"key": "a", "label_fi": "Yksi spin lisää — pieni panos, alkuperäinen suunnitelma rikki vain hetkeksi", "score": 0,
+             "explanation_fi": "Stop-loss on stop-loss. Jokainen \"vielä yksi\" -spin yöllä on todistettu johtava pisteeseen, jossa rationaalinen päätöksenteko on jo poissa. 70% ongelmapelaajista kuvailee tätä hetkeä."},
+            {"key": "b", "label_fi": "Suljen sovelluksen ja menen nukkumaan", "score": 3,
+             "explanation_fi": "Vahvin mahdollinen päätös. Stop-lossin kunnioittaminen unen kustannuksella on yksi tunnistetuimmista kurin merkeistä."},
+            {"key": "c", "label_fi": "Talletan 20 € — vain pieni, pakko vielä yrittää", "score": 0,
+             "explanation_fi": "Tämä on chasing. Pieni \"vain\" -summa yöllä on tilastollisesti sama kuin iso summa — koska keskimäärin et lopeta sen jälkeen."},
+        ],
+        "correct": "b",
+        "topic_tag": "responsibility",
+    },
 ]
 
 
-# Persona thresholds based on TOTAL judgement score (max 15 = 5 × 3)
+# iter64 pivot — 5-profile spectrum based on total judgement score (max 18 = 6×3)
+# Profiles range from most disciplined (Cold Calculator) to highest harm risk
+# (Tilt Risk). Each profile carries a `blind_spot` one-liner (free, shown on
+# the identity card) and `three_traps` (gated behind email — the "value
+# exchange" promised in the gate copy).
 SCENARIO_PERSONAS = {
+    "cold_calculator": {
+        "min": 16,
+        "title": "Kylmä laskija",
+        "title_en": "The Cold Calculator",
+        "tagline": "Pelaat numeroina, et tunteena. Päätöksesi pitävät myös paineessa.",
+        "tagline_en": "You play in numbers, not emotion. Your decisions hold under pressure.",
+        "blind_spot_fi": "Vahvuus on myös sokea piste — yliluottamus omaan kuriin yhdistettynä korkeaan volyymiin tuottaa pisimmät putket.",
+        "blind_spot_en": "Your strength is also your blind spot — overconfidence in your own discipline combined with high volume produces the longest streaks.",
+        "three_traps_fi": [
+            "Volyymin kasvattaminen \"koska olen kunnossa\" — talon edge realisoituu juuri suurilla volyymeillä.",
+            "Bonusten kierrätysmatematiikka — tunne, että hallitset ehdot, peittää sen, että EV on negatiivinen.",
+            "Pitkien voittoputkien jälkeinen mikrohuolimattomuus — yksi tilttihetki riittää ottaa palan koko kuukauden tuotosta.",
+        ],
+        "three_traps_en": [
+            "Increasing volume \"because I'm in control\" — the house edge realises precisely at high volumes.",
+            "Bonus wagering math — the feeling that you've mastered the terms masks the fact that EV is negative.",
+            "Micro-carelessness after long winning streaks — one tilt moment is enough to eat a chunk of the whole month's gain.",
+        ],
+    },
     "patient_tactician": {
         "min": 12,
         "title": "Kärsivällinen taktikko",
         "title_en": "The Patient Tactician",
         "tagline": "Tunnistat tunnesäätelyn ja pidät pään kylmänä paineessa.",
         "tagline_en": "You recognise emotional regulation and keep a cool head under pressure.",
+        "blind_spot_fi": "Kuri on vahva — mutta yksi väsynyt myöhäisilta voi ohittaa kuukausien kurinalaista työtä.",
+        "blind_spot_en": "Your discipline is strong — but one tired late night can undo months of disciplined work.",
+        "three_traps_fi": [
+            "Väsymystila päätöksenteossa — klo 23 jälkeen tehdyt päätökset ovat tilastollisesti huonompia, vaikka kokeneella pelaajalla.",
+            "Pieni \"vain vielä yksi spin\" -hetki stop-lossin jälkeen — kuri on absoluuttinen, ei suhteellinen.",
+            "Streamerin signaalin kuunteleminen \"vain viihteenä\" — affiliate-linkki imee sinut keskimäärin 25–45% tappiolla.",
+        ],
+        "three_traps_en": [
+            "Decision fatigue — choices made after 11pm are statistically worse, even for experienced players.",
+            "A small \"just one more spin\" moment after the stop-loss — discipline is absolute, not relative.",
+            "Treating a streamer's signal as \"just entertainment\" — the affiliate link pulls you in at a 25–45% average loss rate.",
+        ],
     },
-    "growing_judge": {
-        "min": 7,
-        "title": "Kasvava arvioija",
-        "title_en": "The Growing Judge",
-        "tagline": "Sinulla on hyvät perusteet — vahvista bankroll-ajattelua.",
-        "tagline_en": "Solid foundation — reinforce your bankroll thinking.",
+    "streak_chaser": {
+        "min": 8,
+        "title": "Putken jahti",
+        "title_en": "The Streak Chaser",
+        "tagline": "Tunnistat järkevät päätökset — mutta voittoputki sokaisee silmiäsi.",
+        "tagline_en": "You recognise the smart move — but a winning streak blinds you.",
+        "blind_spot_fi": "Hot hand -harha — voittoputken keskellä uskot, että edge kuuluu sinulle. Tilastollisesti edge palaa keskiarvoon.",
+        "blind_spot_en": "The hot-hand fallacy — mid-streak you believe the edge belongs to you. Statistically, edge regresses to the mean.",
+        "three_traps_fi": [
+            "Voiton kanssa lopettamatta jättäminen — vahvin yksittäinen indikaattori siitä, että voitto palautuu tai muuttuu tappioksi.",
+            "Panosten asteittainen nostaminen voittojen edetessä — varianssi syö isompia panoksia paljon nopeammin.",
+            "\"Tuplauskertoimen\" houkutus — bonusten ja kampanjoiden alaiset päätökset perustuvat tunteeseen, ei matematiikkaan.",
+        ],
+        "three_traps_en": [
+            "Failing to stop while ahead — the single strongest indicator that winnings will regress or flip into losses.",
+            "Gradually raising stakes as wins accumulate — variance eats bigger bets far faster.",
+            "The \"double-up\" temptation — decisions during bonuses and campaigns are emotional, not mathematical.",
+        ],
     },
-    "fresh_player": {
+    "comeback_believer": {
+        "min": 4,
+        "title": "Comeback-uskoja",
+        "title_en": "The Comeback Believer",
+        "tagline": "Etsit kääntöpistettä jokaisesta tappiosta. Tämä on tuttua — ja vaarallista.",
+        "tagline_en": "You look for the turning point in every loss. It's familiar — and dangerous.",
+        "blind_spot_fi": "Sunken cost -ansa — mitä enemmän olet hävinnyt, sitä enemmän tunnet pakkoa \"saada takaisin\". Matemaattisesti odotus on sama joka spinissä.",
+        "blind_spot_en": "The sunk-cost trap — the more you've lost, the more you feel forced to \"win it back\". Mathematically, expectation is identical on every spin.",
+        "three_traps_fi": [
+            "Tappioiden jälkeinen talletuksen \"vain pienen summan\" -lisäys — jokainen tällainen talletus pidentää tappion polkua.",
+            "Bonustarjousten houkutus juuri tappion jälkeen — operaattorit kohdistavat tarjouksia tunnetilan mukaan.",
+            "\"Tämä peli on velkaa minulle\" -ajattelu — gambler's fallacy on yksi yleisimmistä syistä ongelmapelaamiseen.",
+        ],
+        "three_traps_en": [
+            "Adding \"just a small\" deposit after losses — every such top-up extends the loss path.",
+            "Bonus offers targeted right after a loss — operators time offers to your emotional state.",
+            "\"This game owes me\" thinking — the gambler's fallacy is one of the most common gateways to problem gambling.",
+        ],
+    },
+    "tilt_risk": {
         "min": 0,
-        "title": "Tuore pelaaja",
-        "title_en": "The Fresh Player",
-        "tagline": "Suosittelemme käymään läpi vastuullisuuden perusteet ennen rahapelipäätöksiä.",
-        "tagline_en": "We recommend reviewing the responsible-play basics before making real-money decisions.",
+        "title": "Tilt-riski",
+        "title_en": "The Tilt Risk",
+        "tagline": "Sinulla on rohkeutta vastata rehellisesti — se on jo iso askel.",
+        "tagline_en": "You had the courage to answer honestly — that's already a big step.",
+        "blind_spot_fi": "Itse-suostuttelun ja todellisen kurin ero — sokea piste on usein \"minulla on tämä hallinnassa\" -ajatus juuri sillä hetkellä kun kuri pettää.",
+        "blind_spot_en": "The gap between self-persuasion and actual discipline — the blind spot is often \"I have this under control\" precisely when control breaks.",
+        "three_traps_fi": [
+            "Talletusrajan asettamatta jättäminen — \"asetan myöhemmin\" -ajattelu on yksi tunnistetuimmista varhaisvaroitusmerkeistä.",
+            "Pelisession pidentäminen ohi suunnitellun ajan — 90 min jälkeen päätöksenteko heikkenee mitattavasti.",
+            "Lainatulla rahalla pelaaminen tai läheisille valehtelu — nämä ovat selvät pisteet, jossa peluuri.fi:n yhteydenotto on suositeltavaa.",
+        ],
+        "three_traps_en": [
+            "Failing to set a deposit limit — \"I'll set it later\" thinking is one of the strongest early warning signs.",
+            "Extending sessions past the planned time — decision-making degrades measurably after 90 minutes.",
+            "Playing with borrowed money or lying to loved ones — these are clear points where contacting peluuri.fi is recommended.",
+        ],
     },
 }
 
 
 def persona_for_scenario(total_score: int) -> Dict[str, Any]:
-    for key in ["patient_tactician", "growing_judge", "fresh_player"]:
+    # Order matters — descending min threshold
+    for key in ["cold_calculator", "patient_tactician", "streak_chaser",
+                "comeback_believer", "tilt_risk"]:
         p = SCENARIO_PERSONAS[key]
         if total_score >= p["min"]:
-            return {"key": key, "title": p["title"], "title_en": p["title_en"],
-                    "tagline": p["tagline"], "tagline_en": p["tagline_en"]}
-    p = SCENARIO_PERSONAS["fresh_player"]
-    return {"key": "fresh_player", "title": p["title"], "title_en": p["title_en"],
-            "tagline": p["tagline"], "tagline_en": p["tagline_en"]}
+            return {
+                "key": key,
+                "title": p["title"], "title_en": p["title_en"],
+                "tagline": p["tagline"], "tagline_en": p["tagline_en"],
+                "blind_spot_fi": p["blind_spot_fi"],
+                "blind_spot_en": p["blind_spot_en"],
+                "three_traps_fi": p["three_traps_fi"],
+                "three_traps_en": p["three_traps_en"],
+            }
+    p = SCENARIO_PERSONAS["tilt_risk"]
+    return {
+        "key": "tilt_risk",
+        "title": p["title"], "title_en": p["title_en"],
+        "tagline": p["tagline"], "tagline_en": p["tagline_en"],
+        "blind_spot_fi": p["blind_spot_fi"],
+        "blind_spot_en": p["blind_spot_en"],
+        "three_traps_fi": p["three_traps_fi"],
+        "three_traps_en": p["three_traps_en"],
+    }
 
 
 # ─────────────────────── Insight Reveal content ──────────────────────

@@ -821,7 +821,7 @@ from mini_games_phase2 import (
     persona_for_scenario,
 )
 
-SCENARIO_MAX_SCORE = 15   # 5 scenarios × 3 points each
+SCENARIO_MAX_SCORE = 18   # 6 scenarios × 3 points each (iter64 pivot — added scenario 6 + 5-profile spectrum)
 INSIGHT_TILE_COUNT = 6    # tiles on the reveal board
 
 
@@ -951,11 +951,7 @@ async def unlock_scenario_result(db, *, play_id, anon_id, email, name=None, cons
         play_id=play_id, anon_id=anon_id, email=email, name=name,
         consent=consent, ip=ip,
         persona_resolver=lambda play: {
-            "key": play.get("persona_key", "fresh_player"),
-            "title": persona_for_scenario(int(play.get("score") or 0))["title"],
-            "title_en": persona_for_scenario(int(play.get("score") or 0))["title_en"],
-            "tagline": persona_for_scenario(int(play.get("score") or 0))["tagline"],
-            "tagline_en": persona_for_scenario(int(play.get("score") or 0))["tagline_en"],
+            **persona_for_scenario(int(play.get("score") or 0)),
         },
     )
 

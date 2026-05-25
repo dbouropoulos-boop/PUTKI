@@ -1,270 +1,207 @@
 /**
- * PUTKI HQ — /peliareena (Mini-Game Hub) · iter55
+ * PUTKI HQ — /peliareena (Behavioral Profiler Hub) · iter64 pivot
  *
- * Phase 1 of the educational mini-game suite (Build Brief v2). Shows
- * the 5-game catalog (1 active + 4 "coming soon"), the current
- * weekly tournament state, the top-5 leaderboard, and the non-monetary
- * prize/recognition framing.
+ * Capture-first single-flagship hub. The five-game arcade has been
+ * killed (Snake / Tap / Insight / Quiz) and the behavioral profiler
+ * is the ONLY entry point. Goal: drive every visitor into the
+ * scenario profiler in <10 seconds.
  *
- * Design rules per the brief:
- *   • Bright + playful but stays editorial (no slot-machine vibe)
- *   • Email is NEVER the gate to play — only to unlock full result + ranking
- *   • Honest counters (real plays_this_week, real ranked_players)
- *   • All copy in Finnish (beginner audience for online gambling literacy)
+ * Design:
+ *   • Single hero — "What kind of gambler are you really?"
+ *   • One bold CTA → /peliareena/paatospolku
+ *   • Trust signals row sits NEXT to the CTA (not below)
+ *   • Social-proof line hidden until ≥50 plays exist (no "0 ranked players")
+ *   • 5-profile preview strip — primes the user with the spectrum
+ *     they'll be placed on
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, ChevronRight, Lock, Clock, BookOpen, Zap, GitBranch } from 'lucide-react';
-import GameTileArt from '../components/GameTileArt';
+import { ChevronRight, ShieldCheck, Lock, Clock3 } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
-import { pickPA, interpolate, langField } from '../i18n/peliareena';
+import { pickPA } from '../i18n/peliareena';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-const GAME_ICONS = {
-  quiz: BookOpen,
-  scenario: GitBranch,
-  reveal: Sparkles,
-  arcade: Zap,
+// 5-profile spectrum preview (must match backend SCENARIO_PERSONAS keys)
+const PROFILE_STRIP = [
+  { key: 'cold_calculator',   fi: 'Kylmä laskija',         en: 'The Cold Calculator',   tone: 'high'   },
+  { key: 'patient_tactician', fi: 'Kärsivällinen taktikko', en: 'The Patient Tactician', tone: 'high'   },
+  { key: 'streak_chaser',     fi: 'Putken jahti',          en: 'The Streak Chaser',     tone: 'mid'    },
+  { key: 'comeback_believer', fi: 'Comeback-uskoja',       en: 'The Comeback Believer', tone: 'low'    },
+  { key: 'tilt_risk',         fi: 'Tilt-riski',            en: 'The Tilt Risk',         tone: 'lowest' },
+];
+
+const TONE_COLOR = {
+  high:   '#3F8A4D',
+  mid:    '#b07d18',
+  low:    '#C8423C',
+  lowest: '#7A2E2C',
 };
 
 const PeliAreenaHub = () => {
   const { lang } = useLang();
   const [hub, setHub] = useState(null);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
-    let alive = true;
     fetch(`${BACKEND}/api/mini-games/hub`)
       .then(r => r.json())
-      .then(d => { if (alive) setHub(d); })
-      .catch(e => { if (alive) setError(e.message); });
-    return () => { alive = false; };
+      .then(setHub)
+      .catch(() => {});
   }, []);
 
-  if (error) return <div className="p-8 mono text-sm" style={{ color: 'var(--ink)' }}>VIRHE: {error}</div>;
-  if (!hub) return <div className="p-8 mono text-sm" style={{ color: 'var(--muted)' }}>{pickPA(lang, 'common.loading')}</div>;
-
-  const t = hub.tournament;
-
-  return (
-    <div data-testid="peliareena-hub" style={{ padding: '40px 24px 80px', maxWidth: 1200, margin: '0 auto' }}>
-      {/* Hero */}
-      <div style={{ marginBottom: 32 }}>
-        <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 12 }}>
-          {pickPA(lang, 'hub.eyebrow')}
-        </div>
-        <h1 style={{
-          fontFamily: 'Georgia, serif', fontWeight: 700,
-          fontSize: 'clamp(36px, 5.5vw, 56px)', lineHeight: 1.05,
-          letterSpacing: '-0.02em', color: 'var(--ink)', maxWidth: 780,
-        }}>
-          {pickPA(lang, 'hub.headline')}
-        </h1>
-        <p style={{
-          fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.6,
-          color: 'var(--muted)', maxWidth: 640, marginTop: 16,
-        }}>
-          {pickPA(lang, 'hub.tagline')}
-        </p>
-      </div>
-
-      {/* Tournament state */}
-      <TournamentPanel t={t} lang={lang} />
-
-      {/* Game grid */}
-      <h2 className="mono" style={{
-        fontSize: 11, letterSpacing: '0.22em', color: 'var(--ink)',
-        fontWeight: 700, margin: '40px 0 16px',
-      }}>{pickPA(lang, 'hub.games.heading')}</h2>
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: 16,
-      }}>
-        {hub.games.map(g => <GameTile key={g.slug} game={g} lang={lang} />)}
-      </div>
-
-      {/* Brand-trust honest footer */}
-      <div style={{
-        marginTop: 56, padding: 20,
-        border: '1px solid var(--border)',
-        background: 'var(--surface)',
-        borderRadius: 4,
-      }}>
-        <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 8 }}>
-          {pickPA(lang, 'hub.smallprint.title')}
-        </div>
-        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', lineHeight: 1.6, margin: 0 }}>
-          {pickPA(lang, 'hub.smallprint.body')}
-          {' '}<a href={hub.privacy_url} style={{ color: 'var(--ink)', textDecoration: 'underline' }}>{pickPA(lang, 'hub.smallprint.privacyLink')}</a>.
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const TournamentPanel = ({ t, lang }) => {
-  const closes = new Date(t.closes_at);
-  const now = new Date();
-  const hoursLeft = Math.max(0, Math.round((closes - now) / (3600 * 1000)));
-  const daysLeft = Math.floor(hoursLeft / 24);
-  const hoursRem = hoursLeft % 24;
-  const daysSuffix = lang === 'en' ? 'd' : 'p';
+  // Social proof — only surface when honest (>= 50 finished plays this week)
+  const playsThisWeek = hub?.tournament?.plays_this_week || 0;
+  const showSocialProof = playsThisWeek >= 50;
 
   return (
-    <div data-testid="peliareena-tournament-panel" style={{
-      border: '1px solid var(--border)',
-      background: 'var(--surface)',
-      padding: '20px 24px',
-      borderRadius: 6,
+    <div data-testid="peliareena-hub" style={{
+      padding: '60px 24px 80px', maxWidth: 900, margin: '0 auto',
     }}>
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap',
-        gap: 16, alignItems: 'flex-start',
+      <div className="mono" style={{
+        fontSize: 11, letterSpacing: '0.22em',
+        color: '#b07d18', fontWeight: 700, marginBottom: 20,
       }}>
-        <div style={{ minWidth: 0, flex: '1 1 200px' }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700 }}>
-            {pickPA(lang, 'intro.weekLabel')} {t.week_iso} · {pickPA(lang, 'hub.tournament.active')}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, marginTop: 4, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-              <Clock size={14} strokeWidth={1.6} style={{ color: 'var(--muted)' }} />
-              <span style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: 'var(--ink)' }}>
-                {daysLeft}{daysSuffix} {hoursRem}h
-              </span>
-              <span className="mono" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)' }}>{pickPA(lang, 'hub.tournament.timeLeft')}</span>
-            </div>
-            <div className="mono" style={{ fontSize: 11, color: 'var(--muted)', letterSpacing: '0.06em' }}>
-              {interpolate(pickPA(lang, 'hub.tournament.playsLine'), { plays: t.plays_this_week, players: t.ranked_players_this_week })}
-            </div>
-          </div>
+        {lang === 'en' ? 'PUTKI HQ · BEHAVIORAL PROFILER' : 'PUTKI HQ · PELAAJAPROFIILI'}
+      </div>
+
+      <h1 data-testid="hub-headline" style={{
+        fontFamily: 'Georgia, Fraunces, serif', fontWeight: 700,
+        fontSize: 'clamp(36px, 6vw, 60px)', lineHeight: 1.04,
+        letterSpacing: '-0.02em', color: 'var(--ink)',
+        margin: '0 0 18px', maxWidth: 760,
+      }}>
+        {lang === 'en'
+          ? 'What kind of gambler are you really?'
+          : 'Millainen pelaaja olet oikeasti?'}
+      </h1>
+
+      <p style={{
+        fontFamily: 'Georgia, Newsreader, serif',
+        fontSize: 19, lineHeight: 1.5, color: 'var(--muted)',
+        maxWidth: 620, margin: '0 0 36px',
+      }}>
+        {lang === 'en'
+          ? 'Six honest decisions. No trivia, no scores to memorise — just situations you\'ve already lived. We name your blind spot at the end. Free.'
+          : 'Kuusi rehellistä päätöstä. Ei tietovisaa, ei pisteitä opeteltavaksi — vain tilanteita, jotka olet jo elänyt. Nimeämme sokean pisteesi lopussa. Ilmainen.'}
+      </p>
+
+      {/* Primary CTA + trust row */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center',
+        gap: 18, marginBottom: 44,
+      }}>
+        <Link
+          to="/peliareena/paatospolku"
+          data-testid="hub-start-cta"
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 10,
+            background: 'var(--ink)', color: 'var(--bg)',
+            padding: '18px 28px', borderRadius: 4, textDecoration: 'none',
+            fontFamily: 'ui-monospace, JetBrains Mono, monospace',
+            fontSize: 13, fontWeight: 700,
+            letterSpacing: '0.16em', textTransform: 'uppercase',
+            transition: 'transform 180ms ease, background 180ms ease',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#b07d18'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--ink)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+        >
+          {lang === 'en' ? 'Start the profiler · 90 seconds' : 'Aloita profilointi · 90 sekuntia'}
+          <ChevronRight size={16} strokeWidth={2.4} />
+        </Link>
+
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '8px 18px',
+          fontFamily: 'ui-monospace, JetBrains Mono, monospace',
+          fontSize: 11, color: 'var(--muted)',
+        }}>
+          {[
+            { icon: ShieldCheck, label: lang === 'en' ? 'No money · no card' : 'Ei rahaa · ei korttia' },
+            { icon: Lock,        label: lang === 'en' ? 'GDPR · independent' : 'GDPR · riippumaton' },
+            { icon: Clock3,      label: lang === 'en' ? '~90 seconds'        : '~90 sekuntia' },
+          ].map(({ icon: Icon, label }) => (
+            <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <Icon size={12} strokeWidth={1.6} style={{ color: '#3f7d4a' }} />
+              {label}
+            </span>
+          ))}
         </div>
-        <div style={{ minWidth: 240, flex: '1 1 240px' }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700, marginBottom: 6 }}>
-            {pickPA(lang, 'hub.tournament.leaderboardTitle')}
-          </div>
-          {(t.leaderboard_top || []).length === 0 ? (
-            <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-              {pickPA(lang, 'hub.tournament.empty')}
-            </p>
-          ) : (
-            <ol style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-              {t.leaderboard_top.slice(0, 5).map((row, i) => (
-                <li key={i} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                  padding: '2px 0', borderBottom: i < Math.min(4, t.leaderboard_top.length - 1) ? '1px dotted var(--border)' : 'none',
-                  fontFamily: 'Georgia, serif', fontSize: 14,
-                }}>
-                  <span style={{ color: 'var(--ink)' }}>
-                    <span className="mono" style={{ fontSize: 10, color: 'var(--muted)', marginRight: 8 }}>#{row.rank}</span>
-                    {row.display_name}
-                  </span>
-                  <span className="mono" style={{ fontSize: 12, color: 'var(--ink)', fontWeight: 700 }}>
-                    {row.score}/10
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
+      </div>
+
+      {/* 5-profile spectrum preview */}
+      <div data-testid="hub-spectrum" style={{
+        borderTop: '1px solid var(--border)', paddingTop: 26, marginBottom: 36,
+      }}>
+        <div className="mono" style={{
+          fontSize: 10, letterSpacing: '0.22em',
+          color: 'var(--muted)', fontWeight: 700, marginBottom: 14,
+        }}>
+          {lang === 'en' ? 'THE FIVE PROFILES YOU MIGHT LAND ON' : 'VIISI PROFIILIA, JOIHIN VOIT PÄÄTYÄ'}
         </div>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: 12,
+        }}>
+          {PROFILE_STRIP.map((p, i) => (
+            <div key={p.key} data-testid={`hub-profile-${p.key}`} style={{
+              border: '1px solid var(--border)',
+              borderLeft: `3px solid ${TONE_COLOR[p.tone]}`,
+              padding: '14px 14px 16px',
+              borderRadius: 3,
+              background: 'var(--surface)',
+            }}>
+              <div className="mono" style={{
+                fontSize: 9.5, letterSpacing: '0.13em',
+                color: TONE_COLOR[p.tone], fontWeight: 700, marginBottom: 6,
+              }}>
+                {`0${i + 1} / 05`}
+              </div>
+              <div style={{
+                fontFamily: 'Georgia, Fraunces, serif', fontSize: 16,
+                fontWeight: 600, color: 'var(--ink)', lineHeight: 1.2,
+              }}>
+                {lang === 'en' ? p.en : p.fi}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Social proof (only when honest) */}
+      {showSocialProof && (
+        <p data-testid="hub-social-proof" style={{
+          fontFamily: 'ui-monospace, JetBrains Mono, monospace',
+          fontSize: 11, color: 'var(--muted)', letterSpacing: '0.04em',
+          margin: '0 0 28px',
+        }}>
+          {lang === 'en'
+            ? `${playsThisWeek.toLocaleString('en-US')} people completed the profiler this week.`
+            : `${playsThisWeek.toLocaleString('fi-FI')} ihmistä on suorittanut profilointin tällä viikolla.`}
+        </p>
+      )}
+
+      {/* Honest fine print */}
+      <div style={{
+        borderTop: '1px solid var(--border)', paddingTop: 22,
+        fontFamily: 'Georgia, Newsreader, serif',
+        fontSize: 13, lineHeight: 1.55, color: 'var(--muted)',
+        maxWidth: 680,
+      }}>
+        <div className="mono" style={{
+          fontSize: 9.5, letterSpacing: '0.22em',
+          color: 'var(--ink)', fontWeight: 700, marginBottom: 8,
+        }}>
+          {lang === 'en' ? 'HONEST FINE PRINT' : 'REHELLINEN PIENI PRINTTI'}
+        </div>
+        {lang === 'en'
+          ? 'The profiler is free. We ask for one email only after we\'ve named your profile and one blind spot — at peak curiosity, at your choice. No card details, no purchase, no third-party sharing. Cancel any time.'
+          : 'Profilointi on ilmainen. Pyydämme yhden sähköpostin vasta kun profiili ja yksi sokea piste on nimetty — uteliaisuuden hetkellä, sinun valinnallasi. Ei korttitietoja, ei ostoa, ei kolmansille osapuolille. Peru milloin tahansa.'}
+        {' '}
+        <Link to="/tietosuoja" style={{ color: 'var(--ink)' }}>
+          {lang === 'en' ? 'Privacy policy' : 'Tietosuojaseloste'}
+        </Link>.
       </div>
     </div>
-  );
-};
-
-const GameTile = ({ game, lang }) => {
-  const Icon = GAME_ICONS[game.kind] || BookOpen;
-  const active = game.status === 'active';
-  const Wrapper = active ? Link : 'div';
-  const wrapperProps = active ? { to: game.play_url } : {};
-  const title = langField(game, 'title', lang) || game.title_fi;
-  const subtitle = langField(game, 'subtitle', lang) || game.subtitle_fi;
-  const duration = langField(game, 'duration', lang) || game.duration_fi;
-
-  return (
-    <Wrapper
-      {...wrapperProps}
-      data-testid={`peliareena-game-${game.slug}`}
-      style={{
-        display: 'block',
-        border: '1px solid var(--border)',
-        background: 'var(--surface)',
-        borderRadius: 6,
-        textDecoration: 'none',
-        position: 'relative',
-        opacity: active ? 1 : 0.55,
-        transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
-        cursor: active ? 'pointer' : 'default',
-        overflow: 'hidden',
-      }}
-      onMouseEnter={(e) => {
-        if (!active) return;
-        e.currentTarget.style.transform = 'translateY(-3px)';
-        e.currentTarget.style.borderColor = 'var(--ink)';
-        e.currentTarget.style.boxShadow = '0 12px 24px -12px rgba(0,0,0,0.18)';
-      }}
-      onMouseLeave={(e) => {
-        if (!active) return;
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.borderColor = 'var(--border)';
-        e.currentTarget.style.boxShadow = 'none';
-      }}
-    >
-      {/* Tile illustration */}
-      <div style={{ position: 'relative', borderBottom: '1px solid var(--border)' }}>
-        <GameTileArt kind={game.kind} slug={game.slug} />
-        {!active && (
-          <div style={{
-            position: 'absolute', inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: 8,
-          }}>
-            <Lock size={14} strokeWidth={1.6} style={{ color: '#F5F3EE' }} />
-            <span className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#F5F3EE', fontWeight: 700 }}>
-              {pickPA(lang, 'hub.coming')}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Tile body */}
-      <div style={{ padding: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <Icon size={16} strokeWidth={1.7} style={{ color: 'var(--ink)' }} />
-          <span className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#5A7BB8', fontWeight: 700 }}>
-            {game.kind.toUpperCase()} · {duration}
-          </span>
-        </div>
-        <h3 style={{
-          fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: 'var(--ink)',
-          margin: '0 0 8px', letterSpacing: '-0.01em',
-        }}>
-          {title}
-        </h3>
-        <p style={{
-          fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted)',
-          lineHeight: 1.5, margin: 0, minHeight: 42,
-        }}>
-          {subtitle}
-        </p>
-        <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
-          {active ? (
-            <>
-              <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--ink)', fontWeight: 700 }}>
-                {pickPA(lang, 'hub.playNow')}
-              </span>
-              <ChevronRight size={14} strokeWidth={2} style={{ color: 'var(--ink)' }} />
-            </>
-          ) : (
-            <span className="mono" style={{ fontSize: 11, letterSpacing: '0.2em', color: 'var(--muted)' }}>
-              {pickPA(lang, 'hub.coming')}
-            </span>
-          )}
-        </div>
-      </div>
-    </Wrapper>
   );
 };
 

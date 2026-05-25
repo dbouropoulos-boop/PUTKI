@@ -25,6 +25,19 @@ const post = async (path, body) => {
   return r.json();
 };
 
+// iter64 — fire-and-forget funnel beacon. Never block UX on this.
+const beacon = (sessionId, event, meta) => {
+  if (!sessionId) return;
+  try {
+    fetch(`${BACKEND}/api/profiler/event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, event, meta: meta || {} }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch { /* swallow */ }
+};
+
 const PeliAreenaScenario = () => {
   const { lang } = useLang();
   const [stage, setStage] = useState('intro');
@@ -37,6 +50,8 @@ const PeliAreenaScenario = () => {
   const start = async () => {
     const s = await post('/api/mini-games/scenario/start');
     setSession(s); setAnswers([]); setPickedNow(null); setStage('playing');
+    beacon(s.play_id, 'session_start', { total: s.total });
+    beacon(s.play_id, 'scenario_view', { idx: 1 });
   };
 
   const currentIdx = answers.length;
@@ -46,6 +61,7 @@ const PeliAreenaScenario = () => {
   const pick = (k) => { if (!pickedNow) setPickedNow(k); };
   const next = async () => {
     if (!pickedNow) return;
+    beacon(session?.play_id, 'scenario_pick', { idx: currentIdx + 1, picked: pickedNow });
     const newAns = [...answers, { q_id: currentSc.id, picked: pickedNow }];
     setAnswers(newAns); setPickedNow(null);
     if (newAns.length >= total) {
@@ -53,6 +69,10 @@ const PeliAreenaScenario = () => {
         play_id: session.play_id, anon_id: session.anon_id, answers: newAns,
       });
       setPreview(r); setStage('preview');
+      beacon(session.play_id, 'session_complete', { profile_key: r?.persona_preview?.key });
+      beacon(session.play_id, 'reveal_view', { profile_key: r?.persona_preview?.key });
+    } else {
+      beacon(session?.play_id, 'scenario_view', { idx: newAns.length + 1 });
     }
   };
 
@@ -219,6 +239,7 @@ const ScenarioPreview = ({ lang, preview, session, onUnlocked, fullResult }) => 
 const ScenarioUnlocked = ({ lang, result }) => {
   const title = (lang === 'en' && result.persona.title_en) || result.persona.title;
   const tagline = (lang === 'en' && result.persona.tagline_en) || result.persona.tagline;
+  const traps = (lang === 'en' && result.persona.three_traps_en) || result.persona.three_traps_fi || [];
   const shareText = (lang === 'en' && result.share_text_en) || result.share_text;
   const share = () => {
     fetch(`${BACKEND}/api/mini-games/share/track`, {
@@ -231,6 +252,43 @@ const ScenarioUnlocked = ({ lang, result }) => {
   };
   return (
     <div data-testid="scenario-unlocked">
+      {/* iter64 — Three Traps panel: the headline value of the email gate */}
+      {traps.length > 0 && (
+        <div data-testid="scenario-three-traps" style={{
+          padding: '28px 28px 24px',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderLeft: '4px solid #b07d18',
+          borderRadius: 4,
+          marginBottom: 32,
+        }}>
+          <div className="mono" style={{
+            fontSize: 10, letterSpacing: '0.18em',
+            color: '#b07d18', fontWeight: 700, marginBottom: 10,
+          }}>
+            {pickPA(lang, 'card.traps.heading')}
+          </div>
+          <p style={{
+            fontFamily: 'Georgia, Newsreader, serif',
+            fontSize: 14.5, lineHeight: 1.55, color: 'var(--muted)',
+            margin: '0 0 18px',
+          }}>
+            {pickPA(lang, 'card.traps.subhead')}
+          </p>
+          <ol style={{ margin: 0, padding: '0 0 0 1.1em', listStyle: 'decimal' }}>
+            {traps.map((trap, i) => (
+              <li key={i} data-testid={`scenario-trap-${i + 1}`} style={{
+                fontFamily: 'Georgia, Newsreader, serif',
+                fontSize: 16, lineHeight: 1.55, color: 'var(--ink)',
+                marginBottom: 12,
+              }}>
+                {trap}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       <div className="mono" style={{ fontSize: 11, letterSpacing: '0.22em', color: '#3F8A4D', fontWeight: 700, marginBottom: 12 }}>
         {pickPA(lang, 'sc.unlocked.eyebrow')}
       </div>
