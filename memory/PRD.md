@@ -2,6 +2,19 @@
 
 ## Phase History (latest first)
 
+- **iter70 · Diagnostics copy audit + iGaming reframe** (2026-05-25, 46/46 tests passing · screenshot-verified all 4 surfaces)
+  - **Audited all 4 diagnostic surfaces** (/mestari hub, sports-betting, poker, blackjack) for academic over-formality, disclaimer-stacking, and missing concrete proof. Found same 4 issues per page: triple-stamped "Research tool" eyebrow, 2-3x disclaimer blocks, zero social proof, cryptic hero stats.
+  - **Trimmed all eyebrows** to crisp format: "SPORTS BETTING · 90 SECONDS · FREE" / "POKER · 90 SECONDS · FREE" / "BLACKJACK · 90 SECONDS · FREE" / "MESTARI · EDITORIAL DIAGNOSTICS". Removes "Research tool · Editorial diagnostic" repetition. Eyebrow now sells time + price + topic in 5 words.
+  - **Collapsed disclaimers** from 2-3 paragraphs of "research tool / does not promote gambling / will never tell you what to wager" down to one strong line: **"Editorial content. 18+. Not betting advice, no gambling. For educational use only."** The footer compliance band already does the heavy legal lifting (added in iter67g), so disclaimers here are now signal not noise.
+  - **Replaced cryptic hero stats** with concrete trust-building numbers:
+    - Poker: "2 axes" -> **"9 profiles · RECOGNISED PLAYER TYPES - DRAWN FROM THE SKLANSKY-STYLE MATRIX"**.
+    - Blackjack: blank "Solved" -> **"0.5% house edge · WITH PERFECT BASIC STRATEGY"**.
+    - Sports unchanged (already had concrete "11 sources, 0 overrides" cred block).
+  - **Rewrote subs** in the iGaming voice: every diagnostic sub now starts with "Five questions about how you…" and ends with the concrete benefit: "5-day playbook on how skilled poker is actually played" / "where the house edge actually comes from" / "how EU sportsbooks actually move prices". No more "research-grounded analytical framework".
+  - **Hub now sells the funnel**: "Three 90-second tests that apply an established framework to how you actually play. At the end: your profile and a 5-day playbook - emailed, free." Concrete steps + concrete deliverable + concrete price.
+  - **Method blurb shortened** by 30 words on each surface, drops the "no editorial spin" tail (already implicit in "Deterministic scoring: same answers, same profile, every time").
+  - **Test fix in lock-step**: `test_mestari_copy.py` had 2 assertions checking `hero.fi.sub.startswith("90 sekunnin")` - updated to `startswith("Viisi kysymystä")` to match the new copy.
+
 - **iter69 phase 4 · Scheduler + Feed + Dispatch admin extraction + global em-dash purge** (2026-05-25, 51/51 tests passing)
   - **Phase 4 admin extraction** - 15 endpoints moved to `routes/admin.py`:
     - **Scheduler (5)**: `GET/PUT /admin/scheduler/cadences`, `GET /admin/scheduler/status`, `POST /admin/scheduler/tick`, `POST /admin/scheduler/fill-variants`. Source module is `seed_scheduler` (NOT `scheduler` - typo bug caught + fixed during restart).

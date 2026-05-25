@@ -79,14 +79,14 @@ class TestDeepMergeAndReset:
         merged = r.json()["merged"]
         assert merged["hero"]["fi"]["headline"] == new_headline
         # The default sub must be preserved (deep-merge, not replace)
-        assert merged["hero"]["fi"]["sub"].startswith("90 sekunnin")
+        assert merged["hero"]["fi"]["sub"].startswith("Viisi kysymystä")
         # EN side untouched
         assert merged["hero"]["en"]["headline"] == "What kind of sports bettor are you?"
 
         # Public endpoint reflects the new value
         pub = requests.get(f"{BASE_URL}/api/mestari/copy", timeout=15).json()
         assert pub["hero"]["fi"]["headline"] == new_headline
-        assert pub["hero"]["fi"]["sub"].startswith("90 sekunnin")
+        assert pub["hero"]["fi"]["sub"].startswith("Viisi kysymystä")
 
     def test_put_empty_body_resets_all_overrides(self):
         # First put a custom value
