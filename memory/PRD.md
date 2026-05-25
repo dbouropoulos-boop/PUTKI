@@ -2,6 +2,26 @@
 
 ## Phase History (latest first)
 
+- **iter68 phase 2 · Phase 2 modularisation + Mestari copy test fix + YouTube channel-ID bulk resolver** (2026-05-25, 27/27 tests passing · 5 stale tests revived)
+  - **Phase 2 admin extraction** — 7 streamer-meta endpoints moved into `routes/admin.py` (now ~250 LOC, 11 endpoints total):
+    - `GET /admin/streamer-meta` (legacy listing)
+    - `PUT /admin/streamer-meta` (manual upsert)
+    - `GET /admin/streamer-meta/v2` (status-aware listing)
+    - `POST /admin/streamer-meta/generate-draft` (AI draft)
+    - `POST /admin/streamer-meta/publish` (promote draft → live)
+    - `POST /admin/streamer-meta/suppress` (toggle flag)
+    - `GET /admin/streamer-meta/history/{platform}/{user_login}` (GDPR history)
+    - Co-located 3 Pydantic payloads (`_StreamerMetaPayload`, `_DraftGeneratePayload`, `_PublishMetaPayload`, `_SuppressMetaPayload`) moved with their handlers. server.py dropped ~140 LOC.
+  - **`test_mestari_copy.py` revival** — 2-line fix: stale assertions still expected the OLD copy "Millainen analyytikko sinä olet?" / "What kind of analyst are you?". Updated to current "Millainen urheiluvedonlyöjä sinä olet?" / "What kind of sports bettor are you?". All 9 tests now green (was 4 passing + 5 failing).
+  - **YouTube channel-ID bulk resolver** — new admin endpoint `POST /api/admin/streamers/resolve-youtube-channels?limit=N&dry_run=bool`:
+    - Iterates every YouTube row in the streamer registry that doesn't yet have `youtube_channel_id`.
+    - Tries multiple candidates per row: raw channel field, slug, with `-yt`/`_yt`/`-youtube` suffix stripped (catches our internal slug-namespace convention).
+    - Persists resolved `UCxxxxxxxx` to `streamers.youtube_channel_id` + `youtube_channel_resolved_at`. `dry_run=true` previews without writes.
+    - Surfaces YouTube API errors per-row (`quotaExceeded`, `forbidden`, `not_found`, `bad_request`, etc.) + an aggregated `error_breakdown` so back-office users see exactly what's wrong.
+    - Audit log entry: `streamer.resolve_youtube_channels`.
+  - **`multi_platform_live._fetch_youtube_live_payload` upgraded** to consume the cached `youtube_channel_id` first, falling back to per-request handle resolve only for un-cached rows. Once the bulk resolver succeeds, the YouTube live-status endpoint runs zero handle-resolve calls.
+  - **Field discovery during build**: confirmed the FI YouTube creator handles in our seed registry are internally suffixed `-yt` (e.g. `@jarttu84-yt`) — the resolver strips this to recover the real handle. Confirmed via direct YouTube API probe that the current API key is over its daily quota — the resolver code is functional, key needs a billing-enabled GCP project or a fresh quota day to actually resolve.
+
 - **iter68 phase 1 · `routes/admin.py` extraction + admin-only "EDIT FOUNDER" deep-link** (2026-05-25, 5/5 new acceptance tests passing · 31/31 pre-existing tests green · screenshot-verified)
   - **First admin cluster extracted from `server.py` monolith** into `/app/backend/routes/admin.py` (~100 LOC, 4 endpoints):
     - `GET  /api/admin/mittari/copy`

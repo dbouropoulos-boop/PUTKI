@@ -83,3 +83,50 @@ class TestMestariCopyExtraction:
         )
         body = _editor_envelope(r)
         assert "hero" in body["merged"]
+
+
+class TestStreamerMetaExtraction:
+    """iter68 phase 2 — streamer-meta cluster lives in routes/admin.py."""
+
+    def test_legacy_listing_requires_admin(self):
+        r = requests.get(f"{BASE_URL}/api/admin/streamer-meta", timeout=5)
+        assert r.status_code == 401
+
+    def test_legacy_listing_returns_items_array(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/streamer-meta", headers=HEADERS, timeout=5
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert "items" in body
+        assert isinstance(body["items"], list)
+
+    def test_v2_listing_returns_status_aware_rows(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/streamer-meta/v2", headers=HEADERS, timeout=5
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert "items" in body and isinstance(body["items"], list)
+        assert "rate_limit" in body
+        # Rate-limit envelope from streamer_meta_drafter
+        for key in ("remaining", "limit_per_hour", "window_seconds"):
+            assert key in body["rate_limit"], f"missing {key} in rate_limit"
+
+    def test_history_requires_admin(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/streamer-meta/history/twitch/some_login",
+            timeout=5,
+        )
+        assert r.status_code == 401
+
+    def test_history_returns_items_array(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/streamer-meta/history/twitch/some_login",
+            headers=HEADERS,
+            timeout=5,
+        )
+        # 200 with an empty list is the expected shape for a streamer
+        # that has no publish history yet.
+        assert r.status_code == 200, r.text
+        assert "items" in r.json()

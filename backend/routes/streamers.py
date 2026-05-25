@@ -25,6 +25,7 @@ Admin (Depends(require_admin)):
 from __future__ import annotations
 
 import asyncio
+import os
 import logging
 import time as _t
 from datetime import datetime, timezone, timedelta
@@ -417,6 +418,145 @@ def build_streamers_router() -> APIRouter:
             "attempted": len(results),
             "succeeded": sum(1 for r in results if r["ok"]),
             "still_failed": sum(1 for r in results if not r["ok"]),
+            "results": results,
+        }
+
+    # ─── iter68 phase 2.1 · YouTube channel-ID bulk resolver ──────
+    # Mass-resolves `@handle` → `UCxxxxxx` for every YouTube row in the
+    # streamer registry that doesn't yet carry a stored `youtube_channel_id`.
+    # Tries the registry's `channel` field first, then strips common
+    # platform-suffixes (`-yt`, `_yt`, `-youtube`) when the @handle ships
+    # with our internal slug-namespacing. Persists hits onto the doc so
+    # the LIVE endpoint can skip the network handle-resolve roundtrip.
+    @router.post("/admin/streamers/resolve-youtube-channels")
+    async def admin_resolve_youtube_channels(
+        request: Request, limit: int = 50, dry_run: bool = False,
+        _: bool = Depends(require_admin), db = Depends(get_db),
+    ):
+        api_key = os.environ.get("YOUTUBE_API_KEY")
+        if not api_key:
+            raise HTTPException(503, "YOUTUBE_API_KEY not configured")
+
+        import httpx
+
+        cur = db.streamers.find(
+            {"platform": {"$regex": "^youtube$", "$options": "i"},
+             "$or": [
+                 {"youtube_channel_id": {"$exists": False}},
+                 {"youtube_channel_id": {"$in": [None, ""]}},
+             ]},
+            {"_id": 0, "slug": 1, "name": 1, "channel": 1},
+        ).limit(max(1, min(limit, 200)))
+        targets = await cur.to_list(length=200)
+
+        # We re-implement handle resolution inline so we can surface the
+        # underlying YouTube API error (quotaExceeded, keyInvalid, etc.)
+        # back to the caller instead of swallowing it to None like the
+        # cached lookup helper does.
+        async def _resolve_one(s):
+            raw = (s.get("channel") or "").strip()
+            slug = (s.get("slug") or "").strip()
+            seen = set()
+            candidates = []
+            for ref in (raw, slug):
+                for cleaned in (
+                    ref,
+                    ref.replace("-yt", "").replace("_yt", "").replace("-youtube", ""),
+                    ref.lstrip("@").replace("-yt", "").replace("_yt", ""),
+                ):
+                    if cleaned and cleaned not in seen:
+                        seen.add(cleaned)
+                        candidates.append(cleaned)
+            resolved = None
+            tried = []
+            api_error = None
+            async with httpx.AsyncClient(timeout=8.0) as http:
+                for cand in candidates:
+                    tried.append(cand)
+                    handle = cand if cand.startswith("@") else f"@{cand.lstrip('@')}"
+                    params = {"part": "id", "forHandle": handle, "key": api_key}
+                    try:
+                        r = await http.get(
+                            "https://www.googleapis.com/youtube/v3/channels",
+                            params=params,
+                        )
+                    except Exception as e:
+                        api_error = f"network_error: {e}"
+                        continue
+                    if r.status_code == 200:
+                        items = (r.json() or {}).get("items") or []
+                        if items:
+                            resolved = items[0].get("id")
+                            if resolved and resolved.startswith("UC"):
+                                break
+                    elif r.status_code == 403:
+                        # Surface the explicit reason — quotaExceeded is
+                        # the common one for FI accounts that aren't on
+                        # a billed YouTube Data API project.
+                        try:
+                            err = r.json().get("error", {}).get("errors", [{}])[0]
+                            api_error = err.get("reason") or "forbidden"
+                        except Exception:
+                            api_error = "forbidden"
+                        # No point trying other candidates if we're rate
+                        # limited / forbidden.
+                        break
+                    elif r.status_code == 400:
+                        api_error = "bad_request"
+                    elif r.status_code == 404:
+                        api_error = "not_found"
+                    else:
+                        api_error = f"http_{r.status_code}"
+            return {"slug": s["slug"], "name": s.get("name"),
+                    "channel": raw, "tried": tried,
+                    "channel_id": resolved, "error": api_error}
+
+        sem = asyncio.Semaphore(4)  # Stay polite with YouTube API quota
+        async def _bounded(s):
+            async with sem:
+                return await _resolve_one(s)
+        results = await asyncio.gather(*[_bounded(s) for s in targets])
+
+        # Persist hits unless caller asked for a dry-run preview.
+        persisted = 0
+        if not dry_run:
+            for r in results:
+                if r["channel_id"]:
+                    await db.streamers.update_one(
+                        {"slug": r["slug"]},
+                        {"$set": {
+                            "youtube_channel_id": r["channel_id"],
+                            "youtube_channel_resolved_at":
+                                datetime.now(timezone.utc).isoformat(),
+                        }},
+                    )
+                    persisted += 1
+
+        # Surface the dominant error reason so the back-office can show
+        # "API quota exceeded — try again tomorrow" instead of a silent zero.
+        error_breakdown: Dict[str, int] = {}
+        for r in results:
+            if not r["channel_id"] and r.get("error"):
+                error_breakdown[r["error"]] = error_breakdown.get(r["error"], 0) + 1
+
+        actor = request.state.admin_actor
+        from admin_auth import write_audit
+        await write_audit(db, actor=actor["actor"], role=actor["role"],
+                          action="streamer.resolve_youtube_channels",
+                          resource="streamers:youtube:*",
+                          meta={"attempted": len(results),
+                                "resolved": sum(1 for r in results if r["channel_id"]),
+                                "persisted": persisted,
+                                "dry_run": dry_run,
+                                "error_breakdown": error_breakdown})
+
+        return {
+            "attempted": len(results),
+            "resolved": sum(1 for r in results if r["channel_id"]),
+            "still_unresolved": sum(1 for r in results if not r["channel_id"]),
+            "persisted": persisted,
+            "dry_run": dry_run,
+            "error_breakdown": error_breakdown,
             "results": results,
         }
 

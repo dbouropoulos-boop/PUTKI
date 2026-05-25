@@ -233,26 +233,41 @@ async def fetch_youtube_live(db) -> Dict[str, Any]:
         except Exception:
             streamers = []
 
-        # Collect every active YouTube streamer's `channel` field (UC… ids,
-        # @handles, and legacy usernames all accepted) and resolve @handles
-        # to canonical UC ids before hitting the live search endpoint.
+        # Collect every active YouTube streamer. Prefer the cached
+        # `youtube_channel_id` (populated by the back-office bulk resolver)
+        # so we skip the per-request handle-resolve roundtrip when possible.
+        yt_rows = [s for s in streamers
+                   if (s.get("platform") or "").lower() == "youtube"]
+        cached_ids = [
+            (s.get("youtube_channel_id") or "").strip()
+            for s in yt_rows
+            if (s.get("youtube_channel_id") or "").strip().startswith("UC")
+        ]
+        # For any row without a cached channel_id, fall back to its
+        # raw @handle / username — still resolved live below.
         raw_refs = [
             (s.get("channel") or "").strip()
-            for s in streamers
-            if (s.get("platform") or "").lower() == "youtube" and (s.get("channel") or "").strip()
+            for s in yt_rows
+            if not (s.get("youtube_channel_id") or "").strip().startswith("UC")
+            and (s.get("channel") or "").strip()
         ]
-        if not raw_refs:
+        if not cached_ids and not raw_refs:
             payload = {"streamers": [], "platform": "youtube", "count": 0,
                        "dormant": False, "reason": "no_youtube_streamers_in_registry",
                        "fetched_at": _now()}
             _store("youtube", payload)
             return payload
 
-        resolved = await asyncio.gather(
-            *[_resolve_youtube_handle(ref, api_key) for ref in raw_refs],
-            return_exceptions=True,
-        )
-        channel_ids = [c for c in resolved if isinstance(c, str) and c.startswith("UC")]
+        # Only run handle-resolve for the un-cached subset.
+        if raw_refs:
+            resolved = await asyncio.gather(
+                *[_resolve_youtube_handle(ref, api_key) for ref in raw_refs],
+                return_exceptions=True,
+            )
+            live_resolved = [c for c in resolved if isinstance(c, str) and c.startswith("UC")]
+        else:
+            live_resolved = []
+        channel_ids = list({*cached_ids, *live_resolved})
 
         if not channel_ids:
             payload = {"streamers": [], "platform": "youtube", "count": 0,

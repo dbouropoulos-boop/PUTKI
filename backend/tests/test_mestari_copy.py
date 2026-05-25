@@ -15,7 +15,7 @@ HEADERS = {"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"}
 
 TOP_KEYS = ["header", "hero", "cred", "method", "stack", "steps",
             "clarity", "team", "faq", "final", "footer"]
-DEFAULT_FI_HEADLINE = "Millainen analyytikko sinä olet?"
+DEFAULT_FI_HEADLINE = "Millainen urheiluvedonlyöjä sinä olet?"
 
 
 @pytest.fixture(autouse=True)
@@ -81,7 +81,7 @@ class TestDeepMergeAndReset:
         # The default sub must be preserved (deep-merge, not replace)
         assert merged["hero"]["fi"]["sub"].startswith("90 sekunnin")
         # EN side untouched
-        assert merged["hero"]["en"]["headline"] == "What kind of analyst are you?"
+        assert merged["hero"]["en"]["headline"] == "What kind of sports bettor are you?"
 
         # Public endpoint reflects the new value
         pub = requests.get(f"{BASE_URL}/api/mestari/copy", timeout=15).json()
