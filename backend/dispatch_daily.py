@@ -875,7 +875,8 @@ async def _dispatch_segment(
 async def run_daily_dispatch(db, *, dry_run: bool = True,
                               cycle_id: Optional[str] = None,
                               recipients_override: Optional[List[str]] = None,
-                              channels: Optional[List[str]] = None) -> Dict[str, Any]:
+                              channels: Optional[List[str]] = None,
+                              force_telegram: bool = False) -> Dict[str, Any]:
     """Assemble payloads, fan out to each segment, write the audit trail.
 
     Parameters
@@ -895,6 +896,11 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
     channels
         Optional whitelist (e.g. `["email"]`) to scope a test send to
         one channel. Defaults to all three.
+    force_telegram
+        When True, bypasses the "already sent today" lock for the
+        Telegram broadcast. Used by the admin /api/admin/dispatch/telegram-force
+        endpoint when the cron lock needs to be overridden for ad-hoc QA.
+        Sharpness threshold still applies.
     """
     cycle_id = cycle_id or uuid.uuid4().hex
     started_at = datetime.now(timezone.utc).isoformat()
@@ -913,6 +919,11 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
     #   • Once per UTC day (unique index on telegram_broadcasts.date_ymd)
     # Manual test sends with `recipients_override` bypass BOTH gates (it's
     # an admin-initiated direct DM, not the public-channel broadcast).
+    # iter74 fix: the once-per-day gate ONLY applies to live broadcasts.
+    # Dry-runs (and `force_telegram=True`) bypass it so admins can preview
+    # the rendered message without poisoning the cron lock. The lock row
+    # is recorded AFTER the broadcast actually fires successfully (see
+    # post-results block below), not speculatively before.
     telegram_throttle: Dict[str, Any] = {"throttled": False, "reason": None,
                                          "top_sharpness": 0,
                                          "threshold": TELEGRAM_BROADCAST_SHARPNESS_MIN}
@@ -926,18 +937,13 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
                 "reason": f"top_sharpness_{top}_below_min_{TELEGRAM_BROADCAST_SHARPNESS_MIN}",
             })
             channels = [c for c in channels if c != "telegram"]
-        elif await _telegram_already_sent_today(db):
+        elif (
+            not dry_run
+            and not force_telegram
+            and await _telegram_already_sent_today(db)
+        ):
             telegram_throttle.update({"throttled": True, "reason": "already_sent_today"})
             channels = [c for c in channels if c != "telegram"]
-        else:
-            # Record BEFORE the send fires so a crash mid-dispatch still
-            # blocks a duplicate retry. Unique index makes this idempotent.
-            await _record_telegram_broadcast(
-                db,
-                picks_count=len(picks_list),
-                top_sharpness=top,
-                mode="dry_run" if dry_run else "live",
-            )
 
     tasks = []
     if "email" in channels:
@@ -962,6 +968,32 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
             recipients_override=recipients_override,
         ))
     results = await asyncio.gather(*tasks, return_exceptions=False)
+
+    # iter74: lock the daily Telegram slot ONLY after a successful live
+    # broadcast actually completed (not on dry-run, not on errors). This
+    # prevents previews from poisoning the cron lock and prevents a
+    # failed sendMessage call from blocking the next retry.
+    if (
+        "telegram" in channels
+        and not recipients_override
+        and not dry_run
+    ):
+        tg_result = next(
+            (r for r in results if r and r.get("channel") == "telegram"),
+            None,
+        )
+        if (
+            tg_result
+            and tg_result.get("mode") == "live"
+            and not tg_result.get("errors")
+            and tg_result.get("delivered")
+        ):
+            await _record_telegram_broadcast(
+                db,
+                picks_count=len((telegram_payload or {}).get("picks") or []),
+                top_sharpness=telegram_throttle.get("top_sharpness") or 0,
+                mode="live",
+            )
 
     finished_at = datetime.now(timezone.utc).isoformat()
     cycle_doc = {
