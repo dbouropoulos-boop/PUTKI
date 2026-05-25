@@ -618,6 +618,13 @@ const Mittari = () => {
   const [cockpit, setCockpit] = useState(null);
   const [odds, setOdds] = useState(null);
   const [stats, setStats] = useState(null);
+  // Admin detection — true iff the back-office token is set in
+  // localStorage. Used to surface the discreet "EDIT FOUNDER ↗"
+  // deep-link without leaking it to regular visitors.
+  const [isAdmin] = useState(() => {
+    try { return !!window.localStorage.getItem('putki_hq_admin_token'); }
+    catch { return false; }
+  });
   const [unlocked, setUnlocked] = useState(() => {
     try { return !!window.localStorage.getItem(STORAGE_UNLOCK_KEY); }
     catch { return false; }
@@ -1151,7 +1158,24 @@ const Mittari = () => {
         <section data-testid="mittari-founder" style={{
           borderTop: '1px solid var(--hairline)', padding: '40px 0',
         }}>
-          <SectionLabel>{c.founderTitle}</SectionLabel>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+            <SectionLabel>{c.founderTitle}</SectionLabel>
+            {/* Admin-only deep-link → back-office copy editor.
+                Visible only when localStorage carries the admin token,
+                so regular visitors never see it. Server-side gate still
+                enforces auth — this is purely a UX shortcut. */}
+            {isAdmin && (
+              <Link to="/back-office/mittari-copy#founder"
+                data-testid="mittari-founder-admin-edit"
+                style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                  letterSpacing: '0.16em', color: '#5BA0E8',
+                  textDecoration: 'none',
+                  border: '1px dashed #5BA0E8', padding: '4px 10px',
+                  background: 'rgba(91,160,232,0.06)',
+                }}>EDIT FOUNDER ↗</Link>
+            )}
+          </div>
           <div className="m-founder-grid" style={{
             marginTop: 18, background: 'var(--surface)',
             border: '1px solid var(--hairline)', padding: 28,

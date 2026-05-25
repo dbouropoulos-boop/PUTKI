@@ -2,6 +2,18 @@
 
 ## Phase History (latest first)
 
+- **iter68 phase 1 · `routes/admin.py` extraction + admin-only "EDIT FOUNDER" deep-link** (2026-05-25, 5/5 new acceptance tests passing · 31/31 pre-existing tests green · screenshot-verified)
+  - **First admin cluster extracted from `server.py` monolith** into `/app/backend/routes/admin.py` (~100 LOC, 4 endpoints):
+    - `GET  /api/admin/mittari/copy`
+    - `PUT  /api/admin/mittari/copy`
+    - `GET  /api/admin/mestari/copy`
+    - `PUT  /api/admin/mestari/copy`
+  - Endpoints use `Depends(get_db)` + `Depends(require_admin)` via the existing `routes/_helpers.bind_dependencies()` pattern — zero new infra. Local imports inside each handler so the module is importable even when a data-layer dep is failing in tests.
+  - **Wiring**: `api_router.include_router(_make_admin_router())` in `server.py` right after the mini-games router include. Replaced the 4 handler functions with single-line `# NOTE: moved to routes/admin.py` markers.
+  - **Test coverage**: new `tests/test_iter68_admin_routes_extraction.py` with 5 cases — 401 without token, editor envelope shape (`{raw, merged, defaults, updated_at}`), PUT round-trip with cleanup, for both mittari + mestari.
+  - **Admin-only "EDIT FOUNDER ↗" link** on `/mittari`: appears only when `localStorage.putki_hq_admin_token` is set. Deep-links to `/back-office/mittari-copy#founder`. Confirmed hidden for regular visitors via Playwright assertion (`count = 0`).
+  - **Known pre-existing failures untouched**: `test_mestari_copy.py` (5 stale assertions expecting the old "Millainen analyytikko sinä olet?" copy — needs a 5-line update to match the new "Millainen urheiluvedonlyöjä sinä olet?" copy), `test_chunk_b_landing_pages.py::test_stats_returns_segments_and_total` (production DB data bleed in optin aggregate). Neither caused by this extraction.
+
 - **iter67g · iGaming clarity + responsible-gambling footer + founder rebrand** (2026-05-25, screenshot-verified)
   - **Copy "books" → "sportsbooks"** across the entire stack (frontend `Mittari.jsx` defaults + backend `mittari_copy.py` DEFAULT_MITTARI_COPY). Now everywhere reads "EU sportsbooks" / "EU-urheilukirjat" — accurate iGaming terminology instead of ambiguous "books".
   - **Added editorial-only disclaimer** to the hero subtitle: "**Editorial only — not betting advice.**" / "**Toimituksellista sisältöä — ei vetovinkkejä.**"

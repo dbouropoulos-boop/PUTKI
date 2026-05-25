@@ -1,0 +1,85 @@
+"""
+iter68 phase 1 — `routes/admin.py` extraction smoke tests.
+
+Validates that the four admin copy endpoints (GET/PUT × mittari/mestari)
+still respond correctly after being lifted from `server.py` into the
+new `routes/admin.py` router module.
+
+What we assert
+──────────────
+1. The endpoint URLs are unchanged (`/api/admin/{mittari,mestari}/copy`).
+2. Without a token they 401 (auth gate intact).
+3. With the admin token they return the editor envelope
+   `{raw, merged, defaults, updated_at}` shape.
+4. PUT round-trips: an admin can persist a tiny override and the next
+   GET reflects it inside the `merged` tree.
+"""
+from __future__ import annotations
+
+import os
+import time
+
+import requests
+
+BASE_URL = os.environ.get("BACKEND_TEST_URL", "http://localhost:8001")
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "putki-hq-admin")
+HEADERS = {"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"}
+
+
+def _editor_envelope(r):
+    assert r.status_code == 200, r.text
+    body = r.json()
+    for key in ("raw", "merged", "defaults", "updated_at"):
+        assert key in body, f"missing {key} in editor envelope"
+    return body
+
+
+class TestMittariCopyExtraction:
+    def test_get_requires_admin_token(self):
+        r = requests.get(f"{BASE_URL}/api/admin/mittari/copy", timeout=5)
+        assert r.status_code == 401
+
+    def test_get_returns_editor_envelope(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/mittari/copy", headers=HEADERS, timeout=5
+        )
+        body = _editor_envelope(r)
+        # The merged tree should expose at least the hero block.
+        assert "hero" in body["merged"]
+
+    def test_put_round_trip(self):
+        # Save a tiny override.
+        new_lead = f"iter68-test-{int(time.time())}"
+        put = requests.put(
+            f"{BASE_URL}/api/admin/mittari/copy",
+            json={"hero": {"fi": {"page_title_lead": new_lead}}},
+            headers=HEADERS,
+            timeout=5,
+        )
+        assert put.status_code == 200, put.text
+        # GET must reflect the new value inside merged.
+        get = requests.get(
+            f"{BASE_URL}/api/admin/mittari/copy", headers=HEADERS, timeout=5
+        )
+        body = _editor_envelope(get)
+        assert body["merged"]["hero"]["fi"]["page_title_lead"] == new_lead
+        # Cleanup — reset by saving an empty override.
+        requests.put(
+            f"{BASE_URL}/api/admin/mittari/copy",
+            json={},
+            headers=HEADERS,
+            timeout=5,
+        )
+
+
+class TestMestariCopyExtraction:
+    def test_get_requires_admin_token(self):
+        r = requests.get(f"{BASE_URL}/api/admin/mestari/copy", timeout=5)
+        assert r.status_code == 401
+
+    def test_get_returns_editor_envelope(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/mestari/copy", headers=HEADERS, timeout=5
+        )
+        body = _editor_envelope(r)
+        assert "hero" in body["merged"]
