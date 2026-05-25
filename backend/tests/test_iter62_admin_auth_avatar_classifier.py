@@ -13,7 +13,9 @@ BACKEND = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND))
 
 BASE = (os.environ.get("REACT_APP_BACKEND_URL") or "http://localhost:8001").rstrip("/")
-LEGACY_TOKEN = "putki-hq-admin"
+# Local-dev admin token. Read from env so it can be rotated without code
+# edits. `admin_auth.seed_root_user_from_env` reads the same var on boot.
+LEGACY_TOKEN = os.environ.get("BACK_OFFICE_TOKEN") or "putki-hq-admin"
 
 
 # ─── Admin auth ──────────────────────────────────────────────────────────
