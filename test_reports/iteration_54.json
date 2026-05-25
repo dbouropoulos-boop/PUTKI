@@ -1,0 +1,29 @@
+{
+  "summary": "iter66 — Mittari unified panel rebuild + admin streamers regression. All 10 backend tests pass (dial/cockpit/mittari-stats/streamers-live across all platforms, admin streamers PUT/GET roundtrip with X-Admin-Token: putki-hq-admin — no 422). All frontend acceptance criteria verified: unified panel wraps both dial + signals slots, all 5 mittari-panel-* data-testids resolve and point to /menetelma(#sharpness), exactly 2 top-level Gate components (hero+final, no middle), FI⇄EN toggle works on both page title and global nav-method-link (Menetelmä/Method), subscriber feed has no 'test' rows, panel renders on 1920x1080 and stacks correctly at 800x1024.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter66_mittari_unified.py",
+    "/app/test_reports/pytest/iter66.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Mittari.jsx is large (~1100+ lines). Consider extracting the Gate component (lines 429–540) and the SignalsList block to dedicated files to keep page-level files <700 lines per code-review guidelines.",
+    "routes/_helpers.py require_admin fix is clean — explicit (Request, X-Admin-Token Header) signature mirrors server.py and avoids the *args/**kwargs introspection leak. Good fix and well-commented.",
+    "StreamerPayload now lives in rosters.py (data layer) which prevents the circular import; server.py NOTE comment is appropriate. No duplicate model definition observed."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter66_mittari_unified.py (new)"
+  ],
+  "success_rate": { "backend": "100%", "frontend": "100%" },
+  "test_credentials": "X-Admin-Token: putki-hq-admin (from /app/memory/test_credentials.md + /app/backend/.env BACK_OFFICE_TOKEN)",
+  "seed_data_creation": "PUT roundtrip upserts a streamer slug 'pelisignaali-fi' via admin endpoint — non-destructive; idempotent (overwrites if rerun).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Mittari unified panel testids: mittari-panel (wrapper), mittari-panel-state-link, mittari-panel-help, mittari-panel-sharpness-link, mittari-subtitle-method-link, mittari-dial-slot, mittari-tips-slot. Header has data-testid='nav-method-link' linking to /menetelma. Only 2 Gate components: mittari-gate-hero and mittari-gate-final (each one creates nested testids -badge/-telegram-cta/-email-input/-email-submit so a naive querySelectorAll('[data-testid^=mittari-gate-]') returns 10 — match exact 'mittari-gate-hero' / 'mittari-gate-final' instead). Lang toggle: button:has-text('FI') / button:has-text('EN'). require_admin signature fix in routes/_helpers.py is solid — PUT /api/admin/streamers/{slug} returns 200, missing token returns 401/403, never 422. /api/streamers/live?platform=youtube legitimately returns 200 with streamers=[] and reason='youtube_handles_unresolved' (expected behaviour per agent_to_agent_context_note).",
+  "rca of the issue": "N/A — no bugs discovered. The previously-reported regressions (admin PUT 422 via *args/**kwargs leak; streamers/live 502 due to StreamerPayload ImportError) are both fixed and covered by test_iter66_mittari_unified.py."
+}

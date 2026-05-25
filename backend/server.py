@@ -2784,18 +2784,8 @@ class OperatorPayload(BaseModel):
     market_id: str = "FI"
 
 
-class StreamerPayload(BaseModel):
-    name: str
-    platform: str
-    channel: str
-    tier: int = 2
-    scene: str = "finnish"  # finnish | intl_global | intl_swedish | intl_dutch | intl_norwegian
-    origin: Optional[str] = None
-    photo: Optional[str] = ""
-    followers: Optional[str] = ""
-    sub: Optional[str] = None
-    active: bool = True
-    market_id: str = "FI"
+# NOTE: StreamerPayload now lives in rosters.py (data-layer) so both
+# server.py and routes/streamers.py can import it without circular deps.
 
 
 @api_router.get("/operators")

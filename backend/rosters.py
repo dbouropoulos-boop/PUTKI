@@ -23,8 +23,30 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel
+
 
 DEFAULT_MARKET_ID = "FI"
+
+
+class StreamerPayload(BaseModel):
+    """Payload model for admin streamer upsert.
+
+    Lives in rosters.py (the data layer) so both server.py and
+    routes/streamers.py can import it without circular dependencies.
+    """
+
+    name: str
+    platform: str
+    channel: str
+    tier: int = 2
+    scene: str = "finnish"  # finnish | intl_global | intl_swedish | intl_dutch | intl_norwegian
+    origin: Optional[str] = None
+    photo: Optional[str] = ""
+    followers: Optional[str] = ""
+    sub: Optional[str] = None
+    active: bool = True
+    market_id: str = "FI"
 
 
 def _now_iso() -> str:

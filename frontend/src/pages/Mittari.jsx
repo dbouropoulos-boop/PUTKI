@@ -652,7 +652,15 @@ const Mittari = () => {
   // Honesty rule: surface the counter only if it's a meaningful real number.
   // Showing "12 connected" hurts more than it helps; <50 → hide the module.
   const showCounter = subscriberCount >= 50;
-  const signupRows = (stats?.latest_signups || []).slice(0, 4);
+  // Drop placeholder/test signups so demo data never leaks into the feed.
+  // The backend may surface dev rows like "Test subscriber" — hide any
+  // row whose name starts with or contains the substring "test".
+  const signupRows = ((stats?.latest_signups || []) || [])
+    .filter((r) => {
+      const n = (r?.name || '').trim().toLowerCase();
+      return n && !n.includes('test');
+    })
+    .slice(0, 4);
 
   // Editable lists — fall back to hardcoded constants when the live tree
   // hasn't loaded yet (or returns empty arrays).
@@ -690,15 +698,6 @@ const Mittari = () => {
 
         {/* ╭─ HERO — the wheel + tips pairing (above the fold) ─╮ */}
         <section ref={heroRef} data-testid="mittari-hero" style={{ padding: '40px 0 24px' }}>
-          {/* Eyebrow + countdown row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-            <SectionLabel color={stateColor}>{c.sectionHero}</SectionLabel>
-            <div data-testid="mittari-pill-countdown" style={{
-              fontFamily: 'ui-monospace, monospace', fontSize: 11,
-              color: 'var(--muted)', letterSpacing: '0.10em',
-            }}><strong style={{ color: 'var(--muted)' }}>{c.countdownLabel.toUpperCase()}</strong> · <span style={{ color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{countdownStr}</span></div>
-          </div>
-
           {/* Page title — Mittari meter + predictive signals */}
           <h1 data-testid="mittari-page-title" style={{
             fontFamily: 'Georgia, serif', fontWeight: 400,
@@ -713,87 +712,138 @@ const Mittari = () => {
             fontFamily: 'ui-monospace, monospace', fontSize: 13,
             color: 'var(--muted)', lineHeight: 1.55, letterSpacing: '0.02em',
             margin: '0 0 24px', maxWidth: 760,
-          }}>{c.pageSubtitle}</p>
+          }}>{c.pageSubtitle}{' '}
+            <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{
+              color: '#E89248', textDecoration: 'none', whiteSpace: 'nowrap',
+            }}>{lang === 'en' ? 'What is Sharpness? →' : 'Mikä on Sharpness? →'}</Link>
+          </p>
 
           {/* Connective sentence — wheel reads scene, tips are play */}
           <h2 data-testid="mittari-headline" style={{
             fontFamily: 'Georgia, serif', fontWeight: 400,
             fontSize: 'clamp(20px, 2.6vw, 28px)', lineHeight: 1.2,
-            letterSpacing: '-0.015em', margin: '0 0 22px', maxWidth: 760,
+            letterSpacing: '-0.015em', margin: '0 0 18px', maxWidth: 760,
           }}>
             <span style={{ color: 'var(--ink)' }}>{c.signalsPairingLead}</span>{' '}
             <em style={{ color: '#E89248', fontStyle: 'italic', fontWeight: 700 }}>{c.signalsPairingEm}</em>{' '}
             <span style={{ color: 'var(--muted)' }}>{c.signalsPairingTail}</span>
           </h2>
 
-          {/* The pairing — wheel left, locked tips right (above the fold) */}
-          <div className="m-pairing-grid" style={{
-            display: 'grid', gridTemplateColumns: '1fr 1.15fr',
-            gap: 28, alignItems: 'stretch', marginBottom: 24,
+          {/* ╔═ Unified Mittari Panel ═════════════════════════════════╗
+              ONE bordered panel houses: header strip · dial (38%) │
+              hairline │ signals list (62%) · footer with avg-Sharpness.
+              Deep-links: state pill, "Sharpness" pill, and the help (?)
+              all route to /menetelma so a curious user can verify the
+              method instead of guessing. */}
+          <div data-testid="mittari-panel" className="m-panel" style={{
+            background: 'var(--surface)', border: '1px solid var(--hairline)',
+            marginBottom: 24, display: 'flex', flexDirection: 'column',
           }}>
-            {/* Left: the wheel + meter pill row */}
-            <div data-testid="mittari-dial-slot" style={{
-              minWidth: 0, display: 'flex', flexDirection: 'column', gap: 14,
+            {/* Panel header strip */}
+            <div className="m-panel-head" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              flexWrap: 'wrap', gap: 14,
+              padding: '12px 18px', borderBottom: '1px solid var(--hairline)',
+              background: 'var(--bg)',
             }}>
-              <DialCockpit state={stateKey} />
-              <div className="m-hero-pills" style={{
-                display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1,
-                background: 'var(--hairline)', border: '1px solid var(--hairline)',
-              }}>
-                <div data-testid="mittari-pill-state" style={{
-                  background: 'var(--surface)', padding: '10px 14px',
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                <SectionLabel color={stateColor}>{c.sectionHero}</SectionLabel>
+                <Link to="/menetelma" data-testid="mittari-panel-state-link" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  textDecoration: 'none',
+                  fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                  letterSpacing: '0.16em', color: stateColor, fontWeight: 700,
+                  border: `1px solid ${stateColor}`, padding: '4px 10px',
                 }}>
-                  <div style={{
-                    fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                    letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
-                    marginBottom: 4,
-                  }}>{c.meterStateLabel}</div>
-                  <div style={{
-                    fontFamily: 'Georgia, serif', fontSize: 22, lineHeight: 1,
-                    color: stateColor, letterSpacing: '-0.01em',
-                  }}>{stateLabel}</div>
-                </div>
-                <div data-testid="mittari-pill-composite" style={{
-                  background: 'var(--surface)', padding: '10px 14px',
+                  <span style={{ width: 6, height: 6, borderRadius: 999, background: stateColor }} />
+                  {c.meterStateLabel} · {stateLabel} · {Math.round(composite)}/100
+                </Link>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <div data-testid="mittari-pill-countdown" style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                  color: 'var(--muted)', letterSpacing: '0.10em',
                 }}>
-                  <div style={{
-                    fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                    letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
-                    marginBottom: 4,
-                  }}>{c.compositeLabel}</div>
-                  <div style={{
-                    fontFamily: 'Georgia, serif', fontSize: 22, lineHeight: 1,
-                    color: 'var(--ink)', letterSpacing: '-0.01em',
-                  }}>{Math.round(composite)}/100</div>
+                  <strong style={{ color: 'var(--muted)' }}>{c.countdownLabel.toUpperCase()}</strong>{' · '}
+                  <span style={{ color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{countdownStr}</span>
                 </div>
+                <Link to="/menetelma" data-testid="mittari-panel-help" aria-label={lang === 'en' ? 'How this works' : 'Miten tämä toimii'}
+                  title={lang === 'en' ? 'Read the full method' : 'Lue koko menetelmä'}
+                  style={{
+                    width: 22, height: 22, borderRadius: 999,
+                    border: '1px solid var(--hairline)', background: 'var(--surface)',
+                    color: 'var(--muted)', textDecoration: 'none',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'Georgia, serif', fontSize: 12, fontWeight: 700,
+                  }}>?</Link>
               </div>
             </div>
 
-            {/* Right: today's five tips (locked & visible — never an empty box) */}
-            <div data-testid="mittari-tips-slot" style={{
-              minWidth: 0, display: 'flex', flexDirection: 'column',
-              background: 'var(--surface)', border: '1px solid var(--hairline)',
-              padding: '16px 16px 14px',
+            {/* Panel body — dial (38%) │ hairline │ signals (62%) */}
+            <div className="m-panel-body" style={{
+              display: 'grid', gridTemplateColumns: '0.38fr 1px 0.62fr',
+              alignItems: 'stretch',
             }}>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                marginBottom: 10, flexWrap: 'wrap', gap: 8,
+              {/* Left: dial */}
+              <div data-testid="mittari-dial-slot" style={{
+                minWidth: 0, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                padding: '20px 18px', gap: 8,
+              }}>
+                <DialCockpit state={stateKey} />
+                <div style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 9,
+                  letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
+                  textAlign: 'center',
+                }}>{c.compositeLabel}{' · '}<span style={{ color: 'var(--ink)' }}>{Math.round(composite)}/100</span></div>
+              </div>
+
+              {/* Hairline vertical divider */}
+              <div aria-hidden style={{ background: 'var(--hairline)' }} />
+
+              {/* Right: signals list */}
+              <div data-testid="mittari-tips-slot" style={{
+                minWidth: 0, display: 'flex', flexDirection: 'column',
+                padding: '14px 18px 16px',
               }}>
                 <div style={{
-                  fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                  letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
-                }}>{unlocked ? (c._signalsCopy?.head_unlocked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU')) : (c._signalsCopy?.head_locked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'))}</div>
-                {hasLiveStats && (
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  marginBottom: 10, flexWrap: 'wrap', gap: 8,
+                }}>
                   <div style={{
                     fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                    letterSpacing: '0.10em', color: 'var(--muted)',
-                  }}>{c.killerEyebrow}{' '}<strong style={{ color: '#E89248' }}>{avgSharp}/100</strong></div>
-                )}
+                    letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
+                  }}>{unlocked ? (c._signalsCopy?.head_unlocked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU')) : (c._signalsCopy?.head_locked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'))}</div>
+                  <Link to="/menetelma#sharpness" data-testid="mittari-panel-sharpness-link" style={{
+                    fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                    letterSpacing: '0.14em', color: 'var(--muted)',
+                    textDecoration: 'none', borderBottom: '1px dotted var(--muted)',
+                  }} title={lang === 'en'
+                    ? 'Sharpness: 0–100 from EU book dispersion + momentum'
+                    : 'Sharpness: 0–100 EU-kirjojen hajonnasta ja momentumista'}>
+                    {lang === 'en' ? 'SHARPNESS 0–100 ?' : 'SHARPNESS 0–100 ?'}
+                  </Link>
+                </div>
+                <MittariSignals compact unlocked={unlocked}
+                  onRevealRequest={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                  copy={c._signalsCopy} lang={lang} />
               </div>
-              <MittariSignals compact unlocked={unlocked}
-                onRevealRequest={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                copy={c._signalsCopy} lang={lang} />
             </div>
+
+            {/* Panel footer — avg-Sharpness summary */}
+            {hasLiveStats && (
+              <div data-testid="mittari-panel-foot" style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                gap: 12, flexWrap: 'wrap',
+                padding: '10px 18px', borderTop: '1px solid var(--hairline)',
+                background: 'var(--bg)',
+                fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+                letterSpacing: '0.10em', color: 'var(--muted)',
+              }}>
+                <span>{c.killerEyebrow}{' '}<strong style={{ color: '#E89248' }}>{avgSharp}/100</strong></span>
+                <span style={{ fontSize: 9.5, letterSpacing: '0.06em' }}>{c.killerFoot}</span>
+              </div>
+            )}
           </div>
 
           {/* Single hero gate — directly under the pairing */}
@@ -1082,10 +1132,17 @@ const Mittari = () => {
       </div>
 
       <style>{`
-        /* Pairing grid stacks earlier — at <=1024 the wheel + tips were
-           cramped (screenshot showed bleed). Stack at <=1024px instead. */
+        /* Unified Mittari panel stacks the body at <=1024 — the dial gets a
+           bottom hairline instead of a right hairline, signals flow under. */
         @media (max-width: 1024px) {
-          .m-pairing-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+          .m-panel-body {
+            grid-template-columns: 1fr !important;
+          }
+          .m-panel-body > [aria-hidden] {
+            height: 1px !important;
+            width: 100% !important;
+            background: var(--hairline) !important;
+          }
         }
         @media (max-width: 900px) {
           .m-hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }

@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from typing import Any, Callable, List, Optional
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Header, Request
 from pydantic import BaseModel
 
 
@@ -56,14 +56,21 @@ def get_db():
     return _db
 
 
-async def require_admin(*args, **kwargs):
-    """Thin async pass-through to the server-bound admin gate so route
-    modules can `Depends(require_admin)` without importing server.py."""
+async def require_admin(
+    request: Request,
+    x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+):
+    """Thin async pass-through to the server-bound admin gate.
+
+    Mirrors server.py's `require_admin` signature *exactly* so FastAPI's
+    OpenAPI introspection treats this as a (Request, X-Admin-Token header)
+    dependency — NOT as an opaque `(*args, **kwargs)` function which
+    would surface bogus query params on every protected endpoint."""
     if _require_admin is None:
         raise HTTPException(
             500, "routes/_helpers: require_admin called before bind_dependencies()"
         )
-    return await _require_admin(*args, **kwargs)
+    return await _require_admin(request, x_admin_token)
 
 
 # ─── Shared mini-game Pydantic payloads ─────────────────────────────
