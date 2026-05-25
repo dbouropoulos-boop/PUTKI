@@ -617,7 +617,7 @@ const PeliBlock = ({ lang }) => {
   const yellow = '#D4B445';
 
   return (
-    <Block to="/peli" dataTestId="explore-block-peli" accent={yellow}>
+    <Block to="/peli" dataTestId="explore-block-peli" accent={green}>
       {/* designed background — restrained slot reel macro */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
