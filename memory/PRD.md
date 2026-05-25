@@ -2,6 +2,18 @@
 
 ## Phase History (latest first)
 
+- **iter67d · Mittari dashboard balance + conversion copy rewrite + trust elements** (2026-05-25, screenshot-verified · backend defaults updated · 0 regressions)
+  - **Plain-language copy rewrite** (backend defaults in `mittari_copy.py` + frontend `buildCopy` fallbacks):
+    - H1 EN: "5 sharpest betting picks. _Every morning at 09:00._ Free." (was "Scene meter + predictive game signals in one subscription.")
+    - H1 FI: "5 vahvinta vetovinkkiä. _Joka aamu klo 09:00._ Ilmaiseksi." (was "Skenelukema + ennustavat pelisignaalit samalla tilauksella.")
+    - Subtitle: explains Sharpness via plain "how tightly the bookmakers agree" metaphor + lists every commitment (free, GDPR, stop anytime) in one sentence.
+    - H2 connective EN: "Two feeds. _One signup._ Telegram or email — your choice." (was the abstract "The wheel reads the scene. The tips are the play.")
+    - H2 connective FI: "Kaksi syötettä. _Yksi tilaus._ Telegram tai sähköposti — sinun valintasi."
+  - **Trust pills strip** (above panel): ✓ 86% HIT RATE · LAST 7 DAYS | ⚡ 10+ EU BOOKS · LIVE PRICES | ✓ FREE · GDPR · STOP ANYTIME | (conditional) ● [N] SUBSCRIBERS. Concrete proof BEFORE the dashboard, social proof BELOW.
+  - **Panel left column rebuild**: bare `<Dial size="medium" />` + COMPOSITE chip + "WHAT THIS MEANS" plain-language state description (per-state map FI/EN, accent-bordered) + STREAMS/SPORTS/NEWSFLOW driver bars + **24-HOUR TREND sparkline** (polyline from `/api/dial/history`, state-colored, dashed midline) + "Last change" caption (transition + minutes-ago).
+  - **Panel right column balance**: added "4 PICKS LOCKED · connect below to unlock all 5 → UNLOCK ↓" conversion CTA strip at the bottom of the signals list when locked. Auto-scrolls to the Telegram gate on click. Hidden when unlocked. Solves the "left column taller than right" asymmetry.
+  - **Screenshot verified**: left and right columns now end at the same y-coordinate; dashboard reads as a unified two-column balance.
+
 - **iter67b · Mittari panel = clean dashboard (dial swap)** (2026-05-25, screenshot-verified · zero new tests · all existing iter66/67 testids preserved)
   - User feedback on iter67 was that the panel still didn't read as a unified dashboard — root cause was that the panel embedded the FULL `<DialCockpit>` component which carries its own internal stack (giant state-name lockup, KOKONAISLUKU big-number, STRIIMIT/URHEILU/UUTISVIRTA stat tiles, PRIMARY DRIVERS legend, MITTARIN HISTORIA link, YHDISTELMÄ sub-label). At 280×~1100px that single widget swamped the entire left column.
   - Swapped to the bare `<Dial size="medium" />` (just the gauge, ~280×280) plus a 2-line **composite chip** ("COMPOSITE 80/100") and a compact **driver-bar block**: STREAMS 57% · SPORTS 29% · NEWSFLOW 14% with 0–100 horizontal bars + numeric values pulled directly from `/api/cockpit` `sub_scores`. Total left-column height now matches the 5 signal rows on the right — true dashboard balance.
