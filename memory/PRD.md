@@ -2,6 +2,11 @@
 
 ## Phase History (latest first)
 
+- **iter66 · Hide leftover PeliAreena Explore tile** (2026-05-25, frontend-only · zero behaviour change to /peliareena profiler itself)
+  - The `<PeliAreenaBlock />` tile inside `ExploreBlocks.jsx` (homepage "MORE FROM PUTKI · EXPLORE" 5-product grid) advertised "Five mini-games · One weekly tournament · 5/5 games live" — copy that's a leftover from the pre-iter64 arcade era and contradicts the new capture-first profiler positioning.
+  - Per user request the tile is now commented out (not deleted — one-line uncomment to restore). The Explore label updates from "5 PRODUCTS" → "4 PRODUCTS". The grid auto-reflows so the remaining 4 tiles (Mittari / Mestari / Voita / Peli) take the row cleanly.
+  - The `/peliareena` profiler page itself is unchanged and still fully linkable via the leaderboard ribbon "PELIAREENAAN →" link + the profiler-funnel back-office. Just the homepage marketing surface is removed.
+
 - **iter65 · Inline share preview + Resend welcome email (feature-flagged)** (2026-05-25, +6 tests · 40/41 iter6X passing — 1 unrelated iter62 avatar-API flake)
   - **Inline share preview** (`components/peliareena/InlineSharePreview.jsx`) renders below the Telegram CTA on the success screen — shows the actual OG identity card (live `/api/profiler/share/og.png`) + 4 one-tap social buttons (Telegram via `t.me/share/url`, X via `twitter.com/intent/tweet`, WhatsApp via `wa.me/`, Copy-link). Each button click fires `share_click` to `/api/profiler/event` with `meta.platform` so /back-office/profiler-funnel can A/B which channel converts. Theme-aware colour (uses `var(--ink)` / `var(--bg)`) so dark mode stays readable.
   - **Resend welcome email** (`backend/resend_email.py`) — feature-flagged dispatcher:

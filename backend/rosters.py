@@ -91,7 +91,7 @@ STREAMERS_SEED: List[Dict[str, Any]] = [
     {"slug": "teukka-kick",    "name": "Teukka (Kick)",  "platform": "Kick",    "channel": "teukka",         "tier": 2, "scene": "finnish", "followers": "3.6k",  "sub": None},
     {"slug": "konna-kick",     "name": "Konna (Kick)",   "platform": "Kick",    "channel": "konna",          "tier": 2, "scene": "finnish", "followers": "540",   "sub": None},
     {"slug": "bonkkuboys",     "name": "BonkkuBoys",     "platform": "YouTube", "channel": "@bonkku",        "tier": 2, "scene": "finnish", "followers": "3k",    "sub": None},
-    {"slug": "rsnakes88",      "name": "RonSnake88",     "platform": "Twitch",  "channel": "rsnakes88",      "tier": 2, "scene": "finnish", "followers": "13.5k", "sub": None},
+    {"slug": "ronsnake88",     "name": "RonSnake88",     "platform": "Twitch",  "channel": "ronsnake88",     "tier": 2, "scene": "finnish", "followers": "13.5k", "sub": None},
     {"slug": "hukkaw",         "name": "Hukkaw",         "platform": "Kick",    "channel": "hukkaw_slots",   "tier": 2, "scene": "finnish", "followers": "2.6k",  "sub": None},
     {"slug": "hukkaw-yt",      "name": "HukkaW (YT)",    "platform": "YouTube", "channel": "@HukkaW",        "tier": 2, "scene": "finnish", "followers": "2.5k",  "sub": None},
     {"slug": "joonagraphics",  "name": "joonagraphics",  "platform": "Twitch",  "channel": "joonagraphics",  "tier": 2, "scene": "finnish", "followers": "3.5k",  "sub": None},
