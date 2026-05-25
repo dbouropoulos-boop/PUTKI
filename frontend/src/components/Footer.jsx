@@ -59,6 +59,36 @@ export const Footer = () => {
           </div>
         </div>
 
+        {/* ╔═ Responsible gambling / age + editorial disclaimer ═══╗
+            Required compliance band. Sits above the source disclosure
+            so it's the FIRST thing visible after the link columns.
+            Bilingual via t() with EN/FI keys in LanguageContext. */}
+        <div data-testid="footer-responsible-gambling"
+          className="mt-10 p-4 sm:p-5"
+          style={{
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+          }}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="shrink-0 inline-flex items-center justify-center"
+              style={{
+                width: 44, height: 44, borderRadius: 999,
+                border: '2px solid #C9344E', color: '#C9344E',
+                fontFamily: 'ui-monospace, monospace', fontSize: 13,
+                fontWeight: 800, letterSpacing: '0.02em',
+              }}>18+</div>
+            <div className="font-serif text-[13.5px] leading-snug" style={{ color: 'var(--ink)' }}>
+              <strong style={{ color: '#C9344E' }}>{t('footer.compliance.title')}</strong>{' '}
+              {t('footer.compliance.body')}{' '}
+              <a href="https://peluuri.fi" target="_blank" rel="noopener noreferrer"
+                style={{ color: 'var(--ink)', textDecoration: 'underline' }}>peluuri.fi</a>
+              {' · '}
+              <a href="https://www.gamblingtherapy.org" target="_blank" rel="noopener noreferrer"
+                style={{ color: 'var(--ink)', textDecoration: 'underline' }}>gamblingtherapy.org</a>
+            </div>
+          </div>
+        </div>
+
         <div className="section-rule mt-10 pt-6 flex flex-col gap-3 mono text-[10.5px]"
              style={{ letterSpacing: '0.12em', color: 'var(--muted)' }}>
           <span data-testid="footer-source-disclosure">

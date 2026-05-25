@@ -741,6 +741,8 @@ export const translations = {
     'footer.warning':        'VAIN VIIHTEELLISIIN TARKOITUKSIIN · EI VEDONLYÖNTIÄ',
     'footer.source_disclosure': 'PUTKI HQ koostaa lähteistä: Yle, Helsingin Sanomat, Iltalehti, Ilta-Sanomat, MTV Uutiset, Kauppalehti, Google News Suomi.',
     'footer.editorial_disclosure': 'Riippumaton toimitus · Viihdetarkoitukseen · Ei vedonlyöntiä PUTKI HQ:ssa · putkihq.fi/menetelma',
+    'footer.compliance.title': '18+ · Pelaa vastuullisesti.',
+    'footer.compliance.body': 'PUTKI HQ on toimituksellinen sivusto eikä tarjoa, välitä eikä mahdollista vedonlyöntiä tai rahapelaamista. Sisältö on tarkoitettu ainoastaan täysi-ikäisille ja viihdekäyttöön. Jos koet pelaamisen ongelmaksi, ota yhteyttä',
   },
 
   en: {
@@ -1468,6 +1470,8 @@ export const translations = {
     'footer.warning':        'FOR ENTERTAINMENT PURPOSES ONLY · NO BETTING ACTIVITY TAKES PLACE',
     'footer.source_disclosure': 'PUTKI HQ aggregates from: Yle, Helsingin Sanomat, Iltalehti, Ilta-Sanomat, MTV Uutiset, Kauppalehti, Google News Finland.',
     'footer.editorial_disclosure': 'Independent editorial · For entertainment only · No betting on PUTKI HQ · putkihq.fi/menetelma',
+    'footer.compliance.title': '18+ · Gamble responsibly.',
+    'footer.compliance.body': 'PUTKI HQ is an editorial website. We do not offer, broker, or facilitate betting or gambling of any kind. Content is for adults only and for entertainment purposes. If gambling has become a problem for you, please contact',
   },
 };
 

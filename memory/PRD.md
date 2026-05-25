@@ -2,6 +2,13 @@
 
 ## Phase History (latest first)
 
+- **iter67g · iGaming clarity + responsible-gambling footer + founder rebrand** (2026-05-25, screenshot-verified)
+  - **Copy "books" → "sportsbooks"** across the entire stack (frontend `Mittari.jsx` defaults + backend `mittari_copy.py` DEFAULT_MITTARI_COPY). Now everywhere reads "EU sportsbooks" / "EU-urheilukirjat" — accurate iGaming terminology instead of ambiguous "books".
+  - **Added editorial-only disclaimer** to the hero subtitle: "**Editorial only — not betting advice.**" / "**Toimituksellista sisältöä — ei vetovinkkejä.**"
+  - **Global Footer compliance band** added: prominent 18+ red badge + bilingual responsible-gambling block ("PUTKI HQ is an editorial website. We do not offer, broker, or facilitate betting or gambling of any kind…") + outbound links to peluuri.fi (Finnish problem-gambling helpline) and gamblingtherapy.org. Bilingual via new `footer.compliance.title` and `footer.compliance.body` i18n keys.
+  - **Founder rebrand**: "Dioni V." → **"Eino K."**, dropped the made-up "Previously Smartico and NeptunePay" cred (would have eroded trust if anyone verified). Avatar initial fallback "D" → "E".
+  - **Designed founder portrait SVG**: replaced the plain letter circle with an inline SVG portrait (abstract head + shoulder silhouette in muted accent + serif monogram on top + small green live-dot bottom-right + accent ring). Reads as a stylized editorial illustration rather than a placeholder.
+
 - **iter67f · Mittari design audit — section cuts, copy tightening, dedupe pass** (2026-05-25, screenshot-verified · 4 sections cleaner · ~50 lines removed)
   - **HOW IT WORKS section removed** — its content was already covered by the trust pills, the WHAT THIS MEANS state strip, the drivers row, gate bullets, and the global METHOD link. Anyone wanting depth clicks METHOD → for the full Sharpness formula.
   - **RECEIPTS renamed** to "TRACK RECORD · LAST 7 DAYS"; dropped the bottom "Read the full method →" link (was the 4th repetition).

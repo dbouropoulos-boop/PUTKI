@@ -71,11 +71,11 @@ const COPY = {
     headlineLead: 'Viisi vahvinta poimintaa',
     headlineEm: 'joka aamu klo 09:00',
     headlineTail: 'suoraan Telegramiin tai sähköpostiin.',
-    sublineLead: 'Sharpness-pisteytetty 0–100 EU-kirjojen hajonnasta ja momentumista. Sama data, sama luku — ei mielipiteitä. Bonuksena Mittarin reaaliaikaiset skenehälytykset.',
+    sublineLead: 'Sharpness-pisteytetty 0–100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista. Sama data, sama luku — ei mielipiteitä, ei toimituksellisia muokkauksia. Bonuksena Mittarin reaaliaikaiset skenehälytykset.',
     killerEyebrow: 'KESKI-SHARPNESS TÄNÄÄN',
     killerSubLead: 'Päivän viisi poimintaa keskiarvolla',
     killerSubTail: '— korkein implisiittinen todennäköisyys',
-    killerFoot: 'Live · 15 min päivitys · lähde Odds API + EU-kirjat',
+    killerFoot: 'Live · 15 min päivitys · lähde Odds API + EU-urheilukirjat',
     killerQuiet: 'Markkina hiljainen juuri nyt — pudotus klo 09:00.',
     countdownLabel: 'Seuraava pudotus',
     gateTitleTop: '→ Kytke putki',
@@ -96,7 +96,7 @@ const COPY = {
     revealedHi: 'Signaali 01 avattiin yllä ↑ · loput tulevat Telegramiin/sähköpostiin alle 3 sekunnissa.',
     explainTitle: 'NÄIN SE TOIMII',
     step1Title: '1 · MARKKINA',
-    step1Body: 'EU-kirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00.',
+    step1Body: 'EU-urheilukirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00.',
     step2Title: '2 · SKENE',
     step2Body: 'Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0–100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele.',
     step3Title: '3 · TOIMITUS',
@@ -109,9 +109,9 @@ const COPY = {
     founderTitle: 'KUKA TÄMÄN TAKANA ON',
     founderEyebrow: 'PERUSTAJA · 9 VUOTTA SUOMEN SKENEN ÄÄRELLÄ',
     founderQuote: 'Rakensin nämä koska olen kyllästynyt missaamaan parhaat hetket — sekä markkinassa että striimausskenessä. Nyt saan viisi vahvinta poimintaa aamulla ja hälytyksen sekunnissa kun skene vaihtaa tilaa.',
-    founderName: 'Dioni V.',
+    founderName: 'Eino K.',
     founderRole: 'Perustaja · Putki HQ',
-    founderCreds: 'Aikaisemmin Smartico ja NeptunePay · Helsinki · 11 julkista lähdettä, 0 toimituksellista muokkausta',
+    founderCreds: '9 vuotta skenen äärellä · Helsinki · 11 julkista lähdettä, 0 toimituksellista muokkausta',
     founderMethodLink: 'Lue koko menetelmä →',
     finalEyebrow: '→ VIIMEINEN MAHDOLLISUUS KYTKEÄ ENNEN PUDOTUSTA',
     finalHeadlineLead: 'Päivän Signaalit aamuisin.',
@@ -135,11 +135,11 @@ const COPY = {
     headlineLead: 'Five strongest picks',
     headlineEm: 'every morning at 09:00',
     headlineTail: 'straight to Telegram or email.',
-    sublineLead: 'Sharpness-scored 0–100 from EU book dispersion + momentum. Same data, same number — no opinions. Bonus: real-time Mittari scene alerts.',
+    sublineLead: 'Sharpness-scored 0–100 from EU sportsbook price dispersion + momentum. Same data, same number — no opinions, no editorial overrides. Bonus: real-time Mittari scene alerts.',
     killerEyebrow: 'AVG SHARPNESS TODAY',
     killerSubLead: 'Today\u2019s five picks average sharpness',
     killerSubTail: '— top implied probability',
-    killerFoot: 'Live · 15-min refresh · source Odds API + EU books',
+    killerFoot: 'Live · 15-min refresh · source Odds API + EU sportsbooks',
     killerQuiet: 'Market quiet right now — next drop at 09:00.',
     countdownLabel: 'Next drop',
     gateTitleTop: '→ Connect the pipe',
@@ -160,7 +160,7 @@ const COPY = {
     revealedHi: 'Signal 01 unlocked above ↑ · the rest land in Telegram/email in under 3 seconds.',
     explainTitle: 'HOW IT WORKS',
     step1Title: '1 · MARKET',
-    step1Body: 'EU books move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00.',
+    step1Body: 'EU sportsbooks move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00.',
     step2Title: '2 · SCENE',
     step2Body: 'Mittari composites 11 public sources into one number 0–100 and five states: Calm · Buzz · Active · Rolling · Perkele.',
     step3Title: '3 · DELIVERY',
@@ -173,9 +173,9 @@ const COPY = {
     founderTitle: 'WHO BUILT THIS',
     founderEyebrow: 'FOUNDER · 9 YEARS IN THE FINNISH SCENE',
     founderQuote: 'I built these because I was tired of missing the best moments — both in the market and in the streaming scene. Now I get five strongest plays in the morning and a ping within seconds when the scene changes state.',
-    founderName: 'Dioni V.',
+    founderName: 'Eino K.',
     founderRole: 'Founder · Putki HQ',
-    founderCreds: 'Previously Smartico and NeptunePay · Helsinki · 11 public sources, 0 editorial overrides',
+    founderCreds: '9 years in the Finnish scene · Helsinki · 11 public sources, 0 editorial overrides',
     founderMethodLink: 'Read the full method →',
     finalEyebrow: '→ LAST CHANCE TO CONNECT BEFORE THE DROP',
     finalHeadlineLead: 'Daily Signals in the morning.',
@@ -328,7 +328,7 @@ const buildCopy = (lang, live) => {
     founderRole: (lang === 'en' ? fnd.role_en : fnd.role_fi) ?? fb.founderRole,
     founderCreds: (lang === 'en' ? fnd.creds_en : fnd.creds_fi) ?? fb.founderCreds,
     founderMethodLink: (lang === 'en' ? fnd.method_link_en : fnd.method_link_fi) ?? fb.founderMethodLink,
-    founderAvatarInitial: fnd.avatar_initial ?? 'D',
+    founderAvatarInitial: fnd.avatar_initial ?? 'E',
     pressTitle: (lang === 'en' ? prs.title_en : prs.title_fi) ?? fb.pressTitle,
     finalEyebrow: (lang === 'en' ? fin.eyebrow_en : fin.eyebrow_fi) ?? fb.finalEyebrow,
     finalHeadlineLead: (lang === 'en' ? fin.headline_lead_en : fin.headline_lead_fi) ?? fb.finalHeadlineLead,
@@ -734,8 +734,8 @@ const Mittari = () => {
             color: 'var(--muted)', lineHeight: 1.55, letterSpacing: '0.02em',
             margin: '0 0 22px', maxWidth: 760,
           }}>{lang === 'en'
-            ? <>Five picks scored 0–100 by <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link> — a deterministic measure of how tightly EU bookmakers agree. The dial tracks Finland’s scene live: streamers, odds, news.</>
-            : <>Viisi vetoa pisteytettynä 0–100 <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link>-kaavalla — kuinka tiiviisti EU-vedonlyöntiyhtiöt ovat samaa mieltä. Mittari seuraa Suomen skeneä reaaliajassa: striimit, kertoimet, uutiset.</>
+            ? <>Five picks scored 0–100 by <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link> — a deterministic measure of how tightly EU sportsbooks price the market. The dial tracks Finland’s scene live: streamers, odds, news. <strong style={{ color: 'var(--ink)' }}>Editorial only — not betting advice.</strong></>
+            : <>Viisi vetoa pisteytettynä 0–100 <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link>-kaavalla — kuinka tiiviisti EU-urheilukirjat hinnoittelevat markkinan. Mittari seuraa Suomen skeneä reaaliajassa: striimit, kertoimet, uutiset. <strong style={{ color: 'var(--ink)' }}>Toimituksellista sisältöä — ei vetovinkkejä.</strong></>
           }</p>
 
           {/* Trust pills strip — concrete proof + frictionless commitments.
@@ -763,7 +763,7 @@ const Mittari = () => {
               letterSpacing: '0.10em',
             }}>
               <span>⚡</span>
-              <span>{lang === 'en' ? '10+ EU BOOKS · LIVE PRICES' : '10+ EU-KIRJAA · LIVE-HINNAT'}</span>
+              <span>{lang === 'en' ? '10+ EU SPORTSBOOKS · LIVE PRICES' : '10+ EU-URHEILUKIRJAA · LIVE-HINNAT'}</span>
             </div>
             <div data-testid="mittari-trust-free" style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -878,8 +878,8 @@ const Mittari = () => {
                     letterSpacing: '0.14em', color: 'var(--muted)',
                     textDecoration: 'none', borderBottom: '1px dotted var(--muted)',
                   }} title={lang === 'en'
-                    ? 'Sharpness: 0–100 from EU book dispersion + momentum'
-                    : 'Sharpness: 0–100 EU-kirjojen hajonnasta ja momentumista'}>
+                    ? 'Sharpness: 0–100 from EU sportsbook price dispersion + momentum'
+                    : 'Sharpness: 0–100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista'}>
                     {lang === 'en' ? 'SHARPNESS 0–100 ?' : 'SHARPNESS 0–100 ?'}
                   </Link>
                 </div>
@@ -1157,13 +1157,37 @@ const Mittari = () => {
             border: '1px solid var(--hairline)', padding: 28,
             display: 'grid', gridTemplateColumns: '100px 1fr', gap: 24, alignItems: 'start',
           }}>
-            <div style={{
-              width: 100, height: 100, borderRadius: 999,
-              background: 'var(--bg)', border: '1px solid #E89248',
-              fontFamily: 'Georgia, serif', fontStyle: 'italic',
-              fontSize: 34, color: '#E89248',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            }}>{c.founderAvatarInitial}</div>
+            {/* Founder avatar — designed editorial portrait.
+                Abstract silhouette (head + shoulder) in muted ink with a
+                serif monogram watermark + small accent dot. Reads as a
+                "stylized photo" without needing a real photograph. */}
+            <div data-testid="mittari-founder-avatar" style={{
+              width: 100, height: 100, position: 'relative',
+            }}>
+              <svg width="100" height="100" viewBox="0 0 100 100"
+                style={{ display: 'block' }} aria-hidden>
+                {/* Tinted background circle */}
+                <circle cx="50" cy="50" r="49" fill="var(--bg)"
+                  stroke="#E89248" strokeWidth="1" />
+                {/* Soft inner shadow ring */}
+                <circle cx="50" cy="50" r="44" fill="none"
+                  stroke="var(--hairline)" strokeWidth="1" />
+                {/* Stylized portrait silhouette — head + shoulders */}
+                <g fill="#E89248" opacity="0.18">
+                  <circle cx="50" cy="40" r="13" />
+                  <path d="M 22 85 Q 22 60 50 60 Q 78 60 78 85 Z" />
+                </g>
+                {/* Serif monogram on top */}
+                <text x="50" y="60" textAnchor="middle"
+                  style={{
+                    fontFamily: 'Georgia, serif', fontStyle: 'italic',
+                    fontSize: 38, fontWeight: 400, fill: '#E89248',
+                  }}>{c.founderAvatarInitial}</text>
+                {/* Small green "live" accent dot bottom-right */}
+                <circle cx="80" cy="78" r="4" fill="#6FA37D"
+                  stroke="var(--surface)" strokeWidth="2" />
+              </svg>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <span style={{
                 fontFamily: 'ui-monospace, monospace', fontSize: 10,
