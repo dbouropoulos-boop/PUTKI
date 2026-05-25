@@ -128,6 +128,59 @@ async def total_views(db) -> int:
         return 0
 
 
+async def _window_counts(db, *, since_iso: str) -> Dict[str, int]:
+    """Aggregate article views in the window. Returns {article_id: count}."""
+    rows: Dict[str, int] = {}
+    cur = db.article_view_dedup.find({"ts": {"$gte": since_iso}}, {"_id": 0, "article_id": 1})
+    async for d in cur:
+        aid = d.get("article_id")
+        if aid:
+            rows[aid] = rows.get(aid, 0) + 1
+    return rows
+
+
+async def _fetch_articles_meta(db, ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    """Bulk-fetch published_content rows for the given ids → {id: meta}."""
+    if not ids:
+        return {}
+    out: Dict[str, Dict[str, Any]] = {}
+    cur = db.published_content.find(
+        {"id": {"$in": ids}},
+        {"_id": 0, "id": 1, "headline": 1, "url_slug": 1,
+         "published_at": 1, "category": 1, "type": 1},
+    )
+    async for a in cur:
+        out[a["id"]] = a
+    return out
+
+
+async def _coldstart_fillers(db, *, need: int, exclude: set) -> List[Dict[str, Any]]:
+    """All-time-top fallback so the rail never reads empty on a fresh
+    deployment with no in-window views. Returns at most `need` items
+    each marked with `fallback=True`."""
+    if need <= 0:
+        return []
+    candidates: List[Dict[str, Any]] = []
+    cur = db.article_views.find({}, {"_id": 0, "article_id": 1, "views": 1}).sort(
+        [("views", -1)]
+    ).limit(need * 3 + 5)
+    async for d in cur:
+        aid = d.get("article_id")
+        if aid and aid not in exclude:
+            candidates.append({"id": aid, "views": int(d.get("views", 0))})
+    if not candidates:
+        return []
+    meta = await _fetch_articles_meta(db, [c["id"] for c in candidates])
+    out: List[Dict[str, Any]] = []
+    for c in candidates:
+        if len(out) >= need:
+            break
+        art = meta.get(c["id"])
+        if art:
+            out.append({**art, "views_window": c["views"], "fallback": True})
+    return out
+
+
 async def most_read(db, *, hours: int = 1, limit: int = 5) -> List[Dict[str, Any]]:
     """Top N most-read articles in the last `hours` hours.
 
@@ -138,58 +191,34 @@ async def most_read(db, *, hours: int = 1, limit: int = 5) -> List[Dict[str, Any
       • If we don't have enough recent activity yet (cold start), fall back
         to all-time top by `article_views.views` so the rail never reads
         empty on a fresh deployment.
+
+    iter66 refactor: was a single 64-line function with cyclomatic 16 +
+    16 locals. Split into focused step helpers (`_window_counts`,
+    `_fetch_articles_meta`, `_coldstart_fillers`). Identical output.
     """
     from datetime import datetime, timezone, timedelta
     since = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
-    rows: Dict[str, int] = {}
-    cur = db.article_view_dedup.find({"ts": {"$gte": since}}, {"_id": 0, "article_id": 1})
-    async for d in cur:
-        aid = d.get("article_id")
-        if aid:
-            rows[aid] = rows.get(aid, 0) + 1
 
+    # 1. window counts
+    rows = await _window_counts(db, since_iso=since)
+
+    # 2. join with published_content for the top `limit`
     items: List[Dict[str, Any]] = []
     if rows:
         ranked = sorted(rows.items(), key=lambda kv: -kv[1])[:limit]
-        ids = [aid for aid, _ in ranked]
-        articles = {}
-        cur2 = db.published_content.find(
-            {"id": {"$in": ids}},
-            {"_id": 0, "id": 1, "headline": 1, "url_slug": 1,
-             "published_at": 1, "category": 1, "type": 1},
-        )
-        async for a in cur2:
-            articles[a["id"]] = a
+        ranked_ids = [aid for aid, _ in ranked]
+        meta = await _fetch_articles_meta(db, ranked_ids)
         for aid, reads in ranked:
-            art = articles.get(aid)
+            art = meta.get(aid)
             if art:
                 items.append({**art, "views_window": reads})
 
-    # Cold-start fallback: fill remaining slots with all-time top
+    # 3. cold-start fillers
     if len(items) < limit:
-        need = limit - len(items)
-        already = {it["id"] for it in items}
-        cur3 = db.article_views.find({}, {"_id": 0, "article_id": 1, "views": 1}).sort(
-            [("views", -1)]
-        ).limit(need * 3 + 5)
-        candidates: List[Dict[str, Any]] = []
-        async for d in cur3:
-            aid = d.get("article_id")
-            if aid and aid not in already:
-                candidates.append({"id": aid, "views": int(d.get("views", 0))})
-        if candidates:
-            ids = [c["id"] for c in candidates]
-            cur4 = db.published_content.find(
-                {"id": {"$in": ids}},
-                {"_id": 0, "id": 1, "headline": 1, "url_slug": 1,
-                 "published_at": 1, "category": 1, "type": 1},
-            )
-            arts = {a["id"]: a async for a in cur4}
-            for c in candidates:
-                if len(items) >= limit:
-                    break
-                art = arts.get(c["id"])
-                if art:
-                    items.append({**art, "views_window": c["views"], "fallback": True})
+        fillers = await _coldstart_fillers(
+            db, need=limit - len(items),
+            exclude={it["id"] for it in items},
+        )
+        items.extend(fillers)
 
     return items

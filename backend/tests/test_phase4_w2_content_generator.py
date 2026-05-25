@@ -175,7 +175,13 @@ async def _fake_llm(system_prompt: str, user_prompt: str) -> str:
             '"betting_angle":"Kerroinmuutos vaikuttaa playoff-veikkauksiin selvästi.",'
             '"facts_used":["api_score","api_player_stat","api_standings"],'
             '"skip_reason":null')
-    body_filler = "<p>" + ("Otteluraportti, jossa kuvataan tapahtumat. " * 12) + "</p>"
+    # iter66 — body filler must satisfy BOTH (a) the source-citation gate
+    # (citation phrase + named source within the first 400 chars) and
+    # (b) the body_word_count 120..280 floor for non-regulatory templates.
+    # `Yle Urheilun mukaan` covers both phrase + named-source in one stroke;
+    # the long-form filler raises the word count well above the floor.
+    body_filler = ("<p>Yle Urheilun mukaan ottelussa nähtiin selkeitä käänteitä. "
+                   + ("Otteluraportti, jossa kuvataan tapahtumat. " * 32) + "</p>")
     if "F1" in user_prompt or "Formula" in system_prompt:
         return ('{"headline":"Bottas Miami","subhead":"P18 vaikea kisa",'
                 f'"body":"{body_filler}",' + base + '}')
@@ -186,7 +192,8 @@ async def _fake_llm(system_prompt: str, user_prompt: str) -> str:
         return ('{"headline":"NHL recap","subhead":"Suomalaishyökkääjä iskussa",'
                 f'"body":"{body_filler}",' + base + '}')
     if "regulatorisen" in system_prompt:
-        long_para = "<p>" + ("Lain vaikutukset markkinoille. " * 8) + "</p>"
+        long_para = ("<p>Yle Urheilun mukaan lain vaikutukset markkinoille ovat huomattavia. "
+                     + ("Lain vaikutukset markkinoille. " * 14) + "</p>")
         return ('{"headline":"Rahapelilaki","subhead":"Veikkaus monopoli muuttuu",'
                 f'"summary":"{long_para}","analysis":"{long_para}{long_para}",'
                 f'"impact":"{long_para}",' + base + '}')
@@ -458,7 +465,18 @@ class TestContentAPIs:
         r = requests.post(f"{API}/admin/content/generate", headers=HDR, json=sig, timeout=10)
         assert r.status_code == 200
         d = r.json()
-        assert d["status"] == "generated"
+        # iter66 — accept BOTH outcomes: if the live DB is hot (>10 auto-
+        # publishes in the last hour) the rate-limit gate fires correctly
+        # and the draft lands at tier 2. Either way the SLUG/URL surface
+        # we want to assert is identical. Rate-limit logic itself is
+        # unit-tested separately in TestRateLimit (against _MemDB).
+        assert d["status"] in ("generated", "rate_limited_to_draft")
+        if d["status"] == "rate_limited_to_draft":
+            # Rate-limited drafts don't go public; the API contract checks
+            # below would fail. Skip the public-read tail of this case —
+            # the rate-limit unit test asserts the downgrade path itself.
+            assert d.get("published") is None
+            return
         slug = d["published"]["url_slug"]
         # Public read works
         pub = requests.get(f"{API}/content/published/{slug}", timeout=5)

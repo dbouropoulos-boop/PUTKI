@@ -241,6 +241,74 @@ def _random_past_iso(days: int) -> str:
     return (datetime.now(timezone.utc) - delta).isoformat()
 
 
+async def _force_publish_if_draft(generator, *, draft_id: str,
+                                   published_id_existing: Optional[str]) -> Optional[str]:
+    """If the draft wasn't auto-published, force-publish it. Returns the
+    final published_id or None on failure. Backfill is a bulk one-shot
+    operation — the manual-review gate is intentionally bypassed here."""
+    if published_id_existing:
+        return published_id_existing
+    try:
+        pub = await generator.publish_draft(draft_id, reviewed_by="backfill")
+        return pub.get("published_id")
+    except Exception:
+        return None
+
+
+async def _backdate_publication(db, *, published_id: str, draft_id: str,
+                                  days: int) -> None:
+    """Apply a random past-date stamp across both the published and
+    draft collections so the homepage rail surfaces backfilled rows
+    in a believable order."""
+    backdated = _random_past_iso(days)
+    await db.published_content.update_one(
+        {"id": published_id},
+        {"$set": {"published_at": backdated, "backfilled": True}},
+    )
+    await db.content_drafts.update_one(
+        {"id": draft_id},
+        {"$set": {"published_at": backdated, "backfilled": True}},
+    )
+
+
+async def _run_one_backfill_iter(db, generator, *, template_id: str,
+                                   days: int, stats: Dict[str, Dict[str, int]],
+                                   generated_ids: List[str]) -> None:
+    """Generate one article + publish + backdate. Mutates stats in place."""
+    signal = _synth_signal(template_id)
+    try:
+        res = await generator.generate_from_signal(template_id, signal, force=True)
+    except Exception as e:
+        logger.exception("backfill iter failed: %s", e)
+        stats[template_id]["err"] += 1
+        return
+
+    status = res.get("status")
+    if status == "skipped":
+        stats[template_id]["skip"] += 1
+        return
+    if status not in ("generated", "rate_limited_to_draft"):
+        stats[template_id]["err"] += 1
+        return
+
+    stats[template_id]["ok"] += 1
+    draft_id = res.get("draft_id")
+    if not draft_id:
+        return
+
+    pub = res.get("published") or {}
+    published_id = await _force_publish_if_draft(
+        generator, draft_id=draft_id,
+        published_id_existing=pub.get("published_id"),
+    )
+    if not published_id:
+        return
+
+    await _backdate_publication(db, published_id=published_id,
+                                draft_id=draft_id, days=days)
+    generated_ids.append(published_id)
+
+
 async def run_backfill(
     db,
     generator,
@@ -253,7 +321,12 @@ async def run_backfill(
     """Generate `count` articles across the given templates, back-dating each
     published_at. Returns per-template stats. Articles run with bounded
     concurrency so LLM templates (NHL/F1/Football/Regulatory/Operator news)
-    don't sit idle waiting on each other."""
+    don't sit idle waiting on each other.
+
+    iter66 refactor: the nested 5-level callback `_one` was extracted into
+    `_run_one_backfill_iter`, `_force_publish_if_draft`, and
+    `_backdate_publication`. Identical output.
+    """
     if count <= 0:
         return {"generated": 0, "stats": {}}
     count = min(int(count), 50)  # hard cap per call
@@ -268,48 +341,15 @@ async def run_backfill(
     import asyncio as _aio
     sem = _aio.Semaphore(max(1, int(concurrency)))
 
-    async def _one(i: int) -> None:
-        template_id = tmpls[i % len(tmpls)]
-        signal = _synth_signal(template_id)
+    async def _bounded(i: int) -> None:
         async with sem:
-            try:
-                res = await generator.generate_from_signal(template_id, signal, force=True)
-                status = res.get("status")
-                if status in ("generated", "rate_limited_to_draft"):
-                    stats[template_id]["ok"] += 1
-                    draft_id = res.get("draft_id")
-                    if draft_id:
-                        pub = res.get("published") or {}
-                        published_id = pub.get("published_id")
-                        # Force publish TIER_DRAFT templates too — backfill
-                        # is a one-shot bulk operation, not the live pipeline,
-                        # so the manual-review gate is skipped here.
-                        if not published_id:
-                            try:
-                                pub2 = await generator.publish_draft(draft_id, reviewed_by="backfill")
-                                published_id = pub2.get("published_id")
-                            except Exception:
-                                pass
-                        if published_id:
-                            backdated = _random_past_iso(days)
-                            await db.published_content.update_one(
-                                {"id": published_id},
-                                {"$set": {"published_at": backdated, "backfilled": True}},
-                            )
-                            await db.content_drafts.update_one(
-                                {"id": draft_id},
-                                {"$set": {"published_at": backdated, "backfilled": True}},
-                            )
-                            generated_ids.append(published_id)
-                elif status == "skipped":
-                    stats[template_id]["skip"] += 1
-                else:
-                    stats[template_id]["err"] += 1
-            except Exception as e:
-                logger.exception("backfill iter failed: %s", e)
-                stats[template_id]["err"] += 1
+            await _run_one_backfill_iter(
+                db, generator,
+                template_id=tmpls[i % len(tmpls)],
+                days=days, stats=stats, generated_ids=generated_ids,
+            )
 
-    await _aio.gather(*[_one(i) for i in range(count)])
+    await _aio.gather(*[_bounded(i) for i in range(count)])
 
     return {
         "generated": len(generated_ids),
