@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Historical content backfill.
+PUTKI HQ - Historical content backfill.
 
 Generates N articles across the 6 content templates and back-dates their
 published_at across the last `days` (default 60). Powers the editorial
@@ -13,8 +13,8 @@ Usage:
       "templates": ["nhl_recap", ...] # optional filter (default all 6)
     }
 
-The endpoint is **synchronous** — it generates articles in-process. Call it
-multiple times to reach 100–200 total. Each call returns the per-template
+The endpoint is **synchronous** - it generates articles in-process. Call it
+multiple times to reach 100-200 total. Each call returns the per-template
 breakdown of successes / skips / errors.
 """
 from __future__ import annotations
@@ -27,11 +27,11 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Templates available — the 6 from content_generator.py.
+# Templates available - the 6 from content_generator.py.
 # Default backfill uses the 5 LLM-driven templates (each produces unique
 # headlines per fixture via Claude). streamer_alert is deterministic
 # ("X aloitti striimin · N katsojaa · Y") so we exclude it from the default
-# rotation to avoid topic-monoculture — callers can still opt in via
+# rotation to avoid topic-monoculture - callers can still opt in via
 # `templates=["streamer_alert"]`.
 DEFAULT_TEMPLATES = [
     "nhl_recap",
@@ -114,17 +114,17 @@ SLOT_GAMES = [
     "San Quentin xWays", "Madame Destiny Megaways", "Starburst",
 ]
 REG_TOPICS = [
-    ("Veikkaus monopoli päivittyy 2027 — uusi lisenssimallin runko julkaistu", "yle.fi"),
-    ("Suomen rahapelilaki uudistuu — mitä se tarkoittaa pelaajille käytännössä", "hs.fi"),
+    ("Veikkaus monopoli päivittyy 2027 - uusi lisenssimallin runko julkaistu", "yle.fi"),
+    ("Suomen rahapelilaki uudistuu - mitä se tarkoittaa pelaajille käytännössä", "hs.fi"),
     ("EU komissio puuttuu Suomen monopoliin uudella valitusprosessilla", "iltalehti.fi"),
     ("Sisäministeriö julkaisi uudet lisenssimallin yksityiskohdat", "yle.fi"),
     ("Peluuri raportoi kasvavasta ongelmapelaamisesta nuorten keskuudessa", "hs.fi"),
     ("Veikkaus laskee jackpot-pottien rajaa uuden lainsäädännön mukaan", "yle.fi"),
     ("Ulkomaiset operaattorit saavat kahden vuoden siirtymäajan Suomeen", "iltalehti.fi"),
-    ("Slot-pelien panostusrajat tiukkenevat — uudet säännöt 2027 alkaen", "hs.fi"),
-    ("Mainonnan rajat Suomen rahapelimarkkinoilla — uusi linjaus", "yle.fi"),
+    ("Slot-pelien panostusrajat tiukkenevat - uudet säännöt 2027 alkaen", "hs.fi"),
+    ("Mainonnan rajat Suomen rahapelimarkkinoilla - uusi linjaus", "yle.fi"),
     ("AML-direktiivin vaikutus suomalaisiin kasinopelaajiin", "iltalehti.fi"),
-    ("Veikkauksen liikevoitto laskee historiallisen alas — syyt avattu", "hs.fi"),
+    ("Veikkauksen liikevoitto laskee historiallisen alas - syyt avattu", "hs.fi"),
     ("Suomi vetoaa CJEU:hun monopolin pysyvyyden puolesta", "yle.fi"),
     ("Liikenne- ja viestintävirasto valvoo verkkokasinoita uudella tavalla", "iltalehti.fi"),
 ]
@@ -136,7 +136,7 @@ OPERATORS = [
 ]
 OPERATOR_NEWS = [
     "lanseeraa uuden bonustuotteen Suomeen",
-    "ilmoittaa nopeammat kotiutukset — alle 2 tuntia",
+    "ilmoittaa nopeammat kotiutukset - alle 2 tuntia",
     "lisää uuden pelivalmistajan kirjastoonsa",
     "saa MGA-lisenssin päivityksen",
     "ottaa käyttöön suomenkielisen asiakaspalvelun 24/7",
@@ -146,7 +146,7 @@ OPERATOR_NEWS = [
     "ottaa käyttöön Trustlyn pikamaksun",
     "menettää MGA-lisenssin compliance-rikkomuksen vuoksi",
     "avaa Live Casino -studion Riikaan",
-    "saa uuden CEO:n — strategiaa muutetaan",
+    "saa uuden CEO:n - strategiaa muutetaan",
     "lopettaa bonusten markkinoinnin Suomeen",
     "yhdistyy isompaan eurooppalaiseen kasino-operaattoriin",
     "lanseeraa cashback-ohjelman ilman kierrätysvaatimuksia",
@@ -205,7 +205,7 @@ def _synth_signal(template_id: str) -> Dict[str, Any]:
             "user_login": login,
             "user_name": name,
             "platform": "twitch",
-            "title": f"{game} — illan striimi",
+            "title": f"{game} - illan striimi",
             "game_name": game,
             "viewer_count": random.randint(80, 2400),
             "started_at": datetime.now(timezone.utc).isoformat(),
@@ -245,7 +245,7 @@ async def _force_publish_if_draft(generator, *, draft_id: str,
                                    published_id_existing: Optional[str]) -> Optional[str]:
     """If the draft wasn't auto-published, force-publish it. Returns the
     final published_id or None on failure. Backfill is a bulk one-shot
-    operation — the manual-review gate is intentionally bypassed here."""
+    operation - the manual-review gate is intentionally bypassed here."""
     if published_id_existing:
         return published_id_existing
     try:

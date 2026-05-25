@@ -2,6 +2,15 @@
 
 ## Phase History (latest first)
 
+- **iter69 phase 4 · Scheduler + Feed + Dispatch admin extraction + global em-dash purge** (2026-05-25, 51/51 tests passing)
+  - **Phase 4 admin extraction** - 15 endpoints moved to `routes/admin.py`:
+    - **Scheduler (5)**: `GET/PUT /admin/scheduler/cadences`, `GET /admin/scheduler/status`, `POST /admin/scheduler/tick`, `POST /admin/scheduler/fill-variants`. Source module is `seed_scheduler` (NOT `scheduler` - typo bug caught + fixed during restart).
+    - **Feed (2)**: `GET /admin/feed`, `POST /admin/feed/rebuild`.
+    - **Dispatch (8)**: `run`, `log`, `summary`, `cycles`, `cycles/{id}`, `logs/{send_id}/flag` (POST + DELETE), `review-flags`, `segment-overrides` (GET + PUT), `test-send`.
+    - 5 new payload models co-located with handlers.
+  - **server.py cumulative reduction**: ~3962 LOC -> ~3459 LOC = 13% smaller. `routes/admin.py` now 36 endpoints in ~700 LOC. Cumulative iter68/69 extraction: 4 + 7 + 10 + 15 = 36 endpoints.
+  - **Global em-dash purge**: replaced every U+2014 (em-dash) and U+2013 (en-dash) with U+002D (regular hyphen) across all `*.jsx`/`*.js`/`*.py` source AND test files. ~250 files touched. Tests updated in lock-step so no assertion drifted. Lint clean, screenshot-verified.
+
 - **iter68 phase 3 · YouTube resolver UI strip + Slot-registry/Voyager admin extraction** (2026-05-25, 46/46 tests passing)
   - **`/back-office/streamers` YouTube resolver UI strip** (~95 LOC in `StreamersAdmin.jsx`):
     - Header strip with Youtube icon + DRY RUN + RESOLVE & SAVE buttons (driving `POST /api/admin/streamers/resolve-youtube-channels`).

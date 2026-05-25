@@ -1,5 +1,5 @@
 /**
- * HubMosaic — Final Architecture Step 5 · Zone 2.
+ * HubMosaic - Final Architecture Step 5 · Zone 2.
  *
  * 5-card centerpiece mosaic. Cards are PRE-DEFINED categories (not free-form
  * feed items). Each card queries /api/feed with its own source/kind filter
@@ -7,11 +7,11 @@
  * state. Polls every 30 s.
  *
  * Cards (left → right):
- *   1. Streamerit live      — kind=stream_live (twitch + kick rolled up)
- *   2. Urheilu nyt          — source=sports
- *   3. Tuoreet hetket       — kind=moment (YouTube big_wins + similar)
- *   4. Foorumit kuumana     — source=forum
- *   5. Mittari live         — source=editorial (latest editorial drops)
+ *   1. Streamerit live      - kind=stream_live (twitch + kick rolled up)
+ *   2. Urheilu nyt          - source=sports
+ *   3. Tuoreet hetket       - kind=moment (YouTube big_wins + similar)
+ *   4. Foorumit kuumana     - source=forum
+ *   5. Mittari live         - source=editorial (latest editorial drops)
  */
 import React, { useEffect, useState } from 'react';
 import { Radio, Trophy, Sparkles, MessageSquare, Newspaper, ExternalLink } from 'lucide-react';

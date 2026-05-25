@@ -19,7 +19,7 @@ const scoreState = (score) => {
   return 'KYLMA';
 };
 
-// Instrument-readout score block — large mono, "MITTARI" label, count-up animation
+// Instrument-readout score block - large mono, "MITTARI" label, count-up animation
 export const ScoreReadout = ({ score, size = 'md' }) => {
   const color = scoreColor(score);
   const state = scoreState(score);

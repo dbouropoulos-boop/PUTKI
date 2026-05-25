@@ -1,5 +1,5 @@
 """
-Iter55 — Telegram throttling + mini-game suite tests.
+Iter55 - Telegram throttling + mini-game suite tests.
 
 These exercise the new daily-broadcast guard and the Phase 1 quiz flow
 end-to-end against the live preview backend.
@@ -66,7 +66,7 @@ def test_quiz_full_flow_with_email_capture():
     assert len(start["questions"]) == 10
     play_id, anon_id, questions = start["play_id"], start["anon_id"], start["questions"]
 
-    # Finish — pick "c" for everything
+    # Finish - pick "c" for everything
     answers = [{"q_id": q["id"], "picked": "c"} for q in questions]
     fin = httpx.post(
         f"{BASE}/api/mini-games/quiz/finish",

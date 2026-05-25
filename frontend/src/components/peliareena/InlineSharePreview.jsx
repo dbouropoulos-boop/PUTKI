@@ -1,9 +1,9 @@
 /**
- * PUTKI HQ — InlineSharePreview (iter65)
+ * PUTKI HQ - InlineSharePreview (iter65)
  *
  * Renders below the Telegram CTA on the success screen. Shows the
  * actual OG share card image (server-rendered at
- * /api/profiler/share/og.png) and one-tap social buttons —
+ * /api/profiler/share/og.png) and one-tap social buttons -
  * Telegram, X/Twitter, WhatsApp, Copy link.
  *
  * Every click fires a `share_click` funnel event with `platform`
@@ -28,8 +28,8 @@ const InlineSharePreview = ({ personaKey, profileTitle, onShare }) => {
   const ogImageUrl = `${BACKEND}/api/profiler/share/og.png?persona_key=${encodeURIComponent(personaKey)}&lang=${lang}`;
   const unfurlUrl  = `${BACKEND}/api/profiler/share/u/${encodeURIComponent(personaKey)}?lang=${lang}`;
   const shareText  = lang === 'en'
-    ? `I'm ${profileTitle} — what are you?`
-    : `Olen ${profileTitle} — mikä sinä olet?`;
+    ? `I'm ${profileTitle} - what are you?`
+    : `Olen ${profileTitle} - mikä sinä olet?`;
 
   const tap = (platform, href) => {
     onShare?.(platform);
@@ -81,7 +81,7 @@ const InlineSharePreview = ({ personaKey, profileTitle, onShare }) => {
       >
         <img
           src={ogImageUrl}
-          alt={`${profileTitle} — Putki HQ`}
+          alt={`${profileTitle} - Putki HQ`}
           loading="lazy"
           data-testid="inline-share-og-image"
           style={{

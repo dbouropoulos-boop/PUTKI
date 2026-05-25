@@ -1,5 +1,5 @@
 /**
- * ConfettiBurst — one-shot canvas confetti, ~1.2s, ~50 particles.
+ * ConfettiBurst - one-shot canvas confetti, ~1.2s, ~50 particles.
  *
  * Mount it with a unique `triggerKey` (e.g. the prize UUID) and it'll
  * fire once. Re-mount with a new key to fire again. Respects
@@ -8,7 +8,7 @@
  * Designed to layer over the Voyager pass: pointer-events:none, absolute
  * positioning is the parent's job.
  *
- * Zero deps — pure RAF + canvas.
+ * Zero deps - pure RAF + canvas.
  */
 import React, { useEffect, useRef } from 'react';
 
@@ -37,7 +37,7 @@ const ConfettiBurst = ({ triggerKey, count = 60, durationMs = 1300 }) => {
 
     const W = rect.width;
     const H = rect.height;
-    // Emitter sits where the prize number is — roughly upper-third.
+    // Emitter sits where the prize number is - roughly upper-third.
     const ox = W / 2;
     const oy = H * 0.32;
 

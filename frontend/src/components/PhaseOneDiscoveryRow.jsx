@@ -1,5 +1,5 @@
 /**
- * PhaseOneDiscoveryRow — temporary discovery bar.
+ * PhaseOneDiscoveryRow - temporary discovery bar.
  *
  * Phase 1 ships with no nav menu in the top bar by design. Until the
  * Phase 2 "Explore" section lands, this low-contrast row above the

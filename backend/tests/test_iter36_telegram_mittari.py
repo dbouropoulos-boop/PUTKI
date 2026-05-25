@@ -1,4 +1,4 @@
-"""Sprint B Slice 3+4 — Telegram bot webhook + Mittari signals subscription.
+"""Sprint B Slice 3+4 - Telegram bot webhook + Mittari signals subscription.
 
 Covers:
 - POST /api/webhooks/telegram  (raffle bind, mittari bind, /stop, /help, fallback, unknown pending)
@@ -89,7 +89,7 @@ class TestWebhookDispatcher:
         assert r.json().get("kind") == "start_unknown_pending"
 
     def test_missing_message_handled_gracefully(self, api):
-        # Telegram sends edited_message / channel_post / etc — handler returns handled=False
+        # Telegram sends edited_message / channel_post / etc - handler returns handled=False
         r = api.post(f"{BASE_URL}/api/webhooks/telegram",
                      json={"update_id": 1, "channel_post": {}})
         # Endpoint always returns 200 regardless
@@ -143,10 +143,10 @@ class TestMittariSubscribeFlow:
         assert r.status_code == 200, r.text
         j = r.json()
         assert j.get("kind") == "mittari_bound"
-        # Telegram sendMessage failed (chat not found) — but binding persists
+        # Telegram sendMessage failed (chat not found) - but binding persists
         assert j.get("already_bound") is False
 
-        # Poll binding-status — should now be bound=True
+        # Poll binding-status - should now be bound=True
         r2 = api.get(f"{BASE_URL}/api/mittari/binding-status",
                      params={"pending_id": pid})
         assert r2.status_code == 200
@@ -189,7 +189,7 @@ class TestMittariSubscribeFlow:
         assert j["kind"] == "stop"
         assert j["deactivated"] >= 1
 
-        # binding-status — bound still True (chat_id persists) but active=False
+        # binding-status - bound still True (chat_id persists) but active=False
         r2 = api.get(f"{BASE_URL}/api/mittari/binding-status",
                      params={"pending_id": pid})
         j2 = r2.json()
@@ -266,7 +266,7 @@ class TestVoitaRaffleBind:
         assert r2.json()["already_bound"] is True
 
 
-# ── Admin endpoints — gating ─────────────────────────────────────────────
+# ── Admin endpoints - gating ─────────────────────────────────────────────
 
 class TestAdminGating:
     def test_bound_entries_requires_admin(self, api):

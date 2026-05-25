@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — /back-office/profiler-funnel · iter64 pivot
+ * PUTKI HQ - /back-office/profiler-funnel · iter64 pivot
  *
  * Lightweight funnel dashboard for the behavioral profiler at /peliareena.
  * Reads from GET /api/admin/profiler/funnel and renders the seven-step
@@ -123,7 +123,7 @@ const BackOfficeProfilerFunnel = () => {
                     {n.toLocaleString()}
                   </div>
                   <div className="mono" style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'right' }}>
-                    {rate != null ? `${rate}% conv.` : '— '}
+                    {rate != null ? `${rate}% conv.` : '- '}
                   </div>
                 </div>
               );

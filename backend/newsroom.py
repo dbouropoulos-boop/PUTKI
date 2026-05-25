@@ -1,15 +1,15 @@
 """
-PUTKI HQ — Newsroom helpers.
+PUTKI HQ - Newsroom helpers.
 
 Severity classification, entity extraction, and stats aggregation for the
 PizzINT-style news system. Severity is computed at read time (no schema
 migration) from article type + age + view count + viewer signals.
 
 Severity tiers:
-  • SCORCHING — high-velocity right now (top reads/hour, very fresh)
-  • HOT       — fresh + meaningful
-  • WARM      — published today/yesterday, moderate engagement
-  • COOL      — older background articles
+  • SCORCHING - high-velocity right now (top reads/hour, very fresh)
+  • HOT       - fresh + meaningful
+  • WARM      - published today/yesterday, moderate engagement
+  • COOL      - older background articles
 """
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def _parse_iso(s: Optional[str]) -> Optional[datetime]:
 def classify_severity(article: Dict[str, Any], *, now: Optional[datetime] = None) -> str:
     """Derive a severity tier (SCORCHING / HOT / WARM / COOL) for an article.
 
-    Pure function — no DB calls, can run on any cached article dict.
+    Pure function - no DB calls, can run on any cached article dict.
     """
     now = now or datetime.now(timezone.utc)
     pub = _parse_iso(article.get("published_at")) or now
@@ -114,7 +114,7 @@ async def list_recent_articles(db, hours: int = 24) -> List[Dict[str, Any]]:
 
 
 async def content_stats(db) -> Dict[str, Any]:
-    """24h newsroom stats — severity breakdown + total + source count."""
+    """24h newsroom stats - severity breakdown + total + source count."""
     arts = await list_recent_articles(db, hours=24)
     by_sev = {"SCORCHING": 0, "HOT": 0, "WARM": 0, "COOL": 0}
     sources: set = set()
@@ -186,7 +186,7 @@ def _infer_entity_type(slug: str) -> str:
 
 
 def annotate(article: Dict[str, Any]) -> Dict[str, Any]:
-    """Mutating helper — add `severity` + `entity_tags` + `source_count`
+    """Mutating helper - add `severity` + `entity_tags` + `source_count`
     fields for outbound API payloads (read-only enrichment)."""
     article["severity"] = classify_severity(article)
     article["entity_tags"] = extract_entity_tags(article)

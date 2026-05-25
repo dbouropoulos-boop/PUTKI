@@ -1,5 +1,5 @@
 """
-iter68 phase 1 — `routes/admin.py` extraction smoke tests.
+iter68 phase 1 - `routes/admin.py` extraction smoke tests.
 
 Validates that the four admin copy endpoints (GET/PUT × mittari/mestari)
 still respond correctly after being lifted from `server.py` into the
@@ -63,7 +63,7 @@ class TestMittariCopyExtraction:
         )
         body = _editor_envelope(get)
         assert body["merged"]["hero"]["fi"]["page_title_lead"] == new_lead
-        # Cleanup — reset by saving an empty override.
+        # Cleanup - reset by saving an empty override.
         requests.put(
             f"{BASE_URL}/api/admin/mittari/copy",
             json={},
@@ -86,7 +86,7 @@ class TestMestariCopyExtraction:
 
 
 class TestStreamerMetaExtraction:
-    """iter68 phase 2 — streamer-meta cluster lives in routes/admin.py."""
+    """iter68 phase 2 - streamer-meta cluster lives in routes/admin.py."""
 
     def test_legacy_listing_requires_admin(self):
         r = requests.get(f"{BASE_URL}/api/admin/streamer-meta", timeout=5)
@@ -133,7 +133,7 @@ class TestStreamerMetaExtraction:
 
 
 class TestSlotRegistryExtraction:
-    """iter68 phase 3a — slot-registry cluster lives in routes/admin.py."""
+    """iter68 phase 3a - slot-registry cluster lives in routes/admin.py."""
 
     def test_list_requires_admin(self):
         r = requests.get(f"{BASE_URL}/api/admin/slot-registry", timeout=5)
@@ -148,7 +148,7 @@ class TestSlotRegistryExtraction:
         assert "items" in body and isinstance(body["items"], list)
 
     def test_seed_is_idempotent(self):
-        # Seed twice — second call must not raise nor mutate.
+        # Seed twice - second call must not raise nor mutate.
         r1 = requests.post(
             f"{BASE_URL}/api/admin/slot-registry/seed",
             headers=HEADERS,
@@ -164,7 +164,7 @@ class TestSlotRegistryExtraction:
 
 
 class TestVoyagerRotationExtraction:
-    """iter68 phase 3b — voyager rotation cluster lives in routes/admin.py."""
+    """iter68 phase 3b - voyager rotation cluster lives in routes/admin.py."""
 
     def test_weeks_listing_requires_admin(self):
         r = requests.get(f"{BASE_URL}/api/admin/voyager/weeks", timeout=5)
@@ -190,7 +190,7 @@ class TestVoyagerRotationExtraction:
         assert r.status_code == 200, r.text
         body = r.json()
         # voyager_rotation uses `sanitised` instead of `merged` because
-        # the sanitiser does more than a deep-merge — it enforces game
+        # the sanitiser does more than a deep-merge - it enforces game
         # template references + redirect-URL constraints.
         for key in ("raw", "sanitised", "defaults"):
             assert key in body, f"missing {key} in rotation envelope"

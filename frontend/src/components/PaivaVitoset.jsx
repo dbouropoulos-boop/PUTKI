@@ -1,18 +1,18 @@
 /**
- * PaivaVitoset — "Päivän tärpit · Today's market watch"
+ * PaivaVitoset - "Päivän tärpit · Today's market watch"
  *
  * Phase 1 rebuild (Section 7 of the brief):
  *   1. Daily Market Watch Card at the top of the section (Sharpness +
  *      30-day sparkline + band label).
- *   2. Soundbite pick cards — scannable in <1s; click-to-expand reveals
+ *   2. Soundbite pick cards - scannable in <1s; click-to-expand reveals
  *      structural analysis + bookmaker + reporting citations + disclosure.
  *   3. Sharpness bar + modifier per pick.
- *   4. Track record line at the bottom (journalism framing — market consensus,
+ *   4. Track record line at the bottom (journalism framing - market consensus,
  *      not "did we win bets").
  *
  * Backend feeds:
- *   GET /api/odds/featured     — picks with Sharpness object attached
- *   GET /api/odds/market-watch — daily score + sparkline
+ *   GET /api/odds/featured     - picks with Sharpness object attached
+ *   GET /api/odds/market-watch - daily score + sparkline
  *
  * Removed in this rebuild:
  *   - Orange Telegram CTA bar (Section 7f)
@@ -128,7 +128,7 @@ const SharpnessBar = ({ value, modifier, lang, onVerify }) => {
 };
 
 /**
- * VerifyMathPanel — worksheet-style breakdown of the Sharpness components.
+ * VerifyMathPanel - worksheet-style breakdown of the Sharpness components.
  * Per Phase 1 user spec: plain-language labels, editorial layout, deterministic-
  * note closing line. Replaces a code block with an inline math worksheet.
  */
@@ -144,7 +144,7 @@ const VerifyMathPanel = ({ sharpness, lang }) => {
     weight: 'Paino',
     score: 'Pisteet',
     weighted: 'Painotettu',
-    no_history: 'Ei vielä 24 h historiaa — oletus 50.',
+    no_history: 'Ei vielä 24 h historiaa - oletus 50.',
     closing: 'Sharpness on deterministinen. Sama data tuottaa aina saman pistemäärän.',
   };
   const L_EN = {
@@ -155,7 +155,7 @@ const VerifyMathPanel = ({ sharpness, lang }) => {
     weight: 'Weight',
     score: 'Score',
     weighted: 'Weighted',
-    no_history: 'No 24h history yet — defaults to 50.',
+    no_history: 'No 24h history yet - defaults to 50.',
     closing: 'Sharpness is deterministic. The same data always produces the same score.',
   };
   const L = lang === 'en' ? L_EN : L_FI;
@@ -165,7 +165,7 @@ const VerifyMathPanel = ({ sharpness, lang }) => {
     { name: L.rm, value: c.recency_momentum,   weight: w.momentum || 0.2,
       note: sharpness.has_momentum_history === false ? L.no_history : null },
   ];
-  const fmt = (n) => (n == null ? '—' : Number(n).toFixed(1));
+  const fmt = (n) => (n == null ? '-' : Number(n).toFixed(1));
 
   return (
     <div data-testid="verify-math-panel"
@@ -209,7 +209,7 @@ const VerifyMathPanel = ({ sharpness, lang }) => {
               <td className="mono" style={{ padding: '8px', textAlign: 'right', fontSize: 13, color: 'var(--ink)' }}>{fmt(r.value)}</td>
               <td className="mono" style={{ padding: '8px', textAlign: 'right', fontSize: 13, color: 'var(--muted)' }}>× {r.weight.toFixed(2)}</td>
               <td className="mono" style={{ padding: '8px 0 8px 8px', textAlign: 'right', fontSize: 13, color: 'var(--ink)', fontWeight: 700 }}>
-                {r.value != null ? (r.value * r.weight).toFixed(1) : '—'}
+                {r.value != null ? (r.value * r.weight).toFixed(1) : '-'}
               </td>
             </tr>
           ))}
@@ -324,8 +324,8 @@ const PickCard = ({ pick, idx, lang }) => {
              style={{ borderTop: '1px solid var(--border)', padding: '14px 18px', background: 'var(--surface)' }}>
           <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.55 }}>
             {lang === 'en'
-              ? `The bookmaker consensus has settled around ${pick.pick_team} at ${Number(pick.decimal_odds).toFixed(2)} across ${pick.bookmaker_count} books. Sharpness ${sharpness.sharpness}/100 — ${BAND_LABELS[sharpness.band || 'mixed'].en.toLowerCase()}.`
-              : `Vedonlyöntiyhtiöiden konsensus on asettunut ${pick.pick_team} -joukkueeseen kertoimella ${Number(pick.decimal_odds).toFixed(2)} ${pick.bookmaker_count} kirjassa. Sharpness ${sharpness.sharpness}/100 — ${BAND_LABELS[sharpness.band || 'mixed'].fi.toLowerCase()}.`}
+              ? `The bookmaker consensus has settled around ${pick.pick_team} at ${Number(pick.decimal_odds).toFixed(2)} across ${pick.bookmaker_count} books. Sharpness ${sharpness.sharpness}/100 - ${BAND_LABELS[sharpness.band || 'mixed'].en.toLowerCase()}.`
+              : `Vedonlyöntiyhtiöiden konsensus on asettunut ${pick.pick_team} -joukkueeseen kertoimella ${Number(pick.decimal_odds).toFixed(2)} ${pick.bookmaker_count} kirjassa. Sharpness ${sharpness.sharpness}/100 - ${BAND_LABELS[sharpness.band || 'mixed'].fi.toLowerCase()}.`}
           </p>
           <p className="mono mt-2"
              style={{ fontSize: 10.5, letterSpacing: '0.12em', color: 'var(--muted)', fontWeight: 600 }}>
@@ -370,7 +370,7 @@ const DailyMarketWatchCard = ({ data, lang }) => {
              style={{ fontSize: 28, fontWeight: 700, color: 'var(--ink)', lineHeight: 1.05 }}>
           Sharpness {data.score}/100
           <span className="mono" style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 500, marginLeft: 10, letterSpacing: '0.06em' }}>
-            — {lang === 'en' ? band.en : band.fi}
+            - {lang === 'en' ? band.en : band.fi}
           </span>
         </div>
         <Sparkline points={data.sparkline} />
@@ -454,13 +454,13 @@ const PaivaVitoset = () => {
         </ol>
       )}
 
-      {/* Track record line — journalism framing per Section 7d */}
+      {/* Track record line - journalism framing per Section 7d */}
       <div className="mono mt-5"
            data-testid="paivan-vitoset-track-record"
            style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--muted)', fontWeight: 500 }}>
         {lang === 'en'
-          ? `Last 7 days · Market consensus tracked across ${picks.length} tips · 30-day Sharpness average: ${marketWatch?.score ?? '—'}/100`
-          : `Viimeinen 7 päivää · Markkinakonsensus seurattu ${picks.length} tärpissä · 30 päivän Sharpness-keskiarvo: ${marketWatch?.score ?? '—'}/100`}
+          ? `Last 7 days · Market consensus tracked across ${picks.length} tips · 30-day Sharpness average: ${marketWatch?.score ?? '-'}/100`
+          : `Viimeinen 7 päivää · Markkinakonsensus seurattu ${picks.length} tärpissä · 30 päivän Sharpness-keskiarvo: ${marketWatch?.score ?? '-'}/100`}
       </div>
     </section>
   );

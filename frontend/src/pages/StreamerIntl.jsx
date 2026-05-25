@@ -5,7 +5,7 @@ import StreamerAvatar from '../components/StreamerAvatar';
 import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
-// V2 honesty pass — INTL streamer page reads /api/streamers?market=intl.
+// V2 honesty pass - INTL streamer page reads /api/streamers?market=intl.
 // Live state/playing/viewers no longer surface (real values come from
 // Step 2 webhook handlers via /api/signals/live).
 
@@ -77,8 +77,8 @@ const StreamerIntl = () => {
           </h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
             {lang === 'en'
-              ? <>PUTKI HQ covers the global slot-streaming scene — from Stake-era superstars to the Swedish, Dutch and Norwegian scenes — without losing its Finnish identity. <strong style={{ color: 'var(--ink)' }}>The dial stays Finnish-only.</strong> International activity surfaces here, never feeds the P*rkele-mittari.</>
-              : <>PUTKI HQ kattaa myös globaalin slot-skenen — Stake-aikakauden supertähdet, ruotsalaiset, hollantilaiset ja norjalaiset — kadottamatta suomalaista identiteettiään. <strong style={{ color: 'var(--ink)' }}>PUTKI HQ pysyy suomi-lähtöisenä.</strong> Kansainvälinen aktiviteetti näkyy täällä, mutta ei syötä P*rkele-mittaria.</>}
+              ? <>PUTKI HQ covers the global slot-streaming scene - from Stake-era superstars to the Swedish, Dutch and Norwegian scenes - without losing its Finnish identity. <strong style={{ color: 'var(--ink)' }}>The dial stays Finnish-only.</strong> International activity surfaces here, never feeds the P*rkele-mittari.</>
+              : <>PUTKI HQ kattaa myös globaalin slot-skenen - Stake-aikakauden supertähdet, ruotsalaiset, hollantilaiset ja norjalaiset - kadottamatta suomalaista identiteettiään. <strong style={{ color: 'var(--ink)' }}>PUTKI HQ pysyy suomi-lähtöisenä.</strong> Kansainvälinen aktiviteetti näkyy täällä, mutta ei syötä P*rkele-mittaria.</>}
           </p>
           <div className="mt-5">
             <Link to="/striimaajat" className="btn-ghost" data-testid="intl-back-link">
@@ -152,7 +152,7 @@ const StreamerIntl = () => {
           </div>
         ) : (
           <div className="panel p-10 text-center mono" style={{ fontSize: 12, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }} data-testid="intl-empty">
-            {lang === 'en' ? 'NO STREAMERS YET — SCENE COMING SOON' : 'EI STRIIMAAJIA VIELÄ — SKENE TULOSSA'}
+            {lang === 'en' ? 'NO STREAMERS YET - SCENE COMING SOON' : 'EI STRIIMAAJIA VIELÄ - SKENE TULOSSA'}
           </div>
         )}
       </section>

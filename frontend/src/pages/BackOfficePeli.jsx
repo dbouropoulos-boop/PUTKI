@@ -1,5 +1,5 @@
 /**
- * BackOfficePeli — admin surface for the /peli raffle.
+ * BackOfficePeli - admin surface for the /peli raffle.
  *
  * Edit prize amount/label/currency, partner config, 3 embedded videos,
  * enable/disable the raffle, view entries.

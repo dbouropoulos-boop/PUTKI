@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — NewsPortal (Phase 1 Final Restructure · Chunk A).
+ * PUTKI HQ - NewsPortal (Phase 1 Final Restructure · Chunk A).
  *
  * Homepage left column.
  * Layout (top → bottom):
@@ -18,7 +18,7 @@
  * Editorial guarantee
  * -------------------
  * Every featured hero with an image carries the mandatory `Photo: {source}`
- * overlay caption. og:image fetcher honours the back-office blocklist —
+ * overlay caption. og:image fetcher honours the back-office blocklist -
  * removal requests propagate immediately.
  */
 import React, { useEffect, useState } from 'react';
@@ -219,7 +219,7 @@ const ChronoRow = ({ item, lang, weight }) => {
   const catColor = CATEGORY_COLOR[cat] || CATEGORY_COLOR.news;
   const isOld = weight === 'old';
 
-  // Uniform editorial treatment across every row — no lead-row variation.
+  // Uniform editorial treatment across every row - no lead-row variation.
   // The "freshness" signal is carried by the severity stripe + ordering;
   // typography stays consistent so the list reads as a single column.
   const titleColor = isOld ? 'var(--muted)' : 'var(--ink)';
@@ -284,7 +284,7 @@ const ChronoRow = ({ item, lang, weight }) => {
           textAlign: 'right', opacity: isOld ? 0.55 : 0.82,
           fontVariantNumeric: 'tabular-nums',
         }}>
-        <span aria-hidden style={{ marginRight: 4, opacity: 0.65 }}>◉</span>{views || '—'}
+        <span aria-hidden style={{ marginRight: 4, opacity: 0.65 }}>◉</span>{views || '-'}
       </span>
       <span data-testid="news-chrono-outlet" style={{
         color: 'var(--muted, #9C9587)', fontFamily: 'ui-monospace, monospace',
@@ -353,7 +353,7 @@ const NewsPortal = () => {
         </span>
       </div>
 
-      {/* Micro-citation — what this section is, in one quiet line */}
+      {/* Micro-citation - what this section is, in one quiet line */}
       <div
         data-testid="news-portal-micro-citation"
         style={{

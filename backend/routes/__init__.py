@@ -1,4 +1,4 @@
-"""PUTKI HQ — Modular route packages (iter66 modularisation phase 1).
+"""PUTKI HQ - Modular route packages (iter66 modularisation phase 1).
 
 Routes are progressively extracted from the server.py monolith into
 focused submodules. Each module exposes a `build_*_router(...)`

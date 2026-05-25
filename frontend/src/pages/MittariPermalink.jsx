@@ -1,7 +1,7 @@
 /**
- * MittariPermalink — /m/:slug
+ * MittariPermalink - /m/:slug
  *
- * Phase 1 Sprint 4 — stub historical-snapshot page for share links.
+ * Phase 1 Sprint 4 - stub historical-snapshot page for share links.
  * Slug format: {state-slug}-{YYYY-MM-DD}, e.g. `perkele-2026-05-18`.
  *
  * Backend: GET /api/dial/permalink/{STATE_KEY}/{date}
@@ -83,7 +83,7 @@ const MittariPermalink = () => {
           const abs = d.url.startsWith('http') ? d.url : `${BACKEND}${d.url}`;
           setOgImageUrl(abs);
         }
-      } catch { /* silent — share preview will fall back to no og:image */ }
+      } catch { /* silent - share preview will fall back to no og:image */ }
     })();
     return () => { cancelled = true; };
   }, [parsed]);
@@ -100,9 +100,9 @@ const MittariPermalink = () => {
   useDocumentMeta({
     title: parsed
       ? (lang === 'en'
-          ? `Mittari was ${label} on ${formatFinnishDate(parsed.date, lang)} — PUTKI HQ`
-          : `Mittari oli ${label} ${formatFinnishDate(parsed.date, 'fi')} — PUTKI HQ`)
-      : 'Mittari — PUTKI HQ',
+          ? `Mittari was ${label} on ${formatFinnishDate(parsed.date, lang)} - PUTKI HQ`
+          : `Mittari oli ${label} ${formatFinnishDate(parsed.date, 'fi')} - PUTKI HQ`)
+      : 'Mittari - PUTKI HQ',
     description: parsed
       ? (lang === 'en'
           ? `Mittari reading: ${reading}`

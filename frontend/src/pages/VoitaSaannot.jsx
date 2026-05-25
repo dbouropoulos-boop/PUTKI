@@ -1,9 +1,9 @@
 /**
- * PUTKI HQ — VoitaSaannot (rules page).
+ * PUTKI HQ - VoitaSaannot (rules page).
  *
  * Pre-launch placeholder. Sako-reviewed final copy will replace the
  * body. Keep the structure: scoring, eligibility, draw mechanism, data
- * handling. Frontend never inlines marketing copy here — this is the
+ * handling. Frontend never inlines marketing copy here - this is the
  * legal surface.
  */
 import React from 'react';
@@ -32,8 +32,8 @@ const VoitaSaannot = () => {
         fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.10em',
         color: '#f4c66a',
       }}>{lang === 'en'
-        ? 'DRAFT — AWAITING SAKO REVIEW. Final binding rules will replace this draft.'
-        : 'LUONNOS — ODOTTAA SAKON TARKASTUSTA. Lopulliset sitovat säännöt korvaavat tämän luonnoksen.'}</div>
+        ? 'DRAFT - AWAITING SAKO REVIEW. Final binding rules will replace this draft.'
+        : 'LUONNOS - ODOTTAA SAKON TARKASTUSTA. Lopulliset sitovat säännöt korvaavat tämän luonnoksen.'}</div>
 
       <section style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--ink)' }}>
         <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: '#FFFFFF', marginTop: 0 }}>

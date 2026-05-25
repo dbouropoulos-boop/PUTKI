@@ -1,15 +1,15 @@
 /**
- * Voyager — `/game` weekly editorial pick.
+ * Voyager - `/game` weekly editorial pick.
  *
- * Source-of-truth spec: PUTKI HQ — Voyager Page Spec (Section 1-10).
+ * Source-of-truth spec: PUTKI HQ - Voyager Page Spec (Section 1-10).
  * Reader frame: "what did PUTKI HQ pick this week", not "claim your bonus".
  *
  * Spine (top-to-bottom):
  *   1. Masthead (← PUTKI HQ · VOYAGER · GAME OF THE WEEK)
  *   2. Standfirst (eyebrow · headline · verdict · "kokeilimme itse")
  *   3. Game block (Smartico embed)
- *   4. Pass (visible artifact carrying visitor_win_uuid) — shows on win
- *   5. Review (operator review card — the editorial bubble)
+ *   4. Pass (visible artifact carrying visitor_win_uuid) - shows on win
+ *   5. Review (operator review card - the editorial bubble)
  *   6. Redeem CTA → operator (only after win)
  *   7. Next week + signup routing
  *
@@ -68,15 +68,15 @@ const Voyager = () => {
 
   useDocumentMeta({
     title: lang === 'en'
-      ? `Voyager · ${activeWeek.game.title_en} × ${activeWeek.operator.name} — PUTKI HQ`
-      : `Voyager · ${activeWeek.game.title_fi} × ${activeWeek.operator.name} — PUTKI HQ`,
+      ? `Voyager · ${activeWeek.game.title_en} × ${activeWeek.operator.name} - PUTKI HQ`
+      : `Voyager · ${activeWeek.game.title_fi} × ${activeWeek.operator.name} - PUTKI HQ`,
     description: lang === 'en'
       ? `PUTKI HQ's pick of the week: play ${activeWeek.game.title_en}, win free spins, redeem at ${activeWeek.operator.name}. Editorial review attached.`
       : `PUTKI HQ:n viikon valinta: pelaa ${activeWeek.game.title_fi}, voita ilmaiskierroksia, lunasta ${activeWeek.operator.name}illä. Toimituksellinen arvostelu mukana.`,
     canonical: `${BACKEND}/game`,
   });
 
-  // Smartico onWin handler — captures the prize and scrolls to the pass.
+  // Smartico onWin handler - captures the prize and scrolls to the pass.
   const onWin = useCallback((p) => {
     setPrize(p || {});
     try {

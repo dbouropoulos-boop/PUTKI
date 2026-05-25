@@ -1,12 +1,12 @@
 """
-Phase 4 Week 2 — ContentGenerator + editorial subjects tests.
+Phase 4 Week 2 - ContentGenerator + editorial subjects tests.
 
 Covers:
   - Editorial subjects loader (305 entries / 17 subject_types)
   - ContentGenerator dedup fingerprint (no rewrite when same signal repeats)
   - Rate-limit downgrade from TIER 1 auto → TIER 2 draft when >10/h
   - Templates: nhl_recap, streamer_alert (no LLM), regulatory_analysis (LLM),
-    operator_news, f1_recap, football_recap — minimal happy paths with the
+    operator_news, f1_recap, football_recap - minimal happy paths with the
     LLM mocked out so tests stay deterministic + offline.
   - /api/content/drafts CRUD: list, get, edit, publish, reject
   - /api/content/published/{slug} public read + view increment
@@ -167,7 +167,7 @@ class _MemDB:
 
 
 async def _fake_llm(system_prompt: str, user_prompt: str) -> str:
-    # Return JSON the generator expects per template — INCLUDE social meta
+    # Return JSON the generator expects per template - INCLUDE social meta
     # so we can assert it survives intact end-to-end. Also include the new
     # validation-required fields (betting_angle ≥ 20 chars + facts_used).
     base = ('"og_title":"OG title","og_description":"OG desc","twitter_description":"TW desc",'
@@ -175,7 +175,7 @@ async def _fake_llm(system_prompt: str, user_prompt: str) -> str:
             '"betting_angle":"Kerroinmuutos vaikuttaa playoff-veikkauksiin selvästi.",'
             '"facts_used":["api_score","api_player_stat","api_standings"],'
             '"skip_reason":null')
-    # iter66 — body filler must satisfy BOTH (a) the source-citation gate
+    # iter66 - body filler must satisfy BOTH (a) the source-citation gate
     # (citation phrase + named source within the first 400 chars) and
     # (b) the body_word_count 120..280 floor for non-regulatory templates.
     # `Yle Urheilun mukaan` covers both phrase + named-source in one stroke;
@@ -303,7 +303,7 @@ class TestSocialMeta:
         assert social["og_description"] == "OG desc"
         assert social["twitter_description"] == "TW desc"
         assert social["article_tags"] == ["tag1", "tag2"]
-        # Canonical URL stamped — unified /uutiset/ prefix to avoid colliding
+        # Canonical URL stamped - unified /uutiset/ prefix to avoid colliding
         # with the existing /kasinot/:slug + /striimaajat/:slug profile routes.
         assert pub["canonical_url"].startswith("https://putkihq.fi/uutiset/")
 
@@ -453,7 +453,7 @@ class TestContentAPIs:
             assert t in ids
 
     def test_streamer_alert_via_api_full_cycle(self):
-        # Use non-TESTAPI prefix — the production publisher guard blocks
+        # Use non-TESTAPI prefix - the production publisher guard blocks
         # any draft whose slug/headline contains "testapi" so dev fixtures
         # cannot leak into /api/content/published.
         unique_login = f"e2efixt_{os.urandom(4).hex()}"
@@ -465,7 +465,7 @@ class TestContentAPIs:
         r = requests.post(f"{API}/admin/content/generate", headers=HDR, json=sig, timeout=10)
         assert r.status_code == 200
         d = r.json()
-        # iter66 — accept BOTH outcomes: if the live DB is hot (>10 auto-
+        # iter66 - accept BOTH outcomes: if the live DB is hot (>10 auto-
         # publishes in the last hour) the rate-limit gate fires correctly
         # and the draft lands at tier 2. Either way the SLUG/URL surface
         # we want to assert is identical. Rate-limit logic itself is
@@ -473,7 +473,7 @@ class TestContentAPIs:
         assert d["status"] in ("generated", "rate_limited_to_draft")
         if d["status"] == "rate_limited_to_draft":
             # Rate-limited drafts don't go public; the API contract checks
-            # below would fail. Skip the public-read tail of this case —
+            # below would fail. Skip the public-read tail of this case -
             # the rate-limit unit test asserts the downgrade path itself.
             assert d.get("published") is None
             return

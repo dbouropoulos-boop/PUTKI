@@ -1,11 +1,11 @@
 /**
- * Ehdot (/ehdot) — Phase 1 brief Section 9.
+ * Ehdot (/ehdot) - Phase 1 brief Section 9.
  *
  * Lightweight Terms & Conditions page. Adds the "KÄYTETTY TEKNOLOGIA" /
  * "TECHNOLOGY USED" section at heading level (as the brief requires),
  * pointing readers to /menetelma for the workflow detail.
  *
- * Existing legal copy stubs are placeholders — full editorial T&C copy
+ * Existing legal copy stubs are placeholders - full editorial T&C copy
  * is editor-supplied; this page is structured so each clause is a
  * labeled section that's easy to extend.
  */
@@ -51,7 +51,7 @@ const Ehdot = () => {
   const { lang } = useLang();
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Terms & conditions — PUTKI HQ' : 'Ehdot — PUTKI HQ',
+    title: lang === 'en' ? 'Terms & conditions - PUTKI HQ' : 'Ehdot - PUTKI HQ',
     description: lang === 'en'
       ? 'Terms of use, editorial independence policy, and technology disclosure.'
       : 'Käyttöehdot, toimituksellisen riippumattomuuden linja ja teknologiailmoitus.',
@@ -78,7 +78,7 @@ const Ehdot = () => {
 
       <section className="container-wide pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 max-w-5xl">
-          {/* CLAUSE — Editorial position */}
+          {/* CLAUSE - Editorial position */}
           <SectionCard
             id="toimituksellinen"
             icon={ScrollText}
@@ -92,7 +92,7 @@ const Ehdot = () => {
             </p>
           </SectionCard>
 
-          {/* CLAUSE — KÄYTETTY TEKNOLOGIA — required by Phase 1 brief Section 9 */}
+          {/* CLAUSE - KÄYTETTY TEKNOLOGIA - required by Phase 1 brief Section 9 */}
           <SectionCard
             id="kaytetty-teknologia"
             icon={Cpu}
@@ -101,8 +101,8 @@ const Ehdot = () => {
           >
             <p>
               {lang === 'en'
-                ? 'PUTKI HQ uses artificial intelligence as part of its publishing operations — for monitoring news sources, classifying content, synthesizing articles, and generating editorial material. All published content passes editorial review before publication. A detailed description of our workflow is available on our methodology page at '
-                : 'PUTKI HQ käyttää tekoälyä julkaisutoimintansa osana — uutislähteiden seurantaan, sisällön luokitteluun, artikkeleiden koostamiseen ja toimituksellisen aineiston tuottamiseen. Kaikki julkaistu sisältö käy läpi toimituksellisen tarkistuksen ennen julkaisua. Yksityiskohtainen kuvaus työnkulustamme on saatavilla menetelmäsivultamme osoitteessa '}
+                ? 'PUTKI HQ uses artificial intelligence as part of its publishing operations - for monitoring news sources, classifying content, synthesizing articles, and generating editorial material. All published content passes editorial review before publication. A detailed description of our workflow is available on our methodology page at '
+                : 'PUTKI HQ käyttää tekoälyä julkaisutoimintansa osana - uutislähteiden seurantaan, sisällön luokitteluun, artikkeleiden koostamiseen ja toimituksellisen aineiston tuottamiseen. Kaikki julkaistu sisältö käy läpi toimituksellisen tarkistuksen ennen julkaisua. Yksityiskohtainen kuvaus työnkulustamme on saatavilla menetelmäsivultamme osoitteessa '}
               <Link to="/menetelma" className="underline" data-testid="ehdot-menetelma-link">
                 putkihq.fi/menetelma
               </Link>

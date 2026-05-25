@@ -1,9 +1,9 @@
-"""Phase 3 — Mestari copy editor endpoint tests.
+"""Phase 3 - Mestari copy editor endpoint tests.
 
 Coverage:
-  GET /api/mestari/copy         — public merged tree
-  GET /api/admin/mestari/copy   — auth-gated raw+merged+defaults
-  PUT /api/admin/mestari/copy   — deep-merge, reset, paste-bomb cap
+  GET /api/mestari/copy         - public merged tree
+  GET /api/admin/mestari/copy   - auth-gated raw+merged+defaults
+  PUT /api/admin/mestari/copy   - deep-merge, reset, paste-bomb cap
 """
 import os
 import pytest

@@ -4,12 +4,12 @@ import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// V2 honesty pass — formerly fake "live event" feed manufactured from
+// V2 honesty pass - formerly fake "live event" feed manufactured from
 // data/mockStreams. Now reads /api/published only. Empty surface when
-// the editorial pipeline hasn't published anything yet — no fabrication.
+// the editorial pipeline hasn't published anything yet - no fabrication.
 
 const timeAgo = (iso, lang) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diff < 60) return lang === 'en' ? `${diff}s ago` : `${diff}s sitten`;
   if (diff < 3600) return lang === 'en' ? `${Math.floor(diff / 60)}m ago` : `${Math.floor(diff / 60)}min sitten`;
@@ -102,7 +102,7 @@ export const ActivityFeedInline = () => {
   );
 };
 
-// Optional rail variant for inner pages — same data, slimmer layout
+// Optional rail variant for inner pages - same data, slimmer layout
 export const ActivityFeedRail = () => {
   const { lang } = useLang();
   const [items, setItems] = useState([]);

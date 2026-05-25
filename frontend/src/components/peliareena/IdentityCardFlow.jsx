@@ -1,17 +1,17 @@
 /**
- * PUTKI HQ — IdentityCardFlow (iter63)
+ * PUTKI HQ - IdentityCardFlow (iter63)
  *
  * Drop-in replacement for the per-game preview/email-gate block.
  * Reads the `card` payload built server-side (mini_game_card.py) and
  * renders the identity-first reveal + micro-yes ladder flow.
  *
  * Props:
- *   preview     — full backend preview/finish response. Must include
+ *   preview     - full backend preview/finish response. Must include
  *                 `card`, `persona_preview`, `week_iso`.
- *   session     — { play_id, anon_id }
- *   gameSlug    — for share-tracking + testids (e.g. "quiz")
- *   unlockPath  — backend path to call on email submit
- *   onUnlocked  — (full_result) => void; called when the email gate
+ *   session     - { play_id, anon_id }
+ *   gameSlug    - for share-tracking + testids (e.g. "quiz")
+ *   unlockPath  - backend path to call on email submit
+ *   onUnlocked  - (full_result) => void; called when the email gate
  *                 successfully unlocks the full personalised result.
  */
 import React from 'react';
@@ -38,7 +38,7 @@ const IdentityCardFlow = ({
   const { lang } = useLang();
   const card = preview?.card || {};
   const persona = preview?.persona_preview || {};
-  const profileTitle = (lang === 'en' && persona.title_en) || persona.title || '—';
+  const profileTitle = (lang === 'en' && persona.title_en) || persona.title || '-';
   const weekISO = preview?.week_iso || '';
 
   return (

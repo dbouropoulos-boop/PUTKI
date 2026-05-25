@@ -5,7 +5,7 @@ import { dialLabel as fmtDialLabel } from '../constants/dial';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// V2 honesty pass — formerly SocialProofTicker.
+// V2 honesty pass - formerly SocialProofTicker.
 // No fabricated subscriber / watcher / "forum heat" numbers.
 // Pulls only real, auditable counts: signups in DB, named sources in
 // source_map, published editorial items, latest dial state.
@@ -72,7 +72,7 @@ export const SocialProofTicker = () => {
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  const fmt = (n) => (n == null ? '—' : n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' '));
+  const fmt = (n) => (n == null ? '-' : n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' '));
   const stateKey = data.dial?.key;
   const dialLabelStr = stateKey ? fmtDialLabel(stateKey, lang) : (lang === 'en' ? 'NO SIGNAL' : 'EI SIGNAALIA');
 

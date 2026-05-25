@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Phase 4 Week 2 ContentGenerator
+PUTKI HQ - Phase 4 Week 2 ContentGenerator
 ==========================================
 
 Takes a Layer 2 signal payload, picks the right template, fetches editorial
@@ -48,7 +48,7 @@ DEDUP_WINDOW_HOURS = int(os.environ.get("CONTENT_GENERATOR_DEDUP_WINDOW_HOURS", 
 EDITORIAL_GUIDELINES_DIRECTIVE = (
     "PUTKI HQ -ÄÄNI JA TYYLI (PAKOLLISET SÄÄNNÖT):\n"
     "- Sävy: ammattilainen pohjavire, älykäs purevuus sallittu. Tyyli kuten "
-    "Complex × GQ × Bloomberg Crypto — fakta+kommentti, ei tylsää uutispuuroa.\n"
+    "Complex × GQ × Bloomberg Crypto - fakta+kommentti, ei tylsää uutispuuroa.\n"
     "- Saa olla terävä ja itsevarma, jopa hivenen ilkikurinen.\n"
     "- Kevyt suomalainen kiroilu (esim. \"perkele\") sallittua harkitusti.\n"
     "- EI markkinointikieltä, EI superlatiivihypeä.\n"
@@ -56,7 +56,7 @@ EDITORIAL_GUIDELINES_DIRECTIVE = (
     "- Joka artikkelin on sisällettävä eksplisiittinen vedonlyöntinäkökulma "
     "(esim. kerroin, markkinaliike, lopputuloksen analyysi, mitä tämä tarkoittaa "
     "pitkän aikavälin trendille). Minimissään 20 merkkiä.\n"
-    "- Jos vedonlyöntikulmaa ei ole, JÄTÄ ARTIKKELI KIRJOITTAMATTA — heikkoa "
+    "- Jos vedonlyöntikulmaa ei ole, JÄTÄ ARTIKKELI KIRJOITTAMATTA - heikkoa "
     "sisältöä ei julkaista.\n"
     "\nKIELLETYT AIHEET (ÄLÄ KOSKAAN KIRJOITA):\n"
     "- Peliongelmista varoittelu artikkelitekstissä (laillinen disclaimer "
@@ -64,7 +64,7 @@ EDITORIAL_GUIDELINES_DIRECTIVE = (
     "- Alaikäisten pelaaminen.\n"
     "- Peliriippuvuus tai riippuvuusterminologia.\n"
     "\nKIELLETYT FRAASIT:\n"
-    "- \"lähteiden mukaan\" / \"asiantuntijat ennustavat\" / \"sources say\" — "
+    "- \"lähteiden mukaan\" / \"asiantuntijat ennustavat\" / \"sources say\" - "
     "ole konkreettinen, älä kierrä.\n"
     "- Englanninkieliset sanat lukuun ottamatta erisnimiä (joukkueet, pelaajat, "
     "operaattorit).\n"
@@ -72,7 +72,7 @@ EDITORIAL_GUIDELINES_DIRECTIVE = (
     "- Otsikko: max 60 merkkiä, aktiivimuoto, sisältää keskeisen nimen + "
     "vedonlyöntikulman.\n"
     "- Alaotsikko: max 100 merkkiä, taustakonteksti tai vaikutus.\n"
-    "- Body: 150–250 sanaa, 3 kappaletta (mitä tapahtui / miksi tällä on "
+    "- Body: 150-250 sanaa, 3 kappaletta (mitä tapahtui / miksi tällä on "
     "merkitystä / mitä seuraavaksi).\n"
 )
 
@@ -87,10 +87,10 @@ FORBIDDEN_PHRASES = (
     "huhujen mukaan",
 )
 
-# Phase 1 brief Section 3e + Section 10 — per-article source citation enforcement.
+# Phase 1 brief Section 3e + Section 10 - per-article source citation enforcement.
 # Every editorial article (except `streamer_alert` auto-live template) must
 # contain BOTH (a) a citation phrase ("mukaan", "raportoi", "according to",
-# "reports that"), AND (b) a named outlet from NAMED_SOURCES — within the
+# "reports that"), AND (b) a named outlet from NAMED_SOURCES - within the
 # first 400 chars of the body. Or, for sports recaps, a `data: <provider>`
 # attribution is accepted in lieu of the named outlet.
 SOURCE_CITATION_PHRASES_RE = re.compile(
@@ -127,7 +127,7 @@ OFF_LIMITS_TERMS = (
 )
 
 # Default OG images per category. Served by the frontend from /og-defaults/.
-# Path is relative to the public origin — frontend resolves to absolute URL
+# Path is relative to the public origin - frontend resolves to absolute URL
 # when injecting into meta tags. Files are inline SVG (no external deps).
 DEFAULT_OG_IMAGE_BASE = "/og-defaults"
 DEFAULT_OG_IMAGE_BY_CATEGORY = {
@@ -145,7 +145,7 @@ def _word_count(html_or_text: str) -> int:
 
 def _validate_streamer_alert(content: Dict[str, Any]) -> Dict[str, Any]:
     """Lenient validation for the structured, non-editorial streamer_alert
-    template — only headline is mandatory."""
+    template - only headline is mandatory."""
     errors: List[str] = []
     if not content.get("headline"):
         errors.append("missing_headline")
@@ -189,7 +189,7 @@ def _validate_phrases(headline: str, subhead: str, body: str,
 
 
 def _validate_source_citation(template_id: str, body: str) -> List[str]:
-    """Phase 1 §3e + §10 — per-article source-citation enforcement.
+    """Phase 1 §3e + §10 - per-article source-citation enforcement.
     streamer_alert is the only exempt template."""
     if template_id in SOURCE_CITATION_EXEMPT_TEMPLATES:
         return []
@@ -209,19 +209,19 @@ def validate_content(template_id: str, content: Dict[str, Any]) -> Dict[str, Any
     """Run the launch-blocker editorial validation checklist. Returns a dict
     with `passed: bool` + `errors: [str]` + `warnings: [str]`.
 
-    Caller decides what to do when `passed=False` — current policy is to
+    Caller decides what to do when `passed=False` - current policy is to
     downgrade auto-publish to draft (never hard-fail the generation).
 
     iter66 refactor: this used to be a single 73-line function with
     cyclomatic complexity ~29. Split into focused helpers per check.
-    Identical output contract — verified by content_generator tests.
+    Identical output contract - verified by content_generator tests.
     """
     # Skip_reason short-circuits everything.
     if content.get("skip_reason"):
         return {"passed": False, "skipped": True, "errors": [], "warnings": [],
                 "skip_reason": content["skip_reason"]}
 
-    # streamer_alert is structured + non-editorial — validation is lenient.
+    # streamer_alert is structured + non-editorial - validation is lenient.
     if template_id == "streamer_alert":
         return _validate_streamer_alert(content)
 
@@ -238,7 +238,7 @@ def validate_content(template_id: str, content: Dict[str, Any]) -> Dict[str, Any
     errors.extend(e_len)
     warnings.extend(w_len)
 
-    # Facts traceability (warning only — LLM sometimes omits even when present)
+    # Facts traceability (warning only - LLM sometimes omits even when present)
     if isinstance(facts, list) and len(facts) < 2:
         warnings.append("facts_used_count_lt_2")
 
@@ -254,7 +254,7 @@ CLAUDE_MODEL = os.environ.get("CONTENT_GENERATOR_MODEL", "claude-opus-4-20250514
 # Dioni's launch-blocker spec: natural Finnish is non-negotiable. Translated-
 # sounding output destroys credibility on day 1.
 NATURAL_FINNISH_DIRECTIVE = (
-    "TÄRKEÄÄ — KIRJOITA TÄYDELLISTÄ, LUONNOLLISTA SUOMEA — EI KÄÄNNÖKSEN MAKUISTA:\n"
+    "TÄRKEÄÄ - KIRJOITA TÄYDELLISTÄ, LUONNOLLISTA SUOMEA - EI KÄÄNNÖKSEN MAKUISTA:\n"
     "- Käytä autenttista suomalaista urheiluslangia ja ilmaisuja\n"
     "- Kirjoita kuin natiivi suomalainen, ÄLÄ käännä englannin lauserakenteita\n"
     "- Suomen kielen lauserakenne ja sananjärjestys\n"
@@ -263,12 +263,12 @@ NATURAL_FINNISH_DIRECTIVE = (
     "ESIMERKKI:\n"
     "  HUONO (käännöksen makuista): \"Laine pelasi hyvin ja teki kaksi maalia tänään illalla.\"\n"
     "  HYVÄ (luonnollista): \"Laine jatkoi maaliputkeaan tehoilla 2+1.\"\n"
-    "\nSOSIAALINEN MEDIA — joka artikkeliin pakolliset kentät JSON-ulostulossa:\n"
+    "\nSOSIAALINEN MEDIA - joka artikkeliin pakolliset kentät JSON-ulostulossa:\n"
     "- og_title:           max 60 merkkiä (Facebook/Telegram preview)\n"
     "- og_description:     max 155 merkkiä (Facebook/Telegram preview)\n"
     "- twitter_description: max 200 merkkiä (X-jaon kuvaus)\n"
     "- og_image_url:       URL nostokuvaan tai null jos ei ole\n"
-    "- article_tags:       lista (5–8 kpl) avainsanoista, suomeksi, pieniä kirjaimia\n"
+    "- article_tags:       lista (5-8 kpl) avainsanoista, suomeksi, pieniä kirjaimia\n"
 )
 
 
@@ -281,7 +281,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "uses_llm": True,
         "system_prompt": (
             "Olet PUTKI HQ:n urheilutoimittaja. Kirjoitat suomeksi NHL-otteluraportteja "
-            "Complex × GQ × Bloomberg Crypto -tyylillä — faktoihin nojaten, "
+            "Complex × GQ × Bloomberg Crypto -tyylillä - faktoihin nojaten, "
             "vedonlyöntinäkökulma huomioiden, terävää kommentaaria mukaan.\n"
             "Vastauksesi on PELKKÄ JSON-objekti muotoa "
             "{\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p>\","
@@ -308,7 +308,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "- Aikaleima: {start_time_utc}\n"
             "- Tila: {game_state}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita 150–250 sanaa, 3 kappaletta (mitä tapahtui / miksi tällä on "
+            "\nKirjoita 150-250 sanaa, 3 kappaletta (mitä tapahtui / miksi tällä on "
             "merkitystä vedonlyönnin kannalta / mitä seuraavaksi). Otsikko max 60 merkkiä, "
             "alaotsikko max 100 merkkiä."
         ),
@@ -317,7 +317,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
     "streamer_alert": {
         "tier": TIER_AUTO,
         "category": "striimaajat",
-        "uses_llm": False,  # no LLM — structured card with social meta filled deterministically
+        "uses_llm": False,  # no LLM - structured card with social meta filled deterministically
         "system_prompt": "",
         "user_prompt": "",
     },
@@ -328,7 +328,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "uses_llm": True,
         "system_prompt": (
             "Olet PUTKI HQ:n regulatorisen toimituksen analyytikko. Käytät neutraalia, "
-            "analyyttistä äänensävyä — terävä kommentaari sallittu, mutta EI mielipiteitä "
+            "analyyttistä äänensävyä - terävä kommentaari sallittu, mutta EI mielipiteitä "
             "lain hyvyydestä/huonoudesta. Selität rahapelilaki/Veikkaus/EU-konteksti "
             "selkokielellä.\n"
             "Vastauksesi on PELKKÄ JSON {\"headline\":\"\",\"subhead\":\"\","
@@ -366,7 +366,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "uses_llm": True,
         "system_prompt": (
             "Olet PUTKI HQ:n operaattori-toimittaja. Neutraali sävy, kuluttajakeskeinen, "
-            "terävä kommentaari sallittu. EI promotionaalista kieltä — emme shilliä.\n"
+            "terävä kommentaari sallittu. EI promotionaalista kieltä - emme shilliä.\n"
             "Vastauksesi on PELKKÄ JSON "
             "{\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p><p>...</p>\","
             "\"betting_angle\":\"\",\"facts_used\":[],\"skip_reason\":null,"
@@ -402,7 +402,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
         "uses_llm": True,
         "system_prompt": (
             "Olet PUTKI HQ:n moottoriurheilutoimittaja. Kirjoitat F1-kisaraportteja "
-            "Complex × GQ × Bloomberg Crypto -tyylillä — faktoja, terävä sävy.\n"
+            "Complex × GQ × Bloomberg Crypto -tyylillä - faktoja, terävä sävy.\n"
             "Vastauksesi on PELKKÄ JSON "
             "{\"headline\":\"\",\"subhead\":\"\",\"body\":\"<p>...</p>\","
             "\"betting_angle\":\"\",\"facts_used\":[],\"skip_reason\":null,"
@@ -424,7 +424,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "- Podium: {podium}\n"
             "- Suomalaiskuljettajat: {finnish_drivers}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita 150–250 sanaa, 3 kappaletta. Otsikko max 60 merkkiä."
+            "\nKirjoita 150-250 sanaa, 3 kappaletta. Otsikko max 60 merkkiä."
         ),
     },
 
@@ -458,7 +458,7 @@ TEMPLATES: Dict[str, Dict[str, Any]] = {
             "- Maalintekijät: {scorers}\n"
             "- Suomalaiset maalintekijät: {finnish_scorers}\n"
             "\nKONTEKSTI:\n{context}\n"
-            "\nKirjoita 150–200 sanaa, 2–3 kappaletta. Otsikko max 60 merkkiä."
+            "\nKirjoita 150-200 sanaa, 2-3 kappaletta. Otsikko max 60 merkkiä."
         ),
     },
 }
@@ -512,7 +512,7 @@ class ContentGenerator:
     without spawning new threads."""
 
     def __init__(self, db, *, llm_callable=None):
-        """`llm_callable` is injectable for tests — when None we lazy-import
+        """`llm_callable` is injectable for tests - when None we lazy-import
         the emergentintegrations Claude path used elsewhere in the codebase."""
         self.db = db
         self._llm = llm_callable
@@ -539,7 +539,7 @@ class ContentGenerator:
     async def _build_content(self, template_id: str, tmpl: Dict[str, Any],
                               signal_data: Dict[str, Any],
                               context_obj: Dict[str, Any]) -> Dict[str, Any]:
-        """Body generation step — returns the LLM/structured content dict.
+        """Body generation step - returns the LLM/structured content dict.
         Raises a runtime error string in `_error_reason` if Claude fails."""
         if tmpl["uses_llm"]:
             return await self._generate_via_llm(template_id, tmpl, signal_data, context_obj)
@@ -558,7 +558,7 @@ class ContentGenerator:
                          context_obj: Dict[str, Any], validation: Dict[str, Any],
                          fp: str, slug: str, downgrade_to_draft: bool,
                          source_signal_id: Optional[str]) -> Dict[str, Any]:
-        """Compose the draft document. Pure function — no I/O."""
+        """Compose the draft document. Pure function - no I/O."""
         return {
             "id": str(uuid.uuid4()),
             "type": template_id,
@@ -582,7 +582,7 @@ class ContentGenerator:
             "reviewed_by": None,
             "rate_limited": downgrade_to_draft,
             "expires_at": content.get("expires_at"),
-            # Social sharing — non-negotiable for launch. Deterministic
+            # Social sharing - non-negotiable for launch. Deterministic
             # fallbacks fire when the LLM forgets a field so we NEVER ship
             # an article without Open Graph + Twitter Card metadata.
             "social": _build_social_meta(content, signal_data, template_id, slug),
@@ -598,7 +598,7 @@ class ContentGenerator:
         *, source_signal_id: Optional[str] = None,
         force: bool = False,
     ) -> Dict[str, Any]:
-        """Top-level entry point. Returns a status dict — never raises on
+        """Top-level entry point. Returns a status dict - never raises on
         normal control-flow paths (dedup skip, rate-limit, unknown template).
 
         iter66 refactor: previously a single 117-line function with
@@ -620,7 +620,7 @@ class ContentGenerator:
                 "existing_id": existing.get("id"),
             }
 
-        # 2. rate-limit auto-publish — overflow falls through to draft
+        # 2. rate-limit auto-publish - overflow falls through to draft
         downgrade_to_draft = await self._should_downgrade_for_rate_limit(tmpl, force)
 
         # 3. fetch editorial context (subject lookup)
@@ -680,7 +680,7 @@ class ContentGenerator:
         if draft.get("status") == "published":
             return {"status": "already_published", "id": draft["id"]}
 
-        # Permanent guard — never publish drafts whose source data leaked
+        # Permanent guard - never publish drafts whose source data leaked
         # development fixture markers ("TESTAPI*"). The dev pytest fixtures
         # populate stream_signals with synthetic TESTAPI_<hex> usernames; if
         # the content scheduler picks one up it must NOT make it to the public
@@ -692,7 +692,7 @@ class ContentGenerator:
         # Additionally we block LLM hallucinations that use placeholder
         # operator/brand names ("Test Casino", "Example Casino", "Casino X",
         # "Sample Casino"). These slip through when Claude's prompt isn't
-        # grounded to a real operator — they look fine in isolation but are
+        # grounded to a real operator - they look fine in isolation but are
         # embarrassing on the public ticker.
         import re as _re
         _slug_or_head = f"{draft.get('url_slug','')} {draft.get('headline','')}".lower()
@@ -748,7 +748,7 @@ class ContentGenerator:
             "expires_at": draft.get("expires_at"),
             "views": 0,
             "clicks": 0,
-            # Social meta carries over verbatim — no re-derivation at publish
+            # Social meta carries over verbatim - no re-derivation at publish
             # time so an editor's manual edit during draft review is preserved.
             "social": social,
             "canonical_url": f"https://putkihq.fi/uutiset/{draft['url_slug']}",
@@ -759,7 +759,7 @@ class ContentGenerator:
             {"$set": {"status": "published", "published_at": published_doc["published_at"],
                       "reviewed_by": reviewed_by}},
         )
-        # Schedule Nano Banana backfill — never awaited from the publish path.
+        # Schedule Nano Banana backfill - never awaited from the publish path.
         try:
             asyncio.create_task(self._backfill_og_image(
                 published_doc["id"], draft["url_slug"], draft["headline"], draft.get("category"),
@@ -772,7 +772,7 @@ class ContentGenerator:
     async def _backfill_og_image(self, published_id: str, slug: str, headline: str,
                                  category: Optional[str]) -> None:
         """Generate a Nano Banana OG card for a freshly-published article and
-        patch the document once it's ready. Silent on failure — the existing
+        patch the document once it's ready. Silent on failure - the existing
         category SVG fallback in `social.og_image_url` keeps social shares
         working in the meantime."""
         try:
@@ -828,7 +828,7 @@ class ContentGenerator:
             day = _now().strftime("%Y-%m-%d")
             return ["streamer", str(sig.get("user_login") or sig.get("user_name") or ""), day]
         if template_id == "regulatory_analysis":
-            # URL is the strongest dedup key — same article from different feeds
+            # URL is the strongest dedup key - same article from different feeds
             # collapses regardless of title differences. Fall back to normalized
             # title ONLY when URL is missing (some RSS feeds drop it).
             url = (sig.get("url") or "").strip()
@@ -869,7 +869,7 @@ class ContentGenerator:
         subject_type_filter: Optional[str] = None
 
         if template_id == "nhl_recap":
-            # Athletes — could match a Finnish player name in the game payload
+            # Athletes - could match a Finnish player name in the game payload
             for key in ("finnish_players", "home_name", "away_name"):
                 v = sig.get(key)
                 if isinstance(v, list):
@@ -911,14 +911,14 @@ class ContentGenerator:
             context_text = f"{matched['name']} ({matched.get('category', '')}):\n"
             context_text += "\n".join(f"- {k}: {v}" for k, v in facts.items() if isinstance(v, (str, int, float)))[:1200]
         else:
-            context_text = "(ei taustakontekstia — käytä pelkkiä API-faktoja)"
+            context_text = "(ei taustakontekstia - käytä pelkkiä API-faktoja)"
 
         return {"context_text": context_text, "matched_subject": matched}
 
     async def _generate_via_llm(self, template_id: str, tmpl: Dict[str, Any],
                                 signal_data: Dict[str, Any], context_obj: Dict[str, Any]) -> Dict[str, Any]:
         fmt_kwargs = {**signal_data, "context": context_obj.get("context_text", "")}
-        # Make sure missing keys don't blow up str.format — patch them in as empty.
+        # Make sure missing keys don't blow up str.format - patch them in as empty.
         for placeholder in re.findall(r"\{(\w+)\}", tmpl["user_prompt"]):
             fmt_kwargs.setdefault(placeholder, "")
         user_prompt = tmpl["user_prompt"].format(**fmt_kwargs)
@@ -935,7 +935,7 @@ class ContentGenerator:
                           "subhead": "", "body": text[:2000], "tags": []}
 
     def _generate_structured(self, template_id: str, sig: Dict[str, Any]) -> Dict[str, Any]:
-        """Non-LLM template path — currently just streamer_alert.
+        """Non-LLM template path - currently just streamer_alert.
 
         Stores BOTH a Finnish and English headline so the frontend can render
         the right language at view time (since the article is auto-published
@@ -1129,7 +1129,7 @@ async def fan_out_from_layer2(db, worker_name: str, generator: "ContentGenerator
     elif worker_name == "football":
         doc = await db.football_signals.find_one({}, {"_id": 0}, sort=[("captured_at", -1)])
         for match in (doc or {}).get("matches", []) or []:
-            # Only auto-recap matches where Finnish player scored — keeps the
+            # Only auto-recap matches where Finnish player scored - keeps the
             # auto-publish volume contained and editorial-relevant.
             if not match.get("finnish_scorers"):
                 continue
@@ -1176,7 +1176,7 @@ async def list_published(db, *, category: Optional[str] = None, limit: int = 50)
         q["category"] = category
     # Only docs created by the new generator (have draft_id back-link)
     q["draft_id"] = {"$exists": True}
-    # Defensive — never surface synthetic dev fixtures or LLM placeholder
+    # Defensive - never surface synthetic dev fixtures or LLM placeholder
     # brand hallucinations even if one slips through the publisher-side
     # guard. Covers TESTAPI_*, E2EFIXT_*, "*FIXT_<hex>", placeholder operator
     # names (Test/Example/Sample/Demo Casino, Casino X) AND any "Test*",

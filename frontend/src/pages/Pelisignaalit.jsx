@@ -1,11 +1,11 @@
 /**
- * Pelisignaalit — Daily game signals (/pelisignaalit).
+ * Pelisignaalit - Daily game signals (/pelisignaalit).
  *
  * Layout:
- *   1. Hero — "Päivän vedot klo 10.00" + 30-day Sharpness sparkline
- *   2. Today's 5 signals — cards with match, pick, odds, bookmaker, Sharpness
- *   3. Track record — daily average + 30d band
- *   4. ProgressiveOptIn — fast channels for bets (sms_bets / telegram_bets)
+ *   1. Hero - "Päivän vedot klo 10.00" + 30-day Sharpness sparkline
+ *   2. Today's 5 signals - cards with match, pick, odds, bookmaker, Sharpness
+ *   3. Track record - daily average + 30d band
+ *   4. ProgressiveOptIn - fast channels for bets (sms_bets / telegram_bets)
  *   5. TrustPills
  */
 import React, { useEffect, useState } from 'react';
@@ -48,7 +48,7 @@ const trackBand = (score) => {
 };
 
 /**
- * Track record strip — pure FE summary computed from the sharpness_daily
+ * Track record strip - pure FE summary computed from the sharpness_daily
  * sparkline payload. No new endpoint required; the values are derived
  * from the same `points` array that drives the sparkline.
  *
@@ -123,7 +123,7 @@ const TrackRecordStrip = ({ points = [], lang = 'fi' }) => {
     },
     {
       label: lang === 'en' ? '7D TREND' : '7 PV TRENDI',
-      value: trendArrow || '—',
+      value: trendArrow || '-',
       sub: trendDelta != null
         ? `${trendDelta > 0 ? '+' : ''}${trendDelta.toFixed(1)}`
         : (lang === 'en' ? 'NOT ENOUGH DATA' : 'EI VIELÄ DATAA'),
@@ -177,7 +177,7 @@ const Pelisignaalit = () => {
   const [loading, setLoading] = useState(true);
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Pelisignaalit — Daily bets · PUTKI HQ' : 'Pelisignaalit — Päivän vedot · PUTKI HQ',
+    title: lang === 'en' ? 'Pelisignaalit - Daily bets · PUTKI HQ' : 'Pelisignaalit - Päivän vedot · PUTKI HQ',
     description: lang === 'en'
       ? "PUTKI HQ's daily game signals. Five picks. Sharpness score. Named bookmaker. 10:00."
       : 'PUTKI HQ:n päivän pelisignaalit. Viisi vedonyöntiä. Sharpness-pisteet. Nimetty veikkauskirja. Klo 10.00.',
@@ -229,8 +229,8 @@ const Pelisignaalit = () => {
           color: 'var(--ink, #ECE6D8)', fontSize: 16, lineHeight: 1.55,
           maxWidth: 680, margin: 0,
         }}>{lang === 'en'
-          ? "Deterministic odds sharpness — implied probability, consensus tightness, 24h momentum. Same data, same score. Subscribe to SMS for instant delivery, or read on the site each morning."
-          : "Deterministinen kerroin­jäykkyys — johdettu todennäköisyys, konsensus­tiukkuus, 24 h momentum. Sama data, sama pistemäärä. Tilaa SMS heti­toimitukseen tai lue sivuilta aamulla."}</p>
+          ? "Deterministic odds sharpness - implied probability, consensus tightness, 24h momentum. Same data, same score. Subscribe to SMS for instant delivery, or read on the site each morning."
+          : "Deterministinen kerroin­jäykkyys - johdettu todennäköisyys, konsensus­tiukkuus, 24 h momentum. Sama data, sama pistemäärä. Tilaa SMS heti­toimitukseen tai lue sivuilta aamulla."}</p>
 
         {/* 30-day sparkline + today score */}
         <div data-testid="pelisignaalit-market-watch" style={{
@@ -250,7 +250,7 @@ const Pelisignaalit = () => {
             <div data-testid="pelisignaalit-today-score" style={{
               color: '#D4B445', fontFamily: 'Georgia, serif',
               fontWeight: 700, fontSize: 36, lineHeight: 1,
-            }}>{todayScore == null ? '—' : Math.round(todayScore)}</div>
+            }}>{todayScore == null ? '-' : Math.round(todayScore)}</div>
             {band && <div style={{
               color: 'var(--muted, #9C9587)',
               fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
@@ -267,7 +267,7 @@ const Pelisignaalit = () => {
           </div>
         </div>
 
-        {/* TRACK RECORD STRIP — derived stats from the 30-day sparkline */}
+        {/* TRACK RECORD STRIP - derived stats from the 30-day sparkline */}
         <TrackRecordStrip points={sparkline} lang={lang} />
       </section>
 
@@ -300,7 +300,7 @@ const Pelisignaalit = () => {
           }}>
             {picks.map((p, i) => {
               const sharp = p?.sharpness?.sharpness;
-              const eventName = p.event_name || p.label || `${p.home_team || ''} – ${p.away_team || ''}`.trim();
+              const eventName = p.event_name || p.label || `${p.home_team || ''} - ${p.away_team || ''}`.trim();
               return (
                 <div key={`${p.event_id || i}-${i}`} data-testid="pelisignaalit-pick"
                   style={{
@@ -336,7 +336,7 @@ const Pelisignaalit = () => {
                     <div style={{
                       color: '#D4B445', fontFamily: 'Georgia, serif',
                       fontWeight: 700, fontSize: 22, lineHeight: 1,
-                    }}>{sharp == null ? '—' : Math.round(sharp)}</div>
+                    }}>{sharp == null ? '-' : Math.round(sharp)}</div>
                     <div style={{
                       color: 'var(--muted, #9C9587)',
                       fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
@@ -375,8 +375,8 @@ const Pelisignaalit = () => {
             dataTestId="pelisignaalit-optin-component"
             valueProps={{
               email: lang === 'en'
-                ? "Daily scene context at 09:00. Mood and Mittari, not the signals — those come faster via SMS."
-                : 'Päivän skene-konteksti klo 09.00. Tunnelma ja Mittari, ei signaaleja — ne tulevat nopeammin SMS:llä.',
+                ? "Daily scene context at 09:00. Mood and Mittari, not the signals - those come faster via SMS."
+                : 'Päivän skene-konteksti klo 09.00. Tunnelma ja Mittari, ei signaaleja - ne tulevat nopeammin SMS:llä.',
               sms: lang === 'en'
                 ? "5 signals at 10:00, Sharpness 75+. Phone gets them the second odds move."
                 : 'Viisi signaalia klo 10.00, Sharpness 75+. Puhelin saa ne sekunnissa kun kerroin liikkuu.',

@@ -1,4 +1,4 @@
-"""Phase 1 Final Restructure · Chunk A — News portal backend tests.
+"""Phase 1 Final Restructure · Chunk A - News portal backend tests.
 
 Covers:
 - GET /api/news/chronological (homepage chrono list)

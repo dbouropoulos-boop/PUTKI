@@ -1,17 +1,17 @@
 """
-PUTKI HQ Phase 3 — Distribution pipeline (Batch 3C).
+PUTKI HQ Phase 3 - Distribution pipeline (Batch 3C).
 
 When a piece of generated_content is approved (or auto-published), we fan it
 out to multiple channels. Each channel is a small async function that takes
-(text, payload) and returns a `DistributionResult` dict — never raises.
+(text, payload) and returns a `DistributionResult` dict - never raises.
 
 Channels:
-  - site         (always — already handled by content_engine.distribute_content)
+  - site         (always - already handled by content_engine.distribute_content)
   - telegram     (env: TELEGRAM_BOT_TOKEN + TELEGRAM_CHANNEL_ID)
   - email        (env: RESEND_API_KEY + RESEND_FROM + reads recipients from db.signups)
-  - x_twitter    (stub — full OAuth2 flow deferred until user wires app credentials)
-  - web_push     (stub — needs VAPID + per-subscriber endpoints)
-  - shareable_card (deferred — Puppeteer/CDN integration)
+  - x_twitter    (stub - full OAuth2 flow deferred until user wires app credentials)
+  - web_push     (stub - needs VAPID + per-subscriber endpoints)
+  - shareable_card (deferred - Puppeteer/CDN integration)
 
 Every result is logged to `distribution_log` collection so the back-office
 can show per-item delivery status.
@@ -115,13 +115,13 @@ async def deliver_push(db, text: str) -> Dict[str, Any]:
     subs = await cur.to_list(length=500)
     if not subs:
         return _result("web_push", "skipped", "no subscribers")
-    return _result("web_push", "skipped", f"{len(subs)} subs found — push library not wired yet")
+    return _result("web_push", "skipped", f"{len(subs)} subs found - push library not wired yet")
 
 
 # ── orchestrator ────────────────────────────────────────────────────────────
 async def fanout(db, generated_content: Dict[str, Any], text: str) -> List[Dict[str, Any]]:
     """Deliver the approved text to every channel listed in distribution_targets.
-    'site' is handled separately — caller writes to published_content directly.
+    'site' is handled separately - caller writes to published_content directly.
     """
     targets = generated_content.get("distribution_targets") or []
     payload = generated_content.get("signal_payload") or {}

@@ -1,5 +1,5 @@
 /**
- * useAlertSession — minimal localStorage-backed session hook for the
+ * useAlertSession - minimal localStorage-backed session hook for the
  * bell-icon alert manager.
  *
  * On mount it reads `putki.alert_session` from localStorage. The flow:

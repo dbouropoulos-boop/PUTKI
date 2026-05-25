@@ -1,5 +1,5 @@
 /**
- * LiveActivityFeed — Phase 4 chronological homepage feed.
+ * LiveActivityFeed - Phase 4 chronological homepage feed.
  *
  * Pulls /api/content/published?limit=N every 60 s. Fully bilingual.
  */

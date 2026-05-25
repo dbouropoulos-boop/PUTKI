@@ -1,5 +1,5 @@
 """
-PUTKI HQ Phase 3 — Signal pipeline foundation (Batch 3A).
+PUTKI HQ Phase 3 - Signal pipeline foundation (Batch 3A).
 
 Pulls raw signals from 6 sources (Twitch, Kick, YouTube, Forums, Sports,
 internal activity), normalises them into a single `Signal` shape, and writes
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 SIGNAL_TTL_MINUTES = int(os.environ.get("SIGNAL_TTL_MINUTES", "120"))
 POLL_INTERVAL_SECONDS = int(os.environ.get("SIGNAL_POLL_INTERVAL", "90"))
 
-# Tracked Finnish streamers — these flow into the streamer adapters as login names.
+# Tracked Finnish streamers - these flow into the streamer adapters as login names.
 TRACKED_TWITCH_LOGINS = [
     "jarttu84", "jugipelaa_", "andypyro", "ogumtv",
     "jamppa", "ella", "teukka", "huispaaja",
@@ -117,7 +117,7 @@ async def adapter_twitch() -> List[Dict[str, Any]]:
                 ))
             return out
     except Exception as e:
-        logger.warning("twitch adapter failed: %s — falling back to mock", e)
+        logger.warning("twitch adapter failed: %s - falling back to mock", e)
         return _mock_streamer_signals("twitch", TRACKED_TWITCH_LOGINS)
 
 
@@ -173,7 +173,7 @@ async def adapter_youtube() -> List[Dict[str, Any]]:
 
 async def adapter_forum() -> List[Dict[str, Any]]:
     """Suomi24 + Ylilauta forum velocity. Real scraping is rate-limited and
-    fragile — we emit synthetic-but-realistic mock signals until a scraping
+    fragile - we emit synthetic-but-realistic mock signals until a scraping
     service is configured (FORUM_SCRAPER_URL env)."""
     scraper_url = os.environ.get("FORUM_SCRAPER_URL")
     if not scraper_url:
@@ -260,7 +260,7 @@ def _mock_youtube_detections() -> List[Dict[str, Any]]:
         weight=min(100, win // 1500),
         payload={
             "streamer": streamer,
-            "title_parsed": f"{streamer} — €{win:,} on Fire in the Hole 2",
+            "title_parsed": f"{streamer} - €{win:,} on Fire in the Hole 2",
             "amount_eur": win,
             "video_url": f"https://youtube.com/watch?v=mock-{uuid.uuid4().hex[:8]}",
         },
@@ -283,7 +283,7 @@ def _mock_forum_signals() -> List[Dict[str, Any]]:
                     "Weezybet kotiutus jämähti taas",
                     "Onko kellään kokemusta Britestä",
                     "Pragmatic-jättibonukset",
-                    "Suomen lisenssi 2027 — mitä mieltä",
+                    "Suomen lisenssi 2027 - mitä mieltä",
                 ]),
                 "posts_per_hour": rng.randint(8, 40),
             },
@@ -302,7 +302,7 @@ def _mock_sports_signals() -> List[Dict[str, Any]]:
             weight=70,
             payload={
                 "league": "Liiga",
-                "match": "Tappara — Ilves",
+                "match": "Tappara - Ilves",
                 "kickoff_in_minutes": 30,
             },
             mocked=True,

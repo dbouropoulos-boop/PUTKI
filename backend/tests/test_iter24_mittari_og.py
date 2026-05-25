@@ -1,5 +1,5 @@
 """
-Iteration 24 — Phase 1 Sprint 4 Mittari OG image helpers.
+Iteration 24 - Phase 1 Sprint 4 Mittari OG image helpers.
 
 Pure unit tests over the slug + cache logic. We do NOT actually call
 Nano Banana here (network + cost). The contract verified:
@@ -21,7 +21,7 @@ import og_image_generator as og
 
 
 def _run(coro):
-    """Tiny sync wrapper around asyncio.run — keeps tests synchronous."""
+    """Tiny sync wrapper around asyncio.run - keeps tests synchronous."""
     return asyncio.run(coro)
 
 
@@ -70,7 +70,7 @@ class TestEnsureMittariStateOg:
         assert slug in result
 
     def test_returns_none_when_emergent_key_unset(self, tmp_path, monkeypatch):
-        """When key is missing, _generate_mittari_card returns None — and
+        """When key is missing, _generate_mittari_card returns None - and
         ensure_mittari_state_og bubbles that up without crashing."""
         monkeypatch.delenv("PUTKI_HQ_DISABLE_OG_IMAGES", raising=False)
         monkeypatch.delenv("EMERGENT_LLM_KEY", raising=False)

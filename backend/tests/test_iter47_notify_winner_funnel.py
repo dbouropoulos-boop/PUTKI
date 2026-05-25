@@ -1,5 +1,5 @@
 """
-Iter47 — Notify-winner + 24h funnel regression.
+Iter47 - Notify-winner + 24h funnel regression.
 """
 from __future__ import annotations
 

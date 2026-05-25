@@ -1,15 +1,15 @@
 """
-PUTKI HQ — Newsroom HTTP router.
+PUTKI HQ - Newsroom HTTP router.
 
 Routes:
-  • GET  /api/content/stats           — 24h severity breakdown + sources
-  • GET  /api/content/top-entities    — top mentioned entities
-  • GET  /api/content/feed            — filterable severity-annotated feed
-  • GET  /api/entities/:type/:id      — entity hub data (entity + articles)
-  • POST /api/subscribe/dial-alerts   — capture dial-state alert intent
+  • GET  /api/content/stats           - 24h severity breakdown + sources
+  • GET  /api/content/top-entities    - top mentioned entities
+  • GET  /api/content/feed            - filterable severity-annotated feed
+  • GET  /api/entities/:type/:id      - entity hub data (entity + articles)
+  • POST /api/subscribe/dial-alerts   - capture dial-state alert intent
 
 `/api/content/stats` is a distinct path from `/api/content/stats/bulk`
-(the article_views bulk-stats endpoint) — FastAPI routes them separately
+(the article_views bulk-stats endpoint) - FastAPI routes them separately
 based on the exact path so the two coexist cleanly.
 """
 from __future__ import annotations
@@ -145,7 +145,7 @@ def build_newsroom_router(db) -> APIRouter:
             if not re.fullmatch(r"\+?\d[\d\s\-]{4,20}", contact):
                 raise HTTPException(status_code=400, detail="invalid_phone")
         else:
-            # telegram handle — strip leading @
+            # telegram handle - strip leading @
             contact = contact.lstrip("@")
             if not re.fullmatch(r"[A-Za-z0-9_]{3,40}", contact):
                 raise HTTPException(status_code=400, detail="invalid_telegram_handle")

@@ -1,10 +1,10 @@
 """
-iter65 — Inline share preview + Resend welcome email (feature-flagged).
+iter65 - Inline share preview + Resend welcome email (feature-flagged).
 
 Verifies:
   • POST /api/mini-games/scenario/unlock triggers welcome email
     dispatch in the background (MOCKED mode when RESEND_API_KEY unset).
-  • Dispatch is idempotent — second unlock for the same email/source_game
+  • Dispatch is idempotent - second unlock for the same email/source_game
     does NOT re-send and DOES NOT increment the mock counter.
   • Mongo lead row carries welcome_email_sent_at + welcome_email_id +
     welcome_email_mode + welcome_email_lang stamps after first send.
@@ -77,7 +77,7 @@ def test_unlock_schedules_mocked_welcome_email(fresh_email):
     pid, aid = _finish(picks="b")
     r = _unlock(pid, aid, fresh_email, lang="en")
     assert r.status_code == 200, r.text
-    # Email task runs as fire-and-forget — give it a moment
+    # Email task runs as fire-and-forget - give it a moment
     time.sleep(2.0)
     lead = _read_lead(fresh_email)
     assert lead.get("welcome_email_sent_at"), f"missing stamp: {lead}"
@@ -95,13 +95,13 @@ def test_unlock_is_idempotent_no_double_send(fresh_email):
     first_id    = first.get("welcome_email_id")
     assert first_stamp and first_id, f"first send failed: {first}"
 
-    # Second unlock — same email — should NOT overwrite the stamp
+    # Second unlock - same email - should NOT overwrite the stamp
     pid2, aid2 = _finish(picks="b")
     _unlock(pid2, aid2, fresh_email).raise_for_status()
     time.sleep(1.5)
     second = _read_lead(fresh_email)
-    assert second.get("welcome_email_sent_at") == first_stamp, "stamp regressed — double-send risk"
-    assert second.get("welcome_email_id") == first_id, "id changed — double-send"
+    assert second.get("welcome_email_sent_at") == first_stamp, "stamp regressed - double-send risk"
+    assert second.get("welcome_email_id") == first_id, "id changed - double-send"
 
 
 def test_unlock_defaults_to_fi_when_no_lang_header(fresh_email):
@@ -112,7 +112,7 @@ def test_unlock_defaults_to_fi_when_no_lang_header(fresh_email):
 
 
 def test_og_image_renderable_for_each_persona():
-    """Round-trip sanity — every key the email module passes to render_from_persona_key
+    """Round-trip sanity - every key the email module passes to render_from_persona_key
     must produce a real PNG via the public endpoint too."""
     for k in ("cold_calculator", "patient_tactician", "streak_chaser",
               "comeback_believer", "tilt_risk"):
@@ -138,7 +138,7 @@ def test_share_click_accepts_platform_meta():
 
 
 def test_resend_module_mocked_when_key_unset():
-    """Sanity — if no RESEND_API_KEY, the module reports `live=False`
+    """Sanity - if no RESEND_API_KEY, the module reports `live=False`
     so the unlock path knows to stub. Live-mode wiring is exercised
     by the integration tests above."""
     import sys

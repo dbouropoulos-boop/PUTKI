@@ -1,5 +1,5 @@
 /**
- * TopicHubPage — entity hub at /topic/:id, /striimaajat/:slug, /operaattorit/:slug.
+ * TopicHubPage - entity hub at /topic/:id, /striimaajat/:slug, /operaattorit/:slug.
  *
  * Sidebar: entity identity (name, platform/scene, follower count, alert CTA).
  * Main: severity-annotated NewsCard grid filtered to this entity.
@@ -24,7 +24,7 @@ const TopicHubPage = ({ kind }) => {
   const [loading, setLoading] = useState(true);
 
   useDocumentMeta({
-    title: `${entityId.toUpperCase()} — PUTKI HQ`,
+    title: `${entityId.toUpperCase()} - PUTKI HQ`,
     description: t('hub.meta_desc'),
     canonical: `${BACKEND}/topic/${entityId}`,
   });
@@ -101,7 +101,7 @@ const TopicHubPage = ({ kind }) => {
                 </div>
               </div>
             )}
-            {entity.follower_count != null && entity.follower_count !== '—' && (
+            {entity.follower_count != null && entity.follower_count !== '-' && (
               <div className="mb-4">
                 <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
                   {t('hub.followers').toUpperCase()}

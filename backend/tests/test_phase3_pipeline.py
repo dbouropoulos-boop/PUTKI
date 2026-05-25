@@ -1,4 +1,4 @@
-"""Phase 3 — Batch 3A/3B/3C smoke tests.
+"""Phase 3 - Batch 3A/3B/3C smoke tests.
 
 Hits the new endpoints behind the admin token and verifies the signal
 pipeline + dial recalc produce the expected shapes.

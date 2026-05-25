@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Aikatappo · Mato (Snake arcade · iter57)
+ * PUTKI HQ - Aikatappo · Mato (Snake arcade · iter57)
  *
  * 20×20 grid, canvas-rendered. Player controls direction with arrow keys
  * / WASD on desktop and swipe gestures on mobile. Score = food eaten;
@@ -108,7 +108,7 @@ const PeliAreenaSnake = () => {
     }
     ctx.globalAlpha = 1;
 
-    // Food — pulsing amber glow
+    // Food - pulsing amber glow
     const pulse = 0.85 + 0.15 * Math.sin(Date.now() / 180);
     const fx = st.food.x * CELL + CELL / 2;
     const fy = st.food.y * CELL + CELL / 2;
@@ -127,7 +127,7 @@ const PeliAreenaSnake = () => {
     ctx.arc(fx - CELL * 0.10, fy - CELL * 0.10, CELL * 0.10, 0, Math.PI * 2);
     ctx.fill();
 
-    // Snake — rounded segments + gradient + glow on head
+    // Snake - rounded segments + gradient + glow on head
     st.snake.forEach((seg, i) => {
       const isHead = i === 0;
       const px = seg.x * CELL;

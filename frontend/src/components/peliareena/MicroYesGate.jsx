@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — MicroYesGate (iter63)
+ * PUTKI HQ - MicroYesGate (iter63)
  *
  * Conversion-funnel rebuild per the mockup. Renders below the identity
  * card and steps the user through:
@@ -7,11 +7,11 @@
  *   1. Read-line summary
  *   2. Micro-yes CTA ("Show me my blind spot →")
  *   3. Share row (free growth loop)
- *   4. Email gate (ONE FIELD — no name input)
+ *   4. Email gate (ONE FIELD - no name input)
  *   5. Success state with optional Telegram opt-in
  *
  * The "blind spot" copy is generated server-side via the existing
- * persona/strengths data — this component just orchestrates the flow.
+ * persona/strengths data - this component just orchestrates the flow.
  */
 import React, { useState } from 'react';
 import { useLang } from '../../context/LanguageContext';
@@ -26,7 +26,7 @@ const MicroYesGate = ({
   unlockPath,         // e.g. "/api/mini-games/quiz/unlock"
   session,            // { play_id, anon_id }
   profileTitle,       // "The Tactician"
-  personaKey,         // e.g. "cold_calculator" — drives OG share image
+  personaKey,         // e.g. "cold_calculator" - drives OG share image
   readLine,           // sentence shown above the micro-yes CTA
   onUnlocked,         // (full_result) => void
 }) => {
@@ -38,7 +38,7 @@ const MicroYesGate = ({
   const [error, setError] = useState(null);
   const [shareCopied, setShareCopied] = useState(false);
 
-  // iter64 — funnel beacon (fire-and-forget; never blocks UX)
+  // iter64 - funnel beacon (fire-and-forget; never blocks UX)
   const fireEvent = (event, meta) => {
     if (!session?.play_id) return;
     try {
@@ -98,7 +98,7 @@ const MicroYesGate = ({
   };
 
   const shareIt = () => {
-    // iter64 Phase 4 — bake the OG image URL into the share URL so
+    // iter64 Phase 4 - bake the OG image URL into the share URL so
     // Twitter/Telegram/Discord/Threads/WhatsApp render the identity
     // card preview on unfurl. The OG image is auto-rendered by the
     // backend at /api/profiler/share/og.png and cached for 24h.
@@ -106,8 +106,8 @@ const MicroYesGate = ({
                                 : `?lang=${lang}`;
     const ogUrl = `${BACKEND}/api/profiler/share/og.png${ogParam}`;
     const shareText = lang === 'en'
-      ? `I'm ${profileTitle} — what are you?`
-      : `Olen ${profileTitle} — mikä sinä olet?`;
+      ? `I'm ${profileTitle} - what are you?`
+      : `Olen ${profileTitle} - mikä sinä olet?`;
     const fullUrl = personaKey
       ? `${BACKEND}/api/profiler/share/u/${encodeURIComponent(personaKey)}?lang=${lang}`
       : `${window.location.origin}/peliareena`;
@@ -169,7 +169,7 @@ const MicroYesGate = ({
           <p style={{ fontSize: 14, color: 'var(--muted)', fontFamily: 'Georgia, Newsreader, serif', margin: 0 }}>
             {pickPA(lang, 'card.shareLeadPrefix')}{' '}
             <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>{profileTitle}</strong>{' '}
-            — {pickPA(lang, 'card.shareLeadSuffix')}
+            - {pickPA(lang, 'card.shareLeadSuffix')}
           </p>
           <button
             onClick={shareIt}
@@ -262,7 +262,7 @@ const MicroYesGate = ({
             ))}
           </div>
 
-          {/* Hidden consent — pre-checked because the trust row above is the consent UX */}
+          {/* Hidden consent - pre-checked because the trust row above is the consent UX */}
           <input
             type="checkbox"
             checked={consent}
@@ -378,7 +378,7 @@ const MicroYesGate = ({
             marginTop: 14, textAlign: 'center',
           }}>{pickPA(lang, 'card.success.footnote')}</p>
 
-          {/* iter65 — Inline share preview: shows the actual OG card +
+          {/* iter65 - Inline share preview: shows the actual OG card +
               one-tap social buttons. Closes the "what am I sharing?" gap. */}
           {personaKey && (
             <InlineSharePreview

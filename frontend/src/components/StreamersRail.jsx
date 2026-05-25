@@ -1,9 +1,9 @@
 /**
- * PUTKI HQ — StreamersRail (Phase 1 Final · Chunk B refinement v3).
+ * PUTKI HQ - StreamersRail (Phase 1 Final · Chunk B refinement v3).
  *
  * Compact tabs + slim rows.
  *
- * Header: three tabs — TWITCH · KICK · YOUTUBE — each with a (n / m) count.
+ * Header: three tabs - TWITCH · KICK · YOUTUBE - each with a (n / m) count.
  * Active tab indicated by a colored underline (platform color).
  *
  * Per-row layout (~64px tall):
@@ -29,7 +29,7 @@ const PLATFORM_META = {
 };
 
 const fmtViewers = (n) => {
-  if (n == null) return '—';
+  if (n == null) return '-';
   if (n >= 10000) return `${(n / 1000).toFixed(0)}k`;
   if (n >= 1000)  return `${(n / 1000).toFixed(1)}k`;
   return String(n);

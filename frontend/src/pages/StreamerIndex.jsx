@@ -15,7 +15,7 @@ const StreamerIndex = () => {
   // Pull real live state across all three platforms. Each call hits the
   // 60s-cached `/api/streamers/live?platform=...` endpoint so refreshing
   // this page is cheap. Bogus + blocked platforms quietly contribute zero
-  // — we only surface streamers that are actually live RIGHT NOW.
+  // - we only surface streamers that are actually live RIGHT NOW.
   const [livePlatforms, setLivePlatforms] = useState({
     twitch: { items: [], dormant: false, reason: null },
     kick:   { items: [], dormant: false, reason: null },
@@ -49,7 +49,7 @@ const StreamerIndex = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // Editorial roster — match liveness by ANY of channel / slug / name
+  // Editorial roster - match liveness by ANY of channel / slug / name
   // since Twitch login often diverges from our registered handle
   // (e.g. registry `andypyro` ↔ live `officialandypyro`, registry
   // `pact_` ↔ live `pact`). Permissive containment matching catches
@@ -171,13 +171,13 @@ const StreamerIndex = () => {
                   }}
                 >
                   <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase' }}>
-                    {it._platform} · {(it.game_name || '—').toString().slice(0, 24)}
+                    {it._platform} · {(it.game_name || '-').toString().slice(0, 24)}
                   </div>
                   <div className="display" style={{ color: 'var(--ink)', fontWeight: 700, fontSize: 15, lineHeight: 1.2 }}>
                     {it.user_name || it.user_login}
                   </div>
                   <div className="font-serif" style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {it.title || '—'}
+                    {it.title || '-'}
                   </div>
                   {typeof it.viewer_count === 'number' && (
                     <div className="mono" style={{ fontSize: 10, color: '#C13B2C', fontWeight: 700, letterSpacing: '0.12em', marginTop: 2 }}>

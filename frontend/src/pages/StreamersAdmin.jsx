@@ -29,7 +29,7 @@ const StreamersAdmin = () => {
   const [saving, setSaving] = useState(false);
   const [sceneFilter, setSceneFilter] = useState('');
   const [refreshingOne, setRefreshingOne] = useState(null);
-  // YouTube channel-ID resolver state — runs against
+  // YouTube channel-ID resolver state - runs against
   // /api/admin/streamers/resolve-youtube-channels. `ytLastRun` holds the
   // full envelope { attempted, resolved, persisted, error_breakdown,
   // results[] } so we can render the per-row outcomes inline.
@@ -100,7 +100,7 @@ const StreamersAdmin = () => {
   const [refreshingFailed, setRefreshingFailed] = useState(false);
   const refreshFailedAvatars = async () => {
     if (refreshingFailed) return;
-    if (!window.confirm('Re-run the FULL fallback cascade (platform → channel OG → DDG search → Wikipedia) on every streamer currently flagged avatar_failed=true. Can take 30–60s.')) return;
+    if (!window.confirm('Re-run the FULL fallback cascade (platform → channel OG → DDG search → Wikipedia) on every streamer currently flagged avatar_failed=true. Can take 30-60s.')) return;
     setRefreshingFailed(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/streamers/refresh-failed-avatars`, {
@@ -241,7 +241,7 @@ const StreamersAdmin = () => {
             <div className="flex items-center gap-2 flex-wrap">
               <button onClick={() => resolveYoutubeChannels(true)} disabled={ytResolving}
                 data-testid="str-yt-dry-run" className="btn-ghost"
-                title="Probe the YouTube API without persisting — confirms which handles resolve">
+                title="Probe the YouTube API without persisting - confirms which handles resolve">
                 <RefreshCw strokeWidth={1.5} size={13} className="mr-2" />
                 {ytResolving ? 'PROBING…' : 'DRY RUN'}
               </button>
@@ -333,8 +333,8 @@ const StreamersAdmin = () => {
                           </span>
                         )}
                       </div>
-                      <h3 className="font-display mt-1" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}>{s.name} · {s.followers || '—'}</h3>
-                      <p className="font-serif mt-1" style={{ fontSize: 13, color: 'var(--muted)' }}>{s.sub || '—'}</p>
+                      <h3 className="font-display mt-1" style={{ fontSize: 18, fontWeight: 600, color: 'var(--ink)' }}>{s.name} · {s.followers || '-'}</h3>
+                      <p className="font-serif mt-1" style={{ fontSize: 13, color: 'var(--muted)' }}>{s.sub || '-'}</p>
                     </div>
                   </div>
                   <div className="flex flex-col gap-1">

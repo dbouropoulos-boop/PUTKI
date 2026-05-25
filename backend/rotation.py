@@ -1,5 +1,5 @@
 """
-PUTKI HQ Phase 3 V2 — Voyager rotation calendar (Step 3 folded into Step 1 surface).
+PUTKI HQ Phase 3 V2 - Voyager rotation calendar (Step 3 folded into Step 1 surface).
 
 Stores one row per ISO week per market for the rotating-operator Voyager mechanic.
 Per FINAL ARCHITECTURE §5: each ISO week, one partnered operator becomes the
@@ -65,7 +65,7 @@ def next_iso_weeks(n: int = 12) -> List[str]:
 
 def _validate_iso_week(value: str) -> str:
     if not ISO_WEEK_RE.match(value or ""):
-        raise ValueError(f"Invalid iso_week format '{value}' — expected 'YYYY-Www'")
+        raise ValueError(f"Invalid iso_week format '{value}' - expected 'YYYY-Www'")
     return value
 
 
@@ -90,7 +90,7 @@ async def _validate_partner(db, slug: Optional[str]) -> None:
     if not op:
         raise ValueError(f"Operator '{slug}' not found")
     if not op.get("partner"):
-        raise ValueError(f"Operator '{slug}' is not flagged partner=True — cannot assign to a Voyager week")
+        raise ValueError(f"Operator '{slug}' is not flagged partner=True - cannot assign to a Voyager week")
 
 
 async def upsert_week(db, data: Dict[str, Any], *, updated_by: str = "admin") -> Dict[str, Any]:

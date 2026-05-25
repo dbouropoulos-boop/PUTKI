@@ -67,7 +67,7 @@ export const StreamerVideoPreview = ({
     return () => obs.disconnect();
   }, [canEmbed, effective]);
 
-  // Iframe error handler — fall back to photo
+  // Iframe error handler - fall back to photo
   const onError = () => setErrored(true);
 
   const onMouseEnter = effective === 'hover' ? () => setActive(true) : undefined;
@@ -83,7 +83,7 @@ export const StreamerVideoPreview = ({
       data-testid={testId}
     >
       {/* Real-avatar block always rendered as the fallback layer (iter54).
-          No stock photos — when no avatar URL is available, an initials
+          No stock photos - when no avatar URL is available, an initials
           block is shown via <StreamerAvatar>. */}
       <div
         className="absolute inset-0 flex items-center justify-center"

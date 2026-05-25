@@ -1,9 +1,9 @@
 /**
- * PUTKI HQ — BackOfficeSlotRegistry.
+ * PUTKI HQ - BackOfficeSlotRegistry.
  *
  * Editorial maintenance of the slot / live-table registry that powers
  * the homepage "Now Playing" ticker. Longest-match-wins extraction
- * means the registry is sensitive to overlapping variants — toggling
+ * means the registry is sensitive to overlapping variants - toggling
  * `Sugar Rush 1000` off but keeping `Sugar Rush` on changes which
  * stream titles match.
  *
@@ -65,7 +65,7 @@ const Row = ({ entry, token, onChanged }) => {
       </td>
       <td style={{ padding: '12px' }}><CategoryPill category={entry.category} /></td>
       <td style={{ padding: '12px', fontFamily: 'ui-monospace, monospace', fontSize: 11, color: 'var(--muted)' }}>
-        {entry.provider || '—'}
+        {entry.provider || '-'}
       </td>
       <td style={{ padding: '12px', textAlign: 'center' }}>
         <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
@@ -193,7 +193,7 @@ const BackOfficeSlotRegistry = () => {
         letterSpacing: '-0.02em', color: '#FFFFFF', margin: '16px 0 8px',
       }}>Slot registry</h1>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, maxWidth: 760, lineHeight: 1.55 }}>
-        Slots and live tables tracked by the homepage Now-Playing ticker. Longest match wins —
+        Slots and live tables tracked by the homepage Now-Playing ticker. Longest match wins -
         e.g. <code style={{ color: 'var(--ink)' }}>Sugar Rush 1000</code> matches before <code style={{ color: 'var(--ink)' }}>Sugar Rush</code>.
         Disabled entries stay in the registry as editorial record but are skipped by the matcher.
       </p>

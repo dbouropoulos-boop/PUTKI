@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Kick official API client (iter52).
+PUTKI HQ - Kick official API client (iter52).
 
 Replaces the legacy `kick.com/api/v2/channels/...` scraping path (which
 sat behind Cloudflare bot-protection and returned 403 on every server-side
@@ -18,7 +18,7 @@ Flow:
      channels are offline. Repeated `?broadcaster_user_id=` params are
      accepted by Kick (verified 2026-05-21 against the live API).
 
-`dormant: true` is now reserved for genuine OAuth / 5xx failures —
+`dormant: true` is now reserved for genuine OAuth / 5xx failures -
 otherwise we always return real results (empty array = nobody live).
 """
 from __future__ import annotations
@@ -228,7 +228,7 @@ async def fetch_live(db, slugs: List[str]) -> Dict[str, Any]:
 
     Returns the same shape `multi_platform_live.fetch_kick_live` used to
     produce. `dormant: true` is set ONLY for real failures (missing creds,
-    OAuth failure, 5xx) — an empty `data[]` from Kick (= nobody live)
+    OAuth failure, 5xx) - an empty `data[]` from Kick (= nobody live)
     returns `dormant: false, count: 0` honestly.
     """
     slugs = [s.lower() for s in slugs if s]

@@ -1,14 +1,14 @@
 """
-Iter54 — streamer avatar resolver tests.
+Iter54 - streamer avatar resolver tests.
 
 Targets:
-  - The pure helpers in `streamer_avatars` (no network) — initials
+  - The pure helpers in `streamer_avatars` (no network) - initials
     extraction and lookup key generation.
   - The admin endpoint requires auth + returns the expected summary shape.
   - The public streamers endpoint passes through `avatar_url`.
 
 Network-dependent paths (`_fetch_twitch_avatars`, `_fetch_kick_avatars`,
-`_fetch_youtube_avatars`) are intentionally NOT exercised here — they
+`_fetch_youtube_avatars`) are intentionally NOT exercised here - they
 need Twitch/Kick OAuth creds + YouTube API key + live API endpoints to
 verify. The iter52 live-data check already covers Twitch/Kick auth.
 """
@@ -61,7 +61,7 @@ def test_admin_refresh_avatars_requires_admin_token():
 
 def test_admin_refresh_avatars_returns_summary_shape():
     """Calling force=false uses cached avatar_resolved_at_unix so re-runs
-    skip every fresh row — should return fast (<2s) regardless of the
+    skip every fresh row - should return fast (<2s) regardless of the
     underlying platform creds."""
     r = httpx.post(
         f"{BASE}/api/admin/streamers/refresh-avatars?force=false",
@@ -90,7 +90,7 @@ def test_public_streamers_endpoint_passes_through_avatar_url():
     # resolved ~34 of 84 on the first pass).
     with_avatars = [s for s in streamers if s.get("avatar_url")]
     assert with_avatars, (
-        "no streamer has avatar_url — backfill did not run or schema "
+        "no streamer has avatar_url - backfill did not run or schema "
         "stripped the field. Check streamer_avatars.refresh_all_avatars "
         "and the public-list pipeline."
     )

@@ -1,5 +1,5 @@
 """
-Iter60 — Bilingual (FI + EN) content exposure tests.
+Iter60 - Bilingual (FI + EN) content exposure tests.
 
 Verifies that quiz/scenario/insight start endpoints expose both
 `prompt_fi`+`prompt_en` and per-option `label_fi`+`label_en`. The

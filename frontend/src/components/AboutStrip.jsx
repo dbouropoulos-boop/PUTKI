@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — AboutStrip (Phase 1 Final · Chunk B).
+ * PUTKI HQ - AboutStrip (Phase 1 Final · Chunk B).
  *
  * Compact "Who we are" editorial paragraph that lives on the homepage
  * between the ExploreBlocks and the EditorialFooter.

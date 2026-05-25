@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Seed two completed + paid raffles so the operational social
+PUTKI HQ - Seed two completed + paid raffles so the operational social
 proof palette (€N paid in prizes, recent winners strip) has real data
 before the first live raffle runs.
 
@@ -31,8 +31,8 @@ def _now_iso(offset_days: int = 0) -> str:
 RAFFLES = [
     {
         "slug": "hjk-fclahti-2026-04",
-        "title_fi": "HJK vs FC Lahti — Veikkausliiga huhtikuu",
-        "title_en": "HJK vs FC Lahti — Veikkausliiga April",
+        "title_fi": "HJK vs FC Lahti - Veikkausliiga huhtikuu",
+        "title_en": "HJK vs FC Lahti - Veikkausliiga April",
         "summary_fi": "Veikkausliigan kevätkauden avausraffle. Ennusta voittaja ja lopputulos.",
         "summary_en": "Veikkausliiga spring-season opener. Pick the winner and the closest score.",
         "sport": "football",
@@ -50,7 +50,7 @@ RAFFLES = [
             ],
         },
         "result": {"home_goals": 2, "away_goals": 1, "one_x_two": "1"},
-        # Winners surfaced on the strip — these are the people who scored
+        # Winners surfaced on the strip - these are the people who scored
         # highest. Display name is optional; when present it replaces the
         # masked email on the public strip.
         "winners": [
@@ -69,8 +69,8 @@ RAFFLES = [
     },
     {
         "slug": "tps-ilves-liiga-2026-04",
-        "title_fi": "TPS vs Ilves — Liiga playoff",
-        "title_en": "TPS vs Ilves — Liiga playoff",
+        "title_fi": "TPS vs Ilves - Liiga playoff",
+        "title_en": "TPS vs Ilves - Liiga playoff",
         "summary_fi": "Liiga-pudotuspelien avausottelu. Voittajan ennustaja sai potin.",
         "summary_en": "Liiga playoffs opening match. Closest score took the pot.",
         "sport": "icehockey",
@@ -83,11 +83,11 @@ RAFFLES = [
             "mode": "tiered",
             "payouts": [
                 {"position": 1, "amount_eur": 350, "type": "cash",
-                 "note": "Ensimmäinen sija — koko otteluennustus oikein."},
+                 "note": "Ensimmäinen sija - koko otteluennustus oikein."},
                 {"position": 2, "amount_eur": 100, "type": "cash",
-                 "note": "Toinen sija — 1-X-2 + maaliero oikein."},
+                 "note": "Toinen sija - 1-X-2 + maaliero oikein."},
                 {"position": 3, "amount_eur": 50, "type": "merch",
-                 "note": "PUTKI HQ -merchandise — t-paita + tarra."},
+                 "note": "PUTKI HQ -merchandise - t-paita + tarra."},
             ],
         },
         "result": {"home_goals": 3, "away_goals": 2, "one_x_two": "1"},
@@ -146,7 +146,7 @@ async def seed(db):
     for r in RAFFLES:
         existing = await db.voita_raffles.find_one({"slug": r["slug"]})
         if existing:
-            print(f"[{r['slug']}] already exists — skipping")
+            print(f"[{r['slug']}] already exists - skipping")
             summary.append({"slug": r["slug"], "skipped": True})
             continue
 
@@ -157,7 +157,7 @@ async def seed(db):
 
         # Build winner ledger entries with score.
         # Scoring: 3 pts for correct 1-X-2 + best-of (5 exact / 3 goal-diff /
-        # 1 total-goals) — matches voita_engine.DEFAULT_SCORING.
+        # 1 total-goals) - matches voita_engine.DEFAULT_SCORING.
         result_home, result_away = r["result"]["home_goals"], r["result"]["away_goals"]
         winners_ledger = []
         winner_entry_ids = []

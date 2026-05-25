@@ -1,5 +1,5 @@
 /**
- * NewsTicker — Phase 1 (Section 2 of the brief).
+ * NewsTicker - Phase 1 (Section 2 of the brief).
  *
  * Full-width continuous horizontal scroll directly under the top bar.
  * The ONLY continuously-scrolling element on the page.
@@ -12,7 +12,7 @@
  *
  * Behaviour:
  *   - Polls every 90s (server already poll-merges from 12 sources every
- *     RSS tick — usually 15min cadence).
+ *     RSS tick - usually 15min cadence).
  *   - CSS marquee via translate transform; pauses on :hover.
  *   - Severity high → small red dot in front of the headline.
  *

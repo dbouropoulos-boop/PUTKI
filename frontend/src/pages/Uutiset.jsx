@@ -1,5 +1,5 @@
 /**
- * Uutiset — public news blog. ALL auto-generated articles, sorted newest
+ * Uutiset - public news blog. ALL auto-generated articles, sorted newest
  * first, filterable by category, infinite scroll.
  *
  * Reads /api/content/published?category=&limit=. Backend already supports
@@ -25,7 +25,7 @@ const Uutiset = () => {
   const [error, setError] = useState(null);
 
   useDocumentMeta({
-    title: `${t('uutiset.title')} — PUTKI HQ`,
+    title: `${t('uutiset.title')} - PUTKI HQ`,
     description: t('uutiset.subtitle'),
     canonical: `${BACKEND}/uutiset`,
   });

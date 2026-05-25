@@ -1,9 +1,9 @@
 /**
- * PUTKI HQ — Tämän viikon mestarit (Weekly champions banner) · iter57
+ * PUTKI HQ - Tämän viikon mestarit (Weekly champions banner) · iter57
  *
  * Auto-pulls rank-1 from each active game for the current ISO week.
  * Renders only when at least one game has a ranked player. Designed to
- * sit between NewsTicker and ExploreBlocks on the homepage — restrained
+ * sit between NewsTicker and ExploreBlocks on the homepage - restrained
  * editorial styling, never gambling marketing.
  */
 import React, { useEffect, useState } from 'react';

@@ -1,5 +1,5 @@
 """
-PUTKI HQ — The Odds API client for the "Päivän Vitoset" homepage strip.
+PUTKI HQ - The Odds API client for the "Päivän Vitoset" homepage strip.
 
 Fetches REAL match odds for hockey + relevant football leagues. The 5
 strongest picks (highest single-outcome implied probability) get surfaced
@@ -71,7 +71,7 @@ async def _fetch_sport(sport_key: str) -> List[Dict[str, Any]]:
     async with httpx.AsyncClient(timeout=12.0) as http:
         r = await http.get(f"{ODDS_API_BASE}/sports/{sport_key}/odds", params=params)
         if r.status_code == 404:
-            # Out-of-season sport (Veikkausliiga in February) — not an error.
+            # Out-of-season sport (Veikkausliiga in February) - not an error.
             return []
         r.raise_for_status()
         return r.json() or []
@@ -117,7 +117,7 @@ def _best_pick_from_event(event: Dict[str, Any], sport_meta: Dict[str, Any]) -> 
         return None
     implied = round(100.0 / price, 1)
 
-    # Side label for the pick — clearer than just "home_team".
+    # Side label for the pick - clearer than just "home_team".
     if fav_name == home:
         side = "home"
     elif fav_name == away:
@@ -141,7 +141,7 @@ def _best_pick_from_event(event: Dict[str, Any], sport_meta: Dict[str, Any]) -> 
         "bookmaker_count": bookmaker_count,
     }
 
-    # Sharpness — deterministic 0-100 score over bookmaker market behaviour.
+    # Sharpness - deterministic 0-100 score over bookmaker market behaviour.
     # Phase 1: implied_prob (50%) + consensus_tightness (30%) computed
     # from this event's bookmaker dispersion. recency_momentum (20%)
     # defaults to 50 unless a 24h snapshot is later joined in via
@@ -202,7 +202,7 @@ async def _build_payload() -> Dict[str, Any]:
             "fetched_at": time.time(),
         }
 
-    # Sort by IMPLIED PROBABILITY descending — strongest favourites first.
+    # Sort by IMPLIED PROBABILITY descending - strongest favourites first.
     # Then secondary sort by soonest kickoff so the top 5 feels fresh.
     all_picks.sort(key=lambda p: (-p["implied_probability"], p.get("commence_time") or ""))
     top = all_picks[:TOP_PICKS]
@@ -223,7 +223,7 @@ async def _build_payload() -> Dict[str, Any]:
 
 
 async def get_featured_picks() -> Dict[str, Any]:
-    """Cached entrypoint — 15 min TTL."""
+    """Cached entrypoint - 15 min TTL."""
     now = time.time()
     if _cache["payload"] and _cache["expires_at"] > now:
         return _cache["payload"]

@@ -1,4 +1,4 @@
-"""Phase 3 V2 Step 1 — Operators + Streamers registry tests."""
+"""Phase 3 V2 Step 1 - Operators + Streamers registry tests."""
 import os
 import uuid
 
@@ -41,7 +41,7 @@ class TestOperatorsRegistry:
 
     def test_admin_crud_roundtrip(self):
         slug = f"test-op-{uuid.uuid4().hex[:6]}"
-        payload = {"name": "Test Op", "logo": "X", "score": 50, "oneLiner": "Test.", "offer": "—", "payout": "—", "license": "MGA", "trustpilot": 3.5, "year": 2026, "partner": False, "active": True, "market_id": "FI"}
+        payload = {"name": "Test Op", "logo": "X", "score": 50, "oneLiner": "Test.", "offer": "-", "payout": "-", "license": "MGA", "trustpilot": 3.5, "year": 2026, "partner": False, "active": True, "market_id": "FI"}
         # CREATE via PUT (upsert)
         r = requests.put(f"{API}/admin/operators/{slug}", headers={**HDR, "Content-Type": "application/json"}, json=payload, timeout=10)
         assert r.status_code == 200

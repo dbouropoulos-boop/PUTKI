@@ -1,15 +1,15 @@
 """
-PUTKI HQ — News-watch editorial board (iter51).
+PUTKI HQ - News-watch editorial board (iter51).
 
 The deterministic classifier already auto-decides between:
-  • news_ticker_items   (relevance ≥ 45 — surfaces on /uutiset + homepage)
-  • news_ticker_archive (relevance 20–44 — held back, editor-promotable)
+  • news_ticker_items   (relevance ≥ 45 - surfaces on /uutiset + homepage)
+  • news_ticker_archive (relevance 20-44 - held back, editor-promotable)
   • silently dropped     (relevance < 20)
 
 This module gives the editor one-click veto power over the classifier:
-  • promote(url) — move an archive item up into the public ticker
-  • demote(url)  — move a ticker item back to the archive (off-brand)
-  • kill(url)    — permanently reject a URL; recorded in
+  • promote(url) - move an archive item up into the public ticker
+  • demote(url)  - move a ticker item back to the archive (off-brand)
+  • kill(url)    - permanently reject a URL; recorded in
                     `news_rejected_urls` so the next RSS tick won't
                     re-ingest it via the deterministic pipeline.
 

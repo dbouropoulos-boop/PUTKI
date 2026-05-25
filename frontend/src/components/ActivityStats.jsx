@@ -1,5 +1,5 @@
 /**
- * ActivityStats — Phase 4 homepage credibility panel.
+ * ActivityStats - Phase 4 homepage credibility panel.
  *
  * Pulls /api/content/stats every 30 s. Renders article counts (today / this
  * week) + the time-since-last-publish so the homepage telegraphs "this is a
@@ -15,7 +15,7 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 30_000;
 
 const fmtAgo = (iso, lang) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     const dt = new Date(iso);
     const secs = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 1000));
@@ -25,7 +25,7 @@ const fmtAgo = (iso, lang) => {
     if (secs < 3600) return `${Math.floor(secs / 60)}${mUnit} ${ago}`;
     if (secs < 86400) return `${Math.floor(secs / 3600)}h ${ago}`;
     return `${Math.floor(secs / 86400)}d ${ago}`;
-  } catch { return '—'; }
+  } catch { return '-'; }
 };
 
 const ActivityStats = () => {
@@ -78,7 +78,7 @@ const ActivityStats = () => {
             {lang === 'en' ? 'TODAY' : 'TÄNÄÄN'}
           </div>
           <div className="mono" style={{ fontSize: 32, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
-            {data?.articles_today ?? '—'}
+            {data?.articles_today ?? '-'}
           </div>
           <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--muted)', opacity: 0.7, marginTop: 4 }}>
             {lang === 'en' ? 'ARTICLES' : 'ARTIKKELIA'}
@@ -89,7 +89,7 @@ const ActivityStats = () => {
             {lang === 'en' ? 'THIS WEEK' : 'VIIKKO'}
           </div>
           <div className="mono" style={{ fontSize: 32, fontWeight: 500, letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1 }}>
-            {data?.articles_this_week ?? '—'}
+            {data?.articles_this_week ?? '-'}
           </div>
           <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.14em', color: 'var(--muted)', opacity: 0.7, marginTop: 4 }}>
             {lang === 'en' ? 'LAST 7 DAYS' : 'VIIM. 7 PV'}

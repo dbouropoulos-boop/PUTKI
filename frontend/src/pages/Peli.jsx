@@ -1,5 +1,5 @@
 /**
- * Peli — Monthly raffle entry page.
+ * Peli - Monthly raffle entry page.
  *
  * REPLACES the old Smartico game leaderboard. PUTKI HQ is a media company,
  * not a gambling platform. This page collects raffle entries (name, phone,
@@ -19,7 +19,7 @@ import SmarticoGame from '../components/SmarticoGame';
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 // Week-1 Smartico game embedded directly on /peli. Same brand/visitor-key
-// pair the user supplied — `template_id` 3383 = Weezy Rally. The win flow
+// pair the user supplied - `template_id` 3383 = Weezy Rally. The win flow
 // hands the visitor straight to Weezybet registration carrying the UUID.
 const WEEZY_RALLY = {
   template_id: 3383,
@@ -232,7 +232,7 @@ const Peli = () => {
   ];
   const entryCount = config?.entry_count || 0;
   const enabled = config?.enabled !== false;
-  // Raffle prize is now locked editorially to €100 to play on Weezybet —
+  // Raffle prize is now locked editorially to €100 to play on Weezybet -
   // a clean side prize alongside the main Smartico game-win flow.
   const prizeText = lang === 'en'
     ? '€100 to play on Weezybet'
@@ -240,7 +240,7 @@ const Peli = () => {
 
   return (
     <div data-testid="peli-page">
-      {/* GAME-FIRST LANDING — no hero banner. The Weezy Rally Smartico
+      {/* GAME-FIRST LANDING - no hero banner. The Weezy Rally Smartico
           mini-game is the first thing a visitor sees and can play it
           immediately. Winning redirects to Weezybet registration with
           the visitor_win_uuid query param so the prize can be credited. */}
@@ -407,8 +407,8 @@ const Peli = () => {
           </div>
           <p className="font-serif mt-6" style={{ fontSize: 13, color: 'var(--muted)', maxWidth: 720, lineHeight: 1.6 }}>
             {lang === 'en'
-              ? 'PUTKI HQ is an editorial media company, not a casino or gambling operator. This raffle is a free promotional draw — no deposit, no stake, no betting activity takes place.'
-              : 'PUTKI HQ on toimituksellinen mediayhtiö, ei kasino tai vedonlyöntioperaattori. Tämä arvonta on ilmainen promootio — ei talletusta, ei panostusta, ei vedonlyöntiä.'}
+              ? 'PUTKI HQ is an editorial media company, not a casino or gambling operator. This raffle is a free promotional draw - no deposit, no stake, no betting activity takes place.'
+              : 'PUTKI HQ on toimituksellinen mediayhtiö, ei kasino tai vedonlyöntioperaattori. Tämä arvonta on ilmainen promootio - ei talletusta, ei panostusta, ei vedonlyöntiä.'}
           </p>
           <p className="mono mt-3" style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>
             <Link to="/uutiset" data-testid="peli-uutiset-link" style={{ color: 'var(--ink)', textDecoration: 'none' }}>

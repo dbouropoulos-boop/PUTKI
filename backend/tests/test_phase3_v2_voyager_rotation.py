@@ -1,4 +1,4 @@
-"""Phase 3 V2 Step 3 (folded into Step 1) — Voyager rotation calendar tests."""
+"""Phase 3 V2 Step 3 (folded into Step 1) - Voyager rotation calendar tests."""
 import os
 from datetime import date
 
@@ -45,7 +45,7 @@ class TestVoyagerRotation:
         payload = {
             "iso_week": iso, "market_id": "FI",
             "partner_operator_slug": "paf",  # Paf is not partner=True in seed
-            "theme": "Test", "prize_summary": "—",
+            "theme": "Test", "prize_summary": "-",
         }
         r = requests.put(f"{API}/admin/voyager/weeks/{iso}", headers={**HDR, "Content-Type": "application/json"}, json=payload, timeout=10)
         assert r.status_code == 400
@@ -83,7 +83,7 @@ class TestVoyagerRotation:
 
     def test_delete_roundtrip(self):
         iso = "2026-W32"
-        payload = {"iso_week": iso, "partner_operator_slug": "weezybet", "theme": "X", "prize_summary": "—"}
+        payload = {"iso_week": iso, "partner_operator_slug": "weezybet", "theme": "X", "prize_summary": "-"}
         r = requests.put(f"{API}/admin/voyager/weeks/{iso}", headers={**HDR, "Content-Type": "application/json"}, json=payload, timeout=10)
         assert r.status_code == 200
         r = requests.delete(f"{API}/admin/voyager/weeks/{iso}?market_id=FI", headers=HDR, timeout=10)
@@ -93,7 +93,7 @@ class TestVoyagerRotation:
         # ensure at least one
         iso = "2026-W30"
         requests.put(f"{API}/admin/voyager/weeks/{iso}", headers={**HDR, "Content-Type": "application/json"}, json={
-            "iso_week": iso, "partner_operator_slug": "weezybet", "theme": "Imatra Rally", "prize_summary": "—",
+            "iso_week": iso, "partner_operator_slug": "weezybet", "theme": "Imatra Rally", "prize_summary": "-",
         }, timeout=10)
         r = requests.get(f"{API}/voyager/weeks?upcoming_only=true&limit=20", timeout=10)
         assert r.status_code == 200

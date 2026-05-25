@@ -9,7 +9,7 @@ import StreamerAvatar from '../components/StreamerAvatar';
 import { useStreamers, useOperators } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
-// V2 honesty pass — profile no longer pulls from STREAMERS / MOMENTS / OPERATORS
+// V2 honesty pass - profile no longer pulls from STREAMERS / MOMENTS / OPERATORS
 // mocks. Roster lookup goes through /api/streamers; related operators through
 // /api/operators; "biggest moments" remain editorially-empty until /api/published
 // surfaces real per-streamer commentary.
@@ -33,7 +33,7 @@ const rng = (seed) => {
 const dayKeys = ['MA', 'TI', 'KE', 'TO', 'PE', 'LA', 'SU'];
 const dayKeysEn = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
 
-// ── Hours-played calendar (8 time blocks × 7 days, 0–4 intensity) ──
+// ── Hours-played calendar (8 time blocks × 7 days, 0-4 intensity) ──
 const buildSchedule = (slug) => {
   const r = rng(seedFromSlug(slug) + 7);
   // Returns intensity matrix [day][block] 0-4
@@ -62,7 +62,7 @@ const buildBiggest = (streamerName) => {
 };
 
 const buildOperatorUsage = (slug, operators) => {
-  // Mittari roster-overlap-by-rank heuristic — editorial estimate using
+  // Mittari roster-overlap-by-rank heuristic - editorial estimate using
   // operator score ordering. Real operator-streamer attribution comes from
   // signal pipeline (Step 2 webhook handlers + clip categorisation).
   const r = rng(seedFromSlug(slug) + 19);
@@ -77,7 +77,7 @@ const buildSocialPosts = (name, lang) => {
   const tplFi = [
     { platform: 'X / Twitter',  hours: 2,  text: 'Tänään 19:00 livenä. Pragmaticin Sweet Bonanza 1000 ja kaikki uutuudet.' },
     { platform: 'Instagram',    hours: 8,  text: 'Eilinen klippi sai 84k katsojaa. Tulee YouTubeen huomenna.' },
-    { platform: 'TikTok',       hours: 22, text: 'Fire in the Hole 2 -reaktio — täysi versio kanavalla.' },
+    { platform: 'TikTok',       hours: 22, text: 'Fire in the Hole 2 -reaktio - täysi versio kanavalla.' },
     { platform: 'X / Twitter',  hours: 31, text: 'Kicktrailer alkaa: Kick-puolella aukeaa rinnakkaisstriimi tammikuussa.' },
     { platform: 'Instagram',    hours: 50, text: 'Studio päivittyy ensi viikolla. Uudet valot, uusi mikki.' },
     { platform: 'YouTube',      hours: 72, text: 'Sunnuntain "Megaways-spesiaali" -tiivistys nyt katsottavissa.' },
@@ -85,7 +85,7 @@ const buildSocialPosts = (name, lang) => {
   const tplEn = [
     { platform: 'X / Twitter',  hours: 2,  text: 'Live tonight at 19:00. Pragmatic\u2019s Sweet Bonanza 1000 + all new releases.' },
     { platform: 'Instagram',    hours: 8,  text: 'Last night\u2019s clip hit 84k views. YouTube cut out tomorrow.' },
-    { platform: 'TikTok',       hours: 22, text: 'Fire in the Hole 2 reaction — full version on the channel.' },
+    { platform: 'TikTok',       hours: 22, text: 'Fire in the Hole 2 reaction - full version on the channel.' },
     { platform: 'X / Twitter',  hours: 31, text: 'Going Kick: parallel stream opens January.' },
     { platform: 'Instagram',    hours: 50, text: 'Studio refresh next week. New lights, new mic.' },
     { platform: 'YouTube',      hours: 72, text: 'Sunday Megaways special highlight reel up now.' },
@@ -94,7 +94,7 @@ const buildSocialPosts = (name, lang) => {
   return arr.map((p, i) => ({ ...p, id: `${name}-soc-${i}` }));
 };
 
-// Generate viewer-rhythm heatmap (24h × 7d) — 0..1 intensity
+// Generate viewer-rhythm heatmap (24h × 7d) - 0..1 intensity
 const buildRhythm = (slug) => {
   const r = rng(seedFromSlug(slug) + 31);
   return Array.from({ length: 7 }, () =>
@@ -289,15 +289,15 @@ const StreamerProfile = () => {
 
   const fmt = (n) => n.toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI').replace(/,/g, lang === 'en' ? ',' : ' ');
 
-  // Editorial commentary (institutional PUTKI HQ -toimitus voice) — name-localized
+  // Editorial commentary (institutional PUTKI HQ -toimitus voice) - name-localized
   const commentary = lang === 'en'
     ? [
-        `${streamer.name} has been around long enough to know what slot streaming actually is — and it isn\u2019t shouting at every spin.`,
+        `${streamer.name} has been around long enough to know what slot streaming actually is - and it isn\u2019t shouting at every spin.`,
         `PUTKI HQ\u2019s read: stake size restrained, schedule consistent, audience engaged. The kind of streamer you can leave on in the background and trust the commentary.`,
       ]
     : [
         `${streamer.name} ei kuulu siihen joukkoon, joka huutaa kameralle joka spinnillä. Tyyli on hallittu, panostus malttava.`,
-        `PUTKI HQ:n huomio: viime kuukauden striimitiheys on tasainen — viisi sessiota viikossa, kestot kahdesta kuuteen tuntiin. Bonuksen metsästäminen ei näy aikatauluissa, ja se on hyvä asia.`,
+        `PUTKI HQ:n huomio: viime kuukauden striimitiheys on tasainen - viisi sessiota viikossa, kestot kahdesta kuuteen tuntiin. Bonuksen metsästäminen ei näy aikatauluissa, ja se on hyvä asia.`,
       ];
 
   return (
@@ -323,20 +323,20 @@ const StreamerProfile = () => {
               </div>
             ) : (
               <div className="mono mb-5" style={{ fontSize: 11, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
-                {lang === 'en' ? 'OFFLINE — NEXT STREAM TODAY 19:00' : 'OFFLINE — SEURAAVA STRIIMI TÄNÄÄN 19:00'}
+                {lang === 'en' ? 'OFFLINE - NEXT STREAM TODAY 19:00' : 'OFFLINE - SEURAAVA STRIIMI TÄNÄÄN 19:00'}
               </div>
             )}
 
             {streamer.sub && <p className="prose-mittari mb-7 max-w-xl">{streamer.sub}</p>}
 
-            {/* Cockpit stat row — only metrics the real pipeline can verify (V2 honesty rule). */}
+            {/* Cockpit stat row - only metrics the real pipeline can verify (V2 honesty rule). */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-7" data-testid="profile-stats">
               <StatCard icon={Clock}    label={lang === 'en' ? 'HOURS · 7D' : 'TUNTIA · 7PV'}  value={`${stats.hours7d}h`} />
               <StatCard icon={Users}    label={lang === 'en' ? 'AVG VIEW'   : 'KATSOJA·KA'}     value={fmt(stats.avgViewer)} />
               <StatCard icon={Activity} label={lang === 'en' ? 'MOMENTS · 30D' : 'HETKIÄ · 30PV'} value={`${stats.momentsCount}`} />
             </div>
 
-            {/* Follow CTA — varies by status */}
+            {/* Follow CTA - varies by status */}
             {!streamer.live ? (
               followDone ? (
                 <div className="panel p-5 inline-flex items-center gap-3" data-testid="follow-success">
@@ -403,7 +403,7 @@ const StreamerProfile = () => {
         </div>
       </section>
 
-      {/* LIVE EMBED — full-width when live */}
+      {/* LIVE EMBED - full-width when live */}
       {streamer.live && (
         <section style={{ borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
           <div className="container-wide py-6 sm:py-8">
@@ -440,7 +440,7 @@ const StreamerProfile = () => {
         </div>
       </section>
 
-      {/* SCHEDULE — cockpit calendar grid */}
+      {/* SCHEDULE - cockpit calendar grid */}
       <section className="py-12 sm:py-16" style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
         <div className="container-wide grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           <div className="lg:col-span-4">
@@ -460,7 +460,7 @@ const StreamerProfile = () => {
         </div>
       </section>
 
-      {/* WHERE STREAMER PLAYS — conversion bridge */}
+      {/* WHERE STREAMER PLAYS - conversion bridge */}
       <section className="py-12 sm:py-16" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
           <div className="eyebrow mb-3">{lang === 'en' ? `WHERE ${streamer.name.toUpperCase()} PLAYS` : `MISSÄ ${streamer.name.toUpperCase()} PELAA`}</div>
@@ -528,7 +528,7 @@ const StreamerProfile = () => {
         </div>
       </section>
 
-      {/* RHYTHM — viewer heatmap */}
+      {/* RHYTHM - viewer heatmap */}
       <section className="py-12 sm:py-16" style={{ borderTop: '1px solid var(--border)' }}>
         <div className="container-wide">
           <div className="eyebrow mb-3">{lang === 'en' ? `${streamer.name.toUpperCase()}\u2019S RHYTHM` : `${streamer.name.toUpperCase()}:N RYTMI`}</div>

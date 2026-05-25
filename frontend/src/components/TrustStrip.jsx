@@ -1,5 +1,5 @@
 /**
- * TrustStrip — homepage trust signals. Honest, non-promotional.
+ * TrustStrip - homepage trust signals. Honest, non-promotional.
  * Sits between the Live Activity Feed and the Capture form.
  */
 import React from 'react';

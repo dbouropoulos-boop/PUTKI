@@ -1,12 +1,12 @@
 """
-PUTKI HQ — Admin auth v2 · per-user tokens + audit log (iter62, P3).
+PUTKI HQ - Admin auth v2 · per-user tokens + audit log (iter62, P3).
 
 We previously had a single shared `BACK_OFFICE_TOKEN` env value that
 everyone working in the back-office used. Now:
 
   • Each editor gets their own token (sha256-hashed at rest).
   • Every admin mutation writes one row to `admin_audit_log`.
-  • The legacy single token still works (back-compat) — it resolves to
+  • The legacy single token still works (back-compat) - it resolves to
     actor `"legacy_env_token"` so existing tooling/curls keep functioning.
 
 Migration: on first boot we seed a `root` admin user from the existing
@@ -16,7 +16,7 @@ Migration: on first boot we seed a `root` admin user from the existing
 Token format:
   • A plain random URL-safe 32-byte string we hand to the user once on
     creation. We persist only `sha256(token)`. Forgotten tokens require
-    a re-issue — they cannot be recovered (this is intentional).
+    a re-issue - they cannot be recovered (this is intentional).
 
 Tokens are passed in via the `X-Admin-Token` header just like before.
 """
@@ -88,7 +88,7 @@ async def resolve_admin_token(db, raw_token: str) -> Optional[Dict[str, Any]]:
     or None for rejection. Accepts:
 
       1. A per-user token whose sha256 matches an `active` admin_users row.
-      2. The legacy `BACK_OFFICE_TOKEN` env value — bound to the
+      2. The legacy `BACK_OFFICE_TOKEN` env value - bound to the
          pseudo-actor `legacy_env_token`, role `owner`.
 
     Updates `last_used_at` on a successful per-user resolution.
@@ -128,7 +128,7 @@ async def write_audit(db, *, actor: str, role: str,
                        action: str, resource: str,
                        meta: Optional[Dict[str, Any]] = None,
                        ip: Optional[str] = None) -> None:
-    """Append-only. Never read by hot-path code — only by the back-office
+    """Append-only. Never read by hot-path code - only by the back-office
     audit view. Safe to call from anywhere (errors are swallowed)."""
     try:
         await db.admin_audit_log.insert_one({
@@ -178,7 +178,7 @@ async def create_admin_user(db, *, username: str, role: str,
         "active": True,
     }
     await db.admin_users.insert_one(doc)
-    # MongoDB mutated `doc` to include `_id` (ObjectId) — drop it before returning.
+    # MongoDB mutated `doc` to include `_id` (ObjectId) - drop it before returning.
     doc.pop("_id", None)
     return {**{k: v for k, v in doc.items() if k != "token_hash"},
             "token_plain": raw_token}  # shown ONCE.

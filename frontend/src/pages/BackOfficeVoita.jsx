@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — BackOfficeVoita.
+ * PUTKI HQ - BackOfficeVoita.
  *
  * CRUD for raffles + editable prize distribution + gate-flag board +
  * draw trigger. Once a raffle is `drawn` all edits are blocked.
@@ -267,7 +267,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
           onChange={(next) => setForm({ ...form, payouts: next })} />
       </div>
 
-      {/* Gating flags — match_populated is auto-derived (server-side) from home_team + away_team + kickoff_at presence */}
+      {/* Gating flags - match_populated is auto-derived (server-side) from home_team + away_team + kickoff_at presence */}
       <div style={{ marginTop: 18, display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}>
         {[
           ['rules_url_set', 'RULES URL SET'],
@@ -327,7 +327,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
             <span style={{ marginLeft: 'auto', color: 'var(--muted)', fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.16em' }}>DRAW WITH FINAL SCORE</span>
             <input type="number" min={0} value={drawHome} onChange={(e) => setDrawHome(e.target.value)} placeholder="home"
               data-testid="draw-home" style={{ width: 70, background: 'var(--bg)', color: '#FFFFFF', border: '1px solid var(--border-strong)', padding: '8px 10px', fontFamily: 'Georgia, serif', fontSize: 16, textAlign: 'center' }} />
-            <span style={{ color: 'var(--muted)' }}>—</span>
+            <span style={{ color: 'var(--muted)' }}>-</span>
             <input type="number" min={0} value={drawAway} onChange={(e) => setDrawAway(e.target.value)} placeholder="away"
               data-testid="draw-away" style={{ width: 70, background: 'var(--bg)', color: '#FFFFFF', border: '1px solid var(--border-strong)', padding: '8px 10px', fontFamily: 'Georgia, serif', fontSize: 16, textAlign: 'center' }} />
             <button type="button" onClick={drawNow} disabled={busy}
@@ -367,7 +367,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
               {busy ? '…' : '✓ MARK PAID'}
             </button>
           )}
-          {/* Notify-winner — uses the editable `voita_winner` template
+          {/* Notify-winner - uses the editable `voita_winner` template
               from /back-office/email-templates. Idempotent: backend
               refuses the second call once winner_notified_at is set. */}
           {!raffle.winner_notified_at ? (
@@ -473,7 +473,7 @@ const BackOfficeVoita = () => {
   }), [items]);
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Voita — raffles" />;
+    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Voita - raffles" />;
   }
 
   return (
@@ -515,10 +515,10 @@ const BackOfficeVoita = () => {
             <StatusPill status={r.status} />
             <div style={{ flex: 1 }}>
               <div style={{ color: '#FFFFFF', fontFamily: 'Georgia, serif', fontSize: 18, fontWeight: 700 }}>
-                {r.home_team || '—'} <span style={{ color: 'var(--muted)' }}>vs</span> {r.away_team || '—'}
+                {r.home_team || '-'} <span style={{ color: 'var(--muted)' }}>vs</span> {r.away_team || '-'}
               </div>
               <div style={{ color: 'var(--muted)', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.12em', marginTop: 2 }}>
-                {r.slug} · {r.sport || '—'} · ENTRIES {r.entries_count || 0}
+                {r.slug} · {r.sport || '-'} · ENTRIES {r.entries_count || 0}
               </div>
             </div>
             <div style={{ display: 'flex', gap: 4 }}>

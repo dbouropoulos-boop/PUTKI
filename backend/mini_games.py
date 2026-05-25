@@ -1,9 +1,9 @@
 """
-PUTKI HQ — Mini-Game Suite Phase 1 (iter55).
+PUTKI HQ - Mini-Game Suite Phase 1 (iter55).
 
 Educational mini-games built around the Build Brief v2 spec:
   • Topic: online gambling literacy, beginner audience
-  • Play instantly — no email required
+  • Play instantly - no email required
   • Email gate unlocks the FULL personalized result + tournament ranking
   • Weekly tournament cycle (auto reset every 7 days)
   • Non-monetary prizes ONLY (recognition, badges, content access)
@@ -11,11 +11,11 @@ Educational mini-games built around the Build Brief v2 spec:
 
 Phase 1 (this iteration) ships:
   ✓ Hub endpoint (5 game tiles, 1 active + 4 "Tulossa")
-  ✓ Quiz Challenge — flagship educational game
+  ✓ Quiz Challenge - flagship educational game
        - 10 beginner-friendly Finnish questions on gambling literacy
        - Per-question explanation revealed after the player answers
        - Personalized result ("type" + strengths + gaps) on completion
-  ✓ Anonymous play — no email needed to play or see preview score
+  ✓ Anonymous play - no email needed to play or see preview score
   ✓ Email gate → unlocks full personalized result + tournament ranking
   ✓ Weekly leaderboard with auto reset on Monday 00:00 UTC
   ✓ GDPR-compliant lead capture (consent flag + privacy URL)
@@ -26,19 +26,19 @@ Phase 2 (next sprint): Scenario, Insight Reveal, Arcade A (Snake), Arcade B
 
 Data model:
 
-  mini_game_questions   — editable quiz content
+  mini_game_questions   - editable quiz content
     {id, slug, order, prompt_fi, options:[{key, label_fi}],
      correct: "a", explanation_fi, topic_tag, active}
 
-  mini_game_plays       — every attempt (anonymous + signed)
+  mini_game_plays       - every attempt (anonymous + signed)
     {id, game_slug, anon_id, score, total, answers:[{q_id, picked, correct}],
      started_at, finished_at, duration_s, week_iso, lead_id?}
 
-  mini_game_leads       — email captures (the real list)
+  mini_game_leads       - email captures (the real list)
     {id, email_hash, email, name?, source_game, score, tournament_week_iso,
      consent_at, consent_text_sha, privacy_url, locale, ip_hash?}
 
-  mini_game_tournaments — weekly resets + final winners (audit)
+  mini_game_tournaments - weekly resets + final winners (audit)
     {id, week_iso, opened_at, closes_at, closed_at?, top10:[{lead_id,score}]}
 """
 from __future__ import annotations
@@ -107,7 +107,7 @@ def _consent_text_sha() -> str:
 # ─────────────────────────── seed content ───────────────────────────
 #
 # 10 Finnish beginner-level gambling-literacy questions. Each has a
-# short, plain-language explanation that runs AFTER the player picks —
+# short, plain-language explanation that runs AFTER the player picks -
 # the player learns even when they get it wrong.
 #
 # Editable later via the admin panel (Phase 2). Source of truth on
@@ -129,7 +129,7 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
             "RTP = Return to Player. Se kertoo, kuinka suuren osan "
             "panoksista peli teoriassa palauttaa pelaajille pitkällä "
             "aikavälillä. 96% RTP tarkoittaa, että keskimäärin 96 € "
-            "100 €:sta palautuu — talo pitää 4%."
+            "100 €:sta palautuu - talo pitää 4%."
         ),
         "topic_tag": "math",
     },
@@ -146,7 +146,7 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
         "explanation_fi": (
             "Korkean volatiliteetin slotit maksavat harvemmin mutta "
             "kun ne maksavat, summat ovat suurempia. Bankrolli "
-            "kestää huonommin näitä — tarvitset isomman puskurin "
+            "kestää huonommin näitä - tarvitset isomman puskurin "
             "ja vahvemmat hermot."
         ),
         "topic_tag": "math",
@@ -173,13 +173,13 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
         "prompt_fi": "Mikä näistä on PARAS bankroll-strategia aloittelijalle?",
         "options": [
             {"key": "a", "label_fi": "Pelaa puolet bankrollista yhdellä spinillä"},
-            {"key": "b", "label_fi": "Käytä max 1–2% bankrollista yhdellä spinillä"},
+            {"key": "b", "label_fi": "Käytä max 1-2% bankrollista yhdellä spinillä"},
             {"key": "c", "label_fi": "Nosta panoksia kun olet häviöllä"},
             {"key": "d", "label_fi": "Pelaa kunnes bankroll on nollissa"},
         ],
         "correct": "b",
         "explanation_fi": (
-            "Ammattilaiset suosittelevat 1–2% panoskokoa per spin. "
+            "Ammattilaiset suosittelevat 1-2% panoskokoa per spin. "
             "Tämä antaa varianssin tasoittua ja pidentää pelisessio. "
             "Häviöllä panostuksen NOSTAMINEN (chasing) on yleisin "
             "syy ison bankrollin häviöön."
@@ -190,15 +190,15 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
         "order": 5,
         "prompt_fi": "Slotti on antanut 50 spinin ajan VAIN tappioita. Onko nyt todennäköisempää, että seuraava spin on voitto?",
         "options": [
-            {"key": "a", "label_fi": "Kyllä — peli on \"velkaa\" pelaajalle"},
-            {"key": "b", "label_fi": "Ei — jokainen spin on itsenäinen"},
+            {"key": "a", "label_fi": "Kyllä - peli on \"velkaa\" pelaajalle"},
+            {"key": "b", "label_fi": "Ei - jokainen spin on itsenäinen"},
             {"key": "c", "label_fi": "Riippuu pelistä"},
             {"key": "d", "label_fi": "Vain jos panostus on suurempi"},
         ],
         "correct": "b",
         "explanation_fi": (
             "Klassinen Gambler's Fallacy. Jokainen spin on tilastollisesti "
-            "ITSENÄINEN edellisistä — slotti ei muista. Tämä on yksi "
+            "ITSENÄINEN edellisistä - slotti ei muista. Tämä on yksi "
             "yleisimmistä ajatusvirheistä, joka johtaa ongelmiin."
         ),
         "topic_tag": "psychology",
@@ -208,14 +208,14 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
         "prompt_fi": "Mikä on Suomessa LAILLISESTI luvanvarainen vedonlyönti- ja casinopalveluiden tarjoaja vuonna 2026?",
         "options": [
             {"key": "a", "label_fi": "Vain Veikkaus"},
-            {"key": "b", "label_fi": "Veikkaus + 5–8 lisenssin saanutta operaattoria"},
+            {"key": "b", "label_fi": "Veikkaus + 5-8 lisenssin saanutta operaattoria"},
             {"key": "c", "label_fi": "Kaikki EU-lisensoidut"},
             {"key": "d", "label_fi": "Ei mikään"},
         ],
         "correct": "b",
         "explanation_fi": (
             "Suomi avasi rahapelimarkkinan kilpailulle 2026. Veikkauksen "
-            "monopoli päättyi — uudella lisenssijärjestelmällä on tällä "
+            "monopoli päättyi - uudella lisenssijärjestelmällä on tällä "
             "hetkellä useita lisensoituja operaattoreita. EU-lisenssi "
             "yksin EI riitä Suomen markkinassa."
         ),
@@ -251,7 +251,7 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
         "correct": "b",
         "explanation_fi": (
             "House Edge × Volyymi = odotettu talon voitto. 4% × 1000 € "
-            "= 40 €. Tämä on TEOREETTINEN keskiarvo — yksittäisessä "
+            "= 40 €. Tämä on TEOREETTINEN keskiarvo - yksittäisessä "
             "sessiossa voit voittaa tai hävitä paljon enemmän."
         ),
         "topic_tag": "math",
@@ -269,7 +269,7 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
         "explanation_fi": (
             "Pieni viikonloppupanos osana viihdebudjettia EI ole "
             "varoitusmerkki. Chasing (häviöiden jahtaaminen), "
-            "valehtelu ja lainattu raha OVAT — ne ovat klassisia "
+            "valehtelu ja lainattu raha OVAT - ne ovat klassisia "
             "merkkejä siitä, että peli on muuttunut hallinnasta."
         ),
         "topic_tag": "responsibility",
@@ -287,7 +287,7 @@ QUIZ_SEED_QUESTIONS_FI: List[Dict[str, Any]] = [
         "explanation_fi": (
             "Operaattoreiden pakolliset työkalut (aikaraja, talletusraja, "
             "itsesulku, peluuri.fi) ovat tehokkaampia kuin pelkkä "
-            "tahdonvoima. Aseta rajat ENNEN sessiota — kuumassa "
+            "tahdonvoima. Aseta rajat ENNEN sessiota - kuumassa "
             "tilanteessa rationaalinen päätöksenteko ei toimi."
         ),
         "topic_tag": "responsibility",
@@ -311,8 +311,8 @@ PERSONA_LABELS = {
     "balanced": {
         "title": "Tasapainoinen aloittelija",
         "title_en": "Balanced Beginner",
-        "tagline": "Hyvä pohja — sekä numerot että hallinta ovat kunnossa.",
-        "tagline_en": "Good foundation — both numbers and self-control in shape.",
+        "tagline": "Hyvä pohja - sekä numerot että hallinta ovat kunnossa.",
+        "tagline_en": "Good foundation - both numbers and self-control in shape.",
     },
     "needs_basics": {
         "title": "Aloitteleva oppija",
@@ -353,7 +353,7 @@ async def ensure_indexes(db) -> None:
 
 
 async def seed_quiz_questions(db) -> None:
-    """Idempotent — seeds (or backfills) FI + EN for every question."""
+    """Idempotent - seeds (or backfills) FI + EN for every question."""
     from mini_games_i18n import quiz_en_by_order
     en_map = quiz_en_by_order()
     for q in QUIZ_SEED_QUESTIONS_FI:
@@ -635,7 +635,7 @@ async def unlock_quiz_result(
         {"$set": {"lead_id": lead_id, "lead_captured_at": consent_at}},
     )
 
-    # Personalized analysis — strengths/gaps from tag_scores.
+    # Personalized analysis - strengths/gaps from tag_scores.
     strengths: List[str] = []
     gaps: List[str] = []
     strengths_en: List[str] = []
@@ -750,8 +750,8 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "kind": "scenario",
             "title_fi": "Päätöspolku",
             "title_en": "Decision Path",
-            "subtitle_fi": "5 oikeaa pelitilannetta — mitä päättäisit?",
-            "subtitle_en": "5 real gambling situations — what would you decide?",
+            "subtitle_fi": "5 oikeaa pelitilannetta - mitä päättäisit?",
+            "subtitle_en": "5 real gambling situations - what would you decide?",
             "duration_fi": "≈ 4 min",
             "duration_en": "≈ 4 min",
             "status": "active",
@@ -762,8 +762,8 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "kind": "reveal",
             "title_fi": "Tietoraape",
             "title_en": "Insight Reveal",
-            "subtitle_fi": "Raaputa kuusi mikro-oppia — yksi fakta kerrallaan.",
-            "subtitle_en": "Scratch six micro-lessons — one fact at a time.",
+            "subtitle_fi": "Raaputa kuusi mikro-oppia - yksi fakta kerrallaan.",
+            "subtitle_en": "Scratch six micro-lessons - one fact at a time.",
             "duration_fi": "≈ 2 min",
             "duration_en": "≈ 2 min",
             "status": "active",
@@ -774,8 +774,8 @@ async def get_hub_payload(db) -> Dict[str, Any]:
             "kind": "arcade",
             "title_fi": "Aikatappo · Mato",
             "title_en": "Timekiller · Snake",
-            "subtitle_fi": "Klassinen mato — viikon korkein pisteytys palkitaan.",
-            "subtitle_en": "Classic snake — the week's top score is recognised.",
+            "subtitle_fi": "Klassinen mato - viikon korkein pisteytys palkitaan.",
+            "subtitle_en": "Classic snake - the week's top score is recognised.",
             "duration_fi": "≈ 2 min",
             "duration_en": "≈ 2 min",
             "status": "active",
@@ -811,7 +811,7 @@ async def get_hub_payload(db) -> Dict[str, Any]:
 
 
 
-# ────────────────── Phase 2 — Scenario (branching) ──────────────────
+# ────────────────── Phase 2 - Scenario (branching) ──────────────────
 # Reuses the same `mini_game_plays` + `mini_game_leads` collections as
 # the quiz; `game_slug` discriminates and `score`/`pct` are normalised
 # so leaderboards can be compared on a 0..15 (scenario) basis.
@@ -821,7 +821,7 @@ from mini_games_phase2 import (
     persona_for_scenario,
 )
 
-SCENARIO_MAX_SCORE = 18   # 6 scenarios × 3 points each (iter64 pivot — added scenario 6 + 5-profile spectrum)
+SCENARIO_MAX_SCORE = 18   # 6 scenarios × 3 points each (iter64 pivot - added scenario 6 + 5-profile spectrum)
 INSIGHT_TILE_COUNT = 6    # tiles on the reveal board
 
 
@@ -956,7 +956,7 @@ async def unlock_scenario_result(db, *, play_id, anon_id, email, name=None, cons
     )
 
 
-# ────────────────── Phase 2 — Insight Reveal ──────────────────
+# ────────────────── Phase 2 - Insight Reveal ──────────────────
 
 async def start_insight(db) -> Dict[str, Any]:
     cur = db.mini_game_questions.find(
@@ -1036,14 +1036,14 @@ async def finish_insight(db, *, play_id, anon_id) -> Dict[str, Any]:
     persona_title = "Tutkiva oppija" if score >= 4 else "Aloitteleva uteliainen"
     persona_title_en = "The Curious Learner" if score >= 4 else "The Beginning Explorer"
     persona_tagline = (
-        "Avaat tietoa tasaiseen tahtiin — oppimismoduuli on selvästi päällä."
+        "Avaat tietoa tasaiseen tahtiin - oppimismoduuli on selvästi päällä."
         if score >= 4 else
-        "Pieni alku — kannattaa palata viikolla tutkimaan loput tiilet."
+        "Pieni alku - kannattaa palata viikolla tutkimaan loput tiilet."
     )
     persona_tagline_en = (
-        "You're steadily unlocking knowledge — the learning module is clearly on."
+        "You're steadily unlocking knowledge - the learning module is clearly on."
         if score >= 4 else
-        "A small start — come back this week to uncover the rest of the tiles."
+        "A small start - come back this week to uncover the rest of the tiles."
     )
 
     from mini_game_card import build_insight_card
@@ -1205,8 +1205,8 @@ async def _unlock_for_game(
     }
 
 
-# ────────────────── Phase 2.5 — Arcade games (Snake / Tap) ──────────────────
-# Arcade games are simpler than the educational games — no questions list,
+# ────────────────── Phase 2.5 - Arcade games (Snake / Tap) ──────────────────
+# Arcade games are simpler than the educational games - no questions list,
 # no per-answer feedback. The frontend runs the game loop, validates score
 # integrity server-side via a simple time/score sanity check, and reuses
 # the same email-gate + leaderboard plumbing.
@@ -1214,8 +1214,8 @@ async def _unlock_for_game(
 ARCADE_SNAKE_SLUG = "arcade_snake"
 ARCADE_TAP_SLUG = "arcade_tap"
 ARCADE_MAX_REASONABLE_SCORE = {
-    ARCADE_SNAKE_SLUG: 999,   # 999 cells eaten — physically improbable but generous
-    ARCADE_TAP_SLUG: 999,     # 999 pipes — same
+    ARCADE_SNAKE_SLUG: 999,   # 999 cells eaten - physically improbable but generous
+    ARCADE_TAP_SLUG: 999,     # 999 pipes - same
 }
 ARCADE_MIN_SECONDS_PER_POINT = {
     ARCADE_SNAKE_SLUG: 0.4,   # at least 0.4s per cell eaten (snake grows -> harder)
@@ -1245,7 +1245,7 @@ async def submit_arcade_score(db, *, play_id: str, anon_id: str, score: int) -> 
       • play row exists + matches anon_id
       • score within sane bounds for the game
       • elapsed seconds ≥ score × min_seconds_per_point (anti-cheat)
-    Failures return error but DO NOT crash — we just refuse to record
+    Failures return error but DO NOT crash - we just refuse to record
     leaderboard-eligible plays."""
     play = await db.mini_game_plays.find_one(
         {"id": play_id, "anon_id": anon_id},
@@ -1267,7 +1267,7 @@ async def submit_arcade_score(db, *, play_id: str, anon_id: str, score: int) -> 
 
     max_score = ARCADE_MAX_REASONABLE_SCORE[game_slug]
     if score > max_score:
-        # Silently clamp — gameplay glitches do happen; we DON'T accuse
+        # Silently clamp - gameplay glitches do happen; we DON'T accuse
         # the player, we just cap the score.
         score = max_score
 
@@ -1277,7 +1277,7 @@ async def submit_arcade_score(db, *, play_id: str, anon_id: str, score: int) -> 
     cheat_suspected = bool(score > 5 and elapsed < min_time * 0.5)
 
     # `valid_for_leaderboard` is the honest gate. We still RECORD every
-    # play in the audit collection — but only valid plays carry forward
+    # play in the audit collection - but only valid plays carry forward
     # into the leaderboard via the email unlock.
     valid_for_leaderboard = not cheat_suspected
     max_score_for_pct = max(max_score, 100)  # avoid div-by-zero edge
@@ -1365,7 +1365,7 @@ async def unlock_arcade_result(db, *, play_id, anon_id, email, name=None, consen
 
 async def get_weekly_champions(db, *, week_iso: Optional[str] = None) -> Dict[str, Any]:
     """Return ONE top scorer per active game for the given ISO week.
-    Used by the homepage social-proof banner. Returns rank-1 only — we
+    Used by the homepage social-proof banner. Returns rank-1 only - we
     intentionally avoid surfacing full leaderboards on the homepage to
     keep the banner restrained and editorial."""
     week = week_iso or _week_iso()

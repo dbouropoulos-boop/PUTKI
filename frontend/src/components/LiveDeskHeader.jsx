@@ -1,5 +1,5 @@
 /**
- * LiveDeskHeader — wire-service style header for /uutiset.
+ * LiveDeskHeader - wire-service style header for /uutiset.
  *
  * Surfaces the editorial heartbeat (24h total, severity breakdown, sources,
  * last-updated). Sits at the top of the news index above the cards.

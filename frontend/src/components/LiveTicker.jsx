@@ -4,10 +4,10 @@ import { dialLabel } from '../constants/dial';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// V2 honesty pass — LiveTicker reads /api/cockpit only.
+// V2 honesty pass - LiveTicker reads /api/cockpit only.
 // No fabricated viewer counts, no hardcoded streamer names, no fake spike copy.
 // When the polling pipeline has no real data, the strip displays a single
-// neutral status: "MITTARI · EI SIGNAALIA — TOIMITUS PÄIVITTÄÄ".
+// neutral status: "MITTARI · EI SIGNAALIA - TOIMITUS PÄIVITTÄÄ".
 
 export const LiveTicker = () => {
   const { lang } = useLang();

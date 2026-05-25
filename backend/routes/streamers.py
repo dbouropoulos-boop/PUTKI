@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Streamer routes (iter66 modularisation phase 3a).
+PUTKI HQ - Streamer routes (iter66 modularisation phase 3a).
 
 Extracts every public + admin endpoint under `/api/streamers/*` and
 `/api/admin/streamers/*` from server.py. ~290 LOC moved.
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 def build_streamers_router() -> APIRouter:
-    """Composed APIRouter — mounted under /api by the caller."""
+    """Composed APIRouter - mounted under /api by the caller."""
     router = APIRouter()
 
     # ─── Public ──────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ def build_streamers_router() -> APIRouter:
         market_id: Optional[str] = None,
         db = Depends(get_db),
     ):
-        """Public — list streamers. `market` filter: 'fi' or 'intl' (convenience)."""
+        """Public - list streamers. `market` filter: 'fi' or 'intl' (convenience)."""
         return {
             "streamers": await list_streamers(db, scene=scene, market=market, market_id=market_id),
             "intl_scenes": INTL_SCENES_META,
@@ -65,7 +65,7 @@ def build_streamers_router() -> APIRouter:
     @router.get("/streamers/live")
     async def public_streamers_live(platform: Optional[str] = None,
                                      db = Depends(get_db)):
-        """Pre-launch polish — REAL live streamers across Twitch + Kick + YouTube.
+        """Pre-launch polish - REAL live streamers across Twitch + Kick + YouTube.
 
         `platform` query param: omit for Twitch (default Helix `language=fi`),
         or pass `kick` / `youtube` to hit the multi-platform aggregator.
@@ -150,7 +150,7 @@ def build_streamers_router() -> APIRouter:
         using longest-match-wins, and returns the per-slot count table for the
         homepage "NOW PLAYING" ticker.
 
-        iter52: also reports `slot_category_streams_count` — the number of
+        iter52: also reports `slot_category_streams_count` - the number of
         live streams whose `game_name` is in the slot/casino category set."""
         from slot_registry import extract_now_playing
         SLOT_CATEGORY_LABELS = {
@@ -272,7 +272,7 @@ def build_streamers_router() -> APIRouter:
         _: bool = Depends(require_admin), db = Depends(get_db),
     ):
         """iter62: Force-refresh a single streamer's avatar with the FULL
-        multi-stage cascade — platform API → channel OG image → DDG image
+        multi-stage cascade - platform API → channel OG image → DDG image
         search → Wikipedia. No initials placeholder ever."""
         s = await db.streamers.find_one(
             {"slug": slug},
@@ -490,7 +490,7 @@ def build_streamers_router() -> APIRouter:
                             if resolved and resolved.startswith("UC"):
                                 break
                     elif r.status_code == 403:
-                        # Surface the explicit reason — quotaExceeded is
+                        # Surface the explicit reason - quotaExceeded is
                         # the common one for FI accounts that aren't on
                         # a billed YouTube Data API project.
                         try:
@@ -533,7 +533,7 @@ def build_streamers_router() -> APIRouter:
                     persisted += 1
 
         # Surface the dominant error reason so the back-office can show
-        # "API quota exceeded — try again tomorrow" instead of a silent zero.
+        # "API quota exceeded - try again tomorrow" instead of a silent zero.
         error_breakdown: Dict[str, int] = {}
         for r in results:
             if not r["channel_id"] and r.get("error"):

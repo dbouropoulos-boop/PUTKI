@@ -1,18 +1,18 @@
 /**
- * PUTKI HQ — StreamerAvatar (iter54, iter62 no-initials policy)
+ * PUTKI HQ - StreamerAvatar (iter54, iter62 no-initials policy)
  *
  * Renders the streamer's REAL profile picture (pulled from Twitch / Kick /
  * YouTube → channel OG → DDG image search → Wikipedia and persisted on
  * the streamer doc as `avatar_url`). When ALL stages fail we render a
- * platform-tinted gradient block with a platform glyph — explicitly NOT
+ * platform-tinted gradient block with a platform glyph - explicitly NOT
  * letter initials (operator preference, iter62).
  *
  * Props:
- *   streamer  — streamer doc with `name`, `slug`, `avatar_url?`, `platform?`
- *   size      — pixel size of the avatar (square)
- *   shape     — 'circle' (default) | 'square'
- *   className — extra classes
- *   style     — extra inline styles
+ *   streamer  - streamer doc with `name`, `slug`, `avatar_url?`, `platform?`
+ *   size      - pixel size of the avatar (square)
+ *   shape     - 'circle' (default) | 'square'
+ *   className - extra classes
+ *   style     - extra inline styles
  */
 import React, { useState } from 'react';
 
@@ -78,7 +78,7 @@ export const StreamerAvatar = ({
     );
   }
 
-  // iter62.1: TRUE no-initials fallback — when all 4 stages fail we render
+  // iter62.1: TRUE no-initials fallback - when all 4 stages fail we render
   // a soft platform-tinted block with a faint diagonal weave pattern. NO
   // letters of any kind. Editors should click ⟳ in the back-office to
   // run the fallback cascade again.
@@ -111,7 +111,7 @@ export const StreamerAvatar = ({
         </defs>
         <rect width={size} height={size} fill={`url(#avwv-${size})`} />
       </svg>
-      {/* Tiny platform tint line at the bottom — the ONLY identifier */}
+      {/* Tiny platform tint line at the bottom - the ONLY identifier */}
       <span aria-hidden style={{
         position: 'absolute', left: 0, right: 0, bottom: 0,
         height: 2, background: tint, opacity: 0.55,

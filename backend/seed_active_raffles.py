@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Seed two OPEN (active) raffles so the gamified `/voita` listing
+PUTKI HQ - Seed two OPEN (active) raffles so the gamified `/voita` listing
 has live cards to demo end-to-end. Both pass the 3 gating flags so they
 surface publicly.
 
@@ -26,8 +26,8 @@ def _iso(offset_hours: int = 0) -> str:
 RAFFLES = [
     {
         "slug": "kups-hjk-veikkausliiga-final-2026",
-        "title_fi": "KuPS vs HJK — Veikkausliigan kärkikamppailu",
-        "title_en": "KuPS vs HJK — Veikkausliiga title clash",
+        "title_fi": "KuPS vs HJK - Veikkausliigan kärkikamppailu",
+        "title_en": "KuPS vs HJK - Veikkausliiga title clash",
         "summary_fi": "Kauden ratkaiseva mestaruusottelu. Ennusta voittaja ja lopputulos.",
         "summary_en": "The season's title decider. Predict the winner and the score.",
         "sport": "football",
@@ -59,8 +59,8 @@ RAFFLES = [
     },
     {
         "slug": "tappara-karpat-liiga-final-2026",
-        "title_fi": "Tappara vs Kärpät — Liiga-finaalin avausottelu",
-        "title_en": "Tappara vs Kärpät — Liiga Final game 1",
+        "title_fi": "Tappara vs Kärpät - Liiga-finaalin avausottelu",
+        "title_en": "Tappara vs Kärpät - Liiga Final game 1",
         "summary_fi": "Liiga-finaalin avausottelu Nokia-areenalla. Mestaruus alkaa tästä.",
         "summary_en": "Game 1 of the Liiga Final at Nokia Arena. The title starts here.",
         "sport": "icehockey",
@@ -98,7 +98,7 @@ async def seed(db):
     for r in RAFFLES:
         existing = await db.voita_raffles.find_one({"slug": r["slug"]})
         if existing:
-            print(f"[{r['slug']}] already exists — skipping")
+            print(f"[{r['slug']}] already exists - skipping")
             summary.append({"slug": r["slug"], "skipped": True})
             continue
 

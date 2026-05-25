@@ -5,7 +5,7 @@ import { useLang } from '../context/LanguageContext';
 // Helper: state hot check (re-used in breathing amplitude)
 const isHotState = (s) => ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(s);
 
-// Dial V2 — cockpit-grade instrument
+// Dial V2 - cockpit-grade instrument
 // - Mechanical bezel (concentric rings)
 // - Hierarchical ticks (major + minor)
 // - Tapered needle with counterweight
@@ -43,7 +43,7 @@ const arcPath = (cx, cy, r, startDeg, endDeg) => {
   return `M ${s.x} ${s.y} A ${r} ${r} 0 ${large} 1 ${e.x} ${e.y}`;
 };
 
-// Spring physics — needle settles with damped oscillation.
+// Spring physics - needle settles with damped oscillation.
 // First mount uses a more aggressive spring so the dial snaps to its target
 // fast on page load; subsequent state changes use a softer settle for the
 // premium "instrument easing" feel.
@@ -122,7 +122,7 @@ export const Dial = ({
   const targetAngle = valueToAngle(stateObj.value);
   const settledAngle = useSpringAngle(targetAngle, [state]);
 
-  // Continuous "breathing" drift — needle wavers ±2-3° around the settled angle
+  // Continuous "breathing" drift - needle wavers ±2-3° around the settled angle
   // so the instrument never feels frozen. Disabled for tiny dials.
   const [breath, setBreath] = useState(0);
   useEffect(() => {
@@ -143,7 +143,7 @@ export const Dial = ({
 
   const angle = settledAngle + breath;
 
-  // SSE pulse — render a 600ms fade-out ring whenever pulseTick changes.
+  // SSE pulse - render a 600ms fade-out ring whenever pulseTick changes.
   // Subtle "we just received fresh data" cue without distracting from the
   // primary reading.
   const [pulseId, setPulseId] = useState(0);
@@ -212,7 +212,7 @@ export const Dial = ({
           )}
         </defs>
 
-        {/* Bezel — outer ring */}
+        {/* Bezel - outer ring */}
         {!isSmall && (
           <>
             <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="var(--border-strong)" strokeWidth="1.5" />
@@ -225,7 +225,7 @@ export const Dial = ({
         {/* Dial face gradient */}
         {!isSmall && <circle cx={cx} cy={cy} r={outerR - 10} fill={`url(#face-${size})`} />}
 
-        {/* All 5 arc segments — active glows in its state color, inactive
+        {/* All 5 arc segments - active glows in its state color, inactive
             ones share a single muted blue tint (premium dial feel; the brown
             undertone the previous orange/red dim caused is gone). */}
         {STATE_ORDER.map((key, i) => {
@@ -255,7 +255,7 @@ export const Dial = ({
           );
         })}
 
-        {/* SSE pulse ring — keyed by pulseId so each tick mounts a fresh
+        {/* SSE pulse ring - keyed by pulseId so each tick mounts a fresh
             element and animates from 0 → 1 then fades out. */}
         {!isSmall && pulseId > 0 ? (
           <circle
@@ -332,7 +332,7 @@ export const Dial = ({
           );
         })}
 
-        {/* Needle — tapered, with counterweight */}
+        {/* Needle - tapered, with counterweight */}
         <g filter={`url(#needle-shadow-${size})`}>
           {/* Counterweight (small fin past pivot) */}
           {!isSmall && (
@@ -347,7 +347,7 @@ export const Dial = ({
               opacity={0.85}
             />
           )}
-          {/* Main needle — tapered using two strokes */}
+          {/* Main needle - tapered using two strokes */}
           <line
             x1={cx}
             y1={cy}
@@ -357,7 +357,7 @@ export const Dial = ({
             strokeWidth={isSmall ? 1.6 : isMedium ? 3 : 4.5}
             strokeLinecap="round"
           />
-          {/* Needle tip accent — pick up state color when hot */}
+          {/* Needle tip accent - pick up state color when hot */}
           <line
             x1={cx + (needleTip.x - cx) * 0.7}
             y1={cy + (needleTip.y - cy) * 0.7}
@@ -378,7 +378,7 @@ export const Dial = ({
         <div className="flex flex-col items-center mt-1">
           {/* Maker's-mark eyebrow moved to DialCockpit (perkele wink at the
               top of the cockpit). The dial itself just shows the state name
-              now — cleaner trading-instrument readout. */}
+              now - cleaner trading-instrument readout. */}
           <div
             className="display state-pulse"
             style={{

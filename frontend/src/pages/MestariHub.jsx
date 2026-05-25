@@ -2,12 +2,12 @@
  * Mestari · Diagnostic chooser hub.
  *
  * Section 2.2 of the multi-diagnostic build brief. Same design language
- * as the individual diagnostic pages — Georgia headlines, blue accent,
+ * as the individual diagnostic pages - Georgia headlines, blue accent,
  * editorial monospace meta. Three cards (sports betting, poker,
  * blackjack) in a grid that gracefully takes a fourth card later
  * without redesign.
  *
- * Compact trust line sits below the H1 — full trust block lives on each
+ * Compact trust line sits below the H1 - full trust block lives on each
  * individual diagnostic page (Section 3, item 4).
  */
 import React, { useEffect, useState } from 'react';
@@ -20,7 +20,7 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
 
-// Locked default — used as fallback while the back-office landing copy
+// Locked default - used as fallback while the back-office landing copy
 // fetch is in flight (zero content shift on first paint).
 const FALLBACK = {
   eyebrow_fi: 'MESTARI · TOIMITUKSELLISIA DIAGNOSTIIKKOJA · TUTKIMUSTYÖKALUJA',
@@ -114,11 +114,11 @@ const MestariHub = () => {
 
   useDocumentMeta({
     title: lang === 'en'
-      ? 'Mestari · Editorial diagnostics — PUTKI HQ'
-      : 'Mestari · Toimituksellinen diagnostiikka — PUTKI HQ',
+      ? 'Mestari · Editorial diagnostics - PUTKI HQ'
+      : 'Mestari · Toimituksellinen diagnostiikka - PUTKI HQ',
     description: lang === 'en'
-      ? 'Three 90-second diagnostics — sports betting, poker, blackjack. Personal profile + 5-day playbook to your inbox. Research and educational tools.'
-      : 'Kolme 90 sekunnin diagnostiikkaa — urheiluvedonlyönti, pokeri, blackjack. Henkilökohtainen profiili + 5 päivän pelikirja sähköpostiisi. Tutkimus- ja opetustyökaluja.',
+      ? 'Three 90-second diagnostics - sports betting, poker, blackjack. Personal profile + 5-day playbook to your inbox. Research and educational tools.'
+      : 'Kolme 90 sekunnin diagnostiikkaa - urheiluvedonlyönti, pokeri, blackjack. Henkilökohtainen profiili + 5 päivän pelikirja sähköpostiisi. Tutkimus- ja opetustyökaluja.',
     canonical: `${BACKEND}/mestari`,
   });
 

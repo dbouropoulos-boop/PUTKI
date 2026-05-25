@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Profiler Funnel Analytics (iter64).
+PUTKI HQ - Profiler Funnel Analytics (iter64).
 
 Lightweight funnel telemetry for the /peliareena behavioral profiler.
 Captures one event per beat so we can answer:
@@ -13,7 +13,7 @@ Captures one event per beat so we can answer:
     tg_click      →  /api/profiler/event  type=tg_click
 
 All event docs share a single `profiler_events` MongoDB collection with
-a 30-day TTL. No PII — just session_id, event type, optional small meta
+a 30-day TTL. No PII - just session_id, event type, optional small meta
 dict (e.g. picked_option, profile_key).
 """
 from __future__ import annotations
@@ -74,7 +74,7 @@ async def funnel_summary(
     ]
     rows = await db.profiler_events.aggregate(pipeline).to_list(length=50)
     counts = {r["_id"]: int(r["n"]) for r in rows}
-    # Funnel steps in order — every step downstream is a subset of the
+    # Funnel steps in order - every step downstream is a subset of the
     # one above it; rates are computed against `session_start`.
     starts = counts.get("session_start", 0) or 0
     completes = counts.get("session_complete", 0) or 0

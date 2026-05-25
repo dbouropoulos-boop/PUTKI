@@ -1,27 +1,27 @@
 """
-PUTKI HQ — Unified lead lifecycle view.
+PUTKI HQ - Unified lead lifecycle view.
 
 Joins the disparate lead collections into a single timeline so the
 back-office can answer "who came in, where from, and what happened
-next" without 6 separate queries. Read-only — no mutation.
+next" without 6 separate queries. Read-only - no mutation.
 
 Source collections joined:
-  signups                    — streamer alerts band (homepage)
-  optin_consents             — unified consent ledger (220+ rows live)
-  voita_entries              — sports raffle entries
-  mestari_diagnostic_leads   — poker + blackjack diagnostics
-  email_outbox               — emails queued / sent / opened / clicked
-  telegram_bindings          — bound Telegram users
+  signups                    - streamer alerts band (homepage)
+  optin_consents             - unified consent ledger (220+ rows live)
+  voita_entries              - sports raffle entries
+  mestari_diagnostic_leads   - poker + blackjack diagnostics
+  email_outbox               - emails queued / sent / opened / clicked
+  telegram_bindings          - bound Telegram users
 
 Output shape (per identity row):
-  identity_key   — email (lowered) or 'tg:<user_id>' for un-emailed TG users
-  channels       — set of channels present (email | telegram)
-  surfaces       — set of surfaces captured on (voita | mestari_sports |
+  identity_key   - email (lowered) or 'tg:<user_id>' for un-emailed TG users
+  channels       - set of channels present (email | telegram)
+  surfaces       - set of surfaces captured on (voita | mestari_sports |
                    mestari_poker | mestari_blackjack | streamer_alerts |
                    mittari | voyager | ...)
   first_seen / last_seen
-  email_metrics  — {queued, sent, opened, clicked, last_sent_at}
-  details        — most recent surface payload per channel
+  email_metrics  - {queued, sent, opened, clicked, last_sent_at}
+  details        - most recent surface payload per channel
 """
 from __future__ import annotations
 
@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Max lookback per collection — defends against unbounded scans on the
+# Max lookback per collection - defends against unbounded scans on the
 # live preview while still surfacing every recent lead. The back-office
 # table truncates at 200 rows; this just bounds the join.
 MAX_PER_COLLECTION = 600
@@ -176,7 +176,7 @@ async def build_timeline(db, *, limit: int = 200) -> Dict[str, Any]:
             continue
         if em not in by_id:
             # Email present in outbox but never made it into a lead
-            # collection — surface anyway so it doesn't go invisible.
+            # collection - surface anyway so it doesn't go invisible.
             r = _get(em)
             r["channels"].add("email")
             r["surfaces"].add("outbox_only")
@@ -253,12 +253,12 @@ async def build_funnel(db, *, hours: int = 24) -> Dict[str, Any]:
     back-office can render it without a second query.
 
     Stages:
-      signups   — distinct emails added to optin_consents
-      queued    — email_outbox rows created
-      sent      — email_outbox rows flipped to status=sent
-      opened    — outbox rows with first_opened_at in window
-      clicked   — outbox rows with first_clicked_at in window
-      returned  — distinct emails that received an email AND came back
+      signups   - distinct emails added to optin_consents
+      queued    - email_outbox rows created
+      sent      - email_outbox rows flipped to status=sent
+      opened    - outbox rows with first_opened_at in window
+      clicked   - outbox rows with first_clicked_at in window
+      returned  - distinct emails that received an email AND came back
                   to voita / mestari AFTER receiving it
     """
     from datetime import datetime, timedelta, timezone

@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Live Twitch streamer discovery for the homepage "Mitä tapahtuu nyt"
+PUTKI HQ - Live Twitch streamer discovery for the homepage "Mitä tapahtuu nyt"
 strip. 100% REAL data from Twitch Helix.
 
 Strategy:
@@ -9,7 +9,7 @@ Strategy:
     rate limits (800 req/min app token) regardless of homepage traffic.
 
 If Twitch credentials are missing the endpoint returns a dormant payload
-(`{streamers: [], dormant: true, reason: ...}`) — never fabricated data.
+(`{streamers: [], dormant: true, reason: ...}`) - never fabricated data.
 """
 from __future__ import annotations
 
@@ -117,7 +117,7 @@ async def _build_payload() -> Dict[str, Any]:
             "fetched_at": time.time(),
         }
 
-    # Fetch follower counts in parallel — bounded by MAX_RESULTS.
+    # Fetch follower counts in parallel - bounded by MAX_RESULTS.
     ids = [s.get("user_id") for s in streams if s.get("user_id")]
     follower_tasks = {uid: asyncio.create_task(_fetch_followers(uid, token)) for uid in ids}
     follower_results: Dict[str, Optional[int]] = {}

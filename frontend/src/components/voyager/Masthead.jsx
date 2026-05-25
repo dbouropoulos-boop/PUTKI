@@ -1,5 +1,5 @@
 /**
- * Voyager — fixed top strip / masthead.
+ * Voyager - fixed top strip / masthead.
  *
  * Mirrors the pattern used on /mestari. Sticky so /voyager always
  * feels like a Putki HQ surface even after the visitor scrolls.

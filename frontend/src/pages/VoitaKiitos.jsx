@@ -1,12 +1,12 @@
 /**
- * PUTKI HQ — VoitaKiitos (confirmation page).
+ * PUTKI HQ - VoitaKiitos (confirmation page).
  *
  * Renders ONLY when an entry was just submitted (sessionStorage holds
  * the entry token). Direct hits without a session token redirect to
  * /voita.
  *
  * The marketing opt-in is rendered via the separate
- * RafflePostEntryPreferences component — explicitly NOT bundled with
+ * RafflePostEntryPreferences component - explicitly NOT bundled with
  * the entry-form submission.
  */
 import React, { useEffect, useState } from 'react';
@@ -28,7 +28,7 @@ const VoitaKiitos = () => {
     try {
       const raw = sessionStorage.getItem(`voita:${slug}:entry`);
       if (!raw) {
-        // No entry token — bounce back to /voita
+        // No entry token - bounce back to /voita
         navigate('/voita', { replace: true });
         return;
       }
@@ -75,7 +75,7 @@ const VoitaKiitos = () => {
             : 'Tulokset ilmoitetaan kaikille osallistujille sähköpostilla ottelun jälkeen. Veikkauksesi: '}
           <strong style={{ color: '#FFFFFF' }}>{entry.prediction}</strong>
           {' · '}
-          <strong style={{ color: '#FFFFFF' }}>{entry.home}–{entry.away}</strong>
+          <strong style={{ color: '#FFFFFF' }}>{entry.home}-{entry.away}</strong>
         </p>
       </section>
 
@@ -91,7 +91,7 @@ const VoitaKiitos = () => {
         </div>
       )}
 
-      {/* Optional marketing preferences — separate from entry */}
+      {/* Optional marketing preferences - separate from entry */}
       <RafflePostEntryPreferences
         defaultEmail={entry.email || ''}
         onSaved={() => { /* keep user on the page, they see "saved" pill */ }}

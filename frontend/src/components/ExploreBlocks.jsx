@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — ExploreBlocks (Phase 1 Final · Chunk B · post-review rebuild).
+ * PUTKI HQ - ExploreBlocks (Phase 1 Final · Chunk B · post-review rebuild).
  *
  * Four equal-weight preview blocks in a 2×2 grid:
  *   MITTARI       · instrument-dial designed background + real dial visual
@@ -35,12 +35,12 @@ const STATE_NAME_EN = {
   MYRSKY: 'ROLLING', KIIRASTULI: 'PERKELE',
 };
 
-// shared block shell — vertical content stack, equal weight.
+// shared block shell - vertical content stack, equal weight.
 // iter54: theme-aware. Both modes render the same visual structure
 // (designed background → veil → content), but light mode swaps the
 // dark rgba veil for a cream-white veil + flips the headline/body
 // colours to dark on light. Accent colours stay the same in both
-// themes — they're brand identifiers, not chrome.
+// themes - they're brand identifiers, not chrome.
 const Block = ({ to, dataTestId, accent, children }) => (
   <Link
     to={to}
@@ -167,7 +167,7 @@ const Anchor = ({ color, label, pulse = true }) => (
   </div>
 );
 
-// Top-right live-stat callout — appears only when there's a real value.
+// Top-right live-stat callout - appears only when there's a real value.
 // Number is large serif (matches the brand typography); label is tiny
 // monospace eyebrow underneath.
 const BlockStat = ({ value, label }) => {
@@ -210,7 +210,7 @@ const Cta = ({ label, color, disabled }) => (
   </div>
 );
 
-// ── MITTARI — full mini-dial in left column, state name + reading right ──
+// ── MITTARI - full mini-dial in left column, state name + reading right ──
 const MittariBlock = ({ lang }) => {
   const { theme } = useTheme();
   const [dial, setDial] = useState(null);
@@ -243,7 +243,7 @@ const MittariBlock = ({ lang }) => {
 
   return (
     <Block to="/mittari" dataTestId="explore-block-mittari" accent={color}>
-      {/* designed background — instrument dial */}
+      {/* designed background - instrument dial */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
         background: theme === 'light'
@@ -270,7 +270,7 @@ const MittariBlock = ({ lang }) => {
         gap: 18, alignItems: 'center',
         position: 'relative', zIndex: 2,
       }}>
-        {/* Full mini-dial — proper size, not a sliver */}
+        {/* Full mini-dial - proper size, not a sliver */}
         <svg width="88" height="88" viewBox="0 0 100 100" style={{ display: 'block', overflow: 'visible' }}>
           <circle cx="50" cy="50" r="40" fill="none"
             stroke={theme === 'light' ? '#E2D8C8' : '#2A2522'} strokeWidth="6" />
@@ -323,7 +323,7 @@ const MittariBlock = ({ lang }) => {
   );
 };
 
-// ── MESTARI — diagnostic quiz with editorial framing ──
+// ── MESTARI - diagnostic quiz with editorial framing ──
 const MestariBlock = ({ lang }) => {
   const { theme } = useTheme();
   const blue = '#5B8DEE';
@@ -368,8 +368,8 @@ const MestariBlock = ({ lang }) => {
           color: bodyFor(theme), fontSize: 12.5, lineHeight: 1.5,
           opacity: 0.92, maxWidth: 360, margin: 0,
         }}>{lang === 'en'
-          ? 'Three 90-second diagnostics — sports betting, poker, blackjack. Personal profile + 5-day playbook to your inbox. Free.'
-          : 'Kolme 90 sekunnin diagnostiikkaa — urheiluvedonlyönti, pokeri, blackjack. Henkilökohtainen profiili + 5 päivän pelikirja sähköpostiisi. Maksuton.'}</p>
+          ? 'Three 90-second diagnostics - sports betting, poker, blackjack. Personal profile + 5-day playbook to your inbox. Free.'
+          : 'Kolme 90 sekunnin diagnostiikkaa - urheiluvedonlyönti, pokeri, blackjack. Henkilökohtainen profiili + 5 päivän pelikirja sähköpostiisi. Maksuton.'}</p>
       </div>
 
       <Cta label={lang === 'en' ? 'START →' : 'ALOITA →'} color={blue} />
@@ -378,7 +378,7 @@ const MestariBlock = ({ lang }) => {
 };
 
 
-// ── PELISIGNAALIT (legacy — kept for backward compat, no longer on homepage) ──
+// ── PELISIGNAALIT (legacy - kept for backward compat, no longer on homepage) ──
 const PelisignaalitBlock = ({ lang }) => {
   const [topPick, setTopPick] = useState(null);
   const [trackRecord, setTrackRecord] = useState(null);
@@ -404,12 +404,12 @@ const PelisignaalitBlock = ({ lang }) => {
   }, []);
 
   const sharpness = topPick?.sharpness?.sharpness;
-  const eventName = topPick ? (topPick.event_name || topPick.label || `${topPick.home_team || ''} – ${topPick.away_team || ''}`.trim()) : '';
+  const eventName = topPick ? (topPick.event_name || topPick.label || `${topPick.home_team || ''} - ${topPick.away_team || ''}`.trim()) : '';
   const yellow = '#D4B445';
 
   return (
     <Block to="/pelisignaalit" dataTestId="explore-block-pelisignaalit">
-      {/* designed background — sparkline ladder */}
+      {/* designed background - sparkline ladder */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
         background: `
@@ -445,7 +445,7 @@ const PelisignaalitBlock = ({ lang }) => {
             marginBottom: 10,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-          }}>{eventName || '—'}</div>
+          }}>{eventName || '-'}</div>
           <div style={{
             display: 'flex', flexWrap: 'wrap', gap: '6px 12px',
             color: 'var(--muted, #9C9587)',
@@ -506,7 +506,7 @@ const PelisignaalitBlock = ({ lang }) => {
   );
 };
 
-// ── VOITA — large editorial typographic treatment, gated state ──
+// ── VOITA - large editorial typographic treatment, gated state ──
 const VoitaBlock = ({ lang }) => {
   const { theme } = useTheme();
   const [enabled, setEnabled] = useState(false);
@@ -531,7 +531,7 @@ const VoitaBlock = ({ lang }) => {
 
   return (
     <Block to="/voita" dataTestId="explore-block-voita" accent={red}>
-      {/* designed background — editorial gradient with crimson glow */}
+      {/* designed background - editorial gradient with crimson glow */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
         background: theme === 'light'
@@ -598,7 +598,7 @@ const VoitaBlock = ({ lang }) => {
   );
 };
 
-// ── PELI — restrained slot-reel macro ──
+// ── PELI - restrained slot-reel macro ──
 const PeliBlock = ({ lang }) => {
   const { theme } = useTheme();
   const [week, setWeek] = useState(null);
@@ -618,7 +618,7 @@ const PeliBlock = ({ lang }) => {
 
   return (
     <Block to="/peli" dataTestId="explore-block-peli" accent={green}>
-      {/* designed background — restrained slot reel macro */}
+      {/* designed background - restrained slot reel macro */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
         background: theme === 'light'
@@ -668,7 +668,7 @@ const PeliBlock = ({ lang }) => {
   );
 };
 
-// ── PeliAreena block (iter58) — mini-game suite product tile ──
+// ── PeliAreena block (iter58) - mini-game suite product tile ──
 const PeliAreenaBlock = ({ lang }) => {
   const { theme } = useTheme();
   const [hub, setHub] = useState(null);
@@ -685,7 +685,7 @@ const PeliAreenaBlock = ({ lang }) => {
 
   return (
     <Block to="/peliareena" dataTestId="explore-block-peliareena" accent={amber}>
-      {/* designed background — geometric tile pattern hint */}
+      {/* designed background - geometric tile pattern hint */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 0,
         background: theme === 'light'
@@ -701,7 +701,7 @@ const PeliAreenaBlock = ({ lang }) => {
       }} />
 
       <BlockStat
-        value={activeCount > 0 ? `${activeCount}/5` : '—'}
+        value={activeCount > 0 ? `${activeCount}/5` : '-'}
         label={lang === 'en' ? 'Games live' : 'Peliä auki'}
       />
 
@@ -775,7 +775,7 @@ const ExploreBlocks = () => {
         <MestariBlock lang={lang} />
         <VoitaBlock lang={lang} />
         <PeliBlock lang={lang} />
-        {/* iter66 (2026-05-25) — PeliAreena tile HIDDEN per user request.
+        {/* iter66 (2026-05-25) - PeliAreena tile HIDDEN per user request.
             The old "5 mini-games · weekly tournament" copy is a remnant of
             the pre-iter64 arcade era. The profiler still lives at
             /peliareena but is no longer surfaced via this Explore tile.

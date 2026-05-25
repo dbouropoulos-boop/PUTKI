@@ -1,5 +1,5 @@
 """
-Iteration 19 — /peli raffle, content backfill, twitch discovery, dial bug fix.
+Iteration 19 - /peli raffle, content backfill, twitch discovery, dial bug fix.
 """
 import os
 import uuid

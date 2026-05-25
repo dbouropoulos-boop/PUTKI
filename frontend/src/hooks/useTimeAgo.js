@@ -1,5 +1,5 @@
 /**
- * useTimeAgo — formats a timestamp as "12m ago" and auto-refreshes every 60s
+ * useTimeAgo - formats a timestamp as "12m ago" and auto-refreshes every 60s
  * so all timestamps decay live without page reload.
  */
 import { useEffect, useState } from 'react';

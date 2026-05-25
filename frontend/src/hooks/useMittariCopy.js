@@ -1,5 +1,5 @@
 /**
- * useMittariCopy — fetch the editable copy tree from the backend.
+ * useMittariCopy - fetch the editable copy tree from the backend.
  *
  * Falls back gracefully: while loading or on network error, returns null
  * so the component can decide whether to render a skeleton. Once the
@@ -17,7 +17,7 @@ export default function useMittariCopy() {
     fetch(`${BACKEND}/api/mittari/copy`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (!stop && d) setCopy(d); })
-      .catch(() => { /* keep null — Mittari.jsx renders a skeleton */ });
+      .catch(() => { /* keep null - Mittari.jsx renders a skeleton */ });
     return () => { stop = true; };
   }, []);
   return copy;

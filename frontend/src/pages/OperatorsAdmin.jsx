@@ -4,7 +4,7 @@ import { Lock, RefreshCw, Plus, Save, Trash2, Calendar } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// V2 Step 1 — Operators registry admin surface.
+// V2 Step 1 - Operators registry admin surface.
 // Replaces mock.js OPERATORS. CRUD through /api/admin/operators.
 
 const useToken = () => {
@@ -120,7 +120,7 @@ const RotationCalendar = ({ token, partnerOperators }) => {
                   </td>
                   <td className="py-2 px-2">
                     <select value={draft.partner_operator_slug || ''} onChange={(e) => setDraft(row.iso_week, { partner_operator_slug: e.target.value })} data-testid={`rotation-partner-${row.iso_week}`} className="mono" style={{ padding: '6px 8px', border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', fontSize: 11, borderRadius: 3, minWidth: 140 }}>
-                      <option value="">— select partner —</option>
+                      <option value="">- select partner -</option>
                       {partnerOperators.map((op) => (
                         <option key={op.slug} value={op.slug}>{op.name}</option>
                       ))}
@@ -175,8 +175,8 @@ const RotationCalendar = ({ token, partnerOperators }) => {
                 {pastRows.map((row) => (
                   <tr key={row.iso_week} style={{ borderBottom: '1px solid var(--border)' }} data-testid={`rotation-past-row-${row.iso_week}`}>
                     <td className="py-2 px-2 mono" style={{ fontSize: 11, letterSpacing: '0.06em', color: 'var(--muted)' }}>{row.iso_week}</td>
-                    <td className="py-2 px-2 mono" style={{ fontSize: 11, color: 'var(--ink)' }}>{row.partner_operator_slug || '—'}</td>
-                    <td className="py-2 px-2 font-serif" style={{ fontSize: 13, color: 'var(--ink)' }}>{row.theme || '—'}</td>
+                    <td className="py-2 px-2 mono" style={{ fontSize: 11, color: 'var(--ink)' }}>{row.partner_operator_slug || '-'}</td>
+                    <td className="py-2 px-2 font-serif" style={{ fontSize: 13, color: 'var(--ink)' }}>{row.theme || '-'}</td>
                     <td className="py-2 px-2 mono" style={{ fontSize: 10.5, letterSpacing: '0.14em', color: statusColor(row.status), fontWeight: 700 }}>{(row.status || '').toUpperCase()}</td>
                     <td className="py-2 px-2 mono" style={{ fontSize: 10.5, letterSpacing: '0.06em', color: 'var(--brand-blue)' }}>
                       /voita-palkinto/arkisto/{row.iso_week}
@@ -307,7 +307,7 @@ const OperatorsAdmin = () => {
                 ['slug', 'SLUG (lowercase, unique)'],
                 ['name', 'NAME'],
                 ['logo', 'LOGO LETTER'],
-                ['score', 'SCORE 0–100', 'number'],
+                ['score', 'SCORE 0-100', 'number'],
                 ['oneLiner', 'ONE-LINER'],
                 ['offer', 'OFFER'],
                 ['payout', 'PAYOUT'],

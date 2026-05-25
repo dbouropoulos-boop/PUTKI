@@ -1,9 +1,9 @@
 /**
- * StreamerLiveGrid — Multi-platform live Twitch/Kick/YouTube carousel +
+ * StreamerLiveGrid - Multi-platform live Twitch/Kick/YouTube carousel +
  * "ASETA HÄLYTYS" conversion funnel.
  *
  * Tabs swap between platforms. Each card opens StreamerAlertModal on
- * Follow Alert click — that's the actual signup path (email + phone +
+ * Follow Alert click - that's the actual signup path (email + phone +
  * Telegram). No more "open Twitch in new tab" link.
  */
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
@@ -21,7 +21,7 @@ const PLATFORMS = [
 ];
 
 const fmtNumber = (n) => {
-  if (n == null) return '—';
+  if (n == null) return '-';
   if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k`;
   return String(n);
 };
@@ -166,7 +166,7 @@ const StreamerLiveGrid = () => {
       setData((prev) => ({ ...prev, [p]: d }));
       setLastRefresh(Date.now());
     } catch {
-      // silent — show empty state
+      // silent - show empty state
     }
   }, []);
 
@@ -215,7 +215,7 @@ const StreamerLiveGrid = () => {
             {t('streamer_live.title')}
           </h2>
         </div>
-        {/* Carousel nav — desktop only; mobile uses native scroll-snap */}
+        {/* Carousel nav - desktop only; mobile uses native scroll-snap */}
         {streamers.length > PAGE_SIZE && (
           <div className="hidden sm:inline-flex items-center gap-2" data-testid="streamer-carousel-nav">
             <span className="mono" style={{ fontSize: 10.5, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
@@ -307,7 +307,7 @@ const StreamerLiveGrid = () => {
           </div>
           <p className="font-serif" style={{ fontSize: 13, color: 'var(--muted)', maxWidth: 480, margin: '0 auto', lineHeight: 1.55 }}>
             {(active.reason || '').includes('blocked')
-              ? (t('streamer_live.dormant_blocked_body') || 'Kick API is currently rate-limiting server-side requests. Our roster is intact — we\u2019ll reconnect once their endpoint reopens.')
+              ? (t('streamer_live.dormant_blocked_body') || 'Kick API is currently rate-limiting server-side requests. Our roster is intact - we\u2019ll reconnect once their endpoint reopens.')
               : t('empty.no_streams_body')}
           </p>
         </div>
@@ -358,7 +358,7 @@ const StreamerLiveGrid = () => {
             {pageStreamers.map((s) => (
               <StreamerCard key={s.user_login} s={s} onAlert={setAlertTarget} t={t} />
             ))}
-            {/* Bulk wildcard alert card — last tile in the grid */}
+            {/* Bulk wildcard alert card - last tile in the grid */}
             <button
               type="button"
               onClick={() => setAlertTarget({ user_login: '*', user_name: t('streamer_live.bulk_title'), profile_url: '#' })}

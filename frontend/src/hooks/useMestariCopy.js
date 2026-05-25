@@ -1,5 +1,5 @@
 /**
- * useMestariCopy — fetch the editable Mestari landing-page copy tree.
+ * useMestariCopy - fetch the editable Mestari landing-page copy tree.
  *
  * Returns null while loading or on network error so the page can fall
  * back to its hardcoded COPY defaults. Once the fetch resolves, every
@@ -17,7 +17,7 @@ export default function useMestariCopy() {
     fetch(`${BACKEND}/api/mestari/copy`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (!stop && d) setCopy(d); })
-      .catch(() => { /* keep null — Mestari.jsx falls back to its hardcoded COPY */ });
+      .catch(() => { /* keep null - Mestari.jsx falls back to its hardcoded COPY */ });
     return () => { stop = true; };
   }, []);
   return copy;

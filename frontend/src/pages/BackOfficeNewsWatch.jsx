@@ -1,5 +1,5 @@
 /**
- * BackOfficeNewsWatch — iter51 editorial veto board.
+ * BackOfficeNewsWatch - iter51 editorial veto board.
  *
  * Pulls items from /api/admin/news-watch/feed?coll={archive|ticker}
  * and lets the editor promote, demote, or permanently kill each one.
@@ -155,7 +155,7 @@ const BackOfficeNewsWatch = () => {
         ))}
       </div>
 
-      {/* Filters — only meaningful for ticker/archive */}
+      {/* Filters - only meaningful for ticker/archive */}
       {coll !== 'rejected' && (
         <div style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }} data-testid="news-watch-filters">
           <select value={source} onChange={(e) => setSource(e.target.value)}
@@ -166,7 +166,7 @@ const BackOfficeNewsWatch = () => {
             data-testid="news-watch-filter-category" style={selectStyle}>
             {CATEGORY_OPTIONS.map((c) => <option key={c || 'all'} value={c}>{c || 'All categories'}</option>)}
           </select>
-          <input type="number" placeholder="Min relevance (0–100)"
+          <input type="number" placeholder="Min relevance (0-100)"
             value={minRelevance} onChange={(e) => setMinRelevance(e.target.value)}
             data-testid="news-watch-filter-min-relevance" style={{ ...selectStyle, width: 180 }} />
           <button type="button" onClick={fetchFeed} data-testid="news-watch-refresh"
@@ -335,7 +335,7 @@ const RejectedRow = ({ item, busyUrl, onUnkill }) => {
     }} data-testid={`news-watch-rejected-row`}>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.12em', color: 'var(--muted)', fontWeight: 700 }}>
-          REJECTED · {item.rejected_at ? new Date(item.rejected_at).toLocaleString() : '—'}
+          REJECTED · {item.rejected_at ? new Date(item.rejected_at).toLocaleString() : '-'}
           {item.reason ? ` · ${item.reason}` : ''}
         </div>
         <div style={{ marginTop: 4, fontFamily: 'ui-monospace, monospace', fontSize: 12, color: 'var(--muted)', wordBreak: 'break-all' }}>

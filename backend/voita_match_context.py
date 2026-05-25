@@ -1,13 +1,13 @@
 """
-PUTKI HQ — Per-raffle match context.
+PUTKI HQ - Per-raffle match context.
 
 Aggregates real data for the prediction game-beats UI:
-  * Bookmaker consensus (The Odds API) — 1X2 implied probabilities + n_books
-  * Team form stats (football-data.org) — gracefully degraded for leagues
+  * Bookmaker consensus (The Odds API) - 1X2 implied probabilities + n_books
+  * Team form stats (football-data.org) - gracefully degraded for leagues
     outside the free tier (Veikkausliiga, Liiga, etc. → returns None,
     FE falls back to raffle-internal data)
-  * Editorial pick — admin-editable field on the raffle doc itself
-  * Raffle-internal pick distribution — % of entrants who picked 1/X/2
+  * Editorial pick - admin-editable field on the raffle doc itself
+  * Raffle-internal pick distribution - % of entrants who picked 1/X/2
 
 The entire payload is honest: every field is real, missing data shows as
 null (UI must degrade), no fabrication.
@@ -49,7 +49,7 @@ _FD_STANDINGS_CACHE: Dict[str, Dict[str, Any]] = {}
 _FD_CACHE_TTL = timedelta(hours=12)
 
 
-# ── The Odds API — per-match consensus ─────────────────────────────────
+# ── The Odds API - per-match consensus ─────────────────────────────────
 
 _ODDS_SPORT_KEY = {
     "football": "soccer",  # The Odds API uses sport-specific subkeys; we
@@ -65,12 +65,12 @@ _ODDS_SPORT_KEY = {
 
 
 def _normalize(s: str) -> str:
-    """Lowercase + strip punctuation + collapse whitespace — for fuzzy team-name matching."""
+    """Lowercase + strip punctuation + collapse whitespace - for fuzzy team-name matching."""
     return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", " ", (s or "").lower())).strip()
 
 
 def _team_match(api_team: str, our_team: str) -> bool:
-    """Fuzzy match — `_team_match("HJK Helsinki", "HJK")` → True."""
+    """Fuzzy match - `_team_match("HJK Helsinki", "HJK")` → True."""
     a, b = _normalize(api_team), _normalize(our_team)
     if not a or not b:
         return False
@@ -122,7 +122,7 @@ async def odds_for_match(
         if _team_match(h, home_team) and _team_match(a, away_team):
             match = ev
             break
-        # Some leagues swap home/away — accept reversed match too.
+        # Some leagues swap home/away - accept reversed match too.
         if _team_match(a, home_team) and _team_match(h, away_team):
             match = ev
             break
@@ -187,7 +187,7 @@ async def odds_for_match(
     }
 
 
-# ── football-data.org — team form ──────────────────────────────────────
+# ── football-data.org - team form ──────────────────────────────────────
 
 async def _fetch_fd_standings(competition_code: str) -> Optional[Dict[str, Any]]:
     key = os.environ.get("FOOTBALL_DATA_KEY") or ""
@@ -246,7 +246,7 @@ async def team_form_for_match(
 ) -> Optional[Dict[str, Any]]:
     """Returns {home, away, league_label} when league is covered by
     football-data.org free tier. Returns None for Veikkausliiga, Liiga,
-    NHL, etc. — caller must gracefully degrade.
+    NHL, etc. - caller must gracefully degrade.
     """
     code = LEAGUE_TO_FD_CODE.get((league or "").lower().strip())
     if not code:
@@ -266,7 +266,7 @@ async def team_form_for_match(
     }
 
 
-# ── Pick distribution — from voita_entries ─────────────────────────────
+# ── Pick distribution - from voita_entries ─────────────────────────────
 
 async def pick_distribution(db, raffle_id: str) -> Dict[str, Any]:
     """% of entrants per 1/X/2 + total count. Used in mode_with_data

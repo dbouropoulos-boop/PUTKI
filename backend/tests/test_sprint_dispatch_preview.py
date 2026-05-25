@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Dispatch previewer + go-live overrides + targeted test-send tests.
+PUTKI HQ - Dispatch previewer + go-live overrides + targeted test-send tests.
 """
 import os
 import uuid

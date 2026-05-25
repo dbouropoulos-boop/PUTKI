@@ -13,7 +13,7 @@
  *   body_html_fi · body_html_en
  *
  * Immutable from the editor:
- *   channel (email / telegram) — set in default seed
+ *   channel (email / telegram) - set in default seed
  *   gated   (true for placeholder copy)
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -105,10 +105,10 @@ const BackOfficeEmailTemplates = () => {
     }}>
       {data.resend_configured
         ? 'RESEND_API_KEY · RESEND_FROM are set. Templates dispatch the moment a lead triggers them.'
-        : 'RESEND_API_KEY is NOT set yet — outbox holds all queued emails. Templates can still be edited + previewed; nothing sends.'}
+        : 'RESEND_API_KEY is NOT set yet - outbox holds all queued emails. Templates can still be edited + previewed; nothing sends.'}
       {!data.dispatch_ready_flag && (
         <span style={{ marginLeft: 8, color: GOLD }}>
-          PLAYBOOK_EMAIL_DISPATCH_READY=0 — gated templates (poker/blackjack playbooks) cannot dispatch even with Resend live.
+          PLAYBOOK_EMAIL_DISPATCH_READY=0 - gated templates (poker/blackjack playbooks) cannot dispatch even with Resend live.
         </span>
       )}
     </div>

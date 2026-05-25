@@ -1,5 +1,5 @@
 """
-Iteration 22 — Phase 5.4 PizzINT-style newsroom overhaul
+Iteration 22 - Phase 5.4 PizzINT-style newsroom overhaul
 Backend tests for the 5 new newsroom endpoints:
   GET  /api/content/stats
   GET  /api/content/top-entities
@@ -110,7 +110,7 @@ class TestEntityHub:
         ent = d["entity"]
         assert ent["id"] == "jarttu84"
         assert "name" in ent
-        # platform/tier/etc. may be None if streamer not in roster — only assert keys exist
+        # platform/tier/etc. may be None if streamer not in roster - only assert keys exist
         for k in ("platform", "channel", "tier", "follower_count", "scene"):
             assert k in ent
         assert isinstance(d["articles"], list)

@@ -1,9 +1,9 @@
 """
-PUTKI HQ — YouTube PubSubHubbub (WebSub) + Data API client.
+PUTKI HQ - YouTube PubSubHubbub (WebSub) + Data API client.
 
 PubSubHubbub is YouTube's mechanism for getting push notifications when a
 channel uploads a new video. Each subscription is per-channel and has a
-~5–10 day lease that must be renewed.
+~5-10 day lease that must be renewed.
 
 Flow:
   1. Resolve channel handle / username → channel_id via Data API v3

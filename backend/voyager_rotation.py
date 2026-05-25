@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Voyager rotation calendar.
+PUTKI HQ - Voyager rotation calendar.
 
 The /voyager page is a recurring editorial pick: a game + an operator,
 chosen and written up by the editor each week. The URL stays /voyager;
@@ -12,7 +12,7 @@ This module is the back-office source-of-truth for that rotation:
     page correctly.
   • settings._id='voyager_rotation' holds an admin-managed list of
     weekly entries plus an `active_slug` pointer.
-  • get_active_voyager(db) is what the public endpoint serves — it
+  • get_active_voyager(db) is what the public endpoint serves - it
     picks the entry the editor flagged active, falling back to the
     earliest non-expired one, then to defaults.
 
@@ -28,7 +28,7 @@ any cell silently truncate):
     },
   }
 
-Each week entry mirrors the WEEK_1 object shape in Voyager.jsx — the
+Each week entry mirrors the WEEK_1 object shape in Voyager.jsx - the
 adapter on the frontend reads the merged result directly.
 """
 from __future__ import annotations
@@ -48,7 +48,7 @@ _HREF = 600
 # Maximum weeks the editor can keep on file. Past this point a save is
 # truncated; the calendar isn't meant as a history log.
 MAX_WEEKS = 24
-# Maximum review bullets per operator card (spec §4.4 — 4 was reference,
+# Maximum review bullets per operator card (spec §4.4 - 4 was reference,
 # we allow up to 6 so the editor has room).
 MAX_REVIEW_POINTS = 6
 
@@ -81,16 +81,16 @@ DEFAULT_VOYAGER: Dict[str, Any] = {
                 "slot_fi": "valitulla slotilla",
                 "slot_en": "on a featured slot",
             },
-            "verdict_fi": "Suomenkielinen rekisteröitymätön Pay N Play -kasino, jonka kotiutukset ovat oikeasti nopeita ja julkaistuja — testattu toimituksessa.",
-            "verdict_en": "A Finnish-language Pay N Play casino whose payouts are genuinely fast and publicly tracked — vetted by our editor.",
+            "verdict_fi": "Suomenkielinen rekisteröitymätön Pay N Play -kasino, jonka kotiutukset ovat oikeasti nopeita ja julkaistuja - testattu toimituksessa.",
+            "verdict_en": "A Finnish-language Pay N Play casino whose payouts are genuinely fast and publicly tracked - vetted by our editor.",
             "tried_fi": "Kokeilimme itse: talletus 50 €, kotiutus saapui 12 minuutissa.",
             "tried_en": "We tried it ourselves: €50 deposit, payout in 12 minutes.",
             "review_points": [
                 {
                     "headline_fi": "Pay N Play (Trustly-virta)",
                     "headline_en": "Pay N Play (Trustly flow)",
-                    "body_fi": "Ei rekisteröitymistä. Pankkitunnukset, talletus, peli — sama istunto.",
-                    "body_en": "No registration. Bank ID, deposit, play — single session.",
+                    "body_fi": "Ei rekisteröitymistä. Pankkitunnukset, talletus, peli - sama istunto.",
+                    "body_en": "No registration. Bank ID, deposit, play - single session.",
                 },
                 {
                     "headline_fi": "Kotiutukset alle 15 min",
@@ -101,14 +101,14 @@ DEFAULT_VOYAGER: Dict[str, Any] = {
                 {
                     "headline_fi": "Suomenkielinen tuki",
                     "headline_en": "Finnish-speaking support",
-                    "body_fi": "Chat-tuki suomeksi 09–24, mediaanivasteaika alle 2 min toimituksen testeissä.",
-                    "body_en": "Live chat in Finnish 09:00–24:00, median response under 2 min in our tests.",
+                    "body_fi": "Chat-tuki suomeksi 09-24, mediaanivasteaika alle 2 min toimituksen testeissä.",
+                    "body_en": "Live chat in Finnish 09:00-24:00, median response under 2 min in our tests.",
                 },
                 {
                     "headline_fi": "Pelivalinta",
                     "headline_en": "Game selection",
-                    "body_fi": "Yli 3 000 nimikettä, mukana NetEnt, Pragmatic, Hacksaw — ei pakkokierrätyspaketteja.",
-                    "body_en": "3,000+ titles incl. NetEnt, Pragmatic, Hacksaw — no forced wagering bundles.",
+                    "body_fi": "Yli 3 000 nimikettä, mukana NetEnt, Pragmatic, Hacksaw - ei pakkokierrätyspaketteja.",
+                    "body_en": "3,000+ titles incl. NetEnt, Pragmatic, Hacksaw - no forced wagering bundles.",
                 },
             ],
         }
@@ -120,7 +120,7 @@ _SLUG_RE = re.compile(r"[^a-z0-9-]+")
 
 
 def _slug(s: str) -> str:
-    """Normalise a slug — lowercase + dashed, max 80 chars."""
+    """Normalise a slug - lowercase + dashed, max 80 chars."""
     if not isinstance(s, str):
         return ""
     out = _SLUG_RE.sub("-", s.lower().strip()).strip("-")
@@ -136,7 +136,7 @@ def _trunc(value: Any, cap: int) -> str:
 
 def _coerce_iso(value: Any) -> str:
     """Accept ISO-8601 strings; pass through unchanged when parseable,
-    otherwise return empty string. We don't reformat — the editor's UI
+    otherwise return empty string. We don't reformat - the editor's UI
     handles tz the way the user typed it."""
     if not isinstance(value, str):
         return ""
@@ -183,7 +183,7 @@ def _sanitise_review_point(rp: Any) -> Dict[str, str]:
 
 
 def _sanitise_week(week: Any, idx: int) -> Dict[str, Any]:
-    """Coerce one week entry — never raises. A garbage payload becomes
+    """Coerce one week entry - never raises. A garbage payload becomes
     an entry with empty strings + numeric defaults; the editor sees that
     on reload and fixes it. Better than refusing the whole save."""
     if not isinstance(week, dict):
@@ -245,7 +245,7 @@ def sanitise(payload: Optional[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 async def get_voyager_rotation_raw(db) -> Dict[str, Any]:
-    """Admin view — raw override + sanitised + defaults + updated_at.
+    """Admin view - raw override + sanitised + defaults + updated_at.
     When the override is missing/empty we hand back the defaults as the
     sanitised tree so the editor opens with the locked week-1 already on
     screen instead of an empty calendar."""
@@ -265,7 +265,7 @@ async def get_voyager_rotation_raw(db) -> Dict[str, Any]:
 
 
 async def get_active_voyager(db) -> Dict[str, Any]:
-    """Public — returns just the currently-active week entry the page
+    """Public - returns just the currently-active week entry the page
     should render. Falls back to the defaults when nothing is set up."""
     doc = await db.settings.find_one(
         {"_id": "voyager_rotation"}, {"_id": 0, "value": 1},

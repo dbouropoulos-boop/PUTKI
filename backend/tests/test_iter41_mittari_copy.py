@@ -1,4 +1,4 @@
-"""Iter41 backend tests — /mittari editable copy system.
+"""Iter41 backend tests - /mittari editable copy system.
 
 Covers:
 - GET /api/mittari/copy (public, merged tree, all sections present)
@@ -126,7 +126,7 @@ class TestPutAndPersistence:
         r = requests.put(f"{BASE_URL}/api/admin/mittari/copy", json=payload, headers=H_ADMIN, timeout=10)
         assert r.status_code == 200
         items = r.json()["merged"]["receipts"]["items"]
-        # First item shouldn't be the empty one — should still have real content from defaults
+        # First item shouldn't be the empty one - should still have real content from defaults
         # because override row was empty → skipped → defaults stay for that index
         assert items[0].get("signal_fi"), "blank row was not dropped properly"
         requests.put(f"{BASE_URL}/api/admin/mittari/copy", json={}, headers=H_ADMIN, timeout=10)
@@ -142,7 +142,7 @@ class TestPutAndPersistence:
         r = requests.put(f"{BASE_URL}/api/admin/mittari/copy", json=payload, headers=H_ADMIN, timeout=10)
         assert r.status_code == 200
         items = r.json()["merged"]["testimonials"]["items"]
-        # Default index 0 testimonial has quote — but override blanked it → row dropped, so the
+        # Default index 0 testimonial has quote - but override blanked it → row dropped, so the
         # output items[0] should now be the default t2 quote OR length<3
         # Importantly: no testimonial in the output should have BOTH quote_fi & quote_en blank.
         for t in items:

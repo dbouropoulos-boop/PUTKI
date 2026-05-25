@@ -132,7 +132,7 @@ const Signup = () => {
             <div className="space-y-4 mb-8">
               {[
                 { key: 'email',    icon: Mail,          title: 'Sähköposti',    sub: 'Toimitus sekunneissa. Toimii kaikilla laitteilla.', connect: 'Aktivoitu' },
-                { key: 'telegram', icon: MessageCircle, title: 'Telegram',       sub: 'Suomalaisten pelaajien suosima — nopea, hiljainen.', connect: 'Yhdistä Telegram' },
+                { key: 'telegram', icon: MessageCircle, title: 'Telegram',       sub: 'Suomalaisten pelaajien suosima - nopea, hiljainen.', connect: 'Yhdistä Telegram' },
                 { key: 'push',     icon: Smartphone,    title: 'Web push',       sub: 'Selaimen ilmoitus. Toimii myös offline-tilassa.',    connect: 'Salli ilmoitukset' },
               ].map((c) => (
                 <button

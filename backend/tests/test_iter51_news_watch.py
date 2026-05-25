@@ -1,5 +1,5 @@
 """
-iter51 — News-watch editorial board regression.
+iter51 - News-watch editorial board regression.
 
 Exercises the public admin endpoints end-to-end against the live backend:
   • GET  /api/admin/news-watch/stats
@@ -98,7 +98,7 @@ def test_rejected_endpoint_shape():
 # ─────────────────────── Promote / demote / kill ─────────────────────
 
 def _pick_archive_url():
-    """Grab any URL currently in the archive — tests are run against
+    """Grab any URL currently in the archive - tests are run against
     live data so we use whatever is there. Returns None if empty."""
     r = _get("/api/admin/news-watch/feed?coll=archive&limit=1")
     items = r.json().get("items", []) if r else []
@@ -108,7 +108,7 @@ def _pick_archive_url():
 def test_promote_then_demote_round_trip():
     url = _pick_archive_url()
     if not url:
-        pytest.skip("archive is empty — no live data to exercise")
+        pytest.skip("archive is empty - no live data to exercise")
 
     # promote: archive → ticker
     r = _post("/api/admin/news-watch/promote", {"url": url})
@@ -128,7 +128,7 @@ def test_promote_then_demote_round_trip():
 
 def test_kill_and_unkill_round_trip():
     test_url = f"https://example.test/iter51-kill-{int(time.time())}"
-    # kill — should be idempotent + add to rejection list
+    # kill - should be idempotent + add to rejection list
     r1 = _post("/api/admin/news-watch/kill", {"url": test_url, "reason": "iter51 test"})
     assert r1.status_code == 200
     body = r1.json()

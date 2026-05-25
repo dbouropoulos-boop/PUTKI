@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Public live-data stats endpoint for the homepage ticker.
+PUTKI HQ - Public live-data stats endpoint for the homepage ticker.
 
 Aggregates honest "we're watching everything in real-time" counters from
 the existing Layer 2 + content collections. No fabrication: if a worker
@@ -74,7 +74,7 @@ async def _build(db) -> Dict[str, Any]:
     except Exception:
         pass
 
-    # Latest update timestamp — max(captured_at) across Layer 2 colls
+    # Latest update timestamp - max(captured_at) across Layer 2 colls
     latest_ts = None
     for coll in ("stream_signals", "sports_signals", "news_signals",
                  "f1_signals", "football_signals"):

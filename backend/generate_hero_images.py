@@ -25,7 +25,7 @@ PROMPTS = {
         "Photograph. No text. No letters. No words. No watermarks. No logos. "
         "An editorial photo for a Bloomberg-style sports news portal. "
         "Wide low-angle shot of an empty floodlit football (soccer) stadium "
-        "at night — looking up the pitch from the corner flag area. Stadium "
+        "at night - looking up the pitch from the corner flag area. Stadium "
         "lights create dramatic shafts of light across the rich green grass. "
         "Sky is deep navy. Stands are empty, slightly out of focus. "
         "Cinematic colour grade, looks like a Reuters or Getty Images wire "
@@ -38,7 +38,7 @@ PROMPTS = {
         "Extreme macro close-up of three vintage casino slot-machine reels "
         "mid-spin, shot at a 45-degree angle. Motion blur on the reel "
         "symbols (cherries, sevens, bars). Lighting is dramatic amber and "
-        "gold with deep mahogany shadows — feels like the interior of an "
+        "gold with deep mahogany shadows - feels like the interior of an "
         "old-money vault, NOT a Vegas casino floor. Brass trim and walnut "
         "wood visible at the edges. Cinematic colour grade. Aspect ratio "
         "16:9 (1920x1080). The image must contain ZERO typography, ZERO "
@@ -51,7 +51,7 @@ PROMPTS = {
 async def generate(slug: str, prompt: str) -> bool:
     api_key = os.getenv("EMERGENT_LLM_KEY")
     if not api_key:
-        print(f"[{slug}] EMERGENT_LLM_KEY missing — skipping")
+        print(f"[{slug}] EMERGENT_LLM_KEY missing - skipping")
         return False
     try:
         from emergentintegrations.llm.chat import LlmChat, UserMessage

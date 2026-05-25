@@ -1,8 +1,8 @@
 """
-PUTKI HQ Phase 3 V2 — Editorial seed scheduler.
+PUTKI HQ Phase 3 V2 - Editorial seed scheduler.
 
 A cadence-driven worker that emits editorial seeds into the approval queue at
-defined rhythms per content type. Seeds are NOT auto-generated content — they
+defined rhythms per content type. Seeds are NOT auto-generated content - they
 are scheduled prompts that the topic_generator turns into a real Claude call,
 producing 3 variants per the editorial pipeline. The system produces; the
 editor judges.
@@ -57,11 +57,11 @@ SCHEDULER_INTERVAL_SECONDS = int(os.environ.get("SEED_SCHEDULER_INTERVAL_SECONDS
 VARIANT_FILLER_INTERVAL_SECONDS = int(os.environ.get("SEED_VARIANT_FILLER_INTERVAL_SECONDS", "900"))
 
 
-# ─── Cadence config — V2 §editorial-cadence ────────────────────────────────
+# ─── Cadence config - V2 §editorial-cadence ────────────────────────────────
 # Schedule keys map to RRULE-lite semantics. The scheduler fires for a given
 # content_type when:
 #   weekday matches AND no seed of that content_type has been emitted since
-#   `min_gap_hours` ago (idempotency guard — restart-safe).
+#   `min_gap_hours` ago (idempotency guard - restart-safe).
 #
 # All cadences are configurable from /api/admin/scheduler/cadences via PUT,
 # so the user can re-tune without code changes.
@@ -85,7 +85,7 @@ DEFAULT_CADENCES: List[Dict[str, Any]] = [
     {
         "content_type": "lifestyle_gambler_profile",
         "weekdays": [4],          # Friday
-        "frequency": "biweekly",  # every 2nd Friday — enforced via min_gap_hours
+        "frequency": "biweekly",  # every 2nd Friday - enforced via min_gap_hours
         "min_gap_hours": 312,     # 13d
         "surface_label": "/profiilit",
         "enabled": True,
@@ -128,7 +128,7 @@ DEFAULT_CADENCES: List[Dict[str, Any]] = [
         "frequency": "weekly",
         "min_gap_hours": 144,
         "surface_label": "/pelit",
-        # Sub-page rotates per fire — handled by topic_generator
+        # Sub-page rotates per fire - handled by topic_generator
         "enabled": True,
     },
     {
@@ -237,7 +237,7 @@ async def build_topic_payload(
     if not research_pool:
         return None
 
-    # Cheapest "freshest + least-recently-used" heuristic — shuffle within
+    # Cheapest "freshest + least-recently-used" heuristic - shuffle within
     # last_updated descending, but bias against entries used in last 30d.
     cutoff_recent = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
     used_recently = set()
@@ -253,10 +253,10 @@ async def build_topic_payload(
 
     sources = _pick_sources_for_beat(chosen["beat"], max_n=5)
     facts_text = "\n".join(
-        f"- {f['fact']} ({f.get('source_attribution', '—')}, {f.get('confidence', 'medium')})"
+        f"- {f['fact']} ({f.get('source_attribution', '-')}, {f.get('confidence', 'medium')})"
         for f in chosen.get("key_facts", [])
-    ) or "—"
-    sources_text = ", ".join(s["name"] for s in sources) or "—"
+    ) or "-"
+    sources_text = ", ".join(s["name"] for s in sources) or "-"
 
     # Build a per-content-type signal_payload aligned with prompt placeholders.
     payload: Dict[str, Any] = {
@@ -277,14 +277,14 @@ async def build_topic_payload(
         "regulatory_event": chosen.get("topic_area", ""),
         "impact_summary": chosen.get("editorial_angle", ""),
         "deal_summary": chosen.get("topic_area", ""),
-        "parties": ", ".join(chosen.get("named_sources_cited", []) or []) or "—",
-        "value": "—",
-        "operator": "—",
-        "bonus_type": "—",
+        "parties": ", ".join(chosen.get("named_sources_cited", []) or []) or "-",
+        "value": "-",
+        "operator": "-",
+        "bonus_type": "-",
         "mechanics": facts_text,
         "subject_name": chosen.get("topic_area", ""),
         "background": chosen.get("editorial_angle", ""),
-        "business_structure": "—",
+        "business_structure": "-",
         "cultural_significance": chosen.get("editorial_angle", ""),
         "event_summary": chosen.get("topic_area", ""),
         "scheduled_surface_label": cadence.get("surface_label"),
@@ -315,7 +315,7 @@ async def _is_cadence_due(db, cadence: Dict[str, Any], *, now: datetime) -> bool
 # ─── Main scheduler tick ────────────────────────────────────────────────────
 async def run_scheduler_tick(db, *, force_content_type: Optional[str] = None) -> Dict[str, Any]:
     """One pass of the scheduler. Returns a summary of what fired / what was
-    skipped (and why). Idempotent — safe to call repeatedly."""
+    skipped (and why). Idempotent - safe to call repeatedly."""
     now = datetime.now(timezone.utc)
     cadences = await get_cadences(db)
     fired: List[Dict[str, Any]] = []
@@ -401,7 +401,7 @@ async def _attempt_seed(
         }
 
 
-# ─── Variant filler — retries awaiting_variants rows ────────────────────────
+# ─── Variant filler - retries awaiting_variants rows ────────────────────────
 async def run_variant_filler(db, *, max_per_tick: int = 5) -> Dict[str, Any]:
     """Retry seeds that parked without variants. LLM-502 tolerant."""
     cutoff = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()

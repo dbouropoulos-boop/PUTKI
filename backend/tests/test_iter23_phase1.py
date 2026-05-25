@@ -1,4 +1,4 @@
-"""Iteration 23 — Phase 1 PUTKI HQ homepage restructure backend tests.
+"""Iteration 23 - Phase 1 PUTKI HQ homepage restructure backend tests.
 
 Covers:
 - GET /api/news/ticker (ticker items shape + relevance >= 45)

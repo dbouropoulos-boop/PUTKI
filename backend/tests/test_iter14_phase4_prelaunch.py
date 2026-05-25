@@ -1,4 +1,4 @@
-"""Iteration 14 — Phase 4 Pre-Launch Polish backend regression.
+"""Iteration 14 - Phase 4 Pre-Launch Polish backend regression.
 
 Covers: streamer multi-platform live, alert subscriptions, live-stats ticker,
 featured odds, OG static mount, /uutiset news feed, /mittari/historia data,
@@ -88,7 +88,7 @@ class TestStreamerAlerts:
         assert r1.status_code == 200, r1.text
         d1 = r1.json()
         assert d1.get("status") in {"ok", "created", "updated", "exists"}, d1
-        # second submit — must be idempotent
+        # second submit - must be idempotent
         r2 = session.post(f"{API}/alerts/streamer", json=payload, timeout=10)
         assert r2.status_code == 200, r2.text
 
@@ -99,7 +99,7 @@ class TestStreamerAlerts:
             "platform": "twitch",
             "phone": "not a number !!",
         }, timeout=10)
-        # invalid_phone -> 400 (acceptable: 200 if backend permissive — capture both)
+        # invalid_phone -> 400 (acceptable: 200 if backend permissive - capture both)
         assert r.status_code in (200, 400), r.text
 
 

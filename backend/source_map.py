@@ -1,5 +1,5 @@
 """
-PUTKI HQ V2 Master Brief §4.1 — Named Finnish source map.
+PUTKI HQ V2 Master Brief §4.1 - Named Finnish source map.
 
 Curated registry of authoritative sources PUTKI HQ's editorial pipeline monitors
 manually or via RSS. Seeded into Mongo collection `tracked_sources` on startup
@@ -19,7 +19,7 @@ TRACKED_SOURCES: List[Dict[str, Any]] = [
     {"key": "ristikaksi",     "name": "Ristikaksi",           "category": "betting_discourse", "url": "https://x.com/ristikaksi",      "tier": 2, "note": "X-based tipster, 20K+ long-bet tips since 2019. Verify performance claims manually."},
     {"key": "tipsimaatti",    "name": "Tipsimaatti",          "category": "betting_discourse", "url": "https://tipsimaatti.fi",        "tier": 3, "note": "Betting-tips portal, editorial-style tip writing around stories/stats/match nuance."},
 
-    # Regulatory + industry (Tier-1 — directly feed /saantely + /sponsoroinnit)
+    # Regulatory + industry (Tier-1 - directly feed /saantely + /sponsoroinnit)
     {"key": "poliisi",        "name": "Poliisi · Arpajaishallinto",                "category": "regulatory",        "url": "https://poliisi.fi/arpajaishallinto",            "tier": 1, "note": "National Police Board gambling enforcement. Enforcement actions, blocking decisions, warning letters, influencer cases."},
     {"key": "veikkaus_news",  "name": "Veikkaus Group Newsroom",                   "category": "regulatory",        "url": "https://www.veikkaus.fi/fi/yritys/uutiset",     "tier": 1, "note": "Incumbent communications. Telegraphs sponsorship strategy, PR framing, defensive positioning."},
     {"key": "ministry",       "name": "Ministry of the Interior Finland",          "category": "regulatory",        "url": "https://intermin.fi/en/arpajaishallinto",       "tier": 1, "note": "Core legislative layer. Implementation changes, amendments, advertising definitions."},
@@ -29,7 +29,7 @@ TRACKED_SOURCES: List[Dict[str, Any]] = [
     {"key": "igb",            "name": "iGB · iGaming Business",                    "category": "regulatory",        "url": "https://igamingbusiness.com",                    "tier": 2, "note": "International trade publication covering Finnish licensing."},
     {"key": "next_io",        "name": "Next.io",                                   "category": "regulatory",        "url": "https://next.io",                                "tier": 3, "note": "Gambling industry trade publication with Finnish reform coverage."},
 
-    # Sports media — Pulssi tracking + editorial seeds
+    # Sports media - Pulssi tracking + editorial seeds
     {"key": "jatkoaika",      "name": "Jatkoaika",            "category": "sports_media",     "url": "https://jatkoaika.com",         "tier": 1, "note": "Finnish hockey culture infrastructure. Liiga narratives, fan sentiment, transfer rumors."},
     {"key": "suomifutis",     "name": "Suomifutis",           "category": "sports_media",     "url": "https://suomifutis.com",        "tier": 2, "note": "Veikkausliiga narratives, football culture, betting-market-relevant news."},
     {"key": "urheilucast",    "name": "Urheilucast",          "category": "sports_media",     "url": "https://urheilucast.fi",        "tier": 3, "note": "Finnish sports-media personality ecosystem. Hot takes, gambling-adjacent narratives."},

@@ -2,11 +2,11 @@
  * Back-office · Leads lifecycle dashboard.
  *
  * Single read-only page that answers "who came in, where from, what
- * happened next" — joining signups, optin_consents, voita_entries,
+ * happened next" - joining signups, optin_consents, voita_entries,
  * mestari_diagnostic_leads, email_outbox and telegram_bindings into one
  * timeline view.
  *
- * Read-only by design — every other back-office page is the mutation
+ * Read-only by design - every other back-office page is the mutation
  * surface for its underlying collection.
  */
 import React, { useEffect, useMemo, useState } from 'react';
@@ -15,7 +15,7 @@ import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const fmt = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try { return new Date(iso).toISOString().replace('T', ' ').slice(0, 16); }
   catch { return iso.slice(0, 16); }
 };
@@ -195,7 +195,7 @@ const BackOfficeLeads = () => {
           <h1 style={{
             fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 700,
             margin: '6px 0 4px', letterSpacing: '-0.02em',
-          }}>Leads — who came in, what happened next</h1>
+          }}>Leads - who came in, what happened next</h1>
           <p style={{ color: 'var(--muted)', margin: 0, fontSize: 13 }}>
             Joined view across signups · opt-ins · voita · mestari · email outbox · telegram. Read-only.
           </p>

@@ -1,5 +1,5 @@
 """
-Iteration 23 — Phase 1 brief Section 2/3 news classifier sanity tests.
+Iteration 23 - Phase 1 brief Section 2/3 news classifier sanity tests.
 
 Pure unit tests over the deterministic news classifier. No I/O.
 """
@@ -42,7 +42,7 @@ class TestClassifier:
         assert "veikkaus" in r["entity_tags"]
 
     def test_tier3_google_news_sports_kw(self):
-        """Google News (tier 3) sports query — should still score above threshold."""
+        """Google News (tier 3) sports query - should still score above threshold."""
         r = classify_item(
             title="Leijonat voitti olympiakultaa",
             source="Google News · Sports",

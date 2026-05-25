@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 
-// Phase 1.5 (Revised): UTM banner — sits above the marquee ticker on the homepage
+// Phase 1.5 (Revised): UTM banner - sits above the marquee ticker on the homepage
 // when a recognized campaign is detected in URL.
 
 export const UTMBanner = () => {
@@ -16,8 +16,8 @@ export const UTMBanner = () => {
 
   const campaign = decodeURIComponent(utm).toUpperCase();
   const message = lang === 'en'
-    ? `You arrived from the "${campaign}" newsletter. Follow your favourite streamer below — drop your email, we\u2019ll handle the rest.`
-    : `Tulit "${campaign}" -uutiskirjeestä. Seuraa suosikkistriimaajaasi alta — anna sähköposti, hoidamme loput.`;
+    ? `You arrived from the "${campaign}" newsletter. Follow your favourite streamer below - drop your email, we\u2019ll handle the rest.`
+    : `Tulit "${campaign}" -uutiskirjeestä. Seuraa suosikkistriimaajaasi alta - anna sähköposti, hoidamme loput.`;
 
   return (
     <div

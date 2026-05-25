@@ -1,10 +1,10 @@
 /**
- * PUTKI HQ — StreamersBand (Carousel redesign · 2026-05-19).
+ * PUTKI HQ - StreamersBand (Carousel redesign · 2026-05-19).
  *
  * Restored the old StreamerLiveGrid carousel energy on top of the
  * editorial chassis. The cards now carry social-proof signals that
  * matter: follower scale, viewer momentum, top-N FI ranking. Streak
- * stays out until we have multi-day data — honest empty states first.
+ * stays out until we have multi-day data - honest empty states first.
  *
  * Visible chrome (per card):
  *   • LIVE badge with pulsing red dot (top-left)
@@ -202,7 +202,7 @@ const StreamerCard = ({ streamer, platform, lang, viewerDelta, rank, alertSignal
             display: 'inline-flex', alignItems: 'center', gap: 6,
           }}>
             ★ EDITORIAL
-            {/* Bell — visible on every PUBLISHED card; pulses if a
+            {/* Bell - visible on every PUBLISHED card; pulses if a
                 per-streamer notification fired in the last 60min */}
             <span
               data-testid="streamer-card-bell"
@@ -229,7 +229,7 @@ const StreamerCard = ({ streamer, platform, lang, viewerDelta, rank, alertSignal
         padding: '14px 16px 14px',
         display: 'flex', flexDirection: 'column', gap: 8, flex: 1,
       }}>
-        {/* Display name — restrained serif, not aggressively big */}
+        {/* Display name - restrained serif, not aggressively big */}
         <a href={href} target="_blank" rel="noreferrer noopener"
           data-testid="streamer-card-name"
           style={{
@@ -282,7 +282,7 @@ const StreamerCard = ({ streamer, platform, lang, viewerDelta, rank, alertSignal
           )}
         </div>
 
-        {/* Editorial line — hover only on desktop */}
+        {/* Editorial line - hover only on desktop */}
         {editorialLine && (
           <div data-testid="streamer-card-context"
             className="streamer-context-line"
@@ -367,7 +367,7 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
   const scrollerRef = useRef(null);
   const [overflow, setOverflow] = useState(false);
 
-  // Per-streamer alert signal — recently-dispatched notifications. Pulls
+  // Per-streamer alert signal - recently-dispatched notifications. Pulls
   // /api/streamers/recent-alerts every 60s; the bell on the card pulses
   // when the count is > 0 within the last 60min window.
   useEffect(() => {
@@ -450,7 +450,7 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
     }),
   );
 
-  // Sort by current viewers desc — that's also how we assign Top-5 rank
+  // Sort by current viewers desc - that's also how we assign Top-5 rank
   const liveList = useMemo(() => (
     (data[activeTab] || [])
       .filter(isLive)
@@ -468,7 +468,7 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
     });
   }, [liveList, slotFilter]);
 
-  // Build a rank map BEFORE the slot filter — rank reflects the platform leaderboard,
+  // Build a rank map BEFORE the slot filter - rank reflects the platform leaderboard,
   // not the filtered subset.
   const rankByLogin = useMemo(() => {
     const m = {};
@@ -522,7 +522,7 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
             liveCount={counts[p].live} totalCount={counts[p].total}
             onClick={() => setActiveTab(p)} />
         ))}
-        {/* Carousel controls — only when content actually overflows */}
+        {/* Carousel controls - only when content actually overflows */}
         {overflow && (
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
           <button type="button" onClick={() => scrollBy(-340)}

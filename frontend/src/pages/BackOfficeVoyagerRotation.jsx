@@ -1,12 +1,12 @@
 /**
- * BackOfficeVoyagerRotation — edits the /voyager weekly rotation calendar.
+ * BackOfficeVoyagerRotation - edits the /voyager weekly rotation calendar.
  *
  * Backend: GET/PUT /api/admin/voyager/rotation
  *   { raw, sanitised, defaults, updated_at }
  *
  * UI shape: a left-side list of weeks (with an "active" radio) and a
  * right-side form to edit the currently-selected week. Each save is
- * an atomic overwrite of the full rotation doc — that's intentional;
+ * an atomic overwrite of the full rotation doc - that's intentional;
  * the editor's intent ("ship this calendar exactly") wins.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -15,7 +15,7 @@ import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// ── Atoms (deliberately local — small page, no need to extract) ────────
+// ── Atoms (deliberately local - small page, no need to extract) ────────
 const Field = ({ label, value, onChange, multiline, placeholder, type = 'text', idScope }) => {
   const id = `voy-${idScope}-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
   const sharedStyle = {
@@ -281,7 +281,7 @@ const BackOfficeVoyagerRotation = () => {
                       {w.week_label_fi || w.slug}
                     </div>
                     <div style={{ color: 'var(--muted)', fontSize: 10, marginTop: 2 }}>
-                      {w.game.title_fi || '—'} × {w.operator.name || '—'}
+                      {w.game.title_fi || '-'} × {w.operator.name || '-'}
                     </div>
                   </button>
                   <button type="button" onClick={() => deleteWeek(w.slug)}

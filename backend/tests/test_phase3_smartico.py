@@ -1,4 +1,4 @@
-"""Phase 3 Batch 3D — Smartico Voyager loader fields in /api/admin/settings + public exposure."""
+"""Phase 3 Batch 3D - Smartico Voyager loader fields in /api/admin/settings + public exposure."""
 import os
 import requests
 from pathlib import Path

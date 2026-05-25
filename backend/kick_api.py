@@ -1,12 +1,12 @@
 """
-PUTKI HQ — Kick API client for events:subscribe lifecycle.
+PUTKI HQ - Kick API client for events:subscribe lifecycle.
 
 Kick differs from Twitch in two important ways:
   1. Webhook signature uses **RSA PKCS1v15 SHA256** over `{message_id}.{timestamp}.{body}`,
-     base64-decoded `Kick-Event-Signature` header — NOT HMAC.
+     base64-decoded `Kick-Event-Signature` header - NOT HMAC.
   2. The callback URL is configured at the **app level** on Kick's developer portal,
      not per-subscription in the API payload. So `KICK_WEBHOOK_CALLBACK_URL` here is
-     informational only — make sure it matches what's registered on the Kick side.
+     informational only - make sure it matches what's registered on the Kick side.
 
 Refs:
   - https://docs.kick.com/events/subscribe-to-events

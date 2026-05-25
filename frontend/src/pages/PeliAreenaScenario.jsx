@@ -1,9 +1,9 @@
 /**
- * PUTKI HQ — /peliareena/paatospolku (Scenario · iter56, i18n iter60)
+ * PUTKI HQ - /peliareena/paatospolku (Scenario · iter56, i18n iter60)
  *
  * Branching decisions game. 5 real gambling scenarios with 3 options each.
  * Each option carries a hidden judgement score (0..3) which we surface
- * only AFTER the player picks — they learn the trade-off of every choice.
+ * only AFTER the player picks - they learn the trade-off of every choice.
  */
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -25,7 +25,7 @@ const post = async (path, body) => {
   return r.json();
 };
 
-// iter64 — fire-and-forget funnel beacon. Never block UX on this.
+// iter64 - fire-and-forget funnel beacon. Never block UX on this.
 const beacon = (sessionId, event, meta) => {
   if (!sessionId) return;
   try {
@@ -175,7 +175,7 @@ const PeliAreenaScenario = () => {
 const ScenarioPreview = ({ lang, preview, session, onUnlocked, fullResult }) => {
   return (
     <div data-testid="scenario-preview">
-      {/* iter63 — Identity-first reveal + Micro-Yes ladder */}
+      {/* iter63 - Identity-first reveal + Micro-Yes ladder */}
       <IdentityCardFlow
         preview={preview}
         session={session}
@@ -252,7 +252,7 @@ const ScenarioUnlocked = ({ lang, result }) => {
   };
   return (
     <div data-testid="scenario-unlocked">
-      {/* iter64 — Three Traps panel: the headline value of the email gate */}
+      {/* iter64 - Three Traps panel: the headline value of the email gate */}
       {traps.length > 0 && (
         <div data-testid="scenario-three-traps" style={{
           padding: '28px 28px 24px',

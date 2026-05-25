@@ -7,8 +7,8 @@ import { EditorialFooter } from './EditorialFooter';
 // its eyebrow + headline + intro paragraph + Mittari-voice lede, then this shell
 // pulls latest approved items from /api/published?surface=<surface>&limit=N.
 //
-// While empty (Phase 3A V2 — content types exist but no items approved yet),
-// the shell renders a "PUTKI HQ VALMISTELEE — KOLME ENSIMMÄISTÄ JUTTUA
+// While empty (Phase 3A V2 - content types exist but no items approved yet),
+// the shell renders a "PUTKI HQ VALMISTELEE - KOLME ENSIMMÄISTÄ JUTTUA
 // JULKAISTAAN VKOLLA X" panel. Once items exist, they replace that block.
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;

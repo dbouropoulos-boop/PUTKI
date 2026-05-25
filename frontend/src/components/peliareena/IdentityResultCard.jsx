@@ -1,12 +1,12 @@
 /**
- * PUTKI HQ — IdentityResultCard (iter63)
+ * PUTKI HQ - IdentityResultCard (iter63)
  *
  * Replaces the old "X/Y score" lead with an identity-first reveal,
  * per the user's mockup. Key principles:
  *
- *   • NO number in the headline — the persona label is the lead.
+ *   • NO number in the headline - the persona label is the lead.
  *   • Discipline-index stat with animated amber fill bar.
- *   • One-line "hook" with arrow + amber accent — the unanswered loop
+ *   • One-line "hook" with arrow + amber accent - the unanswered loop
  *     that the email gate later resolves.
  *
  * Bilingual via the `i18n/peliareena.js` dictionary.
@@ -122,7 +122,7 @@ const IdentityResultCard = ({
             fontSize: 16.5, lineHeight: 1.45, color: '#f4f1ea',
             fontFamily: 'Georgia, Newsreader, serif',
           }}
-          // Hook text is editorial copy controlled by us — safe to render
+          // Hook text is editorial copy controlled by us - safe to render
           // the small set of <em>…</em> tags we inject for the amber accent.
           dangerouslySetInnerHTML={{ __html: hookText }}
         />

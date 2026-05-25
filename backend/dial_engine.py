@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Phase 4 Dial recalc engine (Layer 2 edition)
+PUTKI HQ - Phase 4 Dial recalc engine (Layer 2 edition)
 ========================================================
 
 Replaces the old 6-signal formula (streamers / sports / youtube / forum /
@@ -20,7 +20,7 @@ State mapping unchanged:
     composite >=88  → KIIRASTULI
 
 Output shape unchanged so existing /api/dial + /api/cockpit consumers
-(frontend + pytest) keep working — `state`, `state_key`, `composite_score`,
+(frontend + pytest) keep working - `state`, `state_key`, `composite_score`,
 `sub_scores`, `primary_driver`, `primary_driver_label{fi,en}`, `signal_count`,
 `any_real`, `computed_at` are all still present.
 """
@@ -40,7 +40,7 @@ SOURCE_WEIGHTS: Dict[str, int] = {
     "stream":  57,   # Twitch live viewer count (was 40 before Reddit dropped)
     "sports":  29,   # NHL games active today  (was 20)
     "news":    14,   # gambling/regulatory RSS keyword hits (was 10)
-    # `social` retained at 0 in the snapshot for back-compat — re-enable when
+    # `social` retained at 0 in the snapshot for back-compat - re-enable when
     # Reddit OAuth approval lands by restoring a non-zero weight here.
     "social":   0,
 }
@@ -94,7 +94,7 @@ def _stream_intensity(stream_doc: Optional[Dict[str, Any]]) -> float:
     total = int(stream_doc.get("total_viewers", 0) or 0)
     if total <= 0:
         return 0.0
-    # log10(1) = 0; log10(20 000) ≈ 4.30 — saturate at 20k viewers
+    # log10(1) = 0; log10(20 000) ≈ 4.30 - saturate at 20k viewers
     val = math.log10(total + 1) / math.log10(20_001)
     return max(0.0, min(1.0, val))
 
@@ -147,7 +147,7 @@ async def _latest(db, coll_name: str) -> Optional[Dict[str, Any]]:
 async def recalculate_dial(db) -> Dict[str, Any]:
     """Read the most recent Layer 2 signal docs, compute composite, persist snapshot.
 
-    Each Layer 2 worker writes its own summary doc on every tick — we pull the
+    Each Layer 2 worker writes its own summary doc on every tick - we pull the
     latest one per collection rather than aggregating a window. This keeps the
     dial responsive to event-driven shifts (Twitch viewers spike → dial moves
     on the next 60s tick).
@@ -215,7 +215,7 @@ async def recalculate_dial(db) -> Dict[str, Any]:
 
     await db.dial_snapshots.insert_one(dict(snapshot))
 
-    # Phase 1 (Sprint 4) — record STATE CHANGE events to a separate collection
+    # Phase 1 (Sprint 4) - record STATE CHANGE events to a separate collection
     # with a 365-day TTL. Powers the Mittari streak counter on the homepage
     # and the /m/{state-slug}-{date} permalink share pages.
     prev = await db.dial_snapshots.find_one(
@@ -246,7 +246,7 @@ async def recalculate_dial(db) -> Dict[str, Any]:
             "twitch_viewers":   (snapshot.get("sub_scores") or {}).get("twitch_viewers"),
         })
 
-        # Phase 1 Sprint 4 — fire-and-forget Mittari OG image generation
+        # Phase 1 Sprint 4 - fire-and-forget Mittari OG image generation
         # for this state-change event. Idempotent on the og side (cached
         # by {state}-{date}), so re-entrancy is safe; errors are swallowed
         # inside the generator. The dial loop must NEVER block on this.
@@ -282,7 +282,7 @@ async def recalculate_dial(db) -> Dict[str, Any]:
         except Exception as e:
             logger.debug("Mittari OG dispatch skipped: %s", e)
 
-        # Sprint B Slice 4 — fan-out state-change Telegram pings to every
+        # Sprint B Slice 4 - fan-out state-change Telegram pings to every
         # bound Mittari subscriber. Fire-and-forget; dial loop never
         # blocks on Telegram round-trips.
         try:
@@ -317,7 +317,7 @@ async def dial_history(db, limit: int = 60) -> List[Dict[str, Any]]:
 
 
 async def state_streak(db, current_state_key: str) -> Dict[str, Any]:
-    """Phase 1 Sprint 4 — Mittari streak counter.
+    """Phase 1 Sprint 4 - Mittari streak counter.
 
     Returns `{kind, days, last_event_at, label_fi, label_en}` for the
     homepage streak line under the dial.
@@ -353,8 +353,8 @@ async def state_streak(db, current_state_key: str) -> Dict[str, Any]:
             "kind":            "during_perkele",
             "days":            days,
             "last_event_at":   last_at.isoformat(),
-            "label_fi":        f"PERKELE — ensimmäinen kerta {days} päivään",
-            "label_en":        f"PERKELE — first time in {days} days",
+            "label_fi":        f"PERKELE - ensimmäinen kerta {days} päivään",
+            "label_en":        f"PERKELE - first time in {days} days",
         }
     return {
         "kind":            "between",
@@ -366,7 +366,7 @@ async def state_streak(db, current_state_key: str) -> Dict[str, Any]:
 
 
 async def state_event_for_permalink(db, state_key: str, date_iso: str) -> Optional[Dict[str, Any]]:
-    """Phase 1 Sprint 4 — /m/{state-slug}-{date} permalink lookup.
+    """Phase 1 Sprint 4 - /m/{state-slug}-{date} permalink lookup.
 
     Returns the dial state event for `state_key` on `date_iso` (YYYY-MM-DD,
     UTC), or None if nothing recorded that day.

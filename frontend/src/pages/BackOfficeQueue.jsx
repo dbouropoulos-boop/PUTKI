@@ -5,7 +5,7 @@ import { Lock, RefreshCw, Sparkles, Check, X, Pencil, Edit3, FileText, Save } fr
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 // Phase 3 unified approval queue back-office.
-// Token-protected (X-Admin-Token), MVP per Phase 3 brief — single approve/edit/kill per item, 3 variants visible, guidelines editor inline.
+// Token-protected (X-Admin-Token), MVP per Phase 3 brief - single approve/edit/kill per item, 3 variants visible, guidelines editor inline.
 
 const useToken = () => {
   const [token, setToken] = useState(() => {
@@ -15,7 +15,7 @@ const useToken = () => {
 };
 
 const TimeAgo = ({ iso }) => {
-  if (!iso) return <span>—</span>;
+  if (!iso) return <span>-</span>;
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
   if (diff < 60) return <span>{diff}s sitten</span>;
   if (diff < 3600) return <span>{Math.floor(diff / 60)}min sitten</span>;
@@ -434,7 +434,7 @@ const ScheduleStatus = ({ token }) => {
                 {c.surface_label} · {c.frequency} · GAP {c.min_gap_hours}H
               </div>
               <div className="mono mt-1" style={{ fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink)' }}>
-                RESEARCH POOL · {research} {research === 0 && '— PIPELINE BLOCKED'}
+                RESEARCH POOL · {research} {research === 0 && '- PIPELINE BLOCKED'}
               </div>
               <div className="mono mt-1" style={{ fontSize: 10.5, letterSpacing: '0.06em', color: 'var(--muted)' }}>
                 LAST · {c.last_seeded_at ? new Date(c.last_seeded_at).toISOString().slice(0, 10) : 'never'}
@@ -619,7 +619,7 @@ const BackOfficeQueue = () => {
         <div className="space-y-4" data-testid="queue-list">
           {items.length === 0 ? (
             <div className="panel p-7 text-center mono" style={{ fontSize: 12, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }} data-testid="queue-empty">
-              {statusFilter === 'queued' ? 'NO ITEMS WAITING — GENERATE A SIGNAL ABOVE' : `NO ${statusFilter.toUpperCase()} ITEMS`}
+              {statusFilter === 'queued' ? 'NO ITEMS WAITING - GENERATE A SIGNAL ABOVE' : `NO ${statusFilter.toUpperCase()} ITEMS`}
             </div>
           ) : (
             items.map((item) => (

@@ -1,5 +1,5 @@
 """
-Iteration 18 — Weekly Card gamification + Betting Tips hub + Winners Corner.
+Iteration 18 - Weekly Card gamification + Betting Tips hub + Winners Corner.
 
 Backend test suite covering:
 - Weekly meta + submit + leaderboard public endpoints
@@ -173,7 +173,7 @@ class TestAdminWeekly:
         # then POST submit and force-update its week_key isn't possible. Instead,
         # we drive the flow on the *current* week and assert separately.
         # For sandbox: use only prize/results/draw (no entry-based) but admin draw
-        # needs entries — so we exercise the empty-state error path here.
+        # needs entries - so we exercise the empty-state error path here.
         results_body = {"results": [{"event_id": "evt-a", "pick": "1"}]}
         r = requests.put(
             f"{API}/admin/weekly/{self.week}/results",
@@ -322,7 +322,7 @@ class TestWinners:
 @pytest.fixture(scope="module", autouse=True)
 def _cleanup_module():
     yield
-    # Best-effort cleanup of TEST_-prefixed entries via direct Mongo — we don't
+    # Best-effort cleanup of TEST_-prefixed entries via direct Mongo - we don't
     # have an admin endpoint to delete picks; main agent should clean up if
     # needed. We do at least clear the sandbox week's results.
     try:

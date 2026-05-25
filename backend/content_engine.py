@@ -1,5 +1,5 @@
 """
-PUTKI HQ Phase 3 — Content automation engine.
+PUTKI HQ Phase 3 - Content automation engine.
 
 Pipeline:
   signal (mock-seeded for now) -> Claude generates PUTKI HQ -voice variants
@@ -162,7 +162,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "max_words": 900,
     },
     "tracked_x_post": {
-        "description": "Republication of a tracked X account post with PUTKI HQ framing — Pulssi Layer 1",
+        "description": "Republication of a tracked X account post with PUTKI HQ framing - Pulssi Layer 1",
         "prompt_key": "tracked_x_post_prompt",
         "target_surface": "pulssi_layer_1",
         "approval_required": True,
@@ -171,7 +171,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "max_words": 120,
     },
     "x_trend_annotation": {
-        "description": "Finland X-trend annotation — Pulssi Layer 2",
+        "description": "Finland X-trend annotation - Pulssi Layer 2",
         "prompt_key": "x_trend_annotation_prompt",
         "target_surface": "pulssi_layer_2",
         "approval_required": False,  # auto-publish high-confidence
@@ -180,7 +180,7 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
         "max_words": 60,
     },
     "editor_x_pull": {
-        "description": "Editor-curated notable Finnish X post with PUTKI HQ analysis — Pulssi Layer 3",
+        "description": "Editor-curated notable Finnish X post with PUTKI HQ analysis - Pulssi Layer 3",
         "prompt_key": "editor_x_pull_prompt",
         "target_surface": "pulssi_layer_3",
         "approval_required": True,
@@ -202,27 +202,27 @@ CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
 
 # ─────────────────────── default editorial guidelines ───────────────────────
 DEFAULT_GUIDELINES: Dict[str, str] = {
-    "putki_hq_voice_system_prompt": """Kirjoitat Mittarille — suomalaiselle rahapelikulttuurin julkaisulle.
+    "putki_hq_voice_system_prompt": """Kirjoitat Mittarille - suomalaiselle rahapelikulttuurin julkaisulle.
 
 REFERENSSIKEHYS:
-Ääni: Complex (kulttuurijournalismissa), GQ (miesten kulttuurissa), Bloomberg Crypto (toimialaanalyysissä). Itsevarma, rahatietoinen, statustietoinen, kulttuurisesti sisällä — mutta toimituksellisilla standardeilla.
+Ääni: Complex (kulttuurijournalismissa), GQ (miesten kulttuurissa), Bloomberg Crypto (toimialaanalyysissä). Itsevarma, rahatietoinen, statustietoinen, kulttuurisesti sisällä - mutta toimituksellisilla standardeilla.
 EI KOSKAAN The Economist (liian institutionaalinen, liian etäinen).
 EI KOSKAAN Andrew Tate tai manosfääri (yhteensopimaton toimitukselliselle uskottavuudelle).
 EI KOSKAAN affiliate-sivuston rekisteri (transaktionaalinen, matala uskottavuus).
 
 ÄÄNEN OMINAISUUDET:
-- Institutionaalinen mutta itsevarma — puhu auktoriteetilla ilman hekkailua
-- Rahatietoinen — keskustele summista, sopimuksista, palkoista, liiketoiminnan ekonomiasta suoraan
-- Statustietoinen — tunnista mikä on aitoa flexiä ja mikä asentoilua
-- Kulttuurisesti sisällä — tunne viittaukset, käytä niitä luontevasti
-- Mielipiteinen ja täsmällinen — ota kantaa, mainitse nimet, tee arvioita
-- Suomenkielinen syntyperäisesti — älä koskaan luettavissa käännöksenä englannista
-- Hieman kyyninen, kuiva — suomalainen toimittajarekisteri
+- Institutionaalinen mutta itsevarma - puhu auktoriteetilla ilman hekkailua
+- Rahatietoinen - keskustele summista, sopimuksista, palkoista, liiketoiminnan ekonomiasta suoraan
+- Statustietoinen - tunnista mikä on aitoa flexiä ja mikä asentoilua
+- Kulttuurisesti sisällä - tunne viittaukset, käytä niitä luontevasti
+- Mielipiteinen ja täsmällinen - ota kantaa, mainitse nimet, tee arvioita
+- Suomenkielinen syntyperäisesti - älä koskaan luettavissa käännöksenä englannista
+- Hieman kyyninen, kuiva - suomalainen toimittajarekisteri
 - Kohtelee yleisöä kykenevinä aikuisina jotka rakentavat jotain
 
 HYVIÄ ESIMERKKEJÄ:
 - "Tappara on tulessa, mutta TPS:n maalivahti pelaa 4. peliä peräkkäin. PUTKI HQ sanoo: arvoa kotijoukkueessa."
-- "Trainwreckstv osti Lamborghinin — kuudes vuosi peräkkäin näkyvää statuskulutusta. Stake-talouden mekaniikka näkyy ulospäin."
+- "Trainwreckstv osti Lamborghinin - kuudes vuosi peräkkäin näkyvää statuskulutusta. Stake-talouden mekaniikka näkyy ulospäin."
 - "AndyPyron €42K hit on tilastollisesti epätodennäköinen yhdistelmä. Älä yritä toistaa."
 - "Drake-Stake-yhteistyö maksaa muka 100M$. Kulttuurin osto on harvoin näin avointa."
 - "Suomalaisen miehen 30-vuotiaana keskituloluku on 38 200€. Jos olet selvästi sen yli, neljä asiaa kannattaa tarkastella."
@@ -239,7 +239,7 @@ ANTI-PATTERNIT (älä koskaan kirjoita):
 - Huutomerkit (yksi maksimissaan, harvoin perusteltu)
 - Emojit
 - Fiktiiviset hahmot tai persoonat (ei Topia, ei feikkipersoonia)
-- Numerot ilman välilyöntiä — käytä €42 800, ei 42,800
+- Numerot ilman välilyöntiä - käytä €42 800, ei 42,800
 
 ÄLÄ KOSKAAN:
 - Edistä uhkapelaamista myönteisesti varallisuuden rakentamisena
@@ -264,8 +264,8 @@ Käytä viittauksia luontevasti, älä koskaan pakota. Suurin osa sisällöstä 
 
 ELINTAPAPROFIILI-/-KULTTUURISÄÄNNÖT (kun käsittelet lifestyle-pelaajia, urheilijoita, rappareita, alan henkilöitä):
 - Käsittele kulttuuristen hahmojen uraa, liiketoimintaa, persoonaa ja merkitystä
-- Raportoi — älä tue
-- Ota näkemyksiä — eri mieltä, kritisoi kun aiheellista
+- Raportoi - älä tue
+- Ota näkemyksiä - eri mieltä, kritisoi kun aiheellista
 - ÄLÄ KOSKAAN kehystä "näin sinäkin voit elää tätä elämää uhkapeleillä"
 - KESKUSTELE oikeasta taloudesta (miten he todellisuudessa tienaavat, liiketoimintarakenteet, sopimukset)
 - KÄSITTELE draamaa, kiistoja, kritiikkiä kun kulttuurisesti relevanttia
@@ -285,10 +285,10 @@ SLOTIT erityisesti:
 
 SUOMENKIELINEN LÄHDETYÖSKENTELY:
 - Suosi suomenkielistä lähdemateriaalia foundational_researchista. Kansainvälisiä lähteitä siteerataan vain kun aihe on kansainvälinen (kansainvälinen pelaaja, sääntelyvertailu).
-- Tuotetun sisällön tulee lukea natiivina suomenkielisenä toimitusjuttuna — ei englannista käännetynä.
+- Tuotetun sisällön tulee lukea natiivina suomenkielisenä toimitusjuttuna - ei englannista käännetynä.
 - Käytä suomalaista toimituksellista idiomia, suomalaisia kulttuuriviitteitä luontevasti, suomalaisten uutisjulkaisujen lauserytmiä.
 - Referenssi on Bloomberg-suomeksi, ei Bloomberg-käännettynä.
-- Jos lähde on englanninkielinen mutta aihe suomalainen, käännä faktat suomalaiseen toimitusrekisteriin — älä siirrä englantilaista syntaksia.
+- Jos lähde on englanninkielinen mutta aihe suomalainen, käännä faktat suomalaiseen toimitusrekisteriin - älä siirrä englantilaista syntaksia.
 
 PALAUTA AINA validi JSON ilman ympärysmerkkejä tai selityksiä.""",
 
@@ -322,7 +322,7 @@ LÄHTÖTIEDOT:
 TEHTÄVÄ:
 Kirjoita 3 vaihtoehtoista takea, jokainen 50-100 sanaa PUTKI HQ:n äänellä. Kunkin tulee:
 1. Todeta tapahtuma suomalaisesta näkökulmasta
-2. Lisätä PUTKI HQ:n tulkinta — vedonlyöntinäkökulma kun relevantti
+2. Lisätä PUTKI HQ:n tulkinta - vedonlyöntinäkökulma kun relevantti
 3. Käyttää suomalaisia tunneankkureita (Tappara-fani, Bottas, HJK)
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}, {{"text": "..."}}]}}""",
@@ -349,12 +349,12 @@ LÄHTÖTIEDOT:
 TEHTÄVÄ:
 Kirjoita 2 vaihtoehtoista päivitystä, kumpikin 80-150 sanaa PUTKI HQ:n äänellä. Sisällytä:
 1. Mikä muuttui
-2. PUTKI HQ:n tulkinta — onko kyseessä parannus, heikennys vai sivuttaisliike
+2. PUTKI HQ:n tulkinta - onko kyseessä parannus, heikennys vai sivuttaisliike
 3. Mahdollinen pisteen muutosperuste
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
-    "activity_feed_event_prompt": """Muotoile yksittäinen tapahtuma aktiivisuussyötteeseen — 8-15 sanaa, faktuaalinen, ei tulkintaa.
+    "activity_feed_event_prompt": """Muotoile yksittäinen tapahtuma aktiivisuussyötteeseen - 8-15 sanaa, faktuaalinen, ei tulkintaa.
 
 TIEDOT: {event_summary}
 
@@ -376,7 +376,7 @@ TEHTÄVÄ:
 Kirjoita 1 piirre, 1500-2500 sanaa, PUTKI HQ:n äänellä (Complex/GQ-rekisteri). Sisällytä:
 1. Vahva avaus joka ankkuroi lukijan kulttuuriseen hetkeen
 2. Ekspositio kulttuurisesta ilmiöstä
-3. PUTKI HQ:n näkemys — miksi tämä on noteerattava juuri nyt
+3. PUTKI HQ:n näkemys - miksi tämä on noteerattava juuri nyt
 4. Konkreettiset suomalaiset kulttuuriviitteet luontevasti
 5. Lopetus joka jättää lukijalle painokkaan ajatuksen
 
@@ -397,14 +397,14 @@ Kirjoita 1 profiilijuttu, 2000-3000 sanaa, GQ/Complex/Bloomberg-tasoisella tarkk
 2. Uran kaari ja persoonan kehittyminen
 3. Talous ja liiketoimintarakenne (palkat, sopimukset, tulovirrat)
 4. Statuskulutus ja sen merkityskerros
-5. PUTKI HQ:n kriittinen näkemys — agree/disagree -kantoja
+5. PUTKI HQ:n kriittinen näkemys - agree/disagree -kantoja
 6. Päätös joka kontekstualisoi kohteen Suomen yleisölle
 
 ÄLÄ KOSKAAN: kehystä aspiraationaalisena uhkapelimallina.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
-    "scene_news_prompt": """Kirjoitat skenenuutisen /skene-arkistoon — lifestyle-hetki, draama, liiketoimintauutinen.
+    "scene_news_prompt": """Kirjoitat skenenuutisen /skene-arkistoon - lifestyle-hetki, draama, liiketoimintauutinen.
 
 LÄHTÖTIEDOT:
 - Tapahtuma: {event_summary}
@@ -415,11 +415,11 @@ TEHTÄVÄ:
 Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa PUTKI HQ:n äänellä. Sisällytä:
 1. Mitä tapahtui (faktat)
 2. Mitä tämä tarkoittaa skenelle
-3. PUTKI HQ:n analyysi — kulttuurinen merkitys, liiketoimintamekanismi tai konteksti
+3. PUTKI HQ:n analyysi - kulttuurinen merkitys, liiketoimintamekanismi tai konteksti
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
-    "industry_business_analysis_prompt": """Kirjoitat liiketoimintaanalyysin /skene/talous-arkistoon — Bloomberg-tasoista uhkapelibisneksen analyysiä suomalaisille lukijoille.
+    "industry_business_analysis_prompt": """Kirjoitat liiketoimintaanalyysin /skene/talous-arkistoon - Bloomberg-tasoista uhkapelibisneksen analyysiä suomalaisille lukijoille.
 
 LÄHTÖTIEDOT:
 - Aihe: {topic}
@@ -434,7 +434,7 @@ Kirjoita 2 vaihtoehtoa, kumpikin 800-1500 sanaa PUTKI HQ:n äänellä. Sisällyt
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
-    "money_commentary_prompt": """Kirjoitat rahakommenttia /raha-arkistoon — ura, varallisuus, suomalainen rahankäyttö.
+    "money_commentary_prompt": """Kirjoitat rahakommenttia /raha-arkistoon - ura, varallisuus, suomalainen rahankäyttö.
 
 LÄHTÖTIEDOT:
 - Aihe: {topic}
@@ -447,7 +447,7 @@ Kirjoita 2 vaihtoehtoa, kumpikin 600-1200 sanaa PUTKI HQ:n äänellä. Itsevarma
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
-    "game_literacy_prompt": """Kirjoitat pelilukutaitoa /pelit-arkistoon — koulutusta siitä miten kasinopelit toimivat.
+    "game_literacy_prompt": """Kirjoitat pelilukutaitoa /pelit-arkistoon - koulutusta siitä miten kasinopelit toimivat.
 
 LÄHTÖTIEDOT:
 - Peli/aihe: {topic}
@@ -498,7 +498,7 @@ LÄHTÖTIEDOT:
 - Lähde: {source_url}
 
 TEHTÄVÄ:
-Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa PUTKI HQ:n äänellä. Selitä mitä muuttuu, mitä se tarkoittaa pelaajalle, mitä se tarkoittaa operaattoreille — Suomen rahapelilaki 2025/2027 kehyksessä.
+Kirjoita 2 vaihtoehtoa, kumpikin 400-900 sanaa PUTKI HQ:n äänellä. Selitä mitä muuttuu, mitä se tarkoittaa pelaajalle, mitä se tarkoittaa operaattoreille - Suomen rahapelilaki 2025/2027 kehyksessä.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}, {{"text": "..."}}]}}""",
 
@@ -511,7 +511,7 @@ LÄHTÖTIEDOT:
 - Kulttuurinen konteksti: {context}
 
 TEHTÄVÄ:
-Kirjoita "Miksi tämä on noteerattava" -framing, 60-100 sanaa PUTKI HQ:n äänellä. ÄLÄ TOISTA postauksen sisältöä — selitä kulttuurinen merkitys.
+Kirjoita "Miksi tämä on noteerattava" -framing, 60-100 sanaa PUTKI HQ:n äänellä. ÄLÄ TOISTA postauksen sisältöä - selitä kulttuurinen merkitys.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
@@ -523,7 +523,7 @@ LÄHTÖTIEDOT:
 - Kategoria: {category}
 
 TEHTÄVÄ:
-Kirjoita yksi 25-50 sanan annotaatio PUTKI HQ:n äänellä — mistä tämä trendi kertoo Suomen yleisölle.
+Kirjoita yksi 25-50 sanan annotaatio PUTKI HQ:n äänellä - mistä tämä trendi kertoo Suomen yleisölle.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
@@ -535,7 +535,7 @@ LÄHTÖTIEDOT:
 - Toimittajan kulma: {editor_note}
 
 TEHTÄVÄ:
-Kirjoita 100-180 sanan PUTKI HQ -näkemys — laajempi kulttuurinen viite kuin Layer 1 -republikaatioilla. PUTKI HQ:n paras yhden postauksen ympärille kirjoitettu mini-analyysi.
+Kirjoita 100-180 sanan PUTKI HQ -näkemys - laajempi kulttuurinen viite kuin Layer 1 -republikaatioilla. PUTKI HQ:n paras yhden postauksen ympärille kirjoitettu mini-analyysi.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 
@@ -547,7 +547,7 @@ LÄHTÖTIEDOT:
 - Suomeen sovellettava kulma: {finnish_angle}
 
 TEHTÄVÄ:
-Kirjoita 1 versio, 800-1500 sanaa PUTKI HQ:n äänellä. Tämä on journalismia joka käyttää globaalia osaamista (Wizard of Odds, Casino.guru, akateeminen tutkimus, sääntelyanalyysit) ja soveltaa sitä suomalaiseen kontekstiin — EI sisällön tuontia influencer-lähteistä.
+Kirjoita 1 versio, 800-1500 sanaa PUTKI HQ:n äänellä. Tämä on journalismia joka käyttää globaalia osaamista (Wizard of Odds, Casino.guru, akateeminen tutkimus, sääntelyanalyysit) ja soveltaa sitä suomalaiseen kontekstiin - EI sisällön tuontia influencer-lähteistä.
 
 Palauta JSON: {{"variants": [{{"text": "..."}}]}}""",
 }
@@ -587,7 +587,7 @@ async def call_claude(system_prompt: str, user_prompt: str, session_id: str) -> 
 
 
 def parse_variants(claude_text: str, expected_count: int) -> List[Dict[str, str]]:
-    """Defensive JSON parsing — returns list of {"text": ...}."""
+    """Defensive JSON parsing - returns list of {"text": ...}."""
     cleaned = _strip_code_fence(claude_text)
     try:
         parsed = json.loads(cleaned)
@@ -596,7 +596,7 @@ def parse_variants(claude_text: str, expected_count: int) -> List[Dict[str, str]
             return [{"text": str(v["text"]).strip()} for v in variants[:expected_count] if v.get("text")]
     except (json.JSONDecodeError, AttributeError, TypeError):
         pass
-    # Fallback — wrap raw text as single variant
+    # Fallback - wrap raw text as single variant
     return [{"text": cleaned[:1000]}]
 
 
@@ -628,7 +628,7 @@ async def generate_content_for_signal(
         # If a placeholder is missing in the payload, render it as N/A so generation continues.
         safe_payload = {**signal_payload}
         for k in re.findall(r"\{(\w+)\}", user_prompt_template):
-            safe_payload.setdefault(k, "—")
+            safe_payload.setdefault(k, "-")
         user_prompt = user_prompt_template.format(**safe_payload)
 
     session_id = f"putki-hq-gen-{uuid.uuid4()}"
@@ -722,7 +722,7 @@ async def distribute_content(db, generated_content: Dict[str, Any]) -> Dict[str,
 async def seed_default_guidelines(db) -> None:
     """Idempotently seed default guidelines into the editorial_guidelines collection.
     If a row exists but was never admin-edited (updated_by=='seed'), refresh its
-    text from the source — keeps the seeded voice prompt aligned with code
+    text from the source - keeps the seeded voice prompt aligned with code
     changes while preserving admin edits."""
     for key, text in DEFAULT_GUIDELINES.items():
         existing = await db.editorial_guidelines.find_one({"key": key})

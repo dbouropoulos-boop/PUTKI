@@ -1,5 +1,5 @@
 /**
- * SocialProofBar — homepage credibility strip directly below the hero.
+ * SocialProofBar - homepage credibility strip directly below the hero.
  *
  * Renders four real-data counters pulled from /api/data/live-stats and
  * /api/signup/count + Vitoset count from /api/odds/featured. All figures
@@ -12,7 +12,7 @@ import { useLang } from '../context/LanguageContext';
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const fmt = (n, lang) => {
-  if (n == null) return '—';
+  if (n == null) return '-';
   const s = Number(n).toLocaleString(lang === 'en' ? 'en-US' : 'fi-FI');
   return lang === 'en' ? s : s.replace(/,/g, ' ');
 };

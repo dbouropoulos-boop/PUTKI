@@ -1,8 +1,8 @@
 /**
- * PUTKI HQ — /peliareena/tietoraape (Insight Reveal · iter56, i18n iter60)
+ * PUTKI HQ - /peliareena/tietoraape (Insight Reveal · iter56, i18n iter60)
  *
  * Scratch-card style game. 6 tiles on a board, each hides one micro-
- * lesson about gambling literacy. Click to reveal — no wrong answers,
+ * lesson about gambling literacy. Click to reveal - no wrong answers,
  * the educational payoff IS the revealed fact.
  */
 import React, { useState } from 'react';

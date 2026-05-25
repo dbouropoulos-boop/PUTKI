@@ -1,12 +1,12 @@
 /**
- * PUTKI HQ — InfoStrips (Phase 1 sprint follow-up).
+ * PUTKI HQ - InfoStrips (Phase 1 sprint follow-up).
  *
  * Two thin info strips that sit immediately under the rolling news ticker:
  *
- *   1. OrientationStrip — static, copy-switches between first-visit and
+ *   1. OrientationStrip - static, copy-switches between first-visit and
  *      returning copy via `localStorage`. No cookie consent needed
  *      (legitimate-interest non-tracking flag).
- *   2. NewsroomLiveStrip — monospace metric strip with stories-today /
+ *   2. NewsroomLiveStrip - monospace metric strip with stories-today /
  *      named-outlets / last-publish-age / Mittari score & delta /
  *      "UPDATED LIVE". Refreshes every 30s.
  *
@@ -31,7 +31,7 @@ export const OrientationStrip = () => {
       setFirstVisit(!seen);
       window.localStorage.setItem(STORAGE_KEY, String(Date.now()));
     } catch {
-      // Strict cookie / private mode — show first-visit copy, never set flag
+      // Strict cookie / private mode - show first-visit copy, never set flag
     }
   }, []);
 
@@ -39,8 +39,8 @@ export const OrientationStrip = () => {
     ? "PUTKI HQ · Finland\u2019s independent gambling-culture publication · News from 12 outlets · Streamer scene · Market signals · "
     : "PUTKI HQ · Suomen riippumaton rahapelijulkaisu · Uutiset 12 lähteestä · Striimiskene · Markkinasignaalit · ";
   const returningCopy = lang === 'en'
-    ? "PUTKI HQ · 12 sources · Editorial — not advertising · "
-    : "PUTKI HQ · 12 lähdettä · Toimituksellinen — ei mainontaa · ";
+    ? "PUTKI HQ · 12 sources · Editorial - not advertising · "
+    : "PUTKI HQ · 12 lähdettä · Toimituksellinen - ei mainontaa · ";
 
   return (
     <div
@@ -146,7 +146,7 @@ export const NewsroomLiveStrip = () => {
       <span data-testid="newsroom-named-outlets">{stats.named_outlets} {lang === 'en' ? 'NAMED OUTLETS' : 'NIMETTYÄ LÄHDETTÄ'}</span>
       <span style={{ opacity: 0.45, margin: '0 9px' }}>·</span>
       <span data-testid="newsroom-last-publish">
-        {lang === 'en' ? 'LAST PUBLISH ' : 'VIIMEISIN '}{stats.last_publish_minutes_ago == null ? '—' : `${stats.last_publish_minutes_ago}m`}{lang === 'en' ? ' AGO' : ''}
+        {lang === 'en' ? 'LAST PUBLISH ' : 'VIIMEISIN '}{stats.last_publish_minutes_ago == null ? '-' : `${stats.last_publish_minutes_ago}m`}{lang === 'en' ? ' AGO' : ''}
       </span>
       {stats.mittari_score != null && (
         <>

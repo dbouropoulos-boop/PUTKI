@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — BackOfficeOptinSegments.
+ * PUTKI HQ - BackOfficeOptinSegments.
  *
  * Surfaces /api/admin/optin/stats so the editorial team can see how many
  * readers have opted into each (channel × surface × consent_tag) segment.
@@ -14,7 +14,7 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 // Three segments × three channels. The matrix below is the source of
 // truth: a (channel, consent_tag) pair the dispatch worker knows how
-// to fan out to. Order matters — drives the grid.
+// to fan out to. Order matters - drives the grid.
 const SEGMENT_MATRIX = [
   { channel: 'email', consent_tag: 'email_sentiment', label: 'Email digest · sentiment' },
   { channel: 'sms', consent_tag: 'sms_alerts', label: 'SMS · daily bets' },
@@ -76,7 +76,7 @@ const BackOfficeOptinSegments = () => {
       ]);
       setStats(s); setSummary(su); setLog(lg.items || []); setOverrides(ov.items || []); setSettings(st);
     } catch (e) {
-      // network — leave whatever is on screen
+      // network - leave whatever is on screen
     }
   }, [token, authed]);
 
@@ -88,7 +88,7 @@ const BackOfficeOptinSegments = () => {
     const verb = next ? 'ENABLE' : 'DISABLE';
     const consequence = next
       ? 'The 10:00 Helsinki cycle will fire LIVE every day (real provider calls where credentials are present). Subscribers begin receiving messages tomorrow morning.'
-      : 'The 10:00 Helsinki cycle returns to DRY-RUN — audit rows only, no provider calls.';
+      : 'The 10:00 Helsinki cycle returns to DRY-RUN - audit rows only, no provider calls.';
     if (!window.confirm(`${verb} auto-dispatch?\n\n${consequence}`)) return;
     setSettingsBusy(true);
     try {
@@ -213,7 +213,7 @@ const BackOfficeOptinSegments = () => {
         }}>→ DISPATCH PREVIEWER (REVIEW PAYLOADS BEFORE GO-LIVE)</Link>
       </div>
 
-      {/* ── Kill switch — auto-dispatch on/off ───────────────────────── */}
+      {/* ── Kill switch - auto-dispatch on/off ───────────────────────── */}
       {settings && (
         <div data-testid="auto-dispatch-kill-switch" style={{
           marginBottom: 28, padding: '20px 22px',
@@ -260,7 +260,7 @@ const BackOfficeOptinSegments = () => {
         Three independent consent tags: <code style={{ color: 'var(--ink)' }}>email_sentiment</code> (slow editorial digest),
         <code style={{ color: 'var(--ink)', margin: '0 4px' }}>sms_alerts</code> (fast daily bets),
         <code style={{ color: 'var(--ink)' }}>telegram_alerts</code> (mirror of SMS).
-        Daily cycle fires at 10:00 Europe/Helsinki — dry-run until Resend / Twilio / Telegram credentials land in <code style={{ color: 'var(--ink)' }}>backend/.env</code>.
+        Daily cycle fires at 10:00 Europe/Helsinki - dry-run until Resend / Twilio / Telegram credentials land in <code style={{ color: 'var(--ink)' }}>backend/.env</code>.
       </p>
 
       {/* Totals */}
@@ -271,7 +271,7 @@ const BackOfficeOptinSegments = () => {
       }}>
         <div>
           <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', marginBottom: 4 }}>TOTAL CONSENT ROWS</div>
-          <div data-testid="optin-total" style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 32, color: '#FFFFFF', lineHeight: 1 }}>{stats?.total ?? '—'}</div>
+          <div data-testid="optin-total" style={{ fontFamily: 'Georgia, serif', fontWeight: 700, fontSize: 32, color: '#FFFFFF', lineHeight: 1 }}>{stats?.total ?? '-'}</div>
         </div>
         <div style={{ borderLeft: '1px solid var(--hairline)', paddingLeft: 24 }}>
           <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)', marginBottom: 4 }}>SEGMENTS LIVE</div>
@@ -363,7 +363,7 @@ const BackOfficeOptinSegments = () => {
       <p style={{ color: 'var(--muted)', fontSize: 12.5, marginBottom: 14, maxWidth: 760, lineHeight: 1.55 }}>
         Limit blast radius: send the daily payload to a hand-picked list of recipients only.
         <strong style={{ color: 'var(--ink)' }}> Safety</strong>: a recipient only receives a message if they're
-        ALREADY in the corresponding opt-in segment — listed addresses outside the segment are silently dropped.
+        ALREADY in the corresponding opt-in segment - listed addresses outside the segment are silently dropped.
       </p>
       <div data-testid="test-send-form" style={{
         padding: '16px 18px', background: 'var(--surface)', border: '1px solid var(--hairline)',
@@ -420,7 +420,7 @@ const BackOfficeOptinSegments = () => {
             border: '1px solid #5a2b2b',
             fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.18em',
             fontWeight: 700, cursor: busy ? 'wait' : 'pointer',
-          }}>{busy ? '…' : '⚠ RUN CYCLE (LIVE — uses real keys where present)'}</button>
+          }}>{busy ? '…' : '⚠ RUN CYCLE (LIVE - uses real keys where present)'}</button>
         {summary?.last_cycle && (
           <span data-testid="last-cycle-info" style={{ marginLeft: 'auto', fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)' }}>
             LAST CYCLE · {String(summary.last_cycle.cycle_date)} · {summary.last_cycle.dry_run ? 'DRY-RUN' : 'LIVE'}

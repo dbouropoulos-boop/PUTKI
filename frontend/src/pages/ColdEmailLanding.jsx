@@ -6,15 +6,15 @@ import { useStreamers } from '../hooks/useRegistry';
 import { useLang } from '../context/LanguageContext';
 
 const FAQS_FI = [
-  { q: 'Onko palvelu ilmainen?',         a: 'Kyllä. PUTKI HQ -ilmoitukset ovat täysin ilmaisia. Emme veloita käyttäjältä — affiliaatti rahoittaa toiminnan.' },
+  { q: 'Onko palvelu ilmainen?',         a: 'Kyllä. PUTKI HQ -ilmoitukset ovat täysin ilmaisia. Emme veloita käyttäjältä - affiliaatti rahoittaa toiminnan.' },
   { q: 'Tarvitseeko luoda tili?',        a: 'Voit aloittaa pelkällä sähköpostilla. Tiliä ei tarvitse rekisteröidä erikseen.' },
-  { q: 'Kuinka usein ilmoituksia tulee?', a: 'Vain silloin kun valitsemasi striimaaja menee liveen. Keskimäärin 3–10 viestiä viikossa per seurattava.' },
+  { q: 'Kuinka usein ilmoituksia tulee?', a: 'Vain silloin kun valitsemasi striimaaja menee liveen. Keskimäärin 3-10 viestiä viikossa per seurattava.' },
   { q: 'Voiko ilmoitukset peruuttaa?',    a: 'Yhdellä klikkauksella. Jokainen viesti sisältää suoran perumislinkin.' },
 ];
 const FAQS_EN = [
-  { q: 'Is the service free?',          a: 'Yes. PUTKI HQ notifications are completely free. We don\u2019t charge users — affiliates fund the operation.' },
+  { q: 'Is the service free?',          a: 'Yes. PUTKI HQ notifications are completely free. We don\u2019t charge users - affiliates fund the operation.' },
   { q: 'Do I need to create an account?', a: 'Email is enough to start. No separate registration required.' },
-  { q: 'How often will I get alerts?',   a: 'Only when a streamer you\u2019ve picked goes live. Typically 3–10 messages per week per streamer.' },
+  { q: 'How often will I get alerts?',   a: 'Only when a streamer you\u2019ve picked goes live. Typically 3-10 messages per week per streamer.' },
   { q: 'Can I unsubscribe?',             a: 'One click. Every message includes a direct unsubscribe link.' },
 ];
 
@@ -112,7 +112,7 @@ const ColdEmailLanding = () => {
         <div className="container-narrow">
           <div className="eyebrow mb-3">{t('common.faq').toUpperCase()}</div>
           <h2 className="display text-3xl sm:text-4xl mb-8">
-            {lang === 'en' ? 'You probably know enough — but here\u2019s more' : 'Tiedät jo kaiken — mutta tässä lisätietoa'}
+            {lang === 'en' ? 'You probably know enough - but here\u2019s more' : 'Tiedät jo kaiken - mutta tässä lisätietoa'}
           </h2>
           <div className="space-y-6">
             {faqs.map((f, i) => (

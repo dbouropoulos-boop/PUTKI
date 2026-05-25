@@ -1,5 +1,5 @@
 /**
- * SmarticoGame — embeds a Smartico Visitor-Mode mini-game.
+ * SmarticoGame - embeds a Smartico Visitor-Mode mini-game.
  *
  * Loads the Smartico SDK once per page (idempotent against React strict
  * mode + remounts) and renders an iframe the SDK targets by id.
@@ -17,7 +17,7 @@
  *   maxWidth     number   Iframe max-width in px (default 800).
  *   height       number   Iframe pixel height (default 700).
  *
- * The component is purely presentational — it does NOT decide what to do
+ * The component is purely presentational - it does NOT decide what to do
  * with the win. The parent (Peli, Voyager) owns that.
  */
 import React, { useEffect, useRef } from 'react';
@@ -74,14 +74,14 @@ const SmarticoGame = ({
             frame_id,
             onWin: (prize) => {
               try { winRef.current && winRef.current(prize); }
-              catch { /* swallow — we never crash on operator's onWin */ }
+              catch { /* swallow - we never crash on operator's onWin */ }
             },
           });
         } catch {
           /* Smartico itself logs to console; nothing else to do here. */
         }
       })
-      .catch(() => { /* SDK fetch failed — iframe stays blank, page survives */ });
+      .catch(() => { /* SDK fetch failed - iframe stays blank, page survives */ });
     return () => { cancelled = true; };
   }, [template_id, brand_key, visitor_key, lang, frame_id]);
 

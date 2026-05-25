@@ -1,5 +1,5 @@
 """
-Iter46 — Back-office completeness sprint regression.
+Iter46 - Back-office completeness sprint regression.
 
 Covers:
   - Email template catalogue + CRUD + render preview
@@ -100,7 +100,7 @@ def test_email_templates_save_idempotent():
 
 
 def test_email_templates_only_known_slugs_persist():
-    """Saving an unknown slug must be silently dropped — no schema bypass."""
+    """Saving an unknown slug must be silently dropped - no schema bypass."""
     r1 = _get("/api/admin/email-templates")
     before = set(r1.json()["templates"].keys())
     payload = {"templates": {

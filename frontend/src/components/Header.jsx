@@ -38,7 +38,7 @@ export const Header = () => {
             data-testid="nav-method-link"
             className="hidden sm:inline-flex mono text-[10px] font-semibold tracking-[0.18em] uppercase h-9 px-3 rounded-full border items-center"
             style={{ borderColor: 'var(--border-strong)', color: 'var(--muted)', textDecoration: 'none' }}
-            title={lang === 'fi' ? 'Menetelmä — miten luvut lasketaan' : 'Method — how the numbers are calculated'}
+            title={lang === 'fi' ? 'Menetelmä - miten luvut lasketaan' : 'Method - how the numbers are calculated'}
           >
             {lang === 'fi' ? 'Menetelmä' : 'Method'}
           </Link>

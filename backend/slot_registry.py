@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Slot registry + extraction (Phase 1 sprint follow-up).
+PUTKI HQ - Slot registry + extraction (Phase 1 sprint follow-up).
 
 Editorial reads stream titles and extracts which slot game is being played
 right now across the tracked live streamers. The data is surfaced as the
@@ -17,12 +17,12 @@ length descending before matching achieves this without a real trie.
 A registry entry is **enabled** by default; setting `enabled: false`
 keeps the editorial record but excludes it from live matching.
 
-Both reel slots and live tables share the same registry — the ticker
+Both reel slots and live tables share the same registry - the ticker
 treats them uniformly per `Q1: a` from the spec lock-in.
 
 Public functions
 ----------------
-    seed_default_registry(db)       — idempotent bulk-insert of the
+    seed_default_registry(db)       - idempotent bulk-insert of the
                                       editorially-approved seed list
                                       (called once on FastAPI startup)
     list_registry(db, include_disabled=False) → list[dict]
@@ -30,7 +30,7 @@ Public functions
     update_entry(db, entry_id, …) → dict | None
     delete_entry(db, entry_id) → bool
     extract_now_playing(db, live_streamers) → list[dict]
-        — per-slot counts + per-slot streamer handles, sorted desc
+        - per-slot counts + per-slot streamer handles, sorted desc
 """
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ CATEGORY_LIVE_TABLE = "live_table"
 CATEGORIES = {CATEGORY_SLOT, CATEGORY_LIVE_TABLE}
 
 # Editorially-approved seed list (Sprint follow-up · 2026-05-19).
-# Order doesn't matter — extraction sorts by name length desc at match time.
+# Order doesn't matter - extraction sorts by name length desc at match time.
 DEFAULT_REGISTRY: List[Dict[str, str]] = [
     # ── Pragmatic Play ─────────────────────────────────────────────────
     {"name": "Sweet Bonanza",                "category": CATEGORY_SLOT, "provider": "Pragmatic Play"},
@@ -121,7 +121,7 @@ DEFAULT_REGISTRY: List[Dict[str, str]] = [
 
 # Stream categories that are NEVER slot streams. If a streamer's
 # `game_name` is one of these AND no slot name matches the title, we
-# return zero match — the streamer simply isn't running gambling content
+# return zero match - the streamer simply isn't running gambling content
 # right now.
 NON_SLOT_CATEGORIES = {
     "just chatting", "irl", "music", "talk shows & podcasts",
@@ -137,7 +137,7 @@ async def ensure_indexes(db) -> None:
 
 
 async def seed_default_registry(db) -> Dict[str, int]:
-    """Idempotent — every default entry is upserted by `name_lower`. Existing
+    """Idempotent - every default entry is upserted by `name_lower`. Existing
     rows (with manual edits / disabled state) are left untouched."""
     now = datetime.now(timezone.utc).isoformat()
     inserted = 0
@@ -246,7 +246,7 @@ async def extract_now_playing(db, live_streamers: Iterable[Dict[str, Any]],
     """Returns the now-playing slot table for the homepage ticker.
 
     Each row: `{name, category, provider, count, streamers: [{platform, handle}]}`
-    sorted by `count` descending. Empty list when nothing matches — frontend
+    sorted by `count` descending. Empty list when nothing matches - frontend
     renders the "Pure scene mode" empty state.
     """
     registry = await list_registry(db, include_disabled=False)
@@ -256,7 +256,7 @@ async def extract_now_playing(db, live_streamers: Iterable[Dict[str, Any]],
         title = (s.get("title") or "").strip()
         game = (s.get("game_name") or "").strip()
         # Skip explicit non-slot categories unless the title itself matches
-        # — that handles a streamer whose channel category is "Just Chatting"
+        # - that handles a streamer whose channel category is "Just Chatting"
         # but who's actually running a slot stream right now.
         text = f"{title} {game}"
         if not text.strip():

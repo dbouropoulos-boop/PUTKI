@@ -32,7 +32,7 @@ export const TelegramSubscribeButton = ({ compact = false, dataTestId = 'telegra
   };
 
   const labelOn  = lang === 'en' ? 'Subscribe via Telegram' : 'Tilaa Telegramissa';
-  const labelOff = lang === 'en' ? 'Telegram — coming soon' : 'Telegram — tulossa';
+  const labelOff = lang === 'en' ? 'Telegram - coming soon' : 'Telegram - tulossa';
 
   return (
     <button

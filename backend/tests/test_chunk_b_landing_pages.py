@@ -1,4 +1,4 @@
-"""Phase 1 Final Restructure · Chunk B — landing pages backend tests."""
+"""Phase 1 Final Restructure · Chunk B - landing pages backend tests."""
 
 import os
 import pytest
@@ -25,7 +25,7 @@ def admin_api():
     return s
 
 
-# ── /api/settings/public — voita_feature_enabled flag ──
+# ── /api/settings/public - voita_feature_enabled flag ──
 class TestSettings:
     def test_public_exposes_voita_flag(self, api):
         r = api.get(f"{BASE_URL}/api/settings/public", timeout=10)

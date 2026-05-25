@@ -1,9 +1,9 @@
 """
-PUTKI HQ — AI-assisted streamer editorial meta drafter.
+PUTKI HQ - AI-assisted streamer editorial meta drafter.
 
 Drafts → human review → publish pipeline. The LLM proposes, only humans
 publish. The draft pipeline is intentionally pessimistic about LLM
-output — every draft is opt-in (button click), cached, rate-limited, and
+output - every draft is opt-in (button click), cached, rate-limited, and
 NEVER appears on the public site without an explicit publish action.
 
 Status state machine (`streamer_meta.status`):
@@ -54,7 +54,7 @@ STATUS_DRAFT = "draft_needs_review"
 STATUS_PUBLISHED = "published"
 STATUS_SUPPRESSED = "suppressed"
 
-# Locked system prompt — version-controlled. Changes here must go through
+# Locked system prompt - version-controlled. Changes here must go through
 # code review (this is the editorial guardrail the spec called out).
 SYSTEM_PROMPT = """You write 1-2 sentence editorial context lines for PUTKI HQ, an independent \
 Finnish gambling-culture publication covering streamers, casino news, and \
@@ -72,7 +72,7 @@ Chatting / IRL / variety) factually
 - Use Finnish-cultural framing where natural (skene, scene)
 - Output ONE Finnish version and ONE English version
 
-ABSOLUTELY FORBIDDEN — never include any of the following:
+ABSOLUTELY FORBIDDEN - never include any of the following:
 - Sponsor names or operator affiliations (you do not have reliable data on this)
 - Income claims, "high roller", "big winner", or any financial claims
 - Personal information beyond streaming presence (no real names unless \
@@ -80,7 +80,7 @@ publicly used, no location beyond "Finnish streamer")
 - Promotional language: "popular", "favorite", "best", "top", "must-watch"
 - Tipster vocabulary: "tips", "picks", "predictions"
 - Claims about the streamer's personality, character, or motives
-- Any unverified specific claim — when in doubt, omit it
+- Any unverified specific claim - when in doubt, omit it
 
 OUTPUT FORMAT (JSON, raw object, no markdown fence):
 {
@@ -366,7 +366,7 @@ async def generate_draft(
         "draft_notes_for_reviewer": parsed["notes_for_reviewer"],
         "draft_generated_at": now,
         "draft_model": DRAFT_MODEL,
-        # Promote status only when there's nothing published yet — never
+        # Promote status only when there's nothing published yet - never
         # downgrade a `published` row to draft.
         # We do that in the update below using a conditional check.
     }
@@ -442,7 +442,7 @@ async def publish_meta(
         "meta_fi": fi[:600],
         "meta_en": en[:600],
         "status": STATUS_PUBLISHED,
-        # Clear pending draft fields — they are preserved in history.
+        # Clear pending draft fields - they are preserved in history.
         "draft_line_fi": "",
         "draft_line_en": "",
         "draft_confidence": "",
@@ -582,7 +582,7 @@ async def _resolve_streamer(
         return result.get("streamer"), result.get("recent_titles") or []
 
     # Default: pull from the live cache + any historical snapshot titles
-    # we might have. Titles history is best-effort — empty list is OK,
+    # we might have. Titles history is best-effort - empty list is OK,
     # the LLM still has the live snapshot to work from.
     streamer = None
     try:

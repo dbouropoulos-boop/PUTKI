@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Mittari page copy editor.
+PUTKI HQ - Mittari page copy editor.
 
 Everything visible on /mittari is editable through this module. A single
 Mongo doc (`settings._id='mittari_copy'`) overlays admin edits onto the
@@ -25,16 +25,16 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "page_title_lead": "5 vahvinta vetovinkkiä.",
             "page_title_em": "Joka aamu klo 09:00.",
             "page_title_tail": "Ilmaiseksi.",
-            "page_subtitle": "Viisi vetoa EU-urheilukirjojen markkinoilta Sharpness-pisteytettynä (0–100 — kuinka tiiviisti urheilukirjat hinnoittelevat). Mittari seuraa Suomen vedonlyöntiskeneä reaaliajassa: kun striimit + kertoimet + uutiset kuumenevat, saat hälytyksen. Telegram tai sähköposti. Yksi tilaus. GDPR. Lopeta milloin vain. Toimituksellista sisältöä — ei vetovinkkejä.",
+            "page_subtitle": "Viisi vetoa EU-urheilukirjojen markkinoilta Sharpness-pisteytettynä (0-100 - kuinka tiiviisti urheilukirjat hinnoittelevat). Mittari seuraa Suomen vedonlyöntiskeneä reaaliajassa: kun striimit + kertoimet + uutiset kuumenevat, saat hälytyksen. Telegram tai sähköposti. Yksi tilaus. GDPR. Lopeta milloin vain. Toimituksellista sisältöä - ei vetovinkkejä.",
             "headline_lead": "Viisi vahvinta poimintaa",
             "headline_em": "joka aamu klo 09:00",
             "headline_tail": "suoraan Telegramiin tai sähköpostiin.",
-            "subline": "Sharpness-pisteytetty 0–100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista. Sama data, sama luku — ei mielipiteitä, ei toimituksellisia muokkauksia. Bonuksena Mittarin reaaliaikaiset skenehälytykset.",
+            "subline": "Sharpness-pisteytetty 0-100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista. Sama data, sama luku - ei mielipiteitä, ei toimituksellisia muokkauksia. Bonuksena Mittarin reaaliaikaiset skenehälytykset.",
             "killer_eyebrow": "KESKI-SHARPNESS TÄNÄÄN",
             "killer_sub_lead": "Päivän viisi poimintaa keskiarvolla",
-            "killer_sub_tail": "— korkein implisiittinen todennäköisyys",
+            "killer_sub_tail": "- korkein implisiittinen todennäköisyys",
             "killer_foot": "Live · 15 min päivitys · lähde Odds API + EU-urheilukirjat",
-            "killer_quiet": "Markkina hiljainen juuri nyt — pudotus klo 09:00.",
+            "killer_quiet": "Markkina hiljainen juuri nyt - pudotus klo 09:00.",
             "countdown_label": "Seuraava pudotus",
             "meter_state_label": "MITTARI NYT",
             "composite_label": "YHDISTELMÄ",
@@ -44,16 +44,16 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "page_title_lead": "5 sharpest betting picks.",
             "page_title_em": "Every morning at 09:00.",
             "page_title_tail": "Free.",
-            "page_subtitle": "Five EU-sportsbook market picks, scored 0–100 (Sharpness — how tightly the sportsbooks price the market). The dial tracks Finland\u2019s betting scene live: when streamers + odds + news heat up, you get an alert. Telegram or email. One signup. GDPR. Stop anytime. Editorial only — not betting advice.",
+            "page_subtitle": "Five EU-sportsbook market picks, scored 0-100 (Sharpness - how tightly the sportsbooks price the market). The dial tracks Finland\u2019s betting scene live: when streamers + odds + news heat up, you get an alert. Telegram or email. One signup. GDPR. Stop anytime. Editorial only - not betting advice.",
             "headline_lead": "Five strongest picks",
             "headline_em": "every morning at 09:00",
             "headline_tail": "straight to Telegram or email.",
-            "subline": "Sharpness-scored 0–100 from EU sportsbook price dispersion + momentum. Same data, same number — no opinions, no editorial overrides. Bonus: real-time Mittari scene alerts.",
+            "subline": "Sharpness-scored 0-100 from EU sportsbook price dispersion + momentum. Same data, same number - no opinions, no editorial overrides. Bonus: real-time Mittari scene alerts.",
             "killer_eyebrow": "AVG SHARPNESS TODAY",
             "killer_sub_lead": "Today\u2019s five picks average sharpness",
-            "killer_sub_tail": "— top implied probability",
+            "killer_sub_tail": "- top implied probability",
             "killer_foot": "Live · 15-min refresh · source Odds API + EU sportsbooks",
-            "killer_quiet": "Market quiet right now — next drop at 09:00.",
+            "killer_quiet": "Market quiet right now - next drop at 09:00.",
             "countdown_label": "Next drop",
             "meter_state_label": "METER NOW",
             "composite_label": "COMPOSITE",
@@ -62,7 +62,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
     "gate": {
         "fi": {
             "title_top": "→ Kytke putki",
-            "lead": "Avaa Telegramissa — yksi napsautus",
+            "lead": "Avaa Telegramissa - yksi napsautus",
             "one_tap_inline": "YKSI NAPSAUTUS",
             "badge": "ALLE 3S TOIMITUS",
             "bullets": [
@@ -78,11 +78,11 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "fine_print": "Maksuton · lopeta milloin tahansa · GDPR",
             "revealed_hi": "Signaali 01 avattiin yllä ↑ · loput tulevat Telegramiin/sähköpostiin alle 3 sekunnissa.",
             "form_err": "Tarkista sähköposti",
-            "form_success": "✓ Kiitos — vahvistuslinkki sähköpostissasi",
+            "form_success": "✓ Kiitos - vahvistuslinkki sähköpostissasi",
         },
         "en": {
             "title_top": "→ Connect the pipe",
-            "lead": "Open in Telegram — one tap",
+            "lead": "Open in Telegram - one tap",
             "one_tap_inline": "ONE TAP",
             "badge": "<3S DELIVERY",
             "bullets": [
@@ -98,7 +98,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "fine_print": "Free · stop anytime · GDPR",
             "revealed_hi": "Signal 01 unlocked above ↑ · the rest land in Telegram/email in under 3 seconds.",
             "form_err": "Check your email",
-            "form_success": "✓ Thanks — confirmation link in your inbox",
+            "form_success": "✓ Thanks - confirmation link in your inbox",
         },
     },
     "explain": {
@@ -106,7 +106,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "title": "NÄIN SE TOIMII",
             "steps": [
                 {"title": "1 · MARKKINA", "body": "EU-urheilukirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00."},
-                {"title": "2 · SKENE",    "body": "Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0–100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele."},
+                {"title": "2 · SKENE",    "body": "Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele."},
                 {"title": "3 · TOIMITUS",  "body": "Telegramiin alle 3 sekunnissa. Sähköposti varalla. Sido kerran, ei toista listaa, ei spämmiä."},
             ],
         },
@@ -114,7 +114,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "title": "HOW IT WORKS",
             "steps": [
                 {"title": "1 · MARKET", "body": "EU sportsbooks move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00."},
-                {"title": "2 · SCENE",  "body": "Mittari composites 11 public sources into one number 0–100 and five states: Calm · Buzz · Active · Rolling · Perkele."},
+                {"title": "2 · SCENE",  "body": "Mittari composites 11 public sources into one number 0-100 and five states: Calm · Buzz · Active · Rolling · Perkele."},
                 {"title": "3 · DELIVERY",  "body": "Telegram in under 3 seconds. Email fallback. Bind once, no second list, no spam."},
             ],
         },
@@ -163,8 +163,8 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
         "items": [
             {"id": "t1", "initials": "JK", "name": "Jukka K.",
              "detail_fi": "Espoo · 8 kk · Telegram", "detail_en": "Espoo · 8 mo · Telegram",
-             "quote_fi": "Päivän signaali #02 osui — Sharpness 81 oli täysin oikeassa. Tämä on parempi kuin foorumeilta haahuilu.",
-             "quote_en": "Daily signal #02 hit — Sharpness 81 was spot-on. Better than chasing forum tips.",
+             "quote_fi": "Päivän signaali #02 osui - Sharpness 81 oli täysin oikeassa. Tämä on parempi kuin foorumeilta haahuilu.",
+             "quote_en": "Daily signal #02 hit - Sharpness 81 was spot-on. Better than chasing forum tips.",
              "receipt_fi": "Tilaaja 15.9.2025 · 12/14 signaalia osui viime kuussa",
              "receipt_en": "Subscriber since 15.9.2025 · 12/14 signals hit last month"},
             {"id": "t2", "initials": "SR", "name": "Sami R.",
@@ -175,8 +175,8 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
              "receipt_en": "Subscriber since 21.3.2025 · 94% alert open-rate over 30d"},
             {"id": "t3", "initials": "AL", "name": "Antti L.",
              "detail_fi": "Helsinki · 6 kk · Telegram", "detail_en": "Helsinki · 6 mo · Telegram",
-             "quote_fi": "Yksi tilaus — signaalit aamulla, mittarihälytykset päivän mittaan. Ei kahta listaa, ei spämmiä.",
-             "quote_en": "One subscription — signals in the morning, meter alerts through the day. No second list, no spam.",
+             "quote_fi": "Yksi tilaus - signaalit aamulla, mittarihälytykset päivän mittaan. Ei kahta listaa, ei spämmiä.",
+             "quote_en": "One subscription - signals in the morning, meter alerts through the day. No second list, no spam.",
              "receipt_fi": "Tilaaja 12.11.2025 · suositellut 4 ystävälle",
              "receipt_en": "Subscriber since 12.11.2025 · referred 4 friends"},
         ],
@@ -186,8 +186,8 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
         "title_en": "WHO BUILT THIS",
         "eyebrow_fi": "PERUSTAJA · 9 VUOTTA SUOMEN SKENEN ÄÄRELLÄ",
         "eyebrow_en": "FOUNDER · 9 YEARS IN THE FINNISH SCENE",
-        "quote_fi": "Rakensin nämä koska olen kyllästynyt missaamaan parhaat hetket — sekä markkinassa että striimausskenessä. Nyt saan viisi vahvinta poimintaa aamulla ja hälytyksen sekunnissa kun skene vaihtaa tilaa.",
-        "quote_en": "I built these because I was tired of missing the best moments — both in the market and in the streaming scene. Now I get five strongest plays in the morning and a ping within seconds when the scene changes state.",
+        "quote_fi": "Rakensin nämä koska olen kyllästynyt missaamaan parhaat hetket - sekä markkinassa että striimausskenessä. Nyt saan viisi vahvinta poimintaa aamulla ja hälytyksen sekunnissa kun skene vaihtaa tilaa.",
+        "quote_en": "I built these because I was tired of missing the best moments - both in the market and in the streaming scene. Now I get five strongest plays in the morning and a ping within seconds when the scene changes state.",
         "name": "Eino K.",
         "role_fi": "Perustaja · Putki HQ",
         "role_en": "Founder · Putki HQ",
@@ -234,15 +234,15 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
         },
     "signals": {
         "fi": {
-            "head_locked_eyebrow": "— PÄIVÄN SIGNAALIT · LUKITTU",
-            "head_unlocked_eyebrow": "— PÄIVÄN SIGNAALIT · AVATTU",
+            "head_locked_eyebrow": "- PÄIVÄN SIGNAALIT · LUKITTU",
+            "head_unlocked_eyebrow": "- PÄIVÄN SIGNAALIT · AVATTU",
             "title_lead": "Päivän",
             "title_em": "Signaalit",
             "pairing_lead": "Kaksi syötettä.",
             "pairing_em": "Yksi tilaus.",
-            "pairing_tail": "Telegram tai sähköposti — sinun valintasi.",
+            "pairing_tail": "Telegram tai sähköposti - sinun valintasi.",
             "preview_badge": "ESIKATSELU",
-            "preview_explainer": "Esimerkkirivit — todelliset poiminnat avautuvat tilaajille klo 09:00.",
+            "preview_explainer": "Esimerkkirivit - todelliset poiminnat avautuvat tilaajille klo 09:00.",
             "market_quiet_eyebrow": "MARKKINA HILJAINEN JUURI NYT",
             "market_quiet_body": "Huomenna klo 09:00 pudotamme seuraavat viisi. Tilaa ja saat ensimmäisen heti kun markkina avautuu.",
             "reveal_teaser": "⌥ Napsauta → Signaali 01 avautuu heti",
@@ -260,15 +260,15 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "band_scattered": "hajanainen",
         },
         "en": {
-            "head_locked_eyebrow": "— DAILY SIGNALS · LOCKED",
-            "head_unlocked_eyebrow": "— DAILY SIGNALS · UNLOCKED",
+            "head_locked_eyebrow": "- DAILY SIGNALS · LOCKED",
+            "head_unlocked_eyebrow": "- DAILY SIGNALS · UNLOCKED",
             "title_lead": "Today\u2019s",
             "title_em": "Signals",
             "pairing_lead": "Two feeds.",
             "pairing_em": "One signup.",
-            "pairing_tail": "Telegram or email — your choice.",
+            "pairing_tail": "Telegram or email - your choice.",
             "preview_badge": "PREVIEW",
-            "preview_explainer": "Example rows — real picks unlock for subscribers at 09:00.",
+            "preview_explainer": "Example rows - real picks unlock for subscribers at 09:00.",
             "market_quiet_eyebrow": "MARKET QUIET RIGHT NOW",
             "market_quiet_body": "Tomorrow 09:00 we drop the next five. Subscribe and you\u2019ll get the first one the moment the market opens it up.",
             "reveal_teaser": "⌥ Tap → Signal 01 unlocks instantly",
@@ -486,7 +486,7 @@ def _merge_back_home(defaults: Dict[str, str], override: Any) -> Dict[str, str]:
 def sanitize_and_merge(override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     """Deep-merge an admin override doc onto DEFAULT_MITTARI_COPY with caps.
 
-    Returns the full merged copy tree — every field is guaranteed present,
+    Returns the full merged copy tree - every field is guaranteed present,
     so the frontend can index without optional-chaining and never see
     `undefined`. Override doc is allowed to be partial.
     """
@@ -559,7 +559,7 @@ def sanitize_and_merge(override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 async def get_mittari_copy(db) -> Dict[str, Any]:
-    """Public — returns the fully merged copy tree."""
+    """Public - returns the fully merged copy tree."""
     doc = await db.settings.find_one({"_id": "mittari_copy"}, {"_id": 0, "value": 1})
     override = (doc or {}).get("value") if doc else None
     merged = sanitize_and_merge(override)
@@ -567,7 +567,7 @@ async def get_mittari_copy(db) -> Dict[str, Any]:
 
 
 async def get_mittari_copy_raw(db) -> Dict[str, Any]:
-    """Admin — returns the raw override-doc (what's persisted in Mongo) +
+    """Admin - returns the raw override-doc (what's persisted in Mongo) +
     the merged result, so the editor can show 'edited' vs 'default' state.
     """
     doc = await db.settings.find_one({"_id": "mittari_copy"}, {"_id": 0, "value": 1, "updated_at": 1})
@@ -581,7 +581,7 @@ async def get_mittari_copy_raw(db) -> Dict[str, Any]:
 
 
 async def save_mittari_copy(db, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Admin — persist the user override and return the new merged copy."""
+    """Admin - persist the user override and return the new merged copy."""
     if not isinstance(payload, dict):
         raise ValueError("payload_must_be_object")
     # We persist the user's raw override; sanitisation re-runs on every

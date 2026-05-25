@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Profiler Share OG Image generator (iter64 Phase 4).
+PUTKI HQ - Profiler Share OG Image generator (iter64 Phase 4).
 
 Renders a 1200×630 PNG card for social-share unfurling. The card shows:
 
@@ -20,7 +20,7 @@ from typing import Optional
 
 from PIL import Image, ImageDraw, ImageFont
 
-# Brand palette — kept in lock-step with frontend/src/index.css
+# Brand palette - kept in lock-step with frontend/src/index.css
 BG_PAPER   = (251, 250, 248)   # --bg
 INK        = (28,  26,  24)    # --ink
 MUTED      = (107, 102, 95)    # --muted
@@ -30,7 +30,7 @@ SURFACE_2  = (243, 240, 233)   # alt-bg for noise band
 
 W, H = 1200, 630
 
-# Font paths — DejaVu ships on every base python image; falls back to
+# Font paths - DejaVu ships on every base python image; falls back to
 # default bitmap font on the (vanishingly rare) host without DejaVu.
 _FONT_DIRS = [
     "/usr/share/fonts/truetype/dejavu",
@@ -91,7 +91,7 @@ def render_profile_card(
     lead = "I'm" if lang == "en" else "Olen"
     d.text((72, 150), lead, font=lead_font, fill=MUTED)
 
-    # Profile title — auto-shrink so it always fits on one line
+    # Profile title - auto-shrink so it always fits on one line
     title_size = 92
     title_font = _font(title_size, bold=True)
     while _text_w(d, profile_title, title_font) > (W - 460) and title_size > 48:
@@ -110,7 +110,7 @@ def render_profile_card(
                 if lang == "en" else "Millainen pelaaja sinä olet?")
     d.text((72, 420), question, font=q_font, fill=INK)
 
-    # CTA URL — bottom-left
+    # CTA URL - bottom-left
     url_font = _mono(18, bold=True)
     d.text((72, H - 70), "putkihq.fi/peliareena", font=url_font, fill=INK)
 
@@ -126,7 +126,7 @@ def render_profile_card(
     return out.getvalue()
 
 
-# Profile spectrum lookup — mirrors backend SCENARIO_PERSONAS but only
+# Profile spectrum lookup - mirrors backend SCENARIO_PERSONAS but only
 # carries the display name in both langs. Kept here so the OG renderer
 # is self-contained and importable from anywhere.
 PROFILE_DISPLAY = {

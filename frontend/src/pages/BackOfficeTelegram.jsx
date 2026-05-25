@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — BackOfficeTelegram.
+ * PUTKI HQ - BackOfficeTelegram.
  *
  * One-pane monitoring for the Telegram pipeline introduced in Sprint B:
  *   - Webhook info + one-click re-register
@@ -177,9 +177,9 @@ const BackOfficeTelegram = () => {
         <Pill label="PENDING UPDATES" value={pendingUpdates}
           tone={pendingUpdates > 10 ? 'warn' : 'ink'}
           hint="Queued on Telegram side" />
-        <Pill label="VOITA BOUND" value={leadSummary?.telegram?.voita_bound ?? '—'}
+        <Pill label="VOITA BOUND" value={leadSummary?.telegram?.voita_bound ?? '-'}
           hint="entries w/ chat_id" tone="accent" />
-        <Pill label="MITTARI BOUND" value={leadSummary?.telegram?.mittari_bound_active ?? '—'}
+        <Pill label="MITTARI BOUND" value={leadSummary?.telegram?.mittari_bound_active ?? '-'}
           hint="active subscribers" tone="accent" />
       </div>
 
@@ -211,7 +211,7 @@ const BackOfficeTelegram = () => {
           <div data-testid="bo-tg-webhook-url" style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 12,
             color: 'var(--ink)', wordBreak: 'break-all',
-          }}>{whUrl || '— not set —'}</div>
+          }}>{whUrl || '- not set -'}</div>
         </div>
         <div>
           <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
@@ -219,7 +219,7 @@ const BackOfficeTelegram = () => {
           <div style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 12,
             color: wh.last_error_message ? '#C13B2C' : '#6FA37D',
-          }}>{wh.last_error_message || '— none —'}</div>
+          }}>{wh.last_error_message || '- none -'}</div>
           {wh.last_error_date && (
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
               at {new Date(wh.last_error_date * 1000).toLocaleString()}
@@ -237,7 +237,7 @@ const BackOfficeTelegram = () => {
           <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
             letterSpacing: '0.20em', color: 'var(--muted)', marginBottom: 4 }}>IP ADDRESS</div>
           <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>
-            {wh.ip_address || '—'}
+            {wh.ip_address || '-'}
           </div>
         </div>
       </div>
@@ -337,23 +337,23 @@ const BackOfficeTelegram = () => {
               {boundEntries.items.map((e) => (
                 <tr key={e.id}>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                    {e.telegram_bound_at ? new Date(e.telegram_bound_at).toLocaleString().slice(0, 16) : '—'}
+                    {e.telegram_bound_at ? new Date(e.telegram_bound_at).toLocaleString().slice(0, 16) : '-'}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {e.raffle_slug}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>{e.telegram_chat_id}</td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                    {e.telegram_username ? `@${e.telegram_username}` : '—'}
+                    {e.telegram_username ? `@${e.telegram_username}` : '-'}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)', color: '#E8C26E' }}>
-                    {e.prediction_one_x_two || '—'}
+                    {e.prediction_one_x_two || '-'}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                    {e.predicted_home_goals}–{e.predicted_away_goals}
+                    {e.predicted_home_goals}-{e.predicted_away_goals}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                    {e.confidence ? `${e.confidence}/5` : '—'}
+                    {e.confidence ? `${e.confidence}/5` : '-'}
                   </td>
                 </tr>
               ))}
@@ -365,10 +365,10 @@ const BackOfficeTelegram = () => {
       {/* Mittari subscribers */}
       <SectionTitle>Mittari · signal subscribers</SectionTitle>
       <div style={{ display: 'flex', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-        <Pill label="TOTAL ROWS" value={subscribers?.total ?? '—'} tone="ink" />
-        <Pill label="ACTIVE+BOUND" value={subscribers?.active_bound ?? '—'} tone="ok"
+        <Pill label="TOTAL ROWS" value={subscribers?.total ?? '-'} tone="ink" />
+        <Pill label="ACTIVE+BOUND" value={subscribers?.active_bound ?? '-'} tone="ok"
           hint="receiving pings" />
-        <Pill label="LATEST PAGE" value={subscribers?.count ?? '—'} tone="ink" hint="page size 20" />
+        <Pill label="LATEST PAGE" value={subscribers?.count ?? '-'} tone="ink" hint="page size 20" />
       </div>
       {!subscribers || !subscribers.items?.length ? (
         <div data-testid="bo-tg-no-subscribers" style={{
@@ -399,13 +399,13 @@ const BackOfficeTelegram = () => {
               {subscribers.items.map((s, i) => (
                 <tr key={s.pending_id || i}>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                    {s.telegram_bound_at ? new Date(s.telegram_bound_at).toLocaleString().slice(0, 16) : '—'}
+                    {s.telegram_bound_at ? new Date(s.telegram_bound_at).toLocaleString().slice(0, 16) : '-'}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                    {s.telegram_chat_id || '—'}
+                    {s.telegram_chat_id || '-'}
                   </td>
                   <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                    {s.telegram_username ? `@${s.telegram_username}` : '—'}
+                    {s.telegram_username ? `@${s.telegram_username}` : '-'}
                   </td>
                   <td style={{
                     padding: '10px 12px', borderBottom: '1px solid var(--hairline)',
@@ -454,16 +454,16 @@ const BackOfficeTelegram = () => {
                 return (
                   <tr key={row.update_id || i}>
                     <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                      {row.received_at ? new Date(row.received_at).toLocaleString().slice(0, 16) : '—'}
+                      {row.received_at ? new Date(row.received_at).toLocaleString().slice(0, 16) : '-'}
                     </td>
                     <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                      {row.update_id || '—'}
+                      {row.update_id || '-'}
                     </td>
                     <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-                      {row.chat_id || '—'}
+                      {row.chat_id || '-'}
                     </td>
                     <td style={{ padding: '10px 12px', borderBottom: '1px solid var(--hairline)', color: '#E8C26E' }}>
-                      {r.kind || '—'}
+                      {r.kind || '-'}
                     </td>
                     <td style={{
                       padding: '10px 12px', borderBottom: '1px solid var(--hairline)',

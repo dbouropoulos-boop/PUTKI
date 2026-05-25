@@ -27,7 +27,7 @@ const Template = React.forwardRef(({ variant, payload, lang }, ref) => {
       }}
       data-testid={`shareable-template-${variant}`}
     >
-      {/* Top bar — brand */}
+      {/* Top bar - brand */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
@@ -62,7 +62,7 @@ const Template = React.forwardRef(({ variant, payload, lang }, ref) => {
               fontFamily: 'JetBrains Mono, monospace', fontSize: 132, fontWeight: 500,
               color: stateColor, letterSpacing: '-0.04em', lineHeight: 1,
             }}>
-              {payload.win || '—'}
+              {payload.win || '-'}
             </div>
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 18, letterSpacing: '0.16em', color: '#8E8B85', fontWeight: 600, marginTop: 16 }}>
               {(payload.game || '').toUpperCase()}
@@ -108,7 +108,7 @@ const Template = React.forwardRef(({ variant, payload, lang }, ref) => {
         )}
       </div>
 
-      {/* Bottom bar — meta + watermark */}
+      {/* Bottom bar - meta + watermark */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
         borderTop: '1px solid #2A2A2A', paddingTop: 28,

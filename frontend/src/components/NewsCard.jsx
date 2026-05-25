@@ -1,8 +1,8 @@
 /**
- * NewsCard — severity-tiered article card.
+ * NewsCard - severity-tiered article card.
  *
  * 4 tiers (SCORCHING / HOT / WARM / COOL) with progressive visual prominence
- * and disclosure. Lives in our editorial Nordic aesthetic — no neon, no
+ * and disclosure. Lives in our editorial Nordic aesthetic - no neon, no
  * gradients. Severity is signaled with a left border + label + headline scale.
  */
 import React from 'react';
@@ -114,7 +114,7 @@ const NewsCard = ({ article }) => {
         </div>
       )}
 
-      {/* CTA — only on SCORCHING and HOT */}
+      {/* CTA - only on SCORCHING and HOT */}
       {(article.severity === 'SCORCHING' || article.severity === 'HOT') && (
         <Link
           to="/#dial-cta"

@@ -1,5 +1,5 @@
 /**
- * Voyager — Next week + signup routing.
+ * Voyager - Next week + signup routing.
  *
  * Spec §4.6: the page must NOT dead-end. Two onward CTAs: streamer
  * alerts (so visitors don't miss next week) and Mestari diagnostic

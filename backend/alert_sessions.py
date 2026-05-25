@@ -1,5 +1,5 @@
 """
-PUTKI HQ — alert-manager session auth (iter52).
+PUTKI HQ - alert-manager session auth (iter52).
 
 Email-link-of-the-decade flow. No passwords; users prove they own the
 email by entering a 6-digit code we send to it. Verified codes mint an
@@ -53,14 +53,14 @@ async def ensure_indexes(db) -> None:
         logger.exception("alert_sessions index ensure failed")
 
 
-# ─────────────────────── Step 1 — request a code ──────────────────────
+# ─────────────────────── Step 1 - request a code ──────────────────────
 
 async def request_code(db, email: str) -> Dict[str, Any]:
     """Generate + persist a 6-digit code for `email`. Queues an email
     (real Resend send when RESEND_API_KEY is set; otherwise an
     `email_outbox` row for the back-office to read).
 
-    Returns `{status, expires_at}`. Never echoes the code itself —
+    Returns `{status, expires_at}`. Never echoes the code itself -
     that's only available to the admin via the preview endpoint."""
     email = (email or "").strip().lower()
     if not EMAIL_RE.match(email):
@@ -86,7 +86,7 @@ async def request_code(db, email: str) -> Dict[str, Any]:
     try:
         await db.email_outbox.insert_one({
             "to": email,
-            "subject": "PUTKI HQ — sisäänkirjautumiskoodi",
+            "subject": "PUTKI HQ - sisäänkirjautumiskoodi",
             "template": "alert_login_code",
             "text": (
                 f"Putki HQ -hälytysten hallinta\n\n"
@@ -95,7 +95,7 @@ async def request_code(db, email: str) -> Dict[str, Any]:
                 f"Jos et pyytänyt tätä, voit ohittaa viestin."
             ),
             "html": (
-                f"<p>Putki HQ — hälytysten hallinta</p>"
+                f"<p>Putki HQ - hälytysten hallinta</p>"
                 f"<p>Vahvistuskoodisi: <b style='font-size:22px;letter-spacing:6px'>{code}</b></p>"
                 f"<p>Koodi vanhenee {CODE_TTL_MINUTES} minuutin kuluttua.</p>"
                 f"<p style='color:#888;font-size:12px'>Jos et pyytänyt tätä, voit ohittaa viestin.</p>"
@@ -110,7 +110,7 @@ async def request_code(db, email: str) -> Dict[str, Any]:
     return {"status": "ok", "expires_at": expires.isoformat()}
 
 
-# ─────────────────────── Step 2 — verify the code ─────────────────────
+# ─────────────────────── Step 2 - verify the code ─────────────────────
 
 async def verify_code(db, email: str, code: str) -> Dict[str, Any]:
     """Verify the 6-digit code. On success returns `{token, expires_at}`."""
@@ -125,7 +125,7 @@ async def verify_code(db, email: str, code: str) -> Dict[str, Any]:
     if not doc:
         return {"status": "error", "reason": "code_expired_or_unknown"}
 
-    # `expires_at` is the TTL marker — Mongo cleans it up but the worker
+    # `expires_at` is the TTL marker - Mongo cleans it up but the worker
     # may not have run yet, so guard manually. Mongo strips tzinfo on
     # round-trip; treat naive datetimes as UTC.
     expires = doc.get("expires_at")
@@ -145,7 +145,7 @@ async def verify_code(db, email: str, code: str) -> Dict[str, Any]:
         )
         return {"status": "error", "reason": "code_mismatch"}
 
-    # Success — burn the code, mint a session token.
+    # Success - burn the code, mint a session token.
     await db.alert_login_codes.delete_one({"_id": doc["_id"]})
     token = secrets.token_urlsafe(32)
     now = _now()
@@ -213,7 +213,7 @@ async def delete_subscription(db, email: str, sub_id: str) -> bool:
 # ─────────────────────── Admin preview hatch ──────────────────────────
 
 async def list_pending_codes(db) -> list:
-    """Admin-only — see codes queued for delivery (used in preview when
+    """Admin-only - see codes queued for delivery (used in preview when
     Resend isn't wired). Includes the email_outbox row so the admin can
     extract the code from the rendered HTML."""
     out = []

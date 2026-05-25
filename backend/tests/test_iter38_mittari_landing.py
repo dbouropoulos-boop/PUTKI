@@ -1,4 +1,4 @@
-"""Iter38: /mittari landing page rebuild — backend lead capture tests.
+"""Iter38: /mittari landing page rebuild - backend lead capture tests.
 Verifies POST /api/voita/lead with source='mittari' persists with
 consent_tag='mittari_lead' and surface='mittari_landing'.
 """
@@ -114,7 +114,7 @@ class TestMittariSubscribeRegression:
             "email": _uniq("subreg"),
             "age_18_plus": True,
         }, timeout=15)
-        # Accept 200 (created) or 409 (already exists) — anything < 500
+        # Accept 200 (created) or 409 (already exists) - anything < 500
         assert r.status_code < 500, r.text
 
 

@@ -1,5 +1,5 @@
 /**
- * MostReadRail — homepage momentum signal.
+ * MostReadRail - homepage momentum signal.
  *
  * Surfaces the most-read article in the last hour as a single, low-noise
  * rail under the dial. Rotates through the top 5 every ~6s so first-time

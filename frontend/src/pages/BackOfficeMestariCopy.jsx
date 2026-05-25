@@ -1,5 +1,5 @@
 /**
- * BackOfficeMestariCopy — every line on /mestari is editable here.
+ * BackOfficeMestariCopy - every line on /mestari is editable here.
  *
  * Iter50: section rendering extracted to
  *   `components/back-office/mestariCopySectionsTop.jsx`
@@ -145,7 +145,7 @@ const BackOfficeMestariCopy = () => {
         </div>
       </div>
 
-      {/* Section renderers — pure presentation, see /components/back-office/mestariCopySections{Top,Bottom}.jsx */}
+      {/* Section renderers - pure presentation, see /components/back-office/mestariCopySections{Top,Bottom}.jsx */}
       <HeaderHeroSection {...sectionProps} />
       <MethodStackSection {...sectionProps} />
       <ClarityTeamSection {...sectionProps} />

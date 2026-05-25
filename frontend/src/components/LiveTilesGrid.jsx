@@ -4,11 +4,11 @@ import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// V2 honesty pass — formerly fake "live tile grid" pulling STREAMERS mock with
+// V2 honesty pass - formerly fake "live tile grid" pulling STREAMERS mock with
 // hardcoded viewer counts and live: true flags. Now reads /api/signals/live
 // which returns ONLY non-mocked signals from real Twitch/Kick/YouTube pollers.
 // While external API keys are unset, the endpoint returns empty and this grid
-// renders an honest empty state — no fabrication.
+// renders an honest empty state - no fabrication.
 
 const StreamerLiveTile = ({ sig }) => {
   const slug = (sig.payload?.slug || sig.payload?.login || sig.payload?.channel || '').toLowerCase();

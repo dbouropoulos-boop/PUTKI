@@ -1,5 +1,5 @@
 """
-Mestari multi-diagnostic regression — poker + blackjack.
+Mestari multi-diagnostic regression - poker + blackjack.
 
 Covers:
   - Question metadata shape (5 questions × N options each per diagnostic)

@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Voita game funnel config.
+PUTKI HQ - Voita game funnel config.
 
 DEFAULT_VOITA_QUIZ is the five-round game sequence per the
 2026-05-20 product reframe. Each step contains:
@@ -12,8 +12,8 @@ DEFAULT_VOITA_QUIZ is the five-round game sequence per the
   - A `tag` per option so the profile resolver can compose a profile
     type from the user's answer combination
 
-The structure is intentionally educative — players still learn the
-real betting concepts (Sharpness, the favorite paradox, etc.) — but
+The structure is intentionally educative - players still learn the
+real betting concepts (Sharpness, the favorite paradox, etc.) - but
 the framing is "game / round / scout report", never "lesson".
 
 Editorial can fully edit copy via the back-office; the
@@ -22,7 +22,7 @@ blank the funnel. Unverified percentage claims are tagged with
 `source: editorial_pending_citation` for future provenance audit.
 
 Acceptance: no outcome claims ("win more", "guaranteed", "lose less"
-in causal framing) — those are blocked at PUT time by the compliance
+in causal framing) - those are blocked at PUT time by the compliance
 linter (see `_assert_compliant_copy`).
 """
 
@@ -32,7 +32,7 @@ from typing import Any, Dict, List
 
 # Phrases that imply outcome guarantees or non-compliant edge claims.
 # Match is case-insensitive; substring is enough to flag. These are the
-# exact rahapelimainonta-compliance line we hold — phrases that promise
+# exact rahapelimainonta-compliance line we hold - phrases that promise
 # the *user* a winning outcome. Educational descriptions of bookmaker
 # mathematics (e.g. "guaranteed loss" from the bettor's perspective) are
 # allowed because they discourage, not encourage, blind play.
@@ -71,7 +71,7 @@ def _assert_compliant_copy(text: str, *, field: str) -> None:
 
 
 DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
-    # ── Lesson 1 — The Favorite Paradox ─────────────────────────────────
+    # ── Lesson 1 - The Favorite Paradox ─────────────────────────────────
     {
         "key": "bias_favorite",
         "auto": True, "multi": False, "callback": True,
@@ -80,35 +80,35 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
         "lesson_title_en": "The Favorite Paradox",
         "title_fi": "Altavastaajan ystävä vai suosikin halaaja? Rehellisesti.",
         "title_en": "Underdog backer or favorite-hugger? Be honest.",
-        "sub_fi": "Yksi vastaus. Tämä on peli — pelaa, älä kakkosveikkaa.",
-        "sub_en": "One answer. This is the game — play, don't second-guess.",
-        "zinger_fi": "Suosikit voittavat 67 % otteluista — ja häviävät rahaa 62 % ajasta. Kierros 1 — kierroksen scout selittää.",
-        "zinger_en": "Favorites win 67% of matches — and lose money 62% of the time. Round 1 scout report explains.",
+        "sub_fi": "Yksi vastaus. Tämä on peli - pelaa, älä kakkosveikkaa.",
+        "sub_en": "One answer. This is the game - play, don't second-guess.",
+        "zinger_fi": "Suosikit voittavat 67 % otteluista - ja häviävät rahaa 62 % ajasta. Kierros 1 - kierroksen scout selittää.",
+        "zinger_en": "Favorites win 67% of matches - and lose money 62% of the time. Round 1 scout report explains.",
         "options": [
             {"v": "favorite", "tag": "bias_favorite",
-             "label_fi": "Suosikkia aina — ei oteta riskejä",
-             "label_en": "Favorite every time — no risks",
+             "label_fi": "Suosikkia aina - ei oteta riskejä",
+             "label_en": "Favorite every time - no risks",
              "emoji": "🛡️",
-             "reveal_personalized_fi": "Olet suosikin halaaja. 71 % vapaa-ajan veikkaajista pelaa samalla tavalla — ja maksaa siitä.",
-             "reveal_personalized_en": "You're a Favorite-Hugger. 71% of casual predictors play the same way — and pay for it."},
+             "reveal_personalized_fi": "Olet suosikin halaaja. 71 % vapaa-ajan veikkaajista pelaa samalla tavalla - ja maksaa siitä.",
+             "reveal_personalized_en": "You're a Favorite-Hugger. 71% of casual predictors play the same way - and pay for it."},
             {"v": "underdog", "tag": "bias_underdog",
              "label_fi": "Altavastaajaa kun haistan jotain",
              "label_en": "Underdog when something tips me off",
              "emoji": "🎯",
-             "reveal_personalized_fi": "Olet Underdog Hunter. Tämä on usein arvokas tyyli — kun valitset altavastaajan, sinulla on yleensä syy.",
-             "reveal_personalized_en": "You're an Underdog Hunter. This is often a valuable style — when you back an underdog, you usually have a reason."},
+             "reveal_personalized_fi": "Olet Underdog Hunter. Tämä on usein arvokas tyyli - kun valitset altavastaajan, sinulla on yleensä syy.",
+             "reveal_personalized_en": "You're an Underdog Hunter. This is often a valuable style - when you back an underdog, you usually have a reason."},
             {"v": "balanced", "tag": "bias_balanced",
-             "label_fi": "Sekaisin — ei mitään kaavaa",
-             "label_en": "Mixed — no pattern",
+             "label_fi": "Sekaisin - ei mitään kaavaa",
+             "label_en": "Mixed - no pattern",
              "emoji": "🤷",
-             "reveal_personalized_fi": "Sekoitettu lähestymistapa. Tämä on rehellistä — ja tämä kierros auttaa sinua tunnistamaan, milloin painottaa kumpaakin suuntaan.",
-             "reveal_personalized_en": "A mixed approach. That's honest — and this round helps you spot when to lean each way."},
+             "reveal_personalized_fi": "Sekoitettu lähestymistapa. Tämä on rehellistä - ja tämä kierros auttaa sinua tunnistamaan, milloin painottaa kumpaakin suuntaan.",
+             "reveal_personalized_en": "A mixed approach. That's honest - and this round helps you spot when to lean each way."},
             {"v": "depends", "tag": "bias_situational",
              "label_fi": "Riippuu lajista ja fiiliksestä",
              "label_en": "Depends on sport + mood",
              "emoji": "🎲",
-             "reveal_personalized_fi": "Tilannekohtainen tyyli. Hyvä alku — mutta ilman dataa kytketty fiilis on kallista pitkässä juoksussa.",
-             "reveal_personalized_en": "A situational style. Fine start — but feel without data is expensive over time."},
+             "reveal_personalized_fi": "Tilannekohtainen tyyli. Hyvä alku - mutta ilman dataa kytketty fiilis on kallista pitkässä juoksussa.",
+             "reveal_personalized_en": "A situational style. Fine start - but feel without data is expensive over time."},
         ],
         "reveal_heading_fi": "Kierros 1/5 · Scout-raportti: Suosikkien paradoksi",
         "reveal_heading_en": "Round 1 of 5 · Scout report: The Favorite Paradox",
@@ -121,7 +121,7 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
         "source": "editorial_pending_citation",
     },
 
-    # ── Lesson 2 — Reading the Market ───────────────────────────────────
+    # ── Lesson 2 - Reading the Market ───────────────────────────────────
     {
         "key": "read_consensus",
         "auto": True, "multi": False, "callback": True,
@@ -130,29 +130,29 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
         "lesson_title_en": "Reading the Market",
         "title_fi": "Molemmilla otteluilla oli viime viikolla identtiset kertoimet. Kumpi on turvallisempi veto?",
         "title_en": "Both these matches had identical odds last week. Pick the safer bet.",
-        "sub_fi": "Sama otsikkokerroin — eri tarina alla.",
-        "sub_en": "Same headline odds — different story underneath.",
-        "zinger_fi": "Ottelu A — kun vedonvälittäjät ovat samaa mieltä, markkina on terävä. Kierros 2 — kierroksen scout opettaa luennan.",
+        "sub_fi": "Sama otsikkokerroin - eri tarina alla.",
+        "sub_en": "Same headline odds - different story underneath.",
+        "zinger_fi": "Ottelu A - kun vedonvälittäjät ovat samaa mieltä, markkina on terävä. Kierros 2 - kierroksen scout opettaa luennan.",
         "zinger_en": "Match A. When bookmakers agree, the market is sharp. Round 2 scout report teaches the read.",
         "options": [
             {"v": "tight", "tag": "read_consensus_y",
-             "label_fi": "Ottelu A — vedonvälittäjät 0.05 sisällä toisistaan",
-             "label_en": "Match A — bookmakers within 0.05 of each other",
+             "label_fi": "Ottelu A - vedonvälittäjät 0.05 sisällä toisistaan",
+             "label_en": "Match A - bookmakers within 0.05 of each other",
              "emoji": "🎯",
              "reveal_personalized_fi": "Oikein. Tunnistit Sharpnessin idean ilman, että käytimme sanaa. Tämä on jo etu.",
              "reveal_personalized_en": "Correct. You spotted the Sharpness signal without us using the word. That's already an edge."},
             {"v": "spread", "tag": "read_consensus_n",
-             "label_fi": "Ottelu B — vedonvälittäjät hajautuneet 0.40",
-             "label_en": "Match B — bookmakers spread across 0.40",
+             "label_fi": "Ottelu B - vedonvälittäjät hajautuneet 0.40",
+             "label_en": "Match B - bookmakers spread across 0.40",
              "emoji": "📊",
              "reveal_personalized_fi": "Ei aivan. Sama otsikkokerroin, mutta hajaantunut konsensus tarkoittaa, että vedonvälittäjät eivät ole varmoja. Sharpness olisi tällä matala.",
              "reveal_personalized_en": "Not quite. Same headline odds, but a spread consensus means bookmakers are unsure. Sharpness would be low here."},
             {"v": "same", "tag": "read_consensus_unknown",
-             "label_fi": "Sama veto — kertoimet ovat samat",
-             "label_en": "Same bet — odds are the same",
+             "label_fi": "Sama veto - kertoimet ovat samat",
+             "label_en": "Same bet - odds are the same",
              "emoji": "🤔",
              "reveal_personalized_fi": "Loogista, mutta tässä piilee kierroksen ydin: kertoimet ovat sama, mutta luottamus alla on aivan eri tason.",
-             "reveal_personalized_en": "Logical — but this is the core of the round: the odds match, but the confidence underneath is completely different."},
+             "reveal_personalized_en": "Logical - but this is the core of the round: the odds match, but the confidence underneath is completely different."},
         ],
         "reveal_heading_fi": "Kierros 2/5 · Scout-raportti: Markkinan lukeminen",
         "reveal_heading_en": "Round 2 of 5 · Scout report: Reading the Market",
@@ -165,7 +165,7 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
         "source": "real_metric_published_at_methodology",
     },
 
-    # ── Lesson 3 — The Five Loser Patterns ──────────────────────────────
+    # ── Lesson 3 - The Five Loser Patterns ──────────────────────────────
     {
         "key": "wrong_pattern",
         "auto": True, "multi": False, "callback": True,
@@ -176,14 +176,14 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
         "title_en": "Think about your last three predictions that crashed. What's the pattern?",
         "sub_fi": "Rehellinen vastaus tähän terävöittää seuraavaa kierrosta.",
         "sub_en": "An honest answer here sharpens the next round.",
-        "zinger_fi": "Yksi viidestä kuviosta osuu sinuun. Kierros 3 — kierroksen scout nimeää ja korjaa.",
+        "zinger_fi": "Yksi viidestä kuviosta osuu sinuun. Kierros 3 - kierroksen scout nimeää ja korjaa.",
         "zinger_en": "One of five patterns describes you. Round 3 scout report names it and has the fix.",
         "options": [
             {"v": "loyalty", "tag": "bias_loyalty",
-             "label_fi": "Lojaliteetti — joukkueeni",
-             "label_en": "Loyalty — my team",
+             "label_fi": "Lojaliteetti - joukkueeni",
+             "label_en": "Loyalty - my team",
              "emoji": "🎽",
-             "zinger_personalized_fi": "Urheilun kallein bias. Kierros 3 — kierroksen scout sisältää korjauksen.",
+             "zinger_personalized_fi": "Urheilun kallein bias. Kierros 3 - kierroksen scout sisältää korjauksen.",
              "zinger_personalized_en": "The most expensive bias in sport. Round 3 scout report has the fix.",
              "reveal_personalized_fi": "Oma joukkue on urheilun kallein bias. Tutkimusten mukaan fanit yliennustavat oman joukkueensa voitot keskimäärin 8 prosenttiyksiköllä.",
              "reveal_personalized_en": "Loyalty is the most expensive bias in sports. Studies show fans over-predict their team's wins by 8 percentage points on average."},
@@ -191,34 +191,34 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
              "label_fi": "Vaisto rutiinipeleissä",
              "label_en": "Gut on routine matches",
              "emoji": "🔥",
-             "zinger_personalized_fi": "Vaisto voittaa derbyt. Vaisto häviää tiistait. Kierros 3 — kierroksen scout selittää.",
+             "zinger_personalized_fi": "Vaisto voittaa derbyt. Vaisto häviää tiistait. Kierros 3 - kierroksen scout selittää.",
              "zinger_personalized_en": "Gut wins rivalries. Gut loses Tuesdays. Round 3 scout report explains.",
-             "reveal_personalized_fi": "Vaisto voittaa datan kärkiotteluissa ja paikallisderbyissä — mutta häviää tiistaikierrosten otteluissa. Kuvio on yllättävän johdonmukainen.",
-             "reveal_personalized_en": "Gut beats data on big rivalries — but loses on Tuesday fixtures. The pattern is surprisingly consistent."},
+             "reveal_personalized_fi": "Vaisto voittaa datan kärkiotteluissa ja paikallisderbyissä - mutta häviää tiistaikierrosten otteluissa. Kuvio on yllättävän johdonmukainen.",
+             "reveal_personalized_en": "Gut beats data on big rivalries - but loses on Tuesday fixtures. The pattern is surprisingly consistent."},
             {"v": "consensus", "tag": "bias_crowd",
              "label_fi": "Seurasin äänekästä konsensusta",
              "label_en": "Followed loud consensus",
              "emoji": "📢",
-             "zinger_personalized_fi": "Ääneäs ≠ oikea. Kierros 3 — kierroksen scout paljastaa merkin.",
+             "zinger_personalized_fi": "Ääneäs ≠ oikea. Kierros 3 - kierroksen scout paljastaa merkin.",
              "zinger_personalized_en": "Loud ≠ right. Round 3 scout report has the tell.",
              "reveal_personalized_fi": "Äänekäs konsensus ei ole sama asia kuin tietoinen konsensus. Some-kuhina ja kabinettien tieto eivät korreloi.",
              "reveal_personalized_en": "Loud consensus is not the same as informed consensus. Social-media buzz and inside-room knowledge don't correlate."},
             {"v": "overthink", "tag": "bias_overthink",
-             "label_fi": "Yliajattelin — vaihdoin viime hetkellä",
-             "label_en": "Overthought — switched last minute",
+             "label_fi": "Yliajattelin - vaihdoin viime hetkellä",
+             "label_en": "Overthought - switched last minute",
              "emoji": "🧠",
-             "zinger_personalized_fi": "Ensilukukerta on yleensä oikein. Kierros 3 — kierroksen scout sanoo miksi.",
+             "zinger_personalized_fi": "Ensilukukerta on yleensä oikein. Kierros 3 - kierroksen scout sanoo miksi.",
              "zinger_personalized_en": "Your first read is usually correct. Round 3 scout report says why.",
-             "reveal_personalized_fi": "Ensimmäinen lukukerta on yleensä oikein. Muutos jälkeenpäin on lähes aina väärä — ja jälkikäteen tarkistettavissa.",
-             "reveal_personalized_en": "Your first read is usually right. A late switch is almost always wrong — and verifiable after the fact."},
+             "reveal_personalized_fi": "Ensimmäinen lukukerta on yleensä oikein. Muutos jälkeenpäin on lähes aina väärä - ja jälkikäteen tarkistettavissa.",
+             "reveal_personalized_en": "Your first read is usually right. A late switch is almost always wrong - and verifiable after the fact."},
             {"v": "unknown", "tag": "bias_unknown",
-             "label_fi": "En osaa sanoa — en seuraa omia tuloksiani",
-             "label_en": "Honest answer — I don't track my results",
+             "label_fi": "En osaa sanoa - en seuraa omia tuloksiani",
+             "label_en": "Honest answer - I don't track my results",
              "emoji": "🤷",
              "zinger_personalized_fi": "Rehellinen vastaus. Kierros 3 alkaa juuri tästä.",
              "zinger_personalized_en": "Honest answer. Round 3 scout report starts where you are.",
-             "reveal_personalized_fi": "Rehellinen vastaus. Kierros 3 alkaa juuri sieltä mistä sinäkin — ilman seurantaa toistat samat virheet, joten ratkaisu on aloittaa seuraaminen.",
-             "reveal_personalized_en": "Honest answer. Round 3 scout report starts exactly where you are — without tracking you repeat the same mistakes, so the fix is to start tracking."},
+             "reveal_personalized_fi": "Rehellinen vastaus. Kierros 3 alkaa juuri sieltä mistä sinäkin - ilman seurantaa toistat samat virheet, joten ratkaisu on aloittaa seuraaminen.",
+             "reveal_personalized_en": "Honest answer. Round 3 scout report starts exactly where you are - without tracking you repeat the same mistakes, so the fix is to start tracking."},
         ],
         "reveal_heading_fi": "Kierros 3/5 · Scout-raportti: Viisi häviäjäkuviota",
         "reveal_heading_en": "Round 3 of 5 · Scout report: The Five Loser Patterns",
@@ -226,12 +226,12 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
         "reveal_fact_en": "Most predictors lose for five reasons: loyalty, gut on routine matches, loud consensus, overthinking, and not tracking results. Five patterns account for the majority of losses.",
         "reveal_why_fi": "Miksi? Aivot palkitsevat tutusta. Lojaliteetti ja vaisto tuntuvat varmoilta, mutta ne ovat juuri kohtia, joissa data poikkeaa intuitiosta. Ja ilman seurantaa et koskaan huomaa toistuvuutta.",
         "reveal_why_en": "Why? Brains reward the familiar. Loyalty and gut feel safe, but those are exactly the spots where data diverges from intuition. And without tracking you never notice the pattern.",
-        "reveal_application_fi": "Mitä tämä tarkoittaa arvonnoissasi: tietoisuus on puolet ratkaisusta. Merkitsemme otteluja, joissa juuri sinun bias todennäköisesti laukeaa. Voit jättää huomion huomiotta — mutta tiedät.",
-        "reveal_application_en": "What this means for your raffles: awareness is half the fix. We'll flag matches where your specific bias is likely to fire. You can choose to ignore the flag — but you'll know.",
+        "reveal_application_fi": "Mitä tämä tarkoittaa arvonnoissasi: tietoisuus on puolet ratkaisusta. Merkitsemme otteluja, joissa juuri sinun bias todennäköisesti laukeaa. Voit jättää huomion huomiotta - mutta tiedät.",
+        "reveal_application_en": "What this means for your raffles: awareness is half the fix. We'll flag matches where your specific bias is likely to fire. You can choose to ignore the flag - but you'll know.",
         "source": "editorial_pending_citation",
     },
 
-    # ── Lesson 4 — The Real Hierarchy ───────────────────────────────────
+    # ── Lesson 4 - The Real Hierarchy ───────────────────────────────────
     {
         "key": "analysis_priority",
         "auto": True, "multi": False, "callback": True,
@@ -240,8 +240,8 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
         "lesson_title_en": "The Real Hierarchy",
         "title_fi": "Mikä ennustaa ottelua eniten?",
         "title_en": "What actually predicts a match most?",
-        "sub_fi": "Valitse kärkitekijä — käymme listan läpi reveal-vaiheessa.",
-        "sub_en": "Pick the top factor — we'll walk the full list in the reveal.",
+        "sub_fi": "Valitse kärkitekijä - käymme listan läpi reveal-vaiheessa.",
+        "sub_en": "Pick the top factor - we'll walk the full list in the reveal.",
         "zinger_fi": "Selvä. Painotamme signaaleitasi tähän suuntaan.",
         "zinger_en": "Got it. We'll weight your signals around what you picked.",
         "options": [
@@ -273,67 +273,67 @@ DEFAULT_VOITA_QUIZ: List[Dict[str, Any]] = [
              "label_fi": "Keskinäiset kohtaamiset (H2H)",
              "label_en": "Head-to-head history",
              "emoji": "🤼",
-             "reveal_personalized_fi": "Väärin suuntaan. H2H on ylihinnoitelluin tekijä — vedonvälittäjät hinnoittelevat sen kertoimiin ennen kuin näet ne.",
-             "reveal_personalized_en": "Wrong direction. H2H is the most overrated factor — bookmakers price it in before you see the odds."},
+             "reveal_personalized_fi": "Väärin suuntaan. H2H on ylihinnoitelluin tekijä - vedonvälittäjät hinnoittelevat sen kertoimiin ennen kuin näet ne.",
+             "reveal_personalized_en": "Wrong direction. H2H is the most overrated factor - bookmakers price it in before you see the odds."},
         ],
         "reveal_heading_fi": "Kierros 4/5 · Scout-raportti: Todellinen hierarkia",
         "reveal_heading_en": "Round 4 of 5 · Scout report: The Real Hierarchy",
-        "reveal_fact_fi": "Oikea järjestys, suurten otteluaineistojen perusteella: 1) Vedonvälittäjien konsensuksen tiukkuus (Sharpness) — selvästi ennustavin. 2) Pelaajien saatavuus — loukkaantumiset ja pelikiellot liikuttavat linjaa. 3) Viimeisten 5 ottelun vire — merkitsevä mutta jo hinnoiteltu. 4) Kotietu — oikea, mutta pienempi kuin luullaan. 5) H2H — lähes pelkkä ansa, jo kertoimissa.",
-        "reveal_fact_en": "The correct order, based on large match samples: 1) Bookmaker consensus tightness (Sharpness) — by far the most predictive. 2) Key player availability — injuries and suspensions move the line. 3) Recent form (last 5 matches) — meaningful but priced in. 4) Home advantage — real but smaller than people think. 5) Head-to-head history — almost entirely a trap. Already in the odds.",
-        "reveal_why_fi": "Miksi tässä järjestyksessä? Sharpness mittaa vedonvälittäjien yhteistä tietoa — heillä on enemmän dataa kuin sinulla. Pelaajien saatavuus on signaali, joka ei aina ehdi kertoimiin. Loput tekijät ovat jo siellä.",
-        "reveal_why_en": "Why this order? Sharpness measures bookmakers' pooled knowledge — they have more data than you. Availability is a signal that doesn't always reach the odds in time. The rest is already priced in.",
-        "reveal_application_fi": "Mitä tämä tarkoittaa arvonnoissasi: kun lähetämme signaalin, johdamme sillä, mikä oikeasti merkitsee — Sharpness ensin, sitten saatavuus. H2H mainitsemme vain harvoin, koska se on melun pukeutumista dataksi.",
-        "reveal_application_en": "What this means for your raffles: when we send a signal, we lead with what actually matters — Sharpness, then availability. We barely mention H2H because it's noise dressed as data.",
+        "reveal_fact_fi": "Oikea järjestys, suurten otteluaineistojen perusteella: 1) Vedonvälittäjien konsensuksen tiukkuus (Sharpness) - selvästi ennustavin. 2) Pelaajien saatavuus - loukkaantumiset ja pelikiellot liikuttavat linjaa. 3) Viimeisten 5 ottelun vire - merkitsevä mutta jo hinnoiteltu. 4) Kotietu - oikea, mutta pienempi kuin luullaan. 5) H2H - lähes pelkkä ansa, jo kertoimissa.",
+        "reveal_fact_en": "The correct order, based on large match samples: 1) Bookmaker consensus tightness (Sharpness) - by far the most predictive. 2) Key player availability - injuries and suspensions move the line. 3) Recent form (last 5 matches) - meaningful but priced in. 4) Home advantage - real but smaller than people think. 5) Head-to-head history - almost entirely a trap. Already in the odds.",
+        "reveal_why_fi": "Miksi tässä järjestyksessä? Sharpness mittaa vedonvälittäjien yhteistä tietoa - heillä on enemmän dataa kuin sinulla. Pelaajien saatavuus on signaali, joka ei aina ehdi kertoimiin. Loput tekijät ovat jo siellä.",
+        "reveal_why_en": "Why this order? Sharpness measures bookmakers' pooled knowledge - they have more data than you. Availability is a signal that doesn't always reach the odds in time. The rest is already priced in.",
+        "reveal_application_fi": "Mitä tämä tarkoittaa arvonnoissasi: kun lähetämme signaalin, johdamme sillä, mikä oikeasti merkitsee - Sharpness ensin, sitten saatavuus. H2H mainitsemme vain harvoin, koska se on melun pukeutumista dataksi.",
+        "reveal_application_en": "What this means for your raffles: when we send a signal, we lead with what actually matters - Sharpness, then availability. We barely mention H2H because it's noise dressed as data.",
         "source": "editorial_pending_citation",
     },
 
-    # ── Lesson 5 — How do you want to apply it ──────────────────────────
+    # ── Lesson 5 - How do you want to apply it ──────────────────────────
     {
         "key": "apply_mode",
         "auto": True, "multi": False, "callback": True,
         "lesson_number": 5,
         "lesson_title_fi": "Sovella scout-raporttia",
         "lesson_title_en": "Apply the scout report",
-        "title_fi": "Tähän arvontaan — miten haluat soveltaa oppimaasi?",
-        "title_en": "For this raffle — how do you want to play?",
+        "title_fi": "Tähän arvontaan - miten haluat soveltaa oppimaasi?",
+        "title_en": "For this raffle - how do you want to play?",
         "sub_fi": "Tämä määrittää, miten ennustus näytetään.",
         "sub_en": "This shapes how the prediction is presented.",
         "zinger_fi": "Tämä yhdistää tunnettuun ennustajatyyppiin. Tulos heti perään...",
         "zinger_en": "That maps to a known predictor type. Result coming up...",
         "options": [
             {"v": "snap", "tag": "mode_snap",
-             "label_fi": "Vaistolla — luotan ensilukukertaan",
-             "label_en": "Snap — I trust my first read",
+             "label_fi": "Vaistolla - luotan ensilukukertaan",
+             "label_en": "Snap - I trust my first read",
              "emoji": "⚡",
              "reveal_personalized_fi": "Vaisto ensin. Tunnistat itsesi nopeissa päätöksissä.",
              "reveal_personalized_en": "Gut first. You know yourself in fast calls."},
             {"v": "slow", "tag": "mode_slow",
-             "label_fi": "Hitaasti — tarkistan numerot",
-             "label_en": "Slow — I check the numbers first",
+             "label_fi": "Hitaasti - tarkistan numerot",
+             "label_en": "Slow - I check the numbers first",
              "emoji": "📊",
              "reveal_personalized_fi": "Hidas ja tarkka. Sopii dataan tukeutuvaan veikkaajaan.",
              "reveal_personalized_en": "Slow and careful. The data-led predictor's mode."},
             {"v": "social", "tag": "mode_social",
-             "label_fi": "Sosiaalisesti — kysyn toisten luennan",
-             "label_en": "Social — I check what others read",
+             "label_fi": "Sosiaalisesti - kysyn toisten luennan",
+             "label_en": "Social - I check what others read",
              "emoji": "🤝",
              "reveal_personalized_fi": "Pohjaat valintaasi muiden lukuun. Hyvä, kun lähde on aito.",
              "reveal_personalized_en": "You lean on others' reads. Useful when the source is real."},
             {"v": "chaos", "tag": "mode_chaos",
-             "label_fi": "Kaaoksessa — vaihdan joka kerta tyyliä",
-             "label_en": "Chaos — I switch styles every time",
+             "label_fi": "Kaaoksessa - vaihdan joka kerta tyyliä",
+             "label_en": "Chaos - I switch styles every time",
              "emoji": "🌪️",
-             "reveal_personalized_fi": "Et lukitse tyyliisi. Rehellinen vastaus — ja korjattavissa.",
-             "reveal_personalized_en": "No locked style. Honest answer — and fixable."},
+             "reveal_personalized_fi": "Et lukitse tyyliisi. Rehellinen vastaus - ja korjattavissa.",
+             "reveal_personalized_en": "No locked style. Honest answer - and fixable."},
         ],
         "reveal_heading_fi": "Kierros 5/5 · Scout-raportti: Aika soveltaa",
         "reveal_heading_en": "Round 5 of 5 · Scout report: Time to apply it",
-        "reveal_fact_fi": "Tämä päättää kierrosten sarjan. Seuraavaksi näet henkilökohtaisen ennustajaraporttisi — ja sen jälkeen sovellat oppia oikeaan arvontaan.",
-        "reveal_fact_en": "That closes the round series. Next you'll see your personal predictor report — and then you'll apply what you learned in a real raffle.",
+        "reveal_fact_fi": "Tämä päättää kierrosten sarjan. Seuraavaksi näet henkilökohtaisen ennustajaraporttisi - ja sen jälkeen sovellat oppia oikeaan arvontaan.",
+        "reveal_fact_en": "That closes the round series. Next you'll see your personal predictor report - and then you'll apply what you learned in a real raffle.",
         "reveal_why_fi": "Miksi tässä järjestyksessä? Raportti antaa sinulle yhden lauseen, joka ohjaa valintaasi. Ennustus on scout-raportin sovellus, ei sen korvaaja.",
         "reveal_why_en": "Why this order? The report gives you one sentence to anchor your pick. The prediction is the scout report applied, not a replacement for it.",
-        "reveal_application_fi": "Mitä tämä tarkoittaa arvonnoissasi: koko funnel on yksi tuoteketju — pelaa → tunnista profiilisi → ennusta. Ei satunnaisia askelia.",
-        "reveal_application_en": "What this means for your raffles: the whole funnel is one product story — play → identify your profile → predict. No random steps.",
+        "reveal_application_fi": "Mitä tämä tarkoittaa arvonnoissasi: koko funnel on yksi tuoteketju - pelaa → tunnista profiilisi → ennusta. Ei satunnaisia askelia.",
+        "reveal_application_en": "What this means for your raffles: the whole funnel is one product story - play → identify your profile → predict. No random steps.",
         "source": "internal_product_logic",
     },
 ]

@@ -31,47 +31,47 @@ const SCORE_FACTORS_EN = [
 
 const PROS_FI = [
   'Talletukset 1 minuutissa, kotiutukset alle 2 tunnissa.',
-  'Pragmatic Play, Nolimit City, Hacksaw — täysi kirjasto.',
+  'Pragmatic Play, Nolimit City, Hacksaw - täysi kirjasto.',
   'Pay N Play -tuki Brite-pankkitunnistautumisella.',
   'Suomenkielinen chat 24/7, vastausaika alle minuutti.',
 ];
 const PROS_EN = [
   'Deposits in 1 minute, withdrawals under 2 hours.',
-  'Pragmatic Play, Nolimit City, Hacksaw — full library.',
+  'Pragmatic Play, Nolimit City, Hacksaw - full library.',
   'Pay N Play with Brite bank authentication.',
   'Finnish-language chat 24/7, response under a minute.',
 ];
 
 const CONS_FI = [
-  'Tervetuliaisbonuksen kierto on 35x — markkinastandardi, ei loistava.',
-  'Pikamaksut vain SEPA-instantilla — kortilla 6–8 h.',
+  'Tervetuliaisbonuksen kierto on 35x - markkinastandardi, ei loistava.',
+  'Pikamaksut vain SEPA-instantilla - kortilla 6-8 h.',
   'VIP-ohjelmaa ei ole julkisesti dokumentoitu.',
 ];
 const CONS_EN = [
-  'Welcome bonus wagering is 35x — market-standard, not exceptional.',
-  'Fast payouts only via SEPA Instant — card takes 6–8 h.',
+  'Welcome bonus wagering is 35x - market-standard, not exceptional.',
+  'Fast payouts only via SEPA Instant - card takes 6-8 h.',
   'VIP programme not publicly documented.',
 ];
 
 const FAQS_FI = [
   { q: 'Onko Weezybet luotettava?',                  a: 'Weezybet toimii MGA-lisenssillä, mikä on EU:n korkein vakiintunut sääntelystandardi. Operaattori on toiminut vuodesta 2022. Trustpilot 4.4 / 5, AskGamblersin valitusratkaisuprosentti yli 90 %.' },
-  { q: 'Kuinka kauan kotiutus kestää?',              a: 'SEPA-instantilla alle 2 tuntia. Kortille 6–8 tuntia. Pankkisiirrolla 1–2 arkipäivää. Mittarin mittauksissa Weezybet on Suomen kärkikolmikossa maksunopeudessa.' },
-  { q: 'Tarvitseeko verifioida tili erikseen?',       a: 'Pay N Play -menetelmällä ei tarvitse — pankkitunnistautuminen riittää. Kortilla talletettaessa KYC tehdään ennen ensimmäistä kotiutusta.' },
+  { q: 'Kuinka kauan kotiutus kestää?',              a: 'SEPA-instantilla alle 2 tuntia. Kortille 6-8 tuntia. Pankkisiirrolla 1-2 arkipäivää. Mittarin mittauksissa Weezybet on Suomen kärkikolmikossa maksunopeudessa.' },
+  { q: 'Tarvitseeko verifioida tili erikseen?',       a: 'Pay N Play -menetelmällä ei tarvitse - pankkitunnistautuminen riittää. Kortilla talletettaessa KYC tehdään ennen ensimmäistä kotiutusta.' },
   { q: 'Voiko pelata suomeksi?',                     a: 'Koko sivusto on suomenkielinen, mukaan lukien asiakaspalvelu ja bonusehdot.' },
   { q: 'Onko mobiilisovellus?',                      a: 'Erillistä sovellusta ei ole, mutta selainpohjainen mobiilikäyttöliittymä toimii natiivin tasoisesti.' },
   { q: 'Hyväksytäänkö suomalaiset pelaajat?',         a: 'Kyllä. Weezybet hyväksyy suomalaiset pelaajat avoimesti. Huomioi, että Suomen oma rahapelilisenssijärjestelmä avautuu heinäkuussa 2027.' },
   { q: 'Mitkä maksumenetelmät toimivat?',             a: 'Brite (pankkimaksu), Visa/Mastercard, Skrill, Neteller, MuchBetter, Trustly, SEPA-tilisiirto.' },
-  { q: 'Onko vastuullisen pelaamisen työkaluja?',     a: 'Kyllä. Talletusrajat, tappiorajat, aikarajat, oma-aloitteinen sulku 24h–pysyvä. Linkit Peluuriin ja Peli poikki -ohjelmaan.' },
+  { q: 'Onko vastuullisen pelaamisen työkaluja?',     a: 'Kyllä. Talletusrajat, tappiorajat, aikarajat, oma-aloitteinen sulku 24h-pysyvä. Linkit Peluuriin ja Peli poikki -ohjelmaan.' },
 ];
 const FAQS_EN = [
-  { q: 'Is Weezybet trustworthy?',                a: 'Weezybet operates under an MGA license — the EU\u2019s most established regulatory standard. Operator since 2022. Trustpilot 4.4 / 5, AskGamblers complaint-resolution rate over 90%.' },
-  { q: 'How long does a withdrawal take?',        a: 'SEPA Instant under 2 hours. Card 6–8 hours. Bank transfer 1–2 business days. In Mittari testing, Weezybet is top-3 in Finland for payout speed.' },
-  { q: 'Do I need to verify the account?',        a: 'Not with Pay N Play — bank authentication is enough. With card deposits, KYC happens before the first withdrawal.' },
+  { q: 'Is Weezybet trustworthy?',                a: 'Weezybet operates under an MGA license - the EU\u2019s most established regulatory standard. Operator since 2022. Trustpilot 4.4 / 5, AskGamblers complaint-resolution rate over 90%.' },
+  { q: 'How long does a withdrawal take?',        a: 'SEPA Instant under 2 hours. Card 6-8 hours. Bank transfer 1-2 business days. In Mittari testing, Weezybet is top-3 in Finland for payout speed.' },
+  { q: 'Do I need to verify the account?',        a: 'Not with Pay N Play - bank authentication is enough. With card deposits, KYC happens before the first withdrawal.' },
   { q: 'Can I play in Finnish?',                  a: 'The whole site is in Finnish, including support and bonus terms.' },
   { q: 'Is there a mobile app?',                  a: 'No separate app, but the browser-based mobile UI is native-class.' },
   { q: 'Are Finnish players accepted?',           a: 'Yes. Weezybet openly accepts Finnish players. Note that Finland\u2019s own license regime opens July 2027.' },
   { q: 'Which payment methods are supported?',    a: 'Brite (bank), Visa / Mastercard, Skrill, Neteller, MuchBetter, Trustly, SEPA transfer.' },
-  { q: 'Are responsible-gambling tools provided?', a: 'Yes. Deposit limits, loss limits, time limits, self-exclusion 24h–permanent. Links to Peluuri and Peli poikki.' },
+  { q: 'Are responsible-gambling tools provided?', a: 'Yes. Deposit limits, loss limits, time limits, self-exclusion 24h-permanent. Links to Peluuri and Peli poikki.' },
 ];
 
 const OperatorReview = () => {
@@ -116,7 +116,7 @@ const OperatorReview = () => {
               <h1 className="display text-5xl sm:text-7xl">{operator.name}</h1>
             </div>
             <p className="prose-mittari mb-8 max-w-xl">
-              {operator.oneLiner}{isPartner ? ' PUTKI HQ:n näkemys: paketti on kerralla suomalaiselle pelaajalle suunniteltu — Brite, suomenkielinen chat, Pragmatic-kirjasto ja oikeasti nopeat maksut.' : ''}
+              {operator.oneLiner}{isPartner ? ' PUTKI HQ:n näkemys: paketti on kerralla suomalaiselle pelaajalle suunniteltu - Brite, suomenkielinen chat, Pragmatic-kirjasto ja oikeasti nopeat maksut.' : ''}
             </p>
 
             {isPartner ? (
@@ -138,14 +138,14 @@ const OperatorReview = () => {
                 <div className="eyebrow mb-2">{lang === 'en' ? 'EDITORIAL ASSESSMENT ONLY' : 'VAIN TOIMITUKSELLINEN ARVIO'}</div>
                 <div className="font-serif text-[14px] text-ink leading-relaxed">
                   {lang === 'en'
-                    ? `PUTKI HQ has no partnership with ${operator.name}. No affiliate links, no bonus offers, no real-time tracking — only the P*rkele score and license metadata above.`
-                    : `PUTKI HQ:lla ei ole kumppanuutta operaattorin ${operator.name} kanssa. Ei affiliate-linkkejä, ei bonustarjouksia, ei reaaliaikaista seurantaa — vain yllä oleva P*rkele-pisteytys ja lisenssitieto.`}
+                    ? `PUTKI HQ has no partnership with ${operator.name}. No affiliate links, no bonus offers, no real-time tracking - only the P*rkele score and license metadata above.`
+                    : `PUTKI HQ:lla ei ole kumppanuutta operaattorin ${operator.name} kanssa. Ei affiliate-linkkejä, ei bonustarjouksia, ei reaaliaikaista seurantaa - vain yllä oleva P*rkele-pisteytys ja lisenssitieto.`}
                 </div>
               </div>
             )}
           </div>
 
-          {/* P*rkele Score panel — instrument readout */}
+          {/* P*rkele Score panel - instrument readout */}
           <div className="lg:col-span-5">
             <div className="panel p-6 sm:p-8 sticky top-24">
               <div className="flex items-start justify-between mb-7">
@@ -194,7 +194,7 @@ const OperatorReview = () => {
         </div>
       </section>
 
-      {/* LIVE DATA STRIP — partner-only (Phase 3 surface cleanup). Non-partners get an honest placeholder. */}
+      {/* LIVE DATA STRIP - partner-only (Phase 3 surface cleanup). Non-partners get an honest placeholder. */}
       {operator.slug === 'weezybet' ? (
         <section className="py-8" data-testid="operator-live-strip-partner" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}>
           <div className="container-wide">
@@ -232,7 +232,7 @@ const OperatorReview = () => {
         </section>
       )}
 
-      {/* QUICK FACTS — hidden by default in compressed mode (Phase 1.5 Revised) */}
+      {/* QUICK FACTS - hidden by default in compressed mode (Phase 1.5 Revised) */}
       {showDeeper && (<>
       <section className="container-wide py-12 sm:py-16" data-testid="deeper-quickfacts">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-16">
@@ -241,13 +241,13 @@ const OperatorReview = () => {
             <h2 className="display text-3xl sm:text-4xl mb-6">Maksunopeus kuin Veikkauksella, kirjasto kuin Pinnacle.</h2>
             <div className="prose-mittari">
               <p>
-                Weezybet on kahdessa vuodessa noussut suomalaisille operaattoreille hankalaksi vertailukohdaksi. Talletukset menevät minuutissa, kotiutukset alle kahdessa tunnissa — luku, jolla useimmat MGA-lisenssoidut sivustot eivät pärjää.
+                Weezybet on kahdessa vuodessa noussut suomalaisille operaattoreille hankalaksi vertailukohdaksi. Talletukset menevät minuutissa, kotiutukset alle kahdessa tunnissa - luku, jolla useimmat MGA-lisenssoidut sivustot eivät pärjää.
               </p>
               <p>
                 Pelikirjasto on tinkimätön: Pragmatic Play, Nolimit City, Hacksaw, Push Gaming. Sweet Bonanza 1000 ja Fire in the Hole 2 ovat saatavilla samana päivänä kuin muillakin huipuilla.
               </p>
               <p>
-                Bonuksen 35x-kierto on standardi — ei loistava, ei huono. Markkinoiden parhaat tällä hetkellä Mittarin mittauksissa ovat 25–30x. Pragmatic-jättibonukset jäävät bonuksen ulkopuolelle: kohtuullista, mutta on syytä mainita.
+                Bonuksen 35x-kierto on standardi - ei loistava, ei huono. Markkinoiden parhaat tällä hetkellä Mittarin mittauksissa ovat 25-30x. Pragmatic-jättibonukset jäävät bonuksen ulkopuolelle: kohtuullista, mutta on syytä mainita.
               </p>
             </div>
           </div>
@@ -358,13 +358,13 @@ const OperatorReview = () => {
         </section>
       )}
 
-      {/* BOTTOM CTA — partner only (Phase 3 honesty rule) */}
+      {/* BOTTOM CTA - partner only (Phase 3 honesty rule) */}
       {isPartner && (
         <section id="cta" className="border-t border-subtle-border py-16 bg-[#F4F2EE]">
           <div className="container-narrow text-center">
             <div className="eyebrow mb-4">Pelaa</div>
             <h2 className="display text-4xl sm:text-5xl mb-4">{operator.name}</h2>
-            <p className="font-serif text-lg text-muted-text mb-8 max-w-md mx-auto">{operator.offer} — 35x kierto, 30 päivän voimassaolo.</p>
+            <p className="font-serif text-lg text-muted-text mb-8 max-w-md mx-auto">{operator.offer} - 35x kierto, 30 päivän voimassaolo.</p>
             <a href="#" className="btn-primary text-lg" data-testid="operator-bottom-cta">
               Avaa tili {operator.name}issa →
             </a>
@@ -385,7 +385,7 @@ const OperatorReview = () => {
         </div>
       </section>
 
-      {/* STICKY MOBILE CTA — partner only */}
+      {/* STICKY MOBILE CTA - partner only */}
       {isPartner && (
         <>
           <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-paper border-t border-subtle-border p-3 z-30" data-testid="sticky-mobile-cta">

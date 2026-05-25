@@ -1,4 +1,4 @@
-"""Iter40 — Mittari lead-capture optimization backend tests.
+"""Iter40 - Mittari lead-capture optimization backend tests.
 
 Validates the new GET /api/mittari/stats endpoint contract, plus regression
 on POST /api/voita/lead (mittari surface) and POST /api/mittari/subscribe.

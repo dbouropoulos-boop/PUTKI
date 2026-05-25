@@ -1,12 +1,12 @@
 """
-PUTKI HQ — Phase 4 Server-Sent Events broadcaster for the dial.
+PUTKI HQ - Phase 4 Server-Sent Events broadcaster for the dial.
 
 Lightweight in-process pub-sub:
   - Each connected SSE client gets a bounded asyncio.Queue
   - Layer 2 workers (or any caller) push fresh dial snapshots via `publish`
   - `event_stream` yields formatted SSE chunks until the client disconnects
 
-This deliberately stays in-process — we're running a single Uvicorn worker,
+This deliberately stays in-process - we're running a single Uvicorn worker,
 and an SSE broker like Redis Streams is overkill for a Finnish editorial
 site. If we scale to multi-worker, swap this for `redis.asyncio` pubsub
 without touching the FastAPI route.
@@ -58,7 +58,7 @@ async def event_stream(initial_snapshot: Optional[Dict[str, Any]] = None,
     StreamingResponse(event_stream(), media_type='text/event-stream')."""
     q: asyncio.Queue = asyncio.Queue(maxsize=_QUEUE_MAX)
     _subscribers.add(q)
-    logger.info("SSE client connected — total=%d", len(_subscribers))
+    logger.info("SSE client connected - total=%d", len(_subscribers))
     try:
         # Initial bootstrap: send the most recent known snapshot immediately
         # so the UI can render without waiting for the next worker tick.
@@ -79,7 +79,7 @@ async def event_stream(initial_snapshot: Optional[Dict[str, Any]] = None,
                 yield ": heartbeat\n\n"
     finally:
         _subscribers.discard(q)
-        logger.info("SSE client disconnected — total=%d", len(_subscribers))
+        logger.info("SSE client disconnected - total=%d", len(_subscribers))
 
 
 def _format_event(event: str, payload: Dict[str, Any]) -> str:

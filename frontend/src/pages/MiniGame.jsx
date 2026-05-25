@@ -26,17 +26,17 @@ const PRIZE_TIERS = [
   { tier: '1', prize: '500 €', kind: 'kasino' },
   { tier: '2', prize: '250 €', kind: 'kasino' },
   { tier: '3', prize: '100 €', kind: 'kasino' },
-  { tier: '4–5', prize: '50 €', kind: 'free spins' },
-  { tier: '6–7', prize: '25 €', kind: 'free spins' },
+  { tier: '4-5', prize: '50 €', kind: 'free spins' },
+  { tier: '6-7', prize: '25 €', kind: 'free spins' },
 ];
 
 const TIPS_FI = [
-  'Pidä keskellä rauhassa — sivuun ehtii viime hetkellä.',
+  'Pidä keskellä rauhassa - sivuun ehtii viime hetkellä.',
   'Sininen + tuo lisänopeutta. Kerää mahdollisimman paljon.',
   'Ensimmäiset 30 s ovat helppoja. Säästä keskittyminen viimeisille 30 s:lle.',
 ];
 const TIPS_EN = [
-  'Hold the centre — you can sidestep at the last moment.',
+  'Hold the centre - you can sidestep at the last moment.',
   'Blue + boosters give you speed. Grab as many as you can.',
   'The first 30 s are easy. Save your focus for the last 30.',
 ];
@@ -111,7 +111,7 @@ const MiniGame = () => {
             {lang === 'en' ? 'WEEKLY ROUND · WK' : 'VIIKON KIERROS · VK'} 21
           </div>
           <h1 className="display text-4xl sm:text-6xl mb-5">
-            {lang === 'en' ? 'Weezy Rally — Imatra Stage' : 'Weezy Rally — Imatran etappi'}
+            {lang === 'en' ? 'Weezy Rally - Imatra Stage' : 'Weezy Rally - Imatran etappi'}
           </h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
             {lang === 'en'
@@ -177,8 +177,8 @@ const MiniGame = () => {
                       label: `${fmt(lastResult.score)} pts`,
                       intensity: 'KUUMA',
                       headline: lang === 'en'
-                        ? `${name || 'I'} scored ${fmt(lastResult.score)} on PUTKI HQ Rally — beat me?`
-                        : `${name || 'Sain'} ${fmt(lastResult.score)} pistettä PUTKI HQ Rallyssa — voitatko sen?`,
+                        ? `${name || 'I'} scored ${fmt(lastResult.score)} on PUTKI HQ Rally - beat me?`
+                        : `${name || 'Sain'} ${fmt(lastResult.score)} pistettä PUTKI HQ Rallyssa - voitatko sen?`,
                       color: '#E8924A',
                     }}
                     label={lang === 'en' ? 'SHARE THIS RUN' : 'JAA TÄMÄ AJO'}
@@ -322,7 +322,7 @@ const MiniGame = () => {
 
           {leaderboard.length === 0 ? (
             <div className="panel p-7 text-center mono" style={{ fontSize: 12, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }} data-testid="leaderboard-empty">
-              {lang === 'en' ? 'NO RUNS YET — BE THE FIRST →' : 'EI AJOJA VIELÄ — OLE ENSIMMÄINEN →'}
+              {lang === 'en' ? 'NO RUNS YET - BE THE FIRST →' : 'EI AJOJA VIELÄ - OLE ENSIMMÄINEN →'}
             </div>
           ) : (
             <div className="panel overflow-hidden" data-testid="leaderboard-table">
@@ -334,7 +334,7 @@ const MiniGame = () => {
               </div>
               {leaderboard.map((row, i) => {
                 const rank = i + 1;
-                const prize = PRIZE_TIERS.find((p) => p.tier.includes(String(rank)) || (p.tier.includes('–') && rank >= +p.tier.split('–')[0] && rank <= +p.tier.split('–')[1]));
+                const prize = PRIZE_TIERS.find((p) => p.tier.includes(String(rank)) || (p.tier.includes('-') && rank >= +p.tier.split('-')[0] && rank <= +p.tier.split('-')[1]));
                 return (
                   <div
                     key={row.id || i}
@@ -352,7 +352,7 @@ const MiniGame = () => {
                       {fmt(row.score)}
                     </div>
                     <div className="mono p-3 text-right" style={{ fontSize: 11, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }}>
-                      {prize ? prize.prize : '—'}
+                      {prize ? prize.prize : '-'}
                     </div>
                   </div>
                 );

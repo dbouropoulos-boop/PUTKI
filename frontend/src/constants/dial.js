@@ -1,4 +1,4 @@
-// Mittari editorial constants — dial state palette + labels.
+// Mittari editorial constants - dial state palette + labels.
 // NOT mock data. These are the 5 canonical dial states. The backend
 // dial_engine returns one of these keys; this file holds the visual palette
 // that maps state → color → headline copy.
@@ -7,10 +7,10 @@
 // English equivalent rendered when the language toggle is set to 'en'.
 //
 // 2026-05-19 rebrand: state names converted from "luck-vocab" to
-// "Perkele-mittari" — Finnish-cultural intensity register.
+// "Perkele-mittari" - Finnish-cultural intensity register.
 // Five states escalating from calm to full perkele:
 //   TYYNI · VIRE · VIPINÄ · MEININKI · PERKELE.
-// PERKELE is intentionally NOT translated — it is the cultural top state.
+// PERKELE is intentionally NOT translated - it is the cultural top state.
 //
 // Internal state KEYS (KYLMA/HAALEA/KUUMA/MYRSKY/KIIRASTULI) preserved so the
 // dial engine + collections don't have to migrate.

@@ -1,5 +1,5 @@
 """
-iter64 — Profiler pivot regression tests.
+iter64 - Profiler pivot regression tests.
 
 Covers:
   • Scenario seed now has 6 items (was 5) with max_score=18

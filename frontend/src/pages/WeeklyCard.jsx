@@ -1,5 +1,5 @@
 /**
- * WeeklyCard — "Viikon kortti": 5 real fixtures + gamified prize entry.
+ * WeeklyCard - "Viikon kortti": 5 real fixtures + gamified prize entry.
  *
  * Pulls /api/odds/featured for fixtures, /api/weekly/meta for the configurable
  * prize, /api/weekly/leaderboard for entry count + (settled) ranking. Submits
@@ -125,7 +125,7 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'PUTKI HQ — Weekly Card',
+          title: 'PUTKI HQ - Weekly Card',
           text: t('weekly.invite_help'),
           url: inviteUrl,
         });
@@ -177,7 +177,7 @@ const EntryForm = ({ predictions, picks, meta, lang, t, onSubmit }) => {
           </button>
         </div>
 
-        {/* Invite share card — viral loop */}
+        {/* Invite share card - viral loop */}
         <div className="panel p-5"
              data-testid="weekly-invite-card"
              style={{
@@ -556,7 +556,7 @@ const WeeklyCard = () => {
                       </div>
                       <h2 className="display text-2xl sm:text-3xl mb-3">
                         {p.pick_side === 'home' ? p.home_team : opp}{' '}
-                        <span className="text-muted-text">—</span>{' '}
+                        <span className="text-muted-text">-</span>{' '}
                         {p.pick_side === 'home' ? opp : p.home_team}
                       </h2>
                       <p className="font-serif text-[14.5px] text-ink leading-relaxed">

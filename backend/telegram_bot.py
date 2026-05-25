@@ -1,4 +1,4 @@
-"""PUTKI HQ — Voita Telegram bot (Sprint B Slice 3).
+"""PUTKI HQ - Voita Telegram bot (Sprint B Slice 3).
 
 Inbound webhook + outbound DM helper for `@Putkihq_bot`.
 
@@ -15,7 +15,7 @@ Wiring summary
 3. `handle_update` resolves the pending_id → `voita_entries` row, binds
    the chat_id + telegram_username + timestamp, and replies with a rich
    confirmation card (match · pick · score · confidence · position).
-4. After raffle draw, a follow-up hook (NOT in this slice — see
+4. After raffle draw, a follow-up hook (NOT in this slice - see
    `send_post_match_result`) DMs every bound entry with the result.
 
 Security
@@ -91,7 +91,7 @@ async def send_message(
 
 async def set_webhook(url: str, *, secret_token: Optional[str] = None,
                       drop_pending_updates: bool = True) -> Dict[str, Any]:
-    """Register the webhook URL with Telegram. Idempotent — Telegram
+    """Register the webhook URL with Telegram. Idempotent - Telegram
     overwrites whatever was previously configured."""
     token = _bot_token()
     if not token:
@@ -130,7 +130,7 @@ async def get_webhook_info() -> Dict[str, Any]:
 
 async def handle_update(db, update: Dict[str, Any]) -> Dict[str, Any]:
     """Entry-point for Telegram webhook POSTs. Returns a small dict for
-    audit/logging — Telegram itself only cares that we 200 quickly."""
+    audit/logging - Telegram itself only cares that we 200 quickly."""
     msg = update.get("message") or update.get("edited_message") or {}
     chat = msg.get("chat") or {}
     chat_id = chat.get("id")
@@ -158,7 +158,7 @@ async def handle_update(db, update: Dict[str, Any]) -> Dict[str, Any]:
                                    pending_id=token_arg)
 
     if text.startswith("/stop") or text.startswith("/unsubscribe"):
-        # Soft unsubscribe — flip active=False for any subscriber bound
+        # Soft unsubscribe - flip active=False for any subscriber bound
         # to this chat_id. Keep the row for audit.
         res = await db.mittari_subscribers.update_many(
             {"telegram_chat_id": str(chat_id)},
@@ -178,11 +178,11 @@ async def handle_update(db, update: Dict[str, Any]) -> Dict[str, Any]:
         await send_message(chat_id,
             "ℹ️ <b>PUTKI HQ Voita bot</b>\n\n"
             "Tämä botti vahvistaa arvonta­osallistumisesi ja ilmoittaa tuloksen ottelun jälkeen.\n\n"
-            "Avaa <code>/start &lt;koodi&gt;</code> nettisivulta — koodi on osallistumis­kuittauksen Telegram-painikkeessa.\n\n"
+            "Avaa <code>/start &lt;koodi&gt;</code> nettisivulta - koodi on osallistumis­kuittauksen Telegram-painikkeessa.\n\n"
             "Lue lisää: https://putkihq.fi/voita")
         return {"handled": True, "kind": "help"}
 
-    # Unknown / chitchat — minimal reply, no LLM here.
+    # Unknown / chitchat - minimal reply, no LLM here.
     fallback_text = await _resolve_welcome_text(db, fallback=(
         "Hei! Tämä on PUTKI HQ:n Voita-arvonnan vahvistus­botti.\n"
         "Käytä nettisivun Telegram-painiketta osallistuaksesi: https://putkihq.fi/voita"
@@ -204,7 +204,7 @@ async def _resolve_welcome_text(db, *, fallback: str) -> str:
         })
         if out and (out.get("body_text") or "").strip():
             return out["body_text"]
-    except Exception:  # noqa: BLE001 — pure defensive
+    except Exception:  # noqa: BLE001 - pure defensive
         logger.exception("welcome template resolve failed (using fallback)")
     return fallback
 
@@ -213,7 +213,7 @@ async def _handle_start(db, *, chat_id: int | str, username: str,
                         pending_id: str) -> Dict[str, Any]:
     if not pending_id:
         text = await _resolve_welcome_text(db, fallback=(
-            "👋 Tervetuloa! Käytä nettisivun Telegram-painiketta — saat henkilökohtaisen koodin, "
+            "👋 Tervetuloa! Käytä nettisivun Telegram-painiketta - saat henkilökohtaisen koodin, "
             "joka linkittää osallistumisesi.\n\nhttps://putkihq.fi/voita"
         ))
         await send_message(chat_id, text)
@@ -240,7 +240,7 @@ async def _handle_start(db, *, chat_id: int | str, username: str,
         {"_id": 0, "home_team": 1, "away_team": 1, "league": 1, "sport": 1, "kickoff_at": 1, "slug": 1},
     ) or {}
 
-    # Bind chat_id + username + timestamp. Idempotent — re-binding the
+    # Bind chat_id + username + timestamp. Idempotent - re-binding the
     # same chat is fine; cross-chat re-binding (different chat_id, same
     # pending_id) overwrites with the most recent.
     await db.voita_entries.update_one(
@@ -253,7 +253,7 @@ async def _handle_start(db, *, chat_id: int | str, username: str,
         }},
     )
 
-    # Compute entry position (1-indexed) — cheap re-count for the card.
+    # Compute entry position (1-indexed) - cheap re-count for the card.
     position = await db.voita_entries.count_documents({
         "raffle_id": entry.get("raffle_id"),
         "created_at": {"$lte": entry.get("created_at", _now_iso())},
@@ -293,7 +293,7 @@ def _render_confirmation_card(*, entry: Dict[str, Any], raffle: Dict[str, Any],
         f"<b>{home} vs {away}</b>",
         f"<i>{league}</i>" if league else "",
         "",
-        f"🎯 <b>Veikkauksesi</b>: {pick_label} · {ph}–{pa}",
+        f"🎯 <b>Veikkauksesi</b>: {pick_label} · {ph}-{pa}",
         f"📊 <b>Varmuus</b>: {conf}/5" if conf else "",
         f"🪪 <b>Osallistuja</b> #{position}",
         "",
@@ -324,7 +324,7 @@ def _format_kickoff(iso: Optional[str]) -> str:
 async def _handle_mittari_start(db, *, chat_id: int | str, username: str,
                                  pending_id: str) -> Dict[str, Any]:
     """Bind a Mittari subscriber. Unlike Voita raffles (one-shot per
-    match), Mittari subscribers persist until /stop — they receive
+    match), Mittari subscribers persist until /stop - they receive
     state-change pings + daily signals."""
     pending_id = (pending_id or "").strip()[:64]
     if not pending_id:
@@ -431,18 +431,18 @@ async def send_post_match_result(db, *, entry: Dict[str, Any],
     if is_winner:
         text = (
             "🏆 <b>VOITTO!</b>\n\n"
-            f"{home} vs {away} → <b>{actual_score or '—'}</b>\n"
-            f"Veikkauksesi: {pick} · {ph}–{pa}\n"
-            f"Pisteet: <b>{score if score is not None else '—'}</b>\n\n"
+            f"{home} vs {away} → <b>{actual_score or '-'}</b>\n"
+            f"Veikkauksesi: {pick} · {ph}-{pa}\n"
+            f"Pisteet: <b>{score if score is not None else '-'}</b>\n\n"
             "Toimituksemme on yhteydessä palkinnon toimittamisesta."
         )
     else:
         text = (
             "📋 <b>Arvonta päätöksessä</b>\n\n"
-            f"{home} vs {away} → <b>{actual_score or '—'}</b>\n"
-            f"Veikkauksesi: {pick} · {ph}–{pa}\n"
-            f"Pisteet: <b>{score if score is not None else '—'}</b>\n\n"
-            "Ei voittoa tällä kertaa. Kiitos osallistumisesta — jatkamme uudella arvonnalla pian."
+            f"{home} vs {away} → <b>{actual_score or '-'}</b>\n"
+            f"Veikkauksesi: {pick} · {ph}-{pa}\n"
+            f"Pisteet: <b>{score if score is not None else '-'}</b>\n\n"
+            "Ei voittoa tällä kertaa. Kiitos osallistumisesta - jatkamme uudella arvonnalla pian."
         )
     res = await send_message(chat_id, text)
     return {"sent": bool(res.get("ok")), "raw": res}

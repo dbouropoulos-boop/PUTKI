@@ -22,7 +22,7 @@ const getInitial = () => {
     if (low.startsWith('fi')) return 'fi';
     if (low.startsWith('en')) return 'en';
   }
-  // Other languages — default to English (it's the wider fallback).
+  // Other languages - default to English (it's the wider fallback).
   return 'en';
 };
 

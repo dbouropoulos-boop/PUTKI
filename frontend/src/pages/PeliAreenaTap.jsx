@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Aikatappo · Napautus (Flappy-style arcade · iter57)
+ * PUTKI HQ - Aikatappo · Napautus (Flappy-style arcade · iter57)
  *
  * One-tap mechanic: click/tap or press Space to flap. A bird (chip token)
  * falls under gravity; pipes (gates) scroll left. Score = pipes passed.
@@ -79,7 +79,7 @@ const PeliAreenaTap = () => {
     }
     ctx.globalAlpha = 1;
 
-    // Pipes — amber with cap detail + 3D shadow
+    // Pipes - amber with cap detail + 3D shadow
     st.pipes.forEach(p => {
       const topH = p.gapY - PIPE_GAP / 2;
       const bottomY = p.gapY + PIPE_GAP / 2;
@@ -117,7 +117,7 @@ const PeliAreenaTap = () => {
       drawCap(p.x, bottomY, PIPE_W, 18);
     });
 
-    // Bird (chip token) — rotates with velocity
+    // Bird (chip token) - rotates with velocity
     const b = st.bird;
     const rot = Math.max(-0.5, Math.min(1.1, b.vy / 16));
     ctx.save();
@@ -144,7 +144,7 @@ const PeliAreenaTap = () => {
     ctx.fillText('€', 0, 1);
     ctx.restore();
 
-    // Score HUD — top center
+    // Score HUD - top center
     ctx.font = 'bold 36px Georgia, serif';
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.textAlign = 'center';

@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Phase 4 Week 2 editorial subjects store
+PUTKI HQ - Phase 4 Week 2 editorial subjects store
 ==================================================
 
 Loads the master subject dataset (`foundational_research_v02.json` containing
@@ -8,7 +8,7 @@ Loads the master subject dataset (`foundational_research_v02.json` containing
 MongoDB collection.
 
 This is intentionally separate from the existing `foundational_research`
-collection — that one is a *cadence-driven* research store keyed by beat /
+collection - that one is a *cadence-driven* research store keyed by beat /
 content_type; this one is a *subject knowledge base* keyed by `subject_id`,
 which the ContentGenerator (Week 2) looks up when fetching bio/context for
 LLM prompts.

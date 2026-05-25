@@ -1,5 +1,5 @@
 """
-bootstrap.seeds — every seed_* and ensure_indexes call PUTKI HQ runs at
+bootstrap.seeds - every seed_* and ensure_indexes call PUTKI HQ runs at
 startup, in one auditable list.
 
 Each step is wrapped in try/except + structured logger so a single broken
@@ -63,7 +63,7 @@ async def run_all_seeds_and_indexes(db) -> None:
     await _safe("layer2_ensure_indexes", layer2_ensure_indexes(db))
     await _safe("content_ensure_indexes", content_ensure_indexes(db))
 
-    # ── Index ensures (per feature module — local imports) ───────────
+    # ── Index ensures (per feature module - local imports) ───────────
     from streamer_alerts import ensure_indexes as alerts_ensure_indexes
     from og_image_fetcher import ensure_indexes as og_ensure_indexes
     from streamer_snapshots import ensure_indexes as snap_ensure
@@ -83,12 +83,12 @@ async def run_all_seeds_and_indexes(db) -> None:
     await _safe("slot_registry.ensure_indexes", reg_ensure(db))
     await _safe("slot_registry.seed_default_registry", seed_default_registry(db))
 
-    # iter55 — mini-game suite (educational quiz + tournament backbone)
+    # iter55 - mini-game suite (educational quiz + tournament backbone)
     from mini_games import ensure_indexes as mg_ensure, seed_quiz_questions, seed_phase2_games
     await _safe("mini_games.ensure_indexes", mg_ensure(db))
     await _safe("mini_games.seed_quiz_questions", seed_quiz_questions(db))
     await _safe("mini_games.seed_phase2_games", seed_phase2_games(db))
 
-    # iter58 — tournament closing + analytics indexes
+    # iter58 - tournament closing + analytics indexes
     from mini_game_tournament import ensure_indexes as mgt_ensure
     await _safe("mini_game_tournament.ensure_indexes", mgt_ensure(db))

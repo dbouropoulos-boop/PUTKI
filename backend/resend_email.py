@@ -1,13 +1,13 @@
 """
-PUTKI HQ — Resend welcome-email dispatcher (iter65).
+PUTKI HQ - Resend welcome-email dispatcher (iter65).
 
 Feature-flagged: if `RESEND_API_KEY` is unset or empty the module
-operates in MOCKED mode — it logs the email it would have sent
+operates in MOCKED mode - it logs the email it would have sent
 and stamps `mini_game_leads.welcome_email_sent_at` with a synthetic
 "mocked:<uuid>" id, so the rest of the funnel (idempotency, success
 reporting, /back-office analytics) behaves identically. Drop the
 real key into /app/backend/.env and the module auto-flips to live
-send on the next request — no code change required.
+send on the next request - no code change required.
 
 Resend SDK is synchronous, so we use `asyncio.to_thread` to keep
 the FastAPI event loop free.
@@ -17,7 +17,7 @@ Idempotency: per `(email_hash, source_game)` we check
 
 Bilingual: FI/EN templates with persona-specific blind_spot + three
 traps copy embedded. The OG identity card is attached inline (CID)
-so the email itself shows the same card the user would share — no
+so the email itself shows the same card the user would share - no
 hot-link, no broken image if our domain is blocked.
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Lazy import — the SDK is heavy and only needed when actually sending
+# Lazy import - the SDK is heavy and only needed when actually sending
 _resend = None  # type: ignore
 
 
@@ -77,8 +77,8 @@ def _trap_li(items: List[str]) -> str:
 
 def _subject(lang: str, profile_title: str) -> str:
     if lang == "en":
-        return f"Your profile: {profile_title} — and 3 traps to watch"
-    return f"Profiilisi: {profile_title} — ja 3 ansaa, joista varoa"
+        return f"Your profile: {profile_title} - and 3 traps to watch"
+    return f"Profiilisi: {profile_title} - ja 3 ansaa, joista varoa"
 
 
 def _html(*, lang: str, profile_title: str, profile_index: str,
@@ -214,7 +214,7 @@ async def send_welcome_email(
         from profiler_og import render_from_persona_key
         og_png_bytes = render_from_persona_key(persona_key, lang=lang)
     except Exception:
-        logger.exception("welcome_email: OG render failed — sending without inline image")
+        logger.exception("welcome_email: OG render failed - sending without inline image")
         og_png_bytes = None
 
     subject = _subject(lang, profile_title)
@@ -257,7 +257,7 @@ async def send_welcome_email(
             mode = "live_failed"
     else:
         email_id = f"mocked:{uuid.uuid4()}"
-        logger.info("welcome_email MOCKED — would have sent to %s (subject=%r persona=%s lang=%s)",
+        logger.info("welcome_email MOCKED - would have sent to %s (subject=%r persona=%s lang=%s)",
                     email, subject, persona_key, lang)
 
     # ── Stamp the lead row so we don't double-send

@@ -1,8 +1,8 @@
 """
-PUTKI HQ — Sharpness scoring engine.
+PUTKI HQ - Sharpness scoring engine.
 
 Deterministic 0-100 composite score over bookmaker market behaviour, per
-the Phase 1 brief (Section 6). NO LLM in the loop — the AI never generates
+the Phase 1 brief (Section 6). NO LLM in the loop - the AI never generates
 the numbers; this module does. The picks-generator AI only writes the
 surrounding paragraph.
 

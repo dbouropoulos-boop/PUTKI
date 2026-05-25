@@ -1,5 +1,5 @@
 /**
- * Methodology (/menetelma) — boxed, scannable layout per Dioni's spec.
+ * Methodology (/menetelma) - boxed, scannable layout per Dioni's spec.
  * Fully bilingual via t(). 7 self-contained cards.
  */
 import React from 'react';
@@ -52,10 +52,10 @@ const Methodology = () => {
   const { lang, t } = useLang();
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Method — PUTKI HQ' : 'Menetelmä — PUTKI HQ',
+    title: lang === 'en' ? 'Method - PUTKI HQ' : 'Menetelmä - PUTKI HQ',
     description: lang === 'en'
-      ? 'How Mittari scores are built — objective factors 70 %, editorial weighting 30 %, and what does not count.'
-      : 'Miten Mittari-pisteet syntyvät — objektiiviset tekijät 70 %, toimituksellinen painotus 30 %, ja mikä ei vaikuta.',
+      ? 'How Mittari scores are built - objective factors 70 %, editorial weighting 30 %, and what does not count.'
+      : 'Miten Mittari-pisteet syntyvät - objektiiviset tekijät 70 %, toimituksellinen painotus 30 %, ja mikä ei vaikuta.',
     canonical: `${BACKEND}/menetelma`,
   });
 
@@ -138,7 +138,7 @@ const Methodology = () => {
       title: t('method.s7_t'),
       body: <p>{t('method.s7_b')}</p>,
     },
-    // ─── Phase 1 brief Section 9 — AI workflow disclosure ───
+    // ─── Phase 1 brief Section 9 - AI workflow disclosure ───
     {
       id: 'teknologia',
       icon: Cpu,
@@ -147,8 +147,8 @@ const Methodology = () => {
         <>
           <p>
             {lang === 'en'
-              ? 'PUTKI HQ uses artificial intelligence as part of its publishing operations — for monitoring news sources, classifying content, synthesizing articles, and generating editorial material. All published content passes editorial review before publication.'
-              : 'PUTKI HQ käyttää tekoälyä julkaisutoimintansa osana — uutislähteiden seurantaan, sisällön luokitteluun, artikkeleiden koostamiseen ja toimituksellisen aineiston tuottamiseen. Kaikki julkaistu sisältö käy läpi toimituksellisen tarkistuksen ennen julkaisua.'}
+              ? 'PUTKI HQ uses artificial intelligence as part of its publishing operations - for monitoring news sources, classifying content, synthesizing articles, and generating editorial material. All published content passes editorial review before publication.'
+              : 'PUTKI HQ käyttää tekoälyä julkaisutoimintansa osana - uutislähteiden seurantaan, sisällön luokitteluun, artikkeleiden koostamiseen ja toimituksellisen aineiston tuottamiseen. Kaikki julkaistu sisältö käy läpi toimituksellisen tarkistuksen ennen julkaisua.'}
           </p>
           <p style={{ fontWeight: 600 }}>
             {lang === 'en' ? 'Where AI is used:' : 'Missä tekoälyä käytetään:'}
@@ -175,24 +175,24 @@ const Methodology = () => {
             <li>
               <strong>{lang === 'en' ? 'What does NOT use AI.' : 'Mikä EI käytä tekoälyä.'}</strong>{' '}
               {lang === 'en'
-                ? 'The Mittari score, the Sharpness score, and all dial calculations are deterministic formulas — published in full below. The picks data itself comes from The Odds API. No model generates numbers.'
-                : 'Mittari-pisteet, Sharpness-pisteet ja kaikki dialin laskennat ovat deterministisiä kaavoja — julkaistu kokonaisuudessaan alla. Tärppien data itsessään tulee The Odds API:sta. Mikään malli ei generoi numeroita.'}
+                ? 'The Mittari score, the Sharpness score, and all dial calculations are deterministic formulas - published in full below. The picks data itself comes from The Odds API. No model generates numbers.'
+                : 'Mittari-pisteet, Sharpness-pisteet ja kaikki dialin laskennat ovat deterministisiä kaavoja - julkaistu kokonaisuudessaan alla. Tärppien data itsessään tulee The Odds API:sta. Mikään malli ei generoi numeroita.'}
             </li>
           </ul>
         </>
       ),
     },
-    // ─── Phase 1 brief Section 7e + user req — Sharpness formula published verbatim ───
+    // ─── Phase 1 brief Section 7e + user req - Sharpness formula published verbatim ───
     {
       id: 'sharpness',
       icon: Calculator,
-      title: lang === 'en' ? 'Sharpness — formula' : 'Sharpness — kaava',
+      title: lang === 'en' ? 'Sharpness - formula' : 'Sharpness - kaava',
       body: (
         <>
           <p>
             {lang === 'en'
-              ? 'Sharpness is a 0–100 score over bookmaker market behaviour. Deterministic, AI-free, computed live from The Odds API. We publish it verbatim so any reader can verify it.'
-              : 'Sharpness on 0–100-pisteen mittari, joka kuvaa vedonlyöntiyhtiöiden markkinakäyttäytymistä. Deterministinen, ei tekoälyä, lasketaan reaaliajassa The Odds API:sta. Julkaisemme sen sellaisenaan, jotta lukija voi tarkistaa sen itse.'}
+              ? 'Sharpness is a 0-100 score over bookmaker market behaviour. Deterministic, AI-free, computed live from The Odds API. We publish it verbatim so any reader can verify it.'
+              : 'Sharpness on 0-100-pisteen mittari, joka kuvaa vedonlyöntiyhtiöiden markkinakäyttäytymistä. Deterministinen, ei tekoälyä, lasketaan reaaliajassa The Odds API:sta. Julkaisemme sen sellaisenaan, jotta lukija voi tarkistaa sen itse.'}
           </p>
           <pre className="mono panel"
                style={{
@@ -215,11 +215,11 @@ recency_momentum     = clamp( 50 + (avg_implied_now - avg_implied_24h_ago) * 500
             {lang === 'en' ? 'Bands:' : 'Tasot:'}
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>≥ 90 — {lang === 'en' ? 'Markets are tight' : 'Markkinat ovat tiukat'}</li>
-            <li>75–89 — {lang === 'en' ? 'Markets are clear' : 'Markkinat ovat selkeät'}</li>
-            <li>60–74 — {lang === 'en' ? 'Markets are mixed' : 'Markkinat ovat sekoittuneet'}</li>
-            <li>40–59 — {lang === 'en' ? 'Markets are loose' : 'Markkinat ovat löysät'}</li>
-            <li>&lt; 40 — {lang === 'en' ? 'Markets are scattered' : 'Markkinat ovat hajallaan'}</li>
+            <li>≥ 90 - {lang === 'en' ? 'Markets are tight' : 'Markkinat ovat tiukat'}</li>
+            <li>75-89 - {lang === 'en' ? 'Markets are clear' : 'Markkinat ovat selkeät'}</li>
+            <li>60-74 - {lang === 'en' ? 'Markets are mixed' : 'Markkinat ovat sekoittuneet'}</li>
+            <li>40-59 - {lang === 'en' ? 'Markets are loose' : 'Markkinat ovat löysät'}</li>
+            <li>&lt; 40 - {lang === 'en' ? 'Markets are scattered' : 'Markkinat ovat hajallaan'}</li>
           </ul>
           <p>
             {lang === 'en'

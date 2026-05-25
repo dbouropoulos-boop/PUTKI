@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Daily dispatch + bell-icon + newsroom alerts metric tests.
+PUTKI HQ - Daily dispatch + bell-icon + newsroom alerts metric tests.
 """
 import os
 import asyncio

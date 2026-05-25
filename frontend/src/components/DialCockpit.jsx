@@ -6,12 +6,12 @@ import { formatTimeAgo } from '../utils/formatTime';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// V2 honesty pass — DialCockpit reads /api/cockpit + /api/admin/signals
+// V2 honesty pass - DialCockpit reads /api/cockpit + /api/admin/signals
 // summary surface (/api/signals/summary public would be ideal, but the
 // composite_score + sub_scores + signal_count already on /api/cockpit
 // gives us everything we need without admin auth).
 //
-// No hardcoded "ANDYPYRO €42K · PACT KICK 5.6K · F1 MONZA" — contributors
+// No hardcoded "ANDYPYRO €42K · PACT KICK 5.6K · F1 MONZA" - contributors
 // come from real sub_scores (which categories actually drove the dial).
 // If no real signal yet, show "EI SIGNAALIA" instead of fabricated viewers.
 
@@ -45,7 +45,7 @@ const PanelStat = ({ label, value, sub, align = 'left', lang = 'fi' }) => {
 };
 
 const SUBSCORE_LABEL = {
-  // Phase 4 — new 3-signal layer
+  // Phase 4 - new 3-signal layer
   stream:    { fi: 'STRIIMIT',  en: 'STREAMS',  weightPct: 57 },
   sports:    { fi: 'URHEILU',   en: 'SPORTS',   weightPct: 29 },
   news:      { fi: 'UUTISVIRTA',en: 'NEWSFLOW', weightPct: 14 },
@@ -57,7 +57,7 @@ const SUBSCORE_LABEL = {
   internal:  { fi: 'TOIMITUS',    en: 'EDITORIAL' },
 };
 
-// Tooltip help icon next to the cockpit brand label — first-visit nudge so
+// Tooltip help icon next to the cockpit brand label - first-visit nudge so
 // brand-new visitors understand what the dial actually measures.
 const DialHelp = () => {
   const { t } = useLang();
@@ -158,7 +158,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
           } catch (_) { /* ignore */ }
         });
         es.onerror = () => {
-          // SSE flaked — fall back to polling so we don't go silent
+          // SSE flaked - fall back to polling so we don't go silent
           setSseConnected(false);
           if (es) { es.close(); es = null; }
           if (!pollId) {
@@ -188,7 +188,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
   const subScores = cockpit?.sub_scores || {};
   const intensities = cockpit?.intensities || {};
 
-  // Phase 4 — Layer 2 three-signal bars (Twitch / NHL / News). Show every
+  // Phase 4 - Layer 2 three-signal bars (Twitch / NHL / News). Show every
   // tracked signal so editorial can see what's driving the dial.
   const layer2Signals = [
     { key: 'stream', weight: 57, value: intensities.stream ?? (subScores.stream || 0) / 57 },
@@ -217,7 +217,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
   const todKey = hour >= 18 ? 'time.evening' : hour >= 12 ? 'time.afternoon' : hour >= 6 ? 'time.morning' : 'time.night';
 
   // useNow drives the live "last update Xs ago" ticker in the cockpit
-  // header — re-renders every second when computedAt is set.
+  // header - re-renders every second when computedAt is set.
   const [tickerNow, setTickerNow] = useState(Date.now());
   useEffect(() => {
     const id = setInterval(() => setTickerNow(Date.now()), 1000);
@@ -234,16 +234,16 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
 
   return (
     <div className="flex flex-col items-center w-full" data-testid="dial-cockpit">
-      {/* LAST UPDATE ticker — small, monospace, sits above the maker's mark
+      {/* LAST UPDATE ticker - small, monospace, sits above the maker's mark
           to reinforce the "live trading instrument" feel. */}
       <div
         className="mono mb-1 inline-flex items-center gap-2"
         style={{ fontSize: 9.5, letterSpacing: '0.32em', color: 'var(--muted)', fontWeight: 500, opacity: 0.55 }}
         data-testid="cockpit-last-update"
       >
-        {lang === 'en' ? 'LAST UPDATE' : 'VIIMEISIN PÄIVITYS'} · {lastUpdateLabel || (lang === 'en' ? '— AGO' : '— SITTEN')}
+        {lang === 'en' ? 'LAST UPDATE' : 'VIIMEISIN PÄIVITYS'} · {lastUpdateLabel || (lang === 'en' ? '- AGO' : '- SITTEN')}
       </div>
-      {/* Premium trading-dashboard eyebrow — date/time on the left, live SSE
+      {/* Premium trading-dashboard eyebrow - date/time on the left, live SSE
           indicator on the right. The brand stays as a faint maker's mark above
           the primary mode label so it doesn't compete with the active state. */}
       <div className="mono mb-3 inline-flex items-center gap-3"
@@ -300,7 +300,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         <div className="flex justify-between w-full max-w-xs mb-6">
           <PanelStat
             label={lang === 'en' ? 'COMPOSITE' : 'KOKONAISLUKU'}
-            value={composite ?? '—'}
+            value={composite ?? '-'}
             sub={anyReal ? (lang === 'en' ? 'REAL' : 'OIKEA') : (lang === 'en' ? 'MOCK' : 'MOCK')}
             align="left"
             lang={lang}
@@ -316,7 +316,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
         <Dial size={compact ? 'medium' : 'large'} state={state} pulseTick={pulseTick} />
       </div>
 
-      {/* Phase 4 — Layer 2 three-signal sub-bars. Premium trading-dashboard
+      {/* Phase 4 - Layer 2 three-signal sub-bars. Premium trading-dashboard
           row: ticker label · weighted value · intensity bar · raw % share.
           Always rendered so even an idle scene shows the structure. */}
       <div

@@ -40,7 +40,7 @@ export const MomentCard = ({ moment, featured = false }) => {
       className="overflow-hidden flex flex-col panel panel-hover"
       data-testid={`moment-card-${moment.id}`}
     >
-      {/* DATA HERO PANEL — replaces stock photo (Fix 3) */}
+      {/* DATA HERO PANEL - replaces stock photo (Fix 3) */}
       <div
         className="relative p-6 sm:p-8 flex flex-col justify-between"
         style={{

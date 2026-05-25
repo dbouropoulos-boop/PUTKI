@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Email tracking pixel + click tracking.
+PUTKI HQ - Email tracking pixel + click tracking.
 
 Industry-standard 1×1 transparent GIF pixel injected into outbound
 playbook (and future) emails to track opens, plus a redirect endpoint
@@ -17,7 +17,7 @@ GDPR posture:
     counters with the rest of the row.
 
 Token format: 24-char URL-safe base64 (no padding). Random per outbox row
-— never reused, never derived from PII.
+- never reused, never derived from PII.
 """
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ TRANSPARENT_GIF_1x1 = (
 
 _TRACK_ENABLED_FLAG = os.environ.get("EMAIL_TRACKING_ENABLED", "1").strip()
 
-# Trusted host allowlist for click redirects — refuses anything else so
+# Trusted host allowlist for click redirects - refuses anything else so
 # the redirector cannot be weaponised as an open redirect.
 _ALLOWED_HOSTS = {
     "putkihq.fi",
@@ -68,7 +68,7 @@ def _now_iso() -> str:
 
 def _client_fingerprint(user_agent: Optional[str]) -> str:
     """Short hash of UA so we can collapse repeat opens from one client.
-    Not a PII identifier — full UA is never stored alongside email."""
+    Not a PII identifier - full UA is never stored alongside email."""
     src = (user_agent or "").strip()[:200]
     return hashlib.sha256(src.encode("utf-8")).hexdigest()[:10]
 

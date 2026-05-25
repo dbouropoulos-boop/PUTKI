@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Voita refinements (recent-winners strip masking, paid status,
+PUTKI HQ - Voita refinements (recent-winners strip masking, paid status,
 display_name, ?status=paid filter).
 """
 import os
@@ -70,14 +70,14 @@ class TestMaskEmail:
 
     def test_short_local_part_not_treated_as_full_name(self):
         from voita_engine import mask_email
-        # "a.b@gmail.com" — parts are < 2 chars each, so NOT full-name
+        # "a.b@gmail.com" - parts are < 2 chars each, so NOT full-name
         assert mask_email("a.b@gmail.com") == "a***@gmail.com"
 
     def test_local_with_digits_not_treated_as_full_name(self):
         from voita_engine import mask_email
-        # "mikko23@gmail.com" — no period, so just first-char + ***
+        # "mikko23@gmail.com" - no period, so just first-char + ***
         assert mask_email("mikko23@gmail.com") == "m***@gmail.com"
-        # "mikko.99@gmail.com" — has period but second part is digits
+        # "mikko.99@gmail.com" - has period but second part is digits
         assert mask_email("mikko.99@gmail.com") == "m***@gmail.com"
 
     def test_empty_and_invalid_return_empty(self):
@@ -179,7 +179,7 @@ class TestPaidStatusAndRecentWinners:
         admin.post(f"{BASE_URL}/api/admin/voita/raffles/{rid}/draw",
             json={"home_goals": 2, "away_goals": 1}, timeout=10)
         yield {"id": rid, "slug": slug}
-        # Cleanup — paid raffles can't be deleted, archive instead via
+        # Cleanup - paid raffles can't be deleted, archive instead via
         # direct mongo? Simpler: just leave them; tests use unique slugs.
 
     def test_mark_paid_only_from_drawn(self, admin, drawn_raffle):
@@ -192,7 +192,7 @@ class TestPaidStatusAndRecentWinners:
         assert r2.status_code == 400
 
     def test_paid_filter_returns_paid_raffles_with_masking(self, admin, public, drawn_raffle):
-        # Ensure the raffle is paid (idempotent — if previous test ran)
+        # Ensure the raffle is paid (idempotent - if previous test ran)
         admin.post(f"{BASE_URL}/api/admin/voita/raffles/{drawn_raffle['id']}/mark-paid", timeout=10)
         r = public.get(f"{BASE_URL}/api/voita/raffles?status=paid&limit=3", timeout=10)
         assert r.status_code == 200

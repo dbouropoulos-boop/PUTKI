@@ -1,5 +1,5 @@
 """
-Phase 4 Week 3 — preview endpoint + article surface tests.
+Phase 4 Week 3 - preview endpoint + article surface tests.
 """
 from __future__ import annotations
 

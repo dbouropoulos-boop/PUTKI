@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — VoyagerHomeStrip
+ * PUTKI HQ - VoyagerHomeStrip
  *
  * Single editorial banner on the homepage that links to /game (Voyager
  * weekly pick). Pulls real data from /api/voyager/active so the headline,
@@ -168,7 +168,7 @@ const VoyagerHomeStrip = () => {
             }}>
               {gameTitle} × {operator}
               <span style={{ color: 'var(--muted, #9C9587)', fontWeight: 400 }}>
-                {lang === 'en' ? ' — pick of the week.' : ' — viikon valinta.'}
+                {lang === 'en' ? ' - pick of the week.' : ' - viikon valinta.'}
               </span>
             </h3>
             {verdict && (
@@ -202,7 +202,7 @@ const VoyagerHomeStrip = () => {
                   fontFamily: 'Georgia, serif', fontWeight: 700,
                   fontSize: 'clamp(22px, 2.4vw, 28px)', lineHeight: 1,
                   letterSpacing: '-0.02em',
-                }}>{prizeMin}–{prizeMax}</div>
+                }}>{prizeMin}-{prizeMax}</div>
                 <div style={{
                   color: 'var(--muted, #9C9587)',
                   fontFamily: 'ui-monospace, monospace', fontSize: 9.5,

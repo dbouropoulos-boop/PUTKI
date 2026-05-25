@@ -4,7 +4,7 @@ import { Lock, RefreshCw, Plus, Save, Trash2, Upload } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// Phase 3 V2 — Foundational research admin surface (§seed-scheduler track).
+// Phase 3 V2 - Foundational research admin surface (§seed-scheduler track).
 // The editorial scheduler reads from this collection to surface topics. It
 // sits empty by design until the user populates it with structured datasets.
 
@@ -246,7 +246,7 @@ const FoundationalResearch = () => {
           <div className="space-y-3" data-testid="research-list">
             {entries.length === 0 ? (
               <div className="panel p-7 text-center mono" style={{ fontSize: 12, letterSpacing: '0.14em', color: 'var(--muted)', fontWeight: 600 }} data-testid="research-empty">
-                NO ENTRIES — POPULATE WITH STRUCTURED DATASETS. SCHEDULER STAYS QUIET UNTIL POPULATED.
+                NO ENTRIES - POPULATE WITH STRUCTURED DATASETS. SCHEDULER STAYS QUIET UNTIL POPULATED.
               </div>
             ) : entries.map((e) => (
               <div key={e.id} className="panel p-4" data-testid={`research-row-${e.id}`} style={{ borderColor: selected === e.id ? 'var(--ink)' : 'var(--border)' }}>

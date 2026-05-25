@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Back-office · Mini-game content editor (iter57)
+ * PUTKI HQ - Back-office · Mini-game content editor (iter57)
  *
  * CRUD interface for the 3 educational games' question banks (quiz,
  * scenario, insight). The 2 arcade games have no editable content.
@@ -183,7 +183,7 @@ const MiniGameAdmin = () => {
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <div className="mono" style={{ fontSize: 10, letterSpacing: '0.18em', color: '#5A7BB8', fontWeight: 700 }}>
-                    #{q.order} · {q.topic_tag || '—'} · {q.active ? 'AKTIIVI' : 'POIS'}
+                    #{q.order} · {q.topic_tag || '-'} · {q.active ? 'AKTIIVI' : 'POIS'}
                   </div>
                   <div style={{ display: 'flex', gap: 4 }}>
                     <button onClick={() => startEdit(q)} style={btnTiny} data-testid={`mg-edit-${q.id}`}>EDIT</button>
@@ -198,7 +198,7 @@ const MiniGameAdmin = () => {
               </div>
             ))}
             {questions.length === 0 && !busy && (
-              <p className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>Ei kysymyksiä — luo ensimmäinen UUSI-painikkeesta.</p>
+              <p className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>Ei kysymyksiä - luo ensimmäinen UUSI-painikkeesta.</p>
             )}
           </div>
         </div>

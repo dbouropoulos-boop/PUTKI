@@ -1,5 +1,5 @@
 """
-PUTKI HQ — OG image generator powered by Gemini Nano Banana.
+PUTKI HQ - OG image generator powered by Gemini Nano Banana.
 
 Generates a 1200x630 social-card image for any auto-published Finnish
 editorial article. Images are stored to disk under /app/backend/static/og/
@@ -10,7 +10,7 @@ Strategy:
     the cached URL.
   • Honest: if generation fails (LLM gateway flake, key missing) we return
     None so the content_generator falls through to the default category
-    SVG — no broken/half-baked OG cards.
+    SVG - no broken/half-baked OG cards.
 
 Triggered from content_generator at publish time so the image is ready by
 the time social scrapers hit the canonical URL.
@@ -34,7 +34,7 @@ OG_DIR = STATIC_ROOT / "og"
 PUBLIC_PREFIX = os.environ.get("OG_IMAGE_PUBLIC_PREFIX", "/api/static/og")
 NANO_BANANA_MODEL = os.environ.get("OG_IMAGE_MODEL", "gemini-3.1-flash-image-preview")
 
-# Concurrency cap — Nano Banana calls take 15-25s each and the live preview
+# Concurrency cap - Nano Banana calls take 15-25s each and the live preview
 # pod runs uvicorn with --workers 1. Without this cap, a few concurrent
 # publishes stall every other API request (404 lookups, drafts list, etc.).
 _GENERATION_SEMAPHORE = asyncio.Semaphore(int(os.environ.get("OG_IMAGE_CONCURRENCY", "1")))
@@ -92,7 +92,7 @@ def is_enabled() -> bool:
 async def _generate_once(slug: str, headline: str, category: Optional[str]) -> Optional[str]:
     """Actual Nano Banana call. Returns public URL on success, None on failure.
 
-    NEVER raises — content_generator's OG resolution must remain resilient.
+    NEVER raises - content_generator's OG resolution must remain resilient.
     """
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
@@ -169,7 +169,7 @@ async def ensure_og_image(slug: str, headline: str, category: Optional[str] = No
         _inflight.pop(safe, None)
 
 
-# ─────────────────────── Phase 1 Sprint 4 — Mittari state cards ───────────────────────
+# ─────────────────────── Phase 1 Sprint 4 - Mittari state cards ───────────────────────
 
 def mittari_og_slug(state_key: str, date_iso: str) -> str:
     """Stable filename slug for the state-card image."""
@@ -189,7 +189,7 @@ def mittari_og_exists(state_key: str, date_iso: str) -> bool:
 async def _generate_mittari_card(state_key: str,
                                  date_iso: str,
                                  reading_fi: str) -> Optional[str]:
-    """Internal — single Nano Banana call for one Mittari state card.
+    """Internal - single Nano Banana call for one Mittari state card.
     Idempotent: returns the cached URL if the file already exists."""
     if mittari_og_exists(state_key, date_iso):
         return mittari_og_url(state_key, date_iso)
@@ -207,12 +207,12 @@ async def _generate_mittari_card(state_key: str,
 
     OG_DIR.mkdir(parents=True, exist_ok=True)
     prompt = (
-        f"Editorial Mittari state-card for PUTKI HQ — Finnish independent media outlet. "
+        f"Editorial Mittari state-card for PUTKI HQ - Finnish independent media outlet. "
         f"1200x630 social-card composition.\n"
-        f"State name: \"{label}\" — render as massive bold display typography, "
+        f"State name: \"{label}\" - render as massive bold display typography, "
         f"top-left, dominating 60% of the canvas.\n"
         f"Color palette anchored on {hex_color} ({mood}). Warm near-black background (#0D0C0A) "
-        f"or cream (#F7F2EA) if light mode would feel right — your call as art director. "
+        f"or cream (#F7F2EA) if light mode would feel right - your call as art director. "
         f"Subtle grain texture. No gradients on dark; layered solids only.\n"
         f"Subtitle line, monospace, lower-third: \"{reading_fi[:120]}\".\n"
         f"URL stamp at very bottom-right in tiny monospace: \"putkihq.fi/m/{label.lower()}-{date_iso}\".\n"

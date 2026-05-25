@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Back-office · Mini-game analytics dashboard (iter58)
+ * PUTKI HQ - Back-office · Mini-game analytics dashboard (iter58)
  *
  * Per-game metrics:
  *   • plays_started / plays_finished
@@ -163,7 +163,7 @@ const MiniGameAnalytics = () => {
                 <span className="mono">{r.returning_pct}%</span>
                 <span className="mono">{r.shares}</span>
                 <span style={{ fontSize: 13, color: r.top_player ? 'var(--ink)' : 'var(--muted)' }}>
-                  {r.top_player ? `${r.top_player} · ${r.top_score}` : '—'}
+                  {r.top_player ? `${r.top_player} · ${r.top_score}` : '-'}
                 </span>
               </div>
             ))}

@@ -1,10 +1,10 @@
 """
-Iteration 23 — Phase 1 brief Section 10 source-citation validator tests.
+Iteration 23 - Phase 1 brief Section 10 source-citation validator tests.
 
 Verifies that `validate_content()` rejects articles lacking a specific
 outlet attribution (with rejection_reason `source_citation_missing`),
 while allowing:
-  • streamer_alert template (exempt by design — auto-live signal)
+  • streamer_alert template (exempt by design - auto-live signal)
   • sports recaps citing `data: ergast` / `data: nhl stats` / `data: opta`
 """
 import os
@@ -32,7 +32,7 @@ def _doc(**overrides):
 class TestSourceCitationValidator:
     def test_passes_with_yle_citation(self):
         body = (
-            "Helsinki — Ylen mukaan Veikkaus aikoo tiukentaa vedonlyönnin "
+            "Helsinki - Ylen mukaan Veikkaus aikoo tiukentaa vedonlyönnin "
             "ylärajoja kesäkuusta alkaen. Päätös syntyi sisäisessä "
             "arvioinnissa. Uusi yläraja koskee kaikkia urheilumarkkinoita "
             "ja astuu voimaan asteittain. Liikevaihtovaikutus arvioidaan "
@@ -61,7 +61,7 @@ class TestSourceCitationValidator:
         assert all(not e.startswith("source_citation_missing") for e in r["errors"]), r["errors"]
 
     def test_rejects_no_citation_phrase(self):
-        """Body has named source but no citation phrase — rejected."""
+        """Body has named source but no citation phrase - rejected."""
         body = (
             "Yle on Suomen yleisradio. Veikkaus on tehnyt päätöksen. "
             "Rajat muuttuvat kesäkuussa. Yksityiskohdat eivät ole vielä "
@@ -71,7 +71,7 @@ class TestSourceCitationValidator:
         assert "source_citation_missing:no_citation_phrase" in r["errors"]
 
     def test_rejects_no_named_source(self):
-        """Body has citation phrase but no named outlet — rejected."""
+        """Body has citation phrase but no named outlet - rejected."""
         body = (
             "Markkinaraporttien mukaan Veikkaus aikoo tiukentaa "
             "vedonlyöntirajojaan kesäkuusta alkaen. Lähde ei ole "
@@ -90,7 +90,7 @@ class TestSourceCitationValidator:
     def test_sports_recap_data_attribution_accepted(self):
         """F1/NHL/Football recaps may cite `data: <provider>` in lieu of named outlet."""
         body = (
-            "Imola — data: Ergast vahvistaa, että Bottas sijoittui kymmenenneksi "
+            "Imola - data: Ergast vahvistaa, että Bottas sijoittui kymmenenneksi "
             "lauantain aika-ajossa. Bottas-tiimi totesi jälkikäteen, että "
             "rengasstrategia oli väärä. Sunnuntain kilpailussa odotetaan "
             "kuivaa säätä ja tasaista vauhtia."

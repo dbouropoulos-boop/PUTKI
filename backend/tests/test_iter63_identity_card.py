@@ -1,4 +1,4 @@
-"""iter63 — Identity Result Card backend payload tests.
+"""iter63 - Identity Result Card backend payload tests.
 
 Verifies that POST /api/mini-games/{quiz|scenario|insight|arcade}/finish|submit
 return a `card` object with the full bilingual psychological payload
@@ -13,7 +13,7 @@ import requests
 def _load_backend_url():
     url = os.environ.get("REACT_APP_BACKEND_URL")
     if not url:
-        # fallback — read from frontend/.env (cannot hardcode)
+        # fallback - read from frontend/.env (cannot hardcode)
         envp = "/app/frontend/.env"
         if os.path.exists(envp):
             with open(envp) as f:

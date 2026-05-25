@@ -4,7 +4,7 @@
  * Edits the editable landing-copy tree (hub + poker + blackjack) that
  * was previously hardcoded in MestariHub.jsx + MestariDiagnostic.jsx.
  * Section-by-section; FI + EN side-by-side. Sports diagnostic landing
- * copy is NOT edited here — it lives at /back-office/mestari-copy
+ * copy is NOT edited here - it lives at /back-office/mestari-copy
  * (separate singleton, separate editor, per Section 8 lock).
  *
  * Path: /back-office/mestari-diagnostics-copy

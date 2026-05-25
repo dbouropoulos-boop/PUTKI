@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — ProgressiveOptIn (Phase 1 Final · Chunk B).
+ * PUTKI HQ - ProgressiveOptIn (Phase 1 Final · Chunk B).
  *
  * 3-step sequential funnel. Steps render ONE AT A TIME, never simultaneously.
  * Skip is always available. Each step writes a distinct consent tag.
@@ -14,7 +14,7 @@
  * Props
  * -----
  *   surface: 'mittari' | 'pelisignaalit' | 'voita' | 'peli' | 'homepage'
- *   valueProps: { email, sms, telegram } strings — per-surface copy
+ *   valueProps: { email, sms, telegram } strings - per-surface copy
  *   telegramUrl: full t.me URL (defaults to /api/settings/public telegram_channel)
  *   dataTestId: scoped test id prefix
  */
@@ -104,11 +104,11 @@ const ProgressiveOptIn = ({
   // Default per-surface copy. Caller can override entirely via valueProps.
   const defaults = {
     email: lang === 'en'
-      ? "Daily scene sentiment — Mittari state, four headlines, the mood. 09:00, one email."
-      : "Päivän skene-tunnelma — Mittarin tila, neljä otsikkoa, kokonais­kuva. Klo 09.00, yksi sähköposti.",
+      ? "Daily scene sentiment - Mittari state, four headlines, the mood. 09:00, one email."
+      : "Päivän skene-tunnelma - Mittarin tila, neljä otsikkoa, kokonais­kuva. Klo 09.00, yksi sähköposti.",
     sms: lang === 'en'
-      ? "The day's bets — five signals, Sharpness 75+, straight to your phone at 10:00."
-      : "Päivän vedot — viisi signaalia, Sharpness 75+, suoraan puhelimeen klo 10.00.",
+      ? "The day's bets - five signals, Sharpness 75+, straight to your phone at 10:00."
+      : "Päivän vedot - viisi signaalia, Sharpness 75+, suoraan puhelimeen klo 10.00.",
     telegram: lang === 'en'
       ? "Same daily bets on Telegram. Pick one channel, not both."
       : "Samat päivän vedot Telegramissa. Valitse yksi kanava, ei molempia.",
@@ -177,13 +177,13 @@ const ProgressiveOptIn = ({
           color: 'var(--ink, #ECE6D8)', fontSize: 13.5, lineHeight: 1.55,
           margin: 0,
         }}>{lang === 'en'
-          ? 'Thanks. Tunnelma at 09:00, bets at 10:00. We respect your inbox — no spam, ever.'
-          : 'Kiitos. Tunnelma klo 09.00, vedot klo 10.00. Kunnioitamme postilaatikkoasi — ei roska­postia, koskaan.'}</p>
+          ? 'Thanks. Tunnelma at 09:00, bets at 10:00. We respect your inbox - no spam, ever.'
+          : 'Kiitos. Tunnelma klo 09.00, vedot klo 10.00. Kunnioitamme postilaatikkoasi - ei roska­postia, koskaan.'}</p>
       </div>
     );
   }
 
-  // === STEP 1 — EMAIL ===
+  // === STEP 1 - EMAIL ===
   if (step === 1) {
     return (
       <div data-testid={`${dataTestId}-step1`} style={{
@@ -228,7 +228,7 @@ const ProgressiveOptIn = ({
     );
   }
 
-  // === STEP 2 — SMS upsell ===
+  // === STEP 2 - SMS upsell ===
   if (step === 2) {
     return (
       <div data-testid={`${dataTestId}-step2`} style={{
@@ -278,7 +278,7 @@ const ProgressiveOptIn = ({
     );
   }
 
-  // === STEP 3 — Telegram ===
+  // === STEP 3 - Telegram ===
   return (
     <div data-testid={`${dataTestId}-step3`} style={{
       padding: '22px 24px',

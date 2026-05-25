@@ -1,9 +1,9 @@
 """
-PUTKI HQ — YouTube PubSubHubbub lease auto-renewal worker.
+PUTKI HQ - YouTube PubSubHubbub lease auto-renewal worker.
 
 Scans `youtube_pubsub_leases` every 6 h. For any lease where
 `expires_at_ts < now + 48 h`, re-POSTs hub.mode=subscribe and refreshes the
-stored expiry. Idempotent — re-subscribing an existing topic is the
+stored expiry. Idempotent - re-subscribing an existing topic is the
 WebSub-spec way to extend a lease.
 
 Disable via PUTKI_HQ_DISABLE_YT_LEASE_WORKER=1 (also off when

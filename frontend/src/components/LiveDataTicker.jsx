@@ -1,5 +1,5 @@
 /**
- * LiveDataTicker — horizontal strip at the very top of the homepage that
+ * LiveDataTicker - horizontal strip at the very top of the homepage that
  * proves PUTKI HQ is monitoring real-time data. Pulls /api/data/live-stats
  * every 10s. Honest counters: zeros render zeros, never fabricated.
  */
@@ -10,14 +10,14 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 10_000;
 
 const fmtAgo = (iso, t) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     const dt = new Date(iso);
     const secs = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 1000));
     if (secs < 60) return t('uutiset.ago_s').replace('{n}', secs);
     if (secs < 3600) return t('uutiset.ago_m').replace('{n}', Math.floor(secs / 60));
     return t('uutiset.ago_h').replace('{n}', Math.floor(secs / 3600));
-  } catch { return '—'; }
+  } catch { return '-'; }
 };
 
 const Cell = ({ label, value }) => (

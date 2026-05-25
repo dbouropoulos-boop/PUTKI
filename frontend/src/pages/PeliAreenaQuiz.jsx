@@ -1,15 +1,15 @@
 /**
- * PUTKI HQ — /peliareena/tietoisuustesti (Quiz Challenge) · iter55
+ * PUTKI HQ - /peliareena/tietoisuustesti (Quiz Challenge) · iter55
  *
  * Phase 1 flagship game per Build Brief v2. Three states:
  *
- *   1. INTRO        — "10 kysymystä · ≈3 min" + "ALOITA"
- *   2. PLAYING      — 1 question at a time, options as cards, after pick
+ *   1. INTRO        - "10 kysymystä · ≈3 min" + "ALOITA"
+ *   2. PLAYING      - 1 question at a time, options as cards, after pick
  *                     reveals the correct answer + a short explanation.
  *                     NO email required to play.
- *   3. PREVIEW      — score + persona name, with a locked panel for the
+ *   3. PREVIEW      - score + persona name, with a locked panel for the
  *                     full personalized result (gated by email).
- *   4. UNLOCKED     — email captured → full persona breakdown, strengths,
+ *   4. UNLOCKED     - email captured → full persona breakdown, strengths,
  *                     gaps, tournament rank, share text.
  *
  * GDPR contract: consent checkbox MUST be ticked. Backend rejects without it.
@@ -152,7 +152,7 @@ const Intro = ({ onStart }) => (
     <p style={{ fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.6, color: 'var(--muted)', maxWidth: 600 }}>
       Tämä testi kattaa kolikkopelimatematiikan perusteet (RTP, volatiliteetti, house edge),
       bankroll-hallinnan, pelipsykologian ja vastuullisuuden. Pelaa ilman sähköpostia.
-      Jokainen vastaus selitetään — opit silloinkin, kun vastaat väärin.
+      Jokainen vastaus selitetään - opit silloinkin, kun vastaat väärin.
     </p>
     <button
       onClick={onStart}
@@ -270,7 +270,7 @@ const RevealCard = ({ lang, onNext, index, total }) => (
 const Preview = ({ lang, result, session, onUnlocked, fullResult }) => {
   return (
     <div data-testid="quiz-preview">
-      {/* iter63 — Identity-first reveal + Micro-Yes ladder */}
+      {/* iter63 - Identity-first reveal + Micro-Yes ladder */}
       <IdentityCardFlow
         preview={result}
         session={session}
@@ -594,13 +594,13 @@ const PanelTwoCol = ({ leftTitle, leftItems, rightTitle, rightItems }) => (
     <div style={{ padding: 16, border: '1px solid var(--border)', borderLeft: '4px solid #3F8A4D', background: 'var(--surface)', borderRadius: 4 }}>
       <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#3F8A4D', fontWeight: 700, marginBottom: 8 }}>{leftTitle}</div>
       <ul style={{ margin: 0, paddingLeft: 18, fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>
-        {leftItems.length === 0 ? <li>—</li> : leftItems.map(x => <li key={x}>{x}</li>)}
+        {leftItems.length === 0 ? <li>-</li> : leftItems.map(x => <li key={x}>{x}</li>)}
       </ul>
     </div>
     <div style={{ padding: 16, border: '1px solid var(--border)', borderLeft: '4px solid #C8423C', background: 'var(--surface)', borderRadius: 4 }}>
       <div className="mono" style={{ fontSize: 10, letterSpacing: '0.22em', color: '#C8423C', fontWeight: 700, marginBottom: 8 }}>{rightTitle}</div>
       <ul style={{ margin: 0, paddingLeft: 18, fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--ink)', lineHeight: 1.6 }}>
-        {rightItems.length === 0 ? <li>—</li> : rightItems.map(x => <li key={x}>{x}</li>)}
+        {rightItems.length === 0 ? <li>-</li> : rightItems.map(x => <li key={x}>{x}</li>)}
       </ul>
     </div>
   </div>

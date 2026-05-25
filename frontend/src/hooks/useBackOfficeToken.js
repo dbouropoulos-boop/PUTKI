@@ -1,15 +1,15 @@
 /**
- * useBackOfficeToken — tiny shared hook for the back-office admin pages.
+ * useBackOfficeToken - tiny shared hook for the back-office admin pages.
  *
  * Centralises the X-Admin-Token persistence pattern that each admin page
  * was reimplementing inline. Returns `{token, setToken, authed, authError,
  * checkAuth, logout}`.
  *
- * SECURITY NOTE — the admin token now persists in **sessionStorage**, not
+ * SECURITY NOTE - the admin token now persists in **sessionStorage**, not
  * localStorage. It survives within a tab/session but is cleared when the
  * tab closes, reducing the XSS-stolen-credential blast radius. The proper
  * long-term fix is to issue an httpOnly cookie session from the backend
- * (tracked as ROADMAP P1 — "admin auth → httpOnly cookies"), but this
+ * (tracked as ROADMAP P1 - "admin auth → httpOnly cookies"), but this
  * change closes the most common attack vector (persistent-storage exfil)
  * without a multi-day refactor.
  *
@@ -29,7 +29,7 @@ const tokenStore = {
     try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
   },
   set(v) {
-    // noop on QuotaExceeded / private-browsing — we'd rather lose
+    // noop on QuotaExceeded / private-browsing - we'd rather lose
     // persistence than break the admin UX.
     try { sessionStorage.setItem(TOKEN_KEY, v); } catch { /* sessionStorage unavailable */ }
     // Best-effort: also clear any legacy localStorage entry from before
@@ -70,7 +70,7 @@ export const useBackOfficeToken = () => {
   }, [token]);
 
   // Auto-verify on mount when a stored token exists. We deliberately do
-  // NOT depend on `token` here — `checkAuth` reads from the closure on
+  // NOT depend on `token` here - `checkAuth` reads from the closure on
   // every call, so an effect-once-on-mount is exactly what we want.
   const verifyOnce = useCallback((tk) => { if (tk) checkAuth(tk); }, [checkAuth]);
   useEffect(() => { verifyOnce(tokenStore.get()); }, [verifyOnce]);

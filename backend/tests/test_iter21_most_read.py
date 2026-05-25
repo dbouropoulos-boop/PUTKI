@@ -1,8 +1,8 @@
-"""Iteration 21 — Most-read rail endpoint tests.
+"""Iteration 21 - Most-read rail endpoint tests.
 
 Validates:
-  GET /api/content/most-read?hours=1&limit=5  — shape, items, count
-  GET /api/content/most-read?hours=24&limit=3 — limit/hours respected
+  GET /api/content/most-read?hours=1&limit=5  - shape, items, count
+  GET /api/content/most-read?hours=24&limit=3 - limit/hours respected
   Param clamping (1<=hours<=168, 1<=limit<=20)
   Cold-start fallback behavior
 """
@@ -80,7 +80,7 @@ class TestMostReadRail:
         assert d["hours"] == 1
 
     def test_limit_clamp_lower(self, session):
-        # limit=0 — implementation treats falsy as default 5 (max(1, min(int(limit or 5), 20)))
+        # limit=0 - implementation treats falsy as default 5 (max(1, min(int(limit or 5), 20)))
         r = session.get(f"{EP}?hours=1&limit=0", timeout=30)
         assert r.status_code == 200
         d = r.json()

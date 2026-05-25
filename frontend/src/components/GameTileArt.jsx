@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — GameTileArt
+ * PUTKI HQ - GameTileArt
  *
  * Decorative SVG illustration per game kind. Replaces the bare icons that
  * the user called "terrible without images". Each art is hand-built so it
@@ -34,7 +34,7 @@ export const GameTileArt = ({ kind, slug }) => {
         ))}
         {/* food */}
         <circle cx={210} cy={60} r="7" fill={accent} />
-        {/* snake — segmented squares */}
+        {/* snake - segmented squares */}
         {[[60, 60], [88, 60], [116, 60], [144, 60], [144, 84], [116, 84], [88, 84]].map(([x, y], i) => (
           <rect key={i} x={x} y={y} width="20" height="20" rx="2"
                 fill={ink} fillOpacity={1 - i * 0.08} />
@@ -130,7 +130,7 @@ export const GameTileArt = ({ kind, slug }) => {
       <rect x="70" y="58" width="100" height="6" rx="2" fill={surface2} fillOpacity="0.7" />
       <rect x="70" y="78" width="140" height="6" rx="2" fill={surface2} fillOpacity="0.5" />
       <rect x="70" y="90" width="80" height="6" rx="2" fill={surface2} fillOpacity="0.5" />
-      {/* Accent dot — "right answer" */}
+      {/* Accent dot - "right answer" */}
       <circle cx="50" cy="44" r="6" fill="#3F8A4D" />
       <circle cx="50" cy="64" r="6" fill={muted} fillOpacity="0.4" />
       <circle cx="50" cy="84" r="6" fill={muted} fillOpacity="0.4" />

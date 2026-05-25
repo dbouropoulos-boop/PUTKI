@@ -1,5 +1,5 @@
 /**
- * Voyager — Pass (win → editorial artifact).
+ * Voyager - Pass (win → editorial artifact).
  *
  * Spec §4.3: the win becomes a visible thing the visitor *carries*, not
  * a marketing message. UUID is rendered as a short, copyable code that
@@ -55,7 +55,7 @@ const SlotFlipNumber = ({ target, min, max, durationMs = 1600, onLock }) => {
 const Pass = ({ lang, prize, week }) => {
   // Prize amount: use the operator-supplied value when present, otherwise
   // pick a *real* random value inside the configured variance range. Hooks
-  // run unconditionally — the null-prize early-return is below.
+  // run unconditionally - the null-prize early-return is below.
   const supplied = prize ? (prize.amount ?? prize.spins ?? prize.value) : null;
   const target = useMemo(() => {
     if (Number.isFinite(Number(supplied))) return Number(supplied);

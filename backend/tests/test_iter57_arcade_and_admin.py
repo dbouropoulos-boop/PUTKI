@@ -1,5 +1,5 @@
 """
-Iter57 — Arcade games, champions banner, admin question editor tests.
+Iter57 - Arcade games, champions banner, admin question editor tests.
 """
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ def test_arcade_snake_start_then_score_then_unlock():
 
 
 def test_arcade_cheat_detection_blocks_leaderboard():
-    """50pts in 0.2s — server detects + flags `valid_for_leaderboard=False`."""
+    """50pts in 0.2s - server detects + flags `valid_for_leaderboard=False`."""
     s = httpx.post(f"{BASE}/api/mini-games/arcade/snake/start", timeout=15.0).json()
     time.sleep(0.2)
     sub = httpx.post(

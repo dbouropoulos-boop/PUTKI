@@ -1,4 +1,4 @@
-"""iter66 — Mittari unified panel + admin streamer regression smoke."""
+"""iter66 - Mittari unified panel + admin streamer regression smoke."""
 import os
 import pytest
 import requests
@@ -32,7 +32,7 @@ def test_mittari_stats(session):
     assert r.status_code == 200
 
 
-# ─── /api/streamers/live across platforms — the P1 regression ───
+# ─── /api/streamers/live across platforms - the P1 regression ───
 @pytest.mark.parametrize("platform", ["twitch", "kick", "youtube"])
 def test_streamers_live_platform(session, platform):
     r = session.get(f"{BASE_URL}/api/streamers/live?platform={platform}", timeout=30)
@@ -49,7 +49,7 @@ def test_streamers_live_no_platform(session):
     assert r.status_code == 200, r.text[:200]
 
 
-# ─── Admin streamers PUT — require_admin signature regression ───
+# ─── Admin streamers PUT - require_admin signature regression ───
 def test_admin_streamers_get(session):
     r = session.get(
         f"{BASE_URL}/api/admin/streamers",
@@ -62,7 +62,7 @@ def test_admin_streamers_get(session):
 def test_admin_streamers_put_no_422(session):
     """PUT must NOT return 422 due to *args/**kwargs leaking into FastAPI introspection.
 
-    We send a valid StreamerPayload — should return 200 (or 404 if slug missing,
+    We send a valid StreamerPayload - should return 200 (or 404 if slug missing,
     but NOT 422 from helper signature).
     """
     slug = "pelisignaali-fi"

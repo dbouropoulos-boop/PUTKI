@@ -3,7 +3,7 @@ Regression lock for the iter48 orphan-startup bug + iter50 bootstrap
 extraction.
 
 Before iter48 the entire startup body was orphan-indented inside
-`admin_voita_import_odds` AFTER its `return` — making every Layer 2
+`admin_voita_import_odds` AFTER its `return` - making every Layer 2
 poller, RSS scheduler, content generator, dispatch loop and scheduler
 silently dead until the next edit happened to land inside a real
 startup hook.
@@ -85,7 +85,7 @@ def test_startup_event_delegates_to_bootstrap_run_startup():
 
 
 def test_no_bootstrap_calls_leak_into_admin_voita_import_odds():
-    """Regression lock for the original orphan-startup bug — bootstrap
+    """Regression lock for the original orphan-startup bug - bootstrap
     function names must NEVER appear inside `admin_voita_import_odds`."""
     fns = _functions_by_name(_tree(SERVER_PY))
     bad = fns["admin_voita_import_odds"]
@@ -141,7 +141,7 @@ def test_bootstrap_seeds_owns_every_critical_seed_and_index_call():
         "seed_default_cadences",
         "seed_editorial_subjects",
         "seed_default_registry",
-        # Ensure indexes — every module that owns persistent state.
+        # Ensure indexes - every module that owns persistent state.
         "_ensure_replay_index",
         "feed_ensure_indexes",
         "layer2_ensure_indexes",

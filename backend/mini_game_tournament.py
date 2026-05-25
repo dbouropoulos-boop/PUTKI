@@ -1,15 +1,15 @@
 """
-PUTKI HQ — Tournament closing worker + analytics aggregation (iter58).
+PUTKI HQ - Tournament closing worker + analytics aggregation (iter58).
 
 Two halves:
 
-  1. `tournament_closing_worker_loop` — fires once per day, detects whether
+  1. `tournament_closing_worker_loop` - fires once per day, detects whether
      the just-closed ISO week's winners have already been announced via
      Telegram; if not, composes a Finnish recap message and posts it to
      `TELEGRAM_CHANNEL_ID`. Idempotent via `tournament_closings` collection
      with unique index on `week_iso`.
 
-  2. `mini_game_analytics` — aggregates plays/finishes/captures/conversion
+  2. `mini_game_analytics` - aggregates plays/finishes/captures/conversion
      per game (and optionally per ISO week) for the back-office dashboard.
 """
 from __future__ import annotations
@@ -50,7 +50,7 @@ async def ensure_indexes(db) -> None:
 
 # ─────────────────────── Analytics aggregation ────────────────────────
 
-# ─── iter64 pivot — Snake/Tap/Insight/Quiz killed from the active set.
+# ─── iter64 pivot - Snake/Tap/Insight/Quiz killed from the active set.
 # `scenario_decisions` is now the sole profiler. Snake/Tap/Insight/Quiz
 # slugs remain registered in `_LEGACY_GAME_SLUGS` so the analytics
 # endpoint can still surface historical data when the user opts to
@@ -78,13 +78,13 @@ async def aggregate_metrics(db, *, week_iso: Optional[str] = None) -> Dict[str, 
     """Per-game metrics for the dashboard.
 
     Returns a list of rows, one per active game:
-      • plays_started — `mini_game_plays` rows
-      • plays_finished — `status == finished`
-      • leads_captured — unique emails in `mini_game_leads`
-      • conversion_pct — leads / finished
-      • returning_pct — % of leads that have ≥2 plays under the same email
-      • shares — count from `mini_game_share_events`
-      • top_score / top_player — current rank-1
+      • plays_started - `mini_game_plays` rows
+      • plays_finished - `status == finished`
+      • leads_captured - unique emails in `mini_game_leads`
+      • conversion_pct - leads / finished
+      • returning_pct - % of leads that have ≥2 plays under the same email
+      • shares - count from `mini_game_share_events`
+      • top_score / top_player - current rank-1
     """
     rows: List[Dict[str, Any]] = []
     week_filter: Dict[str, Any] = {"week_iso": week_iso} if week_iso else {}
@@ -195,7 +195,7 @@ async def aggregate_metrics(db, *, week_iso: Optional[str] = None) -> Dict[str, 
 # ───────────────────────── Share tracking ─────────────────────────
 
 async def track_share(db, *, game_slug: str, play_id: Optional[str] = None) -> None:
-    """Fire-and-forget telemetry — increments `mini_game_share_events`."""
+    """Fire-and-forget telemetry - increments `mini_game_share_events`."""
     if game_slug not in ACTIVE_GAME_SLUGS:
         return
     try:
@@ -213,7 +213,7 @@ async def track_share(db, *, game_slug: str, play_id: Optional[str] = None) -> N
 
 async def _build_closing_message(db, *, week_iso: str) -> Optional[str]:
     """Compose the Finnish weekly profiler recap for the just-closed week.
-    iter64 pivot: this no longer ranks across 5 games — it surfaces only
+    iter64 pivot: this no longer ranks across 5 games - it surfaces only
     the top scenario_decisions performer. Returns None when no winner
     exists (the worker silently skips empty weeks)."""
     top = await db.mini_game_leads.find_one(
@@ -241,9 +241,9 @@ async def _build_closing_message(db, *, week_iso: str) -> Optional[str]:
         "",
         "Putki HQ:n pelaajaprofiilin viikkokierros on suljettu.",
         "",
-        f"• *{name}* — {score} / 18 p." + (f" · _{profile_label}_" if profile_label else ""),
+        f"• *{name}* - {score} / 18 p." + (f" · _{profile_label}_" if profile_label else ""),
         "",
-        "Tämä ei ole tappiokisa eikä rahaa pelaava turnaus — se on rehellinen kuukauden snapshot omasta profiilistasi.",
+        "Tämä ei ole tappiokisa eikä rahaa pelaava turnaus - se on rehellinen kuukauden snapshot omasta profiilistasi.",
         "",
         "👉 Tee profilointi tällä viikolla: putkihq.fi/peliareena",
     ]
@@ -320,7 +320,7 @@ async def tournament_closing_worker_loop(db) -> None:
     while True:
         try:
             now = _now()
-            # Only attempt on Monday 00:00–06:00 UTC, OR when the week
+            # Only attempt on Monday 00:00-06:00 UTC, OR when the week
             # was simply never closed (force=False is idempotent so a
             # missed Monday auto-recovers on Tuesday).
             is_monday_morning = now.weekday() == 0 and now.hour < 6

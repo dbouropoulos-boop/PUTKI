@@ -4,11 +4,11 @@ import { useLang } from '../context/LanguageContext';
 import { EditorialFooter } from '../components/EditorialFooter';
 
 // V2 §10.3 accountability surfaces:
-//   /korjaukset       — Corrections log
-//   /affiliaatti      — Affiliate disclosure (single partner: Weezybet)
-//   /avoimuus/2026    — Annual transparency report
-//   /lehdistö         — Press kit + media contact
-//   /paivityslog      — Site changes / methodology updates / new streamers tracked
+//   /korjaukset       - Corrections log
+//   /affiliaatti      - Affiliate disclosure (single partner: Weezybet)
+//   /avoimuus/2026    - Annual transparency report
+//   /lehdistö         - Press kit + media contact
+//   /paivityslog      - Site changes / methodology updates / new streamers tracked
 
 const StaticPage = ({ testId, eyebrow, headline, children }) => (
   <div data-testid={testId} className="min-h-screen">
@@ -39,7 +39,7 @@ export const Korjaukset = () => {
       <p>
         {lang === 'en'
           ? 'Spot an error? Email toimitus@putkihq.fi with the piece URL and what should be corrected.'
-          : 'Huomasitko virheen? Lähetä sähköpostia toimitus@putkihq.fi — kerro jutun osoite ja mikä pitäisi korjata.'}
+          : 'Huomasitko virheen? Lähetä sähköpostia toimitus@putkihq.fi - kerro jutun osoite ja mikä pitäisi korjata.'}
       </p>
     </StaticPage>
   );
@@ -53,7 +53,7 @@ export const Affiliaatti = () => {
       <p>
         {lang === 'en'
           ? 'PUTKI HQ has no active commercial relationships at this time. All operator reviews currently on the site are unsponsored editorial assessments with no affiliate links. This table will be updated the moment any commercial relationship begins, with the score-impact disclosure visible before launch.'
-          : 'PUTKI HQ:lla ei ole tällä hetkellä aktiivisia kaupallisia suhteita. Kaikki sivuston operaattoriarviot ovat sponsoroimattomia toimituksellisia arvioita ilman affiliate-linkkejä. Tämä taulukko päivittyy heti, kun kaupallinen suhde alkaa — pistevaikutus on aina näkyvillä ennen lanseerausta.'}
+          : 'PUTKI HQ:lla ei ole tällä hetkellä aktiivisia kaupallisia suhteita. Kaikki sivuston operaattoriarviot ovat sponsoroimattomia toimituksellisia arvioita ilman affiliate-linkkejä. Tämä taulukko päivittyy heti, kun kaupallinen suhde alkaa - pistevaikutus on aina näkyvillä ennen lanseerausta.'}
       </p>
       <table className="w-full font-display text-[14px]" data-testid="affiliaatti-table">
         <thead>
@@ -162,7 +162,7 @@ export const Lehdisto = () => {
         </Link>
       </p>
 
-      {/* V2 §4.1 — Named Finnish editorial sources */}
+      {/* V2 §4.1 - Named Finnish editorial sources */}
       <div className="mt-10" data-testid="lehdisto-sources">
         <div className="eyebrow mb-2">{lang === 'en' ? `EDITORIAL SOURCE MAP · ${total}` : `TOIMITUKSELLINEN LÄHDEKARTTA · ${total}`}</div>
         <h2 className="display text-2xl mb-3" data-testid="lehdisto-sources-headline">
@@ -170,8 +170,8 @@ export const Lehdisto = () => {
         </h2>
         <p style={{ marginBottom: 20 }}>
           {lang === 'en'
-            ? 'PUTKI HQ\u2019s editorial pipeline monitors a curated set of named Finnish-language and international sources for regulatory, sponsorship, scene, and cultural context. Tier 1 sources feed primary editorial coverage; Tier 2–3 sources provide secondary context and cross-reference. We publish this map so readers can audit who informs our coverage.'
-            : 'PUTKI HQ:n toimituksellinen putki seuraa kuratoitua joukkoa nimettyjä suomenkielisiä ja kansainvälisiä lähteitä sääntelyn, sponsoroinnin, skenen ja kulttuurin konteksteihin. Tier 1 -lähteet syöttävät pääosin toimituksellista kattavuutta; Tier 2–3 antaa toissijaista kontekstia ja ristireferenssejä. Julkaisemme tämän kartan jotta lukijat voivat tarkistaa kuka kattavuuttamme informoi.'}
+            ? 'PUTKI HQ\u2019s editorial pipeline monitors a curated set of named Finnish-language and international sources for regulatory, sponsorship, scene, and cultural context. Tier 1 sources feed primary editorial coverage; Tier 2-3 sources provide secondary context and cross-reference. We publish this map so readers can audit who informs our coverage.'
+            : 'PUTKI HQ:n toimituksellinen putki seuraa kuratoitua joukkoa nimettyjä suomenkielisiä ja kansainvälisiä lähteitä sääntelyn, sponsoroinnin, skenen ja kulttuurin konteksteihin. Tier 1 -lähteet syöttävät pääosin toimituksellista kattavuutta; Tier 2-3 antaa toissijaista kontekstia ja ristireferenssejä. Julkaisemme tämän kartan jotta lukijat voivat tarkistaa kuka kattavuuttamme informoi.'}
         </p>
 
         {CATEGORY_ORDER.map((cat) => {

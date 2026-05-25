@@ -1,17 +1,17 @@
 /**
- * MittariSignals — Päivän Signaalit (locked numbered list).
+ * MittariSignals - Päivän Signaalit (locked numbered list).
  *
  * SOURCE OF TRUTH: GET /api/odds/featured (odds-derived betting picks).
  *
- * This component is now CAPTURE-FREE — the parent page owns the gate(s)
+ * This component is now CAPTURE-FREE - the parent page owns the gate(s)
  * and passes `unlocked` down. We render the locked list, the reveal
  * teaser on row #01, and the (optional) callbacks to scroll the user
  * back to the parent's gate.
  *
  * Visual contract:
- *   - Numbered rows 01–05 (rendered only when the API has picks)
+ *   - Numbered rows 01-05 (rendered only when the API has picks)
  *   - Pick text blurred until unlocked
- *   - Confidence bar = Sharpness 0–100
+ *   - Confidence bar = Sharpness 0-100
  *   - Right column = implied probability %
  *   - Lock icon on every row; row #01 has a reveal-teaser link
  *   - Honest empty-state when no qualifying picks
@@ -31,7 +31,7 @@ const sharpnessBand = (score, sigCopy) => {
 };
 
 const formatKickoff = (iso, isEn) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     const d = new Date(iso);
     if (isEn) {
@@ -44,7 +44,7 @@ const formatKickoff = (iso, isEn) => {
     const hh = String(d.getHours()).padStart(2, '0');
     const mm = String(d.getMinutes()).padStart(2, '0');
     return `${days[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}. ${hh}:${mm}`;
-  } catch { return '—'; }
+  } catch { return '-'; }
 };
 
 const LockIcon = ({ size = 16 }) => (
@@ -64,14 +64,14 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
   // so this component still renders if the parent didn't pass anything.
   const sc = copy || {};
   const t = {
-    headLockedEyebrow: sc.head_locked_eyebrow || (isEn ? '— DAILY SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'),
-    headUnlockedEyebrow: sc.head_unlocked_eyebrow || (isEn ? '— DAILY SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU'),
+    headLockedEyebrow: sc.head_locked_eyebrow || (isEn ? '- DAILY SIGNALS · LOCKED' : '- PÄIVÄN SIGNAALIT · LUKITTU'),
+    headUnlockedEyebrow: sc.head_unlocked_eyebrow || (isEn ? '- DAILY SIGNALS · UNLOCKED' : '- PÄIVÄN SIGNAALIT · AVATTU'),
     titleLead: sc.title_lead || (isEn ? 'Today\u2019s' : 'Päivän'),
     titleEm: sc.title_em || (isEn ? 'Signals' : 'Signaalit'),
     previewBadge: sc.preview_badge || (isEn ? 'PREVIEW' : 'ESIKATSELU'),
     previewExplainer: sc.preview_explainer || (isEn
-      ? 'Example rows — real picks unlock for subscribers at 09:00.'
-      : 'Esimerkkirivit — todelliset poiminnat avautuvat tilaajille klo 09:00.'),
+      ? 'Example rows - real picks unlock for subscribers at 09:00.'
+      : 'Esimerkkirivit - todelliset poiminnat avautuvat tilaajille klo 09:00.'),
     marketQuietEyebrow: sc.market_quiet_eyebrow || (isEn ? 'MARKET QUIET RIGHT NOW' : 'MARKKINA HILJAINEN JUURI NYT'),
     marketQuietBody: sc.market_quiet_body || (isEn
       ? 'Tomorrow 09:00 we drop the next five. Subscribe and you\u2019ll get the first one the moment the market opens it up.'
@@ -81,8 +81,8 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
     // pick hasn't dropped yet (placeholder row). Replaces the
     // confusing "still-blurred-after-unlock" state.
     pendingPickLine: sc.pending_pick_line || (isEn
-      ? 'Today\u2019s pick · dropping 09:00 — first to Telegram, then email'
-      : 'Päivän poiminta · pudotus klo 09:00 — ensin Telegramiin, sitten s\u00e4hk\u00f6postiin'),
+      ? 'Today\u2019s pick · dropping 09:00 - first to Telegram, then email'
+      : 'Päivän poiminta · pudotus klo 09:00 - ensin Telegramiin, sitten s\u00e4hk\u00f6postiin'),
     confidenceLabel: sc.confidence_label || 'Sharpness',
     impliedLabel: sc.implied_label || (isEn ? 'implied prob.' : 'todennäköisyys'),
     impliedInline: sc.implied_inline || (isEn ? 'implied' : 'todenn.'),
@@ -132,7 +132,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
   // Locked = visible shape, never an empty box. When the upstream Odds
   // API has nothing for us right now (dormant key, between days, off-
   // season), we still render 5 placeholder rows with PLAUSIBLE shape so
-  // the user reads "locked" — never "broken / empty". Subtle 'preview'
+  // the user reads "locked" - never "broken / empty". Subtle 'preview'
   // badge keeps it honest. Replaced the moment real picks land.
   const PLACEHOLDER_ROWS = useMemo(() => ([
     { n: '01', sport: 'NHL',     sportIcon: '🏒', sharpness: 84, impliedProb: 71, kickoff: null, isFirst: true,  isPlaceholder: true },
@@ -157,10 +157,10 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
     return `${wd.charAt(0).toUpperCase() + wd.slice(1)} ${d.getDate()}. ${months[d.getMonth()]} · 09:00`;
   }, [isEn]);
 
-  // (Empty state removed — placeholder rows above guarantee shape is
+  // (Empty state removed - placeholder rows above guarantee shape is
   // always visible. The page never renders a bare "no picks" box.)
 
-  // Compact mode skips the standalone title block — the parent (hero)
+  // Compact mode skips the standalone title block - the parent (hero)
   // owns the connective sentence so the user sees wheel + tips paired
   // in one eyeful.
   const showHeader = !compact;
@@ -220,7 +220,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
           const pickText = s.isPlaceholder
             ? (isEn ? 'Favourite vs Underdog @ ?.??' : 'Suosikki vs altavastaaja @ ?.??')
             : (s.side === 'draw'
-                ? `${s.home} – ${s.away} · ${t.drawLabel} @ ${s.odds.toFixed(2)}`
+                ? `${s.home} - ${s.away} · ${t.drawLabel} @ ${s.odds.toFixed(2)}`
                 : `${s.pickTeam} · ${t.vsLabel} ${s.side === 'home' ? s.away : s.home} @ ${s.odds.toFixed(2)}`);
           // iter52: when the user has unlocked but today's pick is still
           // a preview placeholder, swap the blurred text for an honest

@@ -1,8 +1,8 @@
 """
-PUTKI HQ — Voita Personal Predictor Profile system.
+PUTKI HQ - Voita Personal Predictor Profile system.
 
 After the on-site diagnostic the user's answers map to one of the
-named predictor profiles. The full report is delivered by email — the
+named predictor profiles. The full report is delivered by email - the
 on-site flow only shows `on_site_tease` (one paragraph) per profile.
 
 Resolution: longest-match-wins among match_rules, ties broken by
@@ -25,12 +25,12 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "slug": "confident_loyalist", "priority": 80, "is_default": False,
         "name_fi": "ITSEVARMA LOJAALI",
         "name_en": "THE CONFIDENT LOYALIST",
-        "on_site_tease_fi": "Pelaat suosikkia ja seuraat joukkuettasi. Tämä on tutuin pelityyli — ja kalliin biaksen sokeain piste. Raporttisi sähköpostissa kertoo missä se laukeaa ja miten korjaat sen.",
-        "on_site_tease_en": "You back the favorite and follow your team. The most familiar style — and the blind spot for the most expensive bias in sport. The report in your inbox names where it fires and how to handle it.",
+        "on_site_tease_fi": "Pelaat suosikkia ja seuraat joukkuettasi. Tämä on tutuin pelityyli - ja kalliin biaksen sokeain piste. Raporttisi sähköpostissa kertoo missä se laukeaa ja miten korjaat sen.",
+        "on_site_tease_en": "You back the favorite and follow your team. The most familiar style - and the blind spot for the most expensive bias in sport. The report in your inbox names where it fires and how to handle it.",
         "diagnosis_fi": "Olet Suosikin Halaaja. Otat oletuksena pienemmän kertoimen valinnan. Olet 71 %:n vapaa-ajan veikkaajan joukossa. Ansa: suosikit voittavat 67 % ajasta mutta häviävät rahaa 62 % ajasta. Maksat turvasta lisähintaa, jonka kertoimet jo huomioivat.",
         "diagnosis_en": "You're a Favorite-Hugger. You take the odds-on pick by default. You're with 71% of casual predictors. The trap: favorites win 67% of the time but lose money 62% of the time. You're paying a premium for safety that the odds already account for.",
-        "weakness_fi": "Lojaliteetti. Kerroit kaatuneesi vedoissa, joissa valitsit oman joukkueesi. Tämä on urheilun kallein bias — fanit yliennustavat oman joukkueensa voitot keskimäärin 8 %:lla.",
-        "weakness_en": "Loyalty. You said you've crashed on bets where you picked your team. This is the most expensive bias in sports — fans of a team over-predict their team's wins by 8% on average.",
+        "weakness_fi": "Lojaliteetti. Kerroit kaatuneesi vedoissa, joissa valitsit oman joukkueesi. Tämä on urheilun kallein bias - fanit yliennustavat oman joukkueensa voitot keskimäärin 8 %:lla.",
+        "weakness_en": "Loyalty. You said you've crashed on bets where you picked your team. This is the most expensive bias in sports - fans of a team over-predict their team's wins by 8% on average.",
         "edge_fi": "Kun lähdet altavastaajan kannalle, sinulla on yleensä oikea syy. Pidä siitä kiinni.",
         "edge_en": "When you back an underdog, you usually have a real reason. Lean into that.",
         "hooks": [
@@ -47,16 +47,16 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "slug": "gut_player", "priority": 75, "is_default": False,
         "name_fi": "VAISTOPELAAJA",
         "name_en": "THE GUT PLAYER",
-        "on_site_tease_fi": "Luotat ensilukukertaan. Kärkiotteluissa se toimii — rutiinipeleissä häviää. Raporttisi sähköpostissa erottaa luokat puolestasi.",
-        "on_site_tease_en": "You trust your first read. On big calls it works — on routine fixtures it loses. The report in your inbox separates the categories for you.",
+        "on_site_tease_fi": "Luotat ensilukukertaan. Kärkiotteluissa se toimii - rutiinipeleissä häviää. Raporttisi sähköpostissa erottaa luokat puolestasi.",
+        "on_site_tease_en": "You trust your first read. On big calls it works - on routine fixtures it loses. The report in your inbox separates the categories for you.",
         "diagnosis_fi": "Olet Vaistopelaaja. Luotat sisäiseen luentaasi enemmän kuin numeroihin. Kärkiotteluissa ja derbeissä tämä toimii.",
-        "diagnosis_en": "You're a Gut Player. You trust your read more than the numbers. On big rivalries this works — on routine matches it loses.",
+        "diagnosis_en": "You're a Gut Player. You trust your read more than the numbers. On big rivalries this works - on routine matches it loses.",
         "weakness_fi": "Vaisto ei skaalaudu. Useimmat arvonnat ovat rutiinipelejä, joissa data voittaa intuition.",
         "weakness_en": "Gut doesn't scale. Most raffles are routine fixtures where data beats intuition.",
         "edge_fi": "Kärkihetkien tunnistaminen. Säilytä vaisto isoille hetkille; käytä dataa kaikkeen muuhun.",
         "edge_en": "Spotting decisive moments. Keep gut for the big calls; use data for everything else.",
         "hooks": [
-            {"fi": "Merkitsemme isot ottelut erikseen — vaisto kelpaa siellä.", "en": "Flag big matches — gut is fine there."},
+            {"fi": "Merkitsemme isot ottelut erikseen - vaisto kelpaa siellä.", "en": "Flag big matches - gut is fine there."},
             {"fi": "Lähetämme datan rutiineissa.", "en": "Send data on routine fixtures."},
             {"fi": "Seuraamme osumaprosenttiasi kärki- vs rutiinipeleissä.", "en": "Track hit rate on big vs routine matches."},
         ],
@@ -69,14 +69,14 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "slug": "underdog_hunter", "priority": 75, "is_default": False,
         "name_fi": "ALTAVASTAAJAN METSÄSTÄJÄ",
         "name_en": "THE UNDERDOG HUNTER",
-        "on_site_tease_fi": "Pelaat suosikkia vastaan kun jokin vihjaa siitä. Harvinaisempi ja arvokas tyyli — jos vihjeesi ovat aitoja. Raporttisi sähköpostissa kertoo miten erotat ne meluista.",
-        "on_site_tease_en": "You back against the favorite when something tips you off. A rarer and more valuable style — if your tips are real. The report in your inbox separates the signal from the noise.",
-        "diagnosis_fi": "Olet Altavastaajan Metsästäjä. Pelaat suosikkia vastaan kun jokin vihjaa siitä. Harvinaisempi ja arvokkaampi tyyli — jos vihjeesi ovat aitoja.",
-        "diagnosis_en": "You're an Underdog Hunter. You back against the favorite when something tips you off. A rarer and more valuable style — if your tips are real.",
+        "on_site_tease_fi": "Pelaat suosikkia vastaan kun jokin vihjaa siitä. Harvinaisempi ja arvokas tyyli - jos vihjeesi ovat aitoja. Raporttisi sähköpostissa kertoo miten erotat ne meluista.",
+        "on_site_tease_en": "You back against the favorite when something tips you off. A rarer and more valuable style - if your tips are real. The report in your inbox separates the signal from the noise.",
+        "diagnosis_fi": "Olet Altavastaajan Metsästäjä. Pelaat suosikkia vastaan kun jokin vihjaa siitä. Harvinaisempi ja arvokkaampi tyyli - jos vihjeesi ovat aitoja.",
+        "diagnosis_en": "You're an Underdog Hunter. You back against the favorite when something tips you off. A rarer and more valuable style - if your tips are real.",
         "weakness_fi": "Kaikki altavastaajat eivät ole arvokkaita. Tarkista että vihjeesi näkyy Sharpness-luvussa tai pelaajien saatavuudessa.",
         "weakness_en": "Not every underdog is valuable. Check your tip also shows up in Sharpness or availability.",
-        "edge_fi": "Aitojen vihjeiden tunnistaminen — pieni informaatioetu ennen kuin se hinnoitellaan.",
-        "edge_en": "Identifying real tips — small information edge before bookmakers price it.",
+        "edge_fi": "Aitojen vihjeiden tunnistaminen - pieni informaatioetu ennen kuin se hinnoitellaan.",
+        "edge_en": "Identifying real tips - small information edge before bookmakers price it.",
         "hooks": [
             {"fi": "Lähetämme altavastaaja-signaalit, joissa Sharpness on tippumassa.", "en": "Send underdog signals where Sharpness is dropping."},
             {"fi": "Näytämme saatavuuden ennen kuin se vaikuttaa kertoimiin.", "en": "Surface availability before it moves the line."},
@@ -122,7 +122,7 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "edge_fi": "Järjestelmällinen lähestyminen. Kun lukitset valinnan, paranet nopeasti.",
         "edge_en": "Systematic approach. Once you lock a pick, you improve quickly.",
         "hooks": [
-            {"fi": "Yksi pääsignaali per arvonta — ei viestien tulvaa.", "en": "One primary signal per raffle — no flood."},
+            {"fi": "Yksi pääsignaali per arvonta - ei viestien tulvaa.", "en": "One primary signal per raffle - no flood."},
             {"fi": "Pakkolukitus 1 h ennen ottelua.", "en": "Hard-lock 1h before kickoff."},
             {"fi": "Seuraamme ensimmäistä vs vaihdettua valintaasi.", "en": "Track first vs switched picks."},
         ],
@@ -141,8 +141,8 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "diagnosis_en": "You're a Crowd Follower. You start from what you hear around you.",
         "weakness_fi": "Some- ja keskustelupalstojen hälinä ei korreloi vedonvälittäjien kabinettitiedon kanssa.",
         "weakness_en": "Social-media and forum buzz doesn't correlate with bookmakers' inside-room knowledge.",
-        "edge_fi": "Olet hyvä lukemaan tunnelmaa. Käytä sitä yleisön valintojen tunnistamiseen — ja vetäydy niistä.",
-        "edge_en": "You're good at reading mood. Use it to spot crowd picks — and step away from them.",
+        "edge_fi": "Olet hyvä lukemaan tunnelmaa. Käytä sitä yleisön valintojen tunnistamiseen - ja vetäydy niistä.",
+        "edge_en": "You're good at reading mood. Use it to spot crowd picks - and step away from them.",
         "hooks": [
             {"fi": "Vertaamme Sharpnessia someäänekkyyteen.", "en": "Compare Sharpness to social buzz."},
             {"fi": "Hälytys: hälinää, mutta Sharpness < 50.", "en": "Alert: loud buzz but Sharpness < 50."},
@@ -157,16 +157,16 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "slug": "second_guesser", "priority": 72, "is_default": False,
         "name_fi": "TOISEN ARVAUKSEN PELAAJA",
         "name_en": "THE SECOND-GUESSER",
-        "on_site_tease_fi": "Olet kahden mielen valinnoistasi. Vaihdat vasta-aikaan. Kierros 3 — kierroksen scout nimeää tämän — raporttisi sähköpostissa kertoo miksi ensilukukerta yleensä voittaa.",
-        "on_site_tease_en": "You're of two minds about your picks. You switch at the buzzer. Round 3 scout report names this — the report in your inbox explains why your first read usually wins.",
+        "on_site_tease_fi": "Olet kahden mielen valinnoistasi. Vaihdat vasta-aikaan. Kierros 3 - kierroksen scout nimeää tämän - raporttisi sähköpostissa kertoo miksi ensilukukerta yleensä voittaa.",
+        "on_site_tease_en": "You're of two minds about your picks. You switch at the buzzer. Round 3 scout report names this - the report in your inbox explains why your first read usually wins.",
         "diagnosis_fi": "Olet Toisen Arvauksen Pelaaja. Punnitset valintaasi liian pitkään ja vaihdat juuri ennen aikalukkoa.",
         "diagnosis_en": "You're a Second-Guesser. You weigh your pick too long and switch right before lockout.",
-        "weakness_fi": "Viime hetken vaihto on tutkitusti huonompi kuin ensilukukerta — silloinkin kun se tuntuu varmemmalta.",
-        "weakness_en": "The last-second switch is empirically worse than your first read — even when it feels safer.",
+        "weakness_fi": "Viime hetken vaihto on tutkitusti huonompi kuin ensilukukerta - silloinkin kun se tuntuu varmemmalta.",
+        "weakness_en": "The last-second switch is empirically worse than your first read - even when it feels safer.",
         "edge_fi": "Kun lukitset ensilukukerran, tuloksesi nousevat välittömästi. Tämä on yksi nopeimmin korjattavista kuvioista.",
         "edge_en": "Once you lock your first read, results lift immediately. One of the fastest patterns to fix.",
         "hooks": [
-            {"fi": "Lukitsemme valintasi heti — ei vaihtomahdollisuutta.", "en": "Lock your pick on submit — no switch window."},
+            {"fi": "Lukitsemme valintasi heti - ei vaihtomahdollisuutta.", "en": "Lock your pick on submit - no switch window."},
             {"fi": "Lähetämme yhden suosituksen, ei kahta.", "en": "Send one recommendation, not two."},
             {"fi": "Seuraamme ensilukukerta-osumaprosenttiasi.", "en": "Track your first-read hit rate."},
         ],
@@ -179,8 +179,8 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "slug": "chaos_bettor", "priority": 60, "is_default": False,
         "name_fi": "KAAOSPELAAJA",
         "name_en": "THE CHAOS BETTOR",
-        "on_site_tease_fi": "Tyylisi vaihtelee. Tämä antaa vapautta — mutta tekee oppimisesta vaikeaa, koska kaava puuttuu. Raporttisi sähköpostissa ehdottaa oletustilan.",
-        "on_site_tease_en": "Your style shifts. That gives freedom — but makes learning hard because the pattern is missing. The report in your inbox proposes a default mode.",
+        "on_site_tease_fi": "Tyylisi vaihtelee. Tämä antaa vapautta - mutta tekee oppimisesta vaikeaa, koska kaava puuttuu. Raporttisi sähköpostissa ehdottaa oletustilan.",
+        "on_site_tease_en": "Your style shifts. That gives freedom - but makes learning hard because the pattern is missing. The report in your inbox proposes a default mode.",
         "diagnosis_fi": "Olet Kaaospelaaja. Vaihdat tyyliä joka kerta. Ilman jatkuvuutta et voi rakentaa etua.",
         "diagnosis_en": "You're a Chaos Bettor. You switch styles every time. Without consistency you can't build an edge.",
         "weakness_fi": "Et tunne omaa peliäsi, koska et toista sitä riittävän monta kertaa. Korjattavissa yhdellä päätöksellä: valitse oletustila.",
@@ -189,7 +189,7 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "edge_en": "Adaptability. Once you lock a primary mode, you can still cross over when justified.",
         "hooks": [
             {"fi": "Suosittelemme oletustilan ja seuraamme poikkeamia.", "en": "Recommend a default mode and track deviations."},
-            {"fi": "Vertailusignaali — data vs editorial.", "en": "Comparison signal — data vs editorial."},
+            {"fi": "Vertailusignaali - data vs editorial.", "en": "Comparison signal - data vs editorial."},
             {"fi": "Osumaprosenttisi tiloittain.", "en": "Hit rate per mode."},
         ],
         "match_rules": [
@@ -203,8 +203,8 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "name_en": "THE HONEST BEGINNER",
         "on_site_tease_fi": "Et teeskentele tietäväsi mitä et tiedä. Etu monen kokeneemman päälle. Raporttisi sähköpostissa rakentaa hyvät tavat alusta.",
         "on_site_tease_en": "You don't pretend to know what you don't. An edge over many more experienced players. The report in your inbox builds good habits from day one.",
-        "diagnosis_fi": "Olet Rehellinen Aloittelija. Et teeskentele tietäväsi mitä et tiedä — ja se on jo etu.",
-        "diagnosis_en": "You're an Honest Beginner. You don't pretend to know what you don't — and that's already an edge.",
+        "diagnosis_fi": "Olet Rehellinen Aloittelija. Et teeskentele tietäväsi mitä et tiedä - ja se on jo etu.",
+        "diagnosis_en": "You're an Honest Beginner. You don't pretend to know what you don't - and that's already an edge.",
         "weakness_fi": "Et tiedä omaa biaksiasi vielä, koska et ole tehnyt valintoja tarpeeksi monta kertaa.",
         "weakness_en": "You don't yet know your own bias because you haven't made enough picks.",
         "edge_fi": "Tabula rasa. Aloitat hyvistä tavoista.",
@@ -222,16 +222,16 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "slug": "rival_hunter", "priority": 68, "is_default": False,
         "name_fi": "DERBYJEN METSÄSTÄJÄ",
         "name_en": "THE RIVAL HUNTER",
-        "on_site_tease_fi": "Pelaat parhaiten suurissa otteluissa ja derbeissä — siellä vaisto kelpaa. Raporttisi sähköpostissa erottaa kärki- ja rutiinipelit toisistaan.",
-        "on_site_tease_en": "You play best on big matches and rivalries — where gut belongs. The report in your inbox separates marquee fixtures from routine ones for you.",
-        "diagnosis_fi": "Olet Derbyjen Metsästäjä. Kärkihetket tunnistat — rutiinipelit kaatavat sinut. Klassinen vahvuus + heikkous -yhdistelmä.",
-        "diagnosis_en": "You're a Rival Hunter. You recognise the marquee moments — routine fixtures sink you. A classic strength + weakness combo.",
+        "on_site_tease_fi": "Pelaat parhaiten suurissa otteluissa ja derbeissä - siellä vaisto kelpaa. Raporttisi sähköpostissa erottaa kärki- ja rutiinipelit toisistaan.",
+        "on_site_tease_en": "You play best on big matches and rivalries - where gut belongs. The report in your inbox separates marquee fixtures from routine ones for you.",
+        "diagnosis_fi": "Olet Derbyjen Metsästäjä. Kärkihetket tunnistat - rutiinipelit kaatavat sinut. Klassinen vahvuus + heikkous -yhdistelmä.",
+        "diagnosis_en": "You're a Rival Hunter. You recognise the marquee moments - routine fixtures sink you. A classic strength + weakness combo.",
         "weakness_fi": "Vaisto ei korvaa dataa tiistain kierroksilla. Kärkiotteluiden hyvä lukukerta peittää rutiiniotteluiden tappiot, kunnes se ei enää peitä.",
-        "weakness_en": "Gut doesn't replace data on Tuesday fixtures. The marquee wins cover the routine losses — until they don't.",
+        "weakness_en": "Gut doesn't replace data on Tuesday fixtures. The marquee wins cover the routine losses - until they don't.",
         "edge_fi": "Tunnistat kun ottelu merkitsee. Käytä vaistoa siellä, jätä rutiinit datalle.",
         "edge_en": "You know when a match matters. Use gut there, leave the routines to the data.",
         "hooks": [
-            {"fi": "Merkitsemme derbyt ja kärkiottelut — vaisto-suositus.", "en": "Flag rivalries and marquee fixtures — gut-allowed."},
+            {"fi": "Merkitsemme derbyt ja kärkiottelut - vaisto-suositus.", "en": "Flag rivalries and marquee fixtures - gut-allowed."},
             {"fi": "Rutiinipeleissä lähetämme datan, emme tunnelmaa.", "en": "On routine matches we send data, not vibes."},
             {"fi": "Seuraamme kärki- vs rutiini-osumaprosenttiasi erikseen.", "en": "Track your marquee vs routine hit rate separately."},
         ],
@@ -244,12 +244,12 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
         "slug": "curious_learner", "priority": 10, "is_default": True,
         "name_fi": "UUDENOPPIJA",
         "name_en": "THE CURIOUS LEARNER",
-        "on_site_tease_fi": "Sait läpi yhden diagnostiikan — enemmän kuin useimmat tekevät. Profiilisi paljastuu seuraavissa valinnoissa. Raporttisi sähköpostissa kertoo mitä seurata.",
-        "on_site_tease_en": "You finished one diagnostic — more than most people do. Your profile reveals itself in the next picks. The report in your inbox tells you what to watch.",
-        "diagnosis_fi": "Olet Uudenoppija. Et ole vielä lukittunut yhteen tyyliin — voit valita oikean ennen kuin tavat juurtuvat.",
-        "diagnosis_en": "You're a Curious Learner. You're not yet locked into one style — you can pick the right one before habits set in.",
-        "weakness_fi": "Kaavan puuttuminen tässä vaiheessa on normaalia. Seuraavat 5–10 ennustusta paljastavat taipumuksesi.",
-        "weakness_en": "Lack of a pattern at this stage is normal. Your next 5–10 predictions will surface your tendency.",
+        "on_site_tease_fi": "Sait läpi yhden diagnostiikan - enemmän kuin useimmat tekevät. Profiilisi paljastuu seuraavissa valinnoissa. Raporttisi sähköpostissa kertoo mitä seurata.",
+        "on_site_tease_en": "You finished one diagnostic - more than most people do. Your profile reveals itself in the next picks. The report in your inbox tells you what to watch.",
+        "diagnosis_fi": "Olet Uudenoppija. Et ole vielä lukittunut yhteen tyyliin - voit valita oikean ennen kuin tavat juurtuvat.",
+        "diagnosis_en": "You're a Curious Learner. You're not yet locked into one style - you can pick the right one before habits set in.",
+        "weakness_fi": "Kaavan puuttuminen tässä vaiheessa on normaalia. Seuraavat 5-10 ennustusta paljastavat taipumuksesi.",
+        "weakness_en": "Lack of a pattern at this stage is normal. Your next 5-10 predictions will surface your tendency.",
         "edge_fi": "Avoimuus. Voit valita oikean tyylin ennen kuin tavat juurtuvat.",
         "edge_en": "Openness. Pick the right style before habits set in.",
         "hooks": [
@@ -263,7 +263,7 @@ DEFAULT_PROFILES: List[Dict[str, Any]] = [
 
 
 def _is_clean_profile_text(*texts: str) -> bool:
-    """Compliance hold — same as quiz config, no outcome claims."""
+    """Compliance hold - same as quiz config, no outcome claims."""
     from voita_quiz_config import _assert_compliant_copy
     for i, t in enumerate(texts):
         _assert_compliant_copy(t, field=f"profile.text[{i}]")

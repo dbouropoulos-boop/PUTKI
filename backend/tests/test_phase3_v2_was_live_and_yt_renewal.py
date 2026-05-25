@@ -1,4 +1,4 @@
-"""Phase 3 V2 — WAS LIVE demotion + YouTube lease auto-renewal tests."""
+"""Phase 3 V2 - WAS LIVE demotion + YouTube lease auto-renewal tests."""
 from __future__ import annotations
 
 import asyncio
@@ -94,7 +94,7 @@ class TestWasLiveDemotion:
             assert demoted["weight"] < 70  # bumped down
             assert demoted["source_ref"].get("offline_observed_at")
 
-            # 3) expires_at is within the grace window — ≤ 35s from now
+            # 3) expires_at is within the grace window - ≤ 35s from now
             exp = datetime.fromisoformat(demoted["expires_at"].replace("Z", "+00:00"))
             seconds_left = (exp - datetime.now(timezone.utc)).total_seconds()
             assert 0 < seconds_left < 60

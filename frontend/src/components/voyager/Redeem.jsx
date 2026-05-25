@@ -1,5 +1,5 @@
 /**
- * Voyager — Redeem CTA.
+ * Voyager - Redeem CTA.
  *
  * Spec §5: full redirect URL including ?source=putki-voyager and the
  * Smartico visitor_win_uuid the operator resolves on registration.
@@ -13,7 +13,7 @@ const Redeem = ({ lang, prize, week }) => {
     ? `${week.operator.redirect_url}&_smartico_visitor_win_uuid=${encodeURIComponent(uuid)}`
     : week.operator.redirect_url;
   const amount = (prize && (prize.amount || prize.spins || prize.value))
-    || `${week.prize.min}–${week.prize.max}`;
+    || `${week.prize.min}-${week.prize.max}`;
   const label = lang === 'en' ? week.prize.label_en : week.prize.label_fi;
   return (
     <section data-testid="voyager-redeem" style={{
@@ -38,8 +38,8 @@ const Redeem = ({ lang, prize, week }) => {
           color: 'var(--muted)', margin: '0 0 24px',
         }}>
           {lang === 'en'
-            ? `Open a ${week.operator.name} session — your pass travels with you.`
-            : `Avaa ${week.operator.name}-istunto — passisi kulkee mukana.`}
+            ? `Open a ${week.operator.name} session - your pass travels with you.`
+            : `Avaa ${week.operator.name}-istunto - passisi kulkee mukana.`}
         </p>
         <a href={url} target="_blank" rel="noopener noreferrer"
           data-testid="voyager-redeem-cta"

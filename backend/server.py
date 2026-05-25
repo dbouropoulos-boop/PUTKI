@@ -17,7 +17,7 @@ async def require_admin(request: Request,
     """iter62: per-user admin tokens + audit logging.
 
     Resolves the X-Admin-Token via the `admin_users` collection. Legacy
-    env-based BACK_OFFICE_TOKEN still works (back-compat) — both paths
+    env-based BACK_OFFICE_TOKEN still works (back-compat) - both paths
     return an actor record that handlers can pass to `_audit_log`.
 
     `_audit_log` is a thin wrapper around `admin_auth.write_audit` that
@@ -52,7 +52,7 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-app = FastAPI(title="PUTKI HQ API — Phase 1")
+app = FastAPI(title="PUTKI HQ API - Phase 1")
 api_router = APIRouter(prefix="/api")
 
 
@@ -78,7 +78,7 @@ async def root():
 
 @api_router.get("/dial")
 async def get_dial():
-    """Current Mittari state — sourced from latest dial_snapshot if available,
+    """Current Mittari state - sourced from latest dial_snapshot if available,
     otherwise the static seed for first-boot. The recalc worker writes
     snapshots every POLL_INTERVAL_SECONDS once the app has booted."""
     snap = await latest_dial_snapshot(db)
@@ -103,7 +103,7 @@ async def get_dial():
         "any_real": False,
         "context": {
             "active_signals": [],
-            "note": "Ei signaalia vielä — PUTKI HQ:n pollerit eivät ole vielä keränneet dataa.",
+            "note": "Ei signaalia vielä - PUTKI HQ:n pollerit eivät ole vielä keränneet dataa.",
         },
     }
 
@@ -161,7 +161,7 @@ class PredictionResponse(BaseModel):
 
 @api_router.get("/signup/count")
 async def signup_count():
-    """Public — honest live count of newsletter subscribers."""
+    """Public - honest live count of newsletter subscribers."""
     n = await db.signups.count_documents({})
     return {"count": n}
 
@@ -241,7 +241,7 @@ async def _get_settings_doc():
         "smartico_brand_key": doc.get("smartico_brand_key"),
         "voita_feature_enabled": bool(doc.get("voita_feature_enabled", False)),
         "auto_dispatch_enabled": bool(doc.get("auto_dispatch_enabled", False)),
-        # Editable tagline — renders under the header logo and as the
+        # Editable tagline - renders under the header logo and as the
         # lead line of the homepage manifesto. Editorial can A/B test
         # without dev cycles. Defaults match the brief.
         "site_tagline_fi": doc.get("site_tagline_fi") or "Missä Suomen rahapeliskene näkyy",
@@ -255,7 +255,7 @@ async def _get_settings_doc():
 
 @api_router.get("/settings/public")
 async def get_public_settings():
-    """Public — only safe-to-expose settings."""
+    """Public - only safe-to-expose settings."""
     from voita_quiz_config import DEFAULT_VOITA_QUIZ, sanitize_quiz_config
     from voita_profiles import DEFAULT_PROFILES, sanitize_profiles
     s = await _get_settings_doc()
@@ -295,7 +295,7 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     # creds where available, falls back to dry_run per channel).
     if data.auto_dispatch_enabled is not None:
         update["auto_dispatch_enabled"] = bool(data.auto_dispatch_enabled)
-    # Tagline — editorial copy, free-text, length-capped to avoid abuse.
+    # Tagline - editorial copy, free-text, length-capped to avoid abuse.
     if data.site_tagline_fi is not None:
         update["site_tagline_fi"] = (data.site_tagline_fi or "").strip()[:120]
     if data.site_tagline_en is not None:
@@ -322,7 +322,7 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     return await _get_settings_doc()
 
 
-# ── Phase 1 Final · Chunk B — ProgressiveOptIn capture endpoint ──
+# ── Phase 1 Final · Chunk B - ProgressiveOptIn capture endpoint ──
 
 OPTIN_CHANNELS = {"email", "sms", "telegram"}
 OPTIN_SURFACES = {"mittari", "pelisignaalit", "voita", "peli", "homepage", "voita_landing"}
@@ -332,9 +332,9 @@ class OptinPayload(BaseModel):
     """ProgressiveOptIn 3-step funnel capture.
 
     Channel ↔ purpose split (per user spec):
-      - email    = sentiment digest (slow channel — Mittari + skene tunnelma)
-      - sms      = daily bets       (fast channel — Sharpness 75+ signals)
-      - telegram = daily bets       (fast channel — same content, different inbox)
+      - email    = sentiment digest (slow channel - Mittari + skene tunnelma)
+      - sms      = daily bets       (fast channel - Sharpness 75+ signals)
+      - telegram = daily bets       (fast channel - same content, different inbox)
 
     Each captured row records a distinct consent tag like `email_sentiment`,
     `sms_alerts`, `telegram_alerts`. Idempotent per (channel, surface, identifier):
@@ -351,7 +351,7 @@ class OptinPayload(BaseModel):
 # ── Voita lead capture (quiz answers + email before raffle play) ────────
 # Captures qualifying data BEFORE the raffle form. Even if the visitor
 # bounces at the raffle step we keep the email + quiz answers. Single
-# consent tag (`voita_lead`) — distinct from the raffle entry itself
+# consent tag (`voita_lead`) - distinct from the raffle entry itself
 # (which uses `game_raffle`) and distinct from marketing consent.
 
 # PUTKI-wide lead sources. Each surface tags its capture so the drip
@@ -505,7 +505,7 @@ async def admin_optin_stats(_: bool = Depends(require_admin)):
 # ── Public subscriber-count surface (3,000-gating) ───────────────────────
 # Returns a public dict {consent_tag: count} so the FE can decide whether
 # to surface "N subscribers" social proof or fall back to operational
-# facts. Counts are exact — no rounding, no fabrication. Only consent
+# facts. Counts are exact - no rounding, no fabrication. Only consent
 # tags that exist in `optin_consents` show up.
 @api_router.get("/public/subscriber-counts")
 async def public_subscriber_counts():
@@ -603,7 +603,7 @@ async def public_ops_facts():
     return {"facts": facts, "generated_at": now.isoformat()}
 
 
-# ---------- Game scores (Phase 2.5 — Weezy Rally) ----------
+# ---------- Game scores (Phase 2.5 - Weezy Rally) ----------
 
 class GameScoreRequest(BaseModel):
     cookie_id: str = Field(..., min_length=8, max_length=64)
@@ -697,7 +697,7 @@ async def game_personal(cookie_id: str, week: Optional[str] = None, stage: str =
     return {"week": week, "stage": stage, "best": best, "rank": higher + 1, "total": total}
 
 
-# ───────────────── Phase 3 — Content automation engine ─────────────────
+# ───────────────── Phase 3 - Content automation engine ─────────────────
 from content_engine import (  # noqa: E402
     CONTENT_TYPES,
     DEFAULT_GUIDELINES,
@@ -858,7 +858,7 @@ async def admin_update_guideline(key: str, data: GuidelineUpdate, _: bool = Depe
     return await upsert_guideline(db, key, data.text, updated_by="admin")
 
 
-# ── generate content (admin only — calls Claude) ──
+# ── generate content (admin only - calls Claude) ──
 @api_router.post("/admin/queue/generate")
 async def admin_generate(data: GenerateRequest, _: bool = Depends(require_admin)):
     if data.content_type not in CONTENT_TYPES:
@@ -955,7 +955,7 @@ async def admin_kill(item_id: str, _: bool = Depends(require_admin)):
     return {"killed": item_id}
 
 
-# ── public site surface — published content ──
+# ── public site surface - published content ──
 @api_router.get("/published")
 async def get_published(surface: Optional[str] = None, limit: int = 30):
     """Return the most-recent published items for site surfaces."""
@@ -968,7 +968,7 @@ async def get_published(surface: Optional[str] = None, limit: int = 30):
     return {"items": rows}
 
 
-# ── live cockpit data — Pääsyy + Viimeisin piikki ──
+# ── live cockpit data - Pääsyy + Viimeisin piikki ──
 DIAL_DRIVER_LABELS = {
     "sports":           {"fi": "URHEILUTAPAHTUMA AKTIIVINEN", "en": "SPORTS EVENT ACTIVE"},
     "youtube":          {"fi": "YOUTUBE-VOITTO TUNNISTETTU", "en": "YOUTUBE WIN DETECTED"},
@@ -1035,7 +1035,7 @@ async def admin_signals_poll(_: bool = Depends(require_admin)):
 
 @api_router.get("/signals/live")
 async def public_live_signals(limit: int = 12):
-    """Public — honest live signals only. Returns non-mocked streamer/youtube signals
+    """Public - honest live signals only. Returns non-mocked streamer/youtube signals
     surfaced for the public live-tiles grid. If nothing real exists, returns empty
     list (no fabrication)."""
     limit = max(1, min(30, limit))
@@ -1049,7 +1049,7 @@ async def public_live_signals(limit: int = 12):
 
 @api_router.get("/streamers/live")
 async def public_streamers_live(platform: Optional[str] = None):
-    """Pre-launch polish — REAL live streamers across Twitch + Kick + YouTube.
+    """Pre-launch polish - REAL live streamers across Twitch + Kick + YouTube.
 
     `platform` query param: omit for Twitch (default Helix `language=fi`),
     or pass `kick` / `youtube` to hit the multi-platform aggregator.
@@ -1082,7 +1082,7 @@ async def public_streamers_live(platform: Optional[str] = None):
     return d
 
 
-# ── Phase 1 sprint follow-up — newsroom-live strip ────────────────────────
+# ── Phase 1 sprint follow-up - newsroom-live strip ────────────────────────
 
 @api_router.get("/newsroom/live-stats")
 async def public_newsroom_live_stats():
@@ -1365,7 +1365,7 @@ async def alerts_logout(authorization: Optional[str] = Header(None)):
 
 @api_router.get("/admin/alerts/preview-codes")
 async def admin_alert_preview_codes(_: bool = Depends(require_admin)):
-    """Preview hatch — see queued login codes until Resend is wired.
+    """Preview hatch - see queued login codes until Resend is wired.
     Returns the latest 20 alert_login_code emails from `email_outbox`
     with the 6-digit code extracted for easy testing."""
     from alert_sessions import list_pending_codes
@@ -1375,7 +1375,7 @@ async def admin_alert_preview_codes(_: bool = Depends(require_admin)):
 
 @api_router.get("/data/live-stats")
 async def public_data_live_stats():
-    """Homepage ticker — REAL aggregated counters across Layer 2 collections.
+    """Homepage ticker - REAL aggregated counters across Layer 2 collections.
     10s cache. Never fabricated; counters that haven't fired yet return 0."""
     from public_stats import get_live_stats
     return await get_live_stats(db)
@@ -1383,7 +1383,7 @@ async def public_data_live_stats():
 
 @api_router.get("/odds/featured")
 async def public_odds_featured():
-    """Pre-launch polish — REAL betting odds for "Päivän Vitoset" homepage strip.
+    """Pre-launch polish - REAL betting odds for "Päivän Vitoset" homepage strip.
     Top 5 favourites by implied probability across NHL + select football.
     15 min cache. Dormant=true when ODDS_API_KEY is unset."""
     from odds_api import get_featured_picks
@@ -1397,7 +1397,7 @@ async def public_mittari_stats():
     Returns: subscribers_count (total leads with mittari_lead tag),
     fresh_24h (leads in the last 24h), and the 4 most recent signups
     anonymised to first-name + channel + iso timestamp. Returns zeroes /
-    empty list when no real data exists — front-end is expected to hide
+    empty list when no real data exists - front-end is expected to hide
     the social-proof modules in that case rather than show a fake number.
     """
     now = datetime.now(timezone.utc)
@@ -1558,7 +1558,7 @@ async def track_click_redirect(token: str, u: str, request: Request):
 # ── Mestari multi-diagnostic (poker + blackjack) ─────────────────────
 @api_router.get("/mestari/diagnostic/{diagnostic}/meta")
 async def public_diagnostic_meta(diagnostic: str):
-    """Public — return the question + profile metadata for the named
+    """Public - return the question + profile metadata for the named
     diagnostic so the frontend renders the quiz without duplicating
     constants. Sports diagnostic surfaces only its value block (questions
     live in voita_quiz_config)."""
@@ -1573,7 +1573,7 @@ async def public_diagnostic_meta(diagnostic: str):
 
 @api_router.get("/mestari/diagnostic/landing")
 async def public_landing_copy():
-    """Public — return the editable landing-copy tree (hub + poker +
+    """Public - return the editable landing-copy tree (hub + poker +
     blackjack landing text) so the hub renders editable strings."""
     from mestari_diagnostics import get_landing_copy
     return await get_landing_copy(db)
@@ -1599,7 +1599,7 @@ async def admin_save_diagnostic_copy(
 
 @api_router.post("/mestari/diagnostic/{diagnostic}/resolve")
 async def public_diagnostic_resolve(diagnostic: str, payload: Dict[str, Any]):
-    """Public — resolve answers → profile for poker/blackjack. Sports
+    """Public - resolve answers → profile for poker/blackjack. Sports
     diagnostic continues to use POST /api/voita/profile/resolve."""
     from mestari_diagnostics import resolve_blackjack, resolve_poker
     answers = (payload or {}).get("answers") or []
@@ -1705,7 +1705,7 @@ async def public_mestari_copy():
 
 @api_router.get("/voyager/active")
 async def public_voyager_active():
-    """Public — current week's voyager pick (game · operator · prize ·
+    """Public - current week's voyager pick (game · operator · prize ·
     review). Falls back to DEFAULT_VOYAGER when no override is saved."""
     from voyager_rotation import get_active_voyager
     return await get_active_voyager(db)
@@ -1718,7 +1718,7 @@ async def public_voyager_active():
 
 @api_router.get("/odds/market-watch")
 async def public_odds_market_watch():
-    """Phase 1 (Section 7c) — Daily Market Watch Card payload.
+    """Phase 1 (Section 7c) - Daily Market Watch Card payload.
     Computes today's average Sharpness across published picks and returns
     a 30-day sparkline of daily averages. Persists today's score to
     `sharpness_daily` so the sparkline accumulates over time."""
@@ -1736,7 +1736,7 @@ async def public_odds_market_watch():
 
 @api_router.get("/news/ticker")
 async def public_news_ticker(limit: int = 40):
-    """Phase 1 (Section 2) — rolling news ticker feed.
+    """Phase 1 (Section 2) - rolling news ticker feed.
 
     Returns the latest classified items above the relevance threshold,
     sorted by capture time descending. Used by the full-width ticker
@@ -1759,7 +1759,7 @@ async def public_news_ticker(limit: int = 40):
     }
 
 
-# ── Phase 1 FINAL · Chunk A — News Portal (homepage rebuild) ──
+# ── Phase 1 FINAL · Chunk A - News Portal (homepage rebuild) ──
 
 def _news_doc_projection() -> Dict[str, int]:
     return {
@@ -1843,7 +1843,7 @@ async def public_news_chronological(limit: int = 12):
     """Chronological news list for the homepage left column.
 
     Returns the most recent `news_ticker_items` sorted by capture time.
-    No og:image enrichment — that runs only on the featured row to keep
+    No og:image enrichment - that runs only on the featured row to keep
     this endpoint fast (the chronological list shows source + headline +
     timestamp, no hero images).
     """
@@ -1892,7 +1892,7 @@ async def admin_og_blocklist_remove(domain: str, _: bool = Depends(require_admin
 
 @api_router.get("/odds/upcoming")
 async def public_odds_upcoming(days: int = 7, top_per_day: int = 5):
-    """Betting Tips hub — picks grouped by calendar day for the next N days."""
+    """Betting Tips hub - picks grouped by calendar day for the next N days."""
     from odds_api import get_upcoming_picks
     days = max(1, min(14, days))
     top_per_day = max(1, min(10, top_per_day))
@@ -1901,12 +1901,12 @@ async def public_odds_upcoming(days: int = 7, top_per_day: int = 5):
 
 @api_router.get("/dial/history")
 async def public_dial_history(limit: int = 48):
-    """Public — last N dial snapshots for the home mini-chart."""
+    """Public - last N dial snapshots for the home mini-chart."""
     limit = max(1, min(200, limit))
     return {"history": await dial_history(db, limit=limit)}
 
 
-# ── Phase 1 Sprint 4 — Mittari streak counter + state permalink ──
+# ── Phase 1 Sprint 4 - Mittari streak counter + state permalink ──
 
 @api_router.get("/dial/streak")
 async def public_dial_streak():
@@ -1940,7 +1940,7 @@ async def public_dial_permalink(state_key: str, date_iso: str):
 
 @api_router.get("/og/mittari/{state_key}/{date_iso}")
 async def public_mittari_og(state_key: str, date_iso: str):
-    """Phase 1 Sprint 4 — Mittari OG image lookup.
+    """Phase 1 Sprint 4 - Mittari OG image lookup.
 
     Returns `{found:true,url}` when the Nano Banana cache has produced
     an image for this state+date, otherwise `{found:false,reason}`.
@@ -1995,7 +1995,7 @@ async def dial_stream():
 
 @api_router.get("/admin/layer2/status")
 async def admin_layer2_status(_: bool = Depends(require_admin)):
-    """Operational view of the four Layer 2 workers — last-tick timestamps,
+    """Operational view of the four Layer 2 workers - last-tick timestamps,
     document counts, and the most recent dial snapshot summary."""
     out: Dict[str, Any] = {}
     for coll_name in ("stream_signals", "social_signals", "sports_signals",
@@ -2187,7 +2187,7 @@ class _BackfillBody(BaseModel):
 async def admin_content_backfill(payload: _BackfillBody, _: bool = Depends(require_admin)):
     """Generate N historical articles across the 6 templates and back-date
     their published_at across the last `days`. Call multiple times to reach
-    100–200 total. Hard-capped at 50 per call."""
+    100-200 total. Hard-capped at 50 per call."""
     if _content_generator is None:
         raise HTTPException(status_code=503, detail="ContentGenerator not initialised")
     from content_backfill import run_backfill
@@ -2375,7 +2375,7 @@ async def admin_sources(category: Optional[str] = None, _: bool = Depends(requir
 
 @api_router.get("/sources/public")
 async def public_sources():
-    """Public — surfaces on /lehdisto. Returns active named editorial sources."""
+    """Public - surfaces on /lehdisto. Returns active named editorial sources."""
     rows = await list_sources(db, category=None)
     # group by category for ergonomic frontend rendering
     grouped: dict = {}
@@ -2454,7 +2454,7 @@ class BulkResearchPayload(BaseModel):
 
 @api_router.post("/admin/foundational-research/bulk")
 async def admin_bulk_foundational(data: BulkResearchPayload, _: bool = Depends(require_admin)):
-    """Bulk import — used by CSV/JSON drops from /back-office/foundational-research."""
+    """Bulk import - used by CSV/JSON drops from /back-office/foundational-research."""
     out = []
     for e in data.entries:
         out.append(await upsert_foundational_entry(db, e.dict(), updated_by="admin_bulk"))
@@ -2462,38 +2462,8 @@ async def admin_bulk_foundational(data: BulkResearchPayload, _: bool = Depends(r
 
 
 # ── Phase 3 V2: editorial seed scheduler ──
-class CadencesPayload(BaseModel):
-    cadences: List[dict]
-
-
-@api_router.get("/admin/scheduler/cadences")
-async def admin_get_cadences(_: bool = Depends(require_admin)):
-    return {"cadences": await get_scheduler_cadences(db)}
-
-
-@api_router.put("/admin/scheduler/cadences")
-async def admin_set_cadences(data: CadencesPayload, _: bool = Depends(require_admin)):
-    return {"cadences": await set_scheduler_cadences(db, data.cadences)}
-
-
-@api_router.get("/admin/scheduler/status")
-async def admin_scheduler_status(_: bool = Depends(require_admin)):
-    return await scheduler_schedule_status(db)
-
-
-@api_router.post("/admin/scheduler/tick")
-async def admin_scheduler_tick(
-    force_content_type: Optional[str] = None,
-    _: bool = Depends(require_admin),
-):
-    """Force-fire the scheduler now. With `force_content_type` set, bypass the
-    weekday/min-gap check for that single content type."""
-    return await run_scheduler_tick(db, force_content_type=force_content_type)
-
-
-@api_router.post("/admin/scheduler/fill-variants")
-async def admin_fill_variants(max_per_tick: int = 5, _: bool = Depends(require_admin)):
-    return await run_variant_filler(db, max_per_tick=max_per_tick)
+# NOTE: CadencesPayload + all /admin/scheduler/* endpoints moved
+# to routes/admin.py (iter69 phase 4a).
 
 
 # ── Phase 3 V2 Step 1: Operators + Streamers registries ──
@@ -2549,7 +2519,7 @@ async def admin_delete_operator(slug: str, _: bool = Depends(require_admin)):
 
 
 
-# ── Mini-game suite (iter55) — educational gambling-literacy games ───
+# ── Mini-game suite (iter55) - educational gambling-literacy games ───
 import mini_games as _mg
 
 class MiniGameAnswerPayload(BaseModel):
@@ -2571,18 +2541,18 @@ class MiniGameUnlockPayload(BaseModel):
 # ── iter66 phase 2 · Mini-games routes modularised ──────────────────
 # All 25 /api/mini-games/* + /api/admin/mini-games/* endpoints now live
 # in /app/backend/routes/mini_games.py. server.py shrunk by ~400 LOC.
-# Route paths are unchanged — no frontend impact.
-import mini_game_tournament as _mgt  # noqa: E402 — used by other server.py blocks too
+# Route paths are unchanged - no frontend impact.
+import mini_game_tournament as _mgt  # noqa: E402 - used by other server.py blocks too
 from routes._helpers import bind_dependencies  # noqa: E402
 from routes.mini_games import build_mini_games_router  # noqa: E402
 bind_dependencies(db=db, require_admin=require_admin)
 api_router.include_router(build_mini_games_router())
 
-# iter68 phase 1 — admin copy endpoints (mittari + mestari copy)
+# iter68 phase 1 - admin copy endpoints (mittari + mestari copy)
 from routes.admin import make_router as _make_admin_router  # noqa: E402
 api_router.include_router(_make_admin_router())
 
-# iter66 phase 3a — streamer endpoints (7 public + 7 admin)
+# iter66 phase 3a - streamer endpoints (7 public + 7 admin)
 from routes.streamers import build_streamers_router  # noqa: E402
 api_router.include_router(build_streamers_router())
 
@@ -2602,7 +2572,7 @@ register_share_landing(app)
 
 @api_router.get("/voyager/current-week")
 async def public_current_voyager_week(market_id: str = "FI"):
-    """Public — what's this week's Voyager? Powers hub `Tämän viikon peli` card."""
+    """Public - what's this week's Voyager? Powers hub `Tämän viikon peli` card."""
     week = await rotation_get_current(db, market_id=market_id)
     if not week:
         return {"week": None, "iso_week": current_iso_week(), "market_id": market_id}
@@ -2611,7 +2581,7 @@ async def public_current_voyager_week(market_id: str = "FI"):
 
 @api_router.get("/voyager/weeks")
 async def public_voyager_weeks(market_id: str = "FI", upcoming_only: bool = True, limit: int = 12):
-    """Public — for the /voita-palkinto/arkisto/* surface and editor planning views."""
+    """Public - for the /voita-palkinto/arkisto/* surface and editor planning views."""
     return {"weeks": await rotation_list(db, market_id=market_id, upcoming_only=upcoming_only, limit=limit)}
 
 
@@ -2626,24 +2596,14 @@ async def public_feed(
     market_id: str = FEED_DEFAULT_MARKET,
     limit: int = 12,
 ):
-    """Public hub feed. Mocked signals are excluded — endpoint will return
+    """Public hub feed. Mocked signals are excluded - endpoint will return
     [] until real Twitch/Kick/YouTube API keys are supplied. Editorial drops
     are always real (sourced from published_content)."""
     items = await list_feed(db, source=source, kind=kind, market_id=market_id, limit=limit, include_mocked=False)
     return {"items": items, "count": len(items), "market_id": market_id}
 
 
-@api_router.get("/admin/feed")
-async def admin_feed(
-    source: Optional[str] = None,
-    kind: Optional[str] = None,
-    market_id: str = FEED_DEFAULT_MARKET,
-    limit: int = 50,
-    include_mocked: bool = True,
-    _: bool = Depends(require_admin),
-):
-    items = await list_feed(db, source=source, kind=kind, market_id=market_id, limit=limit, include_mocked=include_mocked)
-    return {"items": items, "count": len(items), "market_id": market_id, "include_mocked": include_mocked}
+# NOTE: /admin/feed + /admin/feed/rebuild moved to routes/admin.py (iter69 phase 4b).
 
 
 @api_router.get("/feed/stats")
@@ -2651,160 +2611,8 @@ async def public_feed_stats(market_id: str = FEED_DEFAULT_MARKET):
     return await feed_stats(db, market_id=market_id)
 
 
-@api_router.post("/admin/feed/rebuild")
-async def admin_feed_rebuild(market_id: str = FEED_DEFAULT_MARKET, _: bool = Depends(require_admin)):
-    return await rebuild_feed(db, market_id=market_id)
-
-
-# ── Daily dispatch worker (Email digest + SMS + Telegram, dry-run default) ──
-
-class _DispatchRunPayload(BaseModel):
-    dry_run: Optional[bool] = True
-
-
-@api_router.post("/admin/dispatch/run")
-async def admin_dispatch_run(
-    payload: _DispatchRunPayload,
-    _: bool = Depends(require_admin),
-):
-    """Manually fire the daily dispatch cycle. Dry-run by default — keeps
-    the audit trail honest until Resend/Twilio/Telegram keys land."""
-    from dispatch_daily import run_daily_dispatch
-    return await run_daily_dispatch(db, dry_run=bool(payload.dry_run))
-
-
-@api_router.get("/admin/dispatch/log")
-async def admin_dispatch_log(
-    limit: int = 100, kind: Optional[str] = None,
-    _: bool = Depends(require_admin),
-):
-    from dispatch_daily import list_recent_log
-    items = await list_recent_log(db, limit=limit, kind=kind)
-    return {"items": items, "count": len(items)}
-
-
-@api_router.get("/admin/dispatch/summary")
-async def admin_dispatch_summary(
-    days: int = 7, _: bool = Depends(require_admin),
-):
-    from dispatch_daily import cycle_summary
-    return await cycle_summary(db, days=days)
-
-
-# ── Dispatch previewer + flags + overrides + test-send ───────────────────
-
-
-class _DispatchTestSendPayload(BaseModel):
-    recipients: List[str]
-    channels: Optional[List[str]] = None  # subset of email|sms|telegram
-
-
-class _DispatchFlagPayload(BaseModel):
-    reason: str
-    note: Optional[str] = None
-    flagged_by: Optional[str] = None
-
-
-class _DispatchSegmentOverridePayload(BaseModel):
-    channel: str
-    consent_tag: str
-    mode: str  # dry_run | live_segment_only | live_global
-
-
-@api_router.get("/admin/dispatch/cycles")
-async def admin_dispatch_cycles(
-    days: int = 14, limit: int = 50,
-    _: bool = Depends(require_admin),
-):
-    from dispatch_daily import list_cycles
-    items = await list_cycles(db, days=days, limit=limit)
-    return {"items": items, "count": len(items)}
-
-
-@api_router.get("/admin/dispatch/cycles/{cycle_id}")
-async def admin_dispatch_cycle_detail(
-    cycle_id: str, _: bool = Depends(require_admin),
-):
-    from dispatch_daily import cycle_detail
-    try:
-        return await cycle_detail(db, cycle_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
-
-
-@api_router.post("/admin/dispatch/logs/{send_id}/flag")
-async def admin_dispatch_flag_send(
-    send_id: str, payload: _DispatchFlagPayload,
-    _: bool = Depends(require_admin),
-):
-    from dispatch_daily import flag_send
-    try:
-        return await flag_send(db, send_id,
-                                reason=payload.reason,
-                                note=payload.note,
-                                flagged_by=payload.flagged_by)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-
-@api_router.delete("/admin/dispatch/logs/{send_id}/flag")
-async def admin_dispatch_unflag_send(
-    send_id: str, _: bool = Depends(require_admin),
-):
-    from dispatch_daily import unflag_send
-    removed = await unflag_send(db, send_id)
-    return {"removed": removed}
-
-
-@api_router.get("/admin/dispatch/review-flags")
-async def admin_dispatch_review_flags(
-    status: Optional[str] = None, limit: int = 200,
-    _: bool = Depends(require_admin),
-):
-    from dispatch_daily import list_flags
-    items = await list_flags(db, status=status, limit=limit)
-    return {"items": items, "count": len(items)}
-
-
-@api_router.get("/admin/dispatch/segment-overrides")
-async def admin_dispatch_segment_overrides_list(
-    _: bool = Depends(require_admin),
-):
-    from dispatch_daily import list_segment_overrides
-    items = await list_segment_overrides(db)
-    return {"items": items, "count": len(items)}
-
-
-@api_router.put("/admin/dispatch/segment-overrides")
-async def admin_dispatch_segment_overrides_set(
-    payload: _DispatchSegmentOverridePayload,
-    _: bool = Depends(require_admin),
-):
-    from dispatch_daily import set_segment_override
-    try:
-        return await set_segment_override(
-            db, payload.channel, payload.consent_tag, payload.mode,
-        )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-
-@api_router.post("/admin/dispatch/test-send")
-async def admin_dispatch_test_send(
-    payload: _DispatchTestSendPayload,
-    _: bool = Depends(require_admin),
-):
-    """Trigger a targeted dispatch — only to readers in the opt-in
-    segment whose identifier is in `recipients`. Used for go-live
-    smoke tests with a tiny inbox set before flipping a full segment."""
-    from dispatch_daily import run_daily_dispatch
-    if not payload.recipients:
-        raise HTTPException(status_code=400, detail="recipients required")
-    return await run_daily_dispatch(
-        db, dry_run=False,
-        recipients_override=payload.recipients,
-        channels=payload.channels,
-    )
+# NOTE: All /admin/dispatch/* endpoints + payload models moved to
+# routes/admin.py (iter69 phase 4c).
 
 
 # ── Voita raffle (gated until Sako sign-off + 3 gating flags clear) ──
@@ -2821,7 +2629,7 @@ async def _voita_feature_enabled() -> bool:
 async def public_voita_raffles_list(status: Optional[str] = None, limit: int = 50):
     """Public list. Without filter, returns currently-visible raffles
     (the homepage CTA surface). With `?status=paid&limit=N`, returns the
-    last N paid raffles with winner detail + masked emails — used by
+    last N paid raffles with winner detail + masked emails - used by
     the recent-winners trust strip."""
     if not await _voita_feature_enabled():
         return {"items": [], "feature_enabled": False}
@@ -2849,7 +2657,7 @@ async def public_voita_raffle_detail(slug: str):
 async def public_voita_match_context(slug: str):
     """Real per-match context for the prediction game beats: bookmaker
     consensus, team form (when league is covered), editorial pick, and
-    current pick distribution among entrants. Every field can be null —
+    current pick distribution among entrants. Every field can be null -
     UI must degrade gracefully."""
     if not await _voita_feature_enabled():
         raise HTTPException(status_code=404, detail="raffle not found")
@@ -2865,7 +2673,7 @@ async def public_voita_match_context(slug: str):
 @api_router.post("/voita/profile/resolve")
 async def public_voita_profile_resolve(payload: Dict[str, Any]):
     """Resolve a user's quiz answers to a named predictor profile.
-    Public — accepts {answers: {q_key: tag}} from the lesson funnel and
+    Public - accepts {answers: {q_key: tag}} from the lesson funnel and
     returns the matched profile (name + diagnosis + weakness + edge +
     hooks). Stateless; nothing about the user is persisted here.
     """
@@ -2885,7 +2693,7 @@ async def public_voita_profile_resolve(payload: Dict[str, Any]):
 @api_router.get("/voita/your-record")
 async def public_voita_your_record(email: EmailStr):
     """User-facing 'your record' lookup. Returns aggregate counts ONLY
-    for the requesting email — never enumerates other entrants. Used by
+    for the requesting email - never enumerates other entrants. Used by
     the listing-page strip; FE must pass the email captured in the
     visitor's last entry session.
     """
@@ -2981,7 +2789,7 @@ async def admin_voita_list(_: bool = Depends(require_admin)):
     return {"items": items}
 
 
-# ── Telegram bot — Voita raffle confirmation (Sprint B Slice 3) ──────────
+# ── Telegram bot - Voita raffle confirmation (Sprint B Slice 3) ──────────
 
 @api_router.post("/webhooks/telegram")
 async def webhook_telegram(request: Request):
@@ -2998,7 +2806,7 @@ async def webhook_telegram(request: Request):
     except Exception as exc:
         raise HTTPException(status_code=400, detail=f"invalid_json: {exc}")
     result = await _tg.handle_update(db, update)
-    # Audit log — small TTL collection so we can debug binding issues.
+    # Audit log - small TTL collection so we can debug binding issues.
     try:
         await db.telegram_webhook_log.insert_one({
             "received_at": datetime.now(timezone.utc).isoformat(),
@@ -3059,7 +2867,7 @@ class _MittariSubscribePayload(BaseModel):
 @api_router.post("/mittari/subscribe")
 async def mittari_subscribe(payload: _MittariSubscribePayload):
     """Pre-register the pending_id so the bot can resolve it when the
-    user lands via t.me/Putkihq_bot?start=mittari_<id>. Optimistic — the
+    user lands via t.me/Putkihq_bot?start=mittari_<id>. Optimistic - the
     FE unlocks the signals client-side immediately; the bot side
     finalises the binding (chat_id + telegram_username) async."""
     pid = (payload.pending_id or "").strip()[:64]
@@ -3085,7 +2893,7 @@ async def mittari_subscribe(payload: _MittariSubscribePayload):
 @api_router.get("/mittari/binding-status")
 async def mittari_binding_status(pending_id: str):
     """Public lookup so the page can poll for bot confirmation after the
-    user lands in Telegram. Returns minimal info — no chat_id leaks."""
+    user lands in Telegram. Returns minimal info - no chat_id leaks."""
     pid = (pending_id or "").strip()[:64]
     if not pid:
         raise HTTPException(status_code=400, detail="pending_id required")
@@ -3113,7 +2921,7 @@ async def admin_mittari_subscribers(limit: int = 50, _: bool = Depends(require_a
     return {"items": items, "count": len(items), "total": total, "active_bound": active}
 
 
-# ── PUTKI lead — unified view across all surfaces ────────────────────────
+# ── PUTKI lead - unified view across all surfaces ────────────────────────
 
 _PUTKI_LEAD_TAGS = {
     "mestari_lead": "mestari",
@@ -3353,7 +3161,7 @@ async def admin_voita_notify_winner(
         raise HTTPException(status_code=500, detail="template_missing")
     # Drop into the outbox so the existing send-worker picks it up.
     now = datetime.now(timezone.utc).isoformat()
-    # Pixel injection happens at the email_templates level — track the
+    # Pixel injection happens at the email_templates level - track the
     # winner email via the standard tracking pipeline too.
     from email_tracking import inject_tracking_into_html, new_token, tracking_enabled
     body_html = rendered["body_html"]
@@ -3399,12 +3207,12 @@ async def admin_leads_funnel(
     hours: int = 24, _: bool = Depends(require_admin),
 ):
     """6-stage funnel over the last N hours:
-       1. signups       — distinct emails added to optin_consents
-       2. queued        — email_outbox rows created
-       3. sent          — email_outbox rows that flipped to status=sent
-       4. opened        — outbox rows with first_opened_at in window
-       5. clicked       — outbox rows with first_clicked_at in window
-       6. returned      — emails that received an email AND opened a new
+       1. signups       - distinct emails added to optin_consents
+       2. queued        - email_outbox rows created
+       3. sent          - email_outbox rows that flipped to status=sent
+       4. opened        - outbox rows with first_opened_at in window
+       5. clicked       - outbox rows with first_clicked_at in window
+       6. returned      - emails that received an email AND opened a new
                           voita_entry OR mestari lead AFTER their last
                           sent_at (engagement-loop estimate).
     """
@@ -3417,7 +3225,7 @@ async def admin_voita_import_odds(raffle_id: str, _: bool = Depends(require_admi
     """Snapshot the current bookmaker consensus + team form on the
     raffle doc as `match_meta`. Useful at raffle-creation time so that
     even after the Odds API event expires, the previewer still shows
-    what the markets read at day-0 — backs editorial post-mortems."""
+    what the markets read at day-0 - backs editorial post-mortems."""
     from voita_match_context import odds_for_match, team_form_for_match
     doc = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
     if not doc:
@@ -3447,7 +3255,7 @@ async def admin_voita_import_odds(raffle_id: str, _: bool = Depends(require_admi
 #
 # Editor's one-click veto over the deterministic news classifier. The
 # classifier auto-splits each ingested RSS item between the public
-# ticker (relevance ≥ 45), the editor-promotable archive (20–44), and
+# ticker (relevance ≥ 45), the editor-promotable archive (20-44), and
 # the silent-drop bin (< 20). These endpoints let an editor promote,
 # demote, or permanently kill any item. Killed URLs are stored in
 # `news_rejected_urls` and skipped on every subsequent RSS tick.
@@ -3516,7 +3324,7 @@ async def admin_news_watch_demote(payload: Dict[str, Any], _: bool = Depends(req
 
 @api_router.post("/admin/news-watch/kill")
 async def admin_news_watch_kill(payload: Dict[str, Any], _: bool = Depends(require_admin)):
-    """Permanently reject a URL. Idempotent — safe to retry. The next
+    """Permanently reject a URL. Idempotent - safe to retry. The next
     RSS tick will skip this URL even if the deterministic classifier
     would otherwise re-surface it."""
     url = (payload.get("url") or "").strip()
@@ -3541,7 +3349,7 @@ async def admin_news_watch_unkill(payload: Dict[str, Any], _: bool = Depends(req
 
 @app.on_event("startup")
 async def startup_event():
-    """Startup hook — delegates to the `bootstrap` package.
+    """Startup hook - delegates to the `bootstrap` package.
 
     Iter50: the previous inline body (seeds + Layer 2 worker spawn +
     dispatch + scheduler, ~120 LOC) was extracted to `bootstrap/seeds.py`
@@ -3583,7 +3391,7 @@ _content_generator: Optional[ContentGenerator] = None
 
 
 async def _layer2_on_tick(worker_name: str, result: Any) -> None:
-    """Layer 2 worker hook — recompute dial + broadcast to SSE subscribers,
+    """Layer 2 worker hook - recompute dial + broadcast to SSE subscribers,
     then fan out signal items to the ContentGenerator for the Week 2
     automated editorial system."""
     try:
@@ -3602,7 +3410,7 @@ async def _layer2_on_tick(worker_name: str, result: Any) -> None:
 
 
 async def _signal_dial_worker():
-    """Legacy 6-signal poller — retained for back-compat with `signals`
+    """Legacy 6-signal poller - retained for back-compat with `signals`
     collection (admin /api/admin/signals/poll, regression tests). The new
     Layer 2 workers drive the dial; this loop now only refreshes the legacy
     signals collection without overwriting dial snapshots.
@@ -3619,7 +3427,7 @@ async def _signal_dial_worker():
 
 app.include_router(api_router)
 
-# Phase 4 Pre-Launch Polish — serve Nano Banana-generated OG images.
+# Phase 4 Pre-Launch Polish - serve Nano Banana-generated OG images.
 # StaticFiles is mounted under /api/static so the existing K8s ingress
 # rule that routes /api/* to the backend pod handles social-card lookups
 # without extra config.

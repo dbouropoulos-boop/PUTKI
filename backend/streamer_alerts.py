@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Streamer alert subscription store.
+PUTKI HQ - Streamer alert subscription store.
 
 Captures `POST /api/alerts/streamer` opt-ins (email + optional phone +
 optional Telegram username) tied to a specific streamer login + platform.
@@ -93,7 +93,7 @@ async def create_alert(
         channels = ["email"] + (["telegram"] if telegram_username else []) + (["sms"] if phone else [])
     channels = sorted({c.strip().lower() for c in channels if c.strip().lower() in SUPPORTED_CHANNELS})
 
-    # Upsert — same email + streamer + platform replaces the older subscription
+    # Upsert - same email + streamer + platform replaces the older subscription
     existing = await db.streamer_alerts.find_one(
         {"email": email, "streamer_login": streamer_login, "platform": platform},
         {"_id": 0},
@@ -145,7 +145,7 @@ async def list_subscribers_for(db, *, streamer_login: str, platform: str) -> Lis
 async def notify_subscribers_of_live(db, streamer_login: str, platform: str,
                                      stream_url: str, headline: str) -> Dict[str, Any]:
     """Fan out a notification to every subscriber of `streamer_login` on
-    `platform`. Telegram is the only channel that currently delivers — SMS +
+    `platform`. Telegram is the only channel that currently delivers - SMS +
     WhatsApp are captured for future Twilio integration.
 
     Returns counters for ops visibility. Safe to call when no subscribers
@@ -171,7 +171,7 @@ async def notify_subscribers_of_live(db, streamer_login: str, platform: str,
             try:
                 # Telegram requires numeric chat_id in practice. We optimistically
                 # send via @username (works only if user has /started the bot
-                # and Telegram resolves usernames to chat ids — they typically
+                # and Telegram resolves usernames to chat ids - they typically
                 # don't, so this is a launch placeholder).
                 r = await http.post(
                     f"https://api.telegram.org/bot{bot_token}/sendMessage",

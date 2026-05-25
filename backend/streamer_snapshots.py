@@ -1,14 +1,14 @@
 """
-PUTKI HQ — Streamer viewer-count snapshots + editorial meta.
+PUTKI HQ - Streamer viewer-count snapshots + editorial meta.
 
-`streamer_viewers_24h` — periodic snapshots of every live streamer's viewer
+`streamer_viewers_24h` - periodic snapshots of every live streamer's viewer
 count, used to compute the change indicators surfaced on the homepage
 streamer band (`410 ▲ 47 last hour`). Snapshots accumulate via the existing
 streamer poll loop; once ≥24h of data has been collected, the per-streamer
 trend becomes meaningful. Until then, the frontend suppresses the indicator
 and shows just the raw viewer count.
 
-`streamer_meta` — editorially-maintained per-streamer context lines (FI+EN
+`streamer_meta` - editorially-maintained per-streamer context lines (FI+EN
 + suppressed flag). One row per (platform, user_login). Surfaced on the
 homepage streamer card hover/expand affordance.
 """
@@ -159,7 +159,7 @@ async def attach_meta(db, items: List[Dict[str, Any]], platform: str) -> List[Di
     card".
 
     Status-aware: rows with `status == 'draft_needs_review'` NEVER reach
-    the public surface — drafts are reviewer-only. Legacy rows without
+    the public surface - drafts are reviewer-only. Legacy rows without
     `status` fall back to the published treatment (back-compat).
     """
     if not items:
@@ -181,7 +181,7 @@ async def attach_meta(db, items: List[Dict[str, Any]], platform: str) -> List[Di
             continue
         status = d.get("status")
         # Block drafts from the public surface. Legacy rows have no
-        # status field — those are treated as published for back-compat.
+        # status field - those are treated as published for back-compat.
         if status == "draft_needs_review" or status == "no_meta":
             continue
         by_login[d["user_login"]] = d

@@ -1,5 +1,5 @@
 """
-Phase 4 Week 1 — Layer 2 backend tests.
+Phase 4 Week 1 - Layer 2 backend tests.
 
 Covers:
   - dial_engine.recalculate_dial 4-signal formula (intensities + weights)
@@ -168,7 +168,7 @@ class TestDialFormula:
         assert snap["state_key"] == "HAALEA"
 
     def test_reddit_weight_zero_phase1(self):
-        # Phase 1 has Reddit dropped — social weight = 0 means no matter how
+        # Phase 1 has Reddit dropped - social weight = 0 means no matter how
         # many mentions appear, dial doesn't move from social signal alone.
         db = _StubDB({"social_signals": {"mention_count": 100}})
         snap = _run(dial_engine.recalculate_dial(db))

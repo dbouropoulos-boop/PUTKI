@@ -1,9 +1,9 @@
 /**
- * PUTKI HQ — Back-office Dispatch Previewer.
+ * PUTKI HQ - Back-office Dispatch Previewer.
  *
  * Left column:  list of cycles (last 14d, newest first).
  * Right column: side-by-side preview of all three channels for the
- *               selected cycle — rendered body + raw payload + recipient
+ *               selected cycle - rendered body + raw payload + recipient
  *               count, plus per-send "Flag for review" controls.
  *
  * The previewer is read-mostly. The only write is `Flag for review`, which
@@ -31,7 +31,7 @@ const FLAG_REASONS = [
 ];
 
 const fmtDate = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     return new Date(iso).toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
   } catch { return iso; }
@@ -207,7 +207,7 @@ const ChannelCard = ({ channel, data, token, onChanged }) => {
           <pre data-testid={`rendered-${channel}`} style={{
             margin: 0, fontFamily: 'ui-monospace, monospace', fontSize: 12, color: '#FFFFFF',
             whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.55,
-          }}>{data.rendered_text || '—'}</pre>
+          }}>{data.rendered_text || '-'}</pre>
         )}
         {tab === 'raw' && (
           <pre data-testid={`raw-${channel}`} style={{
@@ -291,7 +291,7 @@ const BackOfficeDispatchPreview = () => {
       </div>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, maxWidth: 880, lineHeight: 1.55 }}>
         Review the last {days} days of dispatch cycles side-by-side across Email / SMS / Telegram.
-        Click any send to flag it (Tone / Factual / Legal / Formatting / Other) — flags drive the
+        Click any send to flag it (Tone / Factual / Legal / Formatting / Other) - flags drive the
         rollout decision before flipping a segment live.
       </p>
 

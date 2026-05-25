@@ -1,24 +1,24 @@
 """
-PUTKI HQ — /peli raffle backend.
+PUTKI HQ - /peli raffle backend.
 
 REPLACES the previous Smartico game leaderboard. The new /peli is a simple
 editorial raffle: visitor leaves name + phone + email and the editorial team
 draws a winner. NO betting. NO deposit. NO stakes. NO gambling activity
-takes place — this is a media-company promotional contest.
+takes place - this is a media-company promotional contest.
 
 Endpoints:
-  • GET  /api/peli/config           — public read-only config (prize, videos,
+  • GET  /api/peli/config           - public read-only config (prize, videos,
                                         partner, enabled, entry_count)
-  • POST /api/peli/enter            — public raffle entry (name, phone, email,
+  • POST /api/peli/enter            - public raffle entry (name, phone, email,
                                         consent)
-  • GET  /api/admin/peli/config     — admin read
-  • PUT  /api/admin/peli/config     — admin update (prize_amount, prize_label,
+  • GET  /api/admin/peli/config     - admin read
+  • PUT  /api/admin/peli/config     - admin update (prize_amount, prize_label,
                                         currency, partner_*, videos, enabled)
-  • GET  /api/admin/peli/entries    — admin list entries (latest first)
+  • GET  /api/admin/peli/entries    - admin list entries (latest first)
 
 Collections:
-  • peli_meta    — singleton config (_id="config")
-  • peli_entries — one doc per submitted entry
+  • peli_meta    - singleton config (_id="config")
+  • peli_entries - one doc per submitted entry
 """
 from __future__ import annotations
 

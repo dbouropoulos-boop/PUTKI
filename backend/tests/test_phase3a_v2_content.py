@@ -1,5 +1,5 @@
 """
-Mittari Phase 3 Batch 3A V2 — content-type registry + new V2 content types end-to-end.
+Mittari Phase 3 Batch 3A V2 - content-type registry + new V2 content types end-to-end.
 
 Covers:
 - GET /api/admin/content-types returns 19 types incl 13 new V2 types
@@ -100,7 +100,7 @@ class TestGuidelines:
         rows = r.json().get("guidelines") or r.json()
         sys_row = next(r for r in rows if r.get("key") == "putki_hq_voice_system_prompt")
         text = (sys_row.get("text") or "").lower()
-        # V2 voice register markers — Complex/GQ/Bloomberg-Crypto explicitly named
+        # V2 voice register markers - Complex/GQ/Bloomberg-Crypto explicitly named
         assert "complex" in text and "gq" in text and "bloomberg" in text
         # V2 editorial instruction blocks (lifestyle profile + game literacy rules)
         assert "elintapaprofiili" in text or "lifestyle" in text, "missing lifestyle/profiili rules block"
@@ -157,7 +157,7 @@ class TestEndToEndV2ContentTypes:
         # 3. Validate distribution channels (mocked status acceptable)
         if expect_distribution_channels:
             dist = (appr_body.get("item") or appr_body).get("distribution_results") or {}
-            # Distribution may be dict of channel→status or list — accept either
+            # Distribution may be dict of channel→status or list - accept either
             if isinstance(dist, dict):
                 got = set(dist.keys())
             else:
@@ -171,7 +171,7 @@ class TestEndToEndV2ContentTypes:
         assert pub.status_code == 200, f"/api/published failed {pub.status_code}"
         items = pub.json().get("items") or []
         ids = [it.get("id") or it.get("queue_id") or it.get("source_queue_id") for it in items]
-        # ID may be remapped on publish — fall back to text match
+        # ID may be remapped on publish - fall back to text match
         if queue_id not in ids:
             texts = [it.get("text", "")[:60] for it in items]
             assert any(variants[0]["text"][:40] in (it.get("text") or "") for it in items), \

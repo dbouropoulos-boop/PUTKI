@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Mini-game suite English translations (iter60).
+PUTKI HQ - Mini-game suite English translations (iter60).
 
 Parallel EN content for every Finnish seed entry in `mini_games.py` and
 `mini_games_phase2.py`. Keyed by `(slug, order)` so the seed functions
@@ -9,7 +9,7 @@ doc without touching the FI definitions.
 Personas are keyed by their internal `key` (e.g. `math_strong`).
 
 Whenever you add a new FI question, add the matching EN entry here.
-The seed loop is idempotent — `$set` will fill in `_en` fields on the
+The seed loop is idempotent - `$set` will fill in `_en` fields on the
 next boot when rows pre-exist without them.
 """
 from __future__ import annotations
@@ -32,7 +32,7 @@ QUIZ_EN: List[Dict[str, Any]] = [
         "explanation_en": (
             "RTP = Return to Player. It indicates the proportion of stakes a "
             "game theoretically returns to players over the long run. 96% RTP "
-            "means that on average €96 of every €100 wagered is returned — "
+            "means that on average €96 of every €100 wagered is returned - "
             "the house keeps 4%."
         ),
     },
@@ -47,7 +47,7 @@ QUIZ_EN: List[Dict[str, Any]] = [
         ],
         "explanation_en": (
             "High-volatility slots pay out less often but bigger when they do. "
-            "Your bankroll takes more punishment — you need a larger buffer "
+            "Your bankroll takes more punishment - you need a larger buffer "
             "and steadier nerves to ride through the dry runs."
         ),
     },
@@ -71,12 +71,12 @@ QUIZ_EN: List[Dict[str, Any]] = [
         "prompt_en": "Which of these is the BEST bankroll strategy for a beginner?",
         "options": [
             {"key": "a", "label_en": "Bet half of your bankroll on one spin"},
-            {"key": "b", "label_en": "Use max 1–2% of your bankroll per spin"},
+            {"key": "b", "label_en": "Use max 1-2% of your bankroll per spin"},
             {"key": "c", "label_en": "Raise stakes when you're losing"},
             {"key": "d", "label_en": "Play until your bankroll is zero"},
         ],
         "explanation_en": (
-            "Pros recommend 1–2% stake per spin. This lets variance smooth out "
+            "Pros recommend 1-2% stake per spin. This lets variance smooth out "
             "and extends sessions. RAISING bets while losing (chasing) is the "
             "single most common cause of large bankroll wipeouts."
         ),
@@ -85,14 +85,14 @@ QUIZ_EN: List[Dict[str, Any]] = [
         "order": 5,
         "prompt_en": "A slot has paid only losses for 50 spins in a row. Is the next spin more likely to win?",
         "options": [
-            {"key": "a", "label_en": "Yes — the game is 'due'"},
-            {"key": "b", "label_en": "No — every spin is independent"},
+            {"key": "a", "label_en": "Yes - the game is 'due'"},
+            {"key": "b", "label_en": "No - every spin is independent"},
             {"key": "c", "label_en": "Depends on the game"},
             {"key": "d", "label_en": "Only if you raise the stake"},
         ],
         "explanation_en": (
             "Classic Gambler's Fallacy. Every spin is statistically INDEPENDENT "
-            "of previous ones — the slot has no memory. This is one of the most "
+            "of previous ones - the slot has no memory. This is one of the most "
             "common cognitive errors that leads to chasing and addiction."
         ),
     },
@@ -101,13 +101,13 @@ QUIZ_EN: List[Dict[str, Any]] = [
         "prompt_en": "Which provider can LEGALLY offer betting and casino services in Finland in 2026?",
         "options": [
             {"key": "a", "label_en": "Only Veikkaus"},
-            {"key": "b", "label_en": "Veikkaus + 5–8 licensed operators"},
+            {"key": "b", "label_en": "Veikkaus + 5-8 licensed operators"},
             {"key": "c", "label_en": "All EU-licensed operators"},
             {"key": "d", "label_en": "None"},
         ],
         "explanation_en": (
             "Finland opened the gambling market to competition in 2026. "
-            "Veikkaus' monopoly ended — under the new licensing regime several "
+            "Veikkaus' monopoly ended - under the new licensing regime several "
             "operators now hold Finnish licences. An EU licence alone is NOT "
             "enough to legally operate in Finland."
         ),
@@ -138,7 +138,7 @@ QUIZ_EN: List[Dict[str, Any]] = [
         ],
         "explanation_en": (
             "House edge × volume = expected house win. 4% × €1,000 = €40. "
-            "This is the THEORETICAL average — in any single session you "
+            "This is the THEORETICAL average - in any single session you "
             "might win or lose much more."
         ),
     },
@@ -154,7 +154,7 @@ QUIZ_EN: List[Dict[str, Any]] = [
         "explanation_en": (
             "A small weekend stake as part of an entertainment budget is NOT a "
             "warning sign. Chasing losses, lying about play, and using borrowed "
-            "money ARE — these are classic signals that play has slipped "
+            "money ARE - these are classic signals that play has slipped "
             "out of control."
         ),
     },
@@ -170,7 +170,7 @@ QUIZ_EN: List[Dict[str, Any]] = [
         "explanation_en": (
             "Mandatory operator tools (time limits, deposit limits, self-exclusion, "
             "peluuri.fi) are far more effective than willpower alone. Set your "
-            "limits BEFORE the session — in the heat of play, rational decision-"
+            "limits BEFORE the session - in the heat of play, rational decision-"
             "making is impaired."
         ),
     },
@@ -190,7 +190,7 @@ QUIZ_PERSONAS_EN = {
     },
     "balanced": {
         "title_en": "Balanced Beginner",
-        "tagline_en": "Good foundation — both numbers and self-control in shape.",
+        "tagline_en": "Good foundation - both numbers and self-control in shape.",
     },
     "needs_basics": {
         "title_en": "Fresh Learner",
@@ -219,7 +219,7 @@ SCENARIO_EN: List[Dict[str, Any]] = [
             "you keep going and 'double it'. What do you do?"
         ),
         "options": [
-            {"key": "a", "label_en": "Keep playing — the flow is good",
+            {"key": "a", "label_en": "Keep playing - the flow is good",
              "explanation_en": "The classic 'hot hand' trap. The win came from variance, not skill. Stopping is statistically the best moment."},
             {"key": "b", "label_en": "Withdraw the profit, keep playing with the original budget",
              "explanation_en": "Good decision. Separating 'your money' from 'the win' protects you from sliding back to break-even or into the red."},
@@ -236,7 +236,7 @@ SCENARIO_EN: List[Dict[str, Any]] = [
         "options": [
             {"key": "a", "label_en": "Deposit and try to win it back",
              "explanation_en": "Chasing losses is the MOST common reason small initial losses snowball into large ones. A bonus makes it more tempting, but the risk is identical."},
-            {"key": "b", "label_en": "Take a break — wait until next month",
+            {"key": "b", "label_en": "Take a break - wait until next month",
              "explanation_en": "Strong decision. The bonus will still be there. A break breaks the emotional tie and restores rational perspective."},
             {"key": "c", "label_en": "Deposit just a small amount to test",
              "explanation_en": "Better than (a), but still suspect. When the budget is broken, every deposit deepens the problem."},
@@ -250,9 +250,9 @@ SCENARIO_EN: List[Dict[str, Any]] = [
         ),
         "options": [
             {"key": "a", "label_en": "If they hit it, I can hit it too",
-             "explanation_en": "Survivor bias. You only see the winners — not the thousands of similar viewers who lost. A streamer's win tells you nothing about EXPECTED value."},
-            {"key": "b", "label_en": "The streamer earns a commission on my losses — the edge is theirs",
-             "explanation_en": "Exactly. The affiliate model rewards the streamer for your losses. The edge is theirs — you are the product."},
+             "explanation_en": "Survivor bias. You only see the winners - not the thousands of similar viewers who lost. A streamer's win tells you nothing about EXPECTED value."},
+            {"key": "b", "label_en": "The streamer earns a commission on my losses - the edge is theirs",
+             "explanation_en": "Exactly. The affiliate model rewards the streamer for your losses. The edge is theirs - you are the product."},
             {"key": "c", "label_en": "I'll check whether the streamer is responsible / plays with their own money",
              "explanation_en": "Good question, but hard to verify. Even if the streamer is honest, the affiliate system still distorts the message."},
         ],
@@ -265,22 +265,22 @@ SCENARIO_EN: List[Dict[str, Any]] = [
         ),
         "options": [
             {"key": "a", "label_en": "Stake €100 on a high-variance slot",
-             "explanation_en": "Risk/reward is off — the expected value of a single spin is negative. Six months of work can disappear in one minute."},
+             "explanation_en": "Risk/reward is off - the expected value of a single spin is negative. Six months of work can disappear in one minute."},
             {"key": "b", "label_en": "Withdraw €250, continue the rest at the usual pace",
-             "explanation_en": "Excellent. You realise part of the profit — psychologically this 'locks it in'. The rest can keep working structurally."},
-            {"key": "c", "label_en": "Pause — don't do anything within the next hour",
-             "explanation_en": "Very sensible. The emotional spike subsides — a rational decision is usually better 30 minutes later."},
+             "explanation_en": "Excellent. You realise part of the profit - psychologically this 'locks it in'. The rest can keep working structurally."},
+            {"key": "c", "label_en": "Pause - don't do anything within the next hour",
+             "explanation_en": "Very sensible. The emotional spike subsides - a rational decision is usually better 30 minutes later."},
         ],
     },
     {
         "order": 5,
         "prompt_en": (
-            "A friend says: 'I just play whenever I feel like it — I don't have an "
+            "A friend says: 'I just play whenever I feel like it - I don't have an "
             "overall budget.' What do you advise?"
         ),
         "options": [
             {"key": "a", "label_en": "Works fine as long as it's fun",
-             "explanation_en": "This is a misconception. Without a pre-set budget every decision is made in the heat of the moment — when losing, the limit disappears."},
+             "explanation_en": "This is a misconception. Without a pre-set budget every decision is made in the heat of the moment - when losing, the limit disappears."},
             {"key": "b", "label_en": "Set a monthly budget IN ADVANCE and a deposit limit with the operator",
              "explanation_en": "Right answer. A pre-set budget + a mandatory operator deposit limit = a practical buffer for when willpower fails."},
             {"key": "c", "label_en": "Use only cash, never a bank card",
@@ -291,16 +291,16 @@ SCENARIO_EN: List[Dict[str, Any]] = [
         "order": 6,
         "prompt_en": (
             "It's 01:47am. You've been playing for 3 hours straight and your "
-            "original €50 stop-loss has been hit — but a feeling says \"just one "
+            "original €50 stop-loss has been hit - but a feeling says \"just one "
             "more spin\" and you're fine. What do you do?"
         ),
         "options": [
-            {"key": "a", "label_en": "One more spin — small stake, original plan broken only briefly",
+            {"key": "a", "label_en": "One more spin - small stake, original plan broken only briefly",
              "explanation_en": "A stop-loss is a stop-loss. Every \"just one more\" spin late at night is documented to lead to a point where rational decision-making is already gone. 70% of problem gamblers describe this exact moment."},
             {"key": "b", "label_en": "Close the app and go to bed",
              "explanation_en": "Strongest possible decision. Respecting the stop-loss at the cost of sleep is one of the most recognised signs of discipline."},
-            {"key": "c", "label_en": "Deposit €20 — just a small one, I have to try once more",
-             "explanation_en": "This is chasing. A small \"just\" amount at night is statistically the same as a large amount — because on average you don't stop after it."},
+            {"key": "c", "label_en": "Deposit €20 - just a small one, I have to try once more",
+             "explanation_en": "This is chasing. A small \"just\" amount at night is statistically the same as a large amount - because on average you don't stop after it."},
         ],
     },
 ]
@@ -315,7 +315,7 @@ SCENARIO_PERSONAS_EN = {
     },
     "growing_judge": {
         "title_en": "The Growing Judge",
-        "tagline_en": "Solid foundation — reinforce your bankroll thinking.",
+        "tagline_en": "Solid foundation - reinforce your bankroll thinking.",
     },
     "fresh_player": {
         "title_en": "The Fresh Player",
@@ -340,7 +340,7 @@ INSIGHT_EN: List[Dict[str, Any]] = [
         "order": 2,
         "prompt_en": "THE COMMISSION TRAP",
         "explanation_en": (
-            "Streamers typically earn 25–45% of a viewer's NET losses under the "
+            "Streamers typically earn 25-45% of a viewer's NET losses under the "
             "affiliate model. The more you lose, the more they earn. This is a "
             "structural conflict of interest."
         ),
@@ -360,7 +360,7 @@ INSIGHT_EN: List[Dict[str, Any]] = [
         "explanation_en": (
             "Your brain processes 5-minute and 5-hour sessions COMPLETELY "
             "differently. Continuous play over 90 minutes measurably degrades "
-            "decision-making — set the operator's time-limit to 60 minutes."
+            "decision-making - set the operator's time-limit to 60 minutes."
         ),
     },
     {
@@ -369,7 +369,7 @@ INSIGHT_EN: List[Dict[str, Any]] = [
         "explanation_en": (
             "The smallest bankroll-friendly stake = 1% of your bankroll per spin. "
             "With a €200 bankroll that's €2/spin. Statistically that gives you "
-            "200+ spins before likely depletion — enough for variance to even out."
+            "200+ spins before likely depletion - enough for variance to even out."
         ),
     },
     {

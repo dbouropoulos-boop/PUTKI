@@ -1,11 +1,11 @@
-"""Sprint A — Mestari standalone + Voita stripped flow backend tests.
+"""Sprint A - Mestari standalone + Voita stripped flow backend tests.
 
 Coverage:
   1. POST /api/voita/lead source field semantics
      - source='mestari'  → surface=mestari_landing + consent_tag=mestari_lead
      - source missing    → surface=voita_landing + consent_tag=voita_lead
      - source invalid    → falls back to voita
-  2. POST /api/voita/raffles/{slug}/enter — new fields persisted
+  2. POST /api/voita/raffles/{slug}/enter - new fields persisted
      - confidence (1..5), contact_channel ('telegram'|'email'), pending_id (<=64)
 
 Test data is prefixed TEST_iter35_ for cleanup.
@@ -32,7 +32,7 @@ def _u(tag):
 
 @pytest.fixture(scope="module", autouse=True)
 def _ensure_voita_enabled():
-    """Sprint A endpoints require voita_feature_enabled — flip it on."""
+    """Sprint A endpoints require voita_feature_enabled - flip it on."""
     r = requests.put(
         f"{BASE_URL}/api/admin/settings",
         headers={"X-Admin-Token": ADMIN_TOKEN, "Content-Type": "application/json"},
@@ -62,7 +62,7 @@ class TestVoitaLeadSource:
         return body
 
     def _admin_lookup(self, email):
-        # Verify directly in mongo — there is no admin /leads HTTP endpoint
+        # Verify directly in mongo - there is no admin /leads HTTP endpoint
         # (leads land in optin_consents with surface=<x>_landing).
         doc = _db.optin_consents.find_one({"identifier": email.lower()})
         return doc
@@ -107,7 +107,7 @@ class TestVoitaLeadSource:
         assert doc.get("consent_tag") == "voita_lead"
 
 
-# ── /api/voita/raffles/{slug}/enter — new optional fields ────────────────
+# ── /api/voita/raffles/{slug}/enter - new optional fields ────────────────
 class TestVoitaEntryNewFields:
     def _payload(self, email, **overrides):
         body = {

@@ -1,5 +1,5 @@
 /**
- * VoyagerNewsFeed — mini live feed on /voita-palkinto.
+ * VoyagerNewsFeed - mini live feed on /voita-palkinto.
  *
  * Five most recent published articles with relative timestamps. Trust signal
  * for the conversion page: "this is a real publication, not a scam landing
@@ -20,7 +20,7 @@ const CATEGORY_BADGE = {
 };
 
 const fmtAgo = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try {
     const t = new Date(iso);
     const secs = Math.max(0, Math.floor((Date.now() - t.getTime()) / 1000));
@@ -28,7 +28,7 @@ const fmtAgo = (iso) => {
     if (secs < 3600) return `${Math.floor(secs / 60)}min sitten`;
     if (secs < 86400) return `${Math.floor(secs / 3600)}h sitten`;
     return `${Math.floor(secs / 86400)}d sitten`;
-  } catch { return '—'; }
+  } catch { return '-'; }
 };
 
 const VoyagerNewsFeed = () => {

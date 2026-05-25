@@ -1,5 +1,5 @@
 /**
- * formatTime — centralized bilingual relative time + locale helpers.
+ * formatTime - centralized bilingual relative time + locale helpers.
  *
  * Used everywhere we render "2 min sitten" / "2 min ago" style timestamps.
  * Keep this the ONLY source of truth so FI/EN flip cleanly.
@@ -13,7 +13,7 @@ const LOCALE = { fi: 'fi-FI', en: 'en-GB' };
  * @param {'fi'|'en'} lang
  */
 export const formatTimeAgo = (when, lang = 'fi') => {
-  if (when == null || when === '') return '—';
+  if (when == null || when === '') return '-';
   try {
     const dt = when instanceof Date ? when : new Date(when);
     const secs = Math.max(0, Math.floor((Date.now() - dt.getTime()) / 1000));
@@ -30,7 +30,7 @@ export const formatTimeAgo = (when, lang = 'fi') => {
     if (secs < 86400) return `${Math.floor(secs / 3600)}h sitten`;
     return `${Math.floor(secs / 86400)}d sitten`;
   } catch {
-    return '—';
+    return '-';
   }
 };
 

@@ -1,11 +1,11 @@
 /**
- * NewsCarousel — Phase 1 Sprint 3.b (Section 3d).
+ * NewsCarousel - Phase 1 Sprint 3.b (Section 3d).
  *
  * Auto-rotating carousel of AI-aggregated news items for the right side
  * of the Mittari section. Visually subordinate to the dial.
  *
  *   • Source: /api/news/ticker (classified items, relevance >= 45).
- *   • Auto-advance: discrete slide every 7s (NOT continuous scroll —
+ *   • Auto-advance: discrete slide every 7s (NOT continuous scroll -
  *     each motion behaviour on the page must mean something different).
  *   • Pause on hover. Dot indicators below.
  *   • Per-slide content: category badge + headline + 1-line lede +

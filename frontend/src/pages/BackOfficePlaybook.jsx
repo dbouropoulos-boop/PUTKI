@@ -1,5 +1,5 @@
 /**
- * BackOfficePlaybook — upload PDF playbook + monitor outbound queue.
+ * BackOfficePlaybook - upload PDF playbook + monitor outbound queue.
  *
  * Single-doc model: admin uploads ONE universal PDF. Every Voita lock-in
  * triggers an email_outbox row with that PDF attached. When RESEND_API_KEY
@@ -16,9 +16,9 @@ import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-const fmtKb = (b) => (b == null ? '—' : `${(b / 1024).toFixed(1)} KB`);
+const fmtKb = (b) => (b == null ? '-' : `${(b / 1024).toFixed(1)} KB`);
 const fmtIso = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try { return new Date(iso).toLocaleString('fi-FI'); } catch { return iso; }
 };
 
@@ -62,7 +62,7 @@ const BackOfficePlaybook = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setStatus('File >5 MB — please slim down'); return;
+      setStatus('File >5 MB - please slim down'); return;
     }
     if (!file.name.toLowerCase().endsWith('.pdf')) {
       setStatus('PDF only'); return;
@@ -91,7 +91,7 @@ const BackOfficePlaybook = () => {
         method: 'POST', headers,
       });
       if (!r.ok) { setStatus(`Resend failed (${r.status})`); return; }
-      setStatus('✓ Marked pending — worker will retry');
+      setStatus('✓ Marked pending - worker will retry');
       refresh();
     } catch (e) { setStatus(`Network: ${e.message}`); }
   };
@@ -161,7 +161,7 @@ const BackOfficePlaybook = () => {
             <div data-testid="bo-pb-empty" style={{
               fontFamily: 'Georgia, serif', fontSize: 18, fontStyle: 'italic',
               color: 'var(--muted)',
-            }}>No playbook uploaded yet — entries are still queued, the PDF attaches automatically once you upload.</div>
+            }}>No playbook uploaded yet - entries are still queued, the PDF attaches automatically once you upload.</div>
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -282,7 +282,7 @@ const BackOfficePlaybook = () => {
         color: 'var(--muted)', letterSpacing: '0.04em', lineHeight: 1.6,
       }}>
         Send-worker flushes <strong>pending → sending → sent</strong> once <code>RESEND_API_KEY</code> is set in <code>backend/.env</code>.
-        Until then, every lock-in still queues correctly — the worker drains the backlog on first run.
+        Until then, every lock-in still queues correctly - the worker drains the backlog on first run.
       </p>
     </div>
   );

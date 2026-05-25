@@ -1,5 +1,5 @@
 /**
- * StreamerAlertModal — the conversion funnel that captures the actual
+ * StreamerAlertModal - the conversion funnel that captures the actual
  * subscriber. Email required, phone + Telegram username optional.
  *
  * Posts to /api/alerts/streamer. Renders a confirmation state on success.

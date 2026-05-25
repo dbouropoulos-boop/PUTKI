@@ -170,7 +170,7 @@ const VoitaPalkinto = () => {
   });
   const [showWinModal, setShowWinModal] = useState(false);
 
-  // Fetch site settings — switch to real Smartico script when smartico_template_id is set
+  // Fetch site settings - switch to real Smartico script when smartico_template_id is set
   useEffect(() => {
     fetch(`${BACKEND}/api/settings/public`)
       .then((r) => r.ok ? r.json() : {})
@@ -279,7 +279,7 @@ const VoitaPalkinto = () => {
             </div>
           </div>
         ) : (
-          // First-time visitor — show game (real Smartico when template_id is set, else placeholder)
+          // First-time visitor - show game (real Smartico when template_id is set, else placeholder)
           <div className="panel p-7 sm:p-10 max-w-2xl mx-auto" style={{ background: 'var(--surface)' }}>
             {templateId ? (
               <div data-testid="smartico-embed">
@@ -309,7 +309,7 @@ const VoitaPalkinto = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {[
               { n: '01', fi: 'Pyöräytä rataa kerran. Jokainen pyöräytys voittaa.', en: 'Spin the wheel once. Every spin wins.' },
-              { n: '02', fi: 'Palkintosi tallentuu automaattisesti — saat UUID:n.', en: 'Your prize is saved automatically — you receive a UUID.' },
+              { n: '02', fi: 'Palkintosi tallentuu automaattisesti - saat UUID:n.', en: 'Your prize is saved automatically - you receive a UUID.' },
               { n: '03', fi: 'Rekisteröidy Weezybetiin → palkinto tilillesi 5 minuutissa.', en: 'Register at Weezybet → prize on your account in 5 minutes.' },
             ].map((step) => (
               <div key={step.n} className="panel p-5">
@@ -335,8 +335,8 @@ const VoitaPalkinto = () => {
             </h3>
             <p className="font-serif mt-1" style={{ fontSize: 13.5, color: 'var(--muted)' }}>
               {lang === 'en'
-                ? 'A different game — competitive, weekly, defend your time.'
-                : 'Eri peli — kilpailullinen, viikoittainen, puolusta aikaasi.'}
+                ? 'A different game - competitive, weekly, defend your time.'
+                : 'Eri peli - kilpailullinen, viikoittainen, puolusta aikaasi.'}
             </p>
           </div>
           <Link to="/peli" className="btn-secondary" data-testid="visitor-cross-rally">
@@ -378,8 +378,8 @@ const VoitaPalkinto = () => {
             </h3>
             <p className="font-serif mb-6" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>
               {lang === 'en'
-                ? 'Your prize is held. Register at Weezybet to claim — auto-credited via your visitor UUID.'
-                : 'Palkintosi on tallessa. Rekisteröidy Weezybetiin — visitor UUID hyvittää sen automaattisesti.'}
+                ? 'Your prize is held. Register at Weezybet to claim - auto-credited via your visitor UUID.'
+                : 'Palkintosi on tallessa. Rekisteröidy Weezybetiin - visitor UUID hyvittää sen automaattisesti.'}
             </p>
             <a
               href={claimUrl}

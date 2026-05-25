@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Voita (guess-the-winner raffle) engine.
+PUTKI HQ - Voita (guess-the-winner raffle) engine.
 
 Sako-approved mechanic, GDPR Article 7(4) compliant entry flow.
 
@@ -63,7 +63,7 @@ Audit trail
 - Every separately-given marketing consent on the confirmation page
   writes its own `consent_given` row to `audit_log` AND its own row to
   `optin_consents` (existing collection). Different legal basis, separate
-  timestamp — survives a DPO inquiry.
+  timestamp - survives a DPO inquiry.
 """
 from __future__ import annotations
 
@@ -156,7 +156,7 @@ def _coerce_slug(slug: str) -> str:
 def _sanitize_display_name(raw: str) -> str:
     """Optional self-chosen display name shown on the recent-winners
     strip. Aggressively bounded: 40 chars max, strips control chars +
-    HTML angle brackets. Empty / missing is fine — strip falls back to
+    HTML angle brackets. Empty / missing is fine - strip falls back to
     the masked email."""
     if not raw:
         return ""
@@ -276,12 +276,12 @@ async def create_raffle(db, payload: Dict[str, Any]) -> Dict[str, Any]:
 
 async def update_raffle(db, raffle_id: str, patch: Dict[str, Any]) -> Dict[str, Any]:
     """Selective patch. Refuses to mutate fields once a raffle reaches
-    `drawn` status — the audit trail must be immutable after the draw."""
+    `drawn` status - the audit trail must be immutable after the draw."""
     existing = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
     if not existing:
         raise ValueError(f"raffle {raffle_id} not found")
     if existing.get("status") in {"drawn", "paid"}:
-        raise ValueError("raffle is drawn/paid — no further edits permitted")
+        raise ValueError("raffle is drawn/paid - no further edits permitted")
 
     update: Dict[str, Any] = {"updated_at": _now_iso()}
 
@@ -315,7 +315,7 @@ async def update_raffle(db, raffle_id: str, patch: Dict[str, Any]) -> Dict[str, 
                 raise ValueError(f"scoring.{k} must be >= 0")
         update["scoring"] = scoring
 
-    # Editorial pick — admin-only, optional. Surfaced on the public
+    # Editorial pick - admin-only, optional. Surfaced on the public
     # match-context endpoint so the quiz `mode_with_editorial` variant
     # can show the toimitus pick alongside bookmaker consensus.
     if "editorial_pick" in patch and patch["editorial_pick"] is not None:
@@ -367,7 +367,7 @@ async def delete_raffle(db, raffle_id: str) -> Dict[str, Any]:
     if not existing:
         raise ValueError(f"raffle {raffle_id} not found")
     if existing.get("status") in {"drawn", "paid"}:
-        raise ValueError("raffle is drawn/paid — cannot delete (use status='archived' instead)")
+        raise ValueError("raffle is drawn/paid - cannot delete (use status='archived' instead)")
     await db.voita_raffles.delete_one({"id": raffle_id})
     # Also drop entries that belonged to it.
     await db.voita_entries.delete_many({"raffle_id": raffle_id})
@@ -409,9 +409,9 @@ async def submit_entry(
     pending_id: Optional[str] = None,
     ip: str = "", ua: str = "",
 ) -> Dict[str, Any]:
-    """Step 1 — raffle entry. Captures the minimum required for contest
+    """Step 1 - raffle entry. Captures the minimum required for contest
     administration under legitimate-interest basis. NO marketing consent
-    is bundled here — that's Step 2 on the confirmation page."""
+    is bundled here - that's Step 2 on the confirmation page."""
     email = (email or "").strip().lower()
     if not EMAIL_RE.match(email):
         raise ValueError("invalid email")
@@ -445,10 +445,10 @@ async def submit_entry(
             if datetime.now(timezone.utc) > close_dt:
                 raise ValueError("entries are closed for this raffle")
         except (ValueError, AttributeError) as exc:
-            # Bad timestamp in db — surface as 500, not silently accept
+            # Bad timestamp in db - surface as 500, not silently accept
             raise ValueError(f"raffle entries_close_at malformed: {exc}") from exc
 
-    # Reject duplicate (raffle_id, email) entries — first submission wins.
+    # Reject duplicate (raffle_id, email) entries - first submission wins.
     dup = await db.voita_entries.find_one(
         {"raffle_id": raffle["id"], "email_lower": email}, {"_id": 1},
     )
@@ -496,7 +496,7 @@ async def submit_entry(
         {"$inc": {"entries_count": 1}, "$set": {"updated_at": _now_iso()}},
     )
 
-    # Audit log — separate from marketing consent audit trail.
+    # Audit log - separate from marketing consent audit trail.
     try:
         await db.audit_log.insert_one({
             "kind": "raffle_entry",
@@ -512,7 +512,7 @@ async def submit_entry(
         logger.exception("voita audit_log insert failed")
 
     entry.pop("_id", None)
-    # Compute entrant position (1-indexed) — count of entries created
+    # Compute entrant position (1-indexed) - count of entries created
     # at or before this one in the same raffle. Surfaced on the
     # confirmation page so the entrant sees "Olet osallistuja #N".
     try:
@@ -523,7 +523,7 @@ async def submit_entry(
     except Exception:
         position = None
 
-    # Enqueue the welcome + playbook email. Idempotent — if the entry
+    # Enqueue the welcome + playbook email. Idempotent - if the entry
     # ever gets resubmitted (or scaled to multi-node), the outbox row
     # is deduped on (entry_id, source). Email-only branch: Telegram
     # users get the playbook via the bot at /start.
@@ -558,7 +558,7 @@ def score_entry(scoring: Dict[str, int], *,
                  actual_one_x_two: str) -> int:
     """Returns the deterministic point total for a single entry against
     the official result. Score-variant points are best-of, not stackable
-    — exact-score awards `exact_score_points`, NOT exact + goal-diff +
+    - exact-score awards `exact_score_points`, NOT exact + goal-diff +
     total."""
     pts = 0
     if (prediction_one_x_two or "").upper() == (actual_one_x_two or "").upper():
@@ -588,7 +588,7 @@ async def draw_raffle(db, raffle_id: str, *, home_goals: int, away_goals: int,
     if not raffle:
         raise ValueError("raffle not found")
     if raffle.get("status") == "drawn":
-        raise ValueError("raffle already drawn — results immutable")
+        raise ValueError("raffle already drawn - results immutable")
 
     actual_one_x_two = compute_one_x_two(home_goals, away_goals)
     scoring = {**DEFAULT_SCORING, **(raffle.get("scoring") or {})}
@@ -730,7 +730,7 @@ def mask_email(email: str) -> str:
 
 async def mark_paid(db, raffle_id: str, *, paid_by: str = "admin") -> Dict[str, Any]:
     """Flip a drawn raffle to `paid` status. The recent-winners strip
-    surfaces only paid raffles — a draw without payment is a weaker
+    surfaces only paid raffles - a draw without payment is a weaker
     trust claim than a draw + paid timestamp."""
     existing = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
     if not existing:
@@ -790,7 +790,7 @@ async def recent_winners_public(db, *, limit: int = 3) -> List[Dict[str, Any]]:
                 "score": w.get("score"),
                 "display_name": display_name or None,
                 "email_masked": email_masked,
-                # Frontend reads `display_label` first — falls back to mask.
+                # Frontend reads `display_label` first - falls back to mask.
                 "display_label": display_name or email_masked,
             })
         items.append({
@@ -802,7 +802,7 @@ async def recent_winners_public(db, *, limit: int = 3) -> List[Dict[str, Any]]:
             "drawn_at": result.get("drawn_at"),
             "paid_at": d.get("paid_at"),
             "scored_count": result.get("scored_count"),
-            "result_score": f"{result.get('home_goals')}–{result.get('away_goals')}",
+            "result_score": f"{result.get('home_goals')}-{result.get('away_goals')}",
             "winners": winner_views,
         })
     return items

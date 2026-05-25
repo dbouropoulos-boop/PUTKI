@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — GameStatsStrip (iter58)
+ * PUTKI HQ - GameStatsStrip (iter58)
  *
  * Social-proof strip rendered on each individual game's subpage. Pulls
  * per-game public metrics from `GET /api/mini-games/stats/{slug}` and

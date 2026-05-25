@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Back-office Voita quiz editor.
+ * PUTKI HQ - Back-office Voita quiz editor.
  *
  * Full editor for the landing-funnel quiz. Admin can:
  *   * Rename question titles + sub-copy (FI + EN)
@@ -101,7 +101,7 @@ const QuestionBlock = ({ q, qIdx, total, onChange, onRemove, onMoveUp, onMoveDow
             data-testid={`q-callback-${qIdx}`} /> Q4 CALLBACK
         </label>
       </div>
-      <Input label="KEY (analytics — don't rename after launch)" value={q.key}
+      <Input label="KEY (analytics - don't rename after launch)" value={q.key}
         onChange={(v) => update({ key: v.replace(/[^a-z0-9_]/gi, '').toLowerCase() })}
         dataTestId={`q-key-${qIdx}`} maxLength={32} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -208,7 +208,7 @@ const BackOfficeVoitaQuiz = () => {
       <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 700, color: 'var(--ink)', margin: '14px 0 8px', letterSpacing: '-0.02em' }}>Voita quiz editor</h1>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 24, lineHeight: 1.55, maxWidth: 700 }}>
         Edit the 5-question quiz that runs on <code>/voita/{'{slug}'}</code> before the prediction.
-        Question/option keys are referenced by analytics — rename copy freely, but only change <code>v</code> values before
+        Question/option keys are referenced by analytics - rename copy freely, but only change <code>v</code> values before
         traffic starts hitting that question.
       </p>
 

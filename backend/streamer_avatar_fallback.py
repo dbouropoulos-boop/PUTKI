@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Per-streamer avatar refresh with multi-stage fallback · iter62
+PUTKI HQ - Per-streamer avatar refresh with multi-stage fallback · iter62
 
 The user explicitly does NOT want letter-initials placeholders. If the
 platform API (Twitch/Kick/YouTube) doesn't return a profile image, we
@@ -158,7 +158,7 @@ async def search_duckduckgo_image(name: str, platform: str) -> Optional[str]:
             results = data.get("results") or []
             for item in results[:10]:
                 image_url = item.get("image") or ""
-                # Prefer images that look like profile pics — small, square-ish,
+                # Prefer images that look like profile pics - small, square-ish,
                 # from a known social host. Skip giant action shots & banners.
                 w = int(item.get("width") or 0)
                 h = int(item.get("height") or 0)

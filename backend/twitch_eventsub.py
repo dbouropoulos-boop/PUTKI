@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Twitch Helix client for EventSub subscription lifecycle.
+PUTKI HQ - Twitch Helix client for EventSub subscription lifecycle.
 
 Responsibilities:
   • Exchange client_credentials for an app-access-token (cached until ~5 min before expiry)
@@ -8,7 +8,7 @@ Responsibilities:
   • Create EventSub subscriptions (stream.online primarily) pointing at our webhook callback
   • Delete subscriptions by id
 
-Secrets are read from env only — they are never logged, never returned in responses.
+Secrets are read from env only - they are never logged, never returned in responses.
 The token cache is process-local; the worker pod restart re-fetches.
 
 Env vars expected:

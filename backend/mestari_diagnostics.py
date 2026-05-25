@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Mestari multi-diagnostic engine (poker + blackjack).
+PUTKI HQ - Mestari multi-diagnostic engine (poker + blackjack).
 
 Mirrors the sports-betting diagnostic in spirit: 5 questions, 4 profiles,
 deterministic resolver, 5-day playbook outline. Distinct from the sports
@@ -14,7 +14,7 @@ Endpoints exposed via server.py:
 Compliance: poker/blackjack reports are research/educational outputs
 ONLY. They never tell the reader what to wager. The page disclaimer +
 value block carry the legal posture; this module enforces by ONLY ever
-returning profile descriptions + day-by-day playbook OUTLINES — no live
+returning profile descriptions + day-by-day playbook OUTLINES - no live
 playbook body text is emailed until the user signs off on the copy
 (`PLAYBOOK_EMAIL_DISPATCH_READY=0` keeps poker/blackjack out of the send
 worker even when RESEND_API_KEY is set).
@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Killswitch — explicit user sign-off needed before any poker/blackjack
+# Killswitch - explicit user sign-off needed before any poker/blackjack
 # placeholder content reaches a real inbox. Sports playbook is unaffected
 # (gated separately via the existing RESEND_API_KEY check).
 PLAYBOOK_EMAIL_DISPATCH_READY = os.environ.get(
@@ -103,8 +103,8 @@ POKER_QUESTIONS: List[Dict[str, Any]] = [
         "fi": "Muuttuuko käsivalintasi pöydällä asemasi mukaan?",
         "en": "Does your hand range change between early and late position?",
         "options": [
-            {"id": "drives", "fi": "Merkittävästi — asema ohjaa päätöksiäni",
-             "en": "Significantly — position drives my decisions",
+            {"id": "drives", "fi": "Merkittävästi - asema ohjaa päätöksiäni",
+             "en": "Significantly - position drives my decisions",
              "axis_score": {"selectivity": 2}},
             {"id": "little", "fi": "Vähän",
              "en": "A little",
@@ -126,8 +126,8 @@ POKER_QUESTIONS: List[Dict[str, Any]] = [
             {"id": "spot", "fi": "Tilannekohtaisia, kun tarina toimii",
              "en": "Spot-picked, when the story makes sense",
              "axis_score": {"aggression": 1}},
-            {"id": "frequent", "fi": "Toistuvia — paine voittaa pottia",
-             "en": "Frequent — pressure wins pots",
+            {"id": "frequent", "fi": "Toistuvia - paine voittaa pottia",
+             "en": "Frequent - pressure wins pots",
              "axis_score": {"aggression": 2}},
         ],
     },
@@ -153,7 +153,7 @@ POKER_PROFILES: Dict[str, Dict[str, Any]] = {
         "axes": {"selectivity": "<=0", "aggression": "<=0"},
         "tagline_fi": "Liikaa käsiä, liian harvoin korotuksia.",
         "tagline_en": "Loose and passive.",
-        "desc_fi": "Pelaat liian montaa kättä ja maksat liian usein, mutta korotat harvoin. Näet paljon floppeja — maksat usein muiden vahvat kädet.",
+        "desc_fi": "Pelaat liian montaa kättä ja maksat liian usein, mutta korotat harvoin. Näet paljon floppeja - maksat usein muiden vahvat kädet.",
         "desc_en": "Plays too many hands and calls too often, but rarely raises. Sees a lot of flops; pays off other players' strong hands.",
         "playbook_focus": [1, 3],
     },
@@ -163,7 +163,7 @@ POKER_PROFILES: Dict[str, Dict[str, Any]] = {
         "name_en": "The Maniac",
         "axes": {"selectivity": "<=0", "aggression": ">=2"},
         "tagline_fi": "Kaikki kädet, koko ajan kovaa.",
-        "tagline_en": "Loose and aggressive — chaos.",
+        "tagline_en": "Loose and aggressive - chaos.",
         "desc_fi": "Pelaat melkein mitä tahansa ja panostat lujaa. Luot kaaosta ja painetta, mutta valikoinnin puute tarkoittaa isoja heilahduksia.",
         "desc_en": "Plays almost anything and bets it hard. Creates chaos and pressure, but the lack of selection makes for huge swings.",
         "playbook_focus": [1, 5],
@@ -174,8 +174,8 @@ POKER_PROFILES: Dict[str, Dict[str, Any]] = {
         "name_en": "The Strategist",
         "axes": {"selectivity": ">=2", "aggression": ">=2"},
         "tagline_fi": "Valikoiva käsissä, päättäväinen panostuksissa.",
-        "tagline_en": "Tight and aggressive — the TAG.",
-        "desc_fi": "Valikoiva käsissä, päättäväinen panostuksissa. Profiili, jota vakiintunut pokeriteoria pitää parhaana — työ täällä on hiomista, ei korjaamista.",
+        "tagline_en": "Tight and aggressive - the TAG.",
+        "desc_fi": "Valikoiva käsissä, päättäväinen panostuksissa. Profiili, jota vakiintunut pokeriteoria pitää parhaana - työ täällä on hiomista, ei korjaamista.",
         "desc_en": "Selective with hands, decisive with bets. The profile established poker theory rates highest; the work here is refinement, not repair.",
         "playbook_focus": [2, 4],
     },
@@ -196,8 +196,8 @@ POKER_PLAYBOOK_DAYS: List[Dict[str, str]] = [
     {"day": "3",
      "title_fi": "Pottiodds ja odotusarvo",
      "title_en": "Pot odds & expected value",
-     "summary_fi": "Maksamisen matematiikka — milloin maksu on perusteltu.",
-     "summary_en": "The maths behind a call — how to know if one is justified."},
+     "summary_fi": "Maksamisen matematiikka - milloin maksu on perusteltu.",
+     "summary_en": "The maths behind a call - how to know if one is justified."},
     {"day": "4",
      "title_fi": "Tarkoituksellinen panostus",
      "title_en": "Betting with purpose",
@@ -319,7 +319,7 @@ BLACKJACK_PROFILES: Dict[str, Dict[str, Any]] = {
         "name_en": "The Hunch Player",
         "axes": {"knowledge": "<=0", "discipline": "<=0"},
         "tagline_fi": "Pelaa tunnetta, ilman järjestelmää.",
-        "tagline_en": "Plays by feel — no fixed system.",
+        "tagline_en": "Plays by feel - no fixed system.",
         "desc_fi": "Pelaat tuntemuksen ja taikauskon mukaan ilman kiinteää järjestelmää. Suurin kuilu on myös helpoiten korjattavissa: tieto, jota ei vielä ole opittu.",
         "desc_en": "Plays by feel and superstition, with no fixed system. The biggest gap is the most fixable: it's information not yet learned.",
         "playbook_focus": [1, 2],
@@ -329,10 +329,10 @@ BLACKJACK_PROFILES: Dict[str, Dict[str, Any]] = {
         "name_fi": "Kansansääntöpelaaja",
         "name_en": "The Folk-Rule Player",
         "axes": {"knowledge": "<=0", "discipline": ">=1"},
-        "tagline_fi": "Tiukka systeemi — mutta osa säännöistä on myyttejä.",
+        "tagline_fi": "Tiukka systeemi - mutta osa säännöistä on myyttejä.",
         "tagline_en": "Disciplined, but the rules are folk myths.",
-        "desc_fi": "Sinulla on omia sääntöjä — kuten “matki jakajaa” tai “älä koskaan bustaa” — ja noudatat niitä. Kuri on hyvä, mutta useat säännöt ovat myyttejä jotka maksavat.",
-        "desc_en": "Has firm informal rules — mimic the dealer, \"never bust\" — and sticks to them. Disciplined, but several of the rules are myths that cost money.",
+        "desc_fi": "Sinulla on omia sääntöjä - kuten “matki jakajaa” tai “älä koskaan bustaa” - ja noudatat niitä. Kuri on hyvä, mutta useat säännöt ovat myyttejä jotka maksavat.",
+        "desc_en": "Has firm informal rules - mimic the dealer, \"never bust\" - and sticks to them. Disciplined, but several of the rules are myths that cost money.",
         "playbook_focus": [2, 4],
     },
     "book": {
@@ -340,10 +340,10 @@ BLACKJACK_PROFILES: Dict[str, Dict[str, Any]] = {
         "name_fi": "Kirjapelaaja",
         "name_en": "The Book Player",
         "axes": {"knowledge": ">=2", "discipline": "<=1"},
-        "tagline_fi": "Tuntee perusstrategian — toteutus jää välillä.",
-        "tagline_en": "Knows the chart — applies it most of the time.",
-        "desc_fi": "Tunnet perusstrategian ja noudatat sitä pääosin. Työ on johdonmukaisuudessa — soveltaa oikeaa taulukkoa jokaisella kädellä, mukaan lukien pehmeät kädet ja jaot, jotka helposti unohtuvat.",
-        "desc_en": "Knows basic strategy and mostly follows it. The work is consistency — applying the correct chart every hand, including the soft hands and splits people skip.",
+        "tagline_fi": "Tuntee perusstrategian - toteutus jää välillä.",
+        "tagline_en": "Knows the chart - applies it most of the time.",
+        "desc_fi": "Tunnet perusstrategian ja noudatat sitä pääosin. Työ on johdonmukaisuudessa - soveltaa oikeaa taulukkoa jokaisella kädellä, mukaan lukien pehmeät kädet ja jaot, jotka helposti unohtuvat.",
+        "desc_en": "Knows basic strategy and mostly follows it. The work is consistency - applying the correct chart every hand, including the soft hands and splits people skip.",
         "playbook_focus": [3, 2],
     },
     "disciplined": {
@@ -369,8 +369,8 @@ BLACKJACK_PLAYBOOK_DAYS: List[Dict[str, str]] = [
     {"day": "2",
      "title_fi": "Perusstrategia: ratkaistu taulukko",
      "title_en": "Basic strategy: the solved chart",
-     "summary_fi": "Kovat kädet — julkaistu oikea pelitapa.",
-     "summary_en": "Hard hands — the published correct play."},
+     "summary_fi": "Kovat kädet - julkaistu oikea pelitapa.",
+     "summary_en": "Hard hands - the published correct play."},
     {"day": "3",
      "title_fi": "Osat jotka usein ohitetaan",
      "title_en": "The parts people skip",
@@ -379,35 +379,35 @@ BLACKJACK_PLAYBOOK_DAYS: List[Dict[str, str]] = [
     {"day": "4",
      "title_fi": "Myytit",
      "title_en": "The myths",
-     "summary_fi": "Vakuutus, “matki jakajaa”, “erääntyvät” kortit — mikä on epätotta ja miksi.",
-     "summary_en": "Insurance, mimic-the-dealer, \"due\" cards — what's false and why."},
+     "summary_fi": "Vakuutus, “matki jakajaa”, “erääntyvät” kortit - mikä on epätotta ja miksi.",
+     "summary_en": "Insurance, mimic-the-dealer, \"due\" cards - what's false and why."},
     {"day": "5",
      "title_fi": "Rehellinen katto",
      "title_en": "The honest ceiling",
-     "summary_fi": "Bankroll, varianssi ja totuus korttilaskennasta — että se on aito etu ja aitoa työtä.",
-     "summary_en": "Bankroll, variance, and the truth about card counting — that it's a real edge, and real work."},
+     "summary_fi": "Bankroll, varianssi ja totuus korttilaskennasta - että se on aito etu ja aitoa työtä.",
+     "summary_en": "Bankroll, variance, and the truth about card counting - that it's a real edge, and real work."},
 ]
 
 
-# Section 7.3 value-block copy — locked verbatim per user sign-off.
+# Section 7.3 value-block copy - locked verbatim per user sign-off.
 VALUE_BLOCK_COPY: Dict[str, Dict[str, str]] = {
     "sports": {
         "kicker_fi": "MITÄ TÄMÄ RAPORTTI ANTAA",
         "kicker_en": "WHAT THIS REPORT GIVES YOU",
-        "body_fi": "Lukeman siitä, miten oikeasti lähestyt ottelua — vastauksistasi, ei siitä miten kuvailisit itseäsi. Se on deterministinen: samat vastaukset tuottavat aina saman profiilin, ilman toimituksen peukaloa vaa'assa. Saat rehellisen kuvauksen siitä, missä lähestymistapasi on terävä ja missä se maksaa, sekä 5 päivän pelikirjan siitä, miten vedonlyöntimarkkinat aidosti käyttäytyvät. Ei vinkkejä, ei valintoja — selkeämpi näkymä omaan ajatteluusi, jota useimmat lukijat eivät koskaan saa.",
-        "body_en": "A read on how you actually approach a match — drawn from your answers, not from how you'd describe yourself. It's deterministic: the same answers always produce the same profile, with no editorial thumb on the scale. You get an honest account of where your approach is sharp and where it costs you, and a 5-day playbook on how betting markets genuinely behave. No tips, no picks — a clearer view of your own thinking, which is the thing most readers never get.",
+        "body_fi": "Lukeman siitä, miten oikeasti lähestyt ottelua - vastauksistasi, ei siitä miten kuvailisit itseäsi. Se on deterministinen: samat vastaukset tuottavat aina saman profiilin, ilman toimituksen peukaloa vaa'assa. Saat rehellisen kuvauksen siitä, missä lähestymistapasi on terävä ja missä se maksaa, sekä 5 päivän pelikirjan siitä, miten vedonlyöntimarkkinat aidosti käyttäytyvät. Ei vinkkejä, ei valintoja - selkeämpi näkymä omaan ajatteluusi, jota useimmat lukijat eivät koskaan saa.",
+        "body_en": "A read on how you actually approach a match - drawn from your answers, not from how you'd describe yourself. It's deterministic: the same answers always produce the same profile, with no editorial thumb on the scale. You get an honest account of where your approach is sharp and where it costs you, and a 5-day playbook on how betting markets genuinely behave. No tips, no picks - a clearer view of your own thinking, which is the thing most readers never get.",
     },
     "poker": {
         "kicker_fi": "MITÄ TÄMÄ RAPORTTI ANTAA",
         "kicker_en": "WHAT THIS REPORT GIVES YOU",
-        "body_fi": "Rehellisen sijoituksen pokeritietyylin vakiintuneeseen malliin — sen mukaan miten pelaat, ei miten haluaisit pelata. Se on deterministinen: samat vastaukset, sama profiili, ei höyhensaarta. Saat suoran kuvauksen siitä, mitä tyylisi voittaa ja mitä se jättää pöytään, sekä 5 päivän pelikirjan siitä, miten taitava pokeri on rakennettu. Arvo ei ole oikotie — se on oman pelisi näkeminen niin selkeästi että sitä voi kehittää.",
-        "body_en": "An honest placement on the established model of poker style — based on how you play, not how you'd like to. It's deterministic: same answers, same profile, no spin. You get a straight account of what your style wins you and what it leaves on the table, and a 5-day playbook on how skilled poker is structured. The value isn't a shortcut — it's seeing your own game clearly enough to work on it.",
+        "body_fi": "Rehellisen sijoituksen pokeritietyylin vakiintuneeseen malliin - sen mukaan miten pelaat, ei miten haluaisit pelata. Se on deterministinen: samat vastaukset, sama profiili, ei höyhensaarta. Saat suoran kuvauksen siitä, mitä tyylisi voittaa ja mitä se jättää pöytään, sekä 5 päivän pelikirjan siitä, miten taitava pokeri on rakennettu. Arvo ei ole oikotie - se on oman pelisi näkeminen niin selkeästi että sitä voi kehittää.",
+        "body_en": "An honest placement on the established model of poker style - based on how you play, not how you'd like to. It's deterministic: same answers, same profile, no spin. You get a straight account of what your style wins you and what it leaves on the table, and a 5-day playbook on how skilled poker is structured. The value isn't a shortcut - it's seeing your own game clearly enough to work on it.",
     },
     "blackjack": {
         "kicker_fi": "MITÄ TÄMÄ RAPORTTI ANTAA",
         "kicker_en": "WHAT THIS REPORT GIVES YOU",
-        "body_fi": "Selkeän lukeman siitä, miten pelisi vertautuu blackjackin tunnettuun matematiikkaan — mitä teet oikein ja mikä maksaa hiljaa. Se on deterministinen: samat vastaukset, sama profiili, ei toimituksen vaikutusta. Saat rehellisen osuuden, jonka useimpi blackjack-sisältö ohittaa — missä talon etu oikeasti sijaitsee ja mitä se tarkoittaa — sekä 5 päivän pelikirjan siitä, miten peli oikeasti toimii. Arvo on totuus pelistä, jota useimmat pelaajat ymmärtävät väärin.",
-        "body_en": "A clear read of how your play measures against the known mathematics of blackjack — what you have right, and what quietly costs you. It's deterministic: same answers, same profile, no editorial spin. You get the honest part most blackjack content skips — where the house edge actually sits and what it means — and a 5-day playbook on how the game really works. The value is the truth about a game most players misunderstand.",
+        "body_fi": "Selkeän lukeman siitä, miten pelisi vertautuu blackjackin tunnettuun matematiikkaan - mitä teet oikein ja mikä maksaa hiljaa. Se on deterministinen: samat vastaukset, sama profiili, ei toimituksen vaikutusta. Saat rehellisen osuuden, jonka useimpi blackjack-sisältö ohittaa - missä talon etu oikeasti sijaitsee ja mitä se tarkoittaa - sekä 5 päivän pelikirjan siitä, miten peli oikeasti toimii. Arvo on totuus pelistä, jota useimmat pelaajat ymmärtävät väärin.",
+        "body_en": "A clear read of how your play measures against the known mathematics of blackjack - what you have right, and what quietly costs you. It's deterministic: same answers, same profile, no editorial spin. You get the honest part most blackjack content skips - where the house edge actually sits and what it means - and a 5-day playbook on how the game really works. The value is the truth about a game most players misunderstand.",
     },
 }
 
@@ -415,7 +415,7 @@ VALUE_BLOCK_COPY: Dict[str, Dict[str, str]] = {
 def _match_axis(value: int, expr: str) -> bool:
     """Match the comparator strings used by profile axes ('>=2', '<=0',
     '==0', etc). Restricted to <= / >= / == / > / < followed by an
-    integer — explicitly NOT Python's `eval()` (this function is named
+    integer - explicitly NOT Python's `eval()` (this function is named
     `_match_axis`, not `_eval`, precisely so static analysis doesn't
     confuse the two). Cannot execute arbitrary code; on parse failure
     returns False."""
@@ -539,14 +539,14 @@ _DEFAULT_LANDING_COPY: Dict[str, Dict[str, Any]] = {
         "eyebrow_en": "MESTARI · EDITORIAL DIAGNOSTICS · RESEARCH TOOLS",
         "headline_fi": "Mikä diagnostiikka?",
         "headline_en": "Which diagnostic?",
-        "subtitle_fi": "Mestari rakentaa tutkimukseen perustuvia työkaluja siihen, miten pelaajat ajattelevat. Valitse diagnostiikka — jokainen kestää noin 90 sekuntia ja päättyy henkilökohtaiseen profiiliin ja 5 päivän pelikirjaan.",
-        "subtitle_en": "Mestari builds research-grounded tools for understanding how players think. Pick a diagnostic — each takes about 90 seconds and ends with a personal profile and a 5-day playbook.",
+        "subtitle_fi": "Mestari rakentaa tutkimukseen perustuvia työkaluja siihen, miten pelaajat ajattelevat. Valitse diagnostiikka - jokainen kestää noin 90 sekuntia ja päättyy henkilökohtaiseen profiiliin ja 5 päivän pelikirjaan.",
+        "subtitle_en": "Mestari builds research-grounded tools for understanding how players think. Pick a diagnostic - each takes about 90 seconds and ends with a personal profile and a 5-day playbook.",
         "trust_line_fi": "Tutkimus- ja opetustyökaluja. Ei rahapelineuvontaa. Vain opetuskäyttöön.",
         "trust_line_en": "Research and educational tools. Not gambling advice. For educational use only.",
         "method_label_fi": "MENETELMÄ · MITEN MESTARI ANALYSOI",
         "method_label_en": "METHOD · HOW MESTARI ANALYSES",
-        "method_body_fi": "Jokainen diagnostiikka soveltaa oman alansa vakiintunutta mallia — julkaistua tutkimusta vedonlyöntimarkkinoista, pokerityylin kaksiakselista mallia, blackjackin matematiikkaa — vastauksiisi. Deterministinen pisteytys: samat vastaukset, sama profiili, ei toimituksen vaikutusta.",
-        "method_body_en": "Each diagnostic applies an established framework from its domain — published research on betting markets, the two-axis model of poker style, the mathematics of blackjack — to your answers. Deterministic scoring: same answers, same profile, no editorial spin.",
+        "method_body_fi": "Jokainen diagnostiikka soveltaa oman alansa vakiintunutta mallia - julkaistua tutkimusta vedonlyöntimarkkinoista, pokerityylin kaksiakselista mallia, blackjackin matematiikkaa - vastauksiisi. Deterministinen pisteytys: samat vastaukset, sama profiili, ei toimituksen vaikutusta.",
+        "method_body_en": "Each diagnostic applies an established framework from its domain - published research on betting markets, the two-axis model of poker style, the mathematics of blackjack - to your answers. Deterministic scoring: same answers, same profile, no editorial spin.",
         "card_sports_kicker_fi": "URHEILUVEDONLYÖNTI", "card_sports_kicker_en": "SPORTS BETTING",
         "card_sports_title_fi": "Millainen urheiluvedonlyöjä sinä olet?",
         "card_sports_title_en": "What kind of sports bettor are you?",
@@ -568,46 +568,46 @@ _DEFAULT_LANDING_COPY: Dict[str, Dict[str, Any]] = {
         "hero_kicker_en": "Mestari · Editorial diagnostic · Research tool",
         "headline_fi": "Millainen pokeripelaaja sinä olet?",
         "headline_en": "What kind of poker player are you?",
-        "sub_fi": "90 sekunnin diagnostiikka, joka perustuu vakiintuneeseen pokeriteoriaan. Vastaa viiteen kysymykseen siitä, miten pelaat pöydässä — saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten taitava pokeri on rakennettu.",
-        "sub_en": "A 90-second diagnostic grounded in established poker theory. Answer five questions about how you play a table — receive a personal player profile and a 5-day playbook on how skilled poker is structured.",
+        "sub_fi": "90 sekunnin diagnostiikka, joka perustuu vakiintuneeseen pokeriteoriaan. Vastaa viiteen kysymykseen siitä, miten pelaat pöydässä - saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten taitava pokeri on rakennettu.",
+        "sub_en": "A 90-second diagnostic grounded in established poker theory. Answer five questions about how you play a table - receive a personal player profile and a 5-day playbook on how skilled poker is structured.",
         "disclaimer_strong_fi": "Tämä on tutkimus- ja opetustyökalu.",
         "disclaimer_strong_en": "This is a research and educational tool.",
         "disclaimer_rest_fi": " Mestari tutkii, miten pelaajat lähestyvät pokeria ja miten taitava pelaaminen on rakennettu. Se ei ole rahapelineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.",
         "disclaimer_rest_en": " Mestari studies how players approach poker and how skilled play is structured. It is not gambling advice, it does not promote gambling, and it will never tell you what to wager. For educational use only.",
         "hero_stat_num": "2",
         "hero_stat_unit_fi": " akselia", "hero_stat_unit_en": " axes",
-        "hero_stat_desc_fi": "TYYLI KARTOITETTU VALIKOIVUUDEN JA AGGRESSION MUKAAN — VAKIINTUNUT POKERIN MALLI.",
-        "hero_stat_desc_en": "STYLE MAPPED ON SELECTIVITY AND AGGRESSION — THE ESTABLISHED MODEL OF POKER PLAY.",
+        "hero_stat_desc_fi": "TYYLI KARTOITETTU VALIKOIVUUDEN JA AGGRESSION MUKAAN - VAKIINTUNUT POKERIN MALLI.",
+        "hero_stat_desc_en": "STYLE MAPPED ON SELECTIVITY AND AGGRESSION - THE ESTABLISHED MODEL OF POKER PLAY.",
         "method_label_fi": "MENETELMÄ · MITEN MESTARI ANALYSOI",
         "method_label_en": "METHOD · HOW MESTARI ANALYSES",
-        "method_body_fi": "Mestari soveltaa vakiintunutta kaksiakselista pokerityylin mallia — kuinka valikoivasti pelaaja käyttää käsiä ja kuinka aggressiivisesti hän panostaa — sijoittaakseen jokaisen pelaajan tunnistettuun profiiliin.",
-        "method_body_en": "Mestari applies the established two-axis model of poker style — how selective a player is with hands, and how aggressive they are with bets — to place each player on a recognised profile.",
+        "method_body_fi": "Mestari soveltaa vakiintunutta kaksiakselista pokerityylin mallia - kuinka valikoivasti pelaaja käyttää käsiä ja kuinka aggressiivisesti hän panostaa - sijoittaakseen jokaisen pelaajan tunnistettuun profiiliin.",
+        "method_body_en": "Mestari applies the established two-axis model of poker style - how selective a player is with hands, and how aggressive they are with bets - to place each player on a recognised profile.",
     },
     "blackjack": {
         "hero_kicker_fi": "Mestari · Toimituksellinen diagnostiikka · Tutkimustyökalu",
         "hero_kicker_en": "Mestari · Editorial diagnostic · Research tool",
         "headline_fi": "Millainen blackjack-pelaaja sinä olet?",
         "headline_en": "What kind of blackjack player are you?",
-        "sub_fi": "90 sekunnin diagnostiikka, joka perustuu pelin matematiikkaan. Vastaa viiteen kysymykseen siitä, miten pelaat käden — saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten blackjack todella toimii.",
-        "sub_en": "A 90-second diagnostic grounded in the mathematics of the game. Answer five questions about how you play a hand — receive a personal player profile and a 5-day playbook on how blackjack actually works.",
+        "sub_fi": "90 sekunnin diagnostiikka, joka perustuu pelin matematiikkaan. Vastaa viiteen kysymykseen siitä, miten pelaat käden - saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten blackjack todella toimii.",
+        "sub_en": "A 90-second diagnostic grounded in the mathematics of the game. Answer five questions about how you play a hand - receive a personal player profile and a 5-day playbook on how blackjack actually works.",
         "disclaimer_strong_fi": "Tämä on tutkimus- ja opetustyökalu.",
         "disclaimer_strong_en": "This is a research and educational tool.",
         "disclaimer_rest_fi": " Mestari tutkii, miten pelaajat lähestyvät blackjackia ja miten pelin matematiikka oikeasti toimii. Se ei ole rahapelineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.",
         "disclaimer_rest_en": " Mestari studies how players approach blackjack and how the game's mathematics actually work. It is not gambling advice, it does not promote gambling, and it will never tell you what to wager. For educational use only.",
         "hero_stat_num": "",
         "hero_stat_unit_fi": "Ratkaistu", "hero_stat_unit_en": "Solved",
-        "hero_stat_desc_fi": "BLACKJACKIN PERUSSTRATEGIA ON JULKAISTU, MATEMAATTISESTI RATKAISTU TULOS — EI MIELIPIDE.",
-        "hero_stat_desc_en": "BLACKJACK BASIC STRATEGY IS A PUBLISHED, MATHEMATICALLY SOLVED RESULT — NOT OPINION.",
+        "hero_stat_desc_fi": "BLACKJACKIN PERUSSTRATEGIA ON JULKAISTU, MATEMAATTISESTI RATKAISTU TULOS - EI MIELIPIDE.",
+        "hero_stat_desc_en": "BLACKJACK BASIC STRATEGY IS A PUBLISHED, MATHEMATICALLY SOLVED RESULT - NOT OPINION.",
         "method_label_fi": "MENETELMÄ · MITEN MESTARI ANALYSOI",
         "method_label_en": "METHOD · HOW MESTARI ANALYSES",
-        "method_body_fi": "Mestari mittaa pelaajaa blackjackin tunnetun matematiikan — jokaisen käden julkaistun oikean pelitavan — mukaan, sijoittaakseen hänet tunnistettuun pelitiedon ja kurin profiiliin.",
-        "method_body_en": "Mestari measures a player against the known mathematics of blackjack — the published correct play for every hand — to place them on a recognised profile of game knowledge and discipline.",
+        "method_body_fi": "Mestari mittaa pelaajaa blackjackin tunnetun matematiikan - jokaisen käden julkaistun oikean pelitavan - mukaan, sijoittaakseen hänet tunnistettuun pelitiedon ja kurin profiiliin.",
+        "method_body_en": "Mestari measures a player against the known mathematics of blackjack - the published correct play for every hand - to place them on a recognised profile of game knowledge and discipline.",
     },
 }
 
 
 async def get_landing_copy(db) -> Dict[str, Dict[str, Any]]:
-    """Merge persisted overrides on top of defaults — every field
+    """Merge persisted overrides on top of defaults - every field
     guaranteed present."""
     doc = await db.settings.find_one({"_id": "mestari_diagnostic_copy"}, {"_id": 0, "value": 1})
     overrides = (doc or {}).get("value") or {}
@@ -667,7 +667,7 @@ async def capture_diagnostic_lead(
         "captured_at": now,
         "playbook_dispatch_ready": PLAYBOOK_EMAIL_DISPATCH_READY or diagnostic == "sports",
     }
-    # Upsert idempotently — same email re-taking the same diagnostic
+    # Upsert idempotently - same email re-taking the same diagnostic
     # refreshes the profile but doesn't blow up history.
     await db.optin_consents.update_one(
         {"email": doc["email"], "consent_tag": consent_tag},

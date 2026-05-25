@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Shared FastAPI deps + Pydantic payloads for the routes/ tree.
+PUTKI HQ - Shared FastAPI deps + Pydantic payloads for the routes/ tree.
 
 iter66 phase 4 infra investment. Removes the need for every route
 factory to accept N positional dependencies. Subsequent extractions
@@ -19,7 +19,7 @@ Then any route module does:
 
 Why bind once vs. carrying around a factory arg per module:
 1. The Mongo handle + admin dependency are SINGLETONS in this app.
-2. FastAPI's `Depends()` is the standard pattern — keeps the route
+2. FastAPI's `Depends()` is the standard pattern - keeps the route
    modules importable without forcing server.py to instantiate them
    eagerly.
 3. Tests can override via `app.dependency_overrides[get_db] = …` if
@@ -47,7 +47,7 @@ def bind_dependencies(*, db: Any, require_admin: Callable) -> None:
 
 
 def get_db():
-    """FastAPI dependency — returns the bound Mongo handle.
+    """FastAPI dependency - returns the bound Mongo handle.
     Fails loud if `bind_dependencies()` was never called."""
     if _db is None:
         raise HTTPException(
@@ -64,7 +64,7 @@ async def require_admin(
 
     Mirrors server.py's `require_admin` signature *exactly* so FastAPI's
     OpenAPI introspection treats this as a (Request, X-Admin-Token header)
-    dependency — NOT as an opaque `(*args, **kwargs)` function which
+    dependency - NOT as an opaque `(*args, **kwargs)` function which
     would surface bogus query params on every protected endpoint."""
     if _require_admin is None:
         raise HTTPException(
@@ -74,7 +74,7 @@ async def require_admin(
 
 
 # ─── Shared mini-game Pydantic payloads ─────────────────────────────
-# These shapes are stable across quiz/scenario/insight/arcade — keeping
+# These shapes are stable across quiz/scenario/insight/arcade - keeping
 # them here lets route modules import the model and matches the FastAPI
 # request body that the frontend already posts. Renaming any field is
 # a frontend break, so the shapes are intentionally locked.

@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Phase 4 Week 1
+PUTKI HQ - Phase 4 Week 1
 ==========================
 Layer 2 real-time signal workers.
 
@@ -44,7 +44,7 @@ TWITCH_POLL_SECONDS = int(os.environ.get("LAYER2_TWITCH_INTERVAL", "60"))
 REDDIT_POLL_SECONDS = int(os.environ.get("LAYER2_REDDIT_INTERVAL", "3600"))
 NHL_POLL_SECONDS    = int(os.environ.get("LAYER2_NHL_INTERVAL", "300"))
 RSS_POLL_SECONDS    = int(os.environ.get("LAYER2_RSS_INTERVAL", "900"))
-F1_POLL_SECONDS     = int(os.environ.get("LAYER2_F1_INTERVAL", "3600"))       # Ergast — race weekends only
+F1_POLL_SECONDS     = int(os.environ.get("LAYER2_F1_INTERVAL", "3600"))       # Ergast - race weekends only
 FOOTBALL_POLL_SECONDS = int(os.environ.get("LAYER2_FOOTBALL_INTERVAL", "600")) # 10 min during match windows
 
 HTTP_TIMEOUT_SECONDS = 15.0
@@ -54,16 +54,16 @@ REDDIT_USER_AGENT = "PUTKI-HQ/1.0 (by /u/putkihq)"
 REDDIT_SUBREDDITS = ["jaska", "Suomi"]
 REDDIT_KEYWORDS = ["kasino", "slotti", "vedonlyönti", "pelaaminen", "weezybet"]
 
-# NHL — Phase 1: all NHL games (no Finnish-roster filter). Phase 2 may add
+# NHL - Phase 1: all NHL games (no Finnish-roster filter). Phase 2 may add
 # nationality weighting via the NHL API directly to avoid stale hardcoded IDs.
 
 # RSS feeds + keywords per user spec
 # RSS feeds + keywords per user spec
-# RSS feeds — Phase 1 brief (Section 2) lockdown.
+# RSS feeds - Phase 1 brief (Section 2) lockdown.
 # Direct Finnish news sources + 5 Google News category queries.
 # Per-source circuit breaker handled by `_should_skip_source` below.
 RSS_FEEDS = [
-    # Direct Finnish news feeds — primary signal sources (high trust).
+    # Direct Finnish news feeds - primary signal sources (high trust).
     {"source": "Yle Uutiset",        "url": "https://yle.fi/rss/uutiset/tuoreimmat",                                         "tier": 1, "category": "news"},
     {"source": "Yle Urheilu",        "url": "https://feeds.yle.fi/uutiset/v1/recent.rss?publisherIds=YLE_UUTISET&concepts=18-35138", "tier": 1, "category": "sports"},
     {"source": "Helsingin Sanomat",  "url": "https://www.hs.fi/rss/tuoreimmat.xml",                                          "tier": 1, "category": "news"},
@@ -71,7 +71,7 @@ RSS_FEEDS = [
     {"source": "Ilta-Sanomat",       "url": "https://www.is.fi/rss/tuoreimmat.xml",                                          "tier": 2, "category": "news"},
     {"source": "MTV Uutiset",        "url": "https://www.mtvuutiset.fi/api/feed/rss/uutiset",                                "tier": 2, "category": "news"},
     {"source": "Kauppalehti",        "url": "https://feeds.kauppalehti.fi/rss/main",                                         "tier": 2, "category": "news"},
-    # Google News aggregation — 5 category queries (Phase 1 brief Section 3,
+    # Google News aggregation - 5 category queries (Phase 1 brief Section 3,
     # refined per user feedback: Sports uses jalkapallo/jääkiekko, not "joukkue").
     {"source": "Google News · News",       "url": "https://news.google.com/rss/search?q=uhkapeli+OR+rahapeli+OR+Veikkaus+OR+kasino&hl=fi&gl=FI&ceid=FI:fi",                                                  "tier": 3, "category": "news"},
     {"source": "Google News · Sports",     "url": "https://news.google.com/rss/search?q=Liiga+OR+Veikkausliiga+OR+Huuhkajat+OR+Leijonat+OR+%22Suomen+jalkapallo%22+OR+%22Suomen+j%C3%A4%C3%A4kiekko%22&hl=fi&gl=FI&ceid=FI:fi", "tier": 3, "category": "sports"},
@@ -82,7 +82,7 @@ RSS_FEEDS = [
 NEWS_KEYWORDS = ["uhkapeli", "rahapeli", "veikkaus", "kasino", "pelaaminen", "vedonlyönti"]
 
 
-# Per-source circuit breaker — Phase 1 brief addendum:
+# Per-source circuit breaker - Phase 1 brief addendum:
 # 5 consecutive 429s/timeouts → 30 min pause before retrying.
 # State is in-process; reset on backend restart (acceptable for an aggregation
 # pipeline where the worker tick is 60s).
@@ -98,7 +98,7 @@ def _should_skip_source(source: str) -> bool:
     if state.get("paused_until"):
         if datetime.now(timezone.utc) < state["paused_until"]:
             return True
-        # Pause expired — reset and let the next fetch try again.
+        # Pause expired - reset and let the next fetch try again.
         state["fails"] = 0
         state["paused_until"] = None
     return False
@@ -118,7 +118,7 @@ def _record_rss_outcome(source: str, ok: bool, *, status: Optional[int] = None) 
     if state["fails"] >= _CIRCUIT_TRIP_THRESHOLD:
         state["paused_until"] = datetime.now(timezone.utc) + timedelta(seconds=_CIRCUIT_PAUSE_SECONDS)
         logger.warning(
-            "RSS circuit breaker tripped for %s after %d consecutive failures — pausing 30 min",
+            "RSS circuit breaker tripped for %s after %d consecutive failures - pausing 30 min",
             source, state["fails"],
         )
 
@@ -157,7 +157,7 @@ async def _fetch_twitch_streams(client_id: str, oauth_token: str) -> List[Dict[s
     """Pull currently-live streams from the entire Finnish Twitch scene.
 
     Uses Helix `/streams?language=fi&first=100` so the dial reflects the
-    actual size of the Finnish-language live audience — not just the
+    actual size of the Finnish-language live audience - not just the
     couple of streamers we've manually rostered. "Scene Heat" is a scene-
     level metric, not a roster-level one.
     """
@@ -182,7 +182,7 @@ async def twitch_tick(db) -> Dict[str, Any]:
         return {"skipped": "module_unavailable"}
 
     if not is_configured():
-        # Honest dormant state — no fake numbers when API is unconfigured
+        # Honest dormant state - no fake numbers when API is unconfigured
         doc = {
             "captured_at": datetime.now(timezone.utc),
             "expires_at": _expires_at(),
@@ -325,7 +325,7 @@ async def nhl_tick(db) -> Dict[str, Any]:
 
     Flags sports_active=true if ANY NHL game is scheduled today. Finnish
     bettors follow NHL broadly, not just Finnish-roster games. Phase 2 may
-    add dynamic Finnish-nationality weighting later — for now we keep the
+    add dynamic Finnish-nationality weighting later - for now we keep the
     code simple and roster-free.
     """
     try:
@@ -364,7 +364,7 @@ async def nhl_tick(db) -> Dict[str, Any]:
 # ─────────────────────── RSS poller ───────────────────────
 
 def _parse_rss(xml_text: str) -> List[Dict[str, Any]]:
-    """Minimal RSS 2.0 / Atom parser — pulls title/link/pubDate from items."""
+    """Minimal RSS 2.0 / Atom parser - pulls title/link/pubDate from items."""
     items: List[Dict[str, Any]] = []
     try:
         root = ET.fromstring(xml_text)
@@ -453,7 +453,7 @@ async def rss_tick(db) -> Dict[str, Any]:
                     continue
                 title_l = (it.get("title") or "").lower()
 
-                # Classify everything — feed.category is a hint, classifier
+                # Classify everything - feed.category is a hint, classifier
                 # may override based on title content. iter62: when the
                 # AI fallback flag is on, items in the ambiguous band are
                 # re-scored by Haiku 4.5.
@@ -495,7 +495,7 @@ async def rss_tick(db) -> Dict[str, Any]:
                         "keywords_matched": kw_hits,
                     })
 
-    # Cross-source corroboration — items sharing first-6-words across 2+
+    # Cross-source corroboration - items sharing first-6-words across 2+
     # sources are flagged verified.
     if ticker_buffer:
         await _mark_cross_source_verified(ticker_buffer)

@@ -1,4 +1,4 @@
-"""Iter34 — Voita SHRINK reframe (zingers + 11 profiles + new tag vocab).
+"""Iter34 - Voita SHRINK reframe (zingers + 11 profiles + new tag vocab).
 
 Validates:
 - voita_quiz_config: zinger_fi/en per lesson; Q3 has bias_* tags; Q5 has 4 mode_* tags.

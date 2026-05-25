@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Mestari standalone diagnostic entry page.
+ * PUTKI HQ - Mestari standalone diagnostic entry page.
  *
  * Two visual states share one component:
  *   1. `step === 'intro'` → premium cold-traffic landing page
@@ -10,7 +10,7 @@
  *
  * Positioning is locked: this is a research/analytics tool, NOT
  * betting advice or gambling promotion. Zero mention of tips on the
- * entry surface — the first allowed mention is the confirmation
+ * entry surface - the first allowed mention is the confirmation
  * screen, per brief.
  *
  * Backend endpoints (unchanged):
@@ -31,7 +31,7 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 // ── Design tokens (brand-aligned: uses Putki HQ CSS variables so the page
 // adapts to the user's chosen light/dark theme. Only the Mestari-signature
-// blue accent is held constant — it's the deliberate visual handshake
+// blue accent is held constant - it's the deliberate visual handshake
 // that says "this is the diagnostic", distinct from Mittari orange and
 // Voita red.) ──────────────────────────────────────────────────────────
 const T = {
@@ -59,7 +59,7 @@ const COPY = {
     hero: {
       eyebrow: 'Mestari · Toimituksellinen diagnostiikka · Tutkimustyökalu',
       headline: 'Millainen urheiluvedonlyöjä sinä olet?',
-      sub: '90 sekunnin diagnostiikka, joka perustuu vedonlyöntimarkkinoiden tutkimukseen. Vastaa viiteen kysymykseen siitä, miten luet ottelua — saat henkilökohtaisen analyyttisen profiilin ja 5 päivän pelikirjan siihen, miten markkinat oikeasti käyttäytyvät.',
+      sub: '90 sekunnin diagnostiikka, joka perustuu vedonlyöntimarkkinoiden tutkimukseen. Vastaa viiteen kysymykseen siitä, miten luet ottelua - saat henkilökohtaisen analyyttisen profiilin ja 5 päivän pelikirjan siihen, miten markkinat oikeasti käyttäytyvät.',
       positioningStrong: 'Tämä on tutkimus- ja analytiikkatyökalu.',
       positioningRest: ' Mestari tutkii, miten vedonlyöntimarkkinat liikkuvat ja miten ihmiset tulkitsevat niitä. Se ei ole vedonlyöntineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.',
       cta: 'Aloita diagnostiikka →',
@@ -77,22 +77,22 @@ const COPY = {
       cards: [
         {
           num: '01 · Viitekehys', title: 'Tutkimuspohjaiset kysymykset',
-          body: ['Jokainen viidestä kysymyksestä vastaa tunnistettua ennustavan päätöksenteon ulottuvuutta — ankkurointia, tuoreuden painotusta, markkinaluottamusta, vastavirran vaistoa ja tiedon käsittelyä. Diagnostiikka rakentuu ', 'tunnetulle käyttäytymistutkimukselle', ', ei mielipiteille.'],
+          body: ['Jokainen viidestä kysymyksestä vastaa tunnistettua ennustavan päätöksenteon ulottuvuutta - ankkurointia, tuoreuden painotusta, markkinaluottamusta, vastavirran vaistoa ja tiedon käsittelyä. Diagnostiikka rakentuu ', 'tunnetulle käyttäytymistutkimukselle', ', ei mielipiteille.'],
           tag: 'Käyttäytymistiede · Päätöksenteon teoria',
         },
         {
           num: '02 · Data', title: 'Todelliset markkinasignaalit',
-          body: ['Profiilisi tulkitaan suhteessa kuvioihin, joita havaitaan ', '11 julkisessa datalähteessä', ' — kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.'],
+          body: ['Profiilisi tulkitaan suhteessa kuvioihin, joita havaitaan ', '11 julkisessa datalähteessä', ' - kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.'],
           tag: 'Julkinen data · Kerroin-API:t · EU-markkinat',
         },
         {
           num: '03 · Mallit', title: 'Tekoälyavusteinen analyysi',
-          body: ['Käytämme koneoppivaa luokittelua tulkitaksemme vastauskuviot johdonmukaisesti ja nostaaksemme esiin profiiliisi sopivimman oppaan. ', 'Mallit avustavat analyysiä', ' — ne tarkistetaan kiinteää menetelmää vasten, ei jätetä toimimaan valvomatta.'],
+          body: ['Käytämme koneoppivaa luokittelua tulkitaksemme vastauskuviot johdonmukaisesti ja nostaaksemme esiin profiiliisi sopivimman oppaan. ', 'Mallit avustavat analyysiä', ' - ne tarkistetaan kiinteää menetelmää vasten, ei jätetä toimimaan valvomatta.'],
           tag: 'ML-luokittelu · Ihmisen tarkistama',
         },
         {
           num: '04 · Läpinäkyvyys', title: 'Dokumentoitu menetelmä',
-          body: ['Jokainen profiili, pistemäärä ja oppitunti jäljittyy ', 'dokumentoituun menetelmään', '. Toimituksellista muokkausta ei ole — samat vastaukset tuottavat aina saman profiilin. Voit pyytää koko menetelmäkuvauksen.'],
+          body: ['Jokainen profiili, pistemäärä ja oppitunti jäljittyy ', 'dokumentoituun menetelmään', '. Toimituksellista muokkausta ei ole - samat vastaukset tuottavat aina saman profiilin. Voit pyytää koko menetelmäkuvauksen.'],
           tag: 'Avoin menetelmä · Toistettava',
         },
       ],
@@ -100,17 +100,17 @@ const COPY = {
     stack: {
       label: 'Mitä diagnostiikan takana on',
       items: [
-        { label: 'Datakerros', title: 'Live-markkinasyötteet', body: 'Jatkuva julkisten kertoimien ja markkinaliikedatan keruu eurooppalaisista kirjoista — samat raakasyötteet kuin ammattimaisilla markkina-analyytikoilla.' },
-        { label: 'Analyysikerros', title: 'Todennäköisyysmallinnus', body: 'Implisiittisen todennäköisyyden laskenta ja hajontapisteytys kvantifioivat, kuinka varma — ja kuinka jakautunut — markkina on. Tilastoa, ei ennusteita.' },
+        { label: 'Datakerros', title: 'Live-markkinasyötteet', body: 'Jatkuva julkisten kertoimien ja markkinaliikedatan keruu eurooppalaisista kirjoista - samat raakasyötteet kuin ammattimaisilla markkina-analyytikoilla.' },
+        { label: 'Analyysikerros', title: 'Todennäköisyysmallinnus', body: 'Implisiittisen todennäköisyyden laskenta ja hajontapisteytys kvantifioivat, kuinka varma - ja kuinka jakautunut - markkina on. Tilastoa, ei ennusteita.' },
         { label: 'Älykkyyskerros', title: 'Tekoälyluokittelu, tarkistettuna', body: 'Koneoppivat mallit luokittelevat vastauskuviot ja yhdistävät ne tutkimusviitekehykseen. Jokainen tulos tarkistetaan kiinteää menetelmää vasten.' },
       ],
     },
     steps: {
       label: 'Mitä tapahtuu kun aloitat',
       rows: [
-        { num: '1', title: 'Viisi kysymystä · noin 90 sekuntia', desc: 'Jokainen kysymys tutkii yhtä ulottuvuutta siinä, miten luet ottelua. Oikeita vastauksia ei ole — diagnostiikka mittaa analyyttistä tyyliäsi, ei tietämystäsi.' },
+        { num: '1', title: 'Viisi kysymystä · noin 90 sekuntia', desc: 'Jokainen kysymys tutkii yhtä ulottuvuutta siinä, miten luet ottelua. Oikeita vastauksia ei ole - diagnostiikka mittaa analyyttistä tyyliäsi, ei tietämystäsi.' },
         { num: '2', title: 'Analyyttinen profiilisi', desc: 'Malli luokittelee vastauksesi yhdeksi tutkimuksessa määritellyistä ennustajaprofiileista, selkokielisellä selityksellä siitä, missä tyyli on vahva ja missä se taipuu harhaan.' },
-        { num: '3', title: 'Koko raportti + 5 päivän pelikirja', desc: 'Anna sähköpostisi ja lähetämme täyden raportin sekä viiden päivän opetussarjan siitä, miten vedonlyöntimarkkinat käyttäytyvät. Vain sähköposti — muuta tietoa ei kerätä.' },
+        { num: '3', title: 'Koko raportti + 5 päivän pelikirja', desc: 'Anna sähköpostisi ja lähetämme täyden raportin sekä viiden päivän opetussarjan siitä, miten vedonlyöntimarkkinat käyttäytyvät. Vain sähköposti - muuta tietoa ei kerätä.' },
       ],
     },
     clarity: {
@@ -119,13 +119,13 @@ const COPY = {
         'Tutkimus- ja analytiikkatyökalu, joka tutkii markkinoiden liikettä',
         'Opetuksellinen diagnostiikka päätöksenteosta ja vinoumista',
         'Strukturoitu, dokumentoitu ja toistettava menetelmä',
-        'Maksuton — ei talletusta, ei tiliä',
+        'Maksuton - ei talletusta, ei tiliä',
       ] },
       isnt: { head: 'Mitä Mestari ei ole', items: [
         'Ei vedonlyöntineuvontaa eikä vihjepalvelua',
         'Ei rahapelaamisen eikä minkään peliyhtiön mainontaa',
         'Ei minkään ottelun lopputuloksen ennustetta',
-        'Ei tulostakuu — mikään menetelmä ei poista riskiä',
+        'Ei tulostakuu - mikään menetelmä ei poista riskiä',
       ] },
     },
     team: {
@@ -143,7 +143,7 @@ const COPY = {
         { q: 'Onko tämä vedonlyöntineuvontaa?', a: 'Ei. Mestari on tutkimus- ja analytiikkatyökalu. Se tutkii miten vedonlyöntimarkkinat käyttäytyvät ja miten ihmiset tulkitsevat niitä. Se ei koskaan kerro mitä lyödä vetoa, eikä se mainosta rahapelaamista. Tarkoitettu opetuskäyttöön.' },
         { q: 'Pitääkö minun lyödä vetoa jotain?', a: 'Ei. Missään vaiheessa ei ole talletusta, panosta tai rahapelitiliä. Diagnostiikka on kyselylomake analyyttisestä tyylistä.' },
         { q: 'Mitä teette sähköpostiosoitteellani?', a: 'Käytämme sitä kerran raporttisi lähettämiseen ja sen jälkeen viiden päivän opetussarjaan. Muuta henkilötietoa ei kerätä. Voit perua tilauksen milloin tahansa. GDPR-yhteensopiva.' },
-        { q: 'Miten profiili lasketaan?', a: 'Viisi vastaustasi luokitellaan kiinteää tutkimusviitekehystä vasten tekoälyavusteisella analyysillä, joka tarkistetaan dokumentoitua menetelmää vasten. Samat vastaukset tuottavat aina saman profiilin — toimituksellista muokkausta ei ole.' },
+        { q: 'Miten profiili lasketaan?', a: 'Viisi vastaustasi luokitellaan kiinteää tutkimusviitekehystä vasten tekoälyavusteisella analyysillä, joka tarkistetaan dokumentoitua menetelmää vasten. Samat vastaukset tuottavat aina saman profiilin - toimituksellista muokkausta ei ole.' },
       ],
     },
     final: {
@@ -162,7 +162,7 @@ const COPY = {
         { href: '/ehdot', label: 'Ehdot' },
         { href: '/yhteys', label: 'Yhteys' },
       ],
-      disclaimer: 'Mestari on Putki HQ:n toimituksellinen tutkimus- ja analytiikkatuote. Se analysoi julkisesti saatavilla olevaa vedonlyöntimarkkinadataa opetustarkoituksessa. Mestari ei tarjoa vedonlyöntineuvontaa, ei ennusta otteluiden lopputuloksia eikä mainosta rahapelaamista tai mitään peliyhtiötä. Mikään tällä sivulla ei ole kehotus pelata rahapelejä. Jos rahapelaaminen huolettaa, apua on saatavilla — Suomessa katso ',
+      disclaimer: 'Mestari on Putki HQ:n toimituksellinen tutkimus- ja analytiikkatuote. Se analysoi julkisesti saatavilla olevaa vedonlyöntimarkkinadataa opetustarkoituksessa. Mestari ei tarjoa vedonlyöntineuvontaa, ei ennusta otteluiden lopputuloksia eikä mainosta rahapelaamista tai mitään peliyhtiötä. Mikään tällä sivulla ei ole kehotus pelata rahapelejä. Jos rahapelaaminen huolettaa, apua on saatavilla - Suomessa katso ',
       disclaimerLink: { href: 'https://peluuri.fi', label: 'peluuri.fi' },
       disclaimerTail: '. 18+.',
     },
@@ -184,7 +184,7 @@ const COPY = {
     hero: {
       eyebrow: 'Mestari · Editorial diagnostic · Research tool',
       headline: 'What kind of sports bettor are you?',
-      sub: 'A 90-second diagnostic grounded in betting-market research. Answer five questions about how you read a match — receive a personal analytical profile and a 5-day playbook on how the markets actually behave.',
+      sub: 'A 90-second diagnostic grounded in betting-market research. Answer five questions about how you read a match - receive a personal analytical profile and a 5-day playbook on how the markets actually behave.',
       positioningStrong: 'This is a research and analytics tool.',
       positioningRest: ' Mestari studies how betting markets move and how people interpret them. It is not betting advice, it does not promote gambling, and it will never tell you what to bet. For educational use only.',
       cta: 'Start the diagnostic →',
@@ -200,26 +200,26 @@ const COPY = {
       label: 'Method · How Mestari analyses',
       intro: ['Mestari applies a ', 'structured analytical framework', ' to a question most people answer on instinct: how do you actually read a betting market? The diagnostic draws on documented research in decision-making, market efficiency and cognitive bias.'],
       cards: [
-        { num: '01 · Framework', title: 'Research-grounded questions', body: ['Each of the five questions targets a recognised dimension of predictive decision-making — anchoring, recency weighting, market trust, contrarian instinct and information processing. The diagnostic is built on ', 'established behavioural research', ', not opinion.'], tag: 'Behavioural science · Decision theory' },
-        { num: '02 · Data', title: 'Real market signals', body: ['Your profile is read against patterns observed across ', '11 public data sources', ' — odds dispersion, market movement and scene activity. We analyse how markets behave; we do not predict outcomes.'], tag: 'Public data · Odds APIs · EU markets' },
-        { num: '03 · Models', title: 'AI-assisted analysis', body: ['We use machine-learning classification to interpret answer patterns consistently and to surface the playbook that best fits your profile. ', 'Models assist analysis', ' — they are checked against a fixed method, not left to run unsupervised.'], tag: 'ML classification · Human-reviewed' },
-        { num: '04 · Transparency', title: 'Documented method', body: ['Every profile, score and lesson traces back to a ', 'documented method', '. There is no editorial override — the same answers always yield the same profile. The full methodology is available on request.'], tag: 'Open method · Reproducible' },
+        { num: '01 · Framework', title: 'Research-grounded questions', body: ['Each of the five questions targets a recognised dimension of predictive decision-making - anchoring, recency weighting, market trust, contrarian instinct and information processing. The diagnostic is built on ', 'established behavioural research', ', not opinion.'], tag: 'Behavioural science · Decision theory' },
+        { num: '02 · Data', title: 'Real market signals', body: ['Your profile is read against patterns observed across ', '11 public data sources', ' - odds dispersion, market movement and scene activity. We analyse how markets behave; we do not predict outcomes.'], tag: 'Public data · Odds APIs · EU markets' },
+        { num: '03 · Models', title: 'AI-assisted analysis', body: ['We use machine-learning classification to interpret answer patterns consistently and to surface the playbook that best fits your profile. ', 'Models assist analysis', ' - they are checked against a fixed method, not left to run unsupervised.'], tag: 'ML classification · Human-reviewed' },
+        { num: '04 · Transparency', title: 'Documented method', body: ['Every profile, score and lesson traces back to a ', 'documented method', '. There is no editorial override - the same answers always yield the same profile. The full methodology is available on request.'], tag: 'Open method · Reproducible' },
       ],
     },
     stack: {
       label: 'What sits behind the diagnostic',
       items: [
-        { label: 'Data layer', title: 'Live market feeds', body: 'Continuous ingestion of public odds and market-movement data from European books — the same raw feeds professional market analysts work with.' },
-        { label: 'Analysis layer', title: 'Probability modelling', body: 'Implied-probability calculations and dispersion scoring quantify how confident — and how split — a market is. Statistics, not predictions.' },
+        { label: 'Data layer', title: 'Live market feeds', body: 'Continuous ingestion of public odds and market-movement data from European books - the same raw feeds professional market analysts work with.' },
+        { label: 'Analysis layer', title: 'Probability modelling', body: 'Implied-probability calculations and dispersion scoring quantify how confident - and how split - a market is. Statistics, not predictions.' },
         { label: 'Intelligence layer', title: 'AI classification, reviewed', body: 'Machine-learning models classify answer patterns and map them onto the research framework. Every output is checked against a fixed method.' },
       ],
     },
     steps: {
       label: 'What happens when you start',
       rows: [
-        { num: '1', title: 'Five questions · about 90 seconds', desc: 'Each question explores one dimension of how you read a match. There are no correct answers — the diagnostic measures analytical style, not knowledge.' },
+        { num: '1', title: 'Five questions · about 90 seconds', desc: 'Each question explores one dimension of how you read a match. There are no correct answers - the diagnostic measures analytical style, not knowledge.' },
         { num: '2', title: 'Your analytical profile', desc: 'The model classifies your answers into one of the predictor profiles defined in the research, with a plain-language read on where your style is strong and where it tends to bend.' },
-        { num: '3', title: 'Full report + 5-day playbook', desc: 'Hand over your email and we send the full report plus a five-day teaching series on how betting markets behave. Email only — no other data is collected.' },
+        { num: '3', title: 'Full report + 5-day playbook', desc: 'Hand over your email and we send the full report plus a five-day teaching series on how betting markets behave. Email only - no other data is collected.' },
       ],
     },
     clarity: {
@@ -228,13 +228,13 @@ const COPY = {
         'A research and analytics tool studying market movement',
         'An educational diagnostic on decision-making and bias',
         'A structured, documented, reproducible method',
-        'Free — no deposit, no account',
+        'Free - no deposit, no account',
       ] },
       isnt: { head: 'What Mestari is not', items: [
         'Not betting advice and not a tipster service',
         'Not gambling promotion or promotion of any operator',
         'Not a prediction of any match outcome',
-        'No outcome guarantee — no method removes risk',
+        'No outcome guarantee - no method removes risk',
       ] },
     },
     team: {
@@ -252,7 +252,7 @@ const COPY = {
         { q: 'Is this betting advice?', a: 'No. Mestari is a research and analytics tool. It studies how betting markets behave and how people interpret them. It will never tell you what to bet, and it does not promote gambling. For educational use.' },
         { q: 'Do I have to bet anything?', a: 'No. There is no deposit, no stake and no gambling account at any point. The diagnostic is a questionnaire on analytical style.' },
         { q: 'What do you do with my email?', a: 'We use it once to send your report and then for the 5-day teaching series. No other personal data is collected. You can unsubscribe at any time. GDPR compliant.' },
-        { q: 'How is the profile calculated?', a: 'Your five answers are classified against a fixed research framework with AI-assisted analysis that is checked against a documented method. The same answers always yield the same profile — there is no editorial override.' },
+        { q: 'How is the profile calculated?', a: 'Your five answers are classified against a fixed research framework with AI-assisted analysis that is checked against a documented method. The same answers always yield the same profile - there is no editorial override.' },
       ],
     },
     final: {
@@ -271,7 +271,7 @@ const COPY = {
         { href: '/ehdot', label: 'Terms' },
         { href: '/yhteys', label: 'Contact' },
       ],
-      disclaimer: 'Mestari is an editorial research and analytics product by Putki HQ. It analyses publicly available betting-market data for educational purposes. Mestari does not provide betting advice, does not predict match outcomes and does not promote gambling or any operator. Nothing on this page is an invitation to gamble. If gambling is a concern, help is available — in Finland see ',
+      disclaimer: 'Mestari is an editorial research and analytics product by Putki HQ. It analyses publicly available betting-market data for educational purposes. Mestari does not provide betting advice, does not predict match outcomes and does not promote gambling or any operator. Nothing on this page is an invitation to gamble. If gambling is a concern, help is available - in Finland see ',
       disclaimerLink: { href: 'https://peluuri.fi', label: 'peluuri.fi' },
       disclaimerTail: '. 18+.',
     },
@@ -925,7 +925,7 @@ const Tease = ({ profile, loading, onContinue, lang }) => {
         background: 'rgba(91,141,238,0.08)', border: '1px solid rgba(91,141,238,0.3)',
       }}>
         <div style={{ fontFamily: T.mono, fontSize: 9.5, letterSpacing: '0.22em', color: T.accent, fontWeight: 700, marginBottom: 6 }}>
-          {lang === 'en' ? 'LOCKED — EMAIL UNLOCKS' : 'LUKITTU — SÄHKÖPOSTI AVAA'}
+          {lang === 'en' ? 'LOCKED - EMAIL UNLOCKS' : 'LUKITTU - SÄHKÖPOSTI AVAA'}
         </div>
         <p style={{ color: T.ink, fontSize: 13.5, lineHeight: 1.55, margin: 0, opacity: 0.9 }}>
           {lang === 'en'
@@ -1021,8 +1021,8 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, t
       </h2>
       <p style={{ color: T.muted, fontSize: 14, marginBottom: 22, lineHeight: 1.55 }}>
         {lang === 'en'
-          ? 'Full report in 5 minutes. The 5-day playbook starts tomorrow at 09:00. No spam — unsubscribe anytime.'
-          : 'Täysi raportti 5 minuutissa. 5 päivän pelikirja alkaa huomenna klo 09. Ei spämmiä — peruuta milloin tahansa.'}
+          ? 'Full report in 5 minutes. The 5-day playbook starts tomorrow at 09:00. No spam - unsubscribe anytime.'
+          : 'Täysi raportti 5 minuutissa. 5 päivän pelikirja alkaa huomenna klo 09. Ei spämmiä - peruuta milloin tahansa.'}
       </p>
       <div style={{ display: 'grid', gap: 14 }}>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
@@ -1035,7 +1035,7 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, t
             outline: 'none',
           }} />
 
-        {/* Trust strip — pills, GDPR note, and external links */}
+        {/* Trust strip - pills, GDPR note, and external links */}
         <TrustStrip trust={trust} />
 
         <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: T.ink, cursor: 'pointer' }}>
@@ -1101,7 +1101,7 @@ const Confirmation = ({ email, profileName, lang }) => (
         ? 'Day 1 of the 5-day playbook arrives tomorrow at 09:00. One per day. Read at your pace.'
         : 'Päivä 1/5 pelikirjasta saapuu huomenna klo 09. Yksi per päivä. Lue omassa tahdissasi.'}
     </p>
-    {/* Section 7.3 value block — required on every diagnostic, verbatim. */}
+    {/* Section 7.3 value block - required on every diagnostic, verbatim. */}
     <div data-testid="mestari-confirm-value-block" style={{
       padding: '20px 20px', background: T.surface,
       border: `1px solid ${T.border}`, marginBottom: 24,
@@ -1114,15 +1114,15 @@ const Confirmation = ({ email, profileName, lang }) => (
         fontFamily: T.serif, fontSize: 15.5, lineHeight: 1.65,
         color: T.ink, margin: '12px 0 0',
       }}>{lang === 'en'
-        ? "A read on how you actually approach a match — drawn from your answers, not from how you'd describe yourself. It's deterministic: the same answers always produce the same profile, with no editorial thumb on the scale. You get an honest account of where your approach is sharp and where it costs you, and a 5-day playbook on how betting markets genuinely behave. No tips, no picks — a clearer view of your own thinking, which is the thing most readers never get."
-        : "Lukeman siitä, miten oikeasti lähestyt ottelua — vastauksistasi, ei siitä miten kuvailisit itseäsi. Se on deterministinen: samat vastaukset tuottavat aina saman profiilin, ilman toimituksen peukaloa vaa'assa. Saat rehellisen kuvauksen siitä, missä lähestymistapasi on terävä ja missä se maksaa, sekä 5 päivän pelikirjan siitä, miten vedonlyöntimarkkinat aidosti käyttäytyvät. Ei vinkkejä, ei valintoja — selkeämpi näkymä omaan ajatteluusi, jota useimmat lukijat eivät koskaan saa."}</p>
+        ? "A read on how you actually approach a match - drawn from your answers, not from how you'd describe yourself. It's deterministic: the same answers always produce the same profile, with no editorial thumb on the scale. You get an honest account of where your approach is sharp and where it costs you, and a 5-day playbook on how betting markets genuinely behave. No tips, no picks - a clearer view of your own thinking, which is the thing most readers never get."
+        : "Lukeman siitä, miten oikeasti lähestyt ottelua - vastauksistasi, ei siitä miten kuvailisit itseäsi. Se on deterministinen: samat vastaukset tuottavat aina saman profiilin, ilman toimituksen peukaloa vaa'assa. Saat rehellisen kuvauksen siitä, missä lähestymistapasi on terävä ja missä se maksaa, sekä 5 päivän pelikirjan siitä, miten vedonlyöntimarkkinat aidosti käyttäytyvät. Ei vinkkejä, ei valintoja - selkeämpi näkymä omaan ajatteluusi, jota useimmat lukijat eivät koskaan saa."}</p>
     </div>
-    {/* The single allowed PS on cold-traffic — soft, link-only mention. */}
+    {/* The single allowed PS on cold-traffic - soft, link-only mention. */}
     <p data-testid="mestari-confirm-ps" style={{
       color: T.muted, fontSize: 13, lineHeight: 1.55, margin: '0 0 24px',
       fontFamily: T.sans, fontStyle: 'italic',
     }}>
-      {lang === 'en' ? 'PS — Putki HQ also publishes daily market signals. ' : 'PS — Putki HQ julkaisee myös päivittäiset markkinasignaalit. '}
+      {lang === 'en' ? 'PS - Putki HQ also publishes daily market signals. ' : 'PS - Putki HQ julkaisee myös päivittäiset markkinasignaalit. '}
       <Link to="/pelisignaalit" style={{ color: T.accent, textDecoration: 'none' }}>
         {lang === 'en' ? 'See today →' : 'Katso tänään →'}
       </Link>
@@ -1225,7 +1225,7 @@ const Mestari = () => {
   const [error, setError] = useState('');
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Mestari — What kind of sports bettor are you?' : 'Mestari — Millainen urheiluvedonlyöjä sinä olet?',
+    title: lang === 'en' ? 'Mestari - What kind of sports bettor are you?' : 'Mestari - Millainen urheiluvedonlyöjä sinä olet?',
     description: lang === 'en'
       ? '90-second research-grounded diagnostic. Personal analytical profile + 5-day playbook to your inbox. Free, no deposit, no betting.'
       : '90-sekunnin tutkimuspohjainen diagnostiikka. Henkilökohtainen analyyttinen profiili + 5 päivän pelikirja sähköpostiisi. Ilmainen, ei talletusta, ei vedonlyöntiä.',

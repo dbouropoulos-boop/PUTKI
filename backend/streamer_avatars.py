@@ -1,5 +1,5 @@
 """
-PUTKI HQ — streamer avatar resolver (iter54).
+PUTKI HQ - streamer avatar resolver (iter54).
 
 Pulls the streamer's REAL profile picture from the platform they're on
 (Twitch / Kick / YouTube) and persists it on the `streamers` doc as
@@ -24,7 +24,7 @@ Honesty rules:
   • Refresh cadence: weekly background tick. Manual refresh available via
     admin endpoint.
 
-The module is INTENTIONALLY independent of the live-stream fetcher —
+The module is INTENTIONALLY independent of the live-stream fetcher -
 avatars rarely change so we don't want to refresh them on every 60s
 live poll. One slow tick a week + boot-time backfill is enough.
 """
@@ -63,7 +63,7 @@ async def _fetch_twitch_avatars(logins: List[str]) -> Dict[str, str]:
     except Exception:
         return {}
     if not is_configured():
-        logger.info("streamer_avatars: twitch credentials missing — skipping Twitch")
+        logger.info("streamer_avatars: twitch credentials missing - skipping Twitch")
         return {}
 
     try:
@@ -112,7 +112,7 @@ async def _fetch_kick_avatars(slugs: List[str]) -> Dict[str, str]:
 
     token = await _get_app_token()
     if not token:
-        logger.info("streamer_avatars: kick OAuth unavailable — skipping Kick")
+        logger.info("streamer_avatars: kick OAuth unavailable - skipping Kick")
         return {}
 
     out: Dict[str, str] = {}
@@ -137,7 +137,7 @@ async def _fetch_kick_avatars(slugs: List[str]) -> Dict[str, str]:
         for entry in data:
             slug = (entry.get("slug") or "").lower()
             # Kick v1 returns `profile_picture`. iter62.1: NEVER fall back to
-            # the banner_picture — those are giant 1920x480 hero images, not
+            # the banner_picture - those are giant 1920x480 hero images, not
             # profile pics. Also reject default-banner placeholders.
             pic = (entry.get("profile_picture") or "").strip()
             if "default-banner" in pic or "default-avatar" in pic:
@@ -188,7 +188,7 @@ async def _fetch_youtube_avatars(refs: List[str]) -> Dict[str, str]:
         return {}
     api_key = os.environ.get("YOUTUBE_API_KEY")
     if not api_key:
-        logger.info("streamer_avatars: YOUTUBE_API_KEY missing — skipping YouTube")
+        logger.info("streamer_avatars: YOUTUBE_API_KEY missing - skipping YouTube")
         return {}
     out: Dict[str, str] = {}
     results = await asyncio.gather(

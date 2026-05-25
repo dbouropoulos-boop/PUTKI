@@ -1,4 +1,4 @@
-"""Phase 3 V2 Step 4 — Live-feed aggregation tests."""
+"""Phase 3 V2 Step 4 - Live-feed aggregation tests."""
 from __future__ import annotations
 
 import os

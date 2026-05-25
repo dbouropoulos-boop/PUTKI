@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Multi-platform live streamer fetcher.
+PUTKI HQ - Multi-platform live streamer fetcher.
 
 Aggregates "who's live RIGHT NOW" across Twitch + Kick + YouTube into a
 unified payload for the homepage carousel.
@@ -54,7 +54,7 @@ def _store(platform: str, payload: Dict[str, Any]) -> None:
 async def _fetch_kick_channel(login: str) -> Optional[Dict[str, Any]]:
     """Hit kick.com/api/v2/channels/{login} and return normalised live entry
     if the channel is currently live, else None. Returns the string
-    "blocked" when Kick's Cloudflare layer rejects the request — caller
+    "blocked" when Kick's Cloudflare layer rejects the request - caller
     uses this to flag the whole platform as dormant rather than silently
     returning empty.
     Public endpoint, no auth needed.
@@ -101,7 +101,7 @@ async def fetch_kick_live(db) -> Dict[str, Any]:
 
     iter52: now delegates to `kick_official.fetch_live` which uses Kick's
     OAuth-gated public API (`api.kick.com/public/v1/...`). The legacy
-    `kick.com/api/v2/channels/{login}` scraping path is dead — it sat
+    `kick.com/api/v2/channels/{login}` scraping path is dead - it sat
     behind Cloudflare bot-protection and returned 403 on every server-
     side request. Real auth, real results, real dormant on real failure.
     """
@@ -118,7 +118,7 @@ async def fetch_kick_live(db) -> Dict[str, Any]:
         except Exception:
             streamers = []
 
-        # Build slug list — prefer `channel` over `slug` so registry
+        # Build slug list - prefer `channel` over `slug` so registry
         # entries that override (`channel="natu"` vs slug="natu-fi") work.
         slugs = [
             (s.get("channel") or s.get("slug") or "").strip().lstrip("@").lower()
@@ -145,7 +145,7 @@ async def _resolve_youtube_handle(handle_or_id: str, api_key: str) -> Optional[s
     if not handle_or_id:
         return None
     raw = handle_or_id.strip()
-    # Already a UC channel id — no resolution needed.
+    # Already a UC channel id - no resolution needed.
     if raw.startswith("UC") and len(raw) >= 20:
         return raw
     if raw in _youtube_handle_cache:
@@ -244,7 +244,7 @@ async def fetch_youtube_live(db) -> Dict[str, Any]:
             if (s.get("youtube_channel_id") or "").strip().startswith("UC")
         ]
         # For any row without a cached channel_id, fall back to its
-        # raw @handle / username — still resolved live below.
+        # raw @handle / username - still resolved live below.
         raw_refs = [
             (s.get("channel") or "").strip()
             for s in yt_rows

@@ -1,15 +1,15 @@
 /**
- * PUTKI HQ — BackOfficeStreamerMeta (AI-assisted drafting workflow).
+ * PUTKI HQ - BackOfficeStreamerMeta (AI-assisted drafting workflow).
  *
  * Editorial surface for per-streamer context lines. The AI proposes,
- * humans publish. Drafts NEVER reach the public site — only PUBLISHED
+ * humans publish. Drafts NEVER reach the public site - only PUBLISHED
  * rows surface in the homepage streamer band tooltip.
  *
  * Status pills:
- *   NO META            — nothing drafted, nothing published
- *   DRAFT NEEDS REVIEW — AI draft pending review
- *   PUBLISHED          — editorial line live on the site
- *   SUPPRESSED         — published but hidden from frontend
+ *   NO META            - nothing drafted, nothing published
+ *   DRAFT NEEDS REVIEW - AI draft pending review
+ *   PUBLISHED          - editorial line live on the site
+ *   SUPPRESSED         - published but hidden from frontend
  *
  * Auth: existing X-Admin-Token (BackOfficeContext).
  */
@@ -156,8 +156,8 @@ const Row = ({ row, token, onChanged }) => {
         </td>
         <td style={{ padding: '14px 12px', verticalAlign: 'middle', color: 'var(--muted)', fontSize: 12, fontStyle: 'italic', maxWidth: 460 }}>
           {row.status === 'published' || row.status === 'suppressed'
-            ? (row.meta_line_fi || row.meta_line_en || '—')
-            : (row.draft_line_fi || row.draft_line_en || '—')}
+            ? (row.meta_line_fi || row.meta_line_en || '-')
+            : (row.draft_line_fi || row.draft_line_en || '-')}
         </td>
         <td style={{ padding: '14px 12px', verticalAlign: 'middle', textAlign: 'right',
           fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)' }}>
@@ -384,7 +384,7 @@ const BackOfficeStreamerMeta = () => {
       }}>Streamer editorial meta</h1>
       <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 8, maxWidth: 760, lineHeight: 1.55 }}>
         Per-streamer context line shown on the homepage streamer band tooltip. Generate an AI draft
-        from live data, review it, then publish. Drafts NEVER reach the live site — only published
+        from live data, review it, then publish. Drafts NEVER reach the live site - only published
         rows surface. Suppression hides published rows without deleting them.
       </p>
       {rl && (

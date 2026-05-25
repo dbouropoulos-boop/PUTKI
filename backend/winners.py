@@ -1,5 +1,5 @@
 """
-Winners Corner — Batch 4.
+Winners Corner - Batch 4.
 
 Maintains a small editorial track-record of settled betting tips that hit.
 Public `/api/winners/recent` reads the latest N. Admin can append a winner

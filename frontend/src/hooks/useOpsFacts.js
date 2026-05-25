@@ -1,11 +1,11 @@
 /**
- * PUTKI HQ — 3,000-subscriber gating hook + operational-fact fallback.
+ * PUTKI HQ - 3,000-subscriber gating hook + operational-fact fallback.
  *
  * Below 3,000 subscribers we do NOT surface "{N} subscribers" social
  * proof. Instead the consumer falls back to a defensible operational
  * fact (€ paid in raffle prizes, stories aggregated today, etc.).
  *
- * Refreshes every 5 minutes — these counts move slowly.
+ * Refreshes every 5 minutes - these counts move slowly.
  */
 import { useEffect, useState } from 'react';
 

@@ -1,4 +1,4 @@
-"""Iter 37 — Sprint C: Lead aggregate + Telegram log + admin auth gating."""
+"""Iter 37 - Sprint C: Lead aggregate + Telegram log + admin auth gating."""
 import os
 import requests
 import pytest

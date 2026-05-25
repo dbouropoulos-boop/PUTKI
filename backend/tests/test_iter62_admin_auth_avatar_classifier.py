@@ -1,5 +1,5 @@
 """
-Iter62 — Admin auth v2, audit log, avatar fallback, classifier Tier 2.
+Iter62 - Admin auth v2, audit log, avatar fallback, classifier Tier 2.
 """
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ def test_refresh_one_avatar_404_on_unknown():
 
 def test_refresh_one_avatar_returns_source():
     """A known streamer slug must come back with `avatar_source` populated
-    even if the platform API is unavailable — the fallback cascade must
+    even if the platform API is unavailable - the fallback cascade must
     return at least 'exhausted_all_fallbacks'.
     """
     streamers = httpx.get(f"{BASE}/api/admin/streamers",
@@ -82,7 +82,7 @@ def test_refresh_one_avatar_returns_source():
 
 def test_classifier_tier1_only_when_flag_off():
     """When NEWS_CLASSIFIER_AI_FALLBACK_ENABLED is unset/0 the wrapper
-    must NEVER call Haiku — verify by asserting `_tier2` is absent."""
+    must NEVER call Haiku - verify by asserting `_tier2` is absent."""
     os.environ.pop("NEWS_CLASSIFIER_AI_FALLBACK_ENABLED", None)
     from news_classifier import classify_item_with_fallback
     import asyncio

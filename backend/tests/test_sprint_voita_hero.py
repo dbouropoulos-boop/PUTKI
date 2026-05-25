@@ -1,4 +1,4 @@
-"""Iter32 — /voita listing restructure: active/paid split + editable voita_hero."""
+"""Iter32 - /voita listing restructure: active/paid split + editable voita_hero."""
 import os
 import pytest
 import requests
@@ -51,7 +51,7 @@ class TestVoitaRaffles:
     def test_paid_raffles_have_winners(self):
         r = requests.get(f"{BASE_URL}/api/voita/raffles", timeout=10)
         items = r.json()["items"]
-        # Only inspect the seeded paid slugs — tests in other suites may
+        # Only inspect the seeded paid slugs - tests in other suites may
         # have introduced additional paid raffles via admin endpoints.
         seeded_paid = [x for x in items if x["status"] == "paid"
                         and x["slug"] in SEEDED_PAID_SLUGS]
@@ -127,7 +127,7 @@ class TestVoitaHeroSettings:
             assert r.status_code == 200
             hero = r.json()["voita_hero"]
             assert hero["title_fi"] == "PARTIAL ONLY FI"
-            # other fields fall back to defaults — must not be blank
+            # other fields fall back to defaults - must not be blank
             for k in HERO_KEYS:
                 if k == "title_fi":
                     continue

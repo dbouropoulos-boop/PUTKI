@@ -1,8 +1,8 @@
 /**
- * PUTKI HQ — RecentWinnersStrip.
+ * PUTKI HQ - RecentWinnersStrip.
  *
  * Compact social-proof block. Single-line per winner, monospace meta,
- * collapsed header — reads as a quiet operational receipt, not a
+ * collapsed header - reads as a quiet operational receipt, not a
  * trophy case. Renders nothing when there are no paid raffles yet.
  */
 import React, { useEffect, useState } from 'react';

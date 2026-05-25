@@ -1,5 +1,5 @@
 /**
- * BackOfficeMittariCopy — every line on /mittari is editable here.
+ * BackOfficeMittariCopy - every line on /mittari is editable here.
  *
  * Data source: GET /api/admin/mittari/copy returns
  *   { raw, merged, defaults, updated_at }
@@ -93,9 +93,9 @@ const LocaleBlock = ({ title, data, defaults, fields, onPatch, scope }) => (
 
 const HERO_FIELDS = [
   { key: 'section_label', label: 'Eyebrow' },
-  { key: 'page_title_lead', label: 'Page title — lead' },
-  { key: 'page_title_em', label: 'Page title — emphasised' },
-  { key: 'page_title_tail', label: 'Page title — tail' },
+  { key: 'page_title_lead', label: 'Page title - lead' },
+  { key: 'page_title_em', label: 'Page title - emphasised' },
+  { key: 'page_title_tail', label: 'Page title - tail' },
   { key: 'page_subtitle', label: 'Page subtitle', multiline: true },
   { key: 'headline_lead', label: 'Headline lead' },
   { key: 'headline_em', label: 'Headline emphasised' },
@@ -130,9 +130,9 @@ const SIGNALS_FIELDS = [
   { key: 'head_unlocked_eyebrow', label: 'Unlocked eyebrow' },
   { key: 'title_lead', label: 'Title lead' },
   { key: 'title_em', label: 'Title emphasised' },
-  { key: 'pairing_lead', label: 'Pairing sentence — lead' },
-  { key: 'pairing_em', label: 'Pairing sentence — emphasised' },
-  { key: 'pairing_tail', label: 'Pairing sentence — tail' },
+  { key: 'pairing_lead', label: 'Pairing sentence - lead' },
+  { key: 'pairing_em', label: 'Pairing sentence - emphasised' },
+  { key: 'pairing_tail', label: 'Pairing sentence - tail' },
   { key: 'preview_badge', label: 'Preview badge' },
   { key: 'preview_explainer', label: 'Preview explainer', multiline: true },
   { key: 'market_quiet_eyebrow', label: 'Quiet eyebrow' },
@@ -340,7 +340,7 @@ const BackOfficeMittariCopy = () => {
       <ResetBtn onClick={() => resetSection('hero')} label="Reset hero to defaults" testid="bo-mc-reset-hero" />
 
       {/* GATE */}
-      <SectionTitle sub="Both gates share these strings — Telegram primary + email fallback">GATES (hero + final)</SectionTitle>
+      <SectionTitle sub="Both gates share these strings - Telegram primary + email fallback">GATES (hero + final)</SectionTitle>
       <Row>
         <LocaleBlock title="FI" scope="gate-fi" data={form.gate?.fi} defaults={D.gate?.fi}
           fields={GATE_FIELDS} onPatch={(k, v) => patchLocale('gate', 'fi', k, v)} />
@@ -586,7 +586,7 @@ const BackOfficeMittariCopy = () => {
         <Row cols={3}>
           <Field label="Name" value={form.founder?.name} onChange={(v) => patchTop('founder', 'name', v)} />
           <Field label="Avatar initial" value={form.founder?.avatar_initial} onChange={(v) => patchTop('founder', 'avatar_initial', v)} />
-          <Field label="(unused)" value="" onChange={() => {}} placeholder="—" />
+          <Field label="(unused)" value="" onChange={() => {}} placeholder="-" />
         </Row>
         <Row cols={2}>
           <Field label="Section title (FI)" value={form.founder?.title_fi} onChange={(v) => patchTop('founder', 'title_fi', v)} />
@@ -647,7 +647,7 @@ const BackOfficeMittariCopy = () => {
       <ResetBtn onClick={() => resetSection('press')} label="Reset press to defaults" testid="bo-mc-reset-press" />
 
       {/* FINAL GATE */}
-      <SectionTitle sub="The closing block — same Telegram-primary gate, different framing">FINAL GATE</SectionTitle>
+      <SectionTitle sub="The closing block - same Telegram-primary gate, different framing">FINAL GATE</SectionTitle>
       <div style={{
         background: 'var(--surface)', border: '1px solid var(--hairline)',
         padding: 18, display: 'flex', flexDirection: 'column', gap: 12,

@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Shared email-gate component for Phase 2 mini-games · iter56
+ * PUTKI HQ - Shared email-gate component for Phase 2 mini-games · iter56
  * iter60: full FI/EN via useLang() + i18n dict.
  */
 import React, { useState } from 'react';

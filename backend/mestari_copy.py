@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Mestari page copy editor.
+PUTKI HQ - Mestari page copy editor.
 
 Everything visible on the /mestari intro surface is editable through this
 module. A single Mongo doc (`settings._id='mestari_copy'`) overlays admin
@@ -28,7 +28,7 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
         "fi": {
             "eyebrow": "Mestari · Toimituksellinen diagnostiikka · Tutkimustyökalu",
             "headline": "Millainen urheiluvedonlyöjä sinä olet?",
-            "sub": "90 sekunnin diagnostiikka, joka perustuu vedonlyöntimarkkinoiden tutkimukseen. Vastaa viiteen kysymykseen siitä, miten luet ottelua — saat henkilökohtaisen analyyttisen profiilin ja 5 päivän pelikirjan siihen, miten markkinat oikeasti käyttäytyvät.",
+            "sub": "90 sekunnin diagnostiikka, joka perustuu vedonlyöntimarkkinoiden tutkimukseen. Vastaa viiteen kysymykseen siitä, miten luet ottelua - saat henkilökohtaisen analyyttisen profiilin ja 5 päivän pelikirjan siihen, miten markkinat oikeasti käyttäytyvät.",
             "positioning_strong": "Tämä on tutkimus- ja analytiikkatyökalu.",
             "positioning_rest": " Mestari tutkii, miten vedonlyöntimarkkinat liikkuvat ja miten ihmiset tulkitsevat niitä. Se ei ole vedonlyöntineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.",
             "cta": "Aloita diagnostiikka →",
@@ -40,7 +40,7 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
         "en": {
             "eyebrow": "Mestari · Editorial diagnostic · Research tool",
             "headline": "What kind of sports bettor are you?",
-            "sub": "A 90-second diagnostic grounded in betting-market research. Answer five questions about how you read a match — receive a personal analytical profile and a 5-day playbook on how the markets actually behave.",
+            "sub": "A 90-second diagnostic grounded in betting-market research. Answer five questions about how you read a match - receive a personal analytical profile and a 5-day playbook on how the markets actually behave.",
             "positioning_strong": "This is a research and analytics tool.",
             "positioning_rest": " Mestari studies how betting markets move and how people interpret them. It is not betting advice, it does not promote gambling, and it will never tell you what to bet. For educational use only.",
             "cta": "Start the diagnostic →",
@@ -77,10 +77,10 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
             {
                 "num_fi": "01 · Viitekehys", "num_en": "01 · Framework",
                 "title_fi": "Tutkimuspohjaiset kysymykset", "title_en": "Research-grounded questions",
-                "body_pre_fi": "Jokainen viidestä kysymyksestä vastaa tunnistettua ennustavan päätöksenteon ulottuvuutta — ankkurointia, tuoreuden painotusta, markkinaluottamusta, vastavirran vaistoa ja tiedon käsittelyä. Diagnostiikka rakentuu ",
+                "body_pre_fi": "Jokainen viidestä kysymyksestä vastaa tunnistettua ennustavan päätöksenteon ulottuvuutta - ankkurointia, tuoreuden painotusta, markkinaluottamusta, vastavirran vaistoa ja tiedon käsittelyä. Diagnostiikka rakentuu ",
                 "body_em_fi": "tunnetulle käyttäytymistutkimukselle",
                 "body_post_fi": ", ei mielipiteille.",
-                "body_pre_en": "Each of the five questions targets a recognised dimension of predictive decision-making — anchoring, recency weighting, market trust, contrarian instinct and information processing. The diagnostic is built on ",
+                "body_pre_en": "Each of the five questions targets a recognised dimension of predictive decision-making - anchoring, recency weighting, market trust, contrarian instinct and information processing. The diagnostic is built on ",
                 "body_em_en": "established behavioural research",
                 "body_post_en": ", not opinion.",
                 "tag_fi": "Käyttäytymistiede · Päätöksenteon teoria",
@@ -91,10 +91,10 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
                 "title_fi": "Todelliset markkinasignaalit", "title_en": "Real market signals",
                 "body_pre_fi": "Profiilisi tulkitaan suhteessa kuvioihin, joita havaitaan ",
                 "body_em_fi": "11 julkisessa datalähteessä",
-                "body_post_fi": " — kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.",
+                "body_post_fi": " - kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.",
                 "body_pre_en": "Your profile is read against patterns observed across ",
                 "body_em_en": "11 public data sources",
-                "body_post_en": " — odds dispersion, market movement and scene activity. We analyse how markets behave; we do not predict outcomes.",
+                "body_post_en": " - odds dispersion, market movement and scene activity. We analyse how markets behave; we do not predict outcomes.",
                 "tag_fi": "Julkinen data · Kerroin-API:t · EU-markkinat",
                 "tag_en": "Public data · Odds APIs · EU markets",
             },
@@ -103,10 +103,10 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
                 "title_fi": "Tekoälyavusteinen analyysi", "title_en": "AI-assisted analysis",
                 "body_pre_fi": "Käytämme koneoppivaa luokittelua tulkitaksemme vastauskuviot johdonmukaisesti ja nostaaksemme esiin profiiliisi sopivimman pelikirjan. ",
                 "body_em_fi": "Mallit avustavat analyysiä",
-                "body_post_fi": " — ne tarkistetaan kiinteää menetelmää vasten, ei jätetä toimimaan valvomatta.",
+                "body_post_fi": " - ne tarkistetaan kiinteää menetelmää vasten, ei jätetä toimimaan valvomatta.",
                 "body_pre_en": "We use machine-learning classification to interpret answer patterns consistently and to surface the playbook that best fits your profile. ",
                 "body_em_en": "Models assist analysis",
-                "body_post_en": " — they are checked against a fixed method, not left to run unsupervised.",
+                "body_post_en": " - they are checked against a fixed method, not left to run unsupervised.",
                 "tag_fi": "ML-luokittelu · Ihmisen tarkistama",
                 "tag_en": "ML classification · Human-reviewed",
             },
@@ -115,10 +115,10 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
                 "title_fi": "Dokumentoitu menetelmä", "title_en": "Documented method",
                 "body_pre_fi": "Jokainen profiili, pistemäärä ja oppitunti jäljittyy ",
                 "body_em_fi": "dokumentoituun menetelmään",
-                "body_post_fi": ". Toimituksellista muokkausta ei ole — samat vastaukset tuottavat aina saman profiilin. Voit pyytää koko menetelmäkuvauksen.",
+                "body_post_fi": ". Toimituksellista muokkausta ei ole - samat vastaukset tuottavat aina saman profiilin. Voit pyytää koko menetelmäkuvauksen.",
                 "body_pre_en": "Every profile, score and lesson traces back to a ",
                 "body_em_en": "documented method",
-                "body_post_en": ". There is no editorial override — the same answers always yield the same profile. The full methodology is available on request.",
+                "body_post_en": ". There is no editorial override - the same answers always yield the same profile. The full methodology is available on request.",
                 "tag_fi": "Avoin menetelmä · Toistettava",
                 "tag_en": "Open method · Reproducible",
             },
@@ -130,12 +130,12 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
         "items": [
             {"label_fi": "Datakerros", "label_en": "Data layer",
              "title_fi": "Live-markkinasyötteet", "title_en": "Live market feeds",
-             "body_fi": "Jatkuva julkisten kertoimien ja markkinaliikedatan keruu eurooppalaisista kirjoista — samat raakasyötteet kuin ammattimaisilla markkina-analyytikoilla.",
-             "body_en": "Continuous ingestion of public odds and market-movement data from European books — the same raw feeds professional market analysts work with."},
+             "body_fi": "Jatkuva julkisten kertoimien ja markkinaliikedatan keruu eurooppalaisista kirjoista - samat raakasyötteet kuin ammattimaisilla markkina-analyytikoilla.",
+             "body_en": "Continuous ingestion of public odds and market-movement data from European books - the same raw feeds professional market analysts work with."},
             {"label_fi": "Analyysikerros", "label_en": "Analysis layer",
              "title_fi": "Todennäköisyysmallinnus", "title_en": "Probability modelling",
-             "body_fi": "Implisiittisen todennäköisyyden laskenta ja hajontapisteytys kvantifioivat, kuinka varma — ja kuinka jakautunut — markkina on. Tilastoa, ei ennusteita.",
-             "body_en": "Implied-probability calculations and dispersion scoring quantify how confident — and how split — a market is. Statistics, not predictions."},
+             "body_fi": "Implisiittisen todennäköisyyden laskenta ja hajontapisteytys kvantifioivat, kuinka varma - ja kuinka jakautunut - markkina on. Tilastoa, ei ennusteita.",
+             "body_en": "Implied-probability calculations and dispersion scoring quantify how confident - and how split - a market is. Statistics, not predictions."},
             {"label_fi": "Älykkyyskerros", "label_en": "Intelligence layer",
              "title_fi": "Tekoälyluokittelu, tarkistettuna", "title_en": "AI classification, reviewed",
              "body_fi": "Koneoppivat mallit luokittelevat vastauskuviot ja yhdistävät ne tutkimusviitekehykseen. Jokainen tulos tarkistetaan kiinteää menetelmää vasten.",
@@ -148,16 +148,16 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
         "rows": [
             {"num": "1",
              "title_fi": "Viisi kysymystä · noin 90 sekuntia", "title_en": "Five questions · about 90 seconds",
-             "desc_fi": "Jokainen kysymys tutkii yhtä ulottuvuutta siinä, miten luet ottelua. Oikeita vastauksia ei ole — diagnostiikka mittaa analyyttistä tyyliäsi, ei tietämystäsi.",
-             "desc_en": "Each question explores one dimension of how you read a match. There are no correct answers — the diagnostic measures analytical style, not knowledge."},
+             "desc_fi": "Jokainen kysymys tutkii yhtä ulottuvuutta siinä, miten luet ottelua. Oikeita vastauksia ei ole - diagnostiikka mittaa analyyttistä tyyliäsi, ei tietämystäsi.",
+             "desc_en": "Each question explores one dimension of how you read a match. There are no correct answers - the diagnostic measures analytical style, not knowledge."},
             {"num": "2",
              "title_fi": "Analyyttinen profiilisi", "title_en": "Your analytical profile",
              "desc_fi": "Malli luokittelee vastauksesi yhdeksi tutkimuksessa määritellyistä ennustajaprofiileista, selkokielisellä selityksellä siitä, missä tyyli on vahva ja missä se taipuu harhaan.",
              "desc_en": "The model classifies your answers into one of the predictor profiles defined in the research, with a plain-language read on where your style is strong and where it tends to bend."},
             {"num": "3",
              "title_fi": "Koko raportti + 5 päivän pelikirja", "title_en": "Full report + 5-day playbook",
-             "desc_fi": "Anna sähköpostisi ja lähetämme täyden raportin sekä viiden päivän opetussarjan siitä, miten vedonlyöntimarkkinat käyttäytyvät. Vain sähköposti — muuta tietoa ei kerätä.",
-             "desc_en": "Hand over your email and we send the full report plus a five-day teaching series on how betting markets behave. Email only — no other data is collected."},
+             "desc_fi": "Anna sähköpostisi ja lähetämme täyden raportin sekä viiden päivän opetussarjan siitä, miten vedonlyöntimarkkinat käyttäytyvät. Vain sähköposti - muuta tietoa ei kerätä.",
+             "desc_en": "Hand over your email and we send the full report plus a five-day teaching series on how betting markets behave. Email only - no other data is collected."},
         ],
     },
     "clarity": {
@@ -168,26 +168,26 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
             "Tutkimus- ja analytiikkatyökalu, joka tutkii markkinoiden liikettä",
             "Opetuksellinen diagnostiikka päätöksenteosta ja vinoumista",
             "Strukturoitu, dokumentoitu ja toistettava menetelmä",
-            "Maksuton — ei talletusta, ei tiliä",
+            "Maksuton - ei talletusta, ei tiliä",
         ],
         "is_items_en": [
             "A research and analytics tool studying market movement",
             "An educational diagnostic on decision-making and bias",
             "A structured, documented, reproducible method",
-            "Free — no deposit, no account",
+            "Free - no deposit, no account",
         ],
         "isnt_head_fi": "Mitä Mestari ei ole", "isnt_head_en": "What Mestari is not",
         "isnt_items_fi": [
             "Ei vedonlyöntineuvontaa eikä vihjepalvelua",
             "Ei rahapelaamisen eikä minkään peliyhtiön mainontaa",
             "Ei minkään ottelun lopputuloksen ennustetta",
-            "Ei tulostakuu — mikään menetelmä ei poista riskiä",
+            "Ei tulostakuu - mikään menetelmä ei poista riskiä",
         ],
         "isnt_items_en": [
             "Not betting advice and not a tipster service",
             "Not gambling promotion or promotion of any operator",
             "Not a prediction of any match outcome",
-            "No outcome guarantee — no method removes risk",
+            "No outcome guarantee - no method removes risk",
         ],
     },
     "team": {
@@ -224,8 +224,8 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
              "a_fi": "Käytämme sitä kerran raporttisi lähettämiseen ja sen jälkeen viiden päivän opetussarjaan. Muuta henkilötietoa ei kerätä. Voit perua tilauksen milloin tahansa. GDPR-yhteensopiva.",
              "a_en": "We use it once to send your report and then for the 5-day teaching series. No other personal data is collected. You can unsubscribe at any time. GDPR compliant."},
             {"q_fi": "Miten profiili lasketaan?", "q_en": "How is the profile calculated?",
-             "a_fi": "Viisi vastaustasi luokitellaan kiinteää tutkimusviitekehystä vasten tekoälyavusteisella analyysillä, joka tarkistetaan dokumentoitua menetelmää vasten. Samat vastaukset tuottavat aina saman profiilin — toimituksellista muokkausta ei ole.",
-             "a_en": "Your five answers are classified against a fixed research framework with AI-assisted analysis that is checked against a documented method. The same answers always yield the same profile — there is no editorial override."},
+             "a_fi": "Viisi vastaustasi luokitellaan kiinteää tutkimusviitekehystä vasten tekoälyavusteisella analyysillä, joka tarkistetaan dokumentoitua menetelmää vasten. Samat vastaukset tuottavat aina saman profiilin - toimituksellista muokkausta ei ole.",
+             "a_en": "Your five answers are classified against a fixed research framework with AI-assisted analysis that is checked against a documented method. The same answers always yield the same profile - there is no editorial override."},
         ],
     },
     "final": {
@@ -280,8 +280,8 @@ DEFAULT_MESTARI_COPY: Dict[str, Any] = {
             {"href": "/ehdot", "label_fi": "Ehdot", "label_en": "Terms"},
             {"href": "/yhteys", "label_fi": "Yhteys", "label_en": "Contact"},
         ],
-        "disclaimer_fi": "Mestari on Putki HQ:n toimituksellinen tutkimus- ja analytiikkatuote. Se analysoi julkisesti saatavilla olevaa vedonlyöntimarkkinadataa opetustarkoituksessa. Mestari ei tarjoa vedonlyöntineuvontaa, ei ennusta otteluiden lopputuloksia eikä mainosta rahapelaamista tai mitään peliyhtiötä. Mikään tällä sivulla ei ole kehotus pelata rahapelejä. Jos rahapelaaminen huolettaa, apua on saatavilla — Suomessa katso ",
-        "disclaimer_en": "Mestari is an editorial research and analytics product by Putki HQ. It analyses publicly available betting-market data for educational purposes. Mestari does not provide betting advice, does not predict match outcomes and does not promote gambling or any operator. Nothing on this page is an invitation to gamble. If gambling is a concern, help is available — in Finland see ",
+        "disclaimer_fi": "Mestari on Putki HQ:n toimituksellinen tutkimus- ja analytiikkatuote. Se analysoi julkisesti saatavilla olevaa vedonlyöntimarkkinadataa opetustarkoituksessa. Mestari ei tarjoa vedonlyöntineuvontaa, ei ennusta otteluiden lopputuloksia eikä mainosta rahapelaamista tai mitään peliyhtiötä. Mikään tällä sivulla ei ole kehotus pelata rahapelejä. Jos rahapelaaminen huolettaa, apua on saatavilla - Suomessa katso ",
+        "disclaimer_en": "Mestari is an editorial research and analytics product by Putki HQ. It analyses publicly available betting-market data for educational purposes. Mestari does not provide betting advice, does not predict match outcomes and does not promote gambling or any operator. Nothing on this page is an invitation to gamble. If gambling is a concern, help is available - in Finland see ",
         "disclaimer_link_href": "https://peluuri.fi",
         "disclaimer_link_label": "peluuri.fi",
         "disclaimer_tail_fi": ". 18+.",
@@ -388,7 +388,7 @@ _TRUST_LANG_CAPS = {
 _TRUST_LINK_CAPS = {"href": _MED, "label_fi": _MED, "label_en": _MED}
 _TRUST_LINKS_N = 3
 
-# Locked array lengths — admin can edit each item but cannot add/remove
+# Locked array lengths - admin can edit each item but cannot add/remove
 # (preserves the layout grid which depends on N=4 cred, N=4 method, etc.).
 _CRED_N = 4
 _METHOD_CARDS_N = 4
@@ -532,14 +532,14 @@ def sanitize_and_merge(override: Optional[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 async def get_mestari_copy(db) -> Dict[str, Any]:
-    """Public — returns the fully merged copy tree."""
+    """Public - returns the fully merged copy tree."""
     doc = await db.settings.find_one({"_id": "mestari_copy"}, {"_id": 0, "value": 1})
     override = (doc or {}).get("value") if doc else None
     return sanitize_and_merge(override)
 
 
 async def get_mestari_copy_raw(db) -> Dict[str, Any]:
-    """Admin — returns raw override + merged + defaults + updated_at."""
+    """Admin - returns raw override + merged + defaults + updated_at."""
     doc = await db.settings.find_one({"_id": "mestari_copy"}, {"_id": 0, "value": 1, "updated_at": 1})
     raw = (doc or {}).get("value") if doc else {}
     return {
@@ -551,7 +551,7 @@ async def get_mestari_copy_raw(db) -> Dict[str, Any]:
 
 
 async def save_mestari_copy(db, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Admin — persist the user override and return the new admin view."""
+    """Admin - persist the user override and return the new admin view."""
     if not isinstance(payload, dict):
         raise ValueError("payload_must_be_object")
     now = datetime.now(timezone.utc).isoformat()

@@ -1,14 +1,14 @@
 """
-PUTKI HQ — Twitch auto-discovery for Finnish casino/slots streamers.
+PUTKI HQ - Twitch auto-discovery for Finnish casino/slots streamers.
 
 Strategy:
   • Helix /streams?language=fi&first=100 → all FI live streams
   • Filter to "Slots" / "Casino" / "Virtual Casino" categories
   • For each candidate, fetch follower count via /channels/followers
   • Auto-register streamers with ≥1000 followers into the streamer registry
-    (idempotent — upserted by slug)
+    (idempotent - upserted by slug)
 
-Targets 60–90 discovered streamers over a few cycles. Runs every 6h to
+Targets 60-90 discovered streamers over a few cycles. Runs every 6h to
 avoid hammering Twitch.
 
 Kill switch: PUTKI_HQ_DISABLE_AUTO_DISCOVERY=1

@@ -5,9 +5,9 @@ import Footer from './Footer';
 import NewsTicker from './NewsTicker';
 
 // Phase 1 Final Restructure (Chunk A):
-// - PersistentCapture removed — site-wide duplicate subscription surface.
+// - PersistentCapture removed - site-wide duplicate subscription surface.
 //   ProgressiveOptIn lives on landing pages only (Chunk B).
-// - StateContextualFloat removed — homepage now hints at /mittari via the
+// - StateContextualFloat removed - homepage now hints at /mittari via the
 //   compact ExploreBlocks grid, no need for a floating contextual CTA.
 // - NewsTicker replaced LiveTicker in Sprint 3.
 

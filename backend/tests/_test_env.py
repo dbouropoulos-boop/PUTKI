@@ -1,5 +1,5 @@
 """
-Test helpers — env-driven config for the backend test suite.
+Test helpers - env-driven config for the backend test suite.
 
 Centralises:
   • BACK_OFFICE admin token resolution (from env, falls back to backend/.env via dotenv)

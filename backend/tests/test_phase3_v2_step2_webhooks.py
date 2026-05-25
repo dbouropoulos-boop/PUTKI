@@ -1,4 +1,4 @@
-"""Phase 3 V2 Step 2 — Webhook signal ingestion tests.
+"""Phase 3 V2 Step 2 - Webhook signal ingestion tests.
 
 Covers Twitch (HMAC-SHA256), Kick (RSA PKCS1v15 SHA-256 over the documented
 {msg_id}.{timestamp}.{body} signing string), and YouTube PubSubHubbub
@@ -52,7 +52,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 # our test key in the cache.
 import kick_api as _kick_api  # noqa: E402
 _kick_api._PUBKEY_CACHE["pem"] = _kick_test_pub_pem
-_kick_api._PUBKEY_CACHE["fetched_at"] = 9999999999  # far future — never refreshes
+_kick_api._PUBKEY_CACHE["fetched_at"] = 9999999999  # far future - never refreshes
 
 from fastapi.testclient import TestClient  # noqa: E402
 from server import app, db as server_db  # noqa: E402
@@ -210,7 +210,7 @@ class TestTwitchWebhook:
         }
         r1 = client.post("/api/webhooks/twitch", content=body, headers=headers)
         assert r1.status_code == 204
-        # Replay — same message_id → silently acknowledged, no second write.
+        # Replay - same message_id → silently acknowledged, no second write.
         r2 = client.post("/api/webhooks/twitch", content=body, headers=headers)
         assert r2.status_code == 200
 
@@ -331,7 +331,7 @@ class TestYouTubePubSub:
         assert doc["payload"]["channel_id"] == "UCchan42"
 
     def test_post_bad_signature_returns_202_silent(self, client):
-        """Per WebSub spec — still 2xx even when verification fails."""
+        """Per WebSub spec - still 2xx even when verification fails."""
         r = client.post(
             "/api/webhooks/youtube/pubsub",
             content=ATOM_FEED,
@@ -341,7 +341,7 @@ class TestYouTubePubSub:
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# 503 — endpoints dormant when secrets unset
+# 503 - endpoints dormant when secrets unset
 # ─────────────────────────────────────────────────────────────────────────
 class TestUnconfiguredDormant:
     """Verifies endpoints return 503 when their respective secrets are

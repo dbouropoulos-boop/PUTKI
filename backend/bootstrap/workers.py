@@ -1,5 +1,5 @@
 """
-bootstrap.workers — every background task PUTKI HQ spawns at startup,
+bootstrap.workers - every background task PUTKI HQ spawns at startup,
 in one auditable list.
 
 Pulled out of server.py so adding a new worker doesn't require touching
@@ -27,7 +27,7 @@ async def spawn_background_workers(
     """Spawn every long-lived background coroutine PUTKI HQ runs.
 
     Env killswitches (preserved from the previous server.py inline block):
-      • PUTKI_HQ_DISABLE_WORKERS — master kill, skips ALL workers.
+      • PUTKI_HQ_DISABLE_WORKERS - master kill, skips ALL workers.
       • PUTKI_HQ_DISABLE_FEED_WORKER
       • PUTKI_HQ_DISABLE_YT_LEASE_WORKER
       • PUTKI_HQ_DISABLE_AUTO_DISCOVERY

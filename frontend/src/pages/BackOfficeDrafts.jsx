@@ -1,5 +1,5 @@
 /**
- * BackOfficeDrafts — Phase 4 Week 3 editorial review surface.
+ * BackOfficeDrafts - Phase 4 Week 3 editorial review surface.
  *
  * Lists draft + published items from /api/content/drafts with one-click
  * preview / inline edit / publish / reject. Filtering by status + tier so
@@ -29,7 +29,7 @@ const TIER_OPTIONS = [
 const headers = (tok) => ({ 'X-Admin-Token': tok, 'Content-Type': 'application/json' });
 
 const fmtTs = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try { return iso.replace('T', ' ').slice(0, 19); } catch { return iso; }
 };
 
@@ -55,7 +55,7 @@ const StatusBadge = ({ status }) => {
     published: { bg: '#2c7a4b', label: 'JULKAISTU' },
     rejected:  { bg: '#C8423C', label: 'HYLÄTTY' },
   };
-  const meta = map[status] || { bg: '#6b7280', label: status?.toUpperCase() || '—' };
+  const meta = map[status] || { bg: '#6b7280', label: status?.toUpperCase() || '-' };
   return (
     <span
       className="mono"
@@ -155,7 +155,7 @@ const PreviewModal = ({ draft, onClose, onSave, busy }) => {
   const [editing, setEditing] = useState(false);
 
   // Reset local edits when the user opens a *different* draft. We
-  // intentionally key only on `draft.id` — if the parent mutates the
+  // intentionally key only on `draft.id` - if the parent mutates the
   // body of the same draft we don't want to clobber unsaved edits.
   useEffect(() => {
     setHeadline(draft.headline || '');
@@ -253,7 +253,7 @@ const PreviewModal = ({ draft, onClose, onSave, busy }) => {
               />
             ) : (
               <p className="font-serif" style={{ fontStyle: 'italic', color: 'var(--muted)' }}>
-                (Ei body-sisältöä — esim. streamer-alert -kortti ei tarvitse leipätekstiä.)
+                (Ei body-sisältöä - esim. streamer-alert -kortti ei tarvitse leipätekstiä.)
               </p>
             )}
 
@@ -265,7 +265,7 @@ const PreviewModal = ({ draft, onClose, onSave, busy }) => {
                   <div data-testid="preview-og-description"><strong>og:description</strong> ({(draft.social.og_description || '').length}/155): {draft.social.og_description}</div>
                   <div data-testid="preview-twitter-description"><strong>twitter:description</strong> ({(draft.social.twitter_description || '').length}/200): {draft.social.twitter_description}</div>
                   <div><strong>twitter:card</strong>: {draft.social.twitter_card}</div>
-                  <div><strong>og:image</strong>: {draft.social.og_image_url || '—'}</div>
+                  <div><strong>og:image</strong>: {draft.social.og_image_url || '-'}</div>
                   <div data-testid="preview-article-tags"><strong>tags</strong>: {(draft.social.article_tags || []).join(' · ')}</div>
                 </div>
               </div>

@@ -1,11 +1,11 @@
 """
-PUTKI HQ — Mini-games routes (iter66 modularisation phase 2).
+PUTKI HQ - Mini-games routes (iter66 modularisation phase 2).
 
 Extracts all `/api/mini-games/*` + `/api/admin/mini-games/*` endpoints
 from server.py. ~25 endpoints, ~390 LOC moved out of the monolith.
 
 Uses the shared `routes/_helpers.py` deps so the factory takes no
-positional args — `build_mini_games_router()` just composes the
+positional args - `build_mini_games_router()` just composes the
 APIRouter and the caller mounts it.
 """
 from __future__ import annotations
@@ -35,19 +35,19 @@ from routes._helpers import (
 
 
 def build_mini_games_router() -> APIRouter:
-    """Returns the composed APIRouter — mount with `api_router.include_router(...)`."""
+    """Returns the composed APIRouter - mount with `api_router.include_router(...)`."""
     router = APIRouter()
 
     # ── Quiz ─────────────────────────────────────────────────────────
 
     @router.get("/mini-games/hub")
     async def mini_games_hub(db = Depends(get_db)):
-        """Public hub payload — 5 game tiles + this week's tournament state."""
+        """Public hub payload - 5 game tiles + this week's tournament state."""
         return await _mg.get_hub_payload(db)
 
     @router.post("/mini-games/quiz/start")
     async def mini_games_quiz_start(db = Depends(get_db)):
-        """Anonymous play start — no email needed. Returns play_id + questions."""
+        """Anonymous play start - no email needed. Returns play_id + questions."""
         return await _mg.start_quiz(db)
 
     @router.post("/mini-games/quiz/finish")
@@ -112,7 +112,7 @@ def build_mini_games_router() -> APIRouter:
         _: bool = Depends(require_admin),
         db = Depends(get_db),
     ):
-        """Lead export — full email + score for the given week (default: current)."""
+        """Lead export - full email + score for the given week (default: current)."""
         q: Dict[str, Any] = {"source_game": _mg.QUIZ_GAME_SLUG}
         if week:
             q["tournament_week_iso"] = week
@@ -186,7 +186,7 @@ def build_mini_games_router() -> APIRouter:
         if result.get("error"):
             raise HTTPException(400, result["error"])
 
-        # iter65 — fire-and-forget welcome email (live if RESEND_API_KEY set,
+        # iter65 - fire-and-forget welcome email (live if RESEND_API_KEY set,
         # MOCKED otherwise). Never block the unlock response on email.
         import asyncio
         import logging
@@ -299,14 +299,14 @@ def build_mini_games_router() -> APIRouter:
 
     @router.get("/mini-games/champions")
     async def mini_games_champions(week: Optional[str] = None, db = Depends(get_db)):
-        """Public homepage social-proof endpoint — one rank-1 per active game."""
+        """Public homepage social-proof endpoint - one rank-1 per active game."""
         return await _mg.get_weekly_champions(db, week_iso=week)
 
     @router.post("/mini-games/share/track")
     async def mini_games_share_track(
         payload: MiniGameShareTrackPayload, db = Depends(get_db),
     ):
-        """Fire-and-forget telemetry — increments share count per game."""
+        """Fire-and-forget telemetry - increments share count per game."""
         await _mgt.track_share(db, game_slug=payload.game_slug, play_id=payload.play_id)
         return {"tracked": True}
 
@@ -314,7 +314,7 @@ def build_mini_games_router() -> APIRouter:
     async def mini_games_stats(
         game_slug: str, week: Optional[str] = None, db = Depends(get_db),
     ):
-        """Per-game public social-proof stats — used on each game's subpage.
+        """Per-game public social-proof stats - used on each game's subpage.
         iter66: accepts ACTIVE + LEGACY slugs (mirrors the leaderboard
         endpoint above) so historical aggregates remain queryable.
         Returns a SAFE subset of the analytics payload (no individual emails)."""

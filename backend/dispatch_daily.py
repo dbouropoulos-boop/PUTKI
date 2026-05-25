@@ -1,11 +1,11 @@
 """
-PUTKI HQ — Daily dispatch worker (Email digest + SMS alerts + Telegram alerts).
+PUTKI HQ - Daily dispatch worker (Email digest + SMS alerts + Telegram alerts).
 
 Default mode: DRY RUN. Until Resend / Twilio / Telegram bot tokens land in
 `/app/backend/.env`, the worker assembles every payload it WOULD send and
 writes the full audit row to `dispatch_log`. No external call is made.
 The moment the credentials show up, the dispatcher hot-switches to real
-sends without code changes — purely env-driven.
+sends without code changes - purely env-driven.
 
 Cadence
 -------
@@ -45,7 +45,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from zoneinfo import ZoneInfo  # py>=3.9
-except ImportError:  # pragma: no cover — fallback for older runtimes
+except ImportError:  # pragma: no cover - fallback for older runtimes
     ZoneInfo = None  # type: ignore
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ DISPATCH_HOUR = int(os.environ.get("DISPATCH_HOUR_LOCAL", "10"))
 DISPATCH_GRACE_MINUTES = int(os.environ.get("DISPATCH_GRACE_MINUTES", "5"))
 WORKER_INTERVAL_SECONDS = int(os.environ.get("DISPATCH_WORKER_INTERVAL", "60"))
 
-# Provider tokens — when absent the channel falls through to dry-run.
+# Provider tokens - when absent the channel falls through to dry-run.
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY") or ""
 RESEND_FROM = os.environ.get("RESEND_FROM") or ""
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID") or ""
@@ -69,21 +69,21 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or ""
 # would otherwise leave most subscribers unreachable.
 TELEGRAM_CHANNEL_ID = os.environ.get("TELEGRAM_CHANNEL_ID") or ""
 
-# Worker kill switch — set to "1" in test/preview to keep the loop quiet.
+# Worker kill switch - set to "1" in test/preview to keep the loop quiet.
 DISABLE_WORKER = os.environ.get("PUTKI_HQ_DISABLE_DISPATCH_WORKER", "0") == "1"
 
 # ── Telegram throttling (iter55) ─────────────────────────────────────────
 #
 # Two gates control whether the daily Telegram broadcast fires:
 #
-#   1. SHARPNESS THRESHOLD — at least one of today's 5 picks must exceed
-#      `TELEGRAM_BROADCAST_SHARPNESS_MIN`. Default 70 — keeps Telegram
+#   1. SHARPNESS THRESHOLD - at least one of today's 5 picks must exceed
+#      `TELEGRAM_BROADCAST_SHARPNESS_MIN`. Default 70 - keeps Telegram
 #      readers from getting low-conviction noise on quiet market days.
 #
-#   2. ONCE PER DAY — the broadcast is idempotent per UTC date. A new
+#   2. ONCE PER DAY - the broadcast is idempotent per UTC date. A new
 #      `telegram_broadcasts` collection records `{date_ymd, fired_at,
 #      payload_picks_count, top_sharpness}`. If today's entry already
-#      exists, we skip — even manual `run_daily_dispatch` calls won't
+#      exists, we skip - even manual `run_daily_dispatch` calls won't
 #      double-fire. Both the scheduled cycle and manual triggers share
 #      this lock.
 #
@@ -108,7 +108,7 @@ async def ensure_indexes(db) -> None:
         await db.dispatch_segment_overrides.create_index(
             [("channel", 1), ("consent_tag", 1)], unique=True,
         )
-        # iter55: one row per UTC date — guarantees a Telegram broadcast
+        # iter55: one row per UTC date - guarantees a Telegram broadcast
         # fires AT MOST once per day even across worker restarts + manual
         # POSTs to /api/admin/dispatch/run.
         await db.telegram_broadcasts.create_index("date_ymd", unique=True)
@@ -177,10 +177,10 @@ async def _record_telegram_broadcast(
 # ── Segment-channel mode overrides ───────────────────────────────────────
 #
 # Mode states (per channel × segment):
-#   * `dry_run`            — default. Audit-only. Records intent.
-#   * `live_segment_only`  — provider hit IF this segment is the recipient set.
+#   * `dry_run`            - default. Audit-only. Records intent.
+#   * `live_segment_only`  - provider hit IF this segment is the recipient set.
 #                            Other segments on the same channel remain dry-run.
-#   * `live_global`        — channel is globally live (creds permitting); this
+#   * `live_global`        - channel is globally live (creds permitting); this
 #                            segment is part of the unlocked set.
 #
 # `live_segment_only` and `live_global` are functionally the same at the
@@ -322,7 +322,7 @@ async def cycle_detail(db, cycle_id: str) -> Dict[str, Any]:
     per_channel: Dict[str, Dict[str, Any]] = {}
     for ch in ("email", "sms", "telegram"):
         ch_sends = [s for s in sends if s.get("channel") == ch]
-        # One representative payload — they're identical within a channel.
+        # One representative payload - they're identical within a channel.
         payload = ch_sends[0].get("payload") if ch_sends else None
         rendered = render_preview(ch, payload or {}) if payload else None
         per_channel[ch] = {
@@ -395,7 +395,7 @@ def _channel_live_mode(channel: str) -> Tuple[bool, str]:
 async def _build_email_digest_payload(db) -> Dict[str, Any]:
     """Email digest = Mittari state + 4 top news + skene tunnelma.
 
-    `email_sentiment` is the slow channel — we DON'T put pelisignaalit picks
+    `email_sentiment` is the slow channel - we DON'T put pelisignaalit picks
     in here. Picks go to SMS/Telegram. Keeping the channel/purpose split
     strict per the architecture invariants.
     """
@@ -427,7 +427,7 @@ async def _build_email_digest_payload(db) -> Dict[str, Any]:
     except Exception:
         logger.exception("email digest: news lookup failed")
 
-    # 3) Skene tunnelma — last 24h of stream signals + ticker volume
+    # 3) Skene tunnelma - last 24h of stream signals + ticker volume
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
         news_24h = await db.news_ticker_items.count_documents(
@@ -446,7 +446,7 @@ async def _build_email_digest_payload(db) -> Dict[str, Any]:
 async def _build_sms_alerts_payload(db) -> Dict[str, Any]:
     """SMS alerts = today's signals with Sharpness >= 75.
 
-    Pure data shaping — message text is built per-recipient later.
+    Pure data shaping - message text is built per-recipient later.
     """
     payload: Dict[str, Any] = {"picks": []}
     try:
@@ -470,7 +470,7 @@ async def _build_sms_alerts_payload(db) -> Dict[str, Any]:
 
 
 async def _build_telegram_alerts_payload(db) -> Dict[str, Any]:
-    """Telegram channel broadcast — today's 5 Mittari signals + a link.
+    """Telegram channel broadcast - today's 5 Mittari signals + a link.
 
     iter52: deliberately wider than SMS. SMS is a paid "high-confidence
     only" channel (sharpness >= 75); Telegram is the public channel
@@ -517,7 +517,7 @@ async def _build_telegram_alerts_payload(db) -> Dict[str, Any]:
 async def _recipients_for_tag(db, consent_tag: str) -> List[Dict[str, Any]]:
     """Pull opted-in identifiers for a given consent_tag.
 
-    Each row is whatever `optin_consents` stored at consent time — keyed
+    Each row is whatever `optin_consents` stored at consent time - keyed
     by `identifier` (email / phone / @handle) + `channel` + `surface` +
     `consent_tag`.
     """
@@ -535,7 +535,7 @@ async def _attempt_email_send(recipient: str, payload: Dict[str, Any]) -> Dict[s
     is_live, provider = _channel_live_mode("email")
     if not is_live:
         return {"mode": "dry_run", "provider": provider}
-    # Real Resend call — kept minimal, full impl lands when keys arrive.
+    # Real Resend call - kept minimal, full impl lands when keys arrive.
     try:
         import httpx
         async with httpx.AsyncClient(timeout=15.0) as http:
@@ -548,7 +548,7 @@ async def _attempt_email_send(recipient: str, payload: Dict[str, Any]) -> Dict[s
                 json={
                     "from": RESEND_FROM,
                     "to": [recipient],
-                    "subject": "PUTKI HQ — päivän skenekatsaus",
+                    "subject": "PUTKI HQ - päivän skenekatsaus",
                     # Text-only stub until the HTML template lands.
                     "text": _render_email_text(payload),
                 },
@@ -607,7 +607,7 @@ async def _attempt_telegram_send(recipient: str, payload: Dict[str, Any]) -> Dic
 # ── Renderers (kept tiny so we can swap to richer templates later) ───────
 
 def _render_email_text(payload: Dict[str, Any]) -> str:
-    lines = ["PUTKI HQ — päivän skenekatsaus", "", ]
+    lines = ["PUTKI HQ - päivän skenekatsaus", "", ]
     for section in payload.get("sections", []):
         if section["kind"] == "mittari":
             lines.append(f"Mittari · {section.get('label')} ({section.get('value')})")
@@ -662,7 +662,7 @@ def _render_telegram_text(payload: Dict[str, Any]) -> str:
     if not picks:
         return (
             "<b>PUTKI HQ · Päivän signaalit</b>\n\n"
-            "Ei tänään luotettavia signaaleja — palaamme huomenna klo 09:00.\n\n"
+            "Ei tänään luotettavia signaaleja - palaamme huomenna klo 09:00.\n\n"
             "→ https://putkihq.fi/mittari"
         )
 
@@ -779,7 +779,7 @@ async def _dispatch_segment(
     # per cycle posted to the @handle / chat_id. We still log subscriber
     # count for audit so opt-in stats stay meaningful, but only ONE send
     # row is written (recipient = the channel handle, broadcast=True).
-    # Skipped when `recipients_override` is set — targeted test-sends
+    # Skipped when `recipients_override` is set - targeted test-sends
     # always go to individual recipients, never the broadcast channel.
     if (
         channel == "telegram"
@@ -887,7 +887,7 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
         when no override row exists). Real provider calls only happen
         when (a) creds are present AND (b) the segment is unlocked.
     recipients_override
-        When provided, the cycle becomes a "test send" — only readers in
+        When provided, the cycle becomes a "test send" - only readers in
         the opt-in segment whose identifier is in the list receive the
         message. Forces live attempt (creds permitting). Other segments
         on the channel are SKIPPED entirely (no log rows). Each cycle
@@ -903,12 +903,12 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
     channels = channels or ["email", "sms", "telegram"]
     channels = [c for c in channels if c in {"email", "sms", "telegram"}]
 
-    # Payload assembly (cheap — once per cycle)
+    # Payload assembly (cheap - once per cycle)
     email_payload = await _build_email_digest_payload(db) if "email" in channels else None
     sms_payload = await _build_sms_alerts_payload(db) if "sms" in channels else None
     telegram_payload = await _build_telegram_alerts_payload(db) if "telegram" in channels else None
 
-    # iter55 — Telegram broadcast throttling. Two gates:
+    # iter55 - Telegram broadcast throttling. Two gates:
     #   • Sharpness threshold (top pick must beat TELEGRAM_BROADCAST_SHARPNESS_MIN)
     #   • Once per UTC day (unique index on telegram_broadcasts.date_ymd)
     # Manual test sends with `recipients_override` bypass BOTH gates (it's
@@ -995,7 +995,7 @@ async def dispatch_worker_loop(db) -> None:
     while True:
         try:
             if _is_dispatch_window() and not await _cycle_already_ran_today(db):
-                # Back-office kill switch — settings.auto_dispatch_enabled
+                # Back-office kill switch - settings.auto_dispatch_enabled
                 # determines whether the scheduled cycle fires LIVE or
                 # stays in dry-run. Default false (safety): the worker
                 # writes audit rows but won't hit any provider until
@@ -1007,7 +1007,7 @@ async def dispatch_worker_loop(db) -> None:
                 except Exception:
                     logger.exception("dispatch worker: settings lookup failed")
                 logger.info(
-                    "dispatch window open — running daily cycle (auto_dispatch_enabled=%s, dry_run=%s)",
+                    "dispatch window open - running daily cycle (auto_dispatch_enabled=%s, dry_run=%s)",
                     enabled, not enabled,
                 )
                 await run_daily_dispatch(db, dry_run=not enabled)

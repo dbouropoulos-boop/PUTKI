@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Voita raffle engine + API tests.
+PUTKI HQ - Voita raffle engine + API tests.
 
 Covers:
   - voita_engine scoring + draw determinism (pure unit, no HTTP)
@@ -280,7 +280,7 @@ class TestAdminCrudAndEntry:
         assert len(match) == 1
         e = match[0]
         # GDPR Art. 7(4) separation: entry carries `game_raffle` tag and
-        # legitimate-interest basis — NOT a marketing consent tag.
+        # legitimate-interest basis - NOT a marketing consent tag.
         assert e["consent_tag"] == "game_raffle"
         assert e["raffle_legal_basis"] == "legitimate_interest_contest_admin"
 

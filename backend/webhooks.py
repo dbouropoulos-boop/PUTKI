@@ -1,13 +1,13 @@
 """
-PUTKI HQ Phase 3 V2 — Step 2 webhook signal handlers.
+PUTKI HQ Phase 3 V2 - Step 2 webhook signal handlers.
 
 Three webhook receivers per FINAL ARCHITECTURE §6.1:
-  • POST /api/webhooks/twitch         — Twitch EventSub (HMAC-SHA256)
-  • POST /api/webhooks/kick           — Kick livestream events
-  • GET|POST /api/webhooks/youtube/pubsub — YouTube PubSubHubbub (HMAC-SHA1)
+  • POST /api/webhooks/twitch         - Twitch EventSub (HMAC-SHA256)
+  • POST /api/webhooks/kick           - Kick livestream events
+  • GET|POST /api/webhooks/youtube/pubsub - YouTube PubSubHubbub (HMAC-SHA1)
 
 All three normalise into the same `signals` collection used by the polling
-adapters in signal_engine.py — webhook ingestion is simply a faster ingress
+adapters in signal_engine.py - webhook ingestion is simply a faster ingress
 path for the same downstream dial / aggregation pipeline.
 
 Honesty contract: when env vars are unset, handlers return 503 instead of
@@ -32,7 +32,7 @@ import hmac
 import json
 import logging
 import os
-import xml.etree.ElementTree as ET  # noqa: N817 — kept for ParseError type ref
+import xml.etree.ElementTree as ET  # noqa: N817 - kept for ParseError type ref
 from defusedxml.ElementTree import fromstring as _safe_xml_fromstring
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
@@ -77,7 +77,7 @@ def _verify_twitch(secret: str, request: Request, body: bytes) -> Tuple[bool, Op
 
 
 # ── Kick ────────────────────────────────────────────────────────────────────
-# Per https://docs.kick.com/events/webhook-security — RSA PKCS1v15 SHA-256
+# Per https://docs.kick.com/events/webhook-security - RSA PKCS1v15 SHA-256
 # verification over `{message_id}.{timestamp}.{raw_body}`. The shared
 # `KICK_WEBHOOK_SECRET` (set in our dev portal) is stored but unused for
 # signature validation; Kick's published scheme is asymmetric-only as of
@@ -136,7 +136,7 @@ def _extract_yt_video_ids(atom_xml: bytes) -> list:
 
 # ── Replay protection ───────────────────────────────────────────────────────
 async def _ensure_replay_index(db) -> None:
-    """Idempotent — create the TTL index for replay protection if missing."""
+    """Idempotent - create the TTL index for replay protection if missing."""
     try:
         await db.webhook_message_ids.create_index(
             "first_seen", expireAfterSeconds=600, name="ttl_first_seen"
@@ -196,7 +196,7 @@ def build_webhook_router(db) -> APIRouter:
 
         msg_id = request.headers.get(TWITCH_MSG_ID_HEADER, "")
         if not await _record_message_id(db, "twitch", msg_id):
-            return Response(status_code=200)  # replay — acknowledge silently
+            return Response(status_code=200)  # replay - acknowledge silently
 
         try:
             payload = json.loads(body.decode("utf-8"))
@@ -260,7 +260,7 @@ def build_webhook_router(db) -> APIRouter:
             or payload.get("event")
             or "kick.unknown"
         )
-        # Kick livestream payload shape varies — normalise the fields the
+        # Kick livestream payload shape varies - normalise the fields the
         # hub cards need (channel slug + viewer count + category if present).
         data = payload.get("data") if isinstance(payload, dict) else None
         body_payload = data or payload
@@ -303,7 +303,7 @@ def build_webhook_router(db) -> APIRouter:
         body = await request.body()
         ok, why = _verify_youtube_pubsub(secret, request, body)
         if not ok:
-            # Per WebSub spec — still acknowledge but ignore body.
+            # Per WebSub spec - still acknowledge but ignore body.
             return Response(status_code=202)
 
         # Atom hashes are body-content so dedup on body sha as message id.
@@ -388,7 +388,7 @@ def build_webhook_router(db) -> APIRouter:
             },
         }
 
-    # ── Operational recovery — force resubscribe (admin only) ──
+    # ── Operational recovery - force resubscribe (admin only) ──
     @r.post("/resubscribe/{source}")
     async def force_resubscribe(source: str,
                                  x_admin_token: Optional[str] = Header(default=None),
@@ -526,7 +526,7 @@ def build_webhook_router(db) -> APIRouter:
                     "detail": "kick_oauth_failed", "source": source, "error": str(exc),
                 })
 
-            # Kick event names per docs/event-types — most channels currently
+            # Kick event names per docs/event-types - most channels currently
             # supported: subscription gifts + subscription renewal. Stream
             # live/offline events are not yet first-class on Kick's public
             # API; once they are, add them here.
@@ -542,7 +542,7 @@ def build_webhook_router(db) -> APIRouter:
             ).limit(500)
             streamers = await streamer_cur.to_list(length=500)
 
-            # Existing subs per broadcaster (one call per channel — small N).
+            # Existing subs per broadcaster (one call per channel - small N).
             existing_per_user: dict[int, set] = {}
 
             results = {"subscribed": [], "skipped": [], "errors": []}
@@ -738,7 +738,7 @@ def build_webhook_router(db) -> APIRouter:
                 "results": results,
             }
 
-        # Truly unknown / future source — stubbed audit record.
+        # Truly unknown / future source - stubbed audit record.
         await db.webhook_audit.insert_one({
             "source": source,
             "action": "resubscribe_requested",
@@ -747,7 +747,7 @@ def build_webhook_router(db) -> APIRouter:
         return {
             "source": source,
             "status": "queued",
-            "detail": "Credentials pending — YouTube PubSubHubbub subscribe call wiring is next.",
+            "detail": "Credentials pending - YouTube PubSubHubbub subscribe call wiring is next.",
         }
 
     # ── Twitch operational verify + list endpoints ────────────────────────
@@ -766,7 +766,7 @@ def build_webhook_router(db) -> APIRouter:
         subs = await list_subscriptions()
         return {
             "ok": True,
-            "oauth_token_length": len(token),  # length only — never the value
+            "oauth_token_length": len(token),  # length only - never the value
             "subscriptions": {
                 "total": subs.get("total"),
                 "total_cost": subs.get("total_cost"),
@@ -821,7 +821,7 @@ def build_webhook_router(db) -> APIRouter:
         subs = await kick_list_subs()
         return {
             "ok": True,
-            "oauth_token_length": len(token),  # length only — never the value
+            "oauth_token_length": len(token),  # length only - never the value
             "public_key_reachable": pubkey_ok,
             "subscriptions": {
                 "total": len(subs.get("subscriptions") or []),

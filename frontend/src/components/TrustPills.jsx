@@ -1,8 +1,8 @@
 /**
- * PUTKI HQ — TrustPills (Phase 1 Final · Chunk B).
+ * PUTKI HQ - TrustPills (Phase 1 Final · Chunk B).
  *
  * Reusable trust strip. Three quiet pills:
- *   - Editorial — not advertising
+ *   - Editorial - not advertising
  *   - 12 verified sources (Yle · HS · IL · IS · MTV · Kauppalehti · Google News FI ×5)
  *   - Strict source citation enforced
  *

@@ -1,5 +1,5 @@
 /**
- * WinnersCorner — rotating proof strip of last settled betting hits.
+ * WinnersCorner - rotating proof strip of last settled betting hits.
  *
  * Reads /api/winners/recent. Empty state surfaces an honest "Track record
  * begins this week" line so we never fake hits.
@@ -87,7 +87,7 @@ const WinnersCorner = () => {
             <span className="mono" style={{ fontSize: 12, letterSpacing: '0.12em', color: '#2c7a4b', fontWeight: 700, marginLeft: 8 }}>
               @ {Number(w.odds).toFixed(2)} ✓
             </span>
-            {/* Phase 1 Section 12d: bettor "+u" unit notation removed —
+            {/* Phase 1 Section 12d: bettor "+u" unit notation removed -
                 contradicts the "we are media, not a tipster" position. */}
           </div>
           <div className="mono mt-1.5" style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 600 }}>

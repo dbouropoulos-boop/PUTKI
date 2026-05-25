@@ -104,7 +104,7 @@ def test_tracking_pixel_and_click():
     assert r.status_code == 200
     assert r.headers.get("content-type", "").startswith("image/gif")
 
-    # click — supply allow-listed host (weezybet.fi)
+    # click - supply allow-listed host (weezybet.fi)
     u = base64.urlsafe_b64encode(b"https://weezybet.com/promo").decode().rstrip("=")
     r2 = requests.get(f"{BASE}/api/track/c/sometok?u={u}", timeout=12, allow_redirects=False)
     assert r2.status_code in (302, 307), f"got {r2.status_code} {r2.text[:200]}"

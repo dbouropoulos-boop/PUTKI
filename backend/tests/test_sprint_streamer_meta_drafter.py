@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Sprint follow-up: AI-assisted streamer meta + slot registry
+PUTKI HQ - Sprint follow-up: AI-assisted streamer meta + slot registry
 back-office endpoints (2026-05-19).
 
 Covers the new admin surfaces:
@@ -76,8 +76,8 @@ class TestStreamerMetaPublishFlow:
             json={
                 "platform": "twitch",
                 "user_login": login,
-                "meta_line_fi": "FI testirivi — vain testi.",
-                "meta_line_en": "EN test line — testing only.",
+                "meta_line_fi": "FI testirivi - vain testi.",
+                "meta_line_en": "EN test line - testing only.",
             },
             timeout=10,
         )
@@ -155,7 +155,7 @@ class TestStreamerMetaPublishFlow:
 # ─────────────────────── AI draft endpoint ───────────────────────
 
 class TestStreamerMetaDraftEndpoint:
-    """Calls through HTTP without burning LLM credits — we expect either
+    """Calls through HTTP without burning LLM credits - we expect either
     `llm_unavailable` (no key / budget) or `200 OK`. Either response
     proves the endpoint is reachable and the rate-limit/auth gates
     work. The deep LLM-output unit tests live in the drafter module."""
@@ -246,7 +246,7 @@ class TestSlotRegistry:
         r1 = admin.post(f"{BASE_URL}/api/admin/slot-registry/seed", timeout=10)
         assert r1.status_code == 200
         d1 = r1.json()
-        # Second seed adds zero — idempotency contract
+        # Second seed adds zero - idempotency contract
         r2 = admin.post(f"{BASE_URL}/api/admin/slot-registry/seed", timeout=10)
         assert r2.status_code == 200
         d2 = r2.json()

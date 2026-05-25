@@ -3,8 +3,8 @@
  *
  * One reusable page driven by the `diagnostic` prop ("poker" or
  * "blackjack"). Mirrors the sports-betting diagnostic's visual design
- * exactly — same header, hero, disclaimer block, CTA, sub-CTA strip,
- * 4-stat block, method strip — but pulls the diagnostic-specific copy
+ * exactly - same header, hero, disclaimer block, CTA, sub-CTA strip,
+ * 4-stat block, method strip - but pulls the diagnostic-specific copy
  * from a single COPY constant below.
  *
  * Section 3 of the build brief: this page template is non-negotiable.
@@ -29,8 +29,8 @@ const COPY = {
     hero_kicker_en: 'Mestari · Editorial diagnostic · Research tool',
     headline_fi: 'Millainen pokeripelaaja sinä olet?',
     headline_en: 'What kind of poker player are you?',
-    sub_fi: '90 sekunnin diagnostiikka, joka perustuu vakiintuneeseen pokeriteoriaan. Vastaa viiteen kysymykseen siitä, miten pelaat pöydässä — saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten taitava pokeri on rakennettu.',
-    sub_en: 'A 90-second diagnostic grounded in established poker theory. Answer five questions about how you play a table — receive a personal player profile and a 5-day playbook on how skilled poker is structured.',
+    sub_fi: '90 sekunnin diagnostiikka, joka perustuu vakiintuneeseen pokeriteoriaan. Vastaa viiteen kysymykseen siitä, miten pelaat pöydässä - saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten taitava pokeri on rakennettu.',
+    sub_en: 'A 90-second diagnostic grounded in established poker theory. Answer five questions about how you play a table - receive a personal player profile and a 5-day playbook on how skilled poker is structured.',
     disclaimer_strong_fi: 'Tämä on tutkimus- ja opetustyökalu.',
     disclaimer_strong_en: 'This is a research and educational tool.',
     disclaimer_rest_fi: ' Mestari tutkii, miten pelaajat lähestyvät pokeria ja miten taitava pelaaminen on rakennettu. Se ei ole rahapelineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.',
@@ -38,12 +38,12 @@ const COPY = {
     hero_stat_num: '2',
     hero_stat_unit_fi: ' akselia',
     hero_stat_unit_en: ' axes',
-    hero_stat_desc_fi: 'TYYLI KARTOITETTU VALIKOIVUUDEN JA AGGRESSION MUKAAN — VAKIINTUNUT POKERIN MALLI.',
-    hero_stat_desc_en: 'STYLE MAPPED ON SELECTIVITY AND AGGRESSION — THE ESTABLISHED MODEL OF POKER PLAY.',
+    hero_stat_desc_fi: 'TYYLI KARTOITETTU VALIKOIVUUDEN JA AGGRESSION MUKAAN - VAKIINTUNUT POKERIN MALLI.',
+    hero_stat_desc_en: 'STYLE MAPPED ON SELECTIVITY AND AGGRESSION - THE ESTABLISHED MODEL OF POKER PLAY.',
     method_label_fi: 'MENETELMÄ · MITEN MESTARI ANALYSOI',
     method_label_en: 'METHOD · HOW MESTARI ANALYSES',
-    method_body_fi: 'Mestari soveltaa vakiintunutta kaksiakselista pokerityylin mallia — kuinka valikoivasti pelaaja käyttää käsiä ja kuinka aggressiivisesti hän panostaa — sijoittaakseen jokaisen pelaajan tunnistettuun profiiliin.',
-    method_body_en: 'Mestari applies the established two-axis model of poker style — how selective a player is with hands, and how aggressive they are with bets — to place each player on a recognised profile.',
+    method_body_fi: 'Mestari soveltaa vakiintunutta kaksiakselista pokerityylin mallia - kuinka valikoivasti pelaaja käyttää käsiä ja kuinka aggressiivisesti hän panostaa - sijoittaakseen jokaisen pelaajan tunnistettuun profiiliin.',
+    method_body_en: 'Mestari applies the established two-axis model of poker style - how selective a player is with hands, and how aggressive they are with bets - to place each player on a recognised profile.',
   },
   blackjack: {
     domain: 'blackjack',
@@ -51,8 +51,8 @@ const COPY = {
     hero_kicker_en: 'Mestari · Editorial diagnostic · Research tool',
     headline_fi: 'Millainen blackjack-pelaaja sinä olet?',
     headline_en: 'What kind of blackjack player are you?',
-    sub_fi: '90 sekunnin diagnostiikka, joka perustuu pelin matematiikkaan. Vastaa viiteen kysymykseen siitä, miten pelaat käden — saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten blackjack todella toimii.',
-    sub_en: 'A 90-second diagnostic grounded in the mathematics of the game. Answer five questions about how you play a hand — receive a personal player profile and a 5-day playbook on how blackjack actually works.',
+    sub_fi: '90 sekunnin diagnostiikka, joka perustuu pelin matematiikkaan. Vastaa viiteen kysymykseen siitä, miten pelaat käden - saat henkilökohtaisen pelaajaprofiilin ja 5 päivän pelikirjan siitä, miten blackjack todella toimii.',
+    sub_en: 'A 90-second diagnostic grounded in the mathematics of the game. Answer five questions about how you play a hand - receive a personal player profile and a 5-day playbook on how blackjack actually works.',
     disclaimer_strong_fi: 'Tämä on tutkimus- ja opetustyökalu.',
     disclaimer_strong_en: 'This is a research and educational tool.',
     disclaimer_rest_fi: ' Mestari tutkii, miten pelaajat lähestyvät blackjackia ja miten pelin matematiikka oikeasti toimii. Se ei ole rahapelineuvontaa, se ei mainosta rahapelaamista, eikä se koskaan kerro mitä lyödä vetoa. Vain opetuskäyttöön.',
@@ -60,16 +60,16 @@ const COPY = {
     hero_stat_num: '',
     hero_stat_unit_fi: 'Ratkaistu',
     hero_stat_unit_en: 'Solved',
-    hero_stat_desc_fi: 'BLACKJACKIN PERUSSTRATEGIA ON JULKAISTU, MATEMAATTISESTI RATKAISTU TULOS — EI MIELIPIDE.',
-    hero_stat_desc_en: 'BLACKJACK BASIC STRATEGY IS A PUBLISHED, MATHEMATICALLY SOLVED RESULT — NOT OPINION.',
+    hero_stat_desc_fi: 'BLACKJACKIN PERUSSTRATEGIA ON JULKAISTU, MATEMAATTISESTI RATKAISTU TULOS - EI MIELIPIDE.',
+    hero_stat_desc_en: 'BLACKJACK BASIC STRATEGY IS A PUBLISHED, MATHEMATICALLY SOLVED RESULT - NOT OPINION.',
     method_label_fi: 'MENETELMÄ · MITEN MESTARI ANALYSOI',
     method_label_en: 'METHOD · HOW MESTARI ANALYSES',
-    method_body_fi: 'Mestari mittaa pelaajaa blackjackin tunnetun matematiikan — jokaisen käden julkaistun oikean pelitavan — mukaan, sijoittaakseen hänet tunnistettuun pelitiedon ja kurin profiiliin.',
-    method_body_en: 'Mestari measures a player against the known mathematics of blackjack — the published correct play for every hand — to place them on a recognised profile of game knowledge and discipline.',
+    method_body_fi: 'Mestari mittaa pelaajaa blackjackin tunnetun matematiikan - jokaisen käden julkaistun oikean pelitavan - mukaan, sijoittaakseen hänet tunnistettuun pelitiedon ja kurin profiiliin.',
+    method_body_en: 'Mestari measures a player against the known mathematics of blackjack - the published correct play for every hand - to place them on a recognised profile of game knowledge and discipline.',
   },
 };
 
-// Constant stats (Section 3, item 7) — three are the same across diagnostics.
+// Constant stats (Section 3, item 7) - three are the same across diagnostics.
 const CONSTANT_STATS = [
   { num: '0', unit_fi: ' muokkausta', unit_en: ' overrides',
     desc_fi: 'Ei toimituksen sormea mallissa. Sama data, sama tulos.',
@@ -282,7 +282,7 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
           </form>
         </div>
 
-        {/* Playbook outline (titles only — full body lands by email once copy ships) */}
+        {/* Playbook outline (titles only - full body lands by email once copy ships) */}
         <div data-testid="mestari-diag-playbook-outline" style={{ marginTop: 28 }}>
           <span style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
@@ -295,7 +295,7 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
                 color: 'var(--ink)', marginBottom: 6,
               }}>
                 <strong>{lang === 'en' ? d.title_en : d.title_fi}</strong>
-                {' — '}
+                {' - '}
                 <span style={{ color: 'var(--muted)' }}>{lang === 'en' ? d.summary_en : d.summary_fi}</span>
               </li>
             ))}
@@ -329,7 +329,7 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
             : `Täysi ${diagnostic === 'poker' ? 'pokeri' : 'blackjack'}-profiilisi ja 5 päivän pelikirja ovat matkalla. Jokainen päivä saapuu seuraavana aamuna edellisen jälkeen.`}
         </p>
 
-        {/* Section 7.3 value block — required on every diagnostic. */}
+        {/* Section 7.3 value block - required on every diagnostic. */}
         <div data-testid="mestari-diag-value-block" style={{
           padding: '22px 22px', background: 'var(--surface)', border: '1px solid var(--border)',
         }}>
@@ -401,8 +401,8 @@ const MestariDiagnostic = ({ diagnostic }) => {
 
   useDocumentMeta({
     title: lang === 'en'
-      ? `Mestari · ${diagnostic === 'poker' ? 'Poker' : 'Blackjack'} diagnostic — PUTKI HQ`
-      : `Mestari · ${diagnostic === 'poker' ? 'Pokeri' : 'Blackjack'}-diagnostiikka — PUTKI HQ`,
+      ? `Mestari · ${diagnostic === 'poker' ? 'Poker' : 'Blackjack'} diagnostic - PUTKI HQ`
+      : `Mestari · ${diagnostic === 'poker' ? 'Pokeri' : 'Blackjack'}-diagnostiikka - PUTKI HQ`,
     description: lang === 'en' ? c.sub_en : c.sub_fi,
     canonical: `${BACKEND}/mestari/${diagnostic}`,
   });

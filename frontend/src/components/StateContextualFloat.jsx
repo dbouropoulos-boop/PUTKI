@@ -32,7 +32,7 @@ const StateContextualFloat = () => {
   const hot = ['KUUMA', 'MYRSKY', 'KIIRASTULI'].includes(stateKey);
   const anyReal = !!dial.any_real;
 
-  // Honesty guard — don't surface a "hot offers" link from a first-boot
+  // Honesty guard - don't surface a "hot offers" link from a first-boot
   // KYLMA fallback. Only surface if we have a real recomputed snapshot.
   if (!anyReal && stateKey === 'KYLMA') return null;
 
@@ -42,8 +42,8 @@ const StateContextualFloat = () => {
         href: '/kasinot',
         label: `${meterWord} ${dialLabel(stateKey, lang)}`,
         body: lang === 'en'
-          ? 'The meter is hot — see the operator ranking →'
-          : 'Mittari on kuuma — katso operaattorisijoitus →',
+          ? 'The meter is hot - see the operator ranking →'
+          : 'Mittari on kuuma - katso operaattorisijoitus →',
         accent: dial.state.color,
       }
     : {

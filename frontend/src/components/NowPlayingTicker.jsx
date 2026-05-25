@@ -1,8 +1,8 @@
 /**
- * PUTKI HQ — NowPlayingTicker (Phase 1 sprint follow-up).
+ * PUTKI HQ - NowPlayingTicker (Phase 1 sprint follow-up).
  *
  * Continuous horizontal-scrolling slot ticker. Distinct from the news
- * ticker — slower cadence, gambling-data domain. Each slot is clickable
+ * ticker - slower cadence, gambling-data domain. Each slot is clickable
  * and filters the StreamersBand above to streamers playing it.
  *
  * Data: GET /api/streamers/now-playing
@@ -12,7 +12,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-// Slot data changes less frequently than news — keep this calmer than
+// Slot data changes less frequently than news - keep this calmer than
 // the news ticker (40 px/s vs ~55 px/s).
 const SLOTS_PIXELS_PER_SECOND = 40;
 
@@ -72,7 +72,7 @@ const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
     );
   }
 
-  // Empty state — return nothing (collapses the row cleanly) when:
+  // Empty state - return nothing (collapses the row cleanly) when:
   //   • zero slot streams at all (was: "Pure scene mode"), or
   //   • slot/casino streams ARE live but their titles don't name a
   //     specific registered slot (was: "titles not declared").
@@ -81,7 +81,7 @@ const NowPlayingTicker = ({ onSlotClick, activeSlot }) => {
   // useful to surface.
   if (slots.length === 0) return null;
 
-  // Build ticker payload — duplicate for seamless scroll
+  // Build ticker payload - duplicate for seamless scroll
   const items = [...slots, ...slots];
 
   return (

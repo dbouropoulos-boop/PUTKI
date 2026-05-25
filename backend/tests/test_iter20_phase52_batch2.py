@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Iteration 20 / Phase 5.2 batch 2 acceptance tests.
+PUTKI HQ - Iteration 20 / Phase 5.2 batch 2 acceptance tests.
 
 Covers:
   • Streamer roster_summary (81 total, 49/20/12 split)

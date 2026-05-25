@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — RafflePostEntryPreferences.
+ * PUTKI HQ - RafflePostEntryPreferences.
  *
  * GDPR Article 7(4): marketing opt-in is FREELY GIVEN and SEPARATELY
  * presented from the raffle entry. Three independent unchecked
@@ -8,12 +8,12 @@
  * Each ticked box writes its own row to optin_consents AND its own
  * audit-trail entry. The raffle entry email may be the same as the
  * marketing opt-in email, but they're stored as separate records with
- * separate legal bases — explicit DPO-survivable.
+ * separate legal bases - explicit DPO-survivable.
  *
  * Props:
- *   defaultEmail   — pre-fill from sessionStorage (user can change)
- *   onSaved        — callback after Save (parent can route away)
- *   onSkip         — callback for Skip (parent routes away)
+ *   defaultEmail   - pre-fill from sessionStorage (user can change)
+ *   onSaved        - callback after Save (parent can route away)
+ *   onSkip         - callback for Skip (parent routes away)
  */
 import React, { useState } from 'react';
 import { useLang } from '../context/LanguageContext';
@@ -69,7 +69,7 @@ const RafflePostEntryPreferences = ({ defaultEmail = '', onSaved, onSkip }) => {
       }));
     }
     if (optTelegram) {
-      // Telegram is a channel-join consent — we open the channel in a
+      // Telegram is a channel-join consent - we open the channel in a
       // new tab; the user actually joins on Telegram itself. We record
       // their intent so the dashboard counts it.
       const handle = telegramHandle.trim() || (email || `voita-${Date.now()}`);
@@ -119,8 +119,8 @@ const RafflePostEntryPreferences = ({ defaultEmail = '', onSaved, onSkip }) => {
         fontSize: 12.5, color: 'var(--muted, #9C9587)', lineHeight: 1.6,
         margin: '6px 0 18px',
       }}>{lang === 'en'
-        ? 'These are entirely separate from your raffle entry. You can skip — your entry is already confirmed.'
-        : 'Nämä ovat täysin erillisiä raffle-osallistumisestasi. Voit ohittaa — osallistumisesi on jo vahvistettu.'}</p>
+        ? 'These are entirely separate from your raffle entry. You can skip - your entry is already confirmed.'
+        : 'Nämä ovat täysin erillisiä raffle-osallistumisestasi. Voit ohittaa - osallistumisesi on jo vahvistettu.'}</p>
 
       {/* Email */}
       <label data-testid="raffle-opt-email-wrap" style={{ display: 'block', cursor: 'pointer', marginBottom: 12 }}>
@@ -195,7 +195,7 @@ const RafflePostEntryPreferences = ({ defaultEmail = '', onSaved, onSkip }) => {
         color: '#9ad4a9', fontSize: 12, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.10em',
       }}>{lang === 'en' ? 'PREFERENCES SAVED.' : 'VALINNAT TALLENNETTU.'}</div>}
 
-      {/* Save + Skip — primary weight on BOTH. Skip is not buried. */}
+      {/* Save + Skip - primary weight on BOTH. Skip is not buried. */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
         <button type="button" onClick={saveAll} disabled={busy}
           data-testid="raffle-prefs-save"

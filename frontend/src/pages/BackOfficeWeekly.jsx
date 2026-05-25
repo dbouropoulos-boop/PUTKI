@@ -1,5 +1,5 @@
 /**
- * BackOfficeWeekly — admin surface for the gamified Weekly Card.
+ * BackOfficeWeekly - admin surface for the gamified Weekly Card.
  *
  * Read prize meta, edit prize amount/currency/label, lock entries, settle
  * results (one 1/X/2 per event), draw a winner.
@@ -244,7 +244,7 @@ const BackOfficeWeekly = () => {
                       <span className="mono mr-2" style={{ fontSize: 10, letterSpacing: '0.14em', color: 'var(--muted)' }}>
                         #{String(i + 1).padStart(2, '0')}
                       </span>
-                      {p.home_team} <span style={{ color: 'var(--muted)' }}>—</span> {p.away_team}
+                      {p.home_team} <span style={{ color: 'var(--muted)' }}>-</span> {p.away_team}
                     </div>
                     <div className="sm:col-span-4 flex gap-2">
                       {['1', 'X', '2'].map((k) => {

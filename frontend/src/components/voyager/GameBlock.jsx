@@ -1,5 +1,5 @@
 /**
- * Voyager — The Game block (Smartico embed).
+ * Voyager - The Game block (Smartico embed).
  *
  * Reuses the shared <SmarticoGame> component (idempotent SDK loader)
  * with the week's game template_id / brand_key / visitor_key.

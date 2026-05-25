@@ -1,5 +1,5 @@
 """
-Weekly Card gamification — Batch 2.
+Weekly Card gamification - Batch 2.
 
 Persists user predictions for the weekly 5-fixture card, settles results,
 and lets the back-office configure the cash prize + draw a winner.
@@ -30,7 +30,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 log = logging.getLogger(__name__)
 
-# Default config used on first-boot — overridable from back-office.
+# Default config used on first-boot - overridable from back-office.
 DEFAULT_PRIZE_AMOUNT = 100
 DEFAULT_PRIZE_CURRENCY = "EUR"
 DEFAULT_PRIZE_LABEL = "Weekly Card cash prize"
@@ -178,7 +178,7 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
         wk = iso_week_key()
         meta = await _ensure_meta(db, wk)
         if meta.get("locked"):
-            raise HTTPException(status_code=409, detail="Weekly card is locked — entries closed.")
+            raise HTTPException(status_code=409, detail="Weekly card is locked - entries closed.")
         if not data.picks:
             raise HTTPException(status_code=400, detail="No picks supplied.")
 
@@ -203,7 +203,7 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
             "settled": False,
             "submitted_at": datetime.now(timezone.utc).isoformat(),
             "invite_code": invite_code,
-            # Tickets in the random draw — 1 base + extras from successful invites
+            # Tickets in the random draw - 1 base + extras from successful invites
             # (set on the inviter's entry by /weekly/invite/use).
             "tickets": (existing.get("tickets") if existing else 1) or 1,
             "invite_count": (existing.get("invite_count") if existing else 0) or 0,
@@ -211,7 +211,7 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
         }
         await db.weekly_picks.update_one({"id": entry_id}, {"$set": entry}, upsert=True)
 
-        # First-time entry came in with an invite — credit the inviter (+1 ticket).
+        # First-time entry came in with an invite - credit the inviter (+1 ticket).
         if not existing and data.invite_code:
             code = data.invite_code.upper().strip()
             if code and code != invite_code:
@@ -333,12 +333,12 @@ def build_weekly_router(db: AsyncIOMotorDatabase, require_admin) -> APIRouter:
             raise HTTPException(status_code=409, detail="No entries to draw from.")
         top = max(entries, key=lambda e: e.get("correct_count", 0)).get("correct_count", 0)
         finalists = [e for e in entries if e.get("correct_count", 0) == top]
-        # Build the weighted pool — repeat each finalist `tickets` times.
+        # Build the weighted pool - repeat each finalist `tickets` times.
         pool = []
         for e in finalists:
             t = max(1, int(e.get("tickets") or 1))
             pool.extend([e] * t)
-        # Raffle winner pick — `secrets.choice` so the draw is
+        # Raffle winner pick - `secrets.choice` so the draw is
         # cryptographically unbiased + not predictable from a seeded RNG.
         winner = secrets.choice(pool)
         winner_doc = {

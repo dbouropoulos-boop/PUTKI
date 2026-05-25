@@ -1,13 +1,13 @@
 /**
- * DialSubscriptionCTA — Editorial Nordic CTA placed UNDER (never inside) the dial.
+ * DialSubscriptionCTA - Editorial Nordic CTA placed UNDER (never inside) the dial.
  *
  * Dial design is untouched. This is a separate panel that rotates its
  * messaging based on the current Mittari state:
  *   • TYYNI / KYLMA       → "Set an alert for when the scene wakes up"
  *   • VIRE / HAALEA       → "Get a daily summary"
- *   • VIPINÄ / KUUMA      → "Scene active — get pinged"
- *   • MEININKI / MYRSKY   → "Scene rolling — alert me on next surge"
- *   • PERKELE / KIIRA.    → "Scene perkele — don't miss the next clip"
+ *   • VIPINÄ / KUUMA      → "Scene active - get pinged"
+ *   • MEININKI / MYRSKY   → "Scene rolling - alert me on next surge"
+ *   • PERKELE / KIIRA.    → "Scene perkele - don't miss the next clip"
  *
  * Channels: Telegram (active), SMS (active), Email (active). All three POST
  * to /api/subscribe/dial-alerts.

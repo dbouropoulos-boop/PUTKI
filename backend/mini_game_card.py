@@ -1,17 +1,17 @@
 """
-PUTKI HQ — Mini-Game Identity Card Builder (iter63).
+PUTKI HQ - Mini-Game Identity Card Builder (iter63).
 
 Generates the `card` payload that powers the new Identity Result Card +
 Micro-Yes gate UI. The card is psychological, not stats-first:
 
-    • profile_index   — "02 / 05" rank of this persona inside the set
-    • stat_value      — 0..100 number for the amber fill bar
-    • stat_*_footnote — "Higher than X% of players this week."
-    • hook_text       — data-driven blind-spot tease (with <em>...</em>
+    • profile_index   - "02 / 05" rank of this persona inside the set
+    • stat_value      - 0..100 number for the amber fill bar
+    • stat_*_footnote - "Higher than X% of players this week."
+    • hook_text       - data-driven blind-spot tease (with <em>...</em>
                         accent on the weak topic). This is the unresolved
                         loop that the email gate later closes.
-    • read_line       — sentence above the micro-yes CTA
-    • verdict         — sentence under the persona title
+    • read_line       - sentence above the micro-yes CTA
+    • verdict         - sentence under the persona title
 
 All copy returned in BOTH `fi` and `en` so the frontend can render the
 active language via `useLang()`.
@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 
 
 # Persona ordering for "02 / 05"-style indices. Keeps the frontend
-# stable when we add personas later — the index only changes if we
+# stable when we add personas later - the index only changes if we
 # reorder the registry.
 PERSONA_ORDER = {
     # Quiz
@@ -42,63 +42,63 @@ PERSONA_ORDER = {
 
 
 # Topic-tag → hook-text mapping. The amber-emphasised phrase is the
-# blind spot — the "unfinished loop" that the email gate later resolves.
+# blind spot - the "unfinished loop" that the email gate later resolves.
 # Each entry has FI and EN with `<em>...</em>` wrapping the key phrase.
 TOPIC_HOOKS = {
     "math": {
-        "fi": ("Numerot ovat selvät — mutta yksi puoli vetää alas. "
+        "fi": ("Numerot ovat selvät - mutta yksi puoli vetää alas. "
                "<em>Talon edge pitkällä volyymilla</em> on se piste, johon "
                "useimmat aloittelijat törmäävät vasta menettäessään."),
-        "en": ("You read the numbers — but one edge bleeds you slowly. "
+        "en": ("You read the numbers - but one edge bleeds you slowly. "
                "<em>The house margin compounds over volume</em> faster "
                "than most beginners realise."),
     },
     "bankroll": {
-        "fi": ("Tunnistat oikeat valinnat — mutta kuri pelisession aikana "
+        "fi": ("Tunnistat oikeat valinnat - mutta kuri pelisession aikana "
                "horjuu. <em>Häviöputken keskellä tehty panospäätös</em> "
                "ratkaisee, kuinka pitkälle bankrolli kantaa."),
-        "en": ("You spot the right call — but discipline mid-session "
+        "en": ("You spot the right call - but discipline mid-session "
                "wavers. <em>The bet sizing during a losing streak</em> "
                "decides how far your bankroll really stretches."),
     },
     "bonus": {
-        "fi": ("Ymmärrät pelin perusteet — mutta bonusehdot piilottavat "
+        "fi": ("Ymmärrät pelin perusteet - mutta bonusehdot piilottavat "
                "rivin. <em>Kierrätysvaatimuksen todellinen volyymi</em> "
                "on yleisin piste, jossa odotusarvo katoaa."),
-        "en": ("You grasp the basics — but bonus terms hide a line. "
+        "en": ("You grasp the basics - but bonus terms hide a line. "
                "<em>The real wagering volume behind a bonus</em> is where "
                "expected value quietly disappears."),
     },
     "psychology": {
-        "fi": ("Looginen puolesi on vahva — mutta lämpö pelitilanteessa "
+        "fi": ("Looginen puolesi on vahva - mutta lämpö pelitilanteessa "
                "siirtää päätöksiä. <em>Tilt-tilan ensimmäinen merkki</em> "
                "on huomaamattoman paljon aikaisempi kuin useimmat olettavat."),
-        "en": ("Your logical side is strong — but heat in the moment "
+        "en": ("Your logical side is strong - but heat in the moment "
                "shifts decisions. <em>The first marker of tilt</em> "
                "shows up far earlier than most players assume."),
     },
     "responsibility": {
-        "fi": ("Pelisilmäsi on terävä — mutta käytännön kahleet puuttuvat. "
+        "fi": ("Pelisilmäsi on terävä - mutta käytännön kahleet puuttuvat. "
                "<em>Talletusrajan asettaminen ENNEN sessiota</em> on se "
                "ero, jonka useimmat oppivat vasta jälkeenpäin."),
-        "en": ("Your read is sharp — but the practical guardrails are "
+        "en": ("Your read is sharp - but the practical guardrails are "
                "missing. <em>Setting the deposit cap before the session</em> "
                "is the difference most players learn the hard way."),
     },
     "regulation": {
-        "fi": ("Tunnet kentän — mutta laillinen toimintaympäristö muuttuu "
+        "fi": ("Tunnet kentän - mutta laillinen toimintaympäristö muuttuu "
                "nopeasti. <em>Lisensoitujen operaattoreiden todellinen "
                "lista</em> on tieto, joka säästää pisteissä ja rahassa."),
-        "en": ("You know the field — but the legal landscape shifts fast. "
+        "en": ("You know the field - but the legal landscape shifts fast. "
                "<em>The real shortlist of licensed operators</em> is the "
                "data that saves both points and money."),
     },
     # Insight-game fallbacks (tile categories overlap with above tags)
     "default": {
-        "fi": ("Tulos näyttää sinusta tasaista — mutta yksi sokea piste "
+        "fi": ("Tulos näyttää sinusta tasaista - mutta yksi sokea piste "
                "vetää alas. <em>Se on aina sama tekijä</em> joka erottaa "
                "kokeneen pelaajan aloittelijasta."),
-        "en": ("Your result reads steady — but one blind spot drags you "
+        "en": ("Your result reads steady - but one blind spot drags you "
                "down. <em>It's always the same factor</em> that separates "
                "the seasoned player from the beginner."),
     },
@@ -163,12 +163,12 @@ def _build_card_text(
         "hook_text_fi": hook["fi"],
         "hook_text_en": hook["en"],
         "read_line_fi": (
-            "Olet jo nähnyt yhden puolen itsestäsi. Toinen — pieni mutta "
-            "ratkaiseva — odottaa vielä avaamista."
+            "Olet jo nähnyt yhden puolen itsestäsi. Toinen - pieni mutta "
+            "ratkaiseva - odottaa vielä avaamista."
         ),
         "read_line_en": (
-            "You've seen one side of yourself. The other — small but "
-            "decisive — is still waiting to be opened."
+            "You've seen one side of yourself. The other - small but "
+            "decisive - is still waiting to be opened."
         ),
         "weak_topic_tag": weak,
     }
@@ -203,7 +203,7 @@ async def build_scenario_card(
     db, *, persona: Dict[str, Any], score: int, max_score: int, pct: float,
     tag_scores: Dict[str, int], week_iso: str,
 ) -> Dict[str, Any]:
-    """iter64 pivot — Scenario is now the flagship behavioral profiler.
+    """iter64 pivot - Scenario is now the flagship behavioral profiler.
     The card uses persona-level `blind_spot` copy when available
     (richer than the topic-tag fallback) and surfaces the discipline
     index as the headline stat."""
@@ -224,14 +224,14 @@ async def build_scenario_card(
     blind_fi = persona.get("blind_spot_fi") or base["hook_text_fi"]
     blind_en = persona.get("blind_spot_en") or base["hook_text_en"]
     # Bold-italicise the first short fragment of the blind-spot for the
-    # amber accent — keeps the editorial voice consistent with iter63.
+    # amber accent - keeps the editorial voice consistent with iter63.
     def _emphasise(s: str) -> str:
         if not s or "<em>" in s:
             return s
         # Wrap the part after the first em-dash in <em>...</em>
-        if " — " in s:
-            head, _, tail = s.partition(" — ")
-            return f"{head} — <em>{tail.split('.')[0]}</em>" + (
+        if " - " in s:
+            head, _, tail = s.partition(" - ")
+            return f"{head} - <em>{tail.split('.')[0]}</em>" + (
                 "." + ".".join(tail.split('.')[1:]) if "." in tail else ""
             )
         return s
@@ -257,7 +257,7 @@ async def build_insight_card(
 ) -> Dict[str, Any]:
     weekly_scores = await _fetch_weekly_scores(db, "insight_reveal", week_iso)
     pct = (revealed_count / total_tiles * 100.0) if total_tiles else 0.0
-    # For insight, "tag_scores" is implicit — every revealed tile counts.
+    # For insight, "tag_scores" is implicit - every revealed tile counts.
     # We treat unrevealed tags as the weak point.
     tag_scores = {t: 1 for t in revealed_topic_tags}
     persona_key = "explorer"
@@ -284,21 +284,21 @@ async def build_arcade_card(
     best = max(weekly_scores) if weekly_scores else max(score, 1)
     pct = (score / max(1, best)) * 100.0
     if score >= max(1, best):
-        verdict_fi = ("Olet tällä hetkellä viikon kärjessä — refleksit "
+        verdict_fi = ("Olet tällä hetkellä viikon kärjessä - refleksit "
                       "kannattelevat sinua pisteessä, jossa useimmat horjuvat.")
-        verdict_en = ("You're at the front of the week — reflex carries "
+        verdict_en = ("You're at the front of the week - reflex carries "
                       "you through the point where most players stumble.")
         hook_key = "psychology"  # focus on tilt-stability when you're top
     elif pct >= 60:
-        verdict_fi = ("Reflektiivinen tarkkuus on kunnossa — viikon kärjelle "
+        verdict_fi = ("Reflektiivinen tarkkuus on kunnossa - viikon kärjelle "
                       "on yhden tarkkaavaisuusvirheen verran matkaa.")
-        verdict_en = ("Reflex precision is solid — the gap to the weekly "
+        verdict_en = ("Reflex precision is solid - the gap to the weekly "
                       "leader is one micro-focus correction away.")
         hook_key = "psychology"
     else:
-        verdict_fi = ("Ohjaus on tutustumisvaiheessa — pieni rytmin muutos "
+        verdict_fi = ("Ohjaus on tutustumisvaiheessa - pieni rytmin muutos "
                       "tuottaa yleensä isoimman pistemäärän hyppäyksen.")
-        verdict_en = ("Your control is still finding its rhythm — a small "
+        verdict_en = ("Your control is still finding its rhythm - a small "
                       "tempo correction usually produces the biggest jump.")
         hook_key = "bankroll"  # discipline / pacing
     hook = TOPIC_HOOKS.get(hook_key) or TOPIC_HOOKS["default"]
@@ -315,12 +315,12 @@ async def build_arcade_card(
         "hook_text_fi": hook["fi"],
         "hook_text_en": hook["en"],
         "read_line_fi": (
-            "Olet jo nähnyt yhden puolen pelistäsi. Toinen — pieni mutta "
-            "ratkaiseva — odottaa vielä avaamista."
+            "Olet jo nähnyt yhden puolen pelistäsi. Toinen - pieni mutta "
+            "ratkaiseva - odottaa vielä avaamista."
         ),
         "read_line_en": (
-            "You've seen one side of your play. The other — small but "
-            "decisive — is still waiting to be opened."
+            "You've seen one side of your play. The other - small but "
+            "decisive - is still waiting to be opened."
         ),
         "weak_topic_tag": hook_key,
     }
@@ -339,5 +339,5 @@ async def _fetch_weekly_scores(db, game_slug: str, week_iso: str) -> List[int]:
         rows = await cur.to_list(length=1000)
         return [int(r.get("score") or 0) for r in rows]
     except Exception:
-        logger.warning("mini_game_card._fetch_weekly_scores failed for %s/%s — falling back to []", game_slug, week_iso, exc_info=True)
+        logger.warning("mini_game_card._fetch_weekly_scores failed for %s/%s - falling back to []", game_slug, week_iso, exc_info=True)
         return []

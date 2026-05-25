@@ -130,7 +130,7 @@ def test_enqueue_writes_track_token_and_zero_counters():
         # Token is embedded in the rendered body_html (pixel URL).
         assert row["track_token"] in row["body_html"]
 
-        # Two opens — counter increments idempotently per call.
+        # Two opens - counter increments idempotently per call.
         await record_open(db, row["track_token"], user_agent="test")
         await record_open(db, row["track_token"], user_agent="test")
         row = await db.email_outbox.find_one({"voita_entry_id": entry_id})

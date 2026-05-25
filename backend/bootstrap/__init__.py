@@ -1,5 +1,5 @@
 """
-PUTKI HQ — bootstrap package.
+PUTKI HQ - bootstrap package.
 
 Extracted out of server.py in iter50 to prevent monolith-rot.
 The previous orphan-indent bug (entire startup body unreachable inside
@@ -7,13 +7,13 @@ The previous orphan-indent bug (entire startup body unreachable inside
 that surfaces in 3600+ LOC server.py files.
 
 Public API:
-  - `run_startup(db, *, layer2_on_tick, signal_dial_worker)` — single
+  - `run_startup(db, *, layer2_on_tick, signal_dial_worker)` - single
      entrypoint called by FastAPI's `@app.on_event("startup")` hook.
 
 Internally splits into:
-  - `bootstrap.seeds.run_all_seeds_and_indexes(db)` — all seed_* and
+  - `bootstrap.seeds.run_all_seeds_and_indexes(db)` - all seed_* and
     ensure_indexes calls, each wrapped in try/except + structured log.
-  - `bootstrap.workers.spawn_background_workers(db, ...)` — every
+  - `bootstrap.workers.spawn_background_workers(db, ...)` - every
     `asyncio.create_task` for Layer-2 / scheduler / dispatch / feed /
     discovery / yt-lease workers, plus env-driven killswitches.
 """

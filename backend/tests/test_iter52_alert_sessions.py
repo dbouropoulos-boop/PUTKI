@@ -1,5 +1,5 @@
 """
-iter52 — Bell-icon alert manager (6-digit code → session token →
+iter52 - Bell-icon alert manager (6-digit code → session token →
 list/delete subscriptions). Hits the live backend end-to-end.
 """
 from __future__ import annotations

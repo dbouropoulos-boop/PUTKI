@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — /peliareena (Behavioral Profiler Hub) · iter64 pivot
+ * PUTKI HQ - /peliareena (Behavioral Profiler Hub) · iter64 pivot
  *
  * Capture-first single-flagship hub. The five-game arcade has been
  * killed (Snake / Tap / Insight / Quiz) and the behavioral profiler
@@ -7,11 +7,11 @@
  * scenario profiler in <10 seconds.
  *
  * Design:
- *   • Single hero — "What kind of gambler are you really?"
+ *   • Single hero - "What kind of gambler are you really?"
  *   • One bold CTA → /peliareena/paatospolku
  *   • Trust signals row sits NEXT to the CTA (not below)
  *   • Social-proof line hidden until ≥50 plays exist (no "0 ranked players")
- *   • 5-profile preview strip — primes the user with the spectrum
+ *   • 5-profile preview strip - primes the user with the spectrum
  *     they'll be placed on
  */
 import React, { useEffect, useState } from 'react';
@@ -49,7 +49,7 @@ const PeliAreenaHub = () => {
       .catch(() => {});
   }, []);
 
-  // Social proof — only surface when honest (>= 50 finished plays this week)
+  // Social proof - only surface when honest (>= 50 finished plays this week)
   const playsThisWeek = hub?.tournament?.plays_this_week || 0;
   const showSocialProof = playsThisWeek >= 50;
 
@@ -81,8 +81,8 @@ const PeliAreenaHub = () => {
         maxWidth: 620, margin: '0 0 36px',
       }}>
         {lang === 'en'
-          ? 'Six honest decisions. No trivia, no scores to memorise — just situations you\'ve already lived. We name your blind spot at the end. Free.'
-          : 'Kuusi rehellistä päätöstä. Ei tietovisaa, ei pisteitä opeteltavaksi — vain tilanteita, jotka olet jo elänyt. Nimeämme sokean pisteesi lopussa. Ilmainen.'}
+          ? 'Six honest decisions. No trivia, no scores to memorise - just situations you\'ve already lived. We name your blind spot at the end. Free.'
+          : 'Kuusi rehellistä päätöstä. Ei tietovisaa, ei pisteitä opeteltavaksi - vain tilanteita, jotka olet jo elänyt. Nimeämme sokean pisteesi lopussa. Ilmainen.'}
       </p>
 
       {/* Primary CTA + trust row */}
@@ -194,8 +194,8 @@ const PeliAreenaHub = () => {
           {lang === 'en' ? 'HONEST FINE PRINT' : 'REHELLINEN PIENI PRINTTI'}
         </div>
         {lang === 'en'
-          ? 'The profiler is free. We ask for one email only after we\'ve named your profile and one blind spot — at peak curiosity, at your choice. No card details, no purchase, no third-party sharing. Cancel any time.'
-          : 'Profilointi on ilmainen. Pyydämme yhden sähköpostin vasta kun profiili ja yksi sokea piste on nimetty — uteliaisuuden hetkellä, sinun valinnallasi. Ei korttitietoja, ei ostoa, ei kolmansille osapuolille. Peru milloin tahansa.'}
+          ? 'The profiler is free. We ask for one email only after we\'ve named your profile and one blind spot - at peak curiosity, at your choice. No card details, no purchase, no third-party sharing. Cancel any time.'
+          : 'Profilointi on ilmainen. Pyydämme yhden sähköpostin vasta kun profiili ja yksi sokea piste on nimetty - uteliaisuuden hetkellä, sinun valinnallasi. Ei korttitietoja, ei ostoa, ei kolmansille osapuolille. Peru milloin tahansa.'}
         {' '}
         <Link to="/tietosuoja" style={{ color: 'var(--ink)' }}>
           {lang === 'en' ? 'Privacy policy' : 'Tietosuojaseloste'}

@@ -1,7 +1,7 @@
 /**
- * Voyager — Operator review card.
+ * Voyager - Operator review card.
  *
- * Spec §4.4 — "Why we like them" with N specific checkable claims and
+ * Spec §4.4 - "Why we like them" with N specific checkable claims and
  * an opt-in editorial-partnership label.
  */
 import React from 'react';

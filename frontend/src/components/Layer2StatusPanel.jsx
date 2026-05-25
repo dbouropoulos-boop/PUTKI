@@ -1,5 +1,5 @@
 /**
- * Layer2StatusPanel — Phase 4 Week 1/2 operational monitoring widget.
+ * Layer2StatusPanel - Phase 4 Week 1/2 operational monitoring widget.
  *
  * Surfaces the six Layer 2 signal pollers (Twitch · NHL · RSS · F1 ·
  * Football · Reddit-dormant) with last-tick timestamp, document count,
@@ -16,14 +16,14 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 20_000;
 
 const fmtAge = (iso, lang) => {
-  if (!iso || iso === 'None') return '—';
+  if (!iso || iso === 'None') return '-';
   try {
     return formatTimeAgo(iso.replace(' ', 'T'), lang);
-  } catch { return '—'; }
+  } catch { return '-'; }
 };
 
 const fmtStamp = (iso) => {
-  if (!iso || iso === 'None') return '—';
+  if (!iso || iso === 'None') return '-';
   return iso.replace('T', ' ').slice(0, 19);
 };
 
@@ -40,7 +40,7 @@ const stateForWorker = (key, coll) => {
   if (!coll) return { color: '#6b7280', label: 'EI DATAA' };
   if (coll.latest_summary?.dormant) return { color: '#C8423C', label: 'DORMANT' };
   const meta = WORKER_META[key];
-  if (!meta || !coll.latest_captured_at) return { color: '#6b7280', label: '—' };
+  if (!meta || !coll.latest_captured_at) return { color: '#6b7280', label: '-' };
   const t = new Date(String(coll.latest_captured_at).replace(' ', 'T'));
   const ageSec = Math.floor((Date.now() - t.getTime()) / 1000);
   if (ageSec > meta.cadence * 3) return { color: '#C8423C', label: 'JÄÄNYT JUMIIN' };
@@ -120,7 +120,7 @@ const Layer2StatusPanel = ({ token }) => {
           const meta = WORKER_META[key];
           const coll = colls[meta.coll] || null;
           const state = stateForWorker(key, coll);
-          const summary = coll?.latest_summary ? meta.summary(coll.latest_summary) : '—';
+          const summary = coll?.latest_summary ? meta.summary(coll.latest_summary) : '-';
           return (
             <div
               key={key}

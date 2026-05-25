@@ -6,7 +6,7 @@ import TelegramSubscribeButton from './TelegramSubscribeButton';
 
 // Phase 1.5 (Revised): persistent notification capture
 // - Mobile: bottom sheet (~56px collapsed, expanded shows form)
-// - Desktop: right-rail on inner pages (not on home — hero capture is dominant there)
+// - Desktop: right-rail on inner pages (not on home - hero capture is dominant there)
 
 const useIsDesktop = () => {
   const [d, setD] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);

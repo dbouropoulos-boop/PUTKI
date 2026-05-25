@@ -1,5 +1,5 @@
 /**
- * BackOfficeWebhooks — Final Architecture Step 2 operational surface.
+ * BackOfficeWebhooks - Final Architecture Step 2 operational surface.
  *
  * Per-source health row (Twitch / Kick / YouTube PubSub) with:
  *   • configured flag (env secret present?)
@@ -22,7 +22,7 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const FEED_REBUILD_TIMESTAMP_KEY = 'putki-hq-admin-last-feed-rebuild';
 
 const fmtUtcStamp = (iso) => {
-  if (!iso) return '—';
+  if (!iso) return '-';
   try { return iso.replace('T', ' ').slice(0, 19) + ' UTC'; } catch { return iso; }
 };
 const POLL_MS = 30_000;
@@ -35,7 +35,7 @@ const useToken = () => {
 };
 
 const fmtAge = (seconds) => {
-  if (seconds == null) return '—';
+  if (seconds == null) return '-';
   const s = Math.max(0, Math.floor(seconds));
   if (s < 60) return `${s} s sitten`;
   if (s < 3600) return `${Math.floor(s / 60)} min sitten`;
@@ -55,7 +55,7 @@ const Stat = ({ label, value, testid }) => (
   <div className="panel" style={{ padding: '10px 12px', background: 'var(--bg)' }} data-testid={testid}>
     <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 600 }}>{label}</div>
     <div className="mono" style={{ fontSize: 22, fontWeight: 500, color: 'var(--ink)', letterSpacing: '-0.02em', marginTop: 4 }}>
-      {typeof value === 'number' ? value : '—'}
+      {typeof value === 'number' ? value : '-'}
     </div>
   </div>
 );
@@ -133,7 +133,7 @@ const SourceRow = ({ source, status, expectedSeconds, lastEvent, onResubscribe, 
           <div className="mono" style={{ fontSize: 10.5, letterSpacing: '0.04em', color: 'var(--muted)', fontWeight: 500 }}>
             <span style={{ color: 'var(--ink)' }}>CALLBACK:</span>{' '}
             <span style={{ wordBreak: 'break-all' }} data-testid={`webhook-callback-${source}`}>
-              {callbackUrl || '— (set ' + (source === 'twitch' ? 'TWITCH_EVENTSUB_CALLBACK_URL' : source === 'kick' ? 'KICK_WEBHOOK_URL' : 'YOUTUBE_PUBSUB_CALLBACK_URL') + ')'}
+              {callbackUrl || '- (set ' + (source === 'twitch' ? 'TWITCH_EVENTSUB_CALLBACK_URL' : source === 'kick' ? 'KICK_WEBHOOK_URL' : 'YOUTUBE_PUBSUB_CALLBACK_URL') + ')'}
             </span>
           </div>
         </div>
@@ -164,7 +164,7 @@ const BackOfficeWebhooks = () => {
   const [busy, setBusy] = useState(null);
   const [lastAction, setLastAction] = useState(null);
 
-  // Force-rebuild state — persists last-rebuild timestamp + result across reloads.
+  // Force-rebuild state - persists last-rebuild timestamp + result across reloads.
   const [rebuildBusy, setRebuildBusy] = useState(false);
   const [rebuildResult, setRebuildResult] = useState(() => {
     try {
@@ -174,7 +174,7 @@ const BackOfficeWebhooks = () => {
   });
   const [rebuildError, setRebuildError] = useState('');
 
-  // Twitch verify state — surfaces OAuth probe + subscription summary.
+  // Twitch verify state - surfaces OAuth probe + subscription summary.
   const [twitchVerifyBusy, setTwitchVerifyBusy] = useState(false);
   const [twitchVerifyResult, setTwitchVerifyResult] = useState(null);
   const [twitchVerifyError, setTwitchVerifyError] = useState('');
@@ -441,15 +441,15 @@ const BackOfficeWebhooks = () => {
             <PubsubLeaseIndicator lease={status?.youtube_pubsub_lease} />
             <div className="mono" style={{ fontSize: 9.5, letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 600 }}
                  data-testid="webhooks-server-now">
-              SERVER · {status?.now ? status.now.replace('T', ' ').slice(0, 19) : '—'} UTC
+              SERVER · {status?.now ? status.now.replace('T', ' ').slice(0, 19) : '-'} UTC
             </div>
           </div>
         </div>
 
-        {/* Phase 4 — Layer 2 signal poller monitoring grid */}
+        {/* Phase 4 - Layer 2 signal poller monitoring grid */}
         <Layer2StatusPanel token={token} />
 
-        {/* Force-rebuild panel — Step 4 operational button */}
+        {/* Force-rebuild panel - Step 4 operational button */}
         <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #3B5BA5' }}
              data-testid="webhooks-force-rebuild-panel">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -504,7 +504,7 @@ const BackOfficeWebhooks = () => {
           ) : null}
         </div>
 
-        {/* Twitch connection verify panel — proves OAuth + lists subscriptions */}
+        {/* Twitch connection verify panel - proves OAuth + lists subscriptions */}
         <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #9146FF' }}
              data-testid="twitch-verify-panel">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -550,7 +550,7 @@ const BackOfficeWebhooks = () => {
           ) : null}
         </div>
 
-        {/* Kick connection verify panel — same shape as Twitch, green accent */}
+        {/* Kick connection verify panel - same shape as Twitch, green accent */}
         <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #53FC18' }}
              data-testid="kick-verify-panel">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -595,7 +595,7 @@ const BackOfficeWebhooks = () => {
           ) : null}
         </div>
 
-        {/* YouTube PubSub verify panel — red accent */}
+        {/* YouTube PubSub verify panel - red accent */}
         <div className="panel mb-6" style={{ padding: '18px 20px', borderLeft: '3px solid #FF0033' }}
              data-testid="youtube-verify-panel">
           <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -607,7 +607,7 @@ const BackOfficeWebhooks = () => {
               </div>
               <p className="font-serif" style={{ fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.5, marginBottom: 6 }}>
                 Tarkistaa Data API -avaimen toimivuuden ja kertoo PubSubHubbub-tilausten lukumäärän
-                (vuokra-aika ~5–10 vrk, automaattinen uusinta tulossa).
+                (vuokra-aika ~5-10 vrk, automaattinen uusinta tulossa).
               </p>
               {youtubeVerifyResult ? (
                 <div className="mono" style={{ fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--ink)', fontWeight: 600, lineHeight: 1.6 }}
@@ -684,7 +684,7 @@ const BackOfficeWebhooks = () => {
           </div>
         </div>
 
-      {/* Confirm modal — gates execution of resubscribe behind a preview */}
+      {/* Confirm modal - gates execution of resubscribe behind a preview */}
       {pendingConfirm ? (
         <div
           style={{
@@ -722,7 +722,7 @@ const BackOfficeWebhooks = () => {
                 <div>… ja {pendingConfirm.dryRun.would_create.length - 20} muuta</div>
               ) : null}
               {(pendingConfirm.dryRun?.would_create || []).length === 0 ? (
-                <div>EI UUSIA TILAUKSIA — KAIKKI JO OLEMASSA</div>
+                <div>EI UUSIA TILAUKSIA - KAIKKI JO OLEMASSA</div>
               ) : null}
             </div>
             {(pendingConfirm.dryRun?.would_error?.length ?? 0) > 0 ? (
@@ -730,7 +730,7 @@ const BackOfficeWebhooks = () => {
                    data-testid="resubscribe-confirm-errors">
                 ESIKATSELUVIRHEET:
                 {(pendingConfirm.dryRun.would_error || []).slice(0, 5).map((e, i) => (
-                  <div key={i} style={{ marginLeft: 8 }}>· {e.slug || '?'} — {e.error || `HTTP ${e.status_code}`}</div>
+                  <div key={i} style={{ marginLeft: 8 }}>· {e.slug || '?'} - {e.error || `HTTP ${e.status_code}`}</div>
                 ))}
               </div>
             ) : null}

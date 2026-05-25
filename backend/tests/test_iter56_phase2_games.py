@@ -1,5 +1,5 @@
 """
-Iter56 — Phase 2 mini-game suite tests.
+Iter56 - Phase 2 mini-game suite tests.
 
 Targets Scenario (branching decisions) + Insight Reveal (scratch tiles)
 plus the CSV lead export. The shared `_unlock_for_game` helper is
@@ -115,7 +115,7 @@ def test_insight_full_flow():
         assert r["tile"]["explanation_fi"]
         assert r["tile"]["id"] == tile["id"]
 
-    # Idempotent re-reveal (same tile twice) — count must NOT grow past 3
+    # Idempotent re-reveal (same tile twice) - count must NOT grow past 3
     r = httpx.post(
         f"{BASE}/api/mini-games/insight/reveal",
         json={"play_id": s["play_id"], "anon_id": s["anon_id"], "q_id": s["tiles"][0]["id"]},

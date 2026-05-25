@@ -1,23 +1,23 @@
 /**
- * PUTKI HQ — Voita raffle (post-Master-Brief).
+ * PUTKI HQ - Voita raffle (post-Master-Brief).
  *
- * Pure 60-second prediction game. ZERO quiz / zinger / tease — that funnel
+ * Pure 60-second prediction game. ZERO quiz / zinger / tease - that funnel
  * lives at `/mestari` now. This page exists only to capture a prediction
  * + a contact handle (Telegram primary, email fallback) so we can ping
  * the user with the result after kickoff.
  *
  * State machine:
- *   1. intro       — match hero with prize + entry count
- *   2. scout       — scout report (market consensus + team form + editorial)
- *   3. pick        — 1-X-2
- *   4. score       — exact score wheels
- *   5. confidence  — 1..5 confidence meter
- *   6. review      — prediction + max points reveal
- *   7. gate        — contact gate (Telegram deep-link primary · email fallback)
- *   8. confirm     — entry locked, "we'll ping you after kickoff"
+ *   1. intro       - match hero with prize + entry count
+ *   2. scout       - scout report (market consensus + team form + editorial)
+ *   3. pick        - 1-X-2
+ *   4. score       - exact score wheels
+ *   5. confidence  - 1..5 confidence meter
+ *   6. review      - prediction + max points reveal
+ *   7. gate        - contact gate (Telegram deep-link primary · email fallback)
+ *   8. confirm     - entry locked, "we'll ping you after kickoff"
  *
  * Telegram deep-link binding is stubbed to `t.me/Putkihq_bot?start={pending_id}`
- * — the real bot (Slice 3) will resolve the pending_id and DM the user
+ * - the real bot (Slice 3) will resolve the pending_id and DM the user
  * the entry confirmation + post-match result.
  */
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
@@ -119,7 +119,7 @@ const Intro = ({ raffle, onStart, lang }) => {
           border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 12,
           letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer',
         }}>
-        {lang === 'en' ? 'PLAY — 60 SECONDS →' : 'PELAA — 60 SEKUNTIA →'}
+        {lang === 'en' ? 'PLAY - 60 SECONDS →' : 'PELAA - 60 SEKUNTIA →'}
       </motion.button>
       <p style={{ marginTop: 14, fontSize: 11.5, color: 'var(--muted)', lineHeight: 1.55, textAlign: 'center' }}>
         {lang === 'en' ? 'No betting. Editorial raffle. Rules apply.' : 'Ei vedonlyöntiä. Toimituksellinen arvonta. Säännöt voimassa.'}
@@ -135,7 +135,7 @@ const ScoutReport = ({ raffle, ctx, onAdvance, lang }) => {
   const dist = ctx?.pick_distribution;
   const editorial = ctx?.editorial_pick;
 
-  // Strongest signal first — favourite
+  // Strongest signal first - favourite
   const fav = odds ? ['home', 'draw', 'away'].reduce((best, k) => {
     const o = odds[k];
     if (!o) return best;
@@ -163,7 +163,7 @@ const ScoutReport = ({ raffle, ctx, onAdvance, lang }) => {
           </div>
           <div style={{ color: 'var(--ink)', fontSize: 14, lineHeight: 1.55 }}>
             <strong style={{ color: '#E8C26E' }}>{favLabel}</strong>{' '}
-            {lang === 'en' ? 'is favoured at' : 'on suosikki —'}{' '}
+            {lang === 'en' ? 'is favoured at' : 'on suosikki -'}{' '}
             <strong>{fav.implied_pct}%</strong>{' '}
             {lang === 'en' ? `implied probability across ${fav.n_books} bookmakers.` : `todennäköisyys ${fav.n_books} kirjassa.`}
           </div>
@@ -328,7 +328,7 @@ const ScoreStep = ({ raffle, homeGoals, awayGoals, setHomeGoals, setAwayGoals, o
       </p>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '20px 0', borderTop: '1px solid var(--hairline)', borderBottom: '1px solid var(--hairline)' }}>
         <Step team={raffle.home_team || 'HOME'} value={homeGoals} setValue={setHomeGoals} tid="home" />
-        <span style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: 'var(--muted)', marginTop: 20 }}>—</span>
+        <span style={{ fontFamily: 'Georgia, serif', fontSize: 28, color: 'var(--muted)', marginTop: 20 }}>-</span>
         <Step team={raffle.away_team || 'AWAY'} value={awayGoals} setValue={setAwayGoals} tid="away" />
       </div>
       <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onAdvance}
@@ -377,8 +377,8 @@ const ConfidenceStep = ({ confidence, setConfidence, onAdvance, lang }) => {
       </div>
       <p style={{ marginTop: 14, fontSize: 12, color: 'var(--muted)', lineHeight: 1.55 }}>
         {lang === 'en'
-          ? 'Confidence is a self-report. It doesn\u2019t change scoring — but we\u2019ll show you whether sure picks hit more often.'
-          : 'Varmuus on oma arviosi. Ei vaikuta pisteytykseen — mutta näytämme osuvatko varmat veikkaukset useammin.'}
+          ? 'Confidence is a self-report. It doesn\u2019t change scoring - but we\u2019ll show you whether sure picks hit more often.'
+          : 'Varmuus on oma arviosi. Ei vaikuta pisteytykseen - mutta näytämme osuvatko varmat veikkaukset useammin.'}
       </p>
       <motion.button whileTap={{ scale: 0.97 }} type="button" onClick={onAdvance}
         disabled={!confidence}
@@ -408,7 +408,7 @@ const ReviewStep = ({ raffle, pick, homeGoals, awayGoals, confidence, onSubmit, 
         transition={{ duration: 0.34, ease: [0.2, 0.7, 0.3, 1] }}
         style={{ padding: '22px 22px', background: 'var(--surface)', border: '1px solid var(--hairline)', marginBottom: 18 }}>
         <div style={{ fontFamily: 'Georgia, serif', fontSize: 17, color: 'var(--muted)', marginBottom: 4 }}>
-          {raffle.home_team} <span style={{ color: 'var(--ink)' }}>{homeGoals}</span> — <span style={{ color: 'var(--ink)' }}>{awayGoals}</span> {raffle.away_team}
+          {raffle.home_team} <span style={{ color: 'var(--ink)' }}>{homeGoals}</span> - <span style={{ color: 'var(--ink)' }}>{awayGoals}</span> {raffle.away_team}
         </div>
         <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700, marginTop: 8 }}>
           {lang === 'en' ? 'PICK' : 'VEIKKAUS'} · {pick}{' · '}
@@ -453,7 +453,7 @@ const ContactGate = ({ pendingId, email, setEmail, age, setAge, rules, setRules,
           : 'Ottelun jälkeen kerromme voititko ja missä sijoituksessa. Yksi viesti. Ei spämmiä.'}
       </p>
 
-      {/* Telegram — primary */}
+      {/* Telegram - primary */}
       <a href={tgUrl} target="_blank" rel="noopener noreferrer"
         data-testid="contact-gate-telegram"
         onClick={onTelegram}
@@ -474,7 +474,7 @@ const ContactGate = ({ pendingId, email, setEmail, age, setAge, rules, setRules,
       }}>
         {lang === 'en'
           ? `Opens @${TELEGRAM_BOT}. Tap START and your entry locks instantly.`
-          : `Avaa @${TELEGRAM_BOT}. Paina START — osallistumisesi lukittuu heti.`}
+          : `Avaa @${TELEGRAM_BOT}. Paina START - osallistumisesi lukittuu heti.`}
       </p>
 
       {/* divider */}
@@ -486,7 +486,7 @@ const ContactGate = ({ pendingId, email, setEmail, age, setAge, rules, setRules,
         <div style={{ flex: 1, height: 1, background: 'var(--hairline)' }} />
       </div>
 
-      {/* Email — fallback */}
+      {/* Email - fallback */}
       <div style={{ display: 'grid', gap: 12 }}>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
           placeholder={lang === 'en' ? 'your@email.com' : 'sähköpostisi@osoite.fi'}
@@ -513,7 +513,7 @@ const ContactGate = ({ pendingId, email, setEmail, age, setAge, rules, setRules,
             style={{ marginTop: 2, width: 18, height: 18 }} />
           <span>{lang === 'en' ? 'I am 18 years or older.' : 'Olen 18 vuotta täyttänyt.'}</span>
         </label>
-        {/* Bonus disclosure — the playbook PDF goes out with the lock-in
+        {/* Bonus disclosure - the playbook PDF goes out with the lock-in
             confirmation email so the user can sharpen their reads before
             kickoff. One ping, one PDF, no extra signup. */}
         <div data-testid="contact-gate-playbook-bonus" style={{
@@ -538,8 +538,8 @@ const ContactGate = ({ pendingId, email, setEmail, age, setAge, rules, setRules,
               fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.45,
               color: 'var(--ink)',
             }}>{lang === 'en'
-              ? 'Scout playbook PDF lands in your inbox alongside the entry confirmation — the same patterns the daily five use.'
-              : 'Scout-pelikirja PDF saapuu vahvistuksen kanssa sähköpostiisi — samat kuviot, joita päivän viisi käyttää.'}</div>
+              ? 'Scout playbook PDF lands in your inbox alongside the entry confirmation - the same patterns the daily five use.'
+              : 'Scout-pelikirja PDF saapuu vahvistuksen kanssa sähköpostiisi - samat kuviot, joita päivän viisi käyttää.'}</div>
           </div>
         </div>
         <label style={{ display: 'flex', gap: 10, fontSize: 12.5, color: 'var(--ink)', cursor: 'pointer', lineHeight: 1.5 }}>
@@ -712,7 +712,7 @@ const VoitaRaffle = () => {
       try {
         // Caching the entry locally lets us re-show the confirmation
         // card if the user navigates back. sessionStorage throws in
-        // Safari private mode — non-critical, swallow.
+        // Safari private mode - non-critical, swallow.
         sessionStorage.setItem(`voita:${slug}:entry`, JSON.stringify({
           entry_id: j.entry_id, position: j.position,
           prediction: pick, home: homeGoals, away: awayGoals,
@@ -730,7 +730,7 @@ const VoitaRaffle = () => {
   const handleTelegram = useCallback(async () => {
     // Fire-and-forget commit the entry with channel=telegram so the bot
     // can resolve `pending_id` when the user lands on /start. We don't
-    // block the link click — the new tab opens immediately.
+    // block the link click - the new tab opens immediately.
     submitEntry('telegram');
     advance('confirm');
   }, [submitEntry, advance]);

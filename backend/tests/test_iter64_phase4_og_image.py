@@ -1,5 +1,5 @@
 """
-iter64 Phase 4 — Tournament re-scope + OG share image regression.
+iter64 Phase 4 - Tournament re-scope + OG share image regression.
 
 Verifies:
   • mini_game_tournament.ACTIVE_GAME_SLUGS is now ONLY ["scenario_decisions"]
@@ -81,10 +81,10 @@ def test_unfurl_landing_falls_back_for_unknown_persona():
 
 
 def test_og_png_does_not_collide_with_landing_route():
-    """Regression — `og.png` must not be matched by the parametric
+    """Regression - `og.png` must not be matched by the parametric
     /u/{persona_key} landing handler."""
     r = requests.get(f"{API}/profiler/share/og.png",
                      params={"persona_key": "cold_calculator"}, timeout=10)
     assert r.headers["content-type"].startswith("image/png"), (
-        f"og.png returned non-PNG content-type — route collision regressed: {r.headers}"
+        f"og.png returned non-PNG content-type - route collision regressed: {r.headers}"
     )

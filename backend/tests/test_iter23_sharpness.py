@@ -1,5 +1,5 @@
 """
-Iteration 23 — Phase 1 brief Section 6 Sharpness sanity tests.
+Iteration 23 - Phase 1 brief Section 6 Sharpness sanity tests.
 
 Pure unit tests over the deterministic Sharpness scoring engine. No
 network, no DB. Just verifies the formula behaves as published on
@@ -143,11 +143,11 @@ class TestBookExtraction:
                     {"name": "Arsenal", "price": 1.12},
                     {"name": "Burnley", "price": 11.0},
                 ]}]},
-                # Wrong market key — skipped.
+                # Wrong market key - skipped.
                 {"markets": [{"key": "totals", "outcomes": [
                     {"name": "Over 2.5", "price": 1.85},
                 ]}]},
-                # Invalid price — skipped.
+                # Invalid price - skipped.
                 {"markets": [{"key": "h2h", "outcomes": [
                     {"name": "Arsenal", "price": 1.0},
                 ]}]},

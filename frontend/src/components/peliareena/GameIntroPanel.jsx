@@ -1,5 +1,5 @@
 /**
- * PUTKI HQ — Peliareena · GameIntroPanel (iter59)
+ * PUTKI HQ - Peliareena · GameIntroPanel (iter59)
  *
  * Standalone game-page intro shared by all 5 mini-games. Surfaces the
  * trust signals a player wants to see BEFORE committing 90 seconds of
@@ -7,9 +7,9 @@
  *
  *   • Branded eyebrow + headline + tagline
  *   • Trust chips (Pelaa heti · GDPR · Viikkoturnaus · Ei rahaa)
- *   • "Miten pelataan" — 3 numbered steps
- *   • "Pisteytys" — what counts toward the leaderboard
- *   • Live weekly leaderboard (top 10) — gaming/trust signal
+ *   • "Miten pelataan" - 3 numbered steps
+ *   • "Pisteytys" - what counts toward the leaderboard
+ *   • Live weekly leaderboard (top 10) - gaming/trust signal
  *   • Big "Aloita peli" CTA
  *   • Honest small-print (no purchase, GDPR, weekly reset)
  *
@@ -239,7 +239,7 @@ const LeaderboardBlock = ({ gameSlug, board, lang }) => {
         <span className="mono" style={{
           fontSize: 10, letterSpacing: '0.18em', color: 'var(--muted)',
         }}>
-          {board?.week_iso ? `${pickPA(lang, 'intro.weekLabel')} ${board.week_iso}` : '—'} · {ranked} {pickPA(lang, 'intro.players')}
+          {board?.week_iso ? `${pickPA(lang, 'intro.weekLabel')} ${board.week_iso}` : '-'} · {ranked} {pickPA(lang, 'intro.players')}
         </span>
       </div>
 

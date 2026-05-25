@@ -1,5 +1,5 @@
 /**
- * MestariCopySectionsBottom — Clarity / Team / FAQ / Final CTA / Trust /
+ * MestariCopySectionsBottom - Clarity / Team / FAQ / Final CTA / Trust /
  * Footer. Lower half of the Mestari copy editor's section list.
  *
  * Mirror of `mestariCopySectionsTop.jsx`. See that file's docstring for

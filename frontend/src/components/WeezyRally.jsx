@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
-// Weezy Rally — lightweight canvas rally game.
+// Weezy Rally - lightweight canvas rally game.
 // Cockpit aesthetic: dark, mono HUD, dial-state colored elements.
 // Gameplay: vertically-scrolling road, swerve to avoid obstacles, score = distance × speed.
 // Controls:
 //   Desktop: ←/→ or A/D to steer; Space to brake; Up/Down to accelerate/brake
-//   Mobile:  on-canvas touch — drag to steer; tap brake button
+//   Mobile:  on-canvas touch - drag to steer; tap brake button
 // Each play lasts until 3 crashes or 75 s elapse. Score then submitted.
 
 const ROAD_COLOR = '#1A1A1A';
@@ -308,7 +308,7 @@ export const WeezyRally = ({ onFinish, onTick, lang = 'fi' }) => {
         ctx.globalAlpha = 1;
       }
 
-      // HUD top — speedometer arc + score + time + crashes already rendered as React overlay
+      // HUD top - speedometer arc + score + time + crashes already rendered as React overlay
     };
 
     raf = requestAnimationFrame(tick);

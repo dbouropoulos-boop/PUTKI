@@ -3,7 +3,7 @@ Seed an expanded curated Finnish gambling streamer roster.
 
 Goal: get to ~60-90 tracked streamers across Twitch + Kick + YouTube
 without depending on Twitch auto-discovery (which doesn't always surface
-small streamers and is blocked for Kick due to Cloudflare). Idempotent —
+small streamers and is blocked for Kick due to Cloudflare). Idempotent -
 re-running is safe; existing slugs are left untouched.
 
 Run inline:
@@ -130,7 +130,7 @@ async def main() -> None:
             "tier": tier,
             "scene": "finnish",
             "photo": _photo(name),
-            "followers": "—",
+            "followers": "-",
             "sub": "",
             "active": True,
             "auto_discovered": False,

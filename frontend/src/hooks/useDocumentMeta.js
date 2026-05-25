@@ -1,11 +1,11 @@
 /**
- * useDocumentMeta — small hook that synchronises <title> + <meta>/<link>
+ * useDocumentMeta - small hook that synchronises <title> + <meta>/<link>
  * tags on document.head for the duration of a route's lifecycle.
  *
  * SPA pages aren't pre-rendered, so Open Graph / Twitter Card scrapers
  * (Facebook, Telegram, X, LinkedIn) won't see meta tags unless they
  * exist in the initial HTML response. For now we still set them client
- * side — this is enough for in-app share buttons and the dynamic <title>,
+ * side - this is enough for in-app share buttons and the dynamic <title>,
  * and we keep the structure ready for SSR / pre-rendering later without
  * having to retrofit components.
  */
@@ -55,7 +55,7 @@ const useDocumentMeta = ({
   canonical,
   articleTags,
 } = {}) => {
-  // Collapse all meta values into a single stable key — the hook
+  // Collapse all meta values into a single stable key - the hook
   // re-runs whenever any meta value changes, but the dep array stays small.
   const metaKey = JSON.stringify({
     title, description, ogTitle, ogDescription, ogImage, ogUrl,

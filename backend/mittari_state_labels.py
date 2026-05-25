@@ -1,4 +1,4 @@
-"""PUTKI HQ — Mittari shared constants.
+"""PUTKI HQ - Mittari shared constants.
 
 Extracted from `telegram_bot.py` so both `dial_engine.py` and
 `telegram_bot.py` can reference these label maps without importing each
@@ -24,6 +24,6 @@ def state_label_fi(state_key: str | None) -> str:
     """Safe lookup with passthrough fallback so unknown states don't
     crash editorial templates."""
     if not state_key:
-        return "—"
+        return "-"
     key = state_key.upper()
     return STATE_LABELS_FI.get(key, key)

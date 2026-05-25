@@ -1,5 +1,5 @@
 /**
- * StickyTelegramCTA — floating Telegram subscribe pill that fades in
+ * StickyTelegramCTA - floating Telegram subscribe pill that fades in
  * after the user scrolls past the hero. Dismissable; remembers dismissal
  * for 7 days via localStorage. Used on the homepage + /viikon-kortti.
  */

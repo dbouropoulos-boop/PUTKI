@@ -1,4 +1,4 @@
-"""Iter33 — Voita lesson funnel reframe tests.
+"""Iter33 - Voita lesson funnel reframe tests.
 
 Covers:
 - GET /api/settings/public exposes voita_quiz_config (5 lessons w/ reveal fields)
@@ -199,11 +199,11 @@ class TestProfilePersistence:
         # 1. Read current
         public = requests.get(f"{BASE_URL}/api/settings/public", timeout=15).json()
         original_profiles = public["voita_predictor_profiles"]
-        # Find curious_learner default — safe to edit & restore
+        # Find curious_learner default - safe to edit & restore
         target = next(p for p in original_profiles if p["slug"] == "curious_learner")
         edited = copy.deepcopy(target)
         marker = "TEST_iter33_marker_text"
-        edited["edge_en"] = f"{marker} — clean openness edge copy."
+        edited["edge_en"] = f"{marker} - clean openness edge copy."
         # PUT with single edited profile array (single-edit payload)
         r = requests.put(
             f"{BASE_URL}/api/admin/settings",

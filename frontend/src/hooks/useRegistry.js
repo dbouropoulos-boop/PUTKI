@@ -1,4 +1,4 @@
-// Mittari V2 — registry hooks. Replace mock.js OPERATORS/STREAMERS imports.
+// Mittari V2 - registry hooks. Replace mock.js OPERATORS/STREAMERS imports.
 // Each hook returns { data, loading, error } so consumers can render empty
 // or loading states honestly.
 

@@ -7,11 +7,11 @@ const formatViewers = (n) => {
 };
 
 /**
- * Streamer card — non-clickable.
+ * Streamer card - non-clickable.
  *
  * Individual streamer profile pages (`/striimaajat/:slug`) are intentionally
  * not exposed publicly. The card surfaces the live state + thumbnail but
- * doesn't link anywhere — visitors discover streamers directly from the
+ * doesn't link anywhere - visitors discover streamers directly from the
  * homepage StreamerLiveGrid (which deep-links to the actual platform).
  */
 export const StreamerCard = ({ streamer }) => {

@@ -1,5 +1,5 @@
 /**
- * Mittari — standalone landing page (/mittari).
+ * Mittari - standalone landing page (/mittari).
  *
  * ONE JOB: capture an email or Telegram contact. Two products, one capture:
  * the Signals (five morning picks) and the Meter (live widget + state-change
@@ -9,12 +9,12 @@
  * spam bounce, mobile-native for the gambling audience). Email is the
  * smaller fallback.
  *
- * Section order (single clean pass — no duplicates):
- *   1. HERO — dial (left) + Telegram-primary gate (right) + signals-led
+ * Section order (single clean pass - no duplicates):
+ *   1. HERO - dial (left) + Telegram-primary gate (right) + signals-led
  *      headline + killer stat
- *   2. PÄIVÄN SIGNAALIT — locked numbered list; row #01 unlocks instantly
+ *   2. PÄIVÄN SIGNAALIT - locked numbered list; row #01 unlocks instantly
  *      on gate submit (reveal mechanic)
- *   3. HOW IT WORKS — 3 steps
+ *   3. HOW IT WORKS - 3 steps
  *   4. RECEIPTS TABLE
  *   5. TESTIMONIALS
  *   6. FOUNDER
@@ -44,7 +44,7 @@ const STATE_LABEL = {
   en: { KYLMA: 'CALM',  HAALEA: 'BUZZ', KUUMA: 'ACTIVE', MYRSKY: 'ROLLING',  KIIRASTULI: 'PERKELE' },
 };
 
-// Plain-language description for each meter state — explains in 1 line what
+// Plain-language description for each meter state - explains in 1 line what
 // the dashboard reader is looking at, so the state label isn't naked jargon.
 // Keeps copy promise: same data → same plain words, no editorial spin.
 const STATE_DESC = {
@@ -53,14 +53,14 @@ const STATE_DESC = {
     HAALEA:     'Joitakin signaaleja heräilemässä. Vilkaisun arvoinen, ei vielä toimintaa.',
     KUUMA:      'Kirjat tiukentuvat, striimit aktiivisia. Vakaita vetoja tarjolla.',
     MYRSKY:     'Vahva skeneaktiviteetti. Vähintään 3 vetoa yli Sharpness 70 tänään.',
-    KIIRASTULI: 'Monilähteinen piikki. Päivän huippu — toimi nyt tai missaat.',
+    KIIRASTULI: 'Monilähteinen piikki. Päivän huippu - toimi nyt tai missaat.',
   },
   en: {
     KYLMA:      'Market quiet. Little movement. Save your time for a hotter window.',
     HAALEA:     'A few signals stirring. Worth a glance, not yet a play.',
     KUUMA:      'Books tightening, streamers active. Solid plays on the board.',
     MYRSKY:     'Strong scene activity. ≥3 picks above Sharpness 70 today.',
-    KIIRASTULI: 'Multi-source spike. Top of the day — act now or miss it.',
+    KIIRASTULI: 'Multi-source spike. Top of the day - act now or miss it.',
   },
 };
 
@@ -71,15 +71,15 @@ const COPY = {
     headlineLead: 'Viisi vahvinta poimintaa',
     headlineEm: 'joka aamu klo 09:00',
     headlineTail: 'suoraan Telegramiin tai sähköpostiin.',
-    sublineLead: 'Sharpness-pisteytetty 0–100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista. Sama data, sama luku — ei mielipiteitä, ei toimituksellisia muokkauksia. Bonuksena Mittarin reaaliaikaiset skenehälytykset.',
+    sublineLead: 'Sharpness-pisteytetty 0-100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista. Sama data, sama luku - ei mielipiteitä, ei toimituksellisia muokkauksia. Bonuksena Mittarin reaaliaikaiset skenehälytykset.',
     killerEyebrow: 'KESKI-SHARPNESS TÄNÄÄN',
     killerSubLead: 'Päivän viisi poimintaa keskiarvolla',
-    killerSubTail: '— korkein implisiittinen todennäköisyys',
+    killerSubTail: '- korkein implisiittinen todennäköisyys',
     killerFoot: 'Live · 15 min päivitys · lähde Odds API + EU-urheilukirjat',
-    killerQuiet: 'Markkina hiljainen juuri nyt — pudotus klo 09:00.',
+    killerQuiet: 'Markkina hiljainen juuri nyt - pudotus klo 09:00.',
     countdownLabel: 'Seuraava pudotus',
     gateTitleTop: '→ Kytke putki',
-    gateLead: 'Avaa Telegramissa — yksi napsautus',
+    gateLead: 'Avaa Telegramissa - yksi napsautus',
     gateOneTapInline: 'YKSI NAPSAUTUS',
     gateBadge: 'ALLE 3S TOIMITUS',
     gateBullets: [
@@ -98,7 +98,7 @@ const COPY = {
     step1Title: '1 · MARKKINA',
     step1Body: 'EU-urheilukirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00.',
     step2Title: '2 · SKENE',
-    step2Body: 'Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0–100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele.',
+    step2Body: 'Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele.',
     step3Title: '3 · TOIMITUS',
     step3Body: 'Telegramiin alle 3 sekunnissa. Sähköposti varalla. Sido kerran, ei toista listaa, ei spämmiä.',
     receiptsTitle: 'VIIME SIGNAALIT · 7 VIIMEISINTÄ · AIKALEIMATTU',
@@ -108,7 +108,7 @@ const COPY = {
     pressTitle: 'MAINITTU',
     founderTitle: 'KUKA TÄMÄN TAKANA ON',
     founderEyebrow: 'PERUSTAJA · 9 VUOTTA SUOMEN SKENEN ÄÄRELLÄ',
-    founderQuote: 'Rakensin nämä koska olen kyllästynyt missaamaan parhaat hetket — sekä markkinassa että striimausskenessä. Nyt saan viisi vahvinta poimintaa aamulla ja hälytyksen sekunnissa kun skene vaihtaa tilaa.',
+    founderQuote: 'Rakensin nämä koska olen kyllästynyt missaamaan parhaat hetket - sekä markkinassa että striimausskenessä. Nyt saan viisi vahvinta poimintaa aamulla ja hälytyksen sekunnissa kun skene vaihtaa tilaa.',
     founderName: 'Eino K.',
     founderRole: 'Perustaja · Putki HQ',
     founderCreds: '9 vuotta skenen äärellä · Helsinki · 11 julkista lähdettä, 0 toimituksellista muokkausta',
@@ -126,7 +126,7 @@ const COPY = {
     stickyCta: 'AVAA',
     statusHit: 'OSUI', statusMiss: 'OHI', statusEarly: 'AIKAISIN',
     formErr: 'Tarkista sähköposti',
-    formSuccess: '✓ Kiitos — vahvistuslinkki sähköpostissasi',
+    formSuccess: '✓ Kiitos - vahvistuslinkki sähköpostissasi',
     meterStateLabel: 'MITTARI NYT',
     backHome: '← PUTKI HQ',
   },
@@ -135,15 +135,15 @@ const COPY = {
     headlineLead: 'Five strongest picks',
     headlineEm: 'every morning at 09:00',
     headlineTail: 'straight to Telegram or email.',
-    sublineLead: 'Sharpness-scored 0–100 from EU sportsbook price dispersion + momentum. Same data, same number — no opinions, no editorial overrides. Bonus: real-time Mittari scene alerts.',
+    sublineLead: 'Sharpness-scored 0-100 from EU sportsbook price dispersion + momentum. Same data, same number - no opinions, no editorial overrides. Bonus: real-time Mittari scene alerts.',
     killerEyebrow: 'AVG SHARPNESS TODAY',
     killerSubLead: 'Today\u2019s five picks average sharpness',
-    killerSubTail: '— top implied probability',
+    killerSubTail: '- top implied probability',
     killerFoot: 'Live · 15-min refresh · source Odds API + EU sportsbooks',
-    killerQuiet: 'Market quiet right now — next drop at 09:00.',
+    killerQuiet: 'Market quiet right now - next drop at 09:00.',
     countdownLabel: 'Next drop',
     gateTitleTop: '→ Connect the pipe',
-    gateLead: 'Open in Telegram — one tap',
+    gateLead: 'Open in Telegram - one tap',
     gateOneTapInline: 'ONE TAP',
     gateBadge: '<3S DELIVERY',
     gateBullets: [
@@ -162,7 +162,7 @@ const COPY = {
     step1Title: '1 · MARKET',
     step1Body: 'EU sportsbooks move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00.',
     step2Title: '2 · SCENE',
-    step2Body: 'Mittari composites 11 public sources into one number 0–100 and five states: Calm · Buzz · Active · Rolling · Perkele.',
+    step2Body: 'Mittari composites 11 public sources into one number 0-100 and five states: Calm · Buzz · Active · Rolling · Perkele.',
     step3Title: '3 · DELIVERY',
     step3Body: 'Telegram in under 3 seconds. Email fallback. Bind once, no second list, no spam.',
     receiptsTitle: 'RECENT SIGNALS · LAST 7 · TIMESTAMPED',
@@ -172,7 +172,7 @@ const COPY = {
     pressTitle: 'AS MENTIONED IN',
     founderTitle: 'WHO BUILT THIS',
     founderEyebrow: 'FOUNDER · 9 YEARS IN THE FINNISH SCENE',
-    founderQuote: 'I built these because I was tired of missing the best moments — both in the market and in the streaming scene. Now I get five strongest plays in the morning and a ping within seconds when the scene changes state.',
+    founderQuote: 'I built these because I was tired of missing the best moments - both in the market and in the streaming scene. Now I get five strongest plays in the morning and a ping within seconds when the scene changes state.',
     founderName: 'Eino K.',
     founderRole: 'Founder · Putki HQ',
     founderCreds: '9 years in the Finnish scene · Helsinki · 11 public sources, 0 editorial overrides',
@@ -190,7 +190,7 @@ const COPY = {
     stickyCta: 'UNLOCK',
     statusHit: 'HIT', statusMiss: 'MISS', statusEarly: 'EARLY',
     formErr: 'Check your email',
-    formSuccess: '✓ Thanks — confirmation link in your inbox',
+    formSuccess: '✓ Thanks - confirmation link in your inbox',
     meterStateLabel: 'METER NOW',
     backHome: '← PUTKI HQ',
   },
@@ -202,8 +202,8 @@ const COPY = {
 const TESTIMONIALS = [
   { id: 't1', initials: 'JK', name: 'Jukka K.',
     detail_fi: 'Espoo · 8 kk · Telegram', detail_en: 'Espoo · 8 mo · Telegram',
-    quote_fi: 'Päivän signaali #02 osui — Sharpness 81 oli täysin oikeassa. Tämä on parempi kuin foorumeilta haahuilu.',
-    quote_en: 'Daily signal #02 hit — Sharpness 81 was spot-on. Better than chasing forum tips.',
+    quote_fi: 'Päivän signaali #02 osui - Sharpness 81 oli täysin oikeassa. Tämä on parempi kuin foorumeilta haahuilu.',
+    quote_en: 'Daily signal #02 hit - Sharpness 81 was spot-on. Better than chasing forum tips.',
     receipt_fi: 'Tilaaja 15.9.2025 · 12/14 signaalia osui viime kuussa',
     receipt_en: 'Subscriber since 15.9.2025 · 12/14 signals hit last month' },
   { id: 't2', initials: 'SR', name: 'Sami R.',
@@ -214,8 +214,8 @@ const TESTIMONIALS = [
     receipt_en: 'Subscriber since 21.3.2025 · 94% alert open-rate over 30d' },
   { id: 't3', initials: 'AL', name: 'Antti L.',
     detail_fi: 'Helsinki · 6 kk · Telegram', detail_en: 'Helsinki · 6 mo · Telegram',
-    quote_fi: 'Yksi tilaus — signaalit aamulla, mittarihälytykset päivän mittaan. Ei kahta listaa, ei spämmiä.',
-    quote_en: 'One subscription — signals in the morning, meter alerts through the day. No second list, no spam.',
+    quote_fi: 'Yksi tilaus - signaalit aamulla, mittarihälytykset päivän mittaan. Ei kahta listaa, ei spämmiä.',
+    quote_en: 'One subscription - signals in the morning, meter alerts through the day. No second list, no spam.',
     receipt_fi: 'Tilaaja 12.11.2025 · suositellut 4 ystävälle',
     receipt_en: 'Subscriber since 12.11.2025 · referred 4 friends' },
 ];
@@ -274,11 +274,11 @@ const buildCopy = (lang, live) => {
     pageTitleEm: hero.page_title_em ?? (lang === 'en' ? 'Every morning at 09:00.' : 'Joka aamu klo 09:00.'),
     pageTitleTail: hero.page_title_tail ?? (lang === 'en' ? 'Free.' : 'Ilmaiseksi.'),
     pageSubtitle: hero.page_subtitle ?? (lang === 'en'
-      ? 'Five EU-market picks, scored 0–100 (Sharpness — how tightly the bookmakers agree). The dial tracks Finland\u2019s betting scene live: when streamers + odds + news heat up, you get an alert. Telegram or email. One signup. GDPR. Stop anytime.'
-      : 'Viisi vetoa EU-markkinoilta Sharpness-pisteytettynä (0–100 — kuinka tiiviisti kirjat ovat samaa mieltä). Mittari seuraa Suomen vedonlyöntiskeneä reaaliajassa: kun striimit + kertoimet + uutiset kuumenevat, saat hälytyksen. Telegram tai sähköposti. Yksi tilaus. GDPR. Lopeta milloin vain.'),
+      ? 'Five EU-market picks, scored 0-100 (Sharpness - how tightly the bookmakers agree). The dial tracks Finland\u2019s betting scene live: when streamers + odds + news heat up, you get an alert. Telegram or email. One signup. GDPR. Stop anytime.'
+      : 'Viisi vetoa EU-markkinoilta Sharpness-pisteytettynä (0-100 - kuinka tiiviisti kirjat ovat samaa mieltä). Mittari seuraa Suomen vedonlyöntiskeneä reaaliajassa: kun striimit + kertoimet + uutiset kuumenevat, saat hälytyksen. Telegram tai sähköposti. Yksi tilaus. GDPR. Lopeta milloin vain.'),
     signalsPairingLead: ((live.signals && live.signals[L]) || {}).pairing_lead ?? (lang === 'en' ? 'Two feeds.' : 'Kaksi syötettä.'),
     signalsPairingEm: ((live.signals && live.signals[L]) || {}).pairing_em ?? (lang === 'en' ? 'One signup.' : 'Yksi tilaus.'),
-    signalsPairingTail: ((live.signals && live.signals[L]) || {}).pairing_tail ?? (lang === 'en' ? 'Telegram or email — your choice.' : 'Telegram tai sähköposti — sinun valintasi.'),
+    signalsPairingTail: ((live.signals && live.signals[L]) || {}).pairing_tail ?? (lang === 'en' ? 'Telegram or email - your choice.' : 'Telegram tai sähköposti - sinun valintasi.'),
     headlineLead: hero.headline_lead ?? fb.headlineLead,
     headlineEm: hero.headline_em ?? fb.headlineEm,
     headlineTail: hero.headline_tail ?? fb.headlineTail,
@@ -517,7 +517,7 @@ const Gate = ({ c, variant, pendingId, onUnlock, tgUrl }) => {
           fontFamily: 'ui-monospace, monospace', fontSize: 10,
           letterSpacing: '0.12em', color: 'var(--muted)', textAlign: 'center',
           paddingTop: 4,
-        }}>— {c.gateOr} —</div>
+        }}>- {c.gateOr} -</div>
         <form onSubmit={submitEmail} className="m-emailrow" style={{
           display: 'flex', border: '1px solid var(--hairline)',
         }}>
@@ -618,7 +618,7 @@ const Mittari = () => {
   const [cockpit, setCockpit] = useState(null);
   const [odds, setOdds] = useState(null);
   const [stats, setStats] = useState(null);
-  // Admin detection — true iff the back-office token is set in
+  // Admin detection - true iff the back-office token is set in
   // localStorage. Used to surface the discreet "EDIT FOUNDER ↗"
   // deep-link without leaking it to regular visitors.
   const [isAdmin] = useState(() => {
@@ -639,8 +639,8 @@ const Mittari = () => {
       ? 'Daily Signals + Mittari · PUTKI HQ'
       : 'Päivän Signaalit + Mittari · PUTKI HQ',
     description: lang === 'en'
-      ? 'Five strongest betting picks every morning at 09:00 — Sharpness-scored. Bonus: real-time Mittari state-change alerts. Telegram or email.'
-      : 'Viisi vahvinta vetoa joka aamu klo 09:00 — Sharpness-pisteytetty. Bonuksena Mittarin reaaliaikaiset tilanvaihdokset. Telegramiin tai sähköpostiin.',
+      ? 'Five strongest betting picks every morning at 09:00 - Sharpness-scored. Bonus: real-time Mittari state-change alerts. Telegram or email.'
+      : 'Viisi vahvinta vetoa joka aamu klo 09:00 - Sharpness-pisteytetty. Bonuksena Mittarin reaaliaikaiset tilanvaihdokset. Telegramiin tai sähköpostiin.',
     canonical: `${BACKEND}/mittari`,
   });
 
@@ -681,7 +681,7 @@ const Mittari = () => {
   // Showing "12 connected" hurts more than it helps; <50 → hide the module.
   const showCounter = subscriberCount >= 50;
   // Drop placeholder/test signups so demo data never leaks into the feed.
-  // The backend may surface dev rows like "Test subscriber" — hide any
+  // The backend may surface dev rows like "Test subscriber" - hide any
   // row whose name starts with or contains the substring "test".
   const signupRows = ((stats?.latest_signups || []) || [])
     .filter((r) => {
@@ -690,7 +690,7 @@ const Mittari = () => {
     })
     .slice(0, 4);
 
-  // Editable lists — fall back to hardcoded constants when the live tree
+  // Editable lists - fall back to hardcoded constants when the live tree
   // hasn't loaded yet (or returns empty arrays).
   const testimonialsList = (liveCopy?.testimonials?.items && liveCopy.testimonials.items.length)
     ? liveCopy.testimonials.items : TESTIMONIALS;
@@ -724,9 +724,9 @@ const Mittari = () => {
 
       <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
 
-        {/* ╭─ HERO — the wheel + tips pairing (above the fold) ─╮ */}
+        {/* ╭─ HERO - the wheel + tips pairing (above the fold) ─╮ */}
         <section ref={heroRef} data-testid="mittari-hero" style={{ padding: '40px 0 24px' }}>
-          {/* Page title — Mittari meter + predictive signals */}
+          {/* Page title - Mittari meter + predictive signals */}
           <h1 data-testid="mittari-page-title" style={{
             fontFamily: 'Georgia, serif', fontWeight: 400,
             fontSize: 'clamp(28px, 4vw, 48px)', lineHeight: 1.05,
@@ -741,11 +741,11 @@ const Mittari = () => {
             color: 'var(--muted)', lineHeight: 1.55, letterSpacing: '0.02em',
             margin: '0 0 22px', maxWidth: 760,
           }}>{lang === 'en'
-            ? <>Five picks scored 0–100 by <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link> — a deterministic measure of how tightly EU sportsbooks price the market. The dial tracks Finland’s scene live: streamers, odds, news. <strong style={{ color: 'var(--ink)' }}>Editorial only — not betting advice.</strong></>
-            : <>Viisi vetoa pisteytettynä 0–100 <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link>-kaavalla — kuinka tiiviisti EU-urheilukirjat hinnoittelevat markkinan. Mittari seuraa Suomen skeneä reaaliajassa: striimit, kertoimet, uutiset. <strong style={{ color: 'var(--ink)' }}>Toimituksellista sisältöä — ei vetovinkkejä.</strong></>
+            ? <>Five picks scored 0-100 by <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link> - a deterministic measure of how tightly EU sportsbooks price the market. The dial tracks Finland’s scene live: streamers, odds, news. <strong style={{ color: 'var(--ink)' }}>Editorial only - not betting advice.</strong></>
+            : <>Viisi vetoa pisteytettynä 0-100 <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link>-kaavalla - kuinka tiiviisti EU-urheilukirjat hinnoittelevat markkinan. Mittari seuraa Suomen skeneä reaaliajassa: striimit, kertoimet, uutiset. <strong style={{ color: 'var(--ink)' }}>Toimituksellista sisältöä - ei vetovinkkejä.</strong></>
           }</p>
 
-          {/* Trust pills strip — concrete proof + frictionless commitments.
+          {/* Trust pills strip - concrete proof + frictionless commitments.
               Sits directly under the connective line so it does the heavy
               lifting before the user reaches the gate below the panel. */}
           <div data-testid="mittari-trust-strip" className="m-trust-strip" style={{
@@ -847,12 +847,12 @@ const Mittari = () => {
               </div>
             </div>
 
-            {/* Panel body — dial (38%) │ hairline │ signals (62%) */}
+            {/* Panel body - dial (38%) │ hairline │ signals (62%) */}
             <div className="m-panel-body" style={{
               display: 'grid', gridTemplateColumns: '0.38fr 1px 0.62fr',
               alignItems: 'stretch',
             }}>
-              {/* Left: dial only — every other widget moved to full-width
+              {/* Left: dial only - every other widget moved to full-width
                   strips below so the panel reads as a real dashboard
                   instead of two columns of disconnected stuff. */}
               <div data-testid="mittari-dial-slot" style={{
@@ -866,7 +866,7 @@ const Mittari = () => {
               {/* Hairline vertical divider */}
               <div aria-hidden style={{ background: 'var(--hairline)' }} />
 
-              {/* Right: signals list — list only, no bottom strip
+              {/* Right: signals list - list only, no bottom strip
                   (UNLOCK CTA is now a full-width band below the panel). */}
               <div data-testid="mittari-tips-slot" style={{
                 minWidth: 0, display: 'flex', flexDirection: 'column',
@@ -879,15 +879,15 @@ const Mittari = () => {
                   <div style={{
                     fontFamily: 'ui-monospace, monospace', fontSize: 10,
                     letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700,
-                  }}>{unlocked ? (c._signalsCopy?.head_unlocked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · UNLOCKED' : '— PÄIVÄN SIGNAALIT · AVATTU')) : (c._signalsCopy?.head_locked_eyebrow || (lang === 'en' ? '— TODAY\u2019S SIGNALS · LOCKED' : '— PÄIVÄN SIGNAALIT · LUKITTU'))}</div>
+                  }}>{unlocked ? (c._signalsCopy?.head_unlocked_eyebrow || (lang === 'en' ? '- TODAY\u2019S SIGNALS · UNLOCKED' : '- PÄIVÄN SIGNAALIT · AVATTU')) : (c._signalsCopy?.head_locked_eyebrow || (lang === 'en' ? '- TODAY\u2019S SIGNALS · LOCKED' : '- PÄIVÄN SIGNAALIT · LUKITTU'))}</div>
                   <Link to="/menetelma#sharpness" data-testid="mittari-panel-sharpness-link" style={{
                     fontFamily: 'ui-monospace, monospace', fontSize: 10,
                     letterSpacing: '0.14em', color: 'var(--muted)',
                     textDecoration: 'none', borderBottom: '1px dotted var(--muted)',
                   }} title={lang === 'en'
-                    ? 'Sharpness: 0–100 from EU sportsbook price dispersion + momentum'
-                    : 'Sharpness: 0–100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista'}>
-                    {lang === 'en' ? 'SHARPNESS 0–100 ?' : 'SHARPNESS 0–100 ?'}
+                    ? 'Sharpness: 0-100 from EU sportsbook price dispersion + momentum'
+                    : 'Sharpness: 0-100 EU-urheilukirjojen hinnoittelun hajonnasta ja momentumista'}>
+                    {lang === 'en' ? 'SHARPNESS 0-100 ?' : 'SHARPNESS 0-100 ?'}
                   </Link>
                 </div>
                 <MittariSignals compact unlocked={unlocked}
@@ -896,7 +896,7 @@ const Mittari = () => {
               </div>
             </div>
 
-            {/* ╔═ Full-width strip — WHAT THIS MEANS (state explainer)  ═╗
+            {/* ╔═ Full-width strip - WHAT THIS MEANS (state explainer)  ═╗
                 Below the two-column body so it spans the full panel and
                 visually ties dial-side to signals-side. Accent-bordered
                 left edge matches the current state color. */}
@@ -922,7 +922,7 @@ const Mittari = () => {
               }}>{stateDesc}</div>
             </div>
 
-            {/* ╔═ Full-width strip — DRIVERS row ═══════════════════════╗
+            {/* ╔═ Full-width strip - DRIVERS row ═══════════════════════╗
                 STREAMS · SPORTS · NEWS each fill 1fr so the bars span the
                 entire panel width and read as a true gauge breakdown. */}
             {cockpit?.sub_scores && typeof cockpit.sub_scores === 'object' && (
@@ -999,7 +999,7 @@ const Mittari = () => {
               </button>
             )}
 
-            {/* Panel footer — avg-Sharpness left, METHOD link right.
+            {/* Panel footer - avg-Sharpness left, METHOD link right.
                 Single source of truth for both (NEXT DROP is only in the
                 header strip; HOW THIS IS COMPUTED → METHOD merged). */}
             <div data-testid="mittari-panel-foot" style={{
@@ -1021,7 +1021,7 @@ const Mittari = () => {
             </div>
           </div>
 
-          {/* Single hero gate — directly under the pairing */}
+          {/* Single hero gate - directly under the pairing */}
           <div ref={gateRef} data-testid="mittari-hero-gate-wrap" style={{
             display: 'grid', gridTemplateColumns: '1fr', gap: 14,
             maxWidth: 760, margin: '0 auto',
@@ -1051,7 +1051,7 @@ const Mittari = () => {
         </section>
 
         {/* ╭─ TRACK RECORD ─╮
-            HOW IT WORKS section removed — its content was already
+            HOW IT WORKS section removed - its content was already
             covered by: trust pills (10+ EU BOOKS), WHAT THIS MEANS
             state strip, driver row, gate bullets, and the global METHOD
             link in the header / panel footer. Curious readers click
@@ -1163,7 +1163,7 @@ const Mittari = () => {
             {/* Admin-only deep-link → back-office copy editor.
                 Visible only when localStorage carries the admin token,
                 so regular visitors never see it. Server-side gate still
-                enforces auth — this is purely a UX shortcut. */}
+                enforces auth - this is purely a UX shortcut. */}
             {isAdmin && (
               <Link to="/back-office/mittari-copy#founder"
                 data-testid="mittari-founder-admin-edit"
@@ -1181,7 +1181,7 @@ const Mittari = () => {
             border: '1px solid var(--hairline)', padding: 28,
             display: 'grid', gridTemplateColumns: '100px 1fr', gap: 24, alignItems: 'start',
           }}>
-            {/* Founder avatar — designed editorial portrait.
+            {/* Founder avatar - designed editorial portrait.
                 Abstract silhouette (head + shoulder) in muted ink with a
                 serif monogram watermark + small accent dot. Reads as a
                 "stylized photo" without needing a real photograph. */}
@@ -1196,7 +1196,7 @@ const Mittari = () => {
                 {/* Soft inner shadow ring */}
                 <circle cx="50" cy="50" r="44" fill="none"
                   stroke="var(--hairline)" strokeWidth="1" />
-                {/* Stylized portrait silhouette — head + shoulders */}
+                {/* Stylized portrait silhouette - head + shoulders */}
                 <g fill="#E89248" opacity="0.18">
                   <circle cx="50" cy="40" r="13" />
                   <path d="M 22 85 Q 22 60 50 60 Q 78 60 78 85 Z" />
@@ -1322,7 +1322,7 @@ const Mittari = () => {
       </div>
 
       <style>{`
-        /* Unified Mittari panel stacks the body at <=1024 — the dial gets a
+        /* Unified Mittari panel stacks the body at <=1024 - the dial gets a
            bottom hairline instead of a right hairline, signals flow under. */
         @media (max-width: 1024px) {
           .m-panel-body {

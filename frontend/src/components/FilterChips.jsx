@@ -1,5 +1,5 @@
 /**
- * FilterChips — category + entity filter rail.
+ * FilterChips - category + entity filter rail.
  *
  * URL-driven state via searchParams so deep-links + browser back work.
  * Pure visual component; calls onFilterChange whenever active filters change.

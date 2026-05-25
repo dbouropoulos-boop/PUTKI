@@ -1,11 +1,11 @@
 """
-PUTKI HQ — Article view counts.
+PUTKI HQ - Article view counts.
 
 Tracks reads per published article via a lightweight `article_views`
 collection (one upsert per article id) and exposes:
-  • POST /api/content/:slug/view   — public, bumps counter
-  • GET  /api/content/:slug/stats  — returns {views}
-  • GET  /api/content/stats/bulk   — returns {[id]: views} for many ids
+  • POST /api/content/:slug/view   - public, bumps counter
+  • GET  /api/content/:slug/stats  - returns {views}
+  • GET  /api/content/stats/bulk   - returns {[id]: views} for many ids
                                       (used by the feed/news index for
                                       per-card view counts)
 
@@ -14,7 +14,7 @@ Schema (`article_views`):
 
 We dedupe per (article, viewer-fingerprint, day) to avoid trivially
 inflating counts from page reloads. The fingerprint is a lightweight
-hash of UA + IP (best-effort — not PII-grade, just spam protection).
+hash of UA + IP (best-effort - not PII-grade, just spam protection).
 """
 from __future__ import annotations
 
@@ -116,7 +116,7 @@ def build_views_router(db) -> APIRouter:
 
 
 async def total_views(db) -> int:
-    """Sum of all article views — used by SocialProofBar / activity totals."""
+    """Sum of all article views - used by SocialProofBar / activity totals."""
     try:
         cur = db.article_views.aggregate([
             {"$group": {"_id": None, "total": {"$sum": "$views"}}},

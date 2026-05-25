@@ -1,5 +1,5 @@
 """
-PUTKI HQ — Playbook upload + send queue.
+PUTKI HQ - Playbook upload + send queue.
 
 Single-doc model (admin uploads ONE universal playbook; every Voita lock-in
 gets it attached to their welcome email). PDF only, 5 MB cap.
@@ -16,7 +16,7 @@ Queue:
   - `email_outbox` documents have `{to, subject, body_html, body_text,
     attachments[{filename, sha256, mime}], status, attempts, scheduled_at,
     sent_at, last_error, voita_entry_id?, source}`.
-  - This module enqueues — actual SEND happens in workers/send_outbox.py
+  - This module enqueues - actual SEND happens in workers/send_outbox.py
     once RESEND_API_KEY is configured.
 
 GDPR: we do NOT store the PDF bytes in Mongo (keeps DB small) and we
@@ -87,7 +87,7 @@ async def save_playbook(db, *, data: bytes, filename: str, content_type: str,
     if (content_type or "").lower() != ALLOWED_MIME:
         raise ValueError(f"unsupported_mime_{content_type}_only_pdf")
     if not data.startswith(b"%PDF"):
-        # Belt-and-braces — reject anything that doesn't have the PDF magic.
+        # Belt-and-braces - reject anything that doesn't have the PDF magic.
         raise ValueError("not_a_valid_pdf")
 
     safe_filename = (filename or "playbook.pdf").strip()[:120]
@@ -160,27 +160,27 @@ def _derive_display_name(*, display_name: Optional[str], email: str,
 def _build_playbook_body(*, display_name: str, raffle_title: str,
                           entry_position: Optional[int], lang: str) -> Dict[str, str]:
     """Lightweight inline body. Final templating (HTML brand wrapper) lives
-    in workers/send_outbox.py — we keep both `body_html` and `body_text`
+    in workers/send_outbox.py - we keep both `body_html` and `body_text`
     so multipart sends look right."""
     if lang == "en":
         subject = "Your scout playbook + entry locked"
         intro = (
             f"Hey {display_name},\n\n"
             f"Your entry to {raffle_title} is locked in"
-            + (f" — you\u2019re entrant #{entry_position}" if entry_position else "")
+            + (f" - you\u2019re entrant #{entry_position}" if entry_position else "")
             + ". The kickoff result lands in your inbox shortly after the match.\n\n"
-            "Attached: the PUTKI HQ scout playbook — the same patterns the scout reports "
-            "use to surface the daily five.\n\nGood luck.\n— PUTKI HQ"
+            "Attached: the PUTKI HQ scout playbook - the same patterns the scout reports "
+            "use to surface the daily five.\n\nGood luck.\n- PUTKI HQ"
         )
     else:
         subject = "Scout-pelikirjasi + osallistuminen lukittu"
         intro = (
             f"Hei {display_name},\n\n"
             f"Osallistumisesi {raffle_title} -arvontaan on lukittu"
-            + (f" — olet osallistuja #{entry_position}" if entry_position else "")
+            + (f" - olet osallistuja #{entry_position}" if entry_position else "")
             + ". Ottelutulos lähtee sähköpostiisi pian kickoffin jälkeen.\n\n"
-            "Liitteenä: PUTKI HQ scout-pelikirja — samat kuviot, joita scout-raportit "
-            "käyttävät päivän viiden poiminnan nostoon.\n\nOnnea matkaan.\n— PUTKI HQ"
+            "Liitteenä: PUTKI HQ scout-pelikirja - samat kuviot, joita scout-raportit "
+            "käyttävät päivän viiden poiminnan nostoon.\n\nOnnea matkaan.\n- PUTKI HQ"
         )
     body_text = intro
     body_html = (
@@ -197,11 +197,11 @@ async def enqueue_playbook_email(db, *, email: str, display_name: Optional[str],
                                   lang: str = "fi") -> Optional[str]:
     """Enqueue ONE playbook email for a fresh Voita entry.
 
-    Idempotent on (entry_id, source=voita_playbook) — re-calling for the
+    Idempotent on (entry_id, source=voita_playbook) - re-calling for the
     same entry is a no-op so retry storms don't duplicate.
 
     Returns the new outbox _id (string) or None if there's no current
-    playbook (admin hasn't uploaded yet — message is queued anyway with a
+    playbook (admin hasn't uploaded yet - message is queued anyway with a
     NULL attachment marker so the send-worker can resolve at send time)."""
     if not email or "@" not in email:
         return None

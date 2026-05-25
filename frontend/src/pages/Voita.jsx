@@ -1,12 +1,12 @@
 /**
- * PUTKI HQ — Voita listing page.
+ * PUTKI HQ - Voita listing page.
  *
  * Page order (per editorial brief):
  *   1. Hero banner (editable copy + image via settings.voita_hero)
- *   2. Trust strip (€ paid total + raffles drawn + entrants — gated at 3k)
+ *   2. Trust strip (€ paid total + raffles drawn + entrants - gated at 3k)
  *   3. Active raffles grid (FanDuel-style tall photo-led cards → quiz funnel)
  *   4. How it works (3-step explainer)
- *   5. Past winners (compact news-portal row list — NO quiz CTA)
+ *   5. Past winners (compact news-portal row list - NO quiz CTA)
  *
  * Paid + drawn raffles are explicitly read-only and never link into the
  * quiz funnel.
@@ -43,7 +43,7 @@ const fmtCountdown = (iso, lang) => {
   return `${m}m`;
 };
 
-// Sport-themed gradient — sits under the (optional) photo overlay.
+// Sport-themed gradient - sits under the (optional) photo overlay.
 const SPORT_GRADIENT = {
   football: 'linear-gradient(135deg, #0e2b1a 0%, #1a4730 60%, #2b6f4e 100%)',
   icehockey: 'linear-gradient(135deg, #0e1a2b 0%, #1f3a5a 60%, #4a7aa6 100%)',
@@ -133,7 +133,7 @@ const ActiveRaffleCard = ({ r, lang }) => {
         e.currentTarget.style.transform = 'translateY(0)';
         e.currentTarget.style.boxShadow = 'none';
       }}>
-      {/* Optional editorial photo overlay — sits between gradient and content. */}
+      {/* Optional editorial photo overlay - sits between gradient and content. */}
       {r.image_url && (
         <div aria-hidden style={{
           position: 'absolute', inset: 0, zIndex: 0,
@@ -244,8 +244,8 @@ const PastRaffleRow = ({ r, lang }) => {
   const topWinner = winners[0];
   const totalPayout = winners.reduce((s, w) => s + (w.amount_eur || 0), 0);
   const winnerName = topWinner
-    ? (topWinner.display_name || topWinner.email_masked || '—')
-    : '—';
+    ? (topWinner.display_name || topWinner.email_masked || '-')
+    : '-';
   const date = fmtDate(result.drawn_at || r.kickoff_at, lang);
   return (
     <div data-testid={`voita-past-row-${r.slug}`}
@@ -279,8 +279,8 @@ const PastRaffleRow = ({ r, lang }) => {
         letterSpacing: '0.04em', minWidth: 60, textAlign: 'right',
       }}>
         {result.home_goals != null && result.away_goals != null
-          ? `${result.home_goals}–${result.away_goals}`
-          : '—'}
+          ? `${result.home_goals}-${result.away_goals}`
+          : '-'}
       </div>
       <div style={{
         fontFamily: 'Georgia, serif', fontSize: 16, fontWeight: 700,
@@ -306,7 +306,7 @@ const Voita = () => {
   const [loaded, setLoaded] = useState(false);
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Voita — PUTKI HQ' : 'Voita — PUTKI HQ',
+    title: lang === 'en' ? 'Voita - PUTKI HQ' : 'Voita - PUTKI HQ',
     description: lang === 'en'
       ? "PUTKI HQ's guess-the-winner editorial raffle. Free to enter, no deposit."
       : 'PUTKI HQ:n voittaja-ennustus -arvonta. Ilmainen osallistua, ei talletusta.',
@@ -338,7 +338,7 @@ const Voita = () => {
   // Sport-driven hero accent: the *first* active raffle decides the
   // hero's colour story (icehockey blue, football green, etc.) and the
   // matchup ticker on the right. This earns ~60px of above-the-fold
-  // space vs the old photo backdrop and makes the hero feel current —
+  // space vs the old photo backdrop and makes the hero feel current -
   // it visibly changes the moment a new raffle goes live.
   const featuredRaffle = (enabled && activeRaffles.length > 0) ? activeRaffles[0] : null;
   const featuredSport = (featuredRaffle && featuredRaffle.sport) || 'football';
@@ -350,7 +350,7 @@ const Voita = () => {
 
   return (
     <div data-testid="voita-page" style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px' }}>
-      {/* 1. HERO — compact band so the live raffles sit above the fold.
+      {/* 1. HERO - compact band so the live raffles sit above the fold.
           The sport of the featured (first) active raffle now drives the
           colour story (gradient + accent emoji + matchup ticker on the
           right), so the hero visibly changes the moment a new raffle
@@ -368,7 +368,7 @@ const Voita = () => {
         }} />
         {/* Decorative sport accent: a big, low-opacity emoji acts as a
             silent watermark behind the matchup ticker on the right side.
-            Replaces the VOITA letterform — more "current product"
+            Replaces the VOITA letterform - more "current product"
             signal, less brand vanity. */}
         <span aria-hidden style={{
           position: 'absolute', top: '50%', right: '6%', zIndex: 1,
@@ -427,7 +427,7 @@ const Voita = () => {
             )}
           </div>
 
-          {/* Right: featured-raffle matchup ticker — the sport accent.
+          {/* Right: featured-raffle matchup ticker - the sport accent.
               Only shown when there's a featured raffle; otherwise the
               empty-state copy already lives in the left column. */}
           {featuredRaffle && (
@@ -516,8 +516,8 @@ const Voita = () => {
           }}>{lang === 'en' ? 'Between raffles' : 'Arvontojen välissä'}</h2>
           <p style={{ color: 'var(--muted, #9C9587)', fontSize: 14, margin: 0 }}>
             {lang === 'en'
-              ? 'No active raffle right now — the next match drops shortly.'
-              : 'Ei käynnissä olevaa arvontaa juuri nyt — seuraava ottelu pian.'}
+              ? 'No active raffle right now - the next match drops shortly.'
+              : 'Ei käynnissä olevaa arvontaa juuri nyt - seuraava ottelu pian.'}
           </p>
         </section>
       )}
@@ -531,7 +531,7 @@ const Voita = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, background: 'var(--hairline, #221E1B)' }} className="voita-explainer-grid">
           {[
             ['01', lang === 'en' ? 'Pick a match' : 'Valitse ottelu',
-             lang === 'en' ? 'Choose from active raffles above. Free entry — email only.' : 'Valitse jokin yllä olevista käynnissä olevista arvonnoista. Ilmainen osallistua — vain sähköposti.'],
+             lang === 'en' ? 'Choose from active raffles above. Free entry - email only.' : 'Valitse jokin yllä olevista käynnissä olevista arvonnoista. Ilmainen osallistua - vain sähköposti.'],
             ['02', lang === 'en' ? 'Predict 1-X-2 + score' : 'Ennusta 1-X-2 + lopputulos',
              lang === 'en' ? '3 pts for correct 1-X-2. Best-of bonus: 5 exact / 3 goal-diff / 1 total-goals.' : '3 pistettä oikeasta 1-X-2:sta. Bonus: 5 tarkka, 3 maaliero, 1 maalisumma.'],
             ['03', lang === 'en' ? 'Top entries win' : 'Parhaat voittavat',
@@ -546,7 +546,7 @@ const Voita = () => {
         </div>
       </section>
 
-      {/* 5. PAST WINNERS — compact list, NO quiz funnel link */}
+      {/* 5. PAST WINNERS - compact list, NO quiz funnel link */}
       {loaded && pastRaffles.length > 0 && (
         <section data-testid="voita-past-section" style={{ borderTop: '1px solid var(--hairline, #221E1B)', padding: '36px 0 24px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>

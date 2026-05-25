@@ -143,7 +143,7 @@ function App() {
             <Route path="tietoa-meista" element={<TietoaMeista />} />
             <Route path="voita-palkinto" element={<VoitaPalkinto />} />
 
-            {/* Phase 1 Final Restructure · Chunk B — dedicated landing pages */}
+            {/* Phase 1 Final Restructure · Chunk B - dedicated landing pages */}
             <Route path="mittari" element={<Mittari />} />
             <Route path="pelisignaalit" element={<Pelisignaalit />} />
             <Route path="voita" element={<Voita />} />
@@ -151,7 +151,7 @@ function App() {
             <Route path="voita/:slug" element={<VoitaRaffle />} />
             <Route path="voita/:slug/kiitos" element={<VoitaKiitos />} />
 
-            {/* Legacy routes — 301 redirect, preserving ?ref / ?invite / ?pick query params */}
+            {/* Legacy routes - 301 redirect, preserving ?ref / ?invite / ?pick query params */}
             <Route path="viikon-kortti" element={<RedirectWithQuery to="/pelisignaalit" />} />
             <Route path="vihjeet" element={<RedirectWithQuery to="/pelisignaalit" />} />
             <Route path="mittari/historia" element={<MittariHistoria />} />

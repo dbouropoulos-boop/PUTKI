@@ -1,4 +1,4 @@
-"""Phase 3 V2 — Source map + foundational research + editorial scheduler tests."""
+"""Phase 3 V2 - Source map + foundational research + editorial scheduler tests."""
 import os
 import time
 import uuid
@@ -61,7 +61,7 @@ class TestFoundationalResearch:
             "topic_area": "TEST · Veikkaus Q1 sponsorship spend",
             "beat": "sponsorship",
             "sub_beat": "ice hockey",
-            "editorial_angle": "Test angle — delete after run.",
+            "editorial_angle": "Test angle - delete after run.",
             "key_facts": [{
                 "fact": "Test fact",
                 "source_attribution": "veikkaus_news",
@@ -125,7 +125,7 @@ class TestEditorialScheduler:
 
     def test_tick_skips_when_no_research(self):
         """Architecture-only guarantee: scheduler MUST skip when
-        foundational_research is empty for a beat — no fabricated content."""
+        foundational_research is empty for a beat - no fabricated content."""
         # Wipe any test entries from previous runs to guarantee empty pool for regulatory.
         # We can't wipe wholesale, but a force tick should report no_foundational_research
         # for content types whose research pool is empty.

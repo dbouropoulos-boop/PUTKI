@@ -1,5 +1,5 @@
 /**
- * BellAlertManager — header bell icon + dropdown panel.
+ * BellAlertManager - header bell icon + dropdown panel.
  *
  * Click the bell:
  *   • Not signed in   → email + 6-digit code flow (inline)
@@ -296,7 +296,7 @@ const errorStyle = {
 const T_FI = {
   openLabel: 'Hälytysten hallinta',
   signinTitle: 'Hallinnoi striimerihälytyksiä',
-  signinLead1: 'Syötä sähköpostiosoite — lähetämme 6-numeroisen koodin.',
+  signinLead1: 'Syötä sähköpostiosoite - lähetämme 6-numeroisen koodin.',
   signinLead2: (email) => `Syötä 6-numeroinen koodi joka lähetettiin osoitteeseen ${email}.`,
   emailPlaceholder: 'sinun@email.fi',
   sendCode: 'Lähetä koodi',
@@ -314,8 +314,8 @@ const T_FI = {
     invalid_email: 'Tarkista sähköpostiosoite.',
     invalid_code: 'Koodissa pitää olla 6 numeroa.',
     code_mismatch: 'Koodi ei täsmää. Yritä uudelleen.',
-    code_expired_or_unknown: 'Koodi vanheni — pyydä uusi.',
-    too_many_attempts: 'Liikaa yrityksiä — pyydä uusi koodi.',
+    code_expired_or_unknown: 'Koodi vanheni - pyydä uusi.',
+    too_many_attempts: 'Liikaa yrityksiä - pyydä uusi koodi.',
     unauthorized: 'Istunto vanheni. Kirjaudu uudelleen.',
   },
 };
@@ -323,7 +323,7 @@ const T_FI = {
 const T_EN = {
   openLabel: 'Manage your alerts',
   signinTitle: 'Manage your streamer alerts',
-  signinLead1: 'Enter your email — we\u2019ll send you a 6-digit code.',
+  signinLead1: 'Enter your email - we\u2019ll send you a 6-digit code.',
   signinLead2: (email) => `Enter the 6-digit code sent to ${email}.`,
   emailPlaceholder: 'you@email.com',
   sendCode: 'Send code',
@@ -341,8 +341,8 @@ const T_EN = {
     invalid_email: 'Check the email address.',
     invalid_code: 'Code must be 6 digits.',
     code_mismatch: 'Code doesn\u2019t match. Try again.',
-    code_expired_or_unknown: 'Code expired — request a new one.',
-    too_many_attempts: 'Too many attempts — request a new code.',
+    code_expired_or_unknown: 'Code expired - request a new one.',
+    too_many_attempts: 'Too many attempts - request a new code.',
     unauthorized: 'Session expired. Sign in again.',
   },
 };

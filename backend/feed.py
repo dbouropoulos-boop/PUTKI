@@ -1,5 +1,5 @@
 """
-PUTKI HQ Phase 3 V2 — Final Architecture Step 4: Live-feed aggregation layer.
+PUTKI HQ Phase 3 V2 - Final Architecture Step 4: Live-feed aggregation layer.
 
 Aggregates `signals` (poller + webhook ingress) + `published_content`
 (editorial pipeline output) into a single normalised `feed_items` view that
@@ -11,21 +11,21 @@ Schema for feed_items:
     id:         uuid,
     source:     "twitch" | "kick" | "youtube" | "editorial" | "sports" | "forum" | "internal",
     kind:       "stream_live" | "video_published" | "moment" | "match" | "forum_burst" | "editorial_drop",
-    title:      str        — short, hub-card-friendly headline
-    body:       str | None — optional 1-line context
-    eyebrow:    str | None — small uppercase tag (channel name, league, content_type)
-    url:        str | None — outbound link
-    slug:       str | None — operator/streamer slug if applicable
-    weight:     int        — 0..100 importance (signal weight or editorial bias)
-    market_id:  str        — default "FI"
-    surfaced_at: ISO-8601  — when this should rank in the hub
+    title:      str        - short, hub-card-friendly headline
+    body:       str | None - optional 1-line context
+    eyebrow:    str | None - small uppercase tag (channel name, league, content_type)
+    url:        str | None - outbound link
+    slug:       str | None - operator/streamer slug if applicable
+    weight:     int        - 0..100 importance (signal weight or editorial bias)
+    market_id:  str        - default "FI"
+    surfaced_at: ISO-8601  - when this should rank in the hub
     created_at:  ISO-8601
-    expires_at:  ISO-8601  — TTL window so stale stream cards drop out
-    mocked:     bool       — passthrough from signal source
-    source_ref: dict       — pointer back to signals.id / published_content.id for traceability
+    expires_at:  ISO-8601  - TTL window so stale stream cards drop out
+    mocked:     bool       - passthrough from signal source
+    source_ref: dict       - pointer back to signals.id / published_content.id for traceability
   }
 
-Honesty contract: aggregation NEVER fabricates new items — every feed_item is
+Honesty contract: aggregation NEVER fabricates new items - every feed_item is
 backed by either a real signal row (incl. webhook ingress) or a real
 published_content row. Mock signals propagate `mocked=True` so the hub can
 visually distinguish if needed.
@@ -310,7 +310,7 @@ async def rebuild_feed(db, *, market_id: str = FEED_DEFAULT_MARKET, signal_limit
             continue
         item["market_id"] = market_id
         upserts.append(item)
-    # Strip offline keys from the upsert list — if a streamer signaled live
+    # Strip offline keys from the upsert list - if a streamer signaled live
     # AND offline in the same window we trust the offline (latest wins).
     upserts = [u for u in upserts if u.get("dedup_key") not in offline_keys]
 
@@ -320,7 +320,7 @@ async def rebuild_feed(db, *, market_id: str = FEED_DEFAULT_MARKET, signal_limit
             item["market_id"] = market_id
             upserts.append(item)
 
-    # 3) upsert each on (dedup_key, market_id) — keep newest surfaced_at + bump expires.
+    # 3) upsert each on (dedup_key, market_id) - keep newest surfaced_at + bump expires.
     written = 0
     for item in upserts:
         if not item.get("dedup_key"):
@@ -423,7 +423,7 @@ async def list_feed(
         q["mocked"] = False
     # Hide expired in case the pruner is mid-tick.
     q["expires_at"] = {"$gte": _iso(_now())}
-    # Defensive — never surface LLM placeholder hallucinations or synthetic
+    # Defensive - never surface LLM placeholder hallucinations or synthetic
     # test fixtures on the live ticker even if they got into feed_items
     # somehow (e.g. legacy doc, before the publish-time guard was added).
     _bad_regex = (
@@ -446,7 +446,7 @@ async def list_feed(
 
 
 async def feed_stats(db, *, market_id: str = FEED_DEFAULT_MARKET) -> Dict[str, Any]:
-    """Editor surface — how full is the feed and from which sources."""
+    """Editor surface - how full is the feed and from which sources."""
     pipeline = [
         {"$match": {"market_id": market_id, "expires_at": {"$gte": _iso(_now())}}},
         {"$group": {"_id": "$source", "count": {"$sum": 1}}},

@@ -20,11 +20,11 @@ const Toimitus = () => {
             {lang === 'en'
               ? <>PUTKI HQ is an independent Finnish slot-streaming and casino review publication.
                 The voice you hear in our reviews, weekly card and editorial commentary is the
-                <strong style={{ color: 'var(--ink)' }}> PUTKI HQ -toimitus</strong> — an institutional editorial team, not a fictional persona.
+                <strong style={{ color: 'var(--ink)' }}> PUTKI HQ -toimitus</strong> - an institutional editorial team, not a fictional persona.
                 When we hire named contributors, their bylines and track records will appear on this page.</>
               : <>PUTKI HQ on riippumaton suomalainen slot-striimausta ja kasinoita käsittelevä julkaisu.
                 Arvioidemme, viikon kortin ja toimituksellisen kommentaarin ääni on
-                <strong style={{ color: 'var(--ink)' }}> PUTKI HQ -toimitus</strong> — toimituksellinen tiimi, ei fiktiivinen hahmo.
+                <strong style={{ color: 'var(--ink)' }}> PUTKI HQ -toimitus</strong> - toimituksellinen tiimi, ei fiktiivinen hahmo.
                 Kun palkkaamme nimettyjä avustajia, heidän nimensä ja jälkensä ilmestyvät tälle sivulle.</>}
           </p>
         </div>
@@ -59,7 +59,7 @@ const Toimitus = () => {
             <p className="font-serif" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.55 }}>
               {lang === 'en'
                 ? 'Score changes are logged with reasoning. Editorial corrections are appended to articles, not silently fixed.'
-                : 'Pistemuutokset kirjataan perusteluineen. Toimitukselliset korjaukset lisätään juttujen loppuun — niitä ei korjata hiljaa.'}
+                : 'Pistemuutokset kirjataan perusteluineen. Toimitukselliset korjaukset lisätään juttujen loppuun - niitä ei korjata hiljaa.'}
             </p>
           </article>
 
@@ -73,8 +73,8 @@ const Toimitus = () => {
             </h3>
             <p className="font-serif" style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.55 }}>
               {lang === 'en'
-                ? 'Reach the editorial team at toimitus@putkihq.fi. We read every message — but the dial does not move on whims.'
-                : 'Tavoita toimitus osoitteesta toimitus@putkihq.fi. Luemme jokaisen viestin — PUTKI HQ ei kuitenkaan liiku oikuilla.'}
+                ? 'Reach the editorial team at toimitus@putkihq.fi. We read every message - but the dial does not move on whims.'
+                : 'Tavoita toimitus osoitteesta toimitus@putkihq.fi. Luemme jokaisen viestin - PUTKI HQ ei kuitenkaan liiku oikuilla.'}
             </p>
           </article>
         </div>
@@ -89,10 +89,10 @@ const Toimitus = () => {
           </h2>
           <p className="font-serif" style={{ fontSize: 15, color: 'var(--muted)', lineHeight: 1.6 }}>
             {lang === 'en'
-              ? <>PUTKI HQ is hiring its first named editors — a Finnish sports analyst for the weekly card, and an industry editor for operator reviews.
+              ? <>PUTKI HQ is hiring its first named editors - a Finnish sports analyst for the weekly card, and an industry editor for operator reviews.
                 When they join, their bylines, photos and personal track records replace the institutional <em>PUTKI HQ -toimitus</em> placeholder on those surfaces.
                 Real human accountability, not a fictional persona.</>
-              : <>PUTKI HQ etsii ensimmäisiä nimettyjä toimittajiaan — urheiluanalyytikkoa viikon korttiin ja kasinotoimittajaa operaattoriarvioihin.
+              : <>PUTKI HQ etsii ensimmäisiä nimettyjä toimittajiaan - urheiluanalyytikkoa viikon korttiin ja kasinotoimittajaa operaattoriarvioihin.
                 Kun he aloittavat, heidän nimensä, kuvansa ja henkilökohtaiset jälkensä korvaavat institutionaalisen <em>PUTKI HQ -toimitus</em> -pohjan kyseisillä pinnoilla.
                 Todellinen vastuullisuus, ei fiktiivinen hahmo.</>}
           </p>

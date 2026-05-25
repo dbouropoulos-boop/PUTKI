@@ -1,5 +1,5 @@
 """
-Phase 4 Week 3 (cont.) — validation gate · /api/content/stats · LegalDisclaimer
+Phase 4 Week 3 (cont.) - validation gate · /api/content/stats · LegalDisclaimer
 visibility · Activity-stats endpoint sanity.
 """
 from __future__ import annotations

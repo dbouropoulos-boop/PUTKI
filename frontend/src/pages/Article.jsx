@@ -1,5 +1,5 @@
 /**
- * Article — public single-article page for Layer 2 auto-published content.
+ * Article - public single-article page for Layer 2 auto-published content.
  *
  * Resolves /:category/:slug against /api/content/published/:slug. Renders the
  * full editorial body with Open Graph / Twitter Card meta tags lifted from the

@@ -1,12 +1,12 @@
 /**
- * VoyagerCorner — Final Architecture Step 5 · top-right hub strip card.
+ * VoyagerCorner - Final Architecture Step 5 · top-right hub strip card.
  *
  * Shows this week's Voyager rotation (operator + theme + prize summary)
  * when configured in /back-office/operators → Voyager rotation calendar.
  * Honest empty state when no week is scheduled.
  *
  * Lives top-right above the fold next to the dial cockpit. Reads
- * /api/voyager/current-week. No polling — voyager rotation moves weekly.
+ * /api/voyager/current-week. No polling - voyager rotation moves weekly.
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';

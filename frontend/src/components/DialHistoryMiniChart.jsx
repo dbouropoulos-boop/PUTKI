@@ -3,7 +3,7 @@ import { DIAL_STATES } from '../constants/dial';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// V2 honesty pass — DialHistoryMiniChart reads /api/dial/history.
+// V2 honesty pass - DialHistoryMiniChart reads /api/dial/history.
 // No mock generator. When the snapshots collection is empty (first boot),
 // chart renders a flat current-value line rather than fabricated history.
 

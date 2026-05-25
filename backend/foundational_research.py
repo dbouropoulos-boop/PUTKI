@@ -1,5 +1,5 @@
 """
-PUTKI HQ Phase 3 V2 — Foundational research store.
+PUTKI HQ Phase 3 V2 - Foundational research store.
 
 A structured knowledge base that backs the editorial_seed_scheduler. Topic
 generation reads from this collection (filtered by beat / content_type / freshness)
@@ -82,7 +82,7 @@ def _now_iso() -> str:
 
 
 def _normalise_entry(entry: Dict[str, Any], *, created_by: str = "import") -> Dict[str, Any]:
-    """Light validation + defaults — never raises, fills missing fields."""
+    """Light validation + defaults - never raises, fills missing fields."""
     return {
         "id": entry.get("id") or str(uuid.uuid4()),
         "topic_area": (entry.get("topic_area") or "").strip(),

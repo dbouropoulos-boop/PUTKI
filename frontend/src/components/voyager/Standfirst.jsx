@@ -1,5 +1,5 @@
 /**
- * Voyager — Standfirst (editorial header above the game).
+ * Voyager - Standfirst (editorial header above the game).
  *
  * Eyebrow · headline · verdict paragraph · "we tried it ourselves"
  * line. Countdown reflects the REAL next-rotation timestamp.
@@ -61,8 +61,8 @@ const Standfirst = ({ lang, rotationISO, week }) => {
           margin: '14px 0 12px',
         }}>
           {lang === 'en'
-            ? `${week.game.title_en} × ${week.operator.name} × Putki HQ — pick of the week.`
-            : `${week.game.title_fi} × ${week.operator.name} × Putki HQ — viikon valinta.`}
+            ? `${week.game.title_en} × ${week.operator.name} × Putki HQ - pick of the week.`
+            : `${week.game.title_fi} × ${week.operator.name} × Putki HQ - viikon valinta.`}
         </h1>
         <p data-testid="voyager-verdict" style={{
           fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.55,

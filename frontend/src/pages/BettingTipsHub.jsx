@@ -1,5 +1,5 @@
 /**
- * BettingTipsHub — public `/vihjeet` page.
+ * BettingTipsHub - public `/vihjeet` page.
  *
  * Daily tabs (Today / Tomorrow / This week) + 7-day calendar strip.
  * Every pick card renders five social-share buttons (Telegram, X,
@@ -54,7 +54,7 @@ const ShareButtons = ({ pick, lang, t }) => {
   };
 
   const onInstagram = async () => {
-    // Instagram has no web-share intent — copy caption and surface a hint.
+    // Instagram has no web-share intent - copy caption and surface a hint.
     try {
       await navigator.clipboard.writeText(full);
       setCopied(true);
@@ -229,7 +229,7 @@ const Calendar7Day = ({ days, activeIso, onPick, lang, t }) => {
                 {c.label.toUpperCase()}
               </div>
               <div className="display mt-1" style={{ fontSize: 22, fontWeight: 700, lineHeight: 1 }}>
-                {c.count > 0 ? c.count : '—'}
+                {c.count > 0 ? c.count : '-'}
               </div>
               <div className="mono mt-1" style={{ fontSize: 9.5, letterSpacing: '0.18em', opacity: 0.7 }}>
                 {c.count > 0
@@ -359,8 +359,8 @@ const BettingTipsHub = () => {
   useDocumentMeta({
     title: lang === 'en' ? 'Tips · PUTKI HQ' : 'Vinkit · PUTKI HQ',
     description: lang === 'en'
-      ? 'Real betting tips for the next 7 days — shareable to Telegram, X, Facebook, WhatsApp, Instagram.'
-      : 'Aitoja vedonlyöntivinkkejä seuraavalle 7 päivälle — jaettavissa Telegramiin, X:ään, Facebookiin, WhatsAppiin ja Instagramiin.',
+      ? 'Real betting tips for the next 7 days - shareable to Telegram, X, Facebook, WhatsApp, Instagram.'
+      : 'Aitoja vedonlyöntivinkkejä seuraavalle 7 päivälle - jaettavissa Telegramiin, X:ään, Facebookiin, WhatsAppiin ja Instagramiin.',
     canonical: `${BACKEND}/vihjeet`,
   });
 
@@ -386,7 +386,7 @@ const BettingTipsHub = () => {
     return [];
   }, [days, activeTab, calendarIso, todayIso, tomorrowIso]);
 
-  // Track unique picks the user has scrolled through — drives the
+  // Track unique picks the user has scrolled through - drives the
   // Telegram conversion modal threshold (opens after 3 unique picks).
   useEffect(() => {
     let changed = false;

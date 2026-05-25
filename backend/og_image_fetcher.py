@@ -1,5 +1,5 @@
 """
-PUTKI HQ — News hero image fetcher (Phase 1 Final Restructure · Chunk A).
+PUTKI HQ - News hero image fetcher (Phase 1 Final Restructure · Chunk A).
 
 Responsibilities
 ================
@@ -20,7 +20,7 @@ Editorial guarantee
 -------------------
 This is standard editorial practice (FT, Bloomberg, Apple News, Google News).
 Combined with the strict source-citation validator already in
-`content_generator.validate_content`, this is journalism — not scraping.
+`content_generator.validate_content`, this is journalism - not scraping.
 Outlets requesting removal must be added to the back-office blocklist; the
 fetcher honours it on every subsequent fetch.
 """
@@ -115,7 +115,7 @@ async def remove_from_blocklist(db, domain: str) -> bool:
 # ── Cache helpers ─────────────────────────────────────────────────────────
 def _cache_key(url: str) -> str:
     # SHA1 used solely as a content-addressed cache key (URL → filename).
-    # Not security-sensitive — `usedforsecurity=False` silences bandit B324.
+    # Not security-sensitive - `usedforsecurity=False` silences bandit B324.
     return hashlib.sha1(url.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
 
 
@@ -234,7 +234,7 @@ async def fetch_and_cache(
     on success, or None when the image is unavailable / invalid / blocked.
     Result is cached for 7 days.
 
-    Never raises — failures degrade silently to None so the frontend can
+    Never raises - failures degrade silently to None so the frontend can
     render the designed fallback hero.
     """
     if _disabled() or not article_url:

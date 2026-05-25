@@ -1,5 +1,5 @@
 """
-Iter59 — Per-game public leaderboard endpoint tests.
+Iter59 - Per-game public leaderboard endpoint tests.
 
 Adds coverage for `GET /api/mini-games/leaderboard/{game_slug}` introduced
 to power the standalone game-page intros (each /peliareena/* sub-page).
@@ -55,5 +55,5 @@ def test_per_game_leaderboard_rejects_unknown_game():
 def test_per_game_leaderboard_respects_limit_clamp():
     r = httpx.get(f"{BASE}/api/mini-games/leaderboard/quiz_gambling_literacy?limit=200", timeout=15.0)
     assert r.status_code == 200
-    # Internal clamp is 50 — list cannot exceed that even on garbage input
+    # Internal clamp is 50 - list cannot exceed that even on garbage input
     assert len(r.json()["leaderboard"]) <= 50

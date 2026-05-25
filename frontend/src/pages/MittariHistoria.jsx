@@ -1,5 +1,5 @@
 /**
- * MittariHistoria — dedicated dial history page at /mittari/historia.
+ * MittariHistoria - dedicated dial history page at /mittari/historia.
  *
  * Reads /api/dial/history (limit=200) and surfaces:
  *  - 7-day composite-score line chart (full-width)
@@ -35,7 +35,7 @@ const fmtClock = (iso, lang = 'fi') => {
       hour: '2-digit', minute: '2-digit',
       timeZone: 'Europe/Helsinki',
     }).format(t);
-  } catch { return '—'; }
+  } catch { return '-'; }
 };
 
 const Chart = ({ data, width = 980, height = 320, lang = 'fi' }) => {
@@ -155,7 +155,7 @@ const MittariHistoria = () => {
   const [loading, setLoading] = useState(true);
 
   useDocumentMeta({
-    title: lang === 'en' ? 'Meter · History — PUTKI HQ' : 'Mittari · Historia — PUTKI HQ',
+    title: lang === 'en' ? 'Meter · History - PUTKI HQ' : 'Mittari · Historia - PUTKI HQ',
     description: lang === 'en'
       ? 'Recent PUTKI HQ meter readings and state distribution.'
       : 'PUTKI HQ:n perkele-mittarin lukemat ja tilajakauma viime polleilta.',
@@ -203,8 +203,8 @@ const MittariHistoria = () => {
         </h1>
         <p className="font-serif mt-4 max-w-2xl" style={{ fontSize: 16, color: 'var(--muted)', lineHeight: 1.55 }}>
           {lang === 'en'
-            ? 'Composite score timeline of the PUTKI HQ meter. Each dot is a single polling round — Layer 2 workers ship 3–5 snapshots per hour on average.'
-            : 'Perkele-mittarin kokonaislukeman aikajana. Jokainen piste on yksi pollauskierros — Layer 2 -työntekijät kirjoittavat keskimäärin 3–5 snapshotia tunnissa.'}
+            ? 'Composite score timeline of the PUTKI HQ meter. Each dot is a single polling round - Layer 2 workers ship 3-5 snapshots per hour on average.'
+            : 'Perkele-mittarin kokonaislukeman aikajana. Jokainen piste on yksi pollauskierros - Layer 2 -työntekijät kirjoittavat keskimäärin 3-5 snapshotia tunnissa.'}
         </p>
       </section>
 

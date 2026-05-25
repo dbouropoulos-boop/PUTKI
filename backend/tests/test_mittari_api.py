@@ -46,7 +46,7 @@ class TestDial:
         # All required keys per spec
         for k in ("key", "label", "color", "value", "headline"):
             assert k in st, f"missing key {k}"
-        # Dial is dynamically computed by the recalc engine — any of the 5 valid states is acceptable
+        # Dial is dynamically computed by the recalc engine - any of the 5 valid states is acceptable
         assert st["key"] in {"KYLMA", "HAALEA", "KUUMA", "MYRSKY", "KIIRASTULI"}
         assert st["color"].startswith("#")
         assert isinstance(st["value"], int)

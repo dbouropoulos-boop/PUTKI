@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useLang } from '../context/LanguageContext';
 
-// PUTKI HQ editorial accountability footer — per V2 Master Brief §10.3.
+// PUTKI HQ editorial accountability footer - per V2 Master Brief §10.3.
 // Sits at the bottom of every editorial piece (profile, scene news, money commentary,
 // cultural feature, game literacy, etc.). Carries byline + päivitetty timestamp +
 // read time + change-log link. Placeholder "PUTKI HQ" until real bylines exist.

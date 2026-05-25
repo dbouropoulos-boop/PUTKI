@@ -1,5 +1,5 @@
 /**
- * RedirectWithQuery — preserves query params when 301-redirecting legacy
+ * RedirectWithQuery - preserves query params when 301-redirecting legacy
  * routes to their new homes. React Router renders a Navigate which the
  * browser History API treats as a client-side redirect (effectively 301
  * for SPA crawl-equivalence).

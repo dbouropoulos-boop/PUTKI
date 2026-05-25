@@ -1,5 +1,5 @@
 /**
- * MestariCopySections — every section renderer for the Mestari copy editor.
+ * MestariCopySections - every section renderer for the Mestari copy editor.
  *
  * Extracted from BackOfficeMestariCopy.jsx in iter50 because that file was
  * approaching the 700-LOC soft cap. Each section is a pure presentational
@@ -7,7 +7,7 @@
  * threads `resetSection` to clear that section back to defaults.
  *
  * Setters are defined inline per section (a few lines each) rather than
- * threaded through props — keeps each section self-contained and avoids
+ * threaded through props - keeps each section self-contained and avoids
  * leaking 17 callbacks through the component tree.
  *
  * All section data-testids on the public surface are preserved (testing
