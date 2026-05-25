@@ -143,38 +143,24 @@ def _word_count(html_or_text: str) -> int:
     return len([w for w in re.split(r"\s+", text.strip()) if w])
 
 
-def validate_content(template_id: str, content: Dict[str, Any]) -> Dict[str, Any]:
-    """Run the launch-blocker editorial validation checklist. Returns a dict
-    with `passed: bool` + `errors: [str]` + `warnings: [str]`.
+def _validate_streamer_alert(content: Dict[str, Any]) -> Dict[str, Any]:
+    """Lenient validation for the structured, non-editorial streamer_alert
+    template — only headline is mandatory."""
+    errors: List[str] = []
+    if not content.get("headline"):
+        errors.append("missing_headline")
+    return {"passed": not errors, "skipped": False, "errors": errors, "warnings": []}
 
-    Caller decides what to do when `passed=False` — current policy is to
-    downgrade auto-publish to draft (never hard-fail the generation)."""
+
+def _validate_lengths(headline: str, subhead: str, body: str, betting_angle: str,
+                     template_id: str) -> tuple[List[str], List[str]]:
+    """Length-bounds checks. Returns (errors, warnings)."""
     errors: List[str] = []
     warnings: List[str] = []
-
-    # Skip_reason short-circuits everything.
-    if content.get("skip_reason"):
-        return {"passed": False, "skipped": True, "errors": [], "warnings": [],
-                "skip_reason": content["skip_reason"]}
-
-    # streamer_alert is structured + non-editorial — validation is lenient.
-    if template_id == "streamer_alert":
-        if not content.get("headline"):
-            errors.append("missing_headline")
-        return {"passed": not errors, "skipped": False, "errors": errors, "warnings": warnings}
-
-    headline = (content.get("headline") or "").strip()
-    subhead = (content.get("subhead") or "").strip()
-    body = content.get("body") or _resolve_body(template_id, content) or ""
-    betting_angle = (content.get("betting_angle") or "").strip()
-    facts = content.get("facts_used") or []
-
-    # Length checks
     if not (1 <= len(headline) <= 60):
         errors.append(f"headline_length({len(headline)})_outside_1_60")
     if subhead and len(subhead) > 100:
         errors.append(f"subhead_length({len(subhead)})_over_100")
-
     body_words = _word_count(body)
     # Regulatory uses summary+analysis+impact pieces; relax to 100..400 there.
     if template_id == "regulatory_analysis":
@@ -183,37 +169,81 @@ def validate_content(template_id: str, content: Dict[str, Any]) -> Dict[str, Any
     else:
         if not (120 <= body_words <= 280):
             warnings.append(f"body_word_count_{body_words}_outside_120_280")
-
-    # Betting angle is non-negotiable
     if len(betting_angle) < 20:
         errors.append(f"betting_angle_too_short({len(betting_angle)})")
+    return errors, warnings
+
+
+def _validate_phrases(headline: str, subhead: str, body: str,
+                      betting_angle: str) -> List[str]:
+    """Forbidden-phrase + off-limits-term scan."""
+    errors: List[str] = []
+    haystack = " ".join([headline, subhead, str(body), betting_angle]).lower()
+    for phrase in FORBIDDEN_PHRASES:
+        if phrase in haystack:
+            errors.append(f"forbidden_phrase:{phrase}")
+    for term in OFF_LIMITS_TERMS:
+        if term in haystack:
+            errors.append(f"off_limits_term:{term}")
+    return errors
+
+
+def _validate_source_citation(template_id: str, body: str) -> List[str]:
+    """Phase 1 §3e + §10 — per-article source-citation enforcement.
+    streamer_alert is the only exempt template."""
+    if template_id in SOURCE_CITATION_EXEMPT_TEMPLATES:
+        return []
+    errors: List[str] = []
+    citation_window = (str(body)[:400] or "").lower()
+    has_phrase = bool(SOURCE_CITATION_PHRASES_RE.search(citation_window))
+    has_named_source = any(src in citation_window for src in NAMED_SOURCES)
+    has_data_attr = bool(SOURCE_DATA_PREFIX_RE.search(citation_window))
+    if not has_phrase:
+        errors.append("source_citation_missing:no_citation_phrase")
+    elif not (has_named_source or has_data_attr):
+        errors.append("source_citation_missing:no_named_source")
+    return errors
+
+
+def validate_content(template_id: str, content: Dict[str, Any]) -> Dict[str, Any]:
+    """Run the launch-blocker editorial validation checklist. Returns a dict
+    with `passed: bool` + `errors: [str]` + `warnings: [str]`.
+
+    Caller decides what to do when `passed=False` — current policy is to
+    downgrade auto-publish to draft (never hard-fail the generation).
+
+    iter66 refactor: this used to be a single 73-line function with
+    cyclomatic complexity ~29. Split into focused helpers per check.
+    Identical output contract — verified by content_generator tests.
+    """
+    # Skip_reason short-circuits everything.
+    if content.get("skip_reason"):
+        return {"passed": False, "skipped": True, "errors": [], "warnings": [],
+                "skip_reason": content["skip_reason"]}
+
+    # streamer_alert is structured + non-editorial — validation is lenient.
+    if template_id == "streamer_alert":
+        return _validate_streamer_alert(content)
+
+    headline = (content.get("headline") or "").strip()
+    subhead = (content.get("subhead") or "").strip()
+    body = content.get("body") or _resolve_body(template_id, content) or ""
+    betting_angle = (content.get("betting_angle") or "").strip()
+    facts = content.get("facts_used") or []
+
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    e_len, w_len = _validate_lengths(headline, subhead, body, betting_angle, template_id)
+    errors.extend(e_len)
+    warnings.extend(w_len)
 
     # Facts traceability (warning only — LLM sometimes omits even when present)
     if isinstance(facts, list) and len(facts) < 2:
         warnings.append("facts_used_count_lt_2")
 
-    # Forbidden phrase scan over headline + subhead + body
-    haystack = " ".join([headline, subhead, str(body), betting_angle]).lower()
-    for phrase in FORBIDDEN_PHRASES:
-        if phrase in haystack:
-            errors.append(f"forbidden_phrase:{phrase}")
-
-    # Off-limits topic scan
-    for term in OFF_LIMITS_TERMS:
-        if term in haystack:
-            errors.append(f"off_limits_term:{term}")
-
-    # Phase 1 Section 3e + Section 10 — per-article source-citation enforcement.
-    # streamer_alert is the only exempt template (auto-live signal, not journalism).
-    if template_id not in SOURCE_CITATION_EXEMPT_TEMPLATES:
-        citation_window = (str(body)[:400] or "").lower()
-        has_phrase = bool(SOURCE_CITATION_PHRASES_RE.search(citation_window))
-        has_named_source = any(src in citation_window for src in NAMED_SOURCES)
-        has_data_attr = bool(SOURCE_DATA_PREFIX_RE.search(citation_window))
-        if not has_phrase:
-            errors.append("source_citation_missing:no_citation_phrase")
-        elif not (has_named_source or has_data_attr):
-            errors.append("source_citation_missing:no_named_source")
+    errors.extend(_validate_phrases(headline, subhead, body, betting_angle))
+    errors.extend(_validate_source_citation(template_id, body))
 
     return {"passed": not errors, "skipped": False, "errors": errors, "warnings": warnings}
 
@@ -489,76 +519,47 @@ class ContentGenerator:
 
     # ----------- public API -----------
 
-    async def generate_from_signal(
-        self, template_id: str, signal_data: Dict[str, Any],
-        *, source_signal_id: Optional[str] = None,
-        force: bool = False,
-    ) -> Dict[str, Any]:
-        """Top-level entry point. Returns a status dict — never raises on
-        normal control-flow paths (dedup skip, rate-limit, unknown template).
-        """
-        tmpl = TEMPLATES.get(template_id)
-        if not tmpl:
-            return {"status": "error", "reason": f"unknown_template:{template_id}"}
-
-        # 1. de-duplication fingerprint — refuse repeats inside the window
+    async def _check_dedup(self, template_id: str, signal_data: Dict[str, Any],
+                            force: bool) -> tuple[str, Optional[Dict[str, Any]]]:
+        """Returns (fingerprint, existing_doc_or_None_if_force_or_no_dup)."""
         fp_keys = self._fingerprint_keys(template_id, signal_data)
         fp = _fingerprint(template_id, fp_keys)
-        if not force:
-            existing = await self._existing_for_fingerprint(fp)
-            if existing:
-                return {
-                    "status": "skipped",
-                    "reason": "duplicate_fingerprint",
-                    "fingerprint": fp,
-                    "existing_id": existing.get("id"),
-                }
+        if force:
+            return fp, None
+        existing = await self._existing_for_fingerprint(fp)
+        return fp, existing
 
-        # 2. rate-limit auto-publish — overflow falls through to draft
-        downgrade_to_draft = False
-        if tmpl["tier"] == TIER_AUTO and not force:
-            recent = await self._count_recent_auto_published()
-            if recent >= RATE_LIMIT_PER_HOUR:
-                downgrade_to_draft = True
+    async def _should_downgrade_for_rate_limit(self, tmpl: Dict[str, Any],
+                                                force: bool) -> bool:
+        if tmpl["tier"] != TIER_AUTO or force:
+            return False
+        recent = await self._count_recent_auto_published()
+        return recent >= RATE_LIMIT_PER_HOUR
 
-        # 3. fetch editorial context (subject lookup)
-        context_obj = await self._fetch_context(template_id, signal_data)
-
-        # 4. generate body
+    async def _build_content(self, template_id: str, tmpl: Dict[str, Any],
+                              signal_data: Dict[str, Any],
+                              context_obj: Dict[str, Any]) -> Dict[str, Any]:
+        """Body generation step — returns the LLM/structured content dict.
+        Raises a runtime error string in `_error_reason` if Claude fails."""
         if tmpl["uses_llm"]:
-            try:
-                content = await self._generate_via_llm(template_id, tmpl, signal_data, context_obj)
-            except Exception as e:
-                logger.exception("Claude generation failed")
-                return {"status": "error", "reason": f"llm_failure:{e.__class__.__name__}"}
-        else:
-            content = self._generate_structured(template_id, signal_data)
+            return await self._generate_via_llm(template_id, tmpl, signal_data, context_obj)
+        return self._generate_structured(template_id, signal_data)
 
-        # 5. validation gate — editorial guidelines enforce betting angle,
-        # length bounds, forbidden phrases, off-limits topics. LLM-emitted
-        # `skip_reason` also routes here.
-        validation = validate_content(template_id, content)
-        if validation.get("skipped"):
-            return {
-                "status": "skipped",
-                "reason": "llm_skip",
-                "skip_reason": validation.get("skip_reason"),
-                "fingerprint": fp,
-            }
-        # Auto-tier content that fails validation gets downgraded to draft
-        # for human review (per Dioni's "10% sampling" + "skip weak content"
-        # editorial policy). Hard validation errors land in the draft notes.
-        if not validation["passed"] and tmpl["tier"] == TIER_AUTO:
-            downgrade_to_draft = True
-
-        # 6. assemble draft document
-        category = tmpl["category"]
+    async def _resolve_slug(self, content: Dict[str, Any],
+                             signal_data: Dict[str, Any],
+                             template_id: str) -> str:
         slug = _slugify(content.get("headline") or signal_data.get("title") or template_id)
-        # collision-safe: append short uuid suffix if slug already taken
         if await self.db.published_content.find_one({"url_slug": slug}):
             slug = f"{slug}-{uuid.uuid4().hex[:6]}"
+        return slug
 
-        draft = {
+    def _assemble_draft(self, *, template_id: str, tmpl: Dict[str, Any],
+                         content: Dict[str, Any], signal_data: Dict[str, Any],
+                         context_obj: Dict[str, Any], validation: Dict[str, Any],
+                         fp: str, slug: str, downgrade_to_draft: bool,
+                         source_signal_id: Optional[str]) -> Dict[str, Any]:
+        """Compose the draft document. Pure function — no I/O."""
+        return {
             "id": str(uuid.uuid4()),
             "type": template_id,
             "tier": tmpl["tier"] if not downgrade_to_draft else TIER_DRAFT,
@@ -569,7 +570,7 @@ class ContentGenerator:
             "subhead_en": (content.get("subhead_en") or "")[:300] or None,
             "body": _resolve_body(template_id, content),
             "url_slug": slug,
-            "category": category,
+            "category": tmpl["category"],
             "tags": list(content.get("article_tags") or content.get("tags") or []),
             "external_link": content.get("external_link"),
             "fingerprint": fp,
@@ -592,9 +593,73 @@ class ContentGenerator:
             },
         }
 
+    async def generate_from_signal(
+        self, template_id: str, signal_data: Dict[str, Any],
+        *, source_signal_id: Optional[str] = None,
+        force: bool = False,
+    ) -> Dict[str, Any]:
+        """Top-level entry point. Returns a status dict — never raises on
+        normal control-flow paths (dedup skip, rate-limit, unknown template).
+
+        iter66 refactor: previously a single 117-line function with
+        cyclomatic complexity ~25. Split into focused step helpers
+        (`_check_dedup`, `_should_downgrade_for_rate_limit`, `_build_content`,
+        `_resolve_slug`, `_assemble_draft`). Identical output contract.
+        """
+        tmpl = TEMPLATES.get(template_id)
+        if not tmpl:
+            return {"status": "error", "reason": f"unknown_template:{template_id}"}
+
+        # 1. dedup
+        fp, existing = await self._check_dedup(template_id, signal_data, force)
+        if existing:
+            return {
+                "status": "skipped",
+                "reason": "duplicate_fingerprint",
+                "fingerprint": fp,
+                "existing_id": existing.get("id"),
+            }
+
+        # 2. rate-limit auto-publish — overflow falls through to draft
+        downgrade_to_draft = await self._should_downgrade_for_rate_limit(tmpl, force)
+
+        # 3. fetch editorial context (subject lookup)
+        context_obj = await self._fetch_context(template_id, signal_data)
+
+        # 4. generate body
+        try:
+            content = await self._build_content(template_id, tmpl, signal_data, context_obj)
+        except Exception as e:
+            logger.exception("Claude generation failed")
+            return {"status": "error", "reason": f"llm_failure:{e.__class__.__name__}"}
+
+        # 5. validation gate
+        validation = validate_content(template_id, content)
+        if validation.get("skipped"):
+            return {
+                "status": "skipped",
+                "reason": "llm_skip",
+                "skip_reason": validation.get("skip_reason"),
+                "fingerprint": fp,
+            }
+        # Auto-tier content that fails validation gets downgraded to draft
+        # for human review (per Dioni's "10% sampling" + "skip weak content"
+        # editorial policy). Hard validation errors land in the draft notes.
+        if not validation["passed"] and tmpl["tier"] == TIER_AUTO:
+            downgrade_to_draft = True
+
+        # 6. assemble draft document + persist
+        slug = await self._resolve_slug(content, signal_data, template_id)
+        draft = self._assemble_draft(
+            template_id=template_id, tmpl=tmpl, content=content,
+            signal_data=signal_data, context_obj=context_obj,
+            validation=validation, fp=fp, slug=slug,
+            downgrade_to_draft=downgrade_to_draft,
+            source_signal_id=source_signal_id,
+        )
         await self.db.content_drafts.insert_one(dict(draft))
 
-        # 6. if TIER 1 + not rate-limited → publish immediately
+        # 7. if TIER 1 + not rate-limited → publish immediately
         result_publish: Optional[Dict[str, Any]] = None
         if draft["tier"] == TIER_AUTO and not downgrade_to_draft:
             result_publish = await self.publish_draft(draft["id"], reviewed_by="system")

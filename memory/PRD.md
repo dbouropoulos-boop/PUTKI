@@ -2,6 +2,14 @@
 
 ## Phase History (latest first)
 
+- **iter66 · Backend refactors: content_generator complexity + server.py modularisation phase 1** (2026-05-25, zero behaviour change · 18/18 iter64–65 + 17/22 content_generator tests passing — same 5 pre-existing failures, no new regressions)
+  - **`content_generator.validate_content` refactored** from a 73-line cyclomatic-29 function into 4 focused helpers: `_validate_streamer_alert` (lenient template fast-path), `_validate_lengths` (headline/subhead/body/betting_angle bounds), `_validate_phrases` (forbidden + off-limits scan), `_validate_source_citation` (Phase 1 §3e enforcement). Public contract unchanged.
+  - **`content_generator.generate_from_signal` refactored** from a 117-line cyclomatic-25 function into 5 step helpers: `_check_dedup`, `_should_downgrade_for_rate_limit`, `_build_content`, `_resolve_slug`, `_assemble_draft`. Public contract unchanged.
+  - **server.py modularisation phase 1** — extracted the 4 newest profiler endpoints (`POST /api/profiler/event`, `GET /api/admin/profiler/funnel`, `GET /api/profiler/share/og.png`, `GET /api/profiler/share/u/{key}`) from server.py into `routes/profiler.py` using a `build_profiler_router(db, require_admin)` factory + `register_share_landing(app)` for the bare-app landing route. **server.py shrunk from 4758 → 4643 LOC (-115)**.
+  - **routes/__init__.py** documents the wire-up convention so subsequent extractions follow the same pattern.
+  - **Verification**: route paths unchanged (no testid/URL changes for the frontend) · `iter64_phase4_og_image.py`, `iter64_profiler_pivot.py`, `iter65_inline_share_resend.py` all green (18/18) · live endpoint smoke confirms OG PNG (9.4kb), Unfurl HTML (2.7kb), funnel POST + GET all work.
+  - **Code review false positives** (from the prior automated reviewer pass): `LEGACY_TOKEN` in `tests/test_iter62_*` now reads from `BACK_OFFICE_TOKEN` env first (small hygiene win); the remaining 7 of 8 reviewer findings were verified false against ruff F821/F632 + manual inspection.
+
 - **iter66 · Hide leftover PeliAreena Explore tile** (2026-05-25, frontend-only · zero behaviour change to /peliareena profiler itself)
   - The `<PeliAreenaBlock />` tile inside `ExploreBlocks.jsx` (homepage "MORE FROM PUTKI · EXPLORE" 5-product grid) advertised "Five mini-games · One weekly tournament · 5/5 games live" — copy that's a leftover from the pre-iter64 arcade era and contradicts the new capture-first profiler positioning.
   - Per user request the tile is now commented out (not deleted — one-line uncomment to restore). The Explore label updates from "5 PRODUCTS" → "4 PRODUCTS". The grid auto-reflows so the remaining 4 tiles (Mittari / Mestari / Voita / Peli) take the row cleanly.
