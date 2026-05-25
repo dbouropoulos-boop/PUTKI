@@ -24,7 +24,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import DialCockpit from '../components/DialCockpit';
+import { Dial } from '../components/Dial';
 import MittariSignals from '../components/MittariSignals';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
@@ -788,14 +788,65 @@ const Mittari = () => {
               <div data-testid="mittari-dial-slot" style={{
                 minWidth: 0, display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'center',
-                padding: '20px 18px', gap: 8,
+                padding: '24px 18px 20px', gap: 14,
               }}>
-                <DialCockpit state={stateKey} />
-                <div style={{
-                  fontFamily: 'ui-monospace, monospace', fontSize: 9,
-                  letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
-                  textAlign: 'center',
-                }}>{c.compositeLabel}{' · '}<span style={{ color: 'var(--ink)' }}>{Math.round(composite)}/100</span></div>
+                <Dial size="medium" state={stateKey} lang={lang} />
+                {/* Composite chip — single source of truth for the score.
+                    The <Dial> component already renders the state label
+                    INSIDE the gauge, so we only repeat the COMPOSITE here. */}
+                <div data-testid="mittari-dial-composite" style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                  letterSpacing: '0.16em', color: 'var(--muted)',
+                }}>{c.compositeLabel}{' '}<span style={{ color: 'var(--ink)', fontWeight: 700 }}>{Math.round(composite)}/100</span></div>
+                {/* Sub-scores · STREAMS / SPORTS / NEWSFLOW driver bars
+                    — gives the dial column real dashboard density without
+                    duplicating the full DialCockpit widget. */}
+                {cockpit?.sub_scores && typeof cockpit.sub_scores === 'object' && (
+                  <div data-testid="mittari-dial-subscores" style={{
+                    width: '100%', maxWidth: 280,
+                    display: 'flex', flexDirection: 'column', gap: 8,
+                    paddingTop: 12, borderTop: '1px solid var(--hairline)',
+                  }}>
+                    {[
+                      { id: 'stream', fi: 'STRIIMIT',   en: 'STREAMS',  w: 57 },
+                      { id: 'sports', fi: 'URHEILU',    en: 'SPORTS',   w: 29 },
+                      { id: 'news',   fi: 'UUTISVIRTA', en: 'NEWSFLOW', w: 14 },
+                    ].map(({ id, fi, en, w }) => {
+                      const raw = cockpit.sub_scores[id];
+                      if (raw == null) return null;
+                      const label = lang === 'en' ? en : fi;
+                      const value = Math.round(raw * 10) / 10;
+                      const valueDisplay = Number.isInteger(value) ? String(value) : value.toFixed(1);
+                      const pct = Math.min(100, Math.max(0, raw));
+                      return (
+                        <div key={id} style={{
+                          display: 'grid', gridTemplateColumns: '78px 1fr 44px',
+                          alignItems: 'center', gap: 8,
+                          fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                          letterSpacing: '0.14em', color: 'var(--muted)',
+                        }}>
+                          <span><span style={{ color: 'var(--ink)' }}>{label}</span>{' '}
+                            <span style={{ fontSize: 8.5, opacity: 0.6 }}>{w}%</span>
+                          </span>
+                          <span style={{
+                            height: 3, background: 'var(--hairline)', position: 'relative',
+                            borderRadius: 1,
+                          }}>
+                            <span style={{
+                              position: 'absolute', inset: 0,
+                              width: `${pct}%`,
+                              background: '#5BA0E8', borderRadius: 1,
+                            }} />
+                          </span>
+                          <span style={{
+                            color: 'var(--ink)', textAlign: 'right',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}>{valueDisplay}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Hairline vertical divider */}

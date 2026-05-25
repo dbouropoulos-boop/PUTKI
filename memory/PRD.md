@@ -2,6 +2,12 @@
 
 ## Phase History (latest first)
 
+- **iter67b · Mittari panel = clean dashboard (dial swap)** (2026-05-25, screenshot-verified · zero new tests · all existing iter66/67 testids preserved)
+  - User feedback on iter67 was that the panel still didn't read as a unified dashboard — root cause was that the panel embedded the FULL `<DialCockpit>` component which carries its own internal stack (giant state-name lockup, KOKONAISLUKU big-number, STRIIMIT/URHEILU/UUTISVIRTA stat tiles, PRIMARY DRIVERS legend, MITTARIN HISTORIA link, YHDISTELMÄ sub-label). At 280×~1100px that single widget swamped the entire left column.
+  - Swapped to the bare `<Dial size="medium" />` (just the gauge, ~280×280) plus a 2-line **composite chip** ("COMPOSITE 80/100") and a compact **driver-bar block**: STREAMS 57% · SPORTS 29% · NEWSFLOW 14% with 0–100 horizontal bars + numeric values pulled directly from `/api/cockpit` `sub_scores`. Total left-column height now matches the 5 signal rows on the right — true dashboard balance.
+  - The `Dial` already renders the state label (e.g. "ROLLING") inside the gauge, so I removed the duplicate state-label `<div>` from iter67 to avoid the "ROLLING" appearing twice. Composite stays as a single sub-chip.
+  - Verified: screenshot at 1440×900 shows a clean panel — header strip, two balanced columns, footer strip, all hairlines aligned. `mittari-dial-slot` and `mittari-tips-slot` still inside `mittari-panel` so existing tests pass.
+
 - **iter67 · Mittari unified panel rebuild + admin streamers regression fix** (2026-05-25, 10/10 new acceptance tests passing · 100% backend + frontend)
   - **`/mittari` unified panel**: dial + locked Daily Signals list now live inside ONE bordered `mittari-panel` (~38% dial / ~62% signals split with a vertical hairline divider) — replaces the previous two-card "pairing grid". Single header strip on top carries the section label + a clickable `mittari-panel-state-link` (state pill linking to /menetelma) + countdown + a `?` help icon (also → /menetelma). Footer strip surfaces the live AVG SHARPNESS when stats are available.
   - **Sharpness deep-linking**: every "Sharpness" mention now reaches the method page. Subtitle has a new `mittari-subtitle-method-link` ("What is Sharpness? →" / "Mikä on Sharpness? →") and the signals header has a dotted-underline `mittari-panel-sharpness-link` to /menetelma#sharpness with hover tooltip explaining the formula.
