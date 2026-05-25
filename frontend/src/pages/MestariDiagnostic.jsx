@@ -185,9 +185,16 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
         </div>
         <h2 data-testid={`mestari-diag-q-${q.id}`} style={{
           fontFamily: 'Georgia, serif', fontSize: 26, fontWeight: 700,
-          lineHeight: 1.2, letterSpacing: '-0.015em', margin: '0 0 24px',
+          lineHeight: 1.2, letterSpacing: '-0.015em', margin: '0 0 6px',
           color: 'var(--ink)',
         }}>{lang === 'en' ? q.en : q.fi}</h2>
+        {(q.hint_en || q.hint_fi) && (
+          <p data-testid={`mestari-diag-hint-${q.id}`} style={{
+            fontFamily: 'ui-monospace, monospace', fontSize: 11.5,
+            letterSpacing: '0.04em', color: 'var(--muted)',
+            margin: '0 0 22px', lineHeight: 1.55,
+          }}>{lang === 'en' ? (q.hint_en || '') : (q.hint_fi || '')}</p>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {q.options.map((opt) => (
             <button key={opt.id} type="button"
@@ -198,11 +205,21 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
                 padding: '14px 16px', textAlign: 'left',
                 fontFamily: 'Georgia, serif', fontSize: 15, lineHeight: 1.5,
                 color: 'var(--ink)', cursor: 'pointer',
-                transition: 'border-color 180ms ease',
+                transition: 'border-color 180ms ease, background 180ms ease',
+                display: 'flex', flexDirection: 'column', gap: 4,
               }}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = BLUE; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-            >{lang === 'en' ? opt.en : opt.fi}</button>
+            >
+              <span style={{ fontWeight: 700 }}>{lang === 'en' ? opt.en : opt.fi}</span>
+              {(opt.subtitle_en || opt.subtitle_fi) && (
+                <span style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                  color: 'var(--muted)', letterSpacing: '0.02em',
+                  lineHeight: 1.5, fontWeight: 400,
+                }}>{lang === 'en' ? (opt.subtitle_en || '') : (opt.subtitle_fi || '')}</span>
+              )}
+            </button>
           ))}
         </div>
         {err && <div style={{ color: '#C13B2C', marginTop: 18, fontSize: 13 }}>{err}</div>}
@@ -242,12 +259,79 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
         {(profile.social_proof_en || profile.social_proof_fi) && (
           <div data-testid="mestari-diag-social-proof" style={{
             borderLeft: '2px solid #5BA0E8',
-            padding: '8px 14px', marginBottom: 28,
+            padding: '8px 14px', marginBottom: 22,
             background: 'rgba(91,160,232,0.04)',
             fontFamily: 'Georgia, serif', fontSize: 14.5,
             lineHeight: 1.5, color: 'var(--muted)', fontStyle: 'italic',
           }}>
             {lang === 'en' ? profile.social_proof_en : profile.social_proof_fi}
+          </div>
+        )}
+
+        {/* iter75 - 3-cell stat strip on the profile card.
+            Mirrors the hub stat strip pattern; gives the user three
+            concrete take-aways before the email gate even loads.
+            Each cell is optional - we only render cells whose data is
+            present, so older profile docs without these fields degrade
+            cleanly. */}
+        {(profile.rarity_pct || profile.common_pitfall_en || profile.upgrade_en) && (
+          <div data-testid="mestari-diag-profile-stats" style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+            border: '1px solid var(--border)', marginBottom: 28,
+            background: 'var(--surface)',
+          }}>
+            {profile.rarity_pct ? (
+              <div data-testid="mestari-diag-stat-rarity" style={{
+                padding: '14px 16px',
+                borderRight: '1px solid var(--border)',
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}>
+                <span style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                  letterSpacing: '0.22em', fontWeight: 700, color: 'var(--muted)',
+                }}>{lang === 'en' ? 'RARITY' : 'YLEISYYS'}</span>
+                <span style={{
+                  fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700,
+                  color: 'var(--ink)', letterSpacing: '-0.01em',
+                }}>{profile.rarity_pct}%</span>
+                <span style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                  color: 'var(--muted)', letterSpacing: '0.04em',
+                }}>{lang === 'en' ? 'of players' : 'pelaajista'}</span>
+              </div>
+            ) : null}
+            {(profile.common_pitfall_en || profile.common_pitfall_fi) ? (
+              <div data-testid="mestari-diag-stat-pitfall" style={{
+                padding: '14px 16px',
+                borderRight: '1px solid var(--border)',
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}>
+                <span style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                  letterSpacing: '0.22em', fontWeight: 700, color: '#C66B5E',
+                }}>{lang === 'en' ? 'COMMON PITFALL' : 'TYYPILLINEN ANSA'}</span>
+                <span style={{
+                  fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.4,
+                  color: 'var(--ink)', fontWeight: 500,
+                }}>{lang === 'en' ? profile.common_pitfall_en : profile.common_pitfall_fi}</span>
+              </div>
+            ) : null}
+            {(profile.upgrade_en || profile.upgrade_fi) ? (
+              <div data-testid="mestari-diag-stat-upgrade" style={{
+                padding: '14px 16px',
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}>
+                <span style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                  letterSpacing: '0.22em', fontWeight: 700, color: '#6FA37D',
+                }}>{lang === 'en' ? 'NEXT UPGRADE' : 'SEURAAVA TASO'}</span>
+                <span style={{
+                  fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.4,
+                  color: 'var(--ink)', fontWeight: 500,
+                }}>{lang === 'en' ? profile.upgrade_en : profile.upgrade_fi}</span>
+              </div>
+            ) : null}
           </div>
         )}
 

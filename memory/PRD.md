@@ -1,11 +1,28 @@
 # PUTKI HQ — PRD
 
 > **STABLE / SHIPPED surfaces** (do not revisit unless user explicitly flags a regression):
-> - `/voita` (Putki HQ raffle listing + detail) — data hygiene, stale-raffle guard, closed-state hero all SHIPPED (iter72, 2026-05-25). No open issues.
-> - `/mestari` (diagnostic suite) — copy audit + social-proof bands SHIPPED (iter71).
+> - `/voita` (Putki HQ raffle listing + detail) — data hygiene, stale-raffle guard, closed-state hero, **feature flag ENABLED in prod** (iter72 + iter75).
+> - `/mestari` (diagnostic suite) — hub rebuild, question hints + option subtitles, profile stat strip on result card (iter75).
 > - `/mittari` (daily signals dashboard) — unified panel, plain-English/Finnish copy, `MittariGate` extracted to component (iter73).
+> - Telegram broadcast lock — dry-runs no longer poison the cron, live-only record-after-success (iter74).
+> - Front-page streamers band — YouTube tab hidden while Data API quota at zero; Twitch + Kick remain (iter75).
 
 ## Phase History (latest first)
+
+- **iter75 · Mestari diagnostic rebuild + Voita flag ON + YouTube tab hidden** (2026-05-25, 32/32 mestari tests passing)
+  - **Voita feature flag**: flipped ON in prod (`voita_feature_enabled = true` via PUT /api/admin/settings); 4 raffles now publicly visible.
+  - **YouTube tab**: removed from front-page `StreamersBand.jsx`; YouTube fetch skipped to save API calls; PLATFORM_META kept so re-enable is a one-line revert when GCP quota is bumped.
+  - **Mestari Phase A (backend)**: every Poker + Blackjack question gets `hint_fi/en` (clarifier under the question); every option gets `subtitle_fi/en` (concrete example); every profile gets `rarity_pct` + `common_pitfall_fi/en` + `upgrade_fi/en`. Bilingual, no em-dashes. New `GET /api/mestari/diagnostic/stats` endpoint surfaces aggregate counters for the hub stat strip.
+  - **Mestari Phase B (hub `/mestari` rebuild)**: H1 changed from flat "Which diagnostic?" to "Find out what you actually are at the table." Stat strip (TESTS TAKEN / PROFILES DIAGNOSED / AVG. TIME) replaces the academic METHOD block. 3 sport-tinted cards (orange/blue/green tops with sport emoji + archetype preview pills). Cleared the persisted `settings.mestari_diagnostic_copy` override so the new defaults render.
+  - **Mestari Phase C (Diagnostic UI rebuild)**: question rendering now shows the hint line under the question (muted monospace); options are 2-line buttons (bold title + monospace subtitle example). Result card gets a 3-cell stat strip (RARITY %, COMMON PITFALL in red, NEXT UPGRADE in green) wired to the new profile data.
+  - **Tests**: 32/32 passing across `test_iter45_mestari_public`, `test_sprint_mestari_multi`, `test_iter46_backoffice_complete`. All backwards-compatible: new fields are additive, FE only renders cells whose data is present.
+
+- **iter74 · Telegram throttle bugfix (lock-after-success, never-on-dry-run)** (2026-05-25)
+  - Root cause: any dry-run preview wrote a `{mode: "dry_run"}` row to `telegram_broadcasts` which then blocked the live cron via the `already_sent_today` gate. Result: bot never sent a public-channel signal for the rest of the day.
+  - Fix: `run_daily_dispatch()` gained a `force_telegram=False` param; the once-per-day gate now applies only to live broadcasts; the lock row is recorded AFTER a successful live `tg_result` (not speculatively before, not on dry-run).
+  - Cleared today's stale dry-run row via one-shot pymongo delete.
+
+
 
 - **iter73 · Extract MittariGate from Mittari.jsx** (2026-05-25, lint clean · screenshot-verified hero + final gate)
   - Lifted the 158-line `Gate` component out of `/app/frontend/src/pages/Mittari.jsx` into `/app/frontend/src/components/MittariGate.jsx` as a named export `MittariGate` + co-located `STORAGE_UNLOCK_KEY` constant.

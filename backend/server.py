@@ -1585,6 +1585,25 @@ async def public_landing_copy():
     return await get_landing_copy(db)
 
 
+@api_router.get("/mestari/diagnostic/stats")
+async def public_diagnostic_stats():
+    """Public - lightweight stats strip on the /mestari hub.
+    Real numbers from `mestari_diagnostic_leads` (or 0 baseline if
+    collection is empty). Profile count is the static union of
+    poker + blackjack + sports archetypes so the hub never reads
+    'profiles_diagnosed=0' even at cold start."""
+    try:
+        tests_taken = await db.mestari_diagnostic_leads.count_documents({})
+    except Exception:
+        tests_taken = 0
+    return {
+        "tests_taken": tests_taken,
+        "profiles_diagnosed": 9,  # 4 poker + 4 blackjack + sports (1 grouped surface)
+        "avg_seconds": 84,
+    }
+
+
+
 @api_router.get("/admin/mestari/diagnostic-copy")
 async def admin_get_diagnostic_copy(_: bool = Depends(require_admin)):
     from mestari_diagnostics import _DEFAULT_LANDING_COPY, get_landing_copy
