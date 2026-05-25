@@ -30,7 +30,11 @@ import StreamerAlertModal from './StreamerAlertModal';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-const PLATFORMS = ['twitch', 'kick', 'youtube'];
+// iter75: YouTube tab hidden from the public front-page band. The
+// Data API v3 key is at quota and counts always render 0/0, which
+// damages trust. Keep the metadata + StreamerCard branding wired so we
+// can re-enable in one line once the quota is bumped.
+const PLATFORMS = ['twitch', 'kick'];
 const PLATFORM_META = {
   twitch:  { label: 'TWITCH',  color: '#9146FF', baseUrl: 'https://twitch.tv/' },
   kick:    { label: 'KICK',    color: '#53FC18', baseUrl: 'https://kick.com/' },
@@ -413,9 +417,12 @@ const StreamersBand = ({ slotFilter, onClearSlotFilter }) => {
       } catch { return []; }
     };
     const load = async () => {
-      const [t, k, y] = await Promise.all([loadOne('twitch'), loadOne('kick'), loadOne('youtube')]);
+      // iter75: skip YouTube fetch entirely while the YT Data API is at
+      // quota - the tab is hidden, so we don't burn requests trying to
+      // populate empty data.
+      const [t, k] = await Promise.all([loadOne('twitch'), loadOne('kick')]);
       if (cancelled) return;
-      setData({ twitch: t, kick: k, youtube: y });
+      setData({ twitch: t, kick: k, youtube: [] });
       setLoading(false);
     };
     load();
