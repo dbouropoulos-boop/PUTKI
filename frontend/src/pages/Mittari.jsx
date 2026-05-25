@@ -903,8 +903,8 @@ const Mittari = () => {
               {/* Left: dial */}
               <div data-testid="mittari-dial-slot" style={{
                 minWidth: 0, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center',
-                padding: '24px 18px 20px', gap: 14,
+                alignItems: 'center', justifyContent: 'flex-start',
+                padding: '20px 18px 16px', gap: 12,
               }}>
                 <Dial size="medium" state={stateKey} lang={lang} />
                 {/* Composite chip — single source of truth for the score.
@@ -1072,33 +1072,56 @@ const Mittari = () => {
                   onRevealRequest={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                   copy={c._signalsCopy} lang={lang} />
 
-                {/* Conversion nudge — fills the bottom of the signals
-                    column so the panel reads as a fully-balanced dashboard.
-                    Clicking it auto-scrolls to the Telegram gate. */}
-                {!unlocked && (
-                  <button data-testid="mittari-signals-cta"
-                    onClick={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                    className="m-signals-cta"
-                    style={{
-                      marginTop: 'auto', paddingTop: 14,
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      gap: 12, width: '100%',
-                      background: 'transparent', border: 0,
-                      borderTop: '1px solid var(--hairline)',
-                      color: 'var(--ink)', cursor: 'pointer',
-                      fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                      letterSpacing: '0.14em', textAlign: 'left',
-                    }}>
-                    <span style={{ color: 'var(--muted)' }}>
-                      <span style={{ color: '#5BA0E8', fontWeight: 700 }}>4 {lang === 'en' ? 'PICKS LOCKED' : 'VINKKIÄ LUKITTU'}</span>
-                      {' · '}{lang === 'en' ? 'connect below to unlock all 5' : 'kytke alta avataksesi kaikki 5'}
-                    </span>
-                    <span style={{
-                      color: '#5BA0E8', fontWeight: 700, letterSpacing: '0.18em',
-                      whiteSpace: 'nowrap',
-                    }}>{lang === 'en' ? 'UNLOCK ↓' : 'AVAA ↓'}</span>
-                  </button>
-                )}
+                {/* Bottom strip — always renders so the signals column
+                    matches the left dial column height. Content swaps
+                    between conversion nudge (locked) and a next-drop /
+                    deep-link (unlocked) so the panel never goes lopsided. */}
+                <div data-testid="mittari-signals-foot"
+                  style={{
+                    marginTop: 'auto', paddingTop: 14,
+                    borderTop: '1px solid var(--hairline)',
+                  }}>
+                  {!unlocked ? (
+                    <button data-testid="mittari-signals-cta"
+                      onClick={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                      className="m-signals-cta"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        gap: 12, width: '100%',
+                        background: 'transparent', border: 0,
+                        color: 'var(--ink)', cursor: 'pointer',
+                        fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                        letterSpacing: '0.14em', textAlign: 'left',
+                      }}>
+                      <span style={{ color: 'var(--muted)' }}>
+                        <span style={{ color: '#5BA0E8', fontWeight: 700 }}>4 {lang === 'en' ? 'PICKS LOCKED' : 'VINKKIÄ LUKITTU'}</span>
+                        {' · '}{lang === 'en' ? 'connect below to unlock all 5' : 'kytke alta avataksesi kaikki 5'}
+                      </span>
+                      <span style={{
+                        color: '#5BA0E8', fontWeight: 700, letterSpacing: '0.18em',
+                        whiteSpace: 'nowrap',
+                      }}>{lang === 'en' ? 'UNLOCK ↓' : 'AVAA ↓'}</span>
+                    </button>
+                  ) : (
+                    <div data-testid="mittari-signals-foot-unlocked"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        gap: 12, flexWrap: 'wrap',
+                        fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                        letterSpacing: '0.12em', color: 'var(--muted)',
+                      }}>
+                      <span>
+                        <span style={{ color: '#6FA37D' }}>✓</span>{' '}
+                        {lang === 'en' ? 'NEXT DROP IN' : 'SEURAAVA PUDOTUS'}{' '}
+                        <span style={{ color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{countdownStr}</span>
+                      </span>
+                      <Link to="/menetelma#sharpness" style={{
+                        color: '#E89248', textDecoration: 'none',
+                        letterSpacing: '0.14em', whiteSpace: 'nowrap',
+                      }}>{lang === 'en' ? 'METHOD →' : 'MENETELMÄ →'}</Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
