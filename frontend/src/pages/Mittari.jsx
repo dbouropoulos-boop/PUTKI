@@ -83,9 +83,9 @@ const COPY = {
     gateOneTapInline: 'YKSI NAPSAUTUS',
     gateBadge: 'ALLE 3S TOIMITUS',
     gateBullets: [
-      'Päivän signaalit aamulla',
-      'Mittari tilanvaihdokset reaaliajassa',
-      'Yksi tilaus · ei kahta listaa · ei spämmiä',
+      'Sidotaan yhdellä napsautuksella · ei sähköpostia, ei salasanaa',
+      'Live-tilanvaihdokset mukana',
+      'Lopeta milloin tahansa · ei spämmiä · GDPR',
     ],
     gateTgCta: 'AVAA TELEGRAMISSA',
     gateTgSub: 'Sitoo chat-ID:n automaattisesti · ei sähköpostia ei salasanaa',
@@ -99,8 +99,8 @@ const COPY = {
     step1Body: 'EU-kirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00.',
     step2Title: '2 · SKENE',
     step2Body: 'Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0–100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele.',
-    step3Title: '3 · HÄLYTYS',
-    step3Body: 'Signaalit aamulla. Mittarin tilanvaihdokset reaaliajassa. Sama tilaus, sama kanava.',
+    step3Title: '3 · TOIMITUS',
+    step3Body: 'Telegramiin alle 3 sekunnissa. Sähköposti varalla. Sido kerran, ei toista listaa, ei spämmiä.',
     receiptsTitle: 'VIIME SIGNAALIT · 7 VIIMEISINTÄ · AIKALEIMATTU',
     receiptsFoot7d: '7 päivän osumatarkkuus',
     receiptsFoot30d: '30 päivän',
@@ -147,9 +147,9 @@ const COPY = {
     gateOneTapInline: 'ONE TAP',
     gateBadge: '<3S DELIVERY',
     gateBullets: [
-      'Daily signals in the morning',
-      'Mittari state-changes in real time',
-      'Single signup · no second list · no spam',
+      'Bound in 1 tap · no email, no password',
+      'Live state-change alerts included',
+      'Stop anytime · no spam · GDPR',
     ],
     gateTgCta: 'OPEN IN TELEGRAM',
     gateTgSub: 'Binds your chat ID automatically · no email no password',
@@ -163,8 +163,8 @@ const COPY = {
     step1Body: 'EU books move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00.',
     step2Title: '2 · SCENE',
     step2Body: 'Mittari composites 11 public sources into one number 0–100 and five states: Calm · Buzz · Active · Rolling · Perkele.',
-    step3Title: '3 · ALERT',
-    step3Body: 'Signals in the morning. State-changes in real time. One subscription, one channel.',
+    step3Title: '3 · DELIVERY',
+    step3Body: 'Telegram in under 3 seconds. Email fallback. Bind once, no second list, no spam.',
     receiptsTitle: 'RECENT SIGNALS · LAST 7 · TIMESTAMPED',
     receiptsFoot7d: '7-day hit rate',
     receiptsFoot30d: '30-day',
@@ -618,7 +618,6 @@ const Mittari = () => {
   const [cockpit, setCockpit] = useState(null);
   const [odds, setOdds] = useState(null);
   const [stats, setStats] = useState(null);
-  const [history, setHistory] = useState([]);
   const [unlocked, setUnlocked] = useState(() => {
     try { return !!window.localStorage.getItem(STORAGE_UNLOCK_KEY); }
     catch { return false; }
@@ -646,12 +645,8 @@ const Mittari = () => {
         fetch(`${BACKEND}/api/cockpit`).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/odds/featured`).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/mittari/stats`).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/dial/history?limit=48`).then((r) => r.ok ? r.json() : null),
-      ]).then(([d, cp, o, s, h]) => {
-        if (!stop) {
-          setDial(d); setCockpit(cp); setOdds(o); setStats(s);
-          setHistory((h && h.history) || []);
-        }
+      ]).then(([d, cp, o, s]) => {
+        if (!stop) { setDial(d); setCockpit(cp); setOdds(o); setStats(s); }
       }).catch(() => {});
     };
     load();
@@ -664,44 +659,6 @@ const Mittari = () => {
   const stateLabel = STATE_LABEL[lang === 'en' ? 'en' : 'fi'][stateKey] || stateKey;
   const stateDesc = STATE_DESC[lang === 'en' ? 'en' : 'fi'][stateKey] || '';
   const composite = cockpit?.composite_score ?? dial?.composite_score ?? 0;
-
-  // ── 24-hour sparkline + last-state-change ──────────────────────────
-  // Source: /api/dial/history?limit=48 — 30-min snapshots oldest-first.
-  // We build a polyline of composite_score over the last 48 ticks (≈24h)
-  // and detect the most recent state transition for the "Last change"
-  // caption underneath the dial. This adds vertical density to the left
-  // column so it visually balances against the 5-row signals list.
-  const historyAsc = useMemo(() => {
-    if (!Array.isArray(history) || history.length === 0) return [];
-    return [...history].sort((a, b) =>
-      new Date(a.recorded_at || a.computed_at) - new Date(b.recorded_at || b.computed_at)
-    );
-  }, [history]);
-  const sparkPoints = useMemo(() => {
-    if (historyAsc.length < 2) return null;
-    const W = 280, H = 48;
-    const vals = historyAsc.map((s) => Math.max(0, Math.min(100, s.composite_score || 0)));
-    const dx = W / (vals.length - 1);
-    return vals.map((v, i) => `${(i * dx).toFixed(1)},${(H - (v / 100) * H).toFixed(1)}`).join(' ');
-  }, [historyAsc]);
-  const lastChange = useMemo(() => {
-    if (historyAsc.length < 2) return null;
-    for (let i = historyAsc.length - 1; i > 0; i--) {
-      if (historyAsc[i].state_key !== historyAsc[i - 1].state_key) {
-        const minsAgo = Math.max(0, Math.round(
-          (Date.now() - new Date(historyAsc[i].recorded_at || historyAsc[i].computed_at).getTime()) / 60000
-        ));
-        return { from: historyAsc[i - 1].state_key, to: historyAsc[i].state_key, minsAgo };
-      }
-    }
-    return null;
-  }, [historyAsc]);
-  const formatAgo = (mins) => {
-    if (mins < 60) return `${mins}${lang === 'en' ? 'm' : 'min'}`;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m === 0 ? `${h}h` : `${h}h ${m}${lang === 'en' ? 'm' : 'min'}`;
-  };
 
   const picks = useMemo(() => (odds?.picks || []).slice(0, 5), [odds]);
   const avgSharp = useMemo(() => {
@@ -775,23 +732,11 @@ const Mittari = () => {
           <p data-testid="mittari-page-subtitle" style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 13,
             color: 'var(--muted)', lineHeight: 1.55, letterSpacing: '0.02em',
-            margin: '0 0 24px', maxWidth: 760,
-          }}>{c.pageSubtitle}{' '}
-            <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{
-              color: '#E89248', textDecoration: 'none', whiteSpace: 'nowrap',
-            }}>{lang === 'en' ? 'What is Sharpness? →' : 'Mikä on Sharpness? →'}</Link>
-          </p>
-
-          {/* Connective sentence — wheel reads scene, tips are play */}
-          <h2 data-testid="mittari-headline" style={{
-            fontFamily: 'Georgia, serif', fontWeight: 400,
-            fontSize: 'clamp(20px, 2.6vw, 28px)', lineHeight: 1.2,
-            letterSpacing: '-0.015em', margin: '0 0 14px', maxWidth: 760,
-          }}>
-            <span style={{ color: 'var(--ink)' }}>{c.signalsPairingLead}</span>{' '}
-            <em style={{ color: '#E89248', fontStyle: 'italic', fontWeight: 700 }}>{c.signalsPairingEm}</em>{' '}
-            <span style={{ color: 'var(--muted)' }}>{c.signalsPairingTail}</span>
-          </h2>
+            margin: '0 0 22px', maxWidth: 760,
+          }}>{lang === 'en'
+            ? <>Five picks scored 0–100 by <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link> — a deterministic measure of how tightly EU bookmakers agree. The dial tracks Finland’s scene live: streamers, odds, news.</>
+            : <>Viisi vetoa pisteytettynä 0–100 <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link>-kaavalla — kuinka tiiviisti EU-vedonlyöntiyhtiöt ovat samaa mieltä. Mittari seuraa Suomen skeneä reaaliajassa: striimit, kertoimet, uutiset.</>
+          }</p>
 
           {/* Trust pills strip — concrete proof + frictionless commitments.
               Sits directly under the connective line so it does the heavy
@@ -900,152 +845,22 @@ const Mittari = () => {
               display: 'grid', gridTemplateColumns: '0.38fr 1px 0.62fr',
               alignItems: 'stretch',
             }}>
-              {/* Left: dial */}
+              {/* Left: dial only — every other widget moved to full-width
+                  strips below so the panel reads as a real dashboard
+                  instead of two columns of disconnected stuff. */}
               <div data-testid="mittari-dial-slot" style={{
                 minWidth: 0, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'flex-start',
-                padding: '20px 18px 16px', gap: 12,
+                alignItems: 'center', justifyContent: 'center',
+                padding: '24px 18px', gap: 10,
               }}>
                 <Dial size="medium" state={stateKey} lang={lang} />
-                {/* Composite chip — single source of truth for the score.
-                    The <Dial> component already renders the state label
-                    INSIDE the gauge, so we only repeat the COMPOSITE here. */}
-                <div data-testid="mittari-dial-composite" style={{
-                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                  letterSpacing: '0.16em', color: 'var(--muted)',
-                }}>{c.compositeLabel}{' '}<span style={{ color: 'var(--ink)', fontWeight: 700 }}>{Math.round(composite)}/100</span></div>
-
-                {/* State description card — plain-language explanation of
-                    what the current state means. Balances the dial column
-                    visually against the 5-row signals list and removes the
-                    "naked jargon" problem (ROLLING / PERKELE / MEININKI). */}
-                <div data-testid="mittari-state-desc" style={{
-                  width: '100%', maxWidth: 300,
-                  borderLeft: `2px solid ${stateColor}`,
-                  paddingLeft: 12, paddingTop: 2, paddingBottom: 2,
-                  marginTop: 4,
-                }}>
-                  <div style={{
-                    fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
-                    letterSpacing: '0.18em', color: stateColor, fontWeight: 700,
-                    marginBottom: 4,
-                  }}>{lang === 'en' ? 'WHAT THIS MEANS' : 'MITÄ TÄMÄ TARKOITTAA'}</div>
-                  <div style={{
-                    fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.4,
-                    color: 'var(--ink)', letterSpacing: '-0.005em',
-                  }}>{stateDesc}</div>
-                </div>
-                {/* Sub-scores · STREAMS / SPORTS / NEWSFLOW driver bars
-                    — gives the dial column real dashboard density without
-                    duplicating the full DialCockpit widget. */}
-                {cockpit?.sub_scores && typeof cockpit.sub_scores === 'object' && (
-                  <div data-testid="mittari-dial-subscores" style={{
-                    width: '100%', maxWidth: 280,
-                    display: 'flex', flexDirection: 'column', gap: 8,
-                    paddingTop: 12, borderTop: '1px solid var(--hairline)',
-                  }}>
-                    {[
-                      { id: 'stream', fi: 'STRIIMIT',   en: 'STREAMS',  w: 57 },
-                      { id: 'sports', fi: 'URHEILU',    en: 'SPORTS',   w: 29 },
-                      { id: 'news',   fi: 'UUTISVIRTA', en: 'NEWSFLOW', w: 14 },
-                    ].map(({ id, fi, en, w }) => {
-                      const raw = cockpit.sub_scores[id];
-                      if (raw == null) return null;
-                      const label = lang === 'en' ? en : fi;
-                      const value = Math.round(raw * 10) / 10;
-                      const valueDisplay = Number.isInteger(value) ? String(value) : value.toFixed(1);
-                      const pct = Math.min(100, Math.max(0, raw));
-                      return (
-                        <div key={id} style={{
-                          display: 'grid', gridTemplateColumns: '78px 1fr 44px',
-                          alignItems: 'center', gap: 8,
-                          fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                          letterSpacing: '0.14em', color: 'var(--muted)',
-                        }}>
-                          <span><span style={{ color: 'var(--ink)' }}>{label}</span>{' '}
-                            <span style={{ fontSize: 8.5, opacity: 0.6 }}>{w}%</span>
-                          </span>
-                          <span style={{
-                            height: 3, background: 'var(--hairline)', position: 'relative',
-                            borderRadius: 1,
-                          }}>
-                            <span style={{
-                              position: 'absolute', inset: 0,
-                              width: `${pct}%`,
-                              background: '#5BA0E8', borderRadius: 1,
-                            }} />
-                          </span>
-                          <span style={{
-                            color: 'var(--ink)', textAlign: 'right',
-                            fontVariantNumeric: 'tabular-nums',
-                          }}>{valueDisplay}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* 24-hour sparkline — fills the remaining left-column
-                    height so the dial side reads as a full dashboard panel
-                    matching the right-side signals list. State-color line
-                    over a faint hairline baseline. */}
-                {sparkPoints && (
-                  <div data-testid="mittari-dial-sparkline" style={{
-                    width: '100%', maxWidth: 280,
-                    paddingTop: 12, borderTop: '1px solid var(--hairline)',
-                  }}>
-                    <div style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                      marginBottom: 6,
-                      fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
-                      letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700,
-                    }}>
-                      <span>{lang === 'en' ? '24-HOUR TREND' : '24 H TRENDI'}</span>
-                      <span style={{ color: stateColor, fontWeight: 700 }}>{stateLabel}</span>
-                    </div>
-                    <svg width="100%" height="48" viewBox="0 0 280 48"
-                      preserveAspectRatio="none" style={{ display: 'block' }}>
-                      {/* Faint mid-line at 50/100 */}
-                      <line x1="0" y1="24" x2="280" y2="24"
-                        stroke="var(--hairline)" strokeWidth="1" strokeDasharray="2 4" />
-                      <polyline
-                        fill="none"
-                        stroke={stateColor}
-                        strokeWidth="1.5"
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        points={sparkPoints}
-                      />
-                    </svg>
-                    {lastChange && (
-                      <div data-testid="mittari-last-change" style={{
-                        marginTop: 6,
-                        fontFamily: 'ui-monospace, monospace', fontSize: 10,
-                        letterSpacing: '0.06em', color: 'var(--muted)',
-                        display: 'flex', justifyContent: 'space-between',
-                      }}>
-                        <span>{lang === 'en' ? 'Last change' : 'Viimeisin muutos'}</span>
-                        <span>
-                          <span style={{ color: 'var(--muted)' }}>
-                            {STATE_LABEL[lang === 'en' ? 'en' : 'fi'][lastChange.from] || lastChange.from}
-                          </span>
-                          {' → '}
-                          <span style={{ color: stateColor, fontWeight: 700 }}>
-                            {STATE_LABEL[lang === 'en' ? 'en' : 'fi'][lastChange.to] || lastChange.to}
-                          </span>
-                          {' · '}
-                          <span style={{ color: 'var(--ink)' }}>{formatAgo(lastChange.minsAgo)}{lang === 'en' ? ' ago' : ' sitten'}</span>
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Hairline vertical divider */}
               <div aria-hidden style={{ background: 'var(--hairline)' }} />
 
-              {/* Right: signals list */}
+              {/* Right: signals list — list only, no bottom strip
+                  (UNLOCK CTA is now a full-width band below the panel). */}
               <div data-testid="mittari-tips-slot" style={{
                 minWidth: 0, display: 'flex', flexDirection: 'column',
                 padding: '14px 18px 16px',
@@ -1071,74 +886,132 @@ const Mittari = () => {
                 <MittariSignals compact unlocked={unlocked}
                   onRevealRequest={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                   copy={c._signalsCopy} lang={lang} />
-
-                {/* Bottom strip — always renders so the signals column
-                    matches the left dial column height. Content swaps
-                    between conversion nudge (locked) and a next-drop /
-                    deep-link (unlocked) so the panel never goes lopsided. */}
-                <div data-testid="mittari-signals-foot"
-                  style={{
-                    marginTop: 'auto', paddingTop: 14,
-                    borderTop: '1px solid var(--hairline)',
-                  }}>
-                  {!unlocked ? (
-                    <button data-testid="mittari-signals-cta"
-                      onClick={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                      className="m-signals-cta"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        gap: 12, width: '100%',
-                        background: 'transparent', border: 0,
-                        color: 'var(--ink)', cursor: 'pointer',
-                        fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                        letterSpacing: '0.14em', textAlign: 'left',
-                      }}>
-                      <span style={{ color: 'var(--muted)' }}>
-                        <span style={{ color: '#5BA0E8', fontWeight: 700 }}>4 {lang === 'en' ? 'PICKS LOCKED' : 'VINKKIÄ LUKITTU'}</span>
-                        {' · '}{lang === 'en' ? 'connect below to unlock all 5' : 'kytke alta avataksesi kaikki 5'}
-                      </span>
-                      <span style={{
-                        color: '#5BA0E8', fontWeight: 700, letterSpacing: '0.18em',
-                        whiteSpace: 'nowrap',
-                      }}>{lang === 'en' ? 'UNLOCK ↓' : 'AVAA ↓'}</span>
-                    </button>
-                  ) : (
-                    <div data-testid="mittari-signals-foot-unlocked"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        gap: 12, flexWrap: 'wrap',
-                        fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                        letterSpacing: '0.12em', color: 'var(--muted)',
-                      }}>
-                      <span>
-                        <span style={{ color: '#6FA37D' }}>✓</span>{' '}
-                        {lang === 'en' ? 'NEXT DROP IN' : 'SEURAAVA PUDOTUS'}{' '}
-                        <span style={{ color: 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{countdownStr}</span>
-                      </span>
-                      <Link to="/menetelma#sharpness" style={{
-                        color: '#E89248', textDecoration: 'none',
-                        letterSpacing: '0.14em', whiteSpace: 'nowrap',
-                      }}>{lang === 'en' ? 'METHOD →' : 'MENETELMÄ →'}</Link>
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
 
-            {/* Panel footer — avg-Sharpness summary */}
-            {hasLiveStats && (
-              <div data-testid="mittari-panel-foot" style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                gap: 12, flexWrap: 'wrap',
-                padding: '10px 18px', borderTop: '1px solid var(--hairline)',
-                background: 'var(--bg)',
-                fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
-                letterSpacing: '0.10em', color: 'var(--muted)',
+            {/* ╔═ Full-width strip — WHAT THIS MEANS (state explainer)  ═╗
+                Below the two-column body so it spans the full panel and
+                visually ties dial-side to signals-side. Accent-bordered
+                left edge matches the current state color. */}
+            <div data-testid="mittari-state-desc" style={{
+              borderTop: '1px solid var(--hairline)',
+              borderLeft: `3px solid ${stateColor}`,
+              background: 'var(--bg)',
+              padding: '14px 18px',
+              display: 'grid', gridTemplateColumns: '160px 1fr',
+              gap: 18, alignItems: 'center',
+            }}>
+              <div style={{
+                fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                letterSpacing: '0.18em', color: stateColor, fontWeight: 700,
               }}>
-                <span>{c.killerEyebrow}{' '}<strong style={{ color: '#E89248' }}>{avgSharp}/100</strong></span>
-                <span style={{ fontSize: 9.5, letterSpacing: '0.06em' }}>{c.killerFoot}</span>
+                {lang === 'en' ? 'WHAT THIS MEANS' : 'MITÄ TÄMÄ TARKOITTAA'}
+                <span style={{ color: 'var(--muted)', marginLeft: 6, opacity: 0.7 }}>·</span>{' '}
+                <span style={{ color: stateColor }}>{stateLabel}</span>
+              </div>
+              <div style={{
+                fontFamily: 'Georgia, serif', fontSize: 15, lineHeight: 1.4,
+                color: 'var(--ink)', letterSpacing: '-0.005em',
+              }}>{stateDesc}</div>
+            </div>
+
+            {/* ╔═ Full-width strip — DRIVERS row ═══════════════════════╗
+                STREAMS · SPORTS · NEWS each fill 1fr so the bars span the
+                entire panel width and read as a true gauge breakdown. */}
+            {cockpit?.sub_scores && typeof cockpit.sub_scores === 'object' && (
+              <div data-testid="mittari-dial-subscores" className="m-drivers-row" style={{
+                borderTop: '1px solid var(--hairline)',
+                background: 'var(--bg)',
+                padding: '14px 18px',
+                display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: 18,
+              }}>
+                {[
+                  { id: 'stream', fi: 'STRIIMIT',   en: 'STREAMS',  w: 57 },
+                  { id: 'sports', fi: 'URHEILU',    en: 'SPORTS',   w: 29 },
+                  { id: 'news',   fi: 'UUTISVIRTA', en: 'NEWS',     w: 14 },
+                ].map(({ id, fi, en, w }) => {
+                  const raw = cockpit.sub_scores[id];
+                  if (raw == null) return null;
+                  const label = lang === 'en' ? en : fi;
+                  const value = Math.round(raw * 10) / 10;
+                  const valueDisplay = Number.isInteger(value) ? String(value) : value.toFixed(1);
+                  const pct = Math.min(100, Math.max(0, raw));
+                  return (
+                    <div key={id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                        fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                        letterSpacing: '0.16em', color: 'var(--muted)',
+                      }}>
+                        <span><span style={{ color: 'var(--ink)', fontWeight: 700 }}>{label}</span>
+                          <span style={{ fontSize: 8.5, opacity: 0.6, marginLeft: 6 }}>{w}%</span></span>
+                        <span style={{
+                          color: '#5BA0E8', fontWeight: 700,
+                          fontVariantNumeric: 'tabular-nums', fontSize: 12,
+                        }}>{valueDisplay}</span>
+                      </div>
+                      <div style={{
+                        height: 4, background: 'var(--hairline)',
+                        position: 'relative', borderRadius: 1,
+                      }}>
+                        <div style={{
+                          position: 'absolute', inset: 0,
+                          width: `${pct}%`,
+                          background: '#5BA0E8', borderRadius: 1,
+                        }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
+
+            {/* ╔═ Full-width conversion CTA (when locked) ══════════════╗ */}
+            {!unlocked && (
+              <button data-testid="mittari-signals-cta"
+                onClick={() => gateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  gap: 12, width: '100%',
+                  background: 'rgba(91,160,232,0.06)',
+                  border: 0, borderTop: '1px solid #5BA0E8',
+                  color: 'var(--ink)', cursor: 'pointer',
+                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
+                  letterSpacing: '0.14em', textAlign: 'left',
+                  padding: '12px 18px',
+                }}>
+                <span style={{ color: 'var(--muted)' }}>
+                  <span style={{ color: '#5BA0E8', fontWeight: 700 }}>4 {lang === 'en' ? 'PICKS LOCKED' : 'VINKKIÄ LUKITTU'}</span>
+                  {' · '}{lang === 'en' ? 'connect below to unlock all 5' : 'kytke alta avataksesi kaikki 5'}
+                </span>
+                <span style={{
+                  color: '#5BA0E8', fontWeight: 700, letterSpacing: '0.18em',
+                  whiteSpace: 'nowrap',
+                }}>{lang === 'en' ? 'UNLOCK ↓' : 'AVAA ↓'}</span>
+              </button>
+            )}
+
+            {/* Panel footer — avg-Sharpness left, METHOD link right.
+                Single source of truth for both (NEXT DROP is only in the
+                header strip; HOW THIS IS COMPUTED → METHOD merged). */}
+            <div data-testid="mittari-panel-foot" style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              gap: 12, flexWrap: 'wrap',
+              padding: '10px 18px', borderTop: '1px solid var(--hairline)',
+              background: 'var(--bg)',
+              fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+              letterSpacing: '0.10em', color: 'var(--muted)',
+            }}>
+              <span>{hasLiveStats
+                ? <>{c.killerEyebrow}{' '}<strong style={{ color: '#E89248' }}>{avgSharp}/100</strong></>
+                : c.killerQuiet}
+              </span>
+              <Link to="/menetelma" style={{
+                color: '#E89248', textDecoration: 'none',
+                letterSpacing: '0.16em', fontWeight: 700,
+              }}>{lang === 'en' ? 'METHOD →' : 'MENETELMÄ →'}</Link>
+            </div>
           </div>
 
           {/* Single hero gate — directly under the pairing */}
@@ -1170,42 +1043,17 @@ const Mittari = () => {
           </div>
         </section>
 
-        {/* ╭─ HOW IT WORKS ─╮ */}
-        <section data-testid="mittari-explain" style={{
-          borderTop: '1px solid var(--hairline)', padding: '40px 0',
-        }}>
-          <SectionLabel>{c.explainTitle}</SectionLabel>
-          <div className="m-explain-grid" style={{
-            display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginTop: 18,
-          }}>
-            {[
-              { t: c.step1Title, b: c.step1Body },
-              { t: c.step2Title, b: c.step2Body },
-              { t: c.step3Title, b: c.step3Body },
-            ].map((s, i) => (
-              <div key={i} data-testid={`mittari-step-${i + 1}`} style={{
-                background: 'var(--surface)', border: '1px solid var(--hairline)',
-                padding: '20px 22px',
-              }}>
-                <div style={{
-                  fontFamily: 'ui-monospace, monospace', fontSize: 11,
-                  letterSpacing: '0.22em', color: '#E89248', fontWeight: 700,
-                  marginBottom: 10,
-                }}>{s.t}</div>
-                <p style={{
-                  fontFamily: 'Georgia, serif', fontSize: 16, lineHeight: 1.45,
-                  color: 'var(--ink)', margin: 0,
-                }}>{s.b}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ╭─ RECEIPTS ─╮ */}
+        {/* ╭─ TRACK RECORD ─╮
+            HOW IT WORKS section removed — its content was already
+            covered by: trust pills (10+ EU BOOKS), WHAT THIS MEANS
+            state strip, driver row, gate bullets, and the global METHOD
+            link in the header / panel footer. Curious readers click
+            METHOD → for the full Sharpness formula on /menetelma.
+         */}
         <section data-testid="mittari-receipts" style={{
           borderTop: '1px solid var(--hairline)', padding: '40px 0',
         }}>
-          <SectionLabel>{c.receiptsTitle}</SectionLabel>
+          <SectionLabel>{lang === 'en' ? 'TRACK RECORD · LAST 7 DAYS' : 'OSUMARAPORTTI · 7 VIIMEISTÄ PÄIVÄÄ'}</SectionLabel>
           <div style={{
             marginTop: 18, border: '1px solid var(--hairline)',
             background: 'var(--hairline)', display: 'flex', flexDirection: 'column', gap: 1,
@@ -1242,14 +1090,10 @@ const Mittari = () => {
           </div>
           <div style={{
             marginTop: 12, padding: '10px 0',
-            display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
             fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
             color: 'var(--muted)', letterSpacing: '0.06em',
           }}>
             <span>{c.receiptsFoot7d}: <strong style={{ color: '#E89248' }}>{c.receiptsFoot7dValue}</strong> · {c.receiptsFoot30d}: {c.receiptsFoot30dValue}</span>
-            <Link to="/menetelma" data-testid="mittari-receipts-method-link" style={{
-              color: '#E89248', textDecoration: 'none',
-            }}>{c.founderMethodLink}</Link>
           </div>
         </section>
 
@@ -1257,7 +1101,7 @@ const Mittari = () => {
         <section data-testid="mittari-testimonials" style={{
           borderTop: '1px solid var(--hairline)', padding: '40px 0',
         }}>
-          <SectionLabel>{c.testimonialsTitle}</SectionLabel>
+          <SectionLabel>{lang === 'en' ? 'WHAT SUBSCRIBERS SAY' : 'MITÄ TILAAJAT SANOVAT'}</SectionLabel>
           <div className="m-testi-grid" style={{
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
             background: 'var(--hairline)', marginTop: 18,
@@ -1340,7 +1184,7 @@ const Mittari = () => {
               <div style={{
                 fontFamily: 'ui-monospace, monospace', fontSize: 10,
                 color: 'var(--muted)', letterSpacing: '0.04em', lineHeight: 1.65,
-              }}>{c.founderCreds} · <Link to="/menetelma" style={{ color: '#E89248', textDecoration: 'none' }}>{c.founderMethodLink}</Link></div>
+              }}>{c.founderCreds}</div>
             </div>
           </div>
         </section>
@@ -1356,7 +1200,7 @@ const Mittari = () => {
           <span style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
             letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
-          }}>{c.pressTitle}</span>
+          }}>{lang === 'en' ? 'FEATURED ON' : 'NÄHTY PALVELUISSA'}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
             {pressList.map((p, i) => (
               <span key={`${p}-${i}`} data-testid={`mittari-press-${i}`} style={{
@@ -1388,12 +1232,15 @@ const Mittari = () => {
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
             letterSpacing: '0.22em', color: '#E89248', fontWeight: 700,
             marginBottom: 14,
-          }}>{c.finalEyebrow}</div>
+          }}>{lang === 'en' ? '→ ONE MORE STEP' : '→ VIELÄ YKSI ASKEL'}</div>
           <h2 style={{
             fontFamily: 'Georgia, serif',
-            fontSize: 'clamp(28px, 4vw, 42px)',
-            lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0, fontWeight: 400,
-          }}>{c.finalHeadlineLead}<br /><em style={{ color: '#E89248', fontStyle: 'italic' }}>{c.finalHeadlineEm}</em></h2>
+            fontSize: 'clamp(24px, 3.4vw, 36px)',
+            lineHeight: 1.1, letterSpacing: '-0.02em', margin: 0, fontWeight: 400,
+          }}>{lang === 'en'
+            ? <>Connect <em style={{ color: '#E89248', fontStyle: 'italic' }}>once.</em></>
+            : <>Kytke <em style={{ color: '#E89248', fontStyle: 'italic' }}>kerran.</em></>
+          }</h2>
           <div style={{ marginTop: 28, textAlign: 'left' }}>
             <Gate c={c} variant="final" pendingId={pendingId}
               onUnlock={unlock} tgUrl={tgUrl} />
@@ -1438,6 +1285,10 @@ const Mittari = () => {
             width: 100% !important;
             background: var(--hairline) !important;
           }
+        }
+        @media (max-width: 720px) {
+          /* Drivers row stacks 1 col on phones so each bar is full-width. */
+          .m-drivers-row { grid-template-columns: 1fr !important; gap: 12px !important; }
         }
         @media (max-width: 900px) {
           .m-hero-grid { grid-template-columns: 1fr !important; gap: 32px !important; }

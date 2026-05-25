@@ -2,6 +2,19 @@
 
 ## Phase History (latest first)
 
+- **iter67f · Mittari design audit — section cuts, copy tightening, dedupe pass** (2026-05-25, screenshot-verified · 4 sections cleaner · ~50 lines removed)
+  - **HOW IT WORKS section removed** — its content was already covered by the trust pills, the WHAT THIS MEANS state strip, the drivers row, gate bullets, and the global METHOD link. Anyone wanting depth clicks METHOD → for the full Sharpness formula.
+  - **RECEIPTS renamed** to "TRACK RECORD · LAST 7 DAYS"; dropped the bottom "Read the full method →" link (was the 4th repetition).
+  - **TESTIMONIALS renamed** "SUBSCRIBERS · MONTHS ON BOARD" → "WHAT SUBSCRIBERS SAY".
+  - **FOUNDER method link removed** (5th METHOD repetition).
+  - **PRESS STRIP renamed** "AS MENTIONED IN" → "FEATURED ON" (cleaner, more confident).
+  - **Section flow**: Hero → Track Record → Subscribers → Founder → Featured → Final Gate. Each section earns its place. METHOD CTA appears only in 3 logical places (header nav chip, panel `?` icon, panel footer).
+
+- **iter67e · Mittari panel — full-width strips for true balance + driver row across whole panel** (2026-05-25, screenshot-verified)
+  - **Restructured panel into 5 horizontal zones**: header strip · two-column body (dial | signals) · WHAT THIS MEANS full-width state strip · DRIVERS full-width row (STREAMS / SPORTS / NEWS bars span the entire panel) · UNLOCK CTA strip (conditional) · footer with AVG SHARPNESS + single METHOD link.
+  - **Killed redundancies**: removed 24-HOUR TREND sparkline (pointless per user feedback), removed duplicate NEXT DROP in signals foot (already in header), merged HOW THIS IS COMPUTED + METHOD into single METHOD → link.
+  - **Removed unused state/computations**: `history` state, `historyAsc`/`sparkPoints`/`lastChange` useMemos, the `formatAgo` helper, and the 5th `/api/dial/history` fetch.
+
 - **iter67d · Mittari dashboard balance + conversion copy rewrite + trust elements** (2026-05-25, screenshot-verified · backend defaults updated · 0 regressions)
   - **Plain-language copy rewrite** (backend defaults in `mittari_copy.py` + frontend `buildCopy` fallbacks):
     - H1 EN: "5 sharpest betting picks. _Every morning at 09:00._ Free." (was "Scene meter + predictive game signals in one subscription.")

@@ -66,9 +66,9 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "one_tap_inline": "YKSI NAPSAUTUS",
             "badge": "ALLE 3S TOIMITUS",
             "bullets": [
-                "Päivän signaalit aamulla",
-                "Mittari tilanvaihdokset reaaliajassa",
-                "Yksi tilaus · ei kahta listaa · ei spämmiä",
+                "Sidotaan yhdellä napsautuksella · ei sähköpostia, ei salasanaa",
+                "Live-tilanvaihdokset mukana",
+                "Lopeta milloin tahansa · ei spämmiä · GDPR",
             ],
             "tg_cta": "AVAA TELEGRAMISSA",
             "tg_sub": "Sitoo chat-ID:n automaattisesti · ei sähköpostia ei salasanaa",
@@ -86,9 +86,9 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "one_tap_inline": "ONE TAP",
             "badge": "<3S DELIVERY",
             "bullets": [
-                "Daily signals in the morning",
-                "Mittari state-changes in real time",
-                "Single signup · no second list · no spam",
+                "Bound in 1 tap · no email, no password",
+                "Live state-change alerts included",
+                "Stop anytime · no spam · GDPR",
             ],
             "tg_cta": "OPEN IN TELEGRAM",
             "tg_sub": "Binds your chat ID automatically · no email no password",
@@ -107,7 +107,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "steps": [
                 {"title": "1 · MARKKINA", "body": "EU-kirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00."},
                 {"title": "2 · SKENE",    "body": "Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0–100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele."},
-                {"title": "3 · HÄLYTYS",  "body": "Signaalit aamulla. Mittarin tilanvaihdokset reaaliajassa. Sama tilaus, sama kanava."},
+                {"title": "3 · TOIMITUS",  "body": "Telegramiin alle 3 sekunnissa. Sähköposti varalla. Sido kerran, ei toista listaa, ei spämmiä."},
             ],
         },
         "en": {
@@ -115,7 +115,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "steps": [
                 {"title": "1 · MARKET", "body": "EU books move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00."},
                 {"title": "2 · SCENE",  "body": "Mittari composites 11 public sources into one number 0–100 and five states: Calm · Buzz · Active · Rolling · Perkele."},
-                {"title": "3 · ALERT",  "body": "Signals in the morning. State-changes in real time. One subscription, one channel."},
+                {"title": "3 · DELIVERY",  "body": "Telegram in under 3 seconds. Email fallback. Bind once, no second list, no spam."},
             ],
         },
     },
@@ -203,12 +203,12 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
         "items": ["Mikä Mikko Show", "Sebsu.fi", "Klubitsoni Podcast", "Roni TV", "Helsingin Striimi"],
     },
     "final_gate": {
-        "eyebrow_fi": "→ VIIMEINEN MAHDOLLISUUS KYTKEÄ ENNEN PUDOTUSTA",
-        "eyebrow_en": "→ LAST CHANCE TO CONNECT BEFORE THE DROP",
-        "headline_lead_fi": "Päivän Signaalit aamuisin.",
-        "headline_lead_en": "Daily Signals in the morning.",
-        "headline_em_fi": "Mittari reaaliajassa.",
-        "headline_em_en": "Mittari in real time.",
+        "eyebrow_fi": "→ VIELÄ YKSI ASKEL",
+        "eyebrow_en": "→ ONE MORE STEP",
+        "headline_lead_fi": "Kytke",
+        "headline_lead_en": "Connect",
+        "headline_em_fi": "kerran.",
+        "headline_em_en": "once.",
     },
     "feed": {
         "title_fi": "TUOREIMMAT TILAUKSET",
