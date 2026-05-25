@@ -766,7 +766,7 @@ const ExploreBlocks = () => {
       </div>
       <div className="explore-grid" style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 1fr 1fr',
+        gridTemplateColumns: '1fr 1fr',
         gridAutoRows: '1fr',
         gap: 1,
         background: 'var(--hairline, #221E1B)',
