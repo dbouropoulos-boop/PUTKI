@@ -92,8 +92,13 @@ def build_mini_games_router() -> APIRouter:
         db = Depends(get_db),
     ):
         """Per-game weekly leaderboard surfaced on each game's intro screen.
-        404 on unknown slugs so the frontend doesn't render bogus boards."""
-        if game_slug not in _mgt.ACTIVE_GAME_SLUGS:
+        iter66: accepts BOTH ACTIVE_GAME_SLUGS (currently just
+        scenario_decisions) and _LEGACY_GAME_SLUGS (quiz/insight/snake/tap)
+        so historical Snake/Tap/Insight/Quiz data stays readable per the
+        iter64 strategic pivot ("keep historical data, hide routes").
+        404 on truly unknown slugs."""
+        known_slugs = set(_mgt.ACTIVE_GAME_SLUGS) | set(_mgt._LEGACY_GAME_SLUGS)
+        if game_slug not in known_slugs:
             raise HTTPException(404, "unknown_game")
         return await _mg.get_game_leaderboard(
             db, game_slug=game_slug, week_iso=week, limit=limit,
@@ -310,8 +315,11 @@ def build_mini_games_router() -> APIRouter:
         game_slug: str, week: Optional[str] = None, db = Depends(get_db),
     ):
         """Per-game public social-proof stats — used on each game's subpage.
+        iter66: accepts ACTIVE + LEGACY slugs (mirrors the leaderboard
+        endpoint above) so historical aggregates remain queryable.
         Returns a SAFE subset of the analytics payload (no individual emails)."""
-        if game_slug not in _mgt.ACTIVE_GAME_SLUGS:
+        known_slugs = set(_mgt.ACTIVE_GAME_SLUGS) | set(_mgt._LEGACY_GAME_SLUGS)
+        if game_slug not in known_slugs:
             raise HTTPException(404, "unknown_game")
         metrics = await _mgt.aggregate_metrics(db, week_iso=week)
         row = next((r for r in metrics["rows"] if r["game_slug"] == game_slug), None)

@@ -1225,83 +1225,8 @@ async def public_streamers_recent_alerts(within_minutes: int = 60):
     }
 
 
-@api_router.get("/streamers/viewer-delta")
-async def public_streamer_viewer_delta(platform: str, user_login: str):
-    """Returns the change indicator for a streamer's viewer count vs ~1h ago.
-    Returns 200 with `null` fields when 24h-snapshot data isn't yet meaningful
-    so the frontend cleanly suppresses the indicator."""
-    from streamer_snapshots import viewer_delta_last_hour
-    p = (platform or "").lower()
-    if p not in {"twitch", "kick", "youtube"}:
-        raise HTTPException(status_code=400, detail="unknown platform")
-    res = await viewer_delta_last_hour(db, platform=p, user_login=user_login)
-    if not res:
-        return {"delta": None, "direction": None}
-    return res
 
 
-@api_router.get("/streamers/now-playing")
-async def public_streamers_now_playing():
-    """Aggregates currently-live streamers across Twitch + Kick + YouTube,
-    matches their stream titles + game categories against the slot registry
-    using longest-match-wins, and returns the per-slot count table for the
-    homepage "NOW PLAYING" ticker.
-
-    iter52: also reports `slot_category_streams_count` — the number of
-    live streams whose `game_name` is in the slot/casino category set
-    (Kick's "Slots & Casino", Twitch's "Slots", etc.) but whose stream
-    title doesn't mention a specific registered slot. Without this, a
-    Kick streamer running slots with a marketing-fluff title gets
-    rendered as "Pure scene mode" when in reality there's clearly a
-    slot stream live. Frontend shows an honest "N slot streams · titles
-    not declared" instead.
-
-    Refresh cadence on the frontend: 60s.
-    """
-    from slot_registry import extract_now_playing
-    # Category labels we trust as "this stream IS slot/casino content"
-    # even when no specific slot title shows up in the metadata.
-    SLOT_CATEGORY_LABELS = {
-        "slots", "slot", "slots & casino", "slot & casino",
-        "casino", "virtual casino", "online casino",
-    }
-    all_rows: List[Dict[str, Any]] = []
-    category_stream_count = 0
-    for p in ("twitch", "kick", "youtube"):
-        try:
-            if p == "twitch":
-                from streamer_live import get_live_streamers
-                d = await get_live_streamers()
-            elif p == "kick":
-                from multi_platform_live import fetch_kick_live
-                d = await fetch_kick_live(db)
-            else:
-                from multi_platform_live import fetch_youtube_live
-                d = await fetch_youtube_live(db)
-            items = d.get("streamers") or d.get("items") or []
-            for s in items:
-                cat = (s.get("game_name") or "").strip().lower()
-                if cat in SLOT_CATEGORY_LABELS:
-                    category_stream_count += 1
-            rows = await extract_now_playing(db, items, platform=p)
-            # merge into all_rows
-            for r in rows:
-                # consolidate by slot name
-                hit = next((x for x in all_rows if x["name"] == r["name"]), None)
-                if hit:
-                    hit["count"] += r["count"]
-                    hit["streamers"].extend(r["streamers"])
-                else:
-                    all_rows.append(r)
-        except Exception:
-            logger.exception("now-playing platform %s failed", p)
-    all_rows.sort(key=lambda r: (-r["count"], r["name"]))
-    return {
-        "slots": all_rows,
-        "total_streams_matched": sum(r["count"] for r in all_rows),
-        "slot_category_streams_count": category_stream_count,
-        "as_of": datetime.now(timezone.utc).isoformat(),
-    }
 
 
 # ── Editorial back-office: streamer_meta + slot_registry ──
@@ -1532,33 +1457,6 @@ async def admin_seed_slot_registry(_: bool = Depends(require_admin)):
     return await seed_default_registry(db)
 
 
-@api_router.get("/streamers/roster_summary")
-async def public_streamers_roster_summary():
-    """Lightweight summary of the streamer roster for the SocialProofBar.
-
-    Returns the TOTAL number of streamers we track (across all platforms) +
-    how many are currently live + per-platform breakdown. This is what
-    visitors should see — "tracked" is the meaningful number, not just
-    "live right now."""
-    # tracked = whole registry, not roster_size of currently-live snapshot
-    tracked_total = await db.streamers.count_documents({})
-    by_platform: Dict[str, int] = {}
-    cursor = db.streamers.find({}, {"_id": 0, "platform": 1})
-    async for s in cursor:
-        p = (s.get("platform") or "twitch").lower()
-        by_platform[p] = by_platform.get(p, 0) + 1
-    # live count — best-effort from public_stats cache (Twitch FI scene)
-    try:
-        from public_stats import get_live_stats
-        stats = await get_live_stats(db)
-        live = int(stats.get("twitch_live", 0) or 0)
-    except Exception:
-        live = 0
-    return {
-        "tracked_total": tracked_total,
-        "by_platform": by_platform,
-        "live": live,
-    }
 
 
 # ── Phase 4 Pre-Launch Polish · Streamer Alert subscriptions ──
@@ -2571,178 +2469,8 @@ async def admin_content_backfill(payload: _BackfillBody, _: bool = Depends(requi
     )
 
 
-@api_router.post("/admin/streamers/discover")
-async def admin_twitch_discover(_: bool = Depends(require_admin)):
-    """Manually trigger one Twitch auto-discovery pass. Adds new FI casino
-    streamers with ≥1000 followers to the registry."""
-    from twitch_discovery import discover_once
-    return await discover_once(db)
 
 
-@api_router.post("/admin/streamers/refresh-avatars")
-async def admin_refresh_avatars(force: bool = True, _: bool = Depends(require_admin)):
-    """Re-resolve avatar URLs for every active streamer (Twitch/Kick/YouTube).
-    `force=true` (default) ignores the weekly freshness window."""
-    from streamer_avatars import refresh_all_avatars
-    return await refresh_all_avatars(db, force=force)
-
-
-@api_router.post("/admin/streamers/{slug}/refresh-avatar")
-async def admin_refresh_one_avatar(slug: str, _: bool = Depends(require_admin)):
-    """iter62: Force-refresh a single streamer's avatar with the FULL
-    multi-stage cascade — platform API → channel OG image → DDG image
-    search → Wikipedia. No initials placeholder ever. Returns the URL +
-    resolution source."""
-    s = await db.streamers.find_one(
-        {"slug": slug},
-        {"_id": 0, "slug": 1, "platform": 1, "channel": 1, "name": 1, "name_en": 1},
-    )
-    if not s:
-        raise HTTPException(404, "streamer_not_found")
-
-    from streamer_avatars import _fetch_twitch_avatars, _fetch_kick_avatars, _fetch_youtube_avatars
-    from streamer_avatar_fallback import resolve_avatar_with_fallback
-
-    platform = (s.get("platform") or "").lower()
-    channel = (s.get("channel") or s.get("slug") or "").strip().lstrip("@")
-    primary = None
-    try:
-        if platform == "twitch":
-            res = await _fetch_twitch_avatars([channel.lower()])
-            primary = res.get(channel.lower())
-        elif platform == "kick":
-            res = await _fetch_kick_avatars([channel.lower()])
-            primary = res.get(channel.lower())
-        elif platform == "youtube":
-            res = await _fetch_youtube_avatars([s.get("channel") or channel])
-            primary = res.get(s.get("channel") or channel)
-    except Exception as e:
-        logger.warning("primary avatar fetch failed for %s: %s", slug, e)
-
-    name_for_search = (s.get("name") or s.get("name_en") or s.get("slug") or "").strip()
-    url, source = await resolve_avatar_with_fallback(
-        name=name_for_search, platform=platform, channel=channel,
-        primary_url=primary,
-    )
-
-    from datetime import datetime, timezone
-    import time as _t
-    now_iso = datetime.now(timezone.utc).isoformat()
-    if url:
-        await db.streamers.update_one(
-            {"slug": slug},
-            {"$set": {"avatar_url": url, "avatar_source": source,
-                      "avatar_resolved_at": now_iso,
-                      "avatar_resolved_at_unix": _t.time(),
-                      "avatar_failed": False},
-             "$unset": {"avatar_failure_reason": ""}},
-        )
-    else:
-        await db.streamers.update_one(
-            {"slug": slug},
-            {"$set": {"avatar_source": "exhausted_all_fallbacks",
-                      "avatar_resolved_at": now_iso,
-                      "avatar_resolved_at_unix": _t.time(),
-                      "avatar_failed": True,
-                      "avatar_failure_reason": "all_4_stages_failed"}},
-        )
-
-    await _audit_log(db, actor="admin", action="streamer.refresh_avatar",
-                     resource=f"streamer:{slug}",
-                     meta={"source": source, "ok": bool(url)})
-
-    return {"slug": slug, "avatar_url": url, "avatar_source": source,
-            "ok": bool(url)}
-
-
-@api_router.post("/admin/streamers/refresh-failed-avatars")
-async def admin_refresh_failed_avatars(request: Request,
-                                         limit: int = 30,
-                                         _: bool = Depends(require_admin)):
-    """iter62.1: Re-run the full 4-stage avatar cascade for streamers
-    currently flagged `avatar_failed=true` OR with no `avatar_url`.
-
-    Runs streamers in parallel batches (concurrency=6) to stay under the
-    60s ingress timeout. Caller can paginate with `?limit=`."""
-    import asyncio
-    from streamer_avatars import _fetch_twitch_avatars, _fetch_kick_avatars, _fetch_youtube_avatars
-    from streamer_avatar_fallback import resolve_avatar_with_fallback
-    from datetime import datetime, timezone
-    import time as _t
-
-    cur = db.streamers.find(
-        {"$or": [
-            {"avatar_failed": True},
-            {"avatar_url": {"$in": [None, ""]}},
-            {"avatar_url": {"$exists": False}},
-        ]},
-        {"_id": 0, "slug": 1, "platform": 1, "channel": 1, "name": 1, "name_en": 1},
-    ).limit(max(1, min(limit, 100)))
-    targets = await cur.to_list(length=100)
-
-    async def _resolve_one(s):
-        platform = (s.get("platform") or "").lower()
-        channel = (s.get("channel") or s.get("slug") or "").strip().lstrip("@")
-        primary = None
-        try:
-            if platform == "twitch":
-                res = await _fetch_twitch_avatars([channel.lower()])
-                primary = res.get(channel.lower())
-            elif platform == "kick":
-                res = await _fetch_kick_avatars([channel.lower()])
-                primary = res.get(channel.lower())
-            elif platform == "youtube":
-                res = await _fetch_youtube_avatars([s.get("channel") or channel])
-                primary = res.get(s.get("channel") or channel)
-        except Exception:
-            pass
-        name = (s.get("name") or s.get("name_en") or s.get("slug") or "").strip()
-        url, source = await resolve_avatar_with_fallback(
-            name=name, platform=platform, channel=channel, primary_url=primary,
-        )
-        now_iso = datetime.now(timezone.utc).isoformat()
-        if url:
-            await db.streamers.update_one(
-                {"slug": s["slug"]},
-                {"$set": {"avatar_url": url, "avatar_source": source,
-                          "avatar_resolved_at": now_iso,
-                          "avatar_resolved_at_unix": _t.time(),
-                          "avatar_failed": False},
-                 "$unset": {"avatar_failure_reason": ""}},
-            )
-        else:
-            await db.streamers.update_one(
-                {"slug": s["slug"]},
-                {"$set": {"avatar_source": "exhausted_all_fallbacks",
-                          "avatar_resolved_at": now_iso,
-                          "avatar_resolved_at_unix": _t.time(),
-                          "avatar_failed": True,
-                          "avatar_failure_reason": "all_4_stages_failed"}},
-            )
-        return {"slug": s["slug"], "name": name, "source": source, "ok": bool(url)}
-
-    # Concurrency: 6 streamers in flight at once. Cascade itself is sync inside.
-    sem = asyncio.Semaphore(6)
-    async def _bounded(s):
-        async with sem:
-            return await _resolve_one(s)
-    results = await asyncio.gather(*[_bounded(s) for s in targets],
-                                    return_exceptions=False)
-
-    actor = request.state.admin_actor
-    from admin_auth import write_audit
-    await write_audit(db, actor=actor["actor"], role=actor["role"],
-                       action="streamer.refresh_failed_avatars",
-                       resource="streamers:*",
-                       meta={"attempted": len(results),
-                             "succeeded": sum(1 for r in results if r["ok"])})
-
-    return {
-        "attempted": len(results),
-        "succeeded": sum(1 for r in results if r["ok"]),
-        "still_failed": sum(1 for r in results if not r["ok"]),
-        "results": results,
-    }
 
 
 # ─── Admin users + audit log (iter62, P3) ────────────────────────────
@@ -3083,22 +2811,6 @@ async def public_get_operator(slug: str):
     return op
 
 
-@api_router.get("/streamers")
-async def public_list_streamers(scene: Optional[str] = None, market: Optional[str] = None, market_id: Optional[str] = None):
-    """Public — list streamers. `market` filter: 'fi' or 'intl' (convenience)."""
-    return {
-        "streamers": await list_streamers(db, scene=scene, market=market, market_id=market_id),
-        "intl_scenes": INTL_SCENES_META,
-    }
-
-
-@api_router.get("/streamers/{slug}")
-async def public_get_streamer(slug: str):
-    s = await get_streamer(db, slug)
-    if not s:
-        raise HTTPException(404, "Not found")
-    return s
-
 
 @api_router.get("/admin/operators")
 async def admin_list_operators(_: bool = Depends(require_admin)):
@@ -3117,23 +2829,6 @@ async def admin_delete_operator(slug: str, _: bool = Depends(require_admin)):
         raise HTTPException(404, "Not found")
     return {"deleted": slug}
 
-
-@api_router.get("/admin/streamers")
-async def admin_list_streamers(_: bool = Depends(require_admin)):
-    return {"streamers": await list_streamers(db, active_only=False)}
-
-
-@api_router.put("/admin/streamers/{slug}")
-async def admin_upsert_streamer(slug: str, data: StreamerPayload, _: bool = Depends(require_admin)):
-    return await upsert_streamer(db, slug, data.dict(), updated_by="admin")
-
-
-@api_router.delete("/admin/streamers/{slug}")
-async def admin_delete_streamer(slug: str, _: bool = Depends(require_admin)):
-    ok = await delete_streamer(db, slug)
-    if not ok:
-        raise HTTPException(404, "Not found")
-    return {"deleted": slug}
 
 
 # ── Mini-game suite (iter55) — educational gambling-literacy games ───
@@ -3164,6 +2859,10 @@ from routes._helpers import bind_dependencies  # noqa: E402
 from routes.mini_games import build_mini_games_router  # noqa: E402
 bind_dependencies(db=db, require_admin=require_admin)
 api_router.include_router(build_mini_games_router())
+
+# iter66 phase 3a — streamer endpoints (7 public + 7 admin)
+from routes.streamers import build_streamers_router  # noqa: E402
+api_router.include_router(build_streamers_router())
 
 
 # ── iter64 · Profiler Funnel + Share OG (modularised iter66 phase 1) ─

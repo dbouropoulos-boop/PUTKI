@@ -91,7 +91,9 @@ async def aggregate_metrics(db, *, week_iso: Optional[str] = None) -> Dict[str, 
     lead_filter: Dict[str, Any] = {"tournament_week_iso": week_iso} if week_iso else {}
     share_filter: Dict[str, Any] = {"week_iso": week_iso} if week_iso else {}
 
-    for slug in ACTIVE_GAME_SLUGS:
+    # iter66: legacy slugs (Snake/Tap/Insight/Quiz) iterate too so historical
+    # rows stay queryable per the "keep historical data, hide routes" policy.
+    for slug in list(ACTIVE_GAME_SLUGS) + list(_LEGACY_GAME_SLUGS):
         started = await db.mini_game_plays.count_documents({"game_slug": slug, **week_filter})
         finished = await db.mini_game_plays.count_documents(
             {"game_slug": slug, "status": "finished", **week_filter}
