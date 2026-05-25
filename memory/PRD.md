@@ -2,6 +2,19 @@
 
 ## Phase History (latest first)
 
+- **iter68 phase 3 · YouTube resolver UI strip + Slot-registry/Voyager admin extraction** (2026-05-25, 46/46 tests passing)
+  - **`/back-office/streamers` YouTube resolver UI strip** (~95 LOC in `StreamersAdmin.jsx`):
+    - Header strip with Youtube icon + DRY RUN + RESOLVE & SAVE buttons (driving `POST /api/admin/streamers/resolve-youtube-channels`).
+    - Live summary line: attempted / resolved (green) / still_unresolved (red) / persisted (blue) / per-error counts.
+    - Scrollable per-row table with color-coded status pills: green ✓ for UC-resolved rows, orange for `quotaExceeded`, red for `not_found`, grey for `unresolved`. Each row shows slug + raw channel handle + status.
+    - One run distinguishes "wrong seed data" (✗ not_found) from "ran out of API budget" (✗ quotaExceeded) at a glance — exactly the diagnostic value asked for.
+  - **Phase 3a — Slot registry cluster** (5 endpoints) moved into `routes/admin.py`:
+    `GET /admin/slot-registry`, `POST /admin/slot-registry`, `PATCH /admin/slot-registry/{id}`, `DELETE /admin/slot-registry/{id}`, `POST /admin/slot-registry/seed`. Co-located `_SlotEntryAdd` + `_SlotEntryUpdate` payload models.
+  - **Phase 3b — Voyager rotation cluster** (5 endpoints) moved into `routes/admin.py`:
+    `GET/PUT /admin/voyager/rotation` (full calendar editor), `GET /admin/voyager/weeks`, `PUT/DELETE /admin/voyager/weeks/{iso_week}`. Co-located `_VoyagerWeekPayload`.
+  - **server.py footprint** dropped another ~140 LOC (now ~3618 LOC, down from ~3962 at iter67 start — almost 9 % reduction in monolith size in 3 phases). `routes/admin.py` is now 21 endpoints, ~400 LOC.
+  - **Test additions**: 7 new acceptance tests in `test_iter68_admin_routes_extraction.py` covering slot-registry listing/idempotent-seed + voyager weeks envelope + rotation editor shape (`raw`/`sanitised`/`defaults`). Full iter68 suite is 16/16 green; full admin/copy/registry regression is 46/46 green.
+
 - **iter68 phase 2 · Phase 2 modularisation + Mestari copy test fix + YouTube channel-ID bulk resolver** (2026-05-25, 27/27 tests passing · 5 stale tests revived)
   - **Phase 2 admin extraction** — 7 streamer-meta endpoints moved into `routes/admin.py` (now ~250 LOC, 11 endpoints total):
     - `GET /admin/streamer-meta` (legacy listing)

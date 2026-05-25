@@ -1235,80 +1235,8 @@ async def public_streamers_recent_alerts(within_minutes: int = 60):
 # moved to routes/admin.py (iter68 phase 2).
 
 
-class _SlotEntryAdd(BaseModel):
-    name: str
-    category: str  # slot | live_table
-    provider: Optional[str] = ""
-    enabled: Optional[bool] = True
-
-
-class _SlotEntryUpdate(BaseModel):
-    enabled: Optional[bool] = None
-    category: Optional[str] = None
-    provider: Optional[str] = None
-
-
-@api_router.get("/admin/slot-registry")
-async def admin_list_slot_registry(_: bool = Depends(require_admin)):
-    from slot_registry import list_registry
-    return {"items": await list_registry(db, include_disabled=True)}
-
-
-@api_router.post("/admin/slot-registry")
-async def admin_add_slot_registry(
-    payload: _SlotEntryAdd,
-    _: bool = Depends(require_admin),
-):
-    from slot_registry import add_entry
-    try:
-        doc = await add_entry(
-            db,
-            name=payload.name,
-            category=payload.category,
-            provider=payload.provider or "",
-            enabled=bool(payload.enabled if payload.enabled is not None else True),
-        )
-        return {"added": doc}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@api_router.patch("/admin/slot-registry/{entry_id}")
-async def admin_update_slot_registry(
-    entry_id: str, payload: _SlotEntryUpdate,
-    _: bool = Depends(require_admin),
-):
-    from slot_registry import update_entry
-    try:
-        doc = await update_entry(
-            db, entry_id,
-            enabled=payload.enabled,
-            category=payload.category,
-            provider=payload.provider,
-        )
-        if not doc:
-            raise HTTPException(status_code=404, detail="not found")
-        return {"updated": doc}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@api_router.delete("/admin/slot-registry/{entry_id}")
-async def admin_delete_slot_registry(
-    entry_id: str, _: bool = Depends(require_admin),
-):
-    from slot_registry import delete_entry
-    ok = await delete_entry(db, entry_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="not found")
-    return {"deleted": entry_id}
-
-
-@api_router.post("/admin/slot-registry/seed")
-async def admin_seed_slot_registry(_: bool = Depends(require_admin)):
-    """Idempotent seed of the default editorial registry. Safe to re-run."""
-    from slot_registry import seed_default_registry
-    return await seed_default_registry(db)
+# NOTE: Slot-registry admin endpoints (5) + their payload models moved
+# to routes/admin.py (iter68 phase 3a).
 
 
 
@@ -1783,24 +1711,7 @@ async def public_voyager_active():
     return await get_active_voyager(db)
 
 
-@api_router.get("/admin/voyager/rotation")
-async def admin_get_voyager_rotation(_: bool = Depends(require_admin)):
-    """Admin — full rotation calendar with raw, sanitised, defaults."""
-    from voyager_rotation import get_voyager_rotation_raw
-    return await get_voyager_rotation_raw(db)
-
-
-@api_router.put("/admin/voyager/rotation")
-async def admin_save_voyager_rotation(
-    payload: Dict[str, Any],
-    _: bool = Depends(require_admin),
-):
-    """Admin — overwrite the rotation calendar. Sanitiser runs server-side."""
-    from voyager_rotation import save_voyager_rotation
-    try:
-        return await save_voyager_rotation(db, payload)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+# NOTE: Both /admin/voyager/rotation endpoints moved to routes/admin.py (iter68 phase 3b).
 
 
 
@@ -2684,16 +2595,9 @@ api_router.include_router(build_profiler_router(db, require_admin))
 register_share_landing(app)
 
 
-# ── Phase 3 V2 Step 1+3 fold: Voyager rotation calendar ──
-class VoyagerWeekPayload(BaseModel):
-    iso_week: str                                  # "YYYY-Www"
-    market_id: str = "FI"
-    partner_operator_slug: Optional[str] = None
-    theme: Optional[str] = ""
-    prize_summary: Optional[str] = ""
-    smartico_template_id: Optional[str] = None
-    notes: Optional[str] = None
-    status: Optional[str] = "planned"
+# NOTE: VoyagerWeekPayload + all /admin/voyager/weeks/* endpoints moved
+# to routes/admin.py (iter68 phase 3b). server.py still imports the
+# `rotation` helpers for its public read-only endpoints below.
 
 
 @api_router.get("/voyager/current-week")
@@ -2711,33 +2615,7 @@ async def public_voyager_weeks(market_id: str = "FI", upcoming_only: bool = True
     return {"weeks": await rotation_list(db, market_id=market_id, upcoming_only=upcoming_only, limit=limit)}
 
 
-@api_router.get("/admin/voyager/weeks")
-async def admin_list_voyager_weeks(market_id: str = "FI", _: bool = Depends(require_admin)):
-    weeks = await rotation_list(db, market_id=market_id, limit=500)
-    return {
-        "weeks": weeks,
-        "stats": await rotation_stats(db, market_id=market_id),
-        "current_iso_week": current_iso_week(),
-        "next_iso_weeks": next_iso_weeks(12),
-    }
-
-
-@api_router.put("/admin/voyager/weeks/{iso_week}")
-async def admin_upsert_voyager_week(iso_week: str, data: VoyagerWeekPayload, _: bool = Depends(require_admin)):
-    payload = data.dict()
-    payload["iso_week"] = iso_week
-    try:
-        return await rotation_upsert(db, payload, updated_by="admin")
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
-
-@api_router.delete("/admin/voyager/weeks/{iso_week}")
-async def admin_delete_voyager_week(iso_week: str, market_id: str = "FI", _: bool = Depends(require_admin)):
-    ok = await rotation_delete(db, iso_week, market_id=market_id)
-    if not ok:
-        raise HTTPException(404, "Not found")
-    return {"deleted": iso_week, "market_id": market_id}
+# NOTE: /admin/voyager/weeks endpoints moved to routes/admin.py (iter68 phase 3b).
 
 
 # ── Step 4: Live-feed aggregation ─────────────────────────────────────────

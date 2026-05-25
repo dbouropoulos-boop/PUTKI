@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, RefreshCw, Plus, Save, Trash2, Image } from 'lucide-react';
+import { Lock, RefreshCw, Plus, Save, Trash2, Image, Youtube } from 'lucide-react';
 import StreamerAvatar from '../components/StreamerAvatar';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -29,6 +29,12 @@ const StreamersAdmin = () => {
   const [saving, setSaving] = useState(false);
   const [sceneFilter, setSceneFilter] = useState('');
   const [refreshingOne, setRefreshingOne] = useState(null);
+  // YouTube channel-ID resolver state — runs against
+  // /api/admin/streamers/resolve-youtube-channels. `ytLastRun` holds the
+  // full envelope { attempted, resolved, persisted, error_breakdown,
+  // results[] } so we can render the per-row outcomes inline.
+  const [ytResolving, setYtResolving] = useState(false);
+  const [ytLastRun, setYtLastRun] = useState(null);
 
   const headers = useCallback(() => ({ 'Content-Type': 'application/json', 'X-Admin-Token': token }), [token]);
 
@@ -161,6 +167,25 @@ const StreamersAdmin = () => {
     }
   };
 
+  const resolveYoutubeChannels = async (dryRun) => {
+    setYtResolving(true);
+    try {
+      const q = new URLSearchParams({ limit: '50', dry_run: String(!!dryRun) });
+      const r = await fetch(
+        `${BACKEND}/api/admin/streamers/resolve-youtube-channels?${q}`,
+        { method: 'POST', headers: { 'X-Admin-Token': token } },
+      );
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.detail || 'failed');
+      setYtLastRun(j);
+      if (!dryRun) await refresh();
+    } catch (e) {
+      alert(`YouTube resolve failed: ${e.message}`);
+    } finally {
+      setYtResolving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen px-5 py-10" style={{ background: 'var(--bg)' }} data-testid="streamers-admin-page">
       <div className="container-wide">
@@ -193,6 +218,103 @@ const StreamersAdmin = () => {
             avatars · resolved {avatarSummary.resolved} · failed {avatarSummary.failed} · twitch {avatarSummary.twitch_count} · kick {avatarSummary.kick_count} · youtube {avatarSummary.youtube_count}
           </div>
         )}
+
+        {/* ╭─ YouTube channel-ID resolver strip ─╮
+            Drives POST /api/admin/streamers/resolve-youtube-channels.
+            Dry-run first → confirms which slugs the API can reach without
+            burning daily quota on a write run. Full run persists hits
+            to `streamers.youtube_channel_id`. Status pills surface
+            the per-row reason so a `quotaExceeded` breakdown is
+            distinguishable from `not_found` (= wrong handle in seed data). */}
+        <div className="panel p-4 mb-5" data-testid="str-yt-resolver"
+          style={{ border: '1px solid var(--border-strong)' }}>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <Youtube strokeWidth={1.6} size={18} style={{ color: '#C8423C' }} />
+              <div style={{ minWidth: 0 }}>
+                <div className="mono text-[10px]" style={{ letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700 }}>YOUTUBE CHANNEL-ID RESOLVER</div>
+                <div className="font-serif text-[13px] mt-1" style={{ color: 'var(--muted)' }}>
+                  Bulk-resolves <code>@handle</code> → <code>UCxxxxxxxx</code> for YouTube rows that don\u2019t yet have a cached channel id. Strips internal <code>-yt</code> suffix automatically. Persists hits to <code>streamers.youtube_channel_id</code>.
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={() => resolveYoutubeChannels(true)} disabled={ytResolving}
+                data-testid="str-yt-dry-run" className="btn-ghost"
+                title="Probe the YouTube API without persisting — confirms which handles resolve">
+                <RefreshCw strokeWidth={1.5} size={13} className="mr-2" />
+                {ytResolving ? 'PROBING…' : 'DRY RUN'}
+              </button>
+              <button onClick={() => resolveYoutubeChannels(false)} disabled={ytResolving}
+                data-testid="str-yt-resolve" className="btn-primary"
+                title="Resolve and persist channel IDs to the DB. Audit-logged.">
+                <Youtube strokeWidth={1.6} size={13} className="mr-2" />
+                {ytResolving ? 'RESOLVING…' : 'RESOLVE & SAVE'}
+              </button>
+            </div>
+          </div>
+
+          {ytLastRun && (
+            <div className="mt-4" data-testid="str-yt-last-run">
+              {/* Summary line */}
+              <div className="mono text-[11px] mb-3 flex flex-wrap gap-x-4 gap-y-1"
+                style={{ letterSpacing: '0.06em', color: 'var(--muted)' }}>
+                <span>attempted: <strong style={{ color: 'var(--ink)' }}>{ytLastRun.attempted}</strong></span>
+                <span>resolved: <strong style={{ color: '#6FA37D' }}>{ytLastRun.resolved}</strong></span>
+                <span>still unresolved: <strong style={{ color: '#C8423C' }}>{ytLastRun.still_unresolved}</strong></span>
+                <span>persisted: <strong style={{ color: ytLastRun.persisted ? '#5BA0E8' : 'var(--muted)' }}>{ytLastRun.persisted}</strong>{ytLastRun.dry_run ? ' (dry-run)' : ''}</span>
+                {ytLastRun.error_breakdown && Object.keys(ytLastRun.error_breakdown).length > 0 && (
+                  <span>errors:{' '}
+                    {Object.entries(ytLastRun.error_breakdown).map(([k, v]) => (
+                      <span key={k} style={{ color: '#C8423C', marginRight: 6 }}>
+                        <strong>{k}</strong>×{v}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </div>
+
+              {/* Per-row outcome table */}
+              <div style={{ maxHeight: 240, overflowY: 'auto', border: '1px solid var(--border)' }}>
+                <table className="w-full mono text-[11px]" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg)' }}>
+                      <th style={{ textAlign: 'left', padding: '6px 10px', letterSpacing: '0.12em', color: 'var(--muted)' }}>SLUG</th>
+                      <th style={{ textAlign: 'left', padding: '6px 10px', letterSpacing: '0.12em', color: 'var(--muted)' }}>CHANNEL</th>
+                      <th style={{ textAlign: 'left', padding: '6px 10px', letterSpacing: '0.12em', color: 'var(--muted)' }}>STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(ytLastRun.results || []).map((r) => {
+                      const ok = !!r.channel_id;
+                      const reason = r.error || (ok ? null : 'unresolved');
+                      const pillColor = ok ? '#6FA37D'
+                        : reason === 'quotaExceeded' ? '#E8A33C'
+                        : reason === 'not_found' ? '#C8423C'
+                        : '#A0A0A0';
+                      return (
+                        <tr key={r.slug} data-testid={`str-yt-row-${r.slug}`}
+                          style={{ borderTop: '1px solid var(--border)' }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--ink)' }}>{r.slug}</td>
+                          <td style={{ padding: '6px 10px', color: 'var(--muted)' }}>{r.channel}</td>
+                          <td style={{ padding: '6px 10px' }}>
+                            <span style={{
+                              display: 'inline-block', padding: '2px 8px',
+                              border: `1px solid ${pillColor}`, color: pillColor,
+                              letterSpacing: '0.10em', fontWeight: 700,
+                            }}>
+                              {ok ? `✓ ${r.channel_id}` : `✗ ${reason}`}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="space-y-3" data-testid="str-list">

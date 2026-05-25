@@ -130,3 +130,67 @@ class TestStreamerMetaExtraction:
         # that has no publish history yet.
         assert r.status_code == 200, r.text
         assert "items" in r.json()
+
+
+class TestSlotRegistryExtraction:
+    """iter68 phase 3a — slot-registry cluster lives in routes/admin.py."""
+
+    def test_list_requires_admin(self):
+        r = requests.get(f"{BASE_URL}/api/admin/slot-registry", timeout=5)
+        assert r.status_code == 401
+
+    def test_list_returns_items_array(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/slot-registry", headers=HEADERS, timeout=5
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert "items" in body and isinstance(body["items"], list)
+
+    def test_seed_is_idempotent(self):
+        # Seed twice — second call must not raise nor mutate.
+        r1 = requests.post(
+            f"{BASE_URL}/api/admin/slot-registry/seed",
+            headers=HEADERS,
+            timeout=10,
+        )
+        r2 = requests.post(
+            f"{BASE_URL}/api/admin/slot-registry/seed",
+            headers=HEADERS,
+            timeout=10,
+        )
+        assert r1.status_code == 200, r1.text
+        assert r2.status_code == 200, r2.text
+
+
+class TestVoyagerRotationExtraction:
+    """iter68 phase 3b — voyager rotation cluster lives in routes/admin.py."""
+
+    def test_weeks_listing_requires_admin(self):
+        r = requests.get(f"{BASE_URL}/api/admin/voyager/weeks", timeout=5)
+        assert r.status_code == 401
+
+    def test_weeks_listing_envelope_shape(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/voyager/weeks", headers=HEADERS, timeout=5
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        for key in ("weeks", "stats", "current_iso_week", "next_iso_weeks"):
+            assert key in body, f"missing {key} in voyager weeks envelope"
+
+    def test_rotation_endpoint_requires_admin(self):
+        r = requests.get(f"{BASE_URL}/api/admin/voyager/rotation", timeout=5)
+        assert r.status_code == 401
+
+    def test_rotation_endpoint_returns_editor_envelope(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/voyager/rotation", headers=HEADERS, timeout=5
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        # voyager_rotation uses `sanitised` instead of `merged` because
+        # the sanitiser does more than a deep-merge — it enforces game
+        # template references + redirect-URL constraints.
+        for key in ("raw", "sanitised", "defaults"):
+            assert key in body, f"missing {key} in rotation envelope"
