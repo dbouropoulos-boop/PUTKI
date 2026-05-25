@@ -1,6 +1,17 @@
 # PUTKI HQ — PRD
 
+> **STABLE / SHIPPED surfaces** (do not revisit unless user explicitly flags a regression):
+> - `/voita` (Putki HQ raffle listing + detail) — data hygiene, stale-raffle guard, closed-state hero all SHIPPED (iter72, 2026-05-25). No open issues.
+> - `/mestari` (diagnostic suite) — copy audit + social-proof bands SHIPPED (iter71).
+> - `/mittari` (daily signals dashboard) — unified panel, plain-English/Finnish copy, `MittariGate` extracted to component (iter73).
+
 ## Phase History (latest first)
+
+- **iter73 · Extract MittariGate from Mittari.jsx** (2026-05-25, lint clean · screenshot-verified hero + final gate)
+  - Lifted the 158-line `Gate` component out of `/app/frontend/src/pages/Mittari.jsx` into `/app/frontend/src/components/MittariGate.jsx` as a named export `MittariGate` + co-located `STORAGE_UNLOCK_KEY` constant.
+  - Both call sites (hero block + final CTA) re-pointed; page LOC drops from 1394 -> 1238 (-156). Hero gate renders correctly with Telegram-primary CTA + email fallback + "50 connected" badge.
+  - Lint clean. No behavior change; isolation is purely structural for readability.
+
 
 - **iter72 · Putki HQ data hygiene + stale-raffle guard** (2026-05-25, 61/61 tests passing · screenshot-verified listing + open detail + closed detail)
   - **Root cause**: `/voita` (Putki HQ) listing was polluted with 14 `pytest-*` raffles leaked from the test suite. The "Recently paid" strip showed "Alice K. · Pelicans 2-1 Tappara · €250" duplicated 3x (pytest seed data, same email, same fake match). Both seeded "active" raffles (Tappara vs Kärpät, KuPS vs HJK) had kickoffs in the past but status was still `open`, so the listing showed "ENTRY OPEN · PLAY - 60 SECONDS" on stale matches.
