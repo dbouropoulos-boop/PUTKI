@@ -9,6 +9,17 @@
 
 ## Phase History (latest first)
 
+- **iter75b · Streamer Channel Audit surface + Pydantic payloads extraction** (2026-05-25, 82/82 affected tests passing · screenshot-verified back-office panel)
+  - **New endpoint** `GET /api/admin/streamers/audit-youtube?stale_days=30` — read-only, returns per-row health classification (`fresh` / `stale` / `never_resolved` / `unresolved`) plus totals. Cheap (single Mongo scan, no YouTube API call), safe to poll on every back-office mount.
+  - **New back-office panel** above the existing resolver strip at `/back-office/streamers`:
+    - 4-cell totals (TOTAL · UNRESOLVED · STALE >30d · FRESH) - each cell click-filters the row table.
+    - Scrollable row table with SLUG / CHANNEL_ID / AGE / STATUS pill columns; inactive rows dimmed.
+    - RE-AUDIT button refreshes without hitting YouTube API.
+    - Auto-loads on mount + after every Resolve & Save cycle.
+  - **Pydantic payloads extracted** from `routes/admin.py` (660 LOC) to `routes/_payloads.py` (125 LOC). 12 payload classes relocated; `admin.py` now imports them at the top. No behavior change. Lint clean.
+
+
+
 - **iter75 · Mestari diagnostic rebuild + Voita flag ON + YouTube tab hidden** (2026-05-25, 32/32 mestari tests passing)
   - **Voita feature flag**: flipped ON in prod (`voita_feature_enabled = true` via PUT /api/admin/settings); 4 raffles now publicly visible.
   - **YouTube tab**: removed from front-page `StreamersBand.jsx`; YouTube fetch skipped to save API calls; PLATFORM_META kept so re-enable is a one-line revert when GCP quota is bumped.

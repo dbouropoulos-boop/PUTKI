@@ -35,6 +35,13 @@ const StreamersAdmin = () => {
   // results[] } so we can render the per-row outcomes inline.
   const [ytResolving, setYtResolving] = useState(false);
   const [ytLastRun, setYtLastRun] = useState(null);
+  // iter75 - Channel Audit. Polls GET /admin/streamers/audit-youtube
+  // on first auth + after every resolve/save. Surfaces the totals
+  // (unresolved / stale / fresh) plus the actionable row list so the
+  // editor can see at a glance whether the roster is healthy.
+  const [audit, setAudit] = useState(null);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditFilter, setAuditFilter] = useState('all');  // all | unresolved | stale | fresh
 
   const headers = useCallback(() => ({ 'Content-Type': 'application/json', 'X-Admin-Token': token }), [token]);
 
@@ -51,6 +58,27 @@ const StreamersAdmin = () => {
   }, [token, headers]);
 
   useEffect(() => { if (authed) refresh(); }, [authed, refresh]);
+
+  // iter75 - YouTube channel audit loader. Cheap (single Mongo scan,
+  // no YouTube API call), safe to call on every mount + after every
+  // resolve/save cycle. Hook lives near `refresh` so React's call-order
+  // invariant is preserved across both authed and !authed renders.
+  const loadAudit = useCallback(async () => {
+    if (!token) return;
+    setAuditLoading(true);
+    try {
+      const r = await fetch(
+        `${BACKEND}/api/admin/streamers/audit-youtube?stale_days=30`,
+        { headers: { 'X-Admin-Token': token } },
+      );
+      if (!r.ok) return;
+      const j = await r.json();
+      setAudit(j);
+    } catch { /* swallow - panel just stays blank */ }
+    finally { setAuditLoading(false); }
+  }, [token]);
+
+  useEffect(() => { if (authed) loadAudit(); }, [authed, loadAudit]);
 
   const startEdit = (s) => { setSelected(s.slug); setDraft({ ...s }); };
   const startNew = () => { setSelected(null); setDraft(emptyStr()); };
@@ -178,7 +206,7 @@ const StreamersAdmin = () => {
       const j = await r.json();
       if (!r.ok) throw new Error(j.detail || 'failed');
       setYtLastRun(j);
-      if (!dryRun) await refresh();
+      if (!dryRun) { await refresh(); await loadAudit(); }
     } catch (e) {
       alert(`YouTube resolve failed: ${e.message}`);
     } finally {
@@ -216,6 +244,113 @@ const StreamersAdmin = () => {
         {avatarSummary && (
           <div className="mono text-[11px] mb-4" style={{ letterSpacing: '0.06em', color: 'var(--muted)' }} data-testid="str-avatar-summary">
             avatars · resolved {avatarSummary.resolved} · failed {avatarSummary.failed} · twitch {avatarSummary.twitch_count} · kick {avatarSummary.kick_count} · youtube {avatarSummary.youtube_count}
+          </div>
+        )}
+
+        {/* ╭─ YouTube Channel Audit panel (iter75) ─╮
+            Read-only counterpart to the resolver. Shows totals + per-row
+            health so the editor can spot stale (>30d) and unresolved
+            rows at a glance. Filter chip narrows the row table without
+            re-fetching. */}
+        {audit && (
+          <div className="panel p-4 mb-5" data-testid="str-yt-audit"
+            style={{ border: '1px solid var(--border-strong)' }}>
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <Youtube strokeWidth={1.6} size={18} style={{ color: '#9C8B6B' }} />
+                <div style={{ minWidth: 0 }}>
+                  <div className="mono text-[10px]" style={{ letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700 }}>YOUTUBE CHANNEL AUDIT · STALE &gt; 30d</div>
+                  <div className="font-serif text-[13px] mt-1" style={{ color: 'var(--muted)' }}>
+                    Live snapshot of every YouTube streamer&apos;s channel-ID resolution status. Filter to focus on rows that need a re-resolve.
+                  </div>
+                </div>
+              </div>
+              <button onClick={loadAudit} disabled={auditLoading}
+                data-testid="str-yt-audit-refresh" className="btn-ghost">
+                <RefreshCw strokeWidth={1.5} size={13} className="mr-2" />
+                {auditLoading ? 'LOADING…' : 'RE-AUDIT'}
+              </button>
+            </div>
+
+            {/* 4-cell totals strip */}
+            <div className="grid mb-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', border: '1px solid var(--border)' }}>
+              {[
+                { label: 'TOTAL', value: audit.totals.total, color: 'var(--ink)' },
+                { label: 'UNRESOLVED', value: audit.totals.unresolved, color: '#C8423C', filter: 'unresolved' },
+                { label: `STALE >${audit.stale_days}d`, value: audit.totals.stale, color: '#E8A33C', filter: 'stale' },
+                { label: 'FRESH', value: audit.totals.fresh, color: '#6FA37D', filter: 'fresh' },
+              ].map((cell) => (
+                <button key={cell.label}
+                  type="button"
+                  data-testid={`str-yt-audit-cell-${(cell.filter || 'total').toLowerCase()}`}
+                  onClick={() => cell.filter && setAuditFilter(auditFilter === cell.filter ? 'all' : cell.filter)}
+                  style={{
+                    padding: '12px 14px', textAlign: 'left',
+                    borderRight: '1px solid var(--border)',
+                    background: cell.filter && auditFilter === cell.filter ? 'color-mix(in srgb, var(--surface) 60%, transparent)' : 'transparent',
+                    cursor: cell.filter ? 'pointer' : 'default',
+                    display: 'flex', flexDirection: 'column', gap: 4,
+                  }}>
+                  <span className="mono" style={{
+                    fontSize: 9.5, letterSpacing: '0.22em',
+                    fontWeight: 700, color: 'var(--muted)',
+                  }}>{cell.label}</span>
+                  <span className="font-serif" style={{
+                    fontSize: 22, fontWeight: 700, color: cell.color,
+                    letterSpacing: '-0.01em',
+                  }}>{cell.value}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Row table - filtered by chip */}
+            <div style={{ maxHeight: 280, overflowY: 'auto', border: '1px solid var(--border)' }}>
+              <table className="w-full mono text-[11px]" style={{ borderCollapse: 'collapse' }}>
+                <thead style={{ position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 1 }}>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '6px 10px', letterSpacing: '0.12em', color: 'var(--muted)' }}>SLUG</th>
+                    <th style={{ textAlign: 'left', padding: '6px 10px', letterSpacing: '0.12em', color: 'var(--muted)' }}>CHANNEL_ID</th>
+                    <th style={{ textAlign: 'left', padding: '6px 10px', letterSpacing: '0.12em', color: 'var(--muted)' }}>AGE</th>
+                    <th style={{ textAlign: 'left', padding: '6px 10px', letterSpacing: '0.12em', color: 'var(--muted)' }}>STATUS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(audit.rows || [])
+                    .filter((r) => auditFilter === 'all' || r.status === auditFilter)
+                    .map((r) => {
+                      const c = r.status === 'fresh' ? '#6FA37D'
+                        : r.status === 'stale' ? '#E8A33C'
+                        : r.status === 'never_resolved' ? '#9C8B6B'
+                        : '#C8423C';
+                      return (
+                        <tr key={r.slug} data-testid={`str-yt-audit-row-${r.slug}`}
+                          style={{ borderTop: '1px solid var(--border)',
+                                   opacity: r.active ? 1 : 0.5 }}>
+                          <td style={{ padding: '6px 10px', color: 'var(--ink)' }}>
+                            {r.slug}{!r.active && <span className="mono text-[9px]" style={{ color: 'var(--muted)', marginLeft: 6, letterSpacing: '0.10em' }}>· INACTIVE</span>}
+                          </td>
+                          <td style={{ padding: '6px 10px', color: r.youtube_channel_id ? 'var(--muted)' : '#C8423C', fontSize: 10.5 }}>
+                            {r.youtube_channel_id || '— none —'}
+                          </td>
+                          <td style={{ padding: '6px 10px', color: 'var(--muted)' }}>
+                            {r.age_days == null ? '—' : `${r.age_days}d`}
+                          </td>
+                          <td style={{ padding: '6px 10px' }}>
+                            <span style={{
+                              display: 'inline-block', padding: '2px 8px',
+                              border: `1px solid ${c}`, color: c,
+                              letterSpacing: '0.10em', fontWeight: 700,
+                              fontSize: 9.5,
+                            }}>
+                              {r.status.toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 

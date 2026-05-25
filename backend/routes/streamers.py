@@ -560,4 +560,84 @@ def build_streamers_router() -> APIRouter:
             "results": results,
         }
 
+    # ─── iter75 · YouTube channel resolution AUDIT ─────────────────
+    # Read-only counterpart to /resolve-youtube-channels above. Surfaces
+    # the full YouTube streamer roster so the back-office can spot:
+    #   - unresolved rows (no channel_id stored)
+    #   - stale rows (resolved > stale_days ago - the @handle could have
+    #     been renamed; the cached channel_id may now 404 on Data API)
+    #   - never-resolved rows (admin added the streamer but never ran
+    #     the resolver - common during initial roster seeding)
+    # The FE consumes this list to render the "Audit" tab in
+    # /back-office/streamers, with row-level actions.
+    @router.get("/admin/streamers/audit-youtube")
+    async def admin_audit_youtube_channels(
+        stale_days: int = 30, _: bool = Depends(require_admin), db = Depends(get_db),
+    ):
+        from datetime import datetime as _dt, timezone as _tz, timedelta as _td
+        now = _dt.now(_tz.utc)
+        cutoff = now - _td(days=max(1, int(stale_days)))
+
+        cur = db.streamers.find(
+            {"platform": {"$regex": "^youtube$", "$options": "i"}},
+            {"_id": 0, "slug": 1, "name": 1, "channel": 1, "active": 1,
+             "youtube_channel_id": 1, "youtube_channel_resolved_at": 1},
+        ).sort([("active", -1), ("slug", 1)])
+        rows = []
+        total = 0
+        active = 0
+        unresolved = 0
+        stale = 0
+        async for s in cur:
+            total += 1
+            is_active = bool(s.get("active", True))
+            if is_active:
+                active += 1
+            channel_id = (s.get("youtube_channel_id") or "").strip() or None
+            resolved_at = s.get("youtube_channel_resolved_at")
+            resolved_dt = None
+            if resolved_at:
+                try:
+                    resolved_dt = _dt.fromisoformat(str(resolved_at).replace("Z", "+00:00"))
+                    if resolved_dt.tzinfo is None:
+                        resolved_dt = resolved_dt.replace(tzinfo=_tz.utc)
+                except (ValueError, AttributeError):
+                    resolved_dt = None
+            age_days = None
+            if resolved_dt:
+                age_days = int((now - resolved_dt).total_seconds() // 86400)
+            # Classification: 'unresolved' (no channel_id) > 'stale'
+            # (resolved but old) > 'never_resolved' (channel_id present
+            # but no timestamp - legacy data) > 'fresh'.
+            if not channel_id:
+                status = "unresolved"
+                unresolved += 1
+            elif resolved_dt is None:
+                status = "never_resolved"
+            elif resolved_dt < cutoff:
+                status = "stale"
+                stale += 1
+            else:
+                status = "fresh"
+            rows.append({
+                "slug": s.get("slug"),
+                "name": s.get("name"),
+                "channel": s.get("channel"),
+                "active": is_active,
+                "youtube_channel_id": channel_id,
+                "youtube_channel_resolved_at": resolved_at,
+                "age_days": age_days,
+                "status": status,
+            })
+
+        return {
+            "stale_days": stale_days,
+            "totals": {
+                "total": total, "active": active,
+                "unresolved": unresolved, "stale": stale,
+                "fresh": total - unresolved - stale,
+            },
+            "rows": rows,
+        }
+
     return router
