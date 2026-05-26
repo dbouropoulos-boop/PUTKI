@@ -70,7 +70,11 @@ def test_resubscribe_twitch_dry_run():
     # plan_count = 2 * resolved streamers (online + offline); resolved = streamer_count - errors
     resolved = j["streamer_count"] - len(j.get("would_error", []))
     assert j["plan_count"] == 2 * resolved, j
-    assert j["plan_count"] == len(wc)
+    # `would_create` is a capped preview (max 50 entries) so we can't
+    # assert exact equality once the roster grows past 25 streamers.
+    # Either it's the full plan, or it's exactly the 50-entry cap.
+    assert len(wc) == min(j["plan_count"], 50), \
+        f"would_create len={len(wc)} should equal min(plan_count={j['plan_count']}, 50)"
     # events present
     events = {x["event"] for x in wc}
     assert {"stream.online", "stream.offline"}.issubset(events) or len(wc) == 0

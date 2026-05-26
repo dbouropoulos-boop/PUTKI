@@ -9,6 +9,14 @@
 
 ## Phase History (latest first)
 
+- **iter75c · Test hygiene + parallel-ready runner** (2026-05-25, 720 tests run in 9m10s, 695 passing · 96.5%)
+  - **Fixed**: `test_iter13_kick_endpoints::test_resubscribe_twitch_dry_run` assertion - the `would_create` preview is server-side capped at 50 entries (`webhooks.py:485`); the test now asserts `len(wc) == min(plan_count, 50)` instead of strict equality, so it scales as the streamer roster grows past 25.
+  - **`pytest-xdist==3.8.0`** added to `requirements.txt`; conftest documents the parallel-safe vs serial conventions (most of our suite hits a live FastAPI sharing one Mongo DB, so workers stepping on each other's writes is a real risk - hence default-serial).
+  - **New `backend/scripts/run_tests.sh`** backgrounds the full suite into `/tmp/pytest-putki.log`, prints pid + tail/wait instructions. Solves the 120s `execute_bash` foreground timeout for the 700+ test broad sweep. Skips the known-flaky `test_iter62_avatar_refresh` (Cloudflare 403) by default.
+  - **Out of scope for iter75c**: the 21 pre-existing failures across `iter18`/`iter20`/`iter21`/`iter22`/`iter45`/`iter56`/`iter62`/`phase3`/`phase4*` test modules. Mostly external-API flakes (YouTube quota, Kick 403) and stale shape assertions. To be triaged file-by-file in a future iter.
+
+
+
 - **iter75b · Streamer Channel Audit surface + Pydantic payloads extraction** (2026-05-25, 82/82 affected tests passing · screenshot-verified back-office panel)
   - **New endpoint** `GET /api/admin/streamers/audit-youtube?stale_days=30` — read-only, returns per-row health classification (`fresh` / `stale` / `never_resolved` / `unresolved`) plus totals. Cheap (single Mongo scan, no YouTube API call), safe to poll on every back-office mount.
   - **New back-office panel** above the existing resolver strip at `/back-office/streamers`:

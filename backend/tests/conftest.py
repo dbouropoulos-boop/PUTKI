@@ -7,9 +7,24 @@ Goals:
      ``test_iter45_mestari_public`` do ``os.environ["MONGO_URL"]`` at import
      time, so we must load env vars at conftest import time.
   2. After the full pytest session completes, sweep any leftover raffles
-     whose slug is prefixed with ``pytest-`` / ``test-`` so the public
-     ``/voita`` (PUTKI HQ) listing stays clean. Tests are not always
-     careful with their own teardown - this is a defensive net.
+     whose slug is prefixed with ``pytest-`` / ``test-`` / ``qa-`` so the
+     public ``/voita`` (PUTKI HQ) listing stays clean. Tests are not
+     always careful with their own teardown - this is a defensive net.
+
+Parallel execution
+------------------
+``pytest-xdist`` (``-n auto``) is supported for tests in the ``parallel_safe``
+group only (see ``pytest.ini``). Most of our suite talks to a LIVE FastAPI
+backend that shares a single Mongo database, so workers stepping on each
+other's raffle inserts is a real risk. The convention is:
+
+  - Pure unit tests (no live API, no shared DB writes) -> safe to run with
+    ``-n auto --dist=loadfile``.
+  - Integration tests that hit ``REACT_APP_BACKEND_URL`` -> serial only.
+
+The ``scripts/run_tests.sh`` helper backgrounds the full suite into
+``/tmp/pytest-putki.log`` so long sweeps no longer hit the 120s
+``execute_bash`` foreground timeout.
 """
 import os
 from pathlib import Path
