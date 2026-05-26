@@ -2599,6 +2599,9 @@ from routes.bot_routing import (  # noqa: E402
 )
 api_router.include_router(_make_bot_routing_router())
 
+from routes.signup import make_router as _make_signup_router  # noqa: E402
+api_router.include_router(_make_signup_router())
+
 # iter66 phase 3a - streamer endpoints (7 public + 7 admin)
 from routes.streamers import build_streamers_router  # noqa: E402
 api_router.include_router(build_streamers_router())

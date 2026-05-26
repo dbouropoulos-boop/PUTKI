@@ -297,6 +297,7 @@ const INDEX_GROUPS = [
       { to: '/back-office/weekly',                    testid: 'back-office-link-weekly',                label: 'Weekly card',            desc: 'Five-pick prediction prize + leaderboard.' },
       { to: '/back-office/peli',                      testid: 'back-office-link-peli',                  label: 'Peli',                   desc: 'Monthly Voyager raffle entries + partner config.' },
       { to: '/back-office/telegram',                  testid: 'back-office-link-telegram',              label: 'Telegram bot',           desc: 'Webhook · bound chats · audit log.' },
+      { to: '/back-office/bot-routing',               testid: 'back-office-link-bot-routing',           label: 'Bot & routing',          desc: 'Funnel master switches · partner affiliates · subscriber summary.' },
     ],
   },
   {

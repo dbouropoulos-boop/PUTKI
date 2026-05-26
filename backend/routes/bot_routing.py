@@ -195,3 +195,6 @@ async def ensure_bot_routing_indexes(db) -> None:
     await db.mittari_subscribers.create_index("referred_by", sparse=True, background=True)
     await db.mittari_subscribers.create_index([("status", 1), ("telegram_chat_id", 1)],
                                               sparse=True, background=True)
+    # Slice 2: signup capture upserts by email - make it the natural key.
+    await db.mittari_subscribers.create_index("email", sparse=True, background=True)
+    await db.mittari_subscribers.create_index("pending_id", sparse=True, background=True)

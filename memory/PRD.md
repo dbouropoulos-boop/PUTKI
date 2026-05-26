@@ -9,6 +9,25 @@
 
 ## Phase History (latest first)
 
+- **iter76 · Slice 1 (Bot & Routing foundation) + Slice 2 (Web signup capture)** (2026-05-26, 19/19 new tests, 43/43 affected suites green, screenshot-verified)
+  - **Slice 1 - Bot & Routing back-office wired end-to-end**:
+    - `BackOfficeBotRouting.jsx` (~360 LOC) now routed at `/back-office/bot-routing` + tile added to the "Leads & raffles" group on the back-office index. Page loads `bot_config` + partners + subscriber summary in a single parallel fetch.
+    - Confirmed: 155 total subs / 0 ACTIVE+BOUND / segments=1 on first paint via live preview.
+    - Buttons: INFORMATIVE / ROUTED mode toggles, REQUIRE VERIFIED SIGNUP, DAILY DM DISPATCH, TELEGRAM STARS (stub), SHARPNESS broadcast floor input. ROUTED is auto-disabled until at least one partner row is LIVE - guards against an empty-router monetisation flip.
+    - Partners table with inline LIVE/PAUSE/DEL row actions + add-row form (partner_key, display_name, affiliate_base_url, target_geos CSV, priority_weight).
+  - **Slice 2 - Website Signup Flow (`/signup`)**:
+    - New page `MittariSignup.jsx` - bilingual one-screen capture (email, segment radio [football/hockey/all], 18+ hard gate, marketing consent). Strict client-side validation: submit button stays disabled until email + age + segment all valid. Honours `?lang=en` query param + navigator.language fallback.
+    - New backend route `POST /api/signup/mittari` (`routes/signup.py`): validates email regex, segment whitelist, age_confirmed=True hard gate. Idempotent by email - same address always yields the same `pending_id` so retries land on the same Telegram deep link. Captures `Accept-Language` + `X-Forwarded-For` first-hop IP for the upcoming Slice 5 geo router. Returns `{pending_id, telegram_deep_link, segment}`.
+    - New admin endpoint `GET /api/admin/subscribers/lookup?q=` - lightweight quick-find by email prefix (case-insensitive), exact pending_id, telegram_chat_id (numeric), or telegram_username. Caps at 50 rows; default 10. Used by back-office for support queries.
+    - New indexes: `mittari_subscribers.email` + `.pending_id` (sparse, background).
+  - **Tests added**:
+    - `tests/test_iter76_bot_routing.py` (11 tests) - auth gates, config defaults envelope, PUT round-trip + bad-mode rejection, partners CRUD lifecycle, subscriber summary shape.
+    - `tests/test_iter76_signup_flow.py` (8 tests) - happy path, idempotent upsert on email, 18+/bad-segment/bad-email rejections, admin lookup auth + prefix match.
+  - **Backend & frontend lint clean** · 43/43 across iter62 + iter68 + iter76 suites passing.
+  - **Status**: Slices 1 + 2 complete. Slice 3 (per-subscriber daily DM dispatch, gated by `daily_dm_enabled`) is next. Slice 4 (Telegram Mini App at `/tma`) + Slice 5 (geo-aware affiliate router `/api/r/{code}`) follow.
+
+
+
 - **iter75d · Test triage to 100% green** (2026-05-26, 720/720 passing in 8m02s, 6 properly skipped)
   - **Real bugs fixed in production code**:
     - `odds_api.get_upcoming_picks` now emits one bucket per requested day (even when empty) so the public UI gets a stable 7-cell grid.

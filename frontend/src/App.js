@@ -42,6 +42,8 @@ import BackOfficeNewsWatch from "@/pages/BackOfficeNewsWatch";
 import BackOfficeEmailTemplates from "@/pages/BackOfficeEmailTemplates";
 import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosticsCopy";
 import BackOfficeProfilerFunnel from "@/pages/BackOfficeProfilerFunnel";
+import BackOfficeBotRouting from "@/pages/BackOfficeBotRouting";
+import MittariSignup from "@/pages/MittariSignup";
 import Mittari from "@/pages/Mittari";
 import Pelisignaalit from "@/pages/Pelisignaalit";
 import Voita from "@/pages/Voita";
@@ -83,6 +85,7 @@ function App() {
           {/* Standalone (no header/footer) */}
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
+          <Route path="/signup" element={<MittariSignup />} />
           <Route path="/mestari" element={<MestariHub />} />
           <Route path="/mestari/sports" element={<Mestari />} />
           <Route path="/mestari/poker" element={<MestariDiagnostic diagnostic="poker" />} />
@@ -110,6 +113,7 @@ function App() {
           <Route path="/back-office/voyager" element={<BackOfficeVoyagerRotation />} />
           <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
           <Route path="/back-office/profiler-funnel" element={<BackOfficeProfilerFunnel />} />
+          <Route path="/back-office/bot-routing" element={<BackOfficeBotRouting />} />
           <Route path="/back-office/leads" element={<BackOfficeLeads />} />
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
