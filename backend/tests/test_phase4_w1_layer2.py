@@ -289,12 +289,43 @@ class TestLayer2Ticks:
 # ─────────── SSE + admin HTTP integration ───────────
 
 class TestSSEEndpoint:
+    def test_admin_layer2_status_shape(self):
+        r = requests.get(f"{API}/admin/layer2/status", headers=HDR, timeout=30)
+        assert r.status_code == 200
+        d = r.json()
+        assert "collections" in d
+        for c in ("stream_signals", "social_signals", "sports_signals", "news_signals"):
+            assert c in d["collections"]
+            assert "doc_count" in d["collections"][c]
+        assert "sse_subscribers" in d
+
+    def test_admin_layer2_tick_recomputes_dial(self):
+        r = requests.post(f"{API}/admin/layer2/tick?worker=nhl", headers=HDR, timeout=30)
+        assert r.status_code == 200
+        d = r.json()
+        assert "workers" in d and "nhl" in d["workers"]
+        assert "dial" in d
+        for k in ("composite_score", "state_key", "sub_scores", "primary_driver"):
+            assert k in d["dial"]
+
+    def test_admin_layer2_tick_unknown_worker_400(self):
+        r = requests.post(f"{API}/admin/layer2/tick?worker=bogus", headers=HDR, timeout=30)
+        assert r.status_code == 400
+
+    def test_admin_layer2_status_requires_auth(self):
+        r = requests.get(f"{API}/admin/layer2/status", timeout=30)
+        assert r.status_code == 401
+
     def test_dial_stream_yields_event(self):
+        """iter75d: moved to the END of the class. SSE keeps the single
+        uvicorn worker busy on a long-lived generator; running it first
+        starved every subsequent admin HTTP call in this class with a
+        30s ReadTimeout."""
         # Pre-publish a snapshot so the initial bootstrap delivers immediately
         snap = {"composite_score": 50.0, "state_key": "KUUMA", "computed_at": "now"}
         _run(dial_sse.publish(snap))
 
-        r = requests.get(f"{API}/dial/stream", stream=True, timeout=6)
+        r = requests.get(f"{API}/dial/stream", stream=True, timeout=30)
         assert r.status_code == 200
         assert "text/event-stream" in r.headers.get("content-type", "")
         # Read until we see a complete event (terminated by blank line)
@@ -305,7 +336,7 @@ class TestSSEEndpoint:
                 break
             if len(buf) > 8192:
                 break
-        r.close()
+        r.connection.close() if hasattr(r,"connection") else r.close()
         assert b"event: dial" in buf
         text = buf.decode("utf-8", errors="ignore")
         # Find the first complete event block after "event: dial"
@@ -313,29 +344,3 @@ class TestSSEEndpoint:
         data_line = next(line for line in block.split("\n") if line.startswith("data: "))
         json.loads(data_line[len("data: "):])
 
-    def test_admin_layer2_status_shape(self):
-        r = requests.get(f"{API}/admin/layer2/status", headers=HDR, timeout=8)
-        assert r.status_code == 200
-        d = r.json()
-        assert "collections" in d
-        for c in ("stream_signals", "social_signals", "sports_signals", "news_signals"):
-            assert c in d["collections"]
-            assert "doc_count" in d["collections"][c]
-        assert "sse_subscribers" in d
-
-    def test_admin_layer2_tick_recomputes_dial(self):
-        r = requests.post(f"{API}/admin/layer2/tick?worker=nhl", headers=HDR, timeout=15)
-        assert r.status_code == 200
-        d = r.json()
-        assert "workers" in d and "nhl" in d["workers"]
-        assert "dial" in d
-        for k in ("composite_score", "state_key", "sub_scores", "primary_driver"):
-            assert k in d["dial"]
-
-    def test_admin_layer2_tick_unknown_worker_400(self):
-        r = requests.post(f"{API}/admin/layer2/tick?worker=bogus", headers=HDR, timeout=5)
-        assert r.status_code == 400
-
-    def test_admin_layer2_status_requires_auth(self):
-        r = requests.get(f"{API}/admin/layer2/status", timeout=5)
-        assert r.status_code == 401

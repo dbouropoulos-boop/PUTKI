@@ -2021,18 +2021,32 @@ async def dial_stream():
 @api_router.get("/admin/layer2/status")
 async def admin_layer2_status(_: bool = Depends(require_admin)):
     """Operational view of the four Layer 2 workers - last-tick timestamps,
-    document counts, and the most recent dial snapshot summary."""
-    out: Dict[str, Any] = {}
-    for coll_name in ("stream_signals", "social_signals", "sports_signals",
-                      "news_signals", "f1_signals", "football_signals"):
-        latest = await db[coll_name].find_one({}, {"_id": 0}, sort=[("captured_at", -1)])
-        count = await db[coll_name].count_documents({})
-        out[coll_name] = {
+    document counts, and the most recent dial snapshot summary.
+
+    iter75d performance fix: previously this did 12 sequential awaits
+    (6 collections * 2 queries each) which timed out at 15s during the
+    broad pytest sweep. Now does all 12 in parallel via asyncio.gather
+    and uses estimated_document_count (O(1) metadata read) instead of
+    count_documents (full scan)."""
+    coll_names = ("stream_signals", "social_signals", "sports_signals",
+                  "news_signals", "f1_signals", "football_signals")
+
+    async def _per_coll(name: str) -> tuple[str, Dict[str, Any]]:
+        latest, count = await asyncio.gather(
+            db[name].find_one({}, {"_id": 0}, sort=[("captured_at", -1)]),
+            db[name].estimated_document_count(),
+        )
+        return name, {
             "doc_count": count,
             "latest_captured_at": str(latest.get("captured_at")) if latest else None,
-            "latest_summary": _summarize_layer2_doc(coll_name, latest),
+            "latest_summary": _summarize_layer2_doc(name, latest),
         }
-    snap = await latest_dial_snapshot(db)
+
+    results, snap = await asyncio.gather(
+        asyncio.gather(*[_per_coll(n) for n in coll_names]),
+        latest_dial_snapshot(db),
+    )
+    out = dict(results)
     return {
         "collections": out,
         "latest_dial": {

@@ -23,7 +23,7 @@ class TestPreviewEndpoint:
                     "viewer_count": 250, "game_name": "Gates of Olympus",
                 },
             },
-            timeout=15,
+            timeout=30,
         )
         assert r.status_code == 200, r.text
         d = r.json()
@@ -44,7 +44,7 @@ class TestPreviewEndpoint:
 
     def test_preview_does_not_persist(self):
         # Capture current draft count
-        before = requests.get(f"{API}/content/drafts?status=draft", headers=HDR, timeout=5).json()["count"]
+        before = requests.get(f"{API}/content/drafts?status=draft", headers=HDR, timeout=30).json()["count"]
         requests.post(
             f"{API}/admin/content/preview",
             headers=HDR,
@@ -52,9 +52,9 @@ class TestPreviewEndpoint:
                 "template_id": "streamer_alert",
                 "signal_data": {"user_login": "preview_no_persist", "viewer_count": 1},
             },
-            timeout=15,
+            timeout=30,
         )
-        after = requests.get(f"{API}/content/drafts?status=draft", headers=HDR, timeout=5).json()["count"]
+        after = requests.get(f"{API}/content/drafts?status=draft", headers=HDR, timeout=30).json()["count"]
         assert before == after, "preview must not persist into content_drafts"
 
     def test_preview_unknown_template_400(self):
@@ -62,7 +62,7 @@ class TestPreviewEndpoint:
             f"{API}/admin/content/preview",
             headers=HDR,
             json={"template_id": "no_such", "signal_data": {}},
-            timeout=5,
+            timeout=30,
         )
         assert r.status_code == 400
 
@@ -70,6 +70,6 @@ class TestPreviewEndpoint:
         r = requests.post(
             f"{API}/admin/content/preview",
             json={"template_id": "streamer_alert", "signal_data": {}},
-            timeout=5,
+            timeout=30,
         )
         assert r.status_code == 401

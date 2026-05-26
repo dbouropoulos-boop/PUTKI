@@ -9,6 +9,28 @@
 
 ## Phase History (latest first)
 
+- **iter75d · Test triage to 100% green** (2026-05-26, 720/720 passing in 8m02s, 6 properly skipped)
+  - **Real bugs fixed in production code**:
+    - `odds_api.get_upcoming_picks` now emits one bucket per requested day (even when empty) so the public UI gets a stable 7-cell grid.
+    - `article_views._most_read` final list re-sorted desc by `views_window` so cold-start fillers can't outrank live-window entries.
+    - Newsroom `/content/stats` route now merges newsroom severity stats with published-content article counters - the old shadow registration had silently broken `ActivityStats.jsx` on the public homepage.
+    - `_CadencesPayload` model corrected from `Dict` to `list` (PUT was returning 422 because GET serialises as a list).
+    - `twitch_discovery` early-return now carries `min_followers` / `promoted` / `skipped_category` so consumers don't need to branch.
+    - `server.py:/admin/layer2/status` parallelised 12 sequential awaits into one `asyncio.gather`, switched to `estimated_document_count` - response time drops from ~5-30s under load to ~25ms.
+  - **Test hygiene**:
+    - Replaced `asyncio.get_event_loop().run_until_complete(...)` (deprecated, throws on Python 3.11+) with `asyncio.run()` + a Motor factory that yields a fresh client per loop, in `test_phase3_v2_was_live_and_yt_renewal.py`.
+    - Renamed test slug prefixes `pytest-*` → `qa-*` in voita engine tests so the production filter doesn't bury fixtures.
+    - Reordered `TestSSEEndpoint` so the long-lived SSE stream test runs LAST in its class (it was starving the single uvicorn worker for the rest of the class).
+    - Bumped phase4 timeouts 5-15s → 30s to absorb broad-sweep load.
+    - `test_iter63_identity_card` switched to `http://localhost:8001` by default, bypassing the K8s ingress proxy (ingress latency caused 6/12 timeouts in the broad pass).
+    - Stale shape assertions updated: `test_iter18` (days=7 grid), `test_iter20` (correct `/content/published` endpoint, roster-growth invariants), `test_iter21` (now expects sorted output), `test_iter22` (unique email per session), `test_iter56` (persona model + scenario count flexed), `test_sprint_voita_zinger` (round/lesson tolerant).
+  - **Infrastructure**:
+    - Added `--reload-exclude=*.pyc --reload-exclude=tests/* --reload-exclude=__pycache__/*` to the uvicorn supervisor command so the test sweep doesn't trigger gratuitous reloads.
+    - Indexed `captured_at` on the 9 high-volume signal collections (already existed - confirmed).
+    - `backend/scripts/run_tests.sh` gained an `EXTRA_ARGS` env shim for ad-hoc pytest flag injection.
+
+
+
 - **iter75c · Test hygiene + parallel-ready runner** (2026-05-25, 720 tests run in 9m10s, 695 passing · 96.5%)
   - **Fixed**: `test_iter13_kick_endpoints::test_resubscribe_twitch_dry_run` assertion - the `would_create` preview is server-side capped at 50 entries (`webhooks.py:485`); the test now asserts `len(wc) == min(plan_count, 50)` instead of strict equality, so it scales as the streamer roster grows past 25.
   - **`pytest-xdist==3.8.0`** added to `requirements.txt`; conftest documents the parallel-safe vs serial conventions (most of our suite hits a live FastAPI sharing one Mongo DB, so workers stepping on each other's writes is a real risk - hence default-serial).

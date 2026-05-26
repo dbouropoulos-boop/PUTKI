@@ -34,9 +34,16 @@ ARGS=("$@")
 if [[ ${#ARGS[@]} -eq 0 ]]; then
   ARGS=("tests/")
 fi
+# Allow EXTRA_ARGS env var to inject pytest flags without polluting the
+# positional default ("tests/") - e.g. EXTRA_ARGS="--tb=long" bash run_tests.sh
+EXTRA=()
+if [[ -n "${EXTRA_ARGS:-}" ]]; then
+  # shellcheck disable=SC2206
+  EXTRA=(${EXTRA_ARGS})
+fi
 
 : > "$LOG"
-nohup python -m pytest "${ARGS[@]}" "${DEFAULT_IGNORES[@]}" --tb=short -q \
+nohup python -m pytest "${ARGS[@]}" "${DEFAULT_IGNORES[@]}" "${EXTRA[@]}" --tb=short -q \
   >>"$LOG" 2>&1 &
 echo $! > "$PIDFILE"
 

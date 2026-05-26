@@ -11,6 +11,14 @@ import pytest
 import requests
 
 def _load_backend_url():
+    # iter75d - prefer localhost during pytest runs. The previous code
+    # routed every request through the public ingress
+    # (REACT_APP_BACKEND_URL), which slows + occasionally times out
+    # during the broad-sweep pytest run. The internal port is faster +
+    # bypasses the proxy. PUTKI_TEST_USE_INGRESS=1 forces the old
+    # behaviour for e2e validation.
+    if not os.environ.get("PUTKI_TEST_USE_INGRESS"):
+        return "http://localhost:8001"
     url = os.environ.get("REACT_APP_BACKEND_URL")
     if not url:
         # fallback - read from frontend/.env (cannot hardcode)

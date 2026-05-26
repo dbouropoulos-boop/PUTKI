@@ -44,7 +44,7 @@ def _run(coro):
 
 class TestEditorialSubjectsLoaded:
     def test_loader_counts_match_dataset(self):
-        r = requests.get(f"{API}/admin/editorial-subjects/stats", headers=HDR, timeout=8)
+        r = requests.get(f"{API}/admin/editorial-subjects/stats", headers=HDR, timeout=30)
         assert r.status_code == 200
         d = r.json()
         # The dataset declares 305 entries across 17 subject_types
@@ -56,7 +56,7 @@ class TestEditorialSubjectsLoaded:
 
     def test_subject_list_filterable(self):
         r = requests.get(f"{API}/admin/editorial-subjects?subject_type=athlete&limit=5",
-                         headers=HDR, timeout=8)
+                         headers=HDR, timeout=30)
         assert r.status_code == 200
         d = r.json()
         assert d["count"] > 0
@@ -445,7 +445,7 @@ class TestLayer2FanOut:
 
 class TestContentAPIs:
     def test_templates_endpoint_lists_all_six(self):
-        r = requests.get(f"{API}/admin/content/templates", headers=HDR, timeout=5)
+        r = requests.get(f"{API}/admin/content/templates", headers=HDR, timeout=30)
         assert r.status_code == 200
         ids = [t["id"] for t in r.json()["templates"]]
         for t in ("nhl_recap", "streamer_alert", "regulatory_analysis",
@@ -479,20 +479,20 @@ class TestContentAPIs:
             return
         slug = d["published"]["url_slug"]
         # Public read works
-        pub = requests.get(f"{API}/content/published/{slug}", timeout=5)
+        pub = requests.get(f"{API}/content/published/{slug}", timeout=30)
         assert pub.status_code == 200
         body = pub.json()
         assert body["url_slug"] == slug
         assert body["type"] == "streamer_alert"
         # List endpoint includes it
-        lst = requests.get(f"{API}/content/published?category=striimaajat", timeout=5)
+        lst = requests.get(f"{API}/content/published?category=striimaajat", timeout=30)
         assert lst.status_code == 200
         assert any(item["url_slug"] == slug for item in lst.json()["items"])
 
     def test_drafts_listing_requires_auth(self):
-        r = requests.get(f"{API}/content/drafts", timeout=5)
+        r = requests.get(f"{API}/content/drafts", timeout=30)
         assert r.status_code == 401
 
     def test_published_unknown_slug_404(self):
-        r = requests.get(f"{API}/content/published/nope-{os.urandom(4).hex()}", timeout=5)
+        r = requests.get(f"{API}/content/published/nope-{os.urandom(4).hex()}", timeout=30)
         assert r.status_code == 404
