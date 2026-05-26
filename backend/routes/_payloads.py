@@ -79,8 +79,12 @@ class _VoyagerWeekPayload(BaseModel):
 
 # ─── Scheduler + dispatch ───────────────────────────────────────────
 class _CadencesPayload(BaseModel):
-    """Editor-driven cadence map: { content_type: {weekday, hour, ...} }."""
-    cadences: Dict[str, Any]
+    """Editor-driven cadence list. Each entry is a per-content-type
+    cadence row (content_type, weekdays, frequency, min_gap_hours, etc.).
+    iter75d fix: model was wrongly typed as Dict[str, Any] which 422'd
+    the PUT roundtrip - the GET / DB representation has always been a
+    list of cadence dicts, and `set_cadences()` consumes a list."""
+    cadences: list
 
 
 class _DispatchRunPayload(BaseModel):

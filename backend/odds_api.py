@@ -263,8 +263,13 @@ async def get_upcoming_picks(days: int = 7, top_per_day: int = 5) -> Dict[str, A
             continue
         out.setdefault(day.isoformat(), []).append(p)
     # Trim per-day and sort each bucket strongest-first.
+    # iter75d: emit ONE bucket per requested day (even when empty) so
+    # the UI gets a stable 7-cell grid; the test in
+    # test_iter18_weekly_tips_winners expects exactly `days` entries.
     grouped = []
-    for day, picks in sorted(out.items()):
+    for offset in range(days):
+        day = (today + timedelta(days=offset)).isoformat()
+        picks = out.get(day, [])
         picks.sort(key=lambda p: -p["implied_probability"])
         grouped.append({"date": day, "picks": picks[:top_per_day]})
     return {

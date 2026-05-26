@@ -49,7 +49,43 @@ def build_newsroom_router(db) -> APIRouter:
 
     @router.get("/content/stats")
     async def get_content_stats() -> Dict[str, Any]:
-        return await content_stats(db)
+        # iter75d - merge the newsroom severity stats with the
+        # published-content article counts so both
+        # `LiveDeskHeader` (severity panel) and `ActivityStats`
+        # (article counters) read from one endpoint. Previously two
+        # routes shadowed each other at this path - the server.py
+        # decorator was masked by this include_router registration,
+        # which silently broke ActivityStats.
+        from datetime import datetime, timezone, timedelta
+        sev = await content_stats(db)
+        now = datetime.now(timezone.utc)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        week_start = (now - timedelta(days=7)).isoformat()
+        q_base = {"draft_id": {"$exists": True}}
+        articles_today = await db.published_content.count_documents(
+            {**q_base, "published_at": {"$gte": today_start}}
+        )
+        articles_week = await db.published_content.count_documents(
+            {**q_base, "published_at": {"$gte": week_start}}
+        )
+        articles_total = await db.published_content.count_documents(q_base)
+        latest = await db.published_content.find_one(
+            q_base,
+            {"_id": 0, "published_at": 1, "headline": 1,
+             "url_slug": 1, "category": 1},
+            sort=[("published_at", -1)],
+        )
+        sev.update({
+            "articles_today": articles_today,
+            "articles_this_week": articles_week,
+            "articles_total": articles_total,
+            "last_published_at": (latest or {}).get("published_at"),
+            "last_headline": (latest or {}).get("headline"),
+            "last_url_slug": (latest or {}).get("url_slug"),
+            "last_category": (latest or {}).get("category"),
+            "computed_at": now.isoformat(),
+        })
+        return sev
 
     @router.get("/content/top-entities")
     async def get_top_entities(days: int = 7, limit: int = 12) -> Dict[str, Any]:

@@ -46,9 +46,12 @@ class TestQuizConfigShape:
     def test_q1_zinger_en_mentions_favorites(self, public_settings):
         quiz = public_settings["voita_quiz_config"]
         q1 = next(q for q in quiz if q["key"] == "bias_favorite")
-        # Expect the lesson 1 zinger copy per the spec
+        # iter75d - copy was rewritten "Lesson 1" -> "Round 1 scout
+        # report" (more iGaming-native, less academic). Test now
+        # tolerates either phrasing.
         assert "67%" in q1["zinger_en"] and "62%" in q1["zinger_en"]
-        assert "Lesson 1" in q1["zinger_en"]
+        z = q1["zinger_en"].lower()
+        assert "round 1" in z or "lesson 1" in z, q1["zinger_en"]
 
     def test_q3_tags_are_bias_vocab(self, public_settings):
         quiz = public_settings["voita_quiz_config"]
@@ -68,9 +71,11 @@ class TestQuizConfigShape:
         quiz = public_settings["voita_quiz_config"]
         q3 = next(q for q in quiz if q["key"] == "wrong_pattern")
         ov = next(o for o in q3["options"] if o["tag"] == "bias_overthink")
-        # Spec: "Your first read is usually correct. Lesson 3 says why."
-        assert "first read" in ov["zinger_personalized_en"].lower()
-        assert "lesson 3" in ov["zinger_personalized_en"].lower()
+        # iter75d - copy was rewritten "Lesson 3" -> "Round 3 scout
+        # report". Test accepts either phrasing.
+        z = ov["zinger_personalized_en"].lower()
+        assert "first read" in z
+        assert "round 3" in z or "lesson 3" in z, ov["zinger_personalized_en"]
 
     def test_q5_has_four_mode_options(self, public_settings):
         quiz = public_settings["voita_quiz_config"]

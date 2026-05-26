@@ -221,4 +221,12 @@ async def most_read(db, *, hours: int = 1, limit: int = 5) -> List[Dict[str, Any
         )
         items.extend(fillers)
 
+    # iter75d - the rail is labelled "most read" so the entire list
+    # MUST be sorted desc by views_window, regardless of whether each
+    # entry came from the live window or the cold-start filler. Without
+    # this re-sort, a low-traffic window (e.g. 2 reads in the last hour)
+    # could sit ABOVE all-time-top fillers with 2,000+ reads, which
+    # contradicts the rail's name.
+    items.sort(key=lambda it: -(it.get("views_window") or 0))
+
     return items

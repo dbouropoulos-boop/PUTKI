@@ -8,6 +8,7 @@ Backend tests for the 5 new newsroom endpoints:
   POST /api/subscribe/dial-alerts
 """
 import os
+import uuid
 import pytest
 import requests
 from dotenv import load_dotenv
@@ -123,13 +124,18 @@ class TestEntityHub:
 
 # ---------- /subscribe/dial-alerts ----------
 class TestDialAlertSubscribe:
-    EMAIL = "test_phase54_dial@example.com"
+    # iter75d - use a unique email per test session so the "created vs
+    # updated" idempotency contract is honoured even after the DB has
+    # been written to by a previous run.
+    @pytest.fixture
+    def email(self):
+        return f"qa_phase54_dial_{uuid.uuid4().hex[:8]}@example.com"
 
-    def test_subscribe_create_and_update(self, client):
+    def test_subscribe_create_and_update(self, client, email):
         # First call -> created
         r = client.post(
             f"{API}/subscribe/dial-alerts",
-            json={"channel": "email", "contact": self.EMAIL, "min_state": "RUSH"},
+            json={"channel": "email", "contact": email, "min_state": "RUSH"},
             timeout=30,
         )
         assert r.status_code == 200, r.text
@@ -141,7 +147,7 @@ class TestDialAlertSubscribe:
         # Second call -> updated (idempotent)
         r2 = client.post(
             f"{API}/subscribe/dial-alerts",
-            json={"channel": "email", "contact": self.EMAIL, "min_state": "JACKPOT"},
+            json={"channel": "email", "contact": email, "min_state": "JACKPOT"},
             timeout=30,
         )
         assert r2.status_code == 200

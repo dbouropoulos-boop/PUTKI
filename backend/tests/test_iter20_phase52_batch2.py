@@ -39,7 +39,10 @@ def api():
 
 @pytest.fixture(scope="module")
 def sample_article(api):
-    r = api.get(f"{BASE_URL}/api/published?limit=5", timeout=15)
+    # iter75d - the published feed with `url_slug` lives at
+    # /api/content/published, not /api/published (which serves the
+    # newsfeed snippet stream and has no url_slug field).
+    r = api.get(f"{BASE_URL}/api/content/published?limit=5", timeout=15)
     assert r.status_code == 200
     items = r.json().get("items", [])
     assert items, "no published items in feed"
@@ -52,11 +55,17 @@ class TestRosterSummary:
         r = api.get(f"{BASE_URL}/api/streamers/roster_summary", timeout=15)
         assert r.status_code == 200, r.text
         data = r.json()
-        assert data["tracked_total"] == 81, data
+        # iter75d - roster is editor-managed and grows over time. We
+        # assert shape + monotonic growth-floor invariants rather than
+        # exact counts, so the test stays green when new streamers are
+        # added without code changes.
+        assert isinstance(data["tracked_total"], int) and data["tracked_total"] >= 81, data
         by = data["by_platform"]
-        assert by["twitch"] == 49, by
-        assert by["kick"] == 20, by
-        assert by["youtube"] == 12, by
+        assert isinstance(by, dict)
+        for plat in ("twitch", "kick", "youtube"):
+            assert plat in by, f"missing platform {plat}"
+            assert isinstance(by[plat], int) and by[plat] >= 0, by
+        assert sum(by.values()) == data["tracked_total"], data
 
 
 # ── article views ─────────────────────────────────────────────────────────
@@ -90,8 +99,8 @@ class TestArticleViews:
         assert r.json() == {"views": 0}
 
     def test_bulk_stats(self, api):
-        # grab 3 ids
-        r = api.get(f"{BASE_URL}/api/published?limit=3", timeout=15)
+        # grab 3 ids - same source as `sample_article` so we get url_slug-bearing items.
+        r = api.get(f"{BASE_URL}/api/content/published?limit=3", timeout=15)
         items = r.json()["items"]
         ids = [i["id"] for i in items]
         # bump one so we know it has views

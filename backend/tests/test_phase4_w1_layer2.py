@@ -191,10 +191,25 @@ from layer2_workers import (  # noqa: E402
 
 
 class _StubInsertCollection:
+    """Minimal Mongo-like stub. Supports insert_one + the upsert pattern
+    used by ``_upsert_ticker_items`` (iter75d). All writes accumulate
+    into ``docs`` for assertion."""
     def __init__(self):
         self.docs = []
     async def insert_one(self, doc):
         self.docs.append(dict(doc))
+    async def update_one(self, filt, update, upsert=False):
+        # Tiny shim: emulate $set semantics for the unique-by-url upsert.
+        set_doc = (update or {}).get("$set") or {}
+        url = (filt or {}).get("url")
+        for d in self.docs:
+            if url is not None and d.get("url") == url:
+                d.update(set_doc)
+                return
+        if upsert:
+            self.docs.append({**set_doc, **filt})
+    async def create_index(self, *args, **kwargs):
+        return None
 
 
 class _StubDBLayer2:
@@ -203,6 +218,10 @@ class _StubDBLayer2:
         self.social_signals = _StubInsertCollection()
         self.sports_signals = _StubInsertCollection()
         self.news_signals   = _StubInsertCollection()
+        # iter75d - rss_tick now also writes to news_ticker_items
+        # (the ticker buffer for the homepage news rail). Stub it with
+        # the same insert-only collection contract used by signals.
+        self.news_ticker_items = _StubInsertCollection()
 
     def __getitem__(self, k): return getattr(self, k)
 

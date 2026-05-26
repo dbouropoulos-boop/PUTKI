@@ -92,7 +92,13 @@ async def discover_once(db) -> Dict[str, Any]:
     ]
 
     if not candidates:
-        return {"status": "ok", "discovered": 0, "added": 0, "skipped_category": len(streams)}
+        # iter75d - early-return must still carry the constant shape
+        # (`promoted`, `min_followers`) so consumers don't need to
+        # branch on "ok" sub-states. Test contract requires
+        # `min_followers` on every ok response.
+        return {"status": "ok", "discovered": 0, "added": 0,
+                "promoted": [], "skipped_category": len(streams),
+                "min_followers": MIN_FOLLOWERS}
 
     # Fetch follower counts for candidates in parallel
     follower_tasks = [_fetch_follower_count(s["user_id"], client_id, token) for s in candidates]

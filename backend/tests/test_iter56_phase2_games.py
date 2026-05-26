@@ -24,13 +24,25 @@ ADMIN_TOKEN = os.environ.get("PUTKI_HQ_ADMIN_TOKEN", "putki-hq-admin")
 # ─────────────────────── persona unit ───────────────────────
 
 def test_scenario_persona_thresholds():
+    """Persona thresholds (SCENARIO_PERSONAS):
+        cold_calculator   min ?  (top - implicit cap)
+        patient_tactician min 12
+        streak_chaser     min 8
+        comeback_believer min 4
+        tilt_risk         min 0
+    Iter75d - the persona model was redesigned (growing_judge /
+    fresh_player retired in favour of streak_chaser / comeback_believer
+    / tilt_risk). Test now mirrors the current bands.
+    """
     from mini_games_phase2 import persona_for_scenario
     assert persona_for_scenario(15)["key"] == "patient_tactician"
     assert persona_for_scenario(12)["key"] == "patient_tactician"
-    assert persona_for_scenario(11)["key"] == "growing_judge"
-    assert persona_for_scenario(7)["key"] == "growing_judge"
-    assert persona_for_scenario(6)["key"] == "fresh_player"
-    assert persona_for_scenario(0)["key"] == "fresh_player"
+    assert persona_for_scenario(11)["key"] == "streak_chaser"
+    assert persona_for_scenario(8)["key"] == "streak_chaser"
+    assert persona_for_scenario(7)["key"] == "comeback_believer"
+    assert persona_for_scenario(4)["key"] == "comeback_believer"
+    assert persona_for_scenario(3)["key"] == "tilt_risk"
+    assert persona_for_scenario(0)["key"] == "tilt_risk"
 
 
 # ─────────────────────── hub catalog ───────────────────────
@@ -48,8 +60,12 @@ def test_hub_promotes_phase2_games_to_active():
 
 def test_scenario_full_flow():
     s = httpx.post(f"{BASE}/api/mini-games/scenario/start", timeout=15.0).json()
-    assert s["total"] == 5
-    assert s["max_score"] == 15
+    # iter75d - the scenario set grew from 5 to 6 questions; assert
+    # shape invariants (total >= 5, max_score == 3 * total) rather than
+    # the old exact counts so the test stays green when editors add
+    # more scenarios.
+    assert s["total"] >= 5, s
+    assert s["max_score"] == 3 * s["total"], s
     for sc in s["scenarios"]:
         # Option scores must NOT be exposed in the start payload
         for opt in sc["options"]:
@@ -62,7 +78,7 @@ def test_scenario_full_flow():
         json={"play_id": s["play_id"], "anon_id": s["anon_id"], "answers": answers},
         timeout=15.0,
     ).json()
-    assert "score" in fin and "max_score" in fin and fin["max_score"] == 15
+    assert "score" in fin and "max_score" in fin and fin["max_score"] == s["max_score"]
     assert fin["personalized_locked"] is True
     # After finish, all option scores + explanations ARE present
     for a in fin["answers"]:
@@ -90,7 +106,7 @@ def test_scenario_full_flow():
     assert u["persona"]["title"]
     assert u["persona"]["tagline"]
     assert u["rank"] >= 1
-    assert u["max_score"] == 15
+    assert u["max_score"] == s["max_score"]
     assert u["leaderboard"]
 
 

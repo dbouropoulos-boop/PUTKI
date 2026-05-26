@@ -74,7 +74,12 @@ def test_refresh_one_avatar_returns_source():
     j = r.json()
     assert j["slug"] == slug
     assert j["avatar_source"] in {
-        "platform_api", "channel_og", "ddg_search", "wikipedia", "exhausted_all_fallbacks",
+        "platform_api", "channel_og", "ddg_search", "wikipedia",
+        # iter75d - the cascade returns "none" as the sentinel when all 4
+        # fallback stages exhaust without finding an image. The DB write
+        # path also writes "exhausted_all_fallbacks" but the API surface
+        # passes the raw source through, so both must be accepted.
+        "exhausted_all_fallbacks", "none",
     }
 
 
