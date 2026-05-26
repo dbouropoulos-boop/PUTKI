@@ -2591,6 +2591,14 @@ api_router.include_router(build_mini_games_router())
 from routes.admin import make_router as _make_admin_router  # noqa: E402
 api_router.include_router(_make_admin_router())
 
+# iter76 (Slice 1) - Bot & Routing admin endpoints (bot_config + partners
+# CRUD + subscribers summary). Sits alongside the existing admin router.
+from routes.bot_routing import (  # noqa: E402
+    make_router as _make_bot_routing_router,
+    ensure_bot_routing_indexes as _ensure_bot_routing_indexes,
+)
+api_router.include_router(_make_bot_routing_router())
+
 # iter66 phase 3a - streamer endpoints (7 public + 7 admin)
 from routes.streamers import build_streamers_router  # noqa: E402
 api_router.include_router(build_streamers_router())
@@ -3416,6 +3424,13 @@ async def startup_event():
         await _ensure_funnel_indexes(db)
     except Exception:
         logger.exception("profiler_funnel: bootstrap failed (non-fatal)")
+    # iter76 (Slice 1): ensure indexes for the new bot/routing collections
+    # (partners, link_codes, redirect_click_log, conversions) + the additive
+    # mittari_subscribers fields. Idempotent.
+    try:
+        await _ensure_bot_routing_indexes(db)
+    except Exception:
+        logger.exception("bot_routing: index bootstrap failed (non-fatal)")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)

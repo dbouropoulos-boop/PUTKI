@@ -113,6 +113,43 @@ class _DispatchSegmentOverridePayload(BaseModel):
     mode: str
 
 
+# ─── iter76 (Slice 1) · Bot config + partners ──────────────────────
+class _BotConfigPayload(BaseModel):
+    """Editable subset of `bot_config` singleton.
+
+    Every field is Optional - the back-office surfaces individual
+    toggles and updates them one at a time; we PATCH-merge whatever
+    arrives onto the existing doc. Strict typing on each field so a
+    misclicked checkbox can't silently land as a string."""
+    signal_unlock_mode: Optional[str] = None    # "informative" | "routed"
+    require_verified_signup: Optional[bool] = None
+    daily_signal_count: Optional[int] = None
+    daily_dm_enabled: Optional[bool] = None
+    sharpness_min: Optional[int] = None          # iter76: replaces deploy-only env var
+    sport_whitelist: Optional[list] = None       # iter76: ditto
+    stars_premium_enabled: Optional[bool] = None # K5: stub - UI shows but no flow
+
+
+class _PartnerPayload(BaseModel):
+    """Affiliate-routing partner row. iter76 (Slice 1) - CRUD schema
+    only; the router that consumes these rows is built in Slice 5.
+    Empty table at launch; routing turns on by adding rows + flipping
+    `bot_config.signal_unlock_mode` to 'routed'."""
+    partner_key: str                             # short stable slug, e.g. "veikkaus"
+    display_name: str
+    affiliate_base_url: str                      # e.g. https://x.com/aff?cid={code}&sub={subid}
+    subid_param_format: Optional[str] = "{code}"
+    target_geos: Optional[list] = None           # ISO-3166-1 alpha-2 codes
+    status: Optional[str] = "paused"             # "live" | "paused"
+    priority_weight: Optional[int] = 0
+    postback_secret: Optional[str] = None
+    # Carry the existing Smartico embedding fields too so a single row
+    # represents the whole partner relationship.
+    smartico_template_id: Optional[str] = None
+    smartico_loader_url: Optional[str] = None
+    smartico_brand_key: Optional[str] = None
+
+
 __all__ = [
     "_StreamerMetaPayload",
     "_DraftGeneratePayload",
@@ -126,4 +163,6 @@ __all__ = [
     "_DispatchTestSendPayload",
     "_DispatchFlagPayload",
     "_DispatchSegmentOverridePayload",
+    "_BotConfigPayload",
+    "_PartnerPayload",
 ]
