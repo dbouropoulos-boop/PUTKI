@@ -9,6 +9,27 @@
 
 ## Phase History (latest first)
 
+- **iter76 · Slice 3 (Daily DM fan-out) + Slice 4 (Telegram Mini App) + Slice 5 (Affiliate Router)** (2026-05-27, +18 new tests · 60/60 across affected suites · screenshot-verified TMA fallback)
+  - **Slice 3 - Per-subscriber Telegram DM fan-out** (`routes/bot_dispatch.py`):
+    - `fanout_daily_dms(db, dry_run=True)` reads `bot_config.daily_dm_enabled`, builds today's picks via the existing `_build_telegram_alerts_payload` (parity with @putkihq channel broadcast), then iterates `mittari_subscribers` where status=active and a `telegram_chat_id` is bound. Per-row segment filter (`football` / `hockey` / `all`) so a football-only subscriber never sees hockey picks. Each DM appends a "Avaa Mini App" CTA pointing at `t.me/<bot>/<app>?startapp=<pending_id>` (or `/tma?pid=` fallback when `TELEGRAM_TMA_APP_NAME` is unset).
+    - Per-recipient `dispatch_log` audit rows (one per attempt; `source="mittari_dm_fanout"`). Idempotent per UTC date via `mittari_dm_dispatches` lock collection - duplicate live runs no-op with `reason="already_dispatched_today"`. Dry-runs never poison the lock.
+    - Admin endpoints: `POST /api/admin/bot/dispatch/preview` (always-dry-run, safe to poll) + `POST /api/admin/bot/dispatch/run` (live; rejects with 409 when `daily_dm_enabled=False`).
+  - **Slice 4 - Telegram Mini App at `/tma`** (`routes/tma.py` + `pages/MittariMiniApp.jsx`):
+    - `POST /api/tma/auth`: validates Telegram WebApp initData via the official HMAC dance (secret = HMAC_SHA256("WebAppData", BOT_TOKEN); expected = HMAC_SHA256(secret, sorted-data-check)). Rejects stale initData (>24h auth_date). Returns a stateless HMAC session token (`HMAC(BOT_TOKEN, "tma:<uid>:<window>")`) that rolls every 30 min with 2-window skew tolerance.
+    - `GET /api/tma/signals?tg_user_id=&token=`: returns today's 5 picks filtered by subscriber segment, with per-card `locked` state (cards 1-2 always public; 3-5 locked unless subscriber is `status=active` and bound). Also surfaces `unlock_mode` so the FE can swap the locked-CTA label between "Reveal in-app" and "Open partner →".
+    - FE page loads `telegram-web-app.js` via script tag, auto-authenticates with `Telegram.WebApp.initData`, fetches signals, renders mobile-first dark cards (Telegram theme params via `--tg-theme-*` CSS vars). Outside Telegram: clean "Open Mini App in Telegram" splash with the `t.me/Putkihq_bot` CTA. `?dev=<tg_id>` query supported for local dev (only honoured when `TELEGRAM_BOT_TOKEN` is empty).
+  - **Slice 5 - Geo-aware Affiliate Router** (`routes/affiliate_router.py`):
+    - `POST /api/admin/links/mint`: mints an 8-char hex `code` mapped to `{signal_id, campaign, segment, subscriber_id, partner_key?}` in the `link_codes` collection (unique index, retry-on-collision).
+    - `GET /api/r/{code}`: in `informative` mode 302s to `/mittari` (safety rail at launch - leaked links never reach a partner). In `routed` mode picks the highest `priority_weight` LIVE partner whose `target_geos` includes the request geo (CF-IPCountry header → Accept-Language locale tail → "ZZ"). Builds the partner URL via `{code}`/`{subid}` substitution. Falls back to `/mittari` on unknown code / no eligible partner. Every click logged to `redirect_click_log` with status (`ok` / `no_partner_for_geo` / `unknown_code` / `informative_mode` / `blocked`), geo, last-octet IP tail, and trimmed user-agent.
+    - `POST /api/r/postback/{partner_key}`: generic conversion landing zone. Verifies the partner row's `postback_secret` if configured (header `X-Postback-Secret` / body `secret` / query `secret`). Always 200s; mismatches recorded with `verified=False` for reconciliation.
+  - **Tests added** (18 new · 60/60 across iter65 + iter68 + all iter76 slices passing):
+    - `test_iter76_bot_dispatch.py` (5): auth gates, off-by-default reason, 409 on live-run with flag off, dry-run envelope shape.
+    - `test_iter76_affiliate_router.py` (8): mint auth + envelope, informative-mode fallback, routed-mode geo match, routed-mode geo miss → fallback, postback acceptance.
+    - `test_iter76_tma.py` (5): blank/tampered initData → 401, HMAC-signed happy path returns subscriber envelope, signals 401 without valid session, signals card array shape (first 2 always public).
+  - **Lint clean** (backend + frontend) · TMA fallback screenshot-verified at 414×896 iPhone viewport.
+
+
+
 - **iter76 · Slice 1 (Bot & Routing foundation) + Slice 2 (Web signup capture)** (2026-05-26, 19/19 new tests, 43/43 affected suites green, screenshot-verified)
   - **Slice 1 - Bot & Routing back-office wired end-to-end**:
     - `BackOfficeBotRouting.jsx` (~360 LOC) now routed at `/back-office/bot-routing` + tile added to the "Leads & raffles" group on the back-office index. Page loads `bot_config` + partners + subscriber summary in a single parallel fetch.

@@ -44,6 +44,7 @@ import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosti
 import BackOfficeProfilerFunnel from "@/pages/BackOfficeProfilerFunnel";
 import BackOfficeBotRouting from "@/pages/BackOfficeBotRouting";
 import MittariSignup from "@/pages/MittariSignup";
+import MittariMiniApp from "@/pages/MittariMiniApp";
 import Mittari from "@/pages/Mittari";
 import Pelisignaalit from "@/pages/Pelisignaalit";
 import Voita from "@/pages/Voita";
@@ -86,6 +87,7 @@ function App() {
           <Route path="/landing" element={<ColdEmailLanding />} />
           <Route path="/aloita" element={<Signup />} />
           <Route path="/signup" element={<MittariSignup />} />
+          <Route path="/tma" element={<MittariMiniApp />} />
           <Route path="/mestari" element={<MestariHub />} />
           <Route path="/mestari/sports" element={<Mestari />} />
           <Route path="/mestari/poker" element={<MestariDiagnostic diagnostic="poker" />} />
