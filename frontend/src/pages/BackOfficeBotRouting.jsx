@@ -271,7 +271,7 @@ const BackOfficeBotRouting = () => {
                 LAST {funnel.hours}H · END-TO-END {funnel.end_to_end_rate}%
               </span>
             </h2>
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
               {[24, 168, 720].map((h) => (
                 <button key={h} onClick={() => setFunnelHours(h)} disabled={busy}
                   data-testid={`bot-funnel-range-${h}`}
@@ -284,6 +284,12 @@ const BackOfficeBotRouting = () => {
                     letterSpacing: '0.16em', fontWeight: 700, cursor: 'pointer',
                   }}>{h === 24 ? '24H' : h === 168 ? '7D' : '30D'}</button>
               ))}
+              <Link to="/back-office/funnel" data-testid="bot-funnel-history-link"
+                style={{
+                  marginLeft: 10, padding: '6px 10px', fontFamily: 'ui-monospace, monospace',
+                  fontSize: 10, letterSpacing: '0.16em', fontWeight: 700, color: 'var(--ink)',
+                  border: '1px solid var(--border)', textDecoration: 'none',
+                }}>30D HISTORY →</Link>
             </div>
           </div>
           <div style={{

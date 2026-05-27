@@ -9,6 +9,20 @@
 
 ## Phase History (latest first)
 
+- **iter76f · Funnel history page `/back-office/funnel`** (2026-05-27, +3 tests, 9/9 funnel suite green, screenshot-verified)
+  - **New `GET /api/admin/bot/funnel/history?days=N`** (default 30, capped at 90). Per-UTC-day buckets of the same 5 stages on the live snapshot (signup / bound / dm_sent / tma_open / unlock_click), backfilled with zeros for missing days so the chart never has gaps. Five `$substr` aggregates on indexed timestamp fields - <80ms typical. Returns `{days, rows, totals}`.
+  - **New `/back-office/funnel` page** (`BackOfficeFunnelHistory.jsx`):
+    - 5-cell totals strip with stage-colored top accents (blue/green/amber/red/gold).
+    - **Stacked bar chart** of daily volume via Recharts; each stage tinted to match. Tooltip + legend rendered in monospace at small size for editorial chrome consistency.
+    - **Trailing 7-day end-to-end rate** line chart computed client-side (signup → unlock_click rolling window). One glance answers "is the funnel improving or decaying?"
+    - 4 range chips (7D / 14D / 30D / 90D) drive both charts. Reuses the same `putki_back_office_token` localStorage key as Bot & Routing - log in once, both pages unlock.
+  - **Bot & Routing snapshot section** gained a "30D HISTORY →" link in the header so the two surfaces feel like one product.
+  - **Back-office index tile** added in the "Leads & raffles" group: "Funnel history · 30-day conversion ladder · daily volume + 7d end-to-end trend."
+  - **Tests**: `test_iter76_funnel_snapshot.py` gained 3 history tests (auth, envelope shape with 8 buckets for days=7, range param clamping at 90). 9/9 funnel suite passing.
+  - **Verified live**: snapshot already showing real data - 30D totals SIGNUP 26 / BOUND 110 / DM SENT 0 / MINI APP OPEN 4 / UNLOCK CLICK 7 with the daily bar chart picking out the 05-25/05-26 bound spike + today's mixed activity, and the 7d rolling rate jumping to ~28% on 05-27 reflecting today's unlock_clicks.
+
+
+
 - **iter76e · Funnel snapshot widget + TMA event beacons** (2026-05-27, +6 tests, 46/46 iter76 green, screenshot-verified)
   - **New `GET /api/admin/bot/funnel/snapshot?hours=N`** - 5-stage conversion ladder over the last N hours (default 24, accepts 24/168/720). Stages: SIGNUP (web rows) → BOUND (TG chat_id linked) → DM SENT (live `dispatch_log` rows from the fanout) → MINI APP OPEN (distinct `tg_user_id`s from `tma_events`) → UNLOCK CLICK (router `status=ok` clicks). Returns step-to-step rates + an end-to-end rate. Five indexed aggregates - <50ms typical.
   - **New `POST /api/tma/event` beacon** - fire-and-forget analytics. The Mini App now fires `tma_open` on signals-load and `unlock_click` before opening the signup tab. No auth, no PII; only `event` / `tg_user_id` / `pending_id` / `meta` land in `tma_events`. Indexed on `ts` + `(event, ts)`.

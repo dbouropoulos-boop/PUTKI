@@ -56,6 +56,39 @@ class TestFunnelSnapshot:
         assert r.json()["hours"] == 168
 
 
+class TestFunnelHistory:
+    def test_requires_admin(self):
+        r = requests.get(f"{BASE_URL}/api/admin/bot/funnel/history", timeout=5)
+        assert r.status_code == 401
+
+    def test_default_envelope_shape(self):
+        r = requests.get(
+            f"{BASE_URL}/api/admin/bot/funnel/history?days=7",
+            headers=HEADERS, timeout=10,
+        )
+        assert r.status_code == 200, r.text
+        body = r.json()
+        assert body["days"] == 7
+        # 7 days requested → 8 buckets (oldest..today inclusive)
+        assert len(body["rows"]) == 8
+        for row in body["rows"]:
+            for k in ("day", "signup", "bound", "dm_sent", "tma_open", "unlock_click"):
+                assert k in row
+            assert len(row["day"]) == 10  # YYYY-MM-DD
+        for k in ("signup", "bound", "dm_sent", "tma_open", "unlock_click"):
+            assert k in body["totals"]
+            assert body["totals"][k] >= 0
+
+    def test_range_param_clamped(self):
+        # Negative / oversize values must clamp to [1..90].
+        r = requests.get(
+            f"{BASE_URL}/api/admin/bot/funnel/history?days=500",
+            headers=HEADERS, timeout=10,
+        )
+        assert r.status_code == 200
+        assert r.json()["days"] == 90
+
+
 class TestTmaBeacon:
     def test_beacon_accepts_unauthed(self):
         # Beacons are fire-and-forget - no auth required.

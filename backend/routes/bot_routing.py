@@ -241,6 +241,87 @@ def make_router() -> APIRouter:
             "end_to_end_rate": _rate(unlock_clicks, signups),
         }
 
+    # ─── Funnel HISTORY (iter76e) - per-day buckets ────────────────
+    @router.get("/admin/bot/funnel/history")
+    async def admin_funnel_history(
+        days: int = 30,
+        _: bool = Depends(require_admin), db = Depends(get_db),
+    ):
+        """Day-over-day breakdown of the same 5 stages. Returns a row
+        per day in [oldest..today], each carrying integer counts so the
+        FE can plot it directly without re-shaping."""
+        days = max(1, min(int(days or 30), 90))
+        today_utc = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0,
+        )
+        # Build a deterministic day index so missing days plot as zeros.
+        day_keys = []
+        for i in range(days, -1, -1):
+            d = today_utc - timedelta(days=i)
+            day_keys.append(d.strftime("%Y-%m-%d"))
+        oldest_iso = (today_utc - timedelta(days=days)).isoformat()
+
+        def _bucket(rows):
+            return {(r.get("_id") or ""): int(r.get("n") or 0) for r in (rows or [])}
+
+        # _id projection cuts the first 10 chars of the ISO timestamp.
+        # Works because all our timestamps are ISO 8601 UTC strings.
+        async def _date_count(coll, match):
+            pipeline = [
+                {"$match": match},
+                {"$group": {
+                    "_id": {"$substr": ["$" + match["__ts_field"], 0, 10]} if False else {"$substr": [f"${match['__ts_field']}", 0, 10]},
+                    "n": {"$sum": 1},
+                }},
+            ]
+            # Strip the marker before sending.
+            field = match.pop("__ts_field")
+            pipeline = [
+                {"$match": match},
+                {"$group": {"_id": {"$substr": [f"${field}", 0, 10]}, "n": {"$sum": 1}}},
+            ]
+            return _bucket([r async for r in coll.aggregate(pipeline)])
+
+        signups = await _date_count(db.mittari_subscribers, {
+            "created_at": {"$gte": oldest_iso}, "source": "web_signup",
+            "__ts_field": "created_at",
+        })
+        bound = await _date_count(db.mittari_subscribers, {
+            "telegram_bound_at": {"$gte": oldest_iso},
+            "__ts_field": "telegram_bound_at",
+        })
+        dm_sent = await _date_count(db.dispatch_log, {
+            "sent_at": {"$gte": oldest_iso},
+            "source": "mittari_dm_fanout",
+            "mode": "live", "error": None,
+            "__ts_field": "sent_at",
+        })
+        # tma_open is COUNTED (not distinct) at the day level so the
+        # trend reads as "how active was the Mini App that day". The
+        # 24h snapshot counter still distincts users; different unit,
+        # different question, both useful.
+        tma_open = await _date_count(db.tma_events, {
+            "ts": {"$gte": oldest_iso}, "event": "tma_open",
+            "__ts_field": "ts",
+        })
+        unlock = await _date_count(db.redirect_click_log, {
+            "ts": {"$gte": oldest_iso}, "status": "ok",
+            "__ts_field": "ts",
+        })
+
+        rows = [{
+            "day": d,
+            "signup": signups.get(d, 0),
+            "bound": bound.get(d, 0),
+            "dm_sent": dm_sent.get(d, 0),
+            "tma_open": tma_open.get(d, 0),
+            "unlock_click": unlock.get(d, 0),
+        } for d in day_keys]
+
+        totals = {k: sum(r[k] for r in rows) for k in
+                  ("signup", "bound", "dm_sent", "tma_open", "unlock_click")}
+        return {"days": days, "rows": rows, "totals": totals}
+
     return router
 
 

@@ -43,6 +43,7 @@ import BackOfficeEmailTemplates from "@/pages/BackOfficeEmailTemplates";
 import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosticsCopy";
 import BackOfficeProfilerFunnel from "@/pages/BackOfficeProfilerFunnel";
 import BackOfficeBotRouting from "@/pages/BackOfficeBotRouting";
+import BackOfficeFunnelHistory from "@/pages/BackOfficeFunnelHistory";
 import MittariSignup from "@/pages/MittariSignup";
 import MittariMiniApp from "@/pages/MittariMiniApp";
 import Mittari from "@/pages/Mittari";
@@ -116,6 +117,7 @@ function App() {
           <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
           <Route path="/back-office/profiler-funnel" element={<BackOfficeProfilerFunnel />} />
           <Route path="/back-office/bot-routing" element={<BackOfficeBotRouting />} />
+          <Route path="/back-office/funnel" element={<BackOfficeFunnelHistory />} />
           <Route path="/back-office/leads" element={<BackOfficeLeads />} />
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
