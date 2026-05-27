@@ -217,4 +217,23 @@ None of these block the funnel from operating — they each unlock one specific 
 
 ---
 
-*Last updated: iter76h · 2026-05-27. Maintained alongside `/app/memory/PRD.md`. If you change a workflow, update this file in the same commit.*
+## 7 · Lessons learned (field-tested)
+
+> **Empty by design.** This section is for *real* gotchas the team encounters in production — not predictions. When something surprises you in ops, append a 3-line entry below in this format so the next operator doesn't relearn it the hard way:
+>
+> ```
+> ### YYYY-MM-DD · One-line summary
+> **Symptom:** what you saw on the dashboard / in logs.
+> **Root cause:** the actual underlying issue (not the first guess).
+> **Fix:** the specific action that resolved it (with file paths / endpoints / config values).
+> ```
+>
+> Keep entries in reverse-chronological order (newest at top). Tag entries with `routing`, `dispatch`, `mini-app`, `signup`, or `partner` so future readers can skim by category.
+
+<!-- TODO: review this section after 1-2 weeks of real ops use (target: 2026-06-10). -->
+
+*(No entries yet — the runbook is brand new. The first real-world gotcha goes here.)*
+
+---
+
+*Last updated: iter76i · 2026-05-27. Maintained alongside `/app/memory/PRD.md`. If you change a workflow, update this file in the same commit.*
