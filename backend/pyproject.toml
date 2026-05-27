@@ -1,0 +1,7 @@
+[tool.ruff.lint.per-file-ignores]
+# These modules generate MOCK signal data + scheduler jitter + synthetic
+# content seeds. The `random` module is the correct primitive for non-
+# security-sensitive jitter; flagging S311 here is a false positive.
+"signal_engine.py"   = ["S311"]
+"seed_scheduler.py"  = ["S311"]
+"content_backfill.py" = ["S311"]

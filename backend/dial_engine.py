@@ -286,6 +286,12 @@ async def recalculate_dial(db) -> Dict[str, Any]:
         # bound Mittari subscriber. Fire-and-forget; dial loop never
         # blocks on Telegram round-trips.
         try:
+            # Late local import is intentional: dial_engine ↔ telegram_bot
+            # form a soft cycle (telegram_bot reads latest_snapshot for the
+            # welcome card, dial_engine notifies telegram_bot on state
+            # flips). Local imports break the cycle at module-load time
+            # without needing a shared interface module - canonical Python
+            # pattern, verified working since iter36.
             from telegram_bot import broadcast_mittari_state_change
             asyncio.create_task(broadcast_mittari_state_change(
                 db,

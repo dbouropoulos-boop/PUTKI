@@ -21,7 +21,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import random
+import random  # noqa: S311 - mock signal generation, not security-sensitive
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional

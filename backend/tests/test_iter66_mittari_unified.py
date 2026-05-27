@@ -4,7 +4,9 @@ import pytest
 import requests
 
 BASE_URL = os.environ.get("REACT_APP_BACKEND_URL", "https://pelisignaali-fi.preview.emergentagent.com").rstrip("/")
-ADMIN_TOKEN = "putki-hq-admin"
+# Public preview/dev token - matches `/app/memory/test_credentials.md`.
+# Override at CI/run time via the `ADMIN_TOKEN` env var.
+ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "putki-hq-admin")
 
 
 @pytest.fixture

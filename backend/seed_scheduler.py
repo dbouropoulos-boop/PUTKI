@@ -33,7 +33,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import random
+import random  # noqa: S311 - scheduler tie-break jitter, not security-sensitive
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional

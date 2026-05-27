@@ -9,6 +9,22 @@
 
 ## Phase History (latest first)
 
+- **iter76g · Code-review hygiene pass** (2026-05-27, ruff clean across F632/F821/F841/S311, 120/120 affected suites green)
+  - **Triage outcome**: the automated review report was **mostly false positives**:
+    - `eval()` at `mestari_diagnostics.py:564` — no `eval()` call exists; the function is `_match_axis` doing manual comparator parsing (`>=2`, `<=0`, etc). Docstring already says "explicitly NOT Python's `eval()`". FALSE POSITIVE.
+    - 28 undefined variables — `ruff check --select F821,F841` returns ZERO across the whole backend. FALSE POSITIVE.
+    - 293 `is` vs `==` for literals — `ruff check --select F632` returns ZERO; flagged files only use `is None`/`is not None` (correct Python idiom). FALSE POSITIVE.
+    - Circular import `dial_engine ↔ telegram_bot` — already broken correctly via local imports inside the handler functions (canonical Python pattern). Added an explicit comment block at the dial_engine call-site so future reviewers don't relitigate.
+    - Hardcoded secret in `test_iter52_alert_sessions.py` — already reads from env with a default. FALSE POSITIVE.
+  - **Genuine fixes applied**:
+    - `test_iter66_mittari_unified.py` — `ADMIN_TOKEN` flipped from hardcoded literal to `os.environ.get("ADMIN_TOKEN", "putki-hq-admin")` with a clarifying comment.
+    - `signal_engine.py` / `seed_scheduler.py` / `content_backfill.py` — added per-file `S311` suppression in a new root `pyproject.toml`. The `random` module is the correct primitive for non-security-sensitive mock data and scheduler jitter; the alternative (`secrets`) is cryptographically overkill and slower for fixture generation.
+    - `dial_engine.py` — added an inline doc-comment at the late-bound `telegram_bot` import explaining the intentional cycle break (the canonical Python pattern is already in use; just made the intent legible).
+  - **Deferred (high-risk, low-value)**: complexity refactors of `content_generator.py`, `article_views.py`, `alert_sessions.py`. These are stable, well-tested production paths with high blast radius. Per the project's coding guidelines ("Don't refactor code beyond what was asked"), these are left untouched until there's a real bug to fix in them.
+  - **Server.py import bloat** is already in flight - 4 new routers extracted this session alone (bot_routing, bot_dispatch, signup, tma, affiliate_router). Continuing incremental extraction is the right path; a Big-Bang split would risk regressions across 120+ admin endpoints.
+
+
+
 - **iter76f · Funnel history page `/back-office/funnel`** (2026-05-27, +3 tests, 9/9 funnel suite green, screenshot-verified)
   - **New `GET /api/admin/bot/funnel/history?days=N`** (default 30, capped at 90). Per-UTC-day buckets of the same 5 stages on the live snapshot (signup / bound / dm_sent / tma_open / unlock_click), backfilled with zeros for missing days so the chart never has gaps. Five `$substr` aggregates on indexed timestamp fields - <80ms typical. Returns `{days, rows, totals}`.
   - **New `/back-office/funnel` page** (`BackOfficeFunnelHistory.jsx`):

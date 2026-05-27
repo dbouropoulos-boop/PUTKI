@@ -20,7 +20,7 @@ breakdown of successes / skips / errors.
 from __future__ import annotations
 
 import logging
-import random
+import random  # noqa: S311 - synthetic content seed data, not security-sensitive
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
