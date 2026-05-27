@@ -9,6 +9,15 @@
 
 ## Phase History (latest first)
 
+- **iter76i · Operator's runbook (`/app/memory/OPS.md` + `/back-office/runbook` viewer)** (2026-05-27, +2 tests, screenshot-verified)
+  - **New `/app/memory/OPS.md`** (~220 lines): one-page playbook covering daily ritual (5-minute morning check), the 4 master switches (informative↔routed flip + rollback, daily DM dispatch, broadcast floor), partner management (add/pause/delete), 6-entry diagnostic cookbook ("if X is happening, check Y"), external-dep status table, and quick reference (URLs/endpoints/env vars/router status verbs). File is the single source of truth; committed alongside PRD.md for review-friendliness.
+  - **New admin endpoint `GET /api/admin/docs/runbook`** (`routes/ops_docs.py`): serves the raw markdown so the dashboard renders the current contents without redeployment. Path is configurable via `PUTKI_OPS_RUNBOOK_PATH` env for future migrations.
+  - **New `/back-office/runbook` page** (`BackOfficeRunbook.jsx`): in-app viewer that fetches the markdown and renders it client-side via a ~120-line bespoke renderer (headings, paragraphs, lists, fenced code, pipe tables, blockquotes, hr, inline `code`/`**bold**`/`*italic*`/`[links]`). No marked/remark dependency - keeps the bundle lean. Reuses the same `putki_back_office_token` localStorage so admins log in once across all back-office surfaces.
+  - **Bot & Routing page** gained a "READ THE OPERATOR'S RUNBOOK →" link beneath the page subtitle so the dashboard self-documents.
+  - **Tests**: `test_iter76_runbook.py` (2 tests · auth gate + envelope shape with section heading sanity check). 58/58 across all 10 iter76 suites passing.
+
+
+
 - **iter76h · Ops dashboard: drill-down + router activity + subscriber search** (2026-05-27, +9 new tests · 56/56 iter76 green · screenshot-verified)
   - **Per-stage funnel drill-down** (`GET /api/admin/bot/funnel/drilldown?stage=&hours=&limit=`): every stage on the snapshot is now a button. Click signup / bound / dm_sent / tma_open / unlock_click to expand an inline 20-row panel of the recent rows behind that count. Each row carries label + sub_label + timestamp pulled from the source collection (subscribers, dispatch_log, tma_events, redirect_click_log). Caps at 50 rows server-side. Clicking the same cell twice closes the panel.
   - **Router activity surface** on `/back-office/bot-routing` (new section): twin tables - left shows the last 20 redirect_click_log rows (ts · geo · code · status · partner), right shows the last 20 conversions (ts · partner · €amount · verified ✓/✗). Header chip strip filters clicks by status (ALL / OK / NO_PARTNER_FOR_GEO / INFORMATIVE_MODE). Header also shows running totals: "20 CLICKS · 10 CONV · €0.00 VERIFIED". Backed by two new endpoints: `GET /api/admin/router/clicks` + `GET /api/admin/router/conversions` (both filter + paginate, capped at 200).

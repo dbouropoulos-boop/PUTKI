@@ -2621,6 +2621,9 @@ from routes.tma import (  # noqa: E402
 )
 api_router.include_router(_make_tma_router())
 
+from routes.ops_docs import make_router as _make_ops_docs_router  # noqa: E402
+api_router.include_router(_make_ops_docs_router())
+
 # iter66 phase 3a - streamer endpoints (7 public + 7 admin)
 from routes.streamers import build_streamers_router  # noqa: E402
 api_router.include_router(build_streamers_router())

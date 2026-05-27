@@ -299,6 +299,14 @@ const BackOfficeBotRouting = () => {
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted, #9C8B6B)', margin: 0, maxWidth: 560 }}>
             Master switches for the Telegram bot + affiliate router. Routing is dormant at launch — flip <em>signal_unlock_mode</em> to <strong>routed</strong> once a partner row is live.
           </p>
+          <p style={{ marginTop: 6, fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--muted)' }}>
+            <span style={{ marginRight: 6 }}>NEW TO THIS PAGE?</span>
+            <Link to="/back-office/runbook"
+              data-testid="bot-routing-ops-link"
+              style={{ color: '#E8C26E', textDecoration: 'underline', fontWeight: 700 }}>
+              READ THE OPERATOR'S RUNBOOK →
+            </Link>
+          </p>
         </div>
         <button onClick={refreshAll} disabled={busy} data-testid="bot-routing-refresh"
           style={{ padding: '10px 18px', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--border)', fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', cursor: 'pointer' }}>

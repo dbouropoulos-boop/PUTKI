@@ -44,6 +44,7 @@ import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosti
 import BackOfficeProfilerFunnel from "@/pages/BackOfficeProfilerFunnel";
 import BackOfficeBotRouting from "@/pages/BackOfficeBotRouting";
 import BackOfficeFunnelHistory from "@/pages/BackOfficeFunnelHistory";
+import BackOfficeRunbook from "@/pages/BackOfficeRunbook";
 import MittariSignup from "@/pages/MittariSignup";
 import MittariMiniApp from "@/pages/MittariMiniApp";
 import Mittari from "@/pages/Mittari";
@@ -118,6 +119,7 @@ function App() {
           <Route path="/back-office/profiler-funnel" element={<BackOfficeProfilerFunnel />} />
           <Route path="/back-office/bot-routing" element={<BackOfficeBotRouting />} />
           <Route path="/back-office/funnel" element={<BackOfficeFunnelHistory />} />
+          <Route path="/back-office/runbook" element={<BackOfficeRunbook />} />
           <Route path="/back-office/leads" element={<BackOfficeLeads />} />
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
