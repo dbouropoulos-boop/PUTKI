@@ -126,6 +126,12 @@ const BackOfficeBotRouting = () => {
   const [mint, setMint] = useState(null);   // { code, full_url, copied }
   const [funnel, setFunnel] = useState(null);
   const [funnelHours, setFunnelHours] = useState(24);
+  const [drillStage, setDrillStage] = useState(null);  // 'signup' | 'bound' | ...
+  const [drillData, setDrillData] = useState(null);
+  const [subQuery, setSubQuery] = useState('');
+  const [subResults, setSubResults] = useState(null);
+  const [router, setRouter] = useState(null);          // { clicks, conversions }
+  const [routerFilter, setRouterFilter] = useState('all');
 
   const hdr = useCallback(() => ({ 'X-Admin-Token': token, 'Content-Type': 'application/json' }), [token]);
 
@@ -175,6 +181,57 @@ const BackOfficeBotRouting = () => {
       await refreshAll();
     } finally { setBusy(false); }
   };
+
+  // Open the inline drill-down for a snapshot stage. Toggling the same
+  // stage twice closes it - mirrors how shadcn Sheets behave but stays
+  // inline so the editor doesn't lose snapshot context.
+  const drillIntoStage = async (stage) => {
+    if (drillStage === stage) {
+      setDrillStage(null); setDrillData(null);
+      return;
+    }
+    setDrillStage(stage); setDrillData(null);
+    try {
+      const r = await fetch(
+        `${BACKEND}/api/admin/bot/funnel/drilldown?stage=${stage}&hours=${funnelHours}&limit=20`,
+        { headers: hdr() },
+      );
+      if (r.ok) setDrillData(await r.json());
+      else setErr(`drilldown ${stage}: ${r.status}`);
+    } catch (e) { setErr(String(e?.message || e)); }
+  };
+
+  // Subscriber quick-search.
+  const lookupSubscribers = async (q) => {
+    setSubQuery(q);
+    const trimmed = (q || '').trim();
+    if (!trimmed) { setSubResults(null); return; }
+    try {
+      const r = await fetch(
+        `${BACKEND}/api/admin/subscribers/lookup?q=${encodeURIComponent(trimmed)}&limit=10`,
+        { headers: hdr() },
+      );
+      if (r.ok) setSubResults(await r.json());
+    } catch { /* leave previous results visible on transient errors */ }
+  };
+
+  // Pull router activity (clicks + conversions). Lazy-loaded so the
+  // initial page paint stays fast.
+  const refreshRouter = useCallback(async () => {
+    if (!token) return;
+    try {
+      const [c, cv] = await Promise.all([
+        fetch(`${BACKEND}/api/admin/router/clicks?limit=20&status=${routerFilter}`,
+          { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        fetch(`${BACKEND}/api/admin/router/conversions?limit=20`,
+          { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+      ]);
+      setRouter({ clicks: c?.items || [], conversions: cv?.items || [],
+                  conv_total: cv?.verified_amount_total ?? 0 });
+    } catch { /* keep last-known-good */ }
+  }, [token, hdr, routerFilter]);
+
+  useEffect(() => { if (authed) refreshRouter(); }, [authed, refreshRouter]);
 
   const mintTestLink = async () => {
     setBusy(true); setMint(null); setErr(null);
@@ -297,11 +354,18 @@ const BackOfficeBotRouting = () => {
             border: '1px solid var(--border)',
           }}>
             {funnel.stages.map((stage, i) => (
-              <div key={stage.key} data-testid={`bot-funnel-stage-${stage.key}`}
+              <button key={stage.key} type="button"
+                onClick={() => drillIntoStage(stage.key)}
+                data-testid={`bot-funnel-stage-${stage.key}`}
                 style={{
                   padding: '14px 12px', borderRight: i < 4 ? '1px solid var(--border)' : 'none',
                   display: 'flex', flexDirection: 'column', gap: 6,
-                  background: i === funnel.stages.length - 1 ? '#1a1610' : 'transparent',
+                  background: drillStage === stage.key ? '#1a1610' :
+                              (i === funnel.stages.length - 1 ? '#1a1610' : 'transparent'),
+                  border: 0, color: 'inherit', textAlign: 'left', cursor: 'pointer',
+                  borderTop: drillStage === stage.key ? '2px solid #E8C26E' : '2px solid transparent',
+                  borderBottom: drillStage === stage.key ? '2px solid #E8C26E' : 'none',
+                  transition: 'background 120ms ease',
                 }}>
                 <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.2em', color: 'var(--muted)', fontWeight: 700 }}>
                   {String(i + 1).padStart(2, '0')} · {stage.label}
@@ -323,12 +387,186 @@ const BackOfficeBotRouting = () => {
                     + {stage.dry_run} DRY-RUN
                   </div>
                 )}
-              </div>
+              </button>
             ))}
           </div>
           <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, color: 'var(--muted)', marginTop: 8, letterSpacing: '0.08em', lineHeight: 1.6 }}>
-            % ← shows the step-to-step conversion from the previous stage. Green ≥50%, amber 20-50%, red &lt;20%. Counts are within the selected window; DM-SENT includes only live sends.
+            % ← shows the step-to-step conversion from the previous stage. Green ≥50%, amber 20-50%, red &lt;20%. <strong>Click any cell</strong> to expand the recent rows behind it.
           </p>
+
+          {/* Drill-down panel */}
+          {drillStage && (
+            <div data-testid="bot-funnel-drilldown" style={{
+              marginTop: 10, border: '1px solid #E8C26E', background: '#13110d',
+              padding: '14px 16px',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 800 }}>
+                  RECENT · {drillStage.toUpperCase()} · LAST {funnel.hours}H
+                </span>
+                <button onClick={() => { setDrillStage(null); setDrillData(null); }}
+                  data-testid="bot-funnel-drilldown-close"
+                  style={{ background: 'transparent', color: 'var(--muted)', border: 0, cursor: 'pointer', fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em' }}>
+                  CLOSE ✕
+                </button>
+              </div>
+              {!drillData && (
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, color: 'var(--muted)' }}>Loading…</div>
+              )}
+              {drillData && drillData.items.length === 0 && (
+                <div data-testid="bot-funnel-drilldown-empty" style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: 'var(--muted)' }}>
+                  No rows in the selected window.
+                </div>
+              )}
+              {drillData && drillData.items.length > 0 && (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <tbody>
+                    {drillData.items.map((it, idx) => (
+                      <tr key={idx} data-testid={`bot-drilldown-row-${idx}`}
+                        style={{ borderBottom: idx < drillData.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                        <td style={{ padding: '6px 0', fontFamily: 'Georgia, serif', fontSize: 13, fontWeight: 700, color: 'var(--ink)' }}>
+                          {it.label}
+                        </td>
+                        <td style={{ padding: '6px 12px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'var(--muted)', letterSpacing: '0.06em' }}>
+                          {it.sub_label}
+                        </td>
+                        <td style={{ padding: '6px 0', fontFamily: 'ui-monospace, monospace', fontSize: 10, color: 'var(--muted)', textAlign: 'right' }}>
+                          {(it.ts || '').replace('T', ' ').slice(0, 19)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Subscriber quick-search */}
+      <section data-testid="bot-routing-sub-search" style={{ marginBottom: 32 }}>
+        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, margin: '0 0 10px' }}>Subscribers</h2>
+        <input
+          type="search"
+          placeholder="Search by email, pending_id, chat_id, or @username…"
+          value={subQuery}
+          onChange={(e) => lookupSubscribers(e.target.value)}
+          data-testid="bot-routing-sub-search-input"
+          style={{
+            width: '100%', maxWidth: 560, padding: '10px 12px', background: 'transparent',
+            border: '1px solid var(--border)', color: 'var(--ink)',
+            fontFamily: 'ui-monospace, monospace', fontSize: 12, letterSpacing: '0.06em',
+          }} />
+        {subResults && subResults.count > 0 && (
+          <table data-testid="bot-routing-sub-results" style={{ width: '100%', marginTop: 12, borderCollapse: 'collapse', border: '1px solid var(--border)' }}>
+            <thead>
+              <tr style={{ background: '#13110d' }}>
+                {['EMAIL', 'SEGMENT', 'STATUS', 'PENDING_ID', 'CHAT_ID', 'BOUND_AT'].map((h) => (
+                  <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {subResults.items.map((s, idx) => (
+                <tr key={s.pending_id || idx} data-testid={`bot-routing-sub-row-${idx}`}>
+                  <td style={{ padding: '6px 10px', fontFamily: 'Georgia, serif', fontSize: 13, borderBottom: '1px solid var(--border)' }}>{s.email || '—'}</td>
+                  <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>{(s.segment || '?').toUpperCase()}</td>
+                  <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: s.status === 'active' ? '#6FA37D' : '#E8C26E', borderBottom: '1px solid var(--border)', fontWeight: 700 }}>{(s.status || '?').toUpperCase()}</td>
+                  <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>{s.pending_id || '—'}</td>
+                  <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>{s.telegram_chat_id ? `…${String(s.telegram_chat_id).slice(-5)}` : '—'}</td>
+                  <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10, color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>{(s.telegram_bound_at || '').slice(0, 16).replace('T', ' ')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        {subResults && subResults.count === 0 && (
+          <div data-testid="bot-routing-sub-empty" style={{ marginTop: 10, fontFamily: 'Georgia, serif', fontSize: 13, color: 'var(--muted)' }}>
+            No subscribers match <code>{subQuery}</code>.
+          </div>
+        )}
+      </section>
+
+      {/* Router activity (clicks + conversions) */}
+      {router && (
+        <section data-testid="bot-routing-activity" style={{ marginBottom: 32 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, margin: 0 }}>
+              Router activity
+              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.2em', color: 'var(--muted)', fontWeight: 700, marginLeft: 12 }}>
+                {router.clicks.length} CLICKS · {router.conversions.length} CONV · €{router.conv_total.toFixed(2)} VERIFIED
+              </span>
+            </h2>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['all', 'ok', 'no_partner_for_geo', 'informative_mode'].map((f) => (
+                <button key={f} onClick={() => setRouterFilter(f)} disabled={busy}
+                  data-testid={`bot-router-filter-${f}`}
+                  style={{
+                    padding: '5px 9px',
+                    background: routerFilter === f ? '#E8C26E' : 'transparent',
+                    color: routerFilter === f ? '#0B0A09' : 'var(--ink)',
+                    border: '1px solid var(--border)',
+                    fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                    letterSpacing: '0.14em', fontWeight: 700, cursor: 'pointer',
+                  }}>{f.toUpperCase()}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 14 }}>
+            {/* Clicks */}
+            <table data-testid="bot-router-clicks" style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid var(--border)' }}>
+              <thead>
+                <tr style={{ background: '#13110d' }}>
+                  {['TS', 'GEO', 'CODE', 'STATUS', 'PARTNER'].map((h) => (
+                    <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {router.clicks.length === 0 && (
+                  <tr><td colSpan={5} style={{ padding: '14px 10px', fontFamily: 'Georgia, serif', fontSize: 13, color: 'var(--muted)' }}>No router clicks yet.</td></tr>
+                )}
+                {router.clicks.map((c, idx) => (
+                  <tr key={`${c.code}-${c.ts}-${idx}`}>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10, color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>{(c.ts || '').slice(11, 19)}</td>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, fontWeight: 700, borderBottom: '1px solid var(--border)' }}>{c.geo || '??'}</td>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'var(--ink)', borderBottom: '1px solid var(--border)' }}>{c.code}</td>
+                    <td style={{
+                      padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.08em', fontWeight: 700,
+                      color: c.status === 'ok' ? '#6FA37D' : c.status === 'no_partner_for_geo' ? '#E8C26E' : '#C8423C',
+                      borderBottom: '1px solid var(--border)',
+                    }}>{(c.status || '').replace(/_/g, ' ')}</td>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>{c.partner_key || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {/* Conversions */}
+            <table data-testid="bot-router-conversions" style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid var(--border)' }}>
+              <thead>
+                <tr style={{ background: '#13110d' }}>
+                  {['TS', 'PARTNER', '€', 'VERIFIED'].map((h) => (
+                    <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.18em', color: 'var(--muted)', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {router.conversions.length === 0 && (
+                  <tr><td colSpan={4} style={{ padding: '14px 10px', fontFamily: 'Georgia, serif', fontSize: 13, color: 'var(--muted)' }}>No conversions yet.</td></tr>
+                )}
+                {router.conversions.map((c, idx) => (
+                  <tr key={`${c.partner_key}-${c.ts}-${idx}`}>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10, color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>{(c.ts || '').slice(11, 19)}</td>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: 'var(--ink)', borderBottom: '1px solid var(--border)' }}>{c.partner_key}</td>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: c.verified ? '#6FA37D' : 'var(--muted)', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>{(c.amount ?? 0).toFixed(2)} {c.currency}</td>
+                    <td style={{ padding: '6px 10px', fontFamily: 'ui-monospace, monospace', fontSize: 10, fontWeight: 700, color: c.verified ? '#6FA37D' : '#C8423C', borderBottom: '1px solid var(--border)' }}>{c.verified ? '✓' : '✗'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
       )}
 

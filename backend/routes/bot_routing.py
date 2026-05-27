@@ -31,7 +31,7 @@ Data model:
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -321,6 +321,142 @@ def make_router() -> APIRouter:
         totals = {k: sum(r[k] for r in rows) for k in
                   ("signup", "bound", "dm_sent", "tma_open", "unlock_click")}
         return {"days": days, "rows": rows, "totals": totals}
+
+    # ─── Funnel DRILL-DOWN (iter76g) - recent rows behind a stage ──
+    @router.get("/admin/bot/funnel/drilldown")
+    async def admin_funnel_drilldown(
+        stage: str, hours: int = 24, limit: int = 20,
+        _: bool = Depends(require_admin), db = Depends(get_db),
+    ):
+        """Per-stage detail rows for the snapshot widget. Each stage maps
+        to a different source collection but the response shape is
+        consistent: { stage, items: [{label, sub_label, ts, meta}] }.
+        Caps at 50 rows so a curious admin click can't run away."""
+        stage = (stage or "").strip().lower()
+        hours = max(1, min(int(hours or 24), 24 * 30))
+        limit = max(1, min(int(limit or 20), 50))
+        cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+
+        items: list[Dict[str, Any]] = []
+
+        if stage == "signup":
+            cur = db.mittari_subscribers.find(
+                {"created_at": {"$gte": cutoff}, "source": "web_signup"},
+                {"_id": 0, "email": 1, "segment": 1, "status": 1,
+                 "pending_id": 1, "created_at": 1, "accept_language": 1},
+            ).sort([("created_at", -1)]).limit(limit)
+            async for r in cur:
+                items.append({
+                    "label": r.get("email") or "(no email)",
+                    "sub_label": f"{(r.get('segment') or '?').upper()} · {(r.get('status') or '?').upper()}",
+                    "ts": r.get("created_at"),
+                    "meta": {"pending_id": r.get("pending_id"),
+                             "lang": r.get("accept_language")},
+                })
+
+        elif stage == "bound":
+            cur = db.mittari_subscribers.find(
+                {"telegram_bound_at": {"$gte": cutoff}},
+                {"_id": 0, "email": 1, "telegram_username": 1,
+                 "telegram_chat_id": 1, "segment": 1, "status": 1,
+                 "telegram_bound_at": 1},
+            ).sort([("telegram_bound_at", -1)]).limit(limit)
+            async for r in cur:
+                items.append({
+                    "label": (r.get("telegram_username") and f"@{r['telegram_username']}")
+                             or r.get("email") or f"chat:{r.get('telegram_chat_id')}",
+                    "sub_label": f"{(r.get('segment') or '?').upper()} · {(r.get('status') or '?').upper()}",
+                    "ts": r.get("telegram_bound_at"),
+                    "meta": {"chat_id_tail": str(r.get("telegram_chat_id") or "")[-4:]},
+                })
+
+        elif stage == "dm_sent":
+            cur = db.dispatch_log.find(
+                {"source": "mittari_dm_fanout", "mode": "live",
+                 "sent_at": {"$gte": cutoff}, "error": None},
+                {"_id": 0, "recipient": 1, "segment": 1, "pending_id": 1,
+                 "payload": 1, "sent_at": 1},
+            ).sort([("sent_at", -1)]).limit(limit)
+            async for r in cur:
+                picks = (r.get("payload") or {}).get("picks_count")
+                items.append({
+                    "label": f"chat:{(r.get('recipient') or '')[-6:]}",
+                    "sub_label": f"{(r.get('segment') or 'all').upper()} · {picks or '?'} picks",
+                    "ts": r.get("sent_at"),
+                    "meta": {"pending_id": r.get("pending_id")},
+                })
+
+        elif stage == "tma_open":
+            cur = db.tma_events.find(
+                {"event": "tma_open", "ts": {"$gte": cutoff}},
+                {"_id": 0, "tg_user_id": 1, "pending_id": 1, "ts": 1},
+            ).sort([("ts", -1)]).limit(limit)
+            async for r in cur:
+                items.append({
+                    "label": f"tg:{r.get('tg_user_id')}",
+                    "sub_label": "Mini App open",
+                    "ts": r.get("ts"),
+                    "meta": {"pending_id": r.get("pending_id")},
+                })
+
+        elif stage == "unlock_click":
+            cur = db.redirect_click_log.find(
+                {"ts": {"$gte": cutoff}, "status": "ok"},
+                {"_id": 0, "code": 1, "partner_key": 1, "geo": 1,
+                 "destination": 1, "ts": 1},
+            ).sort([("ts", -1)]).limit(limit)
+            async for r in cur:
+                items.append({
+                    "label": r.get("partner_key") or "(no partner)",
+                    "sub_label": f"{r.get('geo') or '??'} · code {r.get('code')}",
+                    "ts": r.get("ts"),
+                    "meta": {"destination": (r.get("destination") or "")[:90]},
+                })
+        else:
+            raise HTTPException(400, "unknown stage")
+
+        return {"stage": stage, "hours": hours, "count": len(items), "items": items}
+
+    # ─── Router activity feeds (iter76g) ───────────────────────────
+    @router.get("/admin/router/clicks")
+    async def admin_router_clicks(
+        limit: int = 50, status: str = "all", partner_key: Optional[str] = None,
+        _: bool = Depends(require_admin), db = Depends(get_db),
+    ):
+        """Tail of the redirect_click_log. Filter by status (ok / all)
+        and partner_key. Caps at 200 rows."""
+        limit = max(1, min(int(limit or 50), 200))
+        q: Dict[str, Any] = {}
+        if status and status != "all":
+            q["status"] = status
+        if partner_key:
+            q["partner_key"] = partner_key.strip().lower()
+        cur = db.redirect_click_log.find(
+            q, {"_id": 0, "code": 1, "ts": 1, "geo": 1, "partner_key": 1,
+                "status": 1, "destination": 1, "ip_tail": 1},
+        ).sort([("ts", -1)]).limit(limit)
+        rows = [r async for r in cur]
+        return {"items": rows, "count": len(rows)}
+
+    @router.get("/admin/router/conversions")
+    async def admin_router_conversions(
+        limit: int = 50, partner_key: Optional[str] = None,
+        _: bool = Depends(require_admin), db = Depends(get_db),
+    ):
+        limit = max(1, min(int(limit or 50), 200))
+        q: Dict[str, Any] = {}
+        if partner_key:
+            q["partner_key"] = partner_key.strip().lower()
+        cur = db.conversions.find(
+            q, {"_id": 0, "partner_key": 1, "ts": 1, "code": 1, "subid": 1,
+                "amount": 1, "currency": 1, "verified": 1},
+        ).sort([("ts", -1)]).limit(limit)
+        rows = [r async for r in cur]
+        # Totals (rough) for the strip header.
+        total_count = len(rows)
+        total_amount = sum((r.get("amount") or 0) for r in rows if r.get("verified"))
+        return {"items": rows, "count": total_count,
+                "verified_amount_total": round(total_amount, 2)}
 
     return router
 

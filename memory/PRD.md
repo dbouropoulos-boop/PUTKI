@@ -9,6 +9,15 @@
 
 ## Phase History (latest first)
 
+- **iter76h · Ops dashboard: drill-down + router activity + subscriber search** (2026-05-27, +9 new tests · 56/56 iter76 green · screenshot-verified)
+  - **Per-stage funnel drill-down** (`GET /api/admin/bot/funnel/drilldown?stage=&hours=&limit=`): every stage on the snapshot is now a button. Click signup / bound / dm_sent / tma_open / unlock_click to expand an inline 20-row panel of the recent rows behind that count. Each row carries label + sub_label + timestamp pulled from the source collection (subscribers, dispatch_log, tma_events, redirect_click_log). Caps at 50 rows server-side. Clicking the same cell twice closes the panel.
+  - **Router activity surface** on `/back-office/bot-routing` (new section): twin tables - left shows the last 20 redirect_click_log rows (ts · geo · code · status · partner), right shows the last 20 conversions (ts · partner · €amount · verified ✓/✗). Header chip strip filters clicks by status (ALL / OK / NO_PARTNER_FOR_GEO / INFORMATIVE_MODE). Header also shows running totals: "20 CLICKS · 10 CONV · €0.00 VERIFIED". Backed by two new endpoints: `GET /api/admin/router/clicks` + `GET /api/admin/router/conversions` (both filter + paginate, capped at 200).
+  - **Subscriber quick-search** UI (new section): a single search box hits the existing `/api/admin/subscribers/lookup` API with debounced typing. Results render as a 6-column table (email · segment · status · pending_id · last 5 chars of chat_id · bound_at). Active subscribers highlighted in green, pending in amber. Friendly empty state when nothing matches.
+  - **Tests added** (9): drilldown auth gate, unknown-stage 400, envelope shape for every 5 stages, router clicks auth + filter + envelope, conversions auth + envelope-with-totals. 56/56 across all 9 iter76 suites green.
+  - **Verified live**: clicking BOUND on the snapshot opened the drilldown to show 20 recent bindings (@tester_iter36, @qaclick_xxx with timestamps). Subscriber search for "qa" returned 10 results. Router clicks panel showed 20 rows including FI / US / ZZ geo variants with mixed status (ok / no_partner_for_geo / informative_mode). Conversions panel showed 10 unverified test rows from earlier QA postbacks.
+
+
+
 - **iter76g · Code-review hygiene pass** (2026-05-27, ruff clean across F632/F821/F841/S311, 120/120 affected suites green)
   - **Triage outcome**: the automated review report was **mostly false positives**:
     - `eval()` at `mestari_diagnostics.py:564` — no `eval()` call exists; the function is `_match_axis` doing manual comparator parsing (`>=2`, `<=0`, etc). Docstring already says "explicitly NOT Python's `eval()`". FALSE POSITIVE.
