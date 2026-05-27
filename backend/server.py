@@ -2615,7 +2615,10 @@ from routes.affiliate_router import (  # noqa: E402
 api_router.include_router(_make_affiliate_admin_router())
 api_router.include_router(_make_affiliate_public_router())
 
-from routes.tma import make_router as _make_tma_router  # noqa: E402
+from routes.tma import (  # noqa: E402
+    make_router as _make_tma_router,
+    ensure_indexes as _ensure_tma_indexes,
+)
 api_router.include_router(_make_tma_router())
 
 # iter66 phase 3a - streamer endpoints (7 public + 7 admin)
@@ -3454,6 +3457,10 @@ async def startup_event():
         await _ensure_bot_dispatch_indexes(db)
     except Exception:
         logger.exception("bot_dispatch: index bootstrap failed (non-fatal)")
+    try:
+        await _ensure_tma_indexes(db)
+    except Exception:
+        logger.exception("tma: index bootstrap failed (non-fatal)")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)

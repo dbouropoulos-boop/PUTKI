@@ -179,6 +179,18 @@ const MittariMiniApp = () => {
   useEffect(() => {
     if (!auth?.token || !auth?.tg_user?.id) return;
     let cancelled = false;
+    // Fire the open beacon once per session (best-effort, no auth).
+    try {
+      fetch(`${BACKEND}/api/tma/event`, {
+        method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'tma_open',
+          tg_user_id: auth.tg_user.id,
+          pending_id: auth.subscriber?.pending_id,
+        }),
+      });
+    } catch { /* fire-and-forget */ }
     (async () => {
       setBusy(true); setErr(null);
       try {
@@ -195,12 +207,25 @@ const MittariMiniApp = () => {
   }, [auth, t]);
 
   const openSignup = useCallback(() => {
+    // Beacon the unlock-click event before opening so the funnel widget
+    // attributes it to this subscriber even if the new tab steals focus.
+    try {
+      fetch(`${BACKEND}/api/tma/event`, {
+        method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'unlock_click',
+          tg_user_id: auth?.tg_user?.id,
+          pending_id: auth?.subscriber?.pending_id,
+        }),
+      });
+    } catch { /* fire-and-forget */ }
     const url = `${(process.env.REACT_APP_BACKEND_URL || '')
       .replace(/\/$/, '')
       .replace(/\/api$/, '')}/signup?lang=${lang}`;
     if (tg && typeof tg.openLink === 'function') tg.openLink(url);
     else if (typeof window !== 'undefined') window.open(url, '_blank', 'noopener');
-  }, [tg, lang]);
+  }, [tg, lang, auth]);
 
   const styles = {
     page: {

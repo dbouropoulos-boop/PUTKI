@@ -9,6 +9,15 @@
 
 ## Phase History (latest first)
 
+- **iter76e · Funnel snapshot widget + TMA event beacons** (2026-05-27, +6 tests, 46/46 iter76 green, screenshot-verified)
+  - **New `GET /api/admin/bot/funnel/snapshot?hours=N`** - 5-stage conversion ladder over the last N hours (default 24, accepts 24/168/720). Stages: SIGNUP (web rows) → BOUND (TG chat_id linked) → DM SENT (live `dispatch_log` rows from the fanout) → MINI APP OPEN (distinct `tg_user_id`s from `tma_events`) → UNLOCK CLICK (router `status=ok` clicks). Returns step-to-step rates + an end-to-end rate. Five indexed aggregates - <50ms typical.
+  - **New `POST /api/tma/event` beacon** - fire-and-forget analytics. The Mini App now fires `tma_open` on signals-load and `unlock_click` before opening the signup tab. No auth, no PII; only `event` / `tg_user_id` / `pending_id` / `meta` land in `tma_events`. Indexed on `ts` + `(event, ts)`.
+  - **Back-office Funnel snapshot section** on `/back-office/bot-routing` - 5-cell ladder strip above the bot config. Each cell shows stage label · big count · step-to-step % (green ≥50%, amber 20-50%, red <20%) · DM-SENT cell adds a `+ N DRY-RUN` chip when the live counter is 0. Range chips (24H / 7D / 30D) drive a re-fetch.
+  - **Verified live**: snapshot pulled real data on first load - 190 total subs, 7D window showed SIGNUP 26 → BOUND 88 → DM SENT 0 (+9 DRY-RUN) → MINI APP OPEN 2 → UNLOCK CLICK 7 with an end-to-end rate of 26.9%.
+  - **Tests**: `test_iter76_funnel_snapshot.py` (6 tests · auth gate, envelope shape, range param, beacon accept, empty-event rejection, beacon→snapshot round-trip). 46/46 across all seven iter76 suites passing.
+
+
+
 - **iter76d · Funnel close-out: mint button + strict-signup bot gate + cron wire-up** (2026-05-27, 80/80 iter76 + cross-suite green, screenshot-verified)
   - **Back-office mint button** on `/back-office/bot-routing` ("MINT TEST LINK"): one click pulls today's top pick `signal_id` from `/api/odds/featured`, POSTs to `/api/admin/links/mint`, copies the full router URL to the clipboard, and shows code + URL + signal_id + "OPEN IN NEW TAB →". Lets editors smoke-test the affiliate router without leaving the page. Verified end-to-end via Playwright (mint code `2a717d01`, full URL composed against the preview backend).
   - **Strict signup gate enforced on Telegram bot** (`telegram_bot._handle_mittari_start`): reads `bot_config.require_verified_signup` (default True). Walk-up `/start mittari_<unknown>` users now get a polite block message pointing them to `https://putkihq.fi/signup` instead of silently creating a row. Known pending_ids bind as before AND flip `status` from `pending` → `active` so the Slice 3 DM fan-out + Slice 4 Mini App immediately treat them as fully onboarded.

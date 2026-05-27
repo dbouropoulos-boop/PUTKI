@@ -30,7 +30,7 @@ Data model:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -164,6 +164,81 @@ def make_router() -> APIRouter:
             "consent_marketing": _scalar(f.get("consent_marketing")),
             "by_status": _flat(f.get("by_status")),
             "by_segment": _flat(f.get("by_segment")),
+        }
+
+    # ─── Funnel snapshot (iter76d) - 5-stage conversion ladder ────
+    @router.get("/admin/bot/funnel/snapshot")
+    async def admin_funnel_snapshot(
+        hours: int = 24,
+        _: bool = Depends(require_admin), db = Depends(get_db),
+    ):
+        """Conversion ladder over the last `hours` (default 24).
+        Each stage counts distinct subscribers / events; rates are the
+        step-to-step conversion %. Cheap - 5 indexed Mongo aggregates,
+        runs in <50ms on typical loads."""
+        hours = max(1, min(int(hours or 24), 24 * 30))
+        cutoff = (datetime.now(timezone.utc)
+                  - timedelta(hours=hours)).isoformat()
+
+        # Stage 1: signups (web capture row created)
+        signups = await db.mittari_subscribers.count_documents({
+            "created_at": {"$gte": cutoff},
+            "source": "web_signup",
+        })
+
+        # Stage 2: bound (TG chat_id linked - could be same window or older)
+        bound = await db.mittari_subscribers.count_documents({
+            "telegram_bound_at": {"$gte": cutoff},
+        })
+
+        # Stage 3: DM sent (one row per subscriber per cycle)
+        dm_sent = await db.dispatch_log.count_documents({
+            "source": "mittari_dm_fanout",
+            "sent_at": {"$gte": cutoff},
+            "mode": "live",
+            "error": None,
+        })
+        dm_dry_run = await db.dispatch_log.count_documents({
+            "source": "mittari_dm_fanout",
+            "sent_at": {"$gte": cutoff},
+            "mode": "dry_run",
+        })
+
+        # Stage 4: Mini App opens (distinct tg_user_id)
+        tma_pipeline = [
+            {"$match": {"event": "tma_open", "ts": {"$gte": cutoff}}},
+            {"$group": {"_id": "$tg_user_id"}},
+            {"$count": "n"},
+        ]
+        tma_open_rows = [r async for r in db.tma_events.aggregate(tma_pipeline)]
+        tma_open = tma_open_rows[0]["n"] if tma_open_rows else 0
+
+        # Stage 5: Unlock click - status="ok" only (no informative
+        # fallbacks, no unknown codes).
+        unlock_clicks = await db.redirect_click_log.count_documents({
+            "ts": {"$gte": cutoff},
+            "status": "ok",
+        })
+
+        def _rate(top: int, bot: int) -> float:
+            return round((top / bot) * 100, 1) if bot else 0.0
+
+        return {
+            "hours": hours,
+            "cutoff": cutoff,
+            "stages": [
+                {"key": "signup",         "label": "SIGNUP",      "count": signups},
+                {"key": "bound",          "label": "BOUND",       "count": bound,
+                 "rate_vs_prev": _rate(bound, signups)},
+                {"key": "dm_sent",        "label": "DM SENT",     "count": dm_sent,
+                 "rate_vs_prev": _rate(dm_sent, bound),
+                 "dry_run": dm_dry_run},
+                {"key": "tma_open",       "label": "MINI APP OPEN", "count": tma_open,
+                 "rate_vs_prev": _rate(tma_open, dm_sent)},
+                {"key": "unlock_click",   "label": "UNLOCK CLICK", "count": unlock_clicks,
+                 "rate_vs_prev": _rate(unlock_clicks, tma_open)},
+            ],
+            "end_to_end_rate": _rate(unlock_clicks, signups),
         }
 
     return router

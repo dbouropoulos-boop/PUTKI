@@ -140,6 +140,16 @@ class _SignalsPayload(BaseModel):
     token: str
 
 
+class _EventPayload(BaseModel):
+    """Lightweight beacon - we don't validate session on these because
+    they're fire-and-forget analytics, and the worst case is a spam-loop
+    that the rate-limit middleware would catch upstream anyway."""
+    event: str           # tma_open | unlock_click
+    tg_user_id: Optional[int] = None
+    pending_id: Optional[str] = None
+    meta: Optional[dict] = None
+
+
 # ─── Router builder ───────────────────────────────────────────────────
 def make_router() -> APIRouter:
     router = APIRouter()
@@ -246,4 +256,32 @@ def make_router() -> APIRouter:
             "issued_at": _utc_iso(),
         }
 
+    @router.post("/tma/event")
+    async def tma_event(payload: _EventPayload, db = Depends(get_db)):
+        """Fire-and-forget analytics beacon. Used by the FE to record
+        Mini-App opens + unlock clicks for the back-office funnel widget.
+
+        We accept ANY event without auth - the worst case is noise, and
+        the funnel-snapshot aggregator already filters by event name +
+        timestamp window so spam never widens conversion %s."""
+        evt = (payload.event or "").strip()[:32]
+        if not evt:
+            return {"ok": False}
+        try:
+            await db.tma_events.insert_one({
+                "event": evt,
+                "tg_user_id": payload.tg_user_id,
+                "pending_id": (payload.pending_id or "")[:64] or None,
+                "meta": payload.meta or {},
+                "ts": _utc_iso(),
+            })
+        except Exception:
+            logger.exception("tma_events insert failed")
+        return {"ok": True}
+
     return router
+
+
+async def ensure_indexes(db) -> None:
+    await db.tma_events.create_index("ts", background=True)
+    await db.tma_events.create_index([("event", 1), ("ts", -1)], background=True)

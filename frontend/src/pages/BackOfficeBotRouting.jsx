@@ -124,6 +124,8 @@ const BackOfficeBotRouting = () => {
     target_geos: 'FI', priority_weight: 10,
   });
   const [mint, setMint] = useState(null);   // { code, full_url, copied }
+  const [funnel, setFunnel] = useState(null);
+  const [funnelHours, setFunnelHours] = useState(24);
 
   const hdr = useCallback(() => ({ 'X-Admin-Token': token, 'Content-Type': 'application/json' }), [token]);
 
@@ -131,15 +133,16 @@ const BackOfficeBotRouting = () => {
     if (!token) return;
     setErr(null);
     try {
-      const [c, p, s] = await Promise.all([
+      const [c, p, s, fn] = await Promise.all([
         fetch(`${BACKEND}/api/admin/bot/config`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/admin/partners`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/admin/bot/subscribers/summary`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        fetch(`${BACKEND}/api/admin/bot/funnel/snapshot?hours=${funnelHours}`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
       ]);
       if (!c) { setAuthed(false); setErr('auth failed'); return; }
-      setConfig(c); setPartners((p && p.items) || []); setSummary(s); setAuthed(true);
+      setConfig(c); setPartners((p && p.items) || []); setSummary(s); setFunnel(fn); setAuthed(true);
     } catch (e) { setErr(String(e?.message || e)); }
-  }, [token, hdr]);
+  }, [token, hdr, funnelHours]);
 
   useEffect(() => { if (token) refreshAll(); }, [token, refreshAll]);
 
@@ -256,6 +259,71 @@ const BackOfficeBotRouting = () => {
           <Cell testid="bot-summary-consent" label="MARKETING OK" value={summary.consent_marketing} />
           <Cell testid="bot-summary-segments" label="SEGMENTS" value={Object.keys(summary.by_segment || {}).length} />
         </div>
+      )}
+
+      {/* Funnel snapshot */}
+      {funnel && (
+        <section data-testid="bot-routing-funnel" style={{ marginBottom: 36 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, margin: 0 }}>
+              Funnel snapshot
+              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700, marginLeft: 12 }}>
+                LAST {funnel.hours}H · END-TO-END {funnel.end_to_end_rate}%
+              </span>
+            </h2>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[24, 168, 720].map((h) => (
+                <button key={h} onClick={() => setFunnelHours(h)} disabled={busy}
+                  data-testid={`bot-funnel-range-${h}`}
+                  style={{
+                    padding: '6px 10px',
+                    background: funnelHours === h ? '#E8C26E' : 'transparent',
+                    color: funnelHours === h ? '#0B0A09' : 'var(--ink)',
+                    border: '1px solid var(--border)',
+                    fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                    letterSpacing: '0.16em', fontWeight: 700, cursor: 'pointer',
+                  }}>{h === 24 ? '24H' : h === 168 ? '7D' : '30D'}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6,
+            border: '1px solid var(--border)',
+          }}>
+            {funnel.stages.map((stage, i) => (
+              <div key={stage.key} data-testid={`bot-funnel-stage-${stage.key}`}
+                style={{
+                  padding: '14px 12px', borderRight: i < 4 ? '1px solid var(--border)' : 'none',
+                  display: 'flex', flexDirection: 'column', gap: 6,
+                  background: i === funnel.stages.length - 1 ? '#1a1610' : 'transparent',
+                }}>
+                <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.2em', color: 'var(--muted)', fontWeight: 700 }}>
+                  {String(i + 1).padStart(2, '0')} · {stage.label}
+                </div>
+                <div style={{ fontFamily: 'Georgia, serif', fontSize: 26, fontWeight: 700, lineHeight: 1, color: 'var(--ink)' }}
+                  data-testid={`bot-funnel-stage-${stage.key}-count`}>
+                  {stage.count}
+                </div>
+                {i > 0 && (
+                  <div style={{
+                    fontFamily: 'ui-monospace, monospace', fontSize: 10, fontWeight: 700,
+                    color: stage.rate_vs_prev >= 50 ? '#6FA37D' : stage.rate_vs_prev >= 20 ? '#E8C26E' : '#C8423C',
+                  }}>
+                    {stage.rate_vs_prev}% ←
+                  </div>
+                )}
+                {stage.key === 'dm_sent' && stage.dry_run > 0 && (
+                  <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9, color: 'var(--muted)', letterSpacing: '0.08em' }}>
+                    + {stage.dry_run} DRY-RUN
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          <p style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, color: 'var(--muted)', marginTop: 8, letterSpacing: '0.08em', lineHeight: 1.6 }}>
+            % ← shows the step-to-step conversion from the previous stage. Green ≥50%, amber 20-50%, red &lt;20%. Counts are within the selected window; DM-SENT includes only live sends.
+          </p>
+        </section>
       )}
 
       {/* Bot config */}
