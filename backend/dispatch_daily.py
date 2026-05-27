@@ -1043,6 +1043,15 @@ async def dispatch_worker_loop(db) -> None:
                     enabled, not enabled,
                 )
                 await run_daily_dispatch(db, dry_run=not enabled)
+                # iter76 Slice 3: also fan-out per-subscriber DMs. The
+                # `fanout_daily_dms` helper has its OWN gate via
+                # `bot_config.daily_dm_enabled` - if that's False it
+                # no-ops cheaply, so we always call it.
+                try:
+                    from routes.bot_dispatch import fanout_daily_dms
+                    await fanout_daily_dms(db, dry_run=not enabled)
+                except Exception:
+                    logger.exception("dispatch worker: mittari DM fanout failed")
         except Exception:
             logger.exception("dispatch worker tick failed")
         await asyncio.sleep(WORKER_INTERVAL_SECONDS)

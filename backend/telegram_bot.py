@@ -334,6 +334,25 @@ async def _handle_mittari_start(db, *, chat_id: int | str, username: str,
         return {"handled": True, "kind": "mittari_no_pending"}
 
     sub = await db.mittari_subscribers.find_one({"pending_id": pending_id}, {"_id": 0})
+
+    # iter76 strict gate: when bot_config.require_verified_signup is True,
+    # `/start mittari_<id>` is only honoured if the website signup flow
+    # has already created the row. Walk-up users are bounced to /signup.
+    try:
+        from routes.bot_routing import get_bot_config
+        bot_cfg = await get_bot_config(db)
+    except Exception:
+        bot_cfg = {}
+    if bot_cfg.get("require_verified_signup", True) and not sub:
+        await send_message(
+            chat_id,
+            "🔒 <b>Avaa Mittari ensin Putki HQ:n sivulla.</b>\n\n"
+            "Anna sähköposti + valitse laji + vahvista 18+ täällä:\n"
+            "<a href=\"https://putkihq.fi/signup\">https://putkihq.fi/signup</a>\n\n"
+            "Sen jälkeen saat oman /start-koodisi takaisin Telegramiin.",
+        )
+        return {"handled": True, "kind": "mittari_unverified_blocked"}
+
     already = bool(sub and sub.get("telegram_chat_id"))
 
     now = _now_iso()
@@ -347,6 +366,10 @@ async def _handle_mittari_start(db, *, chat_id: int | str, username: str,
             "consent_tag": "mittari_alerts",
             "source": "mittari_signals",
             "active": True,
+            # iter76: flip funnel status to "active" on bind so the DM
+            # fan-out (Slice 3) + Mini App lock-state (Slice 4) start
+            # treating this subscriber as fully onboarded.
+            "status": "active",
             "last_seen_at": now,
         }, "$setOnInsert": {"created_at": now}},
         upsert=True,

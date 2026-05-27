@@ -123,6 +123,7 @@ const BackOfficeBotRouting = () => {
     partner_key: '', display_name: '', affiliate_base_url: '',
     target_geos: 'FI', priority_weight: 10,
   });
+  const [mint, setMint] = useState(null);   // { code, full_url, copied }
 
   const hdr = useCallback(() => ({ 'X-Admin-Token': token, 'Content-Type': 'application/json' }), [token]);
 
@@ -169,6 +170,38 @@ const BackOfficeBotRouting = () => {
     try {
       await fetch(`${BACKEND}/api/admin/partners/${encodeURIComponent(key)}`, { method: 'DELETE', headers: hdr() });
       await refreshAll();
+    } finally { setBusy(false); }
+  };
+
+  const mintTestLink = async () => {
+    setBusy(true); setMint(null); setErr(null);
+    try {
+      // Pull today's top pick signal_id for traceability; falls back to a
+      // marker when /api/odds/featured is empty.
+      let signalId = null;
+      try {
+        const f = await fetch(`${BACKEND}/api/odds/featured`).then((r) => r.json());
+        const top = (f?.picks || [])[0];
+        signalId = top?.signal_id || top?.event_id || top?.id || null;
+      } catch { /* noop - signal_id stays null */ }
+
+      const r = await fetch(`${BACKEND}/api/admin/links/mint`, {
+        method: 'POST', headers: hdr(),
+        body: JSON.stringify({
+          signal_id: signalId || 'back_office_test',
+          campaign: 'back_office_smoke',
+          segment: 'all',
+        }),
+      });
+      if (!r.ok) { setErr(`mint failed: ${r.status}`); return; }
+      const body = await r.json();
+      const fullUrl = `${BACKEND.replace(/\/$/, '')}/api/r/${body.code}`;
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(fullUrl);
+        copied = true;
+      } catch { /* clipboard may be blocked - we still show the URL */ }
+      setMint({ code: body.code, full_url: fullUrl, copied, signal_id: signalId });
     } finally { setBusy(false); }
   };
 
@@ -285,6 +318,55 @@ const BackOfficeBotRouting = () => {
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: 'var(--muted)', margin: '0 0 14px', maxWidth: 640 }}>
           Empty at launch. Add a row + flip <strong>signal unlock mode</strong> to <strong>routed</strong> to switch monetisation on without a deploy. Routing is geo-gated: a partner only receives traffic from users in <em>target_geos</em>.
         </p>
+
+        {/* Mint test link */}
+        <div data-testid="bot-routing-mint" style={{
+          border: '1px solid var(--border)', padding: '12px 14px', marginBottom: 14,
+          display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ minWidth: 0, flex: '1 1 280px' }}>
+            <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: 'var(--muted)', fontWeight: 700 }}>
+              MINT TEST LINK
+            </div>
+            <div style={{ fontFamily: 'Georgia, serif', fontSize: 13, color: 'var(--ink)', lineHeight: 1.4, marginTop: 4 }}>
+              Spins up a fresh <code>/api/r/&lt;code&gt;</code> against today&apos;s top pick + copies the URL to your clipboard. Use it to smoke-test the router without leaving the page.
+            </div>
+          </div>
+          <button onClick={mintTestLink} disabled={busy}
+            data-testid="bot-routing-mint-btn"
+            style={{
+              padding: '10px 16px', background: '#E8C26E', color: '#0B0A09', border: 0,
+              fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.22em',
+              fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.5 : 1,
+            }}>{busy ? '…' : '+ MINT LINK'}</button>
+        </div>
+
+        {mint && (
+          <div data-testid="bot-routing-mint-result" style={{
+            border: '1px dashed #E8C26E', padding: 12, marginBottom: 14,
+            background: '#1a1610',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.22em', color: '#E8C26E', fontWeight: 700 }}>
+                CODE {mint.code} {mint.copied ? '· COPIED ✓' : '· COPY MANUALLY'}
+              </span>
+              <a href={mint.full_url} target="_blank" rel="noreferrer"
+                data-testid="bot-routing-mint-open"
+                style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, letterSpacing: '0.18em', color: '#E8C26E', textDecoration: 'underline' }}>
+                OPEN IN NEW TAB →
+              </a>
+            </div>
+            <code data-testid="bot-routing-mint-url" style={{
+              display: 'block', padding: 8, background: '#0B0A09', color: '#F2EBE0',
+              fontFamily: 'ui-monospace, monospace', fontSize: 11, wordBreak: 'break-all',
+              border: '1px solid var(--border)',
+            }}>{mint.full_url}</code>
+            <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, color: 'var(--muted)', marginTop: 6, letterSpacing: '0.08em' }}>
+              SIGNAL: {mint.signal_id || 'back_office_test'} · In <strong>informative</strong> mode this 302s to /mittari · in <strong>routed</strong> mode it picks a LIVE geo-eligible partner.
+            </div>
+          </div>
+        )}
+
         <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid var(--border)', marginBottom: 14 }}>
           <thead style={{ background: 'var(--surface, #141210)' }}>
             <tr>

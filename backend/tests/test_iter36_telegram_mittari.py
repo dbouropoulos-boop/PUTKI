@@ -162,17 +162,19 @@ class TestMittariSubscribeFlow:
         assert r3.json().get("already_bound") is True
 
     def test_mittari_bind_without_preregister(self, api):
-        # /start mittari_<pid> creates the subscriber via upsert even if /subscribe
-        # was never hit (resilience: shareable bot link before page visit).
+        # iter76: strict signup is the locked-in default. /start mittari_<pid>
+        # for an UNKNOWN pending_id must now bounce the user back to the
+        # website signup flow rather than silently creating a row.
         pid = f"TEST_iter36_direct_{uuid.uuid4()}"
         chat_id = 9300002
         r = api.post(f"{BASE_URL}/api/webhooks/telegram",
                      json=_make_update(f"/start mittari_{pid}", chat_id=chat_id))
         assert r.status_code == 200
-        assert r.json().get("kind") == "mittari_bound"
+        assert r.json().get("kind") == "mittari_unverified_blocked"
+        # binding-status reports unbound because no row was created.
         r2 = api.get(f"{BASE_URL}/api/mittari/binding-status",
                      params={"pending_id": pid})
-        assert r2.json()["bound"] is True
+        assert r2.json()["bound"] is False
 
     def test_stop_deactivates_subscribers(self, api):
         # Bind, then /stop, then verify active=False

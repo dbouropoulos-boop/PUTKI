@@ -9,6 +9,22 @@
 
 ## Phase History (latest first)
 
+- **iter76d · Funnel close-out: mint button + strict-signup bot gate + cron wire-up** (2026-05-27, 80/80 iter76 + cross-suite green, screenshot-verified)
+  - **Back-office mint button** on `/back-office/bot-routing` ("MINT TEST LINK"): one click pulls today's top pick `signal_id` from `/api/odds/featured`, POSTs to `/api/admin/links/mint`, copies the full router URL to the clipboard, and shows code + URL + signal_id + "OPEN IN NEW TAB →". Lets editors smoke-test the affiliate router without leaving the page. Verified end-to-end via Playwright (mint code `2a717d01`, full URL composed against the preview backend).
+  - **Strict signup gate enforced on Telegram bot** (`telegram_bot._handle_mittari_start`): reads `bot_config.require_verified_signup` (default True). Walk-up `/start mittari_<unknown>` users now get a polite block message pointing them to `https://putkihq.fi/signup` instead of silently creating a row. Known pending_ids bind as before AND flip `status` from `pending` → `active` so the Slice 3 DM fan-out + Slice 4 Mini App immediately treat them as fully onboarded.
+  - **Daily cron wired to fan-out**: `dispatch_worker_loop` now calls `routes.bot_dispatch.fanout_daily_dms(db, dry_run=not enabled)` right after `run_daily_dispatch` in every dispatch-window tick. The fan-out has its own `bot_config.daily_dm_enabled` gate, so the call is cheap when off and live the moment the back-office flips the switch. Errors are swallowed and logged so a DM hiccup never blocks the channel broadcast.
+  - **Test alignment**: `test_iter36_telegram_mittari::test_mittari_bind_without_preregister` flipped from legacy lax-mode assertion (`mittari_bound`) to the new strict-mode contract (`mittari_unverified_blocked` + binding-status `bound:false`). 20/20 + 1 skipped in iter36 suite.
+  - **New tests**: `test_iter76_bot_strict_signup.py` (3 tests · unverified-block path / known-pid-binds-and-flips-status / lax-mode walk-up still accepted).
+  - **Cross-suite regression**: 80/80 across iter62 + iter65 + iter66 + iter68 + all iter76 suites · only known pre-existing flakes left in the broad sweep (`test_iter62_avatar_refresh` skipped, isolated Layer 2 flake unaffected by these changes).
+  - **Funnel architecture now end-to-end live**:
+    1. `/signup` captures email + segment + 18+ + consent → creates `mittari_subscribers` row (status=pending).
+    2. Telegram bot `/start mittari_<pid>` verifies the row exists (strict mode), binds chat_id, flips status to active.
+    3. Daily cron at 09:00 EET fires `fanout_daily_dms` → per-subscriber DM with picks + Mini App deep link (gated by `daily_dm_enabled`).
+    4. User taps "Avaa Mini App" → `/tma` loads inside Telegram, validates initData HMAC, fetches today's signals.
+    5. (Future) When `signal_unlock_mode` flips to `routed`, Mini App "Unlock" buttons can mint a code + redirect to a geo-eligible LIVE partner via `/api/r/{code}`.
+
+
+
 - **iter76 · Slice 3 (Daily DM fan-out) + Slice 4 (Telegram Mini App) + Slice 5 (Affiliate Router)** (2026-05-27, +18 new tests · 60/60 across affected suites · screenshot-verified TMA fallback)
   - **Slice 3 - Per-subscriber Telegram DM fan-out** (`routes/bot_dispatch.py`):
     - `fanout_daily_dms(db, dry_run=True)` reads `bot_config.daily_dm_enabled`, builds today's picks via the existing `_build_telegram_alerts_payload` (parity with @putkihq channel broadcast), then iterates `mittari_subscribers` where status=active and a `telegram_chat_id` is bound. Per-row segment filter (`football` / `hockey` / `all`) so a football-only subscriber never sees hockey picks. Each DM appends a "Avaa Mini App" CTA pointing at `t.me/<bot>/<app>?startapp=<pending_id>` (or `/tma?pid=` fallback when `TELEGRAM_TMA_APP_NAME` is unset).
