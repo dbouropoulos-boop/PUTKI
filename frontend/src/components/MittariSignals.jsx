@@ -76,7 +76,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
     marketQuietBody: sc.market_quiet_body || (isEn
       ? 'Tomorrow 09:00 we drop the next five. Subscribe and you\u2019ll get the first one the moment the market opens it up.'
       : 'Huomenna klo 09:00 pudotamme seuraavat viisi. Tilaa ja saat ensimmäisen heti kun markkina avautuu.'),
-    revealTeaser: sc.reveal_teaser || (isEn ? '⌥ Tap → Signal 01 unlocks instantly' : '⌥ Napsauta → Signaali 01 avautuu heti'),
+    revealTeaser: sc.reveal_teaser || (isEn ? '⌥ Subscribe → see today\u2019s pick first' : '⌥ Tilaa → näe päivän vinkki ensin'),
     // iter52: copy shown when the user has unlocked but today's real
     // pick hasn't dropped yet (placeholder row). Replaces the
     // confusing "still-blurred-after-unlock" state.
@@ -86,10 +86,15 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
     confidenceLabel: sc.confidence_label || 'Sharpness',
     impliedLabel: sc.implied_label || (isEn ? 'implied prob.' : 'todennäköisyys'),
     impliedInline: sc.implied_inline || (isEn ? 'implied' : 'todenn.'),
-    lockedFoot: sc.locked_foot || (isEn ? 'Locked · the full five drop every morning at' : 'Lukittu · viisi pudotusta joka aamu klo'),
+    // iter77 UX: row 01 is FREE preview. The foot copy now reflects
+    // "subscribe to see the next four + tomorrow" rather than "submit
+    // to unlock row 01".
+    lockedFoot: sc.locked_foot || (isEn
+      ? 'Signal 01 is free above ↑ · subscribe to unlock 02-05 + tomorrow\u2019s drop at'
+      : 'Signaali 01 on ilmainen yllä ↑ · tilaa avataksesi 02-05 + huomisen pudotus klo'),
     unlockedFoot: sc.unlocked_foot || (isEn
-      ? '✓ Signal 01 unlocked · the rest land in your inbox in <3 seconds'
-      : '✓ Signaali 01 avattu · loput tippuvat sähköpostiisi alle 3 sekunnissa'),
+      ? '✓ All five unlocked · the next drop lands in your inbox tomorrow at 09:00'
+      : '✓ Kaikki viisi avattu · seuraava pudotus saapuu huomenna klo 09:00'),
     drawLabel: sc.draw_label || (isEn ? 'draw' : 'tasapeli'),
     vsLabel: sc.vs_label || 'vs',
   };
@@ -226,8 +231,11 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
           // a preview placeholder, swap the blurred text for an honest
           // "dropping at 09:00 → Telegram first" line. Keeps the unlock
           // event meaningful instead of looking broken.
-          const showPendingCopy = unlocked && s.isFirst && s.isPlaceholder;
-          const rowUnlocked = unlocked && s.isFirst;
+          const showPendingCopy = s.isFirst && s.isPlaceholder;
+          // iter77 UX: row 01 is ALWAYS unlocked (free first-tip preview).
+          // Email/Telegram capture unlocks rows 02-05 + future days. This
+          // is the "value first, capture second" funnel inversion.
+          const rowUnlocked = s.isFirst || unlocked;
           const everUnlocked = unlocked;
           const rowPadding = compact ? '14px 16px' : '22px 24px';
           const rowCols = compact
@@ -273,7 +281,17 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
                     {s.kickoff && (<>{' · '}{formatKickoff(s.kickoff, isEn)}</>)}
                   </>)}
                 </div>
-                {s.isFirst && !everUnlocked && (
+                {s.isFirst && !everUnlocked && !s.isPlaceholder && (
+                  <div data-testid="mittari-signal-first-free-badge" style={{
+                    width: 'fit-content',
+                    padding: '4px 10px', marginTop: 4,
+                    background: '#1e2a18', border: '1px solid #6FA37D',
+                    fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                    letterSpacing: '0.12em', color: '#A6E0B0',
+                    textTransform: 'uppercase', fontWeight: 700,
+                  }}>{isEn ? 'FREE · TODAY\u2019S PREVIEW' : 'ILMAINEN · PÄIVÄN ESIKATSELU'}</div>
+                )}
+                {s.isFirst && !everUnlocked && s.isPlaceholder && (
                   <div data-testid="mittari-signal-reveal-teaser"
                     onClick={() => onRevealRequest?.()} style={{
                       width: 'fit-content', cursor: 'pointer',
@@ -282,7 +300,7 @@ const MittariSignals = ({ unlocked = false, onRevealRequest, copy, lang: propLan
                       fontFamily: 'ui-monospace, monospace', fontSize: 10,
                       letterSpacing: '0.10em', color: '#E89248',
                       textTransform: 'uppercase',
-                    }}>{t.revealTeaser}</div>
+                    }}>{isEn ? '⌥ Subscribe → see today\u2019s pick first' : '⌥ Tilaa → näe päivän vinkki ensin'}</div>
                 )}
               </div>
 

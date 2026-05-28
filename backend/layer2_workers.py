@@ -422,6 +422,7 @@ async def rss_tick(db) -> Dict[str, Any]:
         killed = set()
 
     async with httpx.AsyncClient(timeout=HTTP_TIMEOUT_SECONDS,
+                                 follow_redirects=True,
                                  headers={"User-Agent": REDDIT_USER_AGENT}) as http:
         for feed in RSS_FEEDS:
             if _should_skip_source(feed["source"]):
