@@ -43,7 +43,15 @@ if [[ -n "${EXTRA_ARGS:-}" ]]; then
 fi
 
 : > "$LOG"
-nohup python -m pytest "${ARGS[@]}" "${DEFAULT_IGNORES[@]}" "${EXTRA[@]}" --tb=short -q \
+# PYTHONDONTWRITEBYTECODE=1 + PYTHONPYCACHEPREFIX prevent pytest from
+# writing .pyc files under /app/backend/, which would otherwise retrigger
+# the uvicorn dev-reload watcher and drop in-flight connections. (We
+# previously used --reload-exclude in the supervisord command, but that
+# broke production deployment because the deploy pipeline mangled the
+# flags. The env-var approach is dev-only by design.)
+nohup env PYTHONDONTWRITEBYTECODE=1 PYTHONPYCACHEPREFIX=/tmp/pytest-pycache \
+  python -m pytest "${ARGS[@]}" "${DEFAULT_IGNORES[@]}" "${EXTRA[@]}" \
+    -p no:cacheprovider --tb=short -q \
   >>"$LOG" 2>&1 &
 echo $! > "$PIDFILE"
 
