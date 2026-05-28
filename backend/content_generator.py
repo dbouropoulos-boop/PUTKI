@@ -19,6 +19,7 @@ draft so editorial can decide.
 from __future__ import annotations
 
 import asyncio
+import time
 import hashlib
 import json
 import logging
@@ -1049,7 +1050,19 @@ def _assemble_regulatory_body(content: Dict[str, Any]) -> str:
 
 async def _call_claude_default(system_prompt: str, user_prompt: str, session_id: str) -> str:
     """Calls Claude via emergentintegrations, mirroring `content_engine.call_claude`
-    but private to this module so it can evolve independently."""
+    but private to this module so it can evolve independently.
+
+    iter77: Budget circuit breaker. The Emergent LLM key has a hard monthly
+    budget; once exceeded, every call hangs ~30s before returning a
+    BadRequestError. Without short-circuiting, a worker tick burning 5
+    sequential calls = 150s of event-loop time per tick AND the prod
+    back-office stalls behind it. We track the last 'budget exceeded'
+    timestamp in a module-global and refuse to call for `_BUDGET_COOLDOWN`
+    seconds after a hit, raising a fast-path RuntimeError instead.
+    """
+    if _CLAUDE_BUDGET_COOLDOWN_UNTIL[0] > time.time():
+        raise RuntimeError("emergent_llm_budget_cooldown_active")
+
     from emergentintegrations.llm.chat import LlmChat, UserMessage
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
@@ -1059,10 +1072,26 @@ async def _call_claude_default(system_prompt: str, user_prompt: str, session_id:
         session_id=session_id,
         system_message=system_prompt,
     ).with_model("anthropic", CLAUDE_MODEL)
-    return await asyncio.wait_for(
-        chat.send_message(UserMessage(text=user_prompt)),
-        timeout=45.0,
-    )
+    try:
+        return await asyncio.wait_for(
+            chat.send_message(UserMessage(text=user_prompt)),
+            timeout=45.0,
+        )
+    except Exception as exc:
+        msg = str(exc).lower()
+        if "budget has been exceeded" in msg or "max budget" in msg:
+            _CLAUDE_BUDGET_COOLDOWN_UNTIL[0] = time.time() + _BUDGET_COOLDOWN
+            logger.warning(
+                "Emergent LLM budget exceeded; cooling down generation for %ss",
+                _BUDGET_COOLDOWN,
+            )
+        raise
+
+
+# Module-globals for the budget circuit breaker. Wrapped in a list so the
+# inner function can mutate without `global` boilerplate.
+_BUDGET_COOLDOWN = 600  # 10 min - long enough that a top-up + next tick clears.
+_CLAUDE_BUDGET_COOLDOWN_UNTIL = [0.0]
 
 
 # ─────────────────── Index helper ───────────────────

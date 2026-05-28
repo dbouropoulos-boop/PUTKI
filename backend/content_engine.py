@@ -564,8 +564,21 @@ def _strip_code_fence(text: str) -> str:
 
 async def call_claude(system_prompt: str, user_prompt: str, session_id: str) -> str:
     """One-shot Claude call. Returns raw text.
-    Hard-capped at 45s so a flaky upstream gateway never blocks the event loop."""
+    Hard-capped at 45s so a flaky upstream gateway never blocks the event loop.
+
+    iter77: Shares the budget-exceeded circuit breaker with
+    `content_generator._call_claude_default` so when the Emergent LLM key
+    runs out, both call sites short-circuit instantly instead of hanging
+    30s per call and starving the back-office.
+    """
     import asyncio as _aio
+    import time as _time
+    from content_generator import (
+        _CLAUDE_BUDGET_COOLDOWN_UNTIL, _BUDGET_COOLDOWN,
+    )
+    if _CLAUDE_BUDGET_COOLDOWN_UNTIL[0] > _time.time():
+        raise RuntimeError("emergent_llm_budget_cooldown_active")
+
     api_key = os.environ.get("EMERGENT_LLM_KEY")
     if not api_key:
         raise RuntimeError("EMERGENT_LLM_KEY missing in /app/backend/.env")
@@ -583,6 +596,15 @@ async def call_claude(system_prompt: str, user_prompt: str, session_id: str) -> 
         )
     except _aio.TimeoutError:
         raise RuntimeError("Claude call timed out after 45s (upstream gateway flake)")
+    except Exception as exc:
+        msg = str(exc).lower()
+        if "budget has been exceeded" in msg or "max budget" in msg:
+            _CLAUDE_BUDGET_COOLDOWN_UNTIL[0] = _time.time() + _BUDGET_COOLDOWN
+            logger.warning(
+                "Emergent LLM budget exceeded (content_engine); cooling down for %ss",
+                _BUDGET_COOLDOWN,
+            )
+        raise
     return response
 
 

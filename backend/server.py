@@ -3525,13 +3525,27 @@ _static_dir.mkdir(parents=True, exist_ok=True)
 (_static_dir / "og").mkdir(parents=True, exist_ok=True)
 app.mount("/api/static", StaticFiles(directory=str(_static_dir)), name="static")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+_cors_raw = os.environ.get('CORS_ORIGINS', '*').strip()
+# Browsers reject `Access-Control-Allow-Origin: *` together with
+# `Access-Control-Allow-Credentials: true`. When CORS_ORIGINS=* we MUST
+# fall back to the regex-allowlist form so credentialed admin calls
+# from the back-office still work.
+if _cors_raw == '*':
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origin_regex='.*',
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_credentials=True,
+        allow_origins=[o.strip() for o in _cors_raw.split(',') if o.strip()],
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 logging.basicConfig(
     level=logging.INFO,
