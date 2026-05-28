@@ -48,7 +48,7 @@ const Signup = () => {
       <div className="border-b border-subtle-border">
         <div className="container-wide flex gap-1 h-1">
           {[1, 2, 3, 4].map((s) => (
-            <div key={s} className="flex-1" style={{ backgroundColor: s <= step ? '#1B2D5B' : '#E8E5DF' }}></div>
+            <div key={s} className="flex-1" style={{ backgroundColor: s <= step ? 'var(--ember)' : 'var(--line)' }}></div>
           ))}
         </div>
       </div>

@@ -327,7 +327,7 @@ const VoitaPalkinto = () => {
 
       {/* Cross-link to Weezy Rally */}
       <section className="container-wide py-10">
-        <div className="panel p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap" style={{ borderLeft: '3px solid var(--brand-blue)' }}>
+        <div className="panel p-5 sm:p-6 flex items-center justify-between gap-4 flex-wrap" style={{ borderLeft: '3px solid var(--voita-accent)' }}>
           <div>
             <div className="eyebrow mb-1.5">{lang === 'en' ? 'ALSO ON PUTKI HQ' : 'PUTKI HQ:LLA MYÖS'}</div>
             <h3 className="font-display font-bold" style={{ fontSize: 18, color: 'var(--ink)' }}>
