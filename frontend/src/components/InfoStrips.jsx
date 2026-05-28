@@ -36,11 +36,11 @@ export const OrientationStrip = () => {
   }, []);
 
   const firstCopy = lang === 'en'
-    ? "PUTKI HQ · Finland\u2019s independent gambling-culture publication · News from 12 outlets · Streamer scene · Market signals · "
-    : "PUTKI HQ · Suomen riippumaton rahapelijulkaisu · Uutiset 12 lähteestä · Striimiskene · Markkinasignaalit · ";
+    ? "PUTKI HQ · Finland\u2019s independent gambling-culture publication · 28 named sources across 6 categories · Streamer scene · Market signals · "
+    : "PUTKI HQ · Suomen riippumaton rahapelijulkaisu · 28 nimettyä lähdettä yli kuuden kategorian · Striimiskene · Markkinasignaalit · ";
   const returningCopy = lang === 'en'
-    ? "PUTKI HQ · 12 sources · Editorial - not advertising · "
-    : "PUTKI HQ · 12 lähdettä · Toimituksellinen - ei mainontaa · ";
+    ? "PUTKI HQ · 28 named sources · Editorial - commercial relationships openly listed · "
+    : "PUTKI HQ · 28 nimettyä lähdettä · Toimituksellinen - kaupalliset suhteet avoimesti merkitty · ";
 
   return (
     <div

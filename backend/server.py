@@ -1691,7 +1691,7 @@ async def admin_preview_email_template(
     sample_vars = (payload or {}).get("vars") or {
         "name": "Antti", "profile_name": "The Strategist",
         "diagnostic": "poker", "raffle_title": "HJK vs Lahti",
-        "entry_position": "7", "prize_label": "€100 Weezybet credit",
+        "entry_position": "7", "prize_label": "€100 editorial prize credit",
         "redeem_url": "https://putkihq.fi/redeem/EXAMPLE",
         "magic_link": "https://putkihq.fi/bind/abc123",
         "unsubscribe_url": "https://putkihq.fi/unsub/EXAMPLE",
@@ -3215,7 +3215,7 @@ async def admin_voita_notify_winner(
     lang = (entry or {}).get("lang", "fi")
     raffle_title = raffle.get("title_fi") or raffle.get("title_en") or raffle.get("slug", "")
     prize_label = (raffle.get("prize") or {}).get(
-        f"label_{lang}", raffle.get("prize_label", "€100 Weezybet credit"),
+        f"label_{lang}", raffle.get("prize_label", "€100 editorial prize credit"),
     )
     redeem_url = f"https://putkihq.fi/voita/{raffle.get('slug', '')}?winner={entry_id}"
     rendered = await render_template(

@@ -41,16 +41,16 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
     "_id": CONFIG_ID,
     "prize_amount": None,             # None until editor fills it in
     "prize_currency": "EUR",
-    "prize_label": "",                # e.g. "500 € cash" or "Weezybet bonus"
-    "partner_name": "Weezybet",
-    "partner_url": "https://weezybet.com",
-    "partner_disclosure": "Yhteistyössä · julkistettu päivämäärällä",
+    "prize_label": "",                # editor fills in (e.g. "500 € cash")
+    "partner_name": "",               # blank by default - admin must set
+    "partner_url": "",
+    "partner_disclosure": "",
     "videos": [
         {"id": "v1", "title": "", "caption": ""},
         {"id": "v2", "title": "", "caption": ""},
         {"id": "v3", "title": "", "caption": ""},
     ],
-    "enabled": True,
+    "enabled": False,                 # OFF by default - require explicit enable
     "updated_at": None,
 }
 
@@ -192,12 +192,26 @@ def build_peli_admin_router(db) -> APIRouter:
         x_admin_token: Optional[str] = Header(None),
     ):
         _admin_required(x_admin_token)
-        await _get_or_seed(db)
+        existing = await _get_or_seed(db)
         patch: Dict[str, Any] = {
             k: v for k, v in body.dict(exclude_unset=True).items() if v is not None
         }
         if "videos" in patch:
             patch["videos"] = [v.dict() if hasattr(v, "dict") else v for v in patch["videos"]]
+        # Guard: cannot enable a raffle without partner_name + partner_disclosure.
+        # Empty defaults force the editor to fill them in BEFORE going live.
+        merged_after_patch = {**existing, **patch}
+        if merged_after_patch.get("enabled"):
+            if not (merged_after_patch.get("partner_name") or "").strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="partner_name_required_to_enable",
+                )
+            if not (merged_after_patch.get("partner_disclosure") or "").strip():
+                raise HTTPException(
+                    status_code=400,
+                    detail="partner_disclosure_required_to_enable",
+                )
         patch["updated_at"] = _now_iso()
         await db.peli_meta.update_one({"_id": CONFIG_ID}, {"$set": patch})
         cfg = await db.peli_meta.find_one({"_id": CONFIG_ID})

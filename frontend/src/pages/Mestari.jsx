@@ -66,7 +66,7 @@ const COPY = {
       ctaMeta: ['90 sekuntia', 'Maksuton', 'Ei talletusta', 'Ei vedonlyöntiä'],
     },
     cred: [
-      { num: '11', unit: ' lähdettä', desc: 'Julkista markkina- ja skenedatalähdettä analysoidaan' },
+      { num: '28', unit: ' lähdettä', desc: 'Nimettyä julkista lähdettä yli kuuden kategorian' },
       { num: '0', unit: ' muokkausta', desc: 'Ei toimituksen sormea mallissa. Sama data, sama tulos.' },
       { num: '5', unit: ' päivää', desc: 'Strukturoitu opas markkinakäyttäytymisen lukemiseen' },
       { num: '90', unit: ' sek', desc: 'Suoritusaika · 5 tutkimuspohjaista kysymystä' },
@@ -82,7 +82,7 @@ const COPY = {
         },
         {
           num: '02 · Data', title: 'Todelliset markkinasignaalit',
-          body: ['Profiilisi tulkitaan suhteessa kuvioihin, joita havaitaan ', '11 julkisessa datalähteessä', ' - kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.'],
+          body: ['Profiilisi tulkitaan suhteessa kuvioihin, joita havaitaan ', '28 nimetyssä lähteessä yli kuuden kategorian', ' - kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.'],
           tag: 'Julkinen data · Kerroin-API:t · EU-markkinat',
         },
         {
@@ -191,7 +191,7 @@ const COPY = {
       ctaMeta: ['90 seconds', 'Free', 'No deposit', 'No betting'],
     },
     cred: [
-      { num: '11', unit: ' sources', desc: 'Public market and scene data feeds analysed' },
+      { num: '28', unit: ' sources', desc: 'Named public sources across 6 categories' },
       { num: '0', unit: ' overrides', desc: 'No editorial finger on the model. Same data, same output.' },
       { num: '5', unit: ' days', desc: 'Structured playbook on reading market behaviour' },
       { num: '90', unit: ' sec', desc: 'Run time · 5 research-grounded questions' },
@@ -201,7 +201,7 @@ const COPY = {
       intro: ['Mestari applies a ', 'structured analytical framework', ' to a question most people answer on instinct: how do you actually read a betting market? The diagnostic draws on documented research in decision-making, market efficiency and cognitive bias.'],
       cards: [
         { num: '01 · Framework', title: 'Research-grounded questions', body: ['Each of the five questions targets a recognised dimension of predictive decision-making - anchoring, recency weighting, market trust, contrarian instinct and information processing. The diagnostic is built on ', 'established behavioural research', ', not opinion.'], tag: 'Behavioural science · Decision theory' },
-        { num: '02 · Data', title: 'Real market signals', body: ['Your profile is read against patterns observed across ', '11 public data sources', ' - odds dispersion, market movement and scene activity. We analyse how markets behave; we do not predict outcomes.'], tag: 'Public data · Odds APIs · EU markets' },
+        { num: '02 · Data', title: 'Real market signals', body: ['Your profile is read against patterns observed across ', '28 named sources across 6 categories', ' - odds dispersion, market movement and scene activity. We analyse how markets behave; we do not predict outcomes.'], tag: 'Public data · Odds APIs · EU markets' },
         { num: '03 · Models', title: 'AI-assisted analysis', body: ['We use machine-learning classification to interpret answer patterns consistently and to surface the playbook that best fits your profile. ', 'Models assist analysis', ' - they are checked against a fixed method, not left to run unsupervised.'], tag: 'ML classification · Human-reviewed' },
         { num: '04 · Transparency', title: 'Documented method', body: ['Every profile, score and lesson traces back to a ', 'documented method', '. There is no editorial override - the same answers always yield the same profile. The full methodology is available on request.'], tag: 'Open method · Reproducible' },
       ],

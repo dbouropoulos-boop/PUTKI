@@ -2,8 +2,8 @@
  * PUTKI HQ - TrustPills (Phase 1 Final · Chunk B).
  *
  * Reusable trust strip. Three quiet pills:
- *   - Editorial - not advertising
- *   - 12 verified sources (Yle · HS · IL · IS · MTV · Kauppalehti · Google News FI ×5)
+ *   - Editorial - commercial relationships openly listed
+ *   - 28 named sources across 6 categories
  *   - Strict source citation enforced
  *
  * Renders on /pelisignaalit, /voita, and the homepage below ExploreBlocks
@@ -46,7 +46,7 @@ const TrustPills = ({ dataTestId = 'trust-pills' }) => {
       }}
     >
       <Pill
-        label={lang === 'en' ? 'Editorial · not advertising' : 'Toimitus · ei mainontaa'}
+        label={lang === 'en' ? 'Editorial · commercial relationships openly listed' : 'Toimitus · kaupalliset suhteet avoimesti merkitty'}
         sub={lang === 'en'
           ? 'Independent newsroom. Affiliate links labeled separately.'
           : 'Itsenäinen toimitus. Affiliaattilinkit merkitty erikseen.'}

@@ -115,8 +115,8 @@ const MiniGame = () => {
           </h1>
           <p className="prose-mittari max-w-2xl" style={{ color: 'var(--muted)' }}>
             {lang === 'en'
-              ? <>Drive through the Imatra rally road. Avoid obstacles, grab boosters, beat other Finns. This week{'\u2019'}s prize pool <span className="mono" style={{ color: 'var(--ink)' }}>925 €</span>. Sponsored by Weezybet. Free to play.</>
-              : <>Käy lävitse Imatran karavaanitie. Vältä esteet, kerää nitroja, päihitä muut suomalaiset. Tämän viikon palkintosumma <span className="mono" style={{ color: 'var(--ink)' }}>925 €</span>. Sponsorina Weezybet. Pelaaminen on ilmaista.</>}
+              ? <>Drive through the Imatra rally road. Avoid obstacles, grab boosters, beat other Finns. This week{'\u2019'}s prize pool <span className="mono" style={{ color: 'var(--ink)' }}>925 €</span>. Free to play.</>
+              : <>Käy lävitse Imatran karavaanitie. Vältä esteet, kerää nitroja, päihitä muut suomalaiset. Tämän viikon palkintosumma <span className="mono" style={{ color: 'var(--ink)' }}>925 €</span>. Pelaaminen on ilmaista.</>}
           </p>
         </div>
       </section>
@@ -256,7 +256,7 @@ const MiniGame = () => {
                 <li>· {lang === 'en' ? 'Best score per week counts.' : 'Paras tulos viikossa lasketaan.'}</li>
                 <li>· {lang === 'en' ? 'No deposit, no card.' : 'Ei talletusta, ei luottokorttia.'}</li>
                 <li>· {lang === 'en' ? 'Winners announced Sunday.' : 'Voittajat julkistetaan sunnuntaina.'}</li>
-                <li>· {lang === 'en' ? 'Prizes credited to Weezybet account.' : 'Palkinnot lähetetään Weezybet-tilille.'}</li>
+                <li>· {lang === 'en' ? 'Prizes credited via the active editorial partner — disclosed at draw time.' : 'Palkinnot välitetään aktiivisen toimituksellisen kumppanin kautta — kerrotaan voitonarvonnassa.'}</li>
                 <li>· {lang === 'en' ? 'For entertainment only · no betting.' : 'Vain viihteeksi · ei vedonlyöntiä.'}</li>
               </ul>
             </div>

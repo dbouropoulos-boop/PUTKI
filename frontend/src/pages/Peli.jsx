@@ -6,7 +6,7 @@
  * email) and surfaces:
  *   • current prize (editable via /back-office/peli)
  *   • 3 embedded videos (editable via back-office)
- *   • Weezybet partnership disclosure
+ *   • editorial partner disclosure (configured per active partnership)
  *   • clear "for entertainment only · no betting" notice
  */
 import React, { useEffect, useState } from 'react';
@@ -18,21 +18,22 @@ import SmarticoGame from '../components/SmarticoGame';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
-// Week-1 Smartico game embedded directly on /peli. Same brand/visitor-key
-// pair the user supplied - `template_id` 3383 = Weezy Rally. The win flow
-// hands the visitor straight to Weezybet registration carrying the UUID.
-const WEEZY_RALLY = {
+// Smartico mini-game embed config. ONLY rendered when an active editorial
+// partner is configured via /back-office/peli. Default state shows a clean
+// "no active raffle" placeholder — never stale partner branding.
+const SMARTICO_GAME = {
   template_id: 3383,
   brand_key: '7f2db034',
   visitor_key: '9250d6a7-1401-4205-a36b-14caba30b8d9-7',
-  redirect_base: 'https://weezybet.com/register?source=weezy-rally',
 };
-const onWeezyRallyWin = (prize) => {
+const onSmarticoGameWin = (prize, partnerUrl) => {
   try {
     const uuid = prize && prize.visitor_win_uuid;
+    if (!partnerUrl) return;
+    const sep = partnerUrl.includes('?') ? '&' : '?';
     const url = uuid
-      ? `${WEEZY_RALLY.redirect_base}&_smartico_visitor_win_uuid=${encodeURIComponent(uuid)}`
-      : WEEZY_RALLY.redirect_base;
+      ? `${partnerUrl}${sep}_smartico_visitor_win_uuid=${encodeURIComponent(uuid)}`
+      : partnerUrl;
     window.location.href = url;
   } catch { /* fall back to no-op if window is gone */ }
 };
@@ -232,18 +233,71 @@ const Peli = () => {
   ];
   const entryCount = config?.entry_count || 0;
   const enabled = config?.enabled !== false;
-  // Raffle prize is now locked editorially to €100 to play on Weezybet -
-  // a clean side prize alongside the main Smartico game-win flow.
-  const prizeText = lang === 'en'
-    ? '€100 to play on Weezybet'
-    : '100 € pelattavaksi Weezybetillä';
+  const partnerName = (config?.partner_name || '').trim();
+  const partnerDisclosure = (config?.partner_disclosure || '').trim();
+  const partnerUrl = (config?.partner_url || '').trim();
+  const hasActivePartner = Boolean(partnerName && partnerDisclosure);
+
+  // Editorial render-gate: when no partner is configured, show a clean
+  // "no active raffle" placeholder instead of stale partner branding.
+  if (!loading && !hasActivePartner) {
+    return (
+      <div data-testid="peli-page">
+        <section data-testid="peli-no-partner" style={{
+          padding: '80px 16px',
+          background: 'var(--bg)',
+          minHeight: '60vh',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ maxWidth: 640, textAlign: 'center' }}>
+            <div className="eyebrow mb-4" style={{
+              fontFamily: 'ui-monospace, monospace', fontSize: 10,
+              letterSpacing: '0.24em', color: 'var(--muted)', fontWeight: 700,
+            }}>
+              {lang === 'en' ? 'PELI · BETWEEN RAFFLES' : 'PELI · ARVONTOJEN VÄLISSÄ'}
+            </div>
+            <h1 className="display" style={{
+              fontSize: 32, lineHeight: 1.15, color: 'var(--ink)',
+              fontWeight: 900, marginBottom: 16,
+            }}>
+              {lang === 'en' ? 'No active raffle right now' : 'Ei aktiivista arvontaa tällä hetkellä'}
+            </h1>
+            <p className="font-serif" style={{
+              fontSize: 16, lineHeight: 1.65, color: 'var(--muted)', marginBottom: 28,
+            }}>
+              {lang === 'en'
+                ? 'Follow Telegram or the newsletter — we\u2019ll announce when the next one starts.'
+                : 'Seuraa Telegramia tai uutiskirjettä — ilmoitamme heti kun uusi arvonta on käynnissä.'}
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link to="/pelisignaalit" data-testid="peli-cta-signals" style={{
+                padding: '12px 22px', background: 'var(--ink)', color: 'var(--bg)',
+                fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.2em',
+                fontWeight: 700, textDecoration: 'none', borderRadius: 4,
+              }}>{lang === 'en' ? 'TELEGRAM · DAILY SIGNALS' : 'TELEGRAM · PÄIVITTÄIN'}</Link>
+              <Link to="/uutiset" data-testid="peli-cta-news" style={{
+                padding: '12px 22px', background: 'transparent', color: 'var(--ink)',
+                border: '1px solid var(--ink)',
+                fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.2em',
+                fontWeight: 700, textDecoration: 'none', borderRadius: 4,
+              }}>{lang === 'en' ? 'READ NEWS' : 'LUE UUTISET'}</Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  // Active-partner render path: prize label sourced from the live config.
+  const prizeText = (config?.prize_label || '').trim() || (lang === 'en'
+    ? `Editorial raffle · ${partnerName}`
+    : `Toimituksellinen arvonta · ${partnerName}`);
 
   return (
     <div data-testid="peli-page">
-      {/* GAME-FIRST LANDING - no hero banner. The Weezy Rally Smartico
-          mini-game is the first thing a visitor sees and can play it
-          immediately. Winning redirects to Weezybet registration with
-          the visitor_win_uuid query param so the prize can be credited. */}
+      {/* GAME-FIRST LANDING - Smartico mini-game appears first when a
+          partner is configured. Winning redirects to the partner_url
+          with the visitor_win_uuid query param so the prize can be credited. */}
       <section data-testid="peli-game-section" style={{
         padding: '32px 16px 24px',
         background: 'var(--bg)',
@@ -260,7 +314,7 @@ const Peli = () => {
               display: 'inline-flex', alignItems: 'center', gap: 8,
             }}>
               <Gift strokeWidth={1.5} size={12} />
-              {lang === 'en' ? 'PELI · WEEZY RALLY · PLAY NOW' : 'PELI · WEEZY RALLY · PELAA NYT'}
+              {lang === 'en' ? 'PELI · PLAY NOW' : 'PELI · PELAA NYT'}
             </span>
             <span style={{
               fontFamily: 'ui-monospace, monospace', fontSize: 10,
@@ -270,12 +324,12 @@ const Peli = () => {
             </span>
           </div>
           <SmarticoGame
-            template_id={WEEZY_RALLY.template_id}
-            brand_key={WEEZY_RALLY.brand_key}
-            visitor_key={WEEZY_RALLY.visitor_key}
+            template_id={SMARTICO_GAME.template_id}
+            brand_key={SMARTICO_GAME.brand_key}
+            visitor_key={SMARTICO_GAME.visitor_key}
             lang={(lang || 'fi').toUpperCase()}
-            frame_id="weezy-rally-frame"
-            onWin={onWeezyRallyWin}
+            frame_id="peli-smartico-frame"
+            onWin={(prize) => onSmarticoGameWin(prize, partnerUrl)}
             testid="peli-smartico-frame"
           />
           <p data-testid="peli-game-disclaimer" style={{
@@ -284,8 +338,8 @@ const Peli = () => {
             letterSpacing: '0.16em', color: 'var(--muted)', lineHeight: 1.6,
           }}>
             {lang === 'en'
-              ? 'Editorial mini-game by Smartico × Weezybet. Win a prize, register at Weezybet to redeem.'
-              : 'Toimituksellinen mini-peli (Smartico × Weezybet). Voita palkinto, rekisteröidy Weezybetille lunastusta varten.'}
+              ? `Editorial mini-game · Smartico × ${partnerName}. Win a prize, register at ${partnerName} to redeem.`
+              : `Toimituksellinen mini-peli · Smartico × ${partnerName}. Voita palkinto, rekisteröidy ${partnerName}-sivustolle lunastusta varten.`}
           </p>
         </div>
       </section>

@@ -135,7 +135,7 @@ const BackOfficePeli = () => {
               <input
                 value={config.prize_label || ''}
                 onChange={(e) => updateConfig({ prize_label: e.target.value })}
-                placeholder='e.g. "Weezybet bonus" or "Editorial prize pack"'
+                placeholder='e.g. "Operator bonus" or "Editorial prize pack"'
                 className="w-full px-3 py-2"
                 style={{ border: '1px solid var(--border-strong)', background: 'var(--bg)' }}
                 data-testid="bo-peli-prize-label"

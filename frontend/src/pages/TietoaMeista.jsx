@@ -29,8 +29,8 @@ const TietoaMeista = () => {
       ? 'About - PUTKI HQ'
       : 'Tietoa meistä - PUTKI HQ',
     description: lang === 'en'
-      ? 'PUTKI HQ is Finland\u2019s most honest casino and streamer source. Editorial - not advertising.'
-      : 'PUTKI HQ on Suomen rehellisin kasino- ja striimaaja-lähde. Toimituksellinen - ei mainontaa.',
+      ? 'PUTKI HQ is Finland\u2019s independent gambling, sports and streaming publication. Editorial - commercial relationships openly listed.'
+      : 'PUTKI HQ on Suomen riippumaton uhkapeli-, urheilu- ja striimausjulkaisu. Toimituksellinen - kaupalliset suhteet avoimesti merkitty.',
     canonical: `${BACKEND}/tietoa-meista`,
   });
 

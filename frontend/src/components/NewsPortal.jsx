@@ -365,7 +365,7 @@ const NewsPortal = () => {
       >
         {lang === 'en'
           ? '12 sources · every story cites a named outlet · '
-          : '12 lähdettä · jokainen juttu siteeraa nimettyä julkaisua · '}
+          : '28 nimettyä lähdettä yli kuuden kategorian · jokainen juttu siteeraa nimettyä julkaisua · '}
         <a href="/menetelma" style={{
           color: 'var(--amber, #C97A3A)',
           textDecoration: 'underline', textUnderlineOffset: 3,

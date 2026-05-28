@@ -106,7 +106,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "title": "NÄIN SE TOIMII",
             "steps": [
                 {"title": "1 · MARKKINA", "body": "EU-urheilukirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00."},
-                {"title": "2 · SKENE",    "body": "Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele."},
+                {"title": "2 · SKENE",    "body": "Mittari yhdistää 28 nimettyä lähdettä yli kuuden kategorian yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele."},
                 {"title": "3 · TOIMITUS",  "body": "Telegramiin alle 3 sekunnissa. Sähköposti varalla. Sido kerran, ei toista listaa, ei spämmiä."},
             ],
         },
@@ -114,7 +114,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "title": "HOW IT WORKS",
             "steps": [
                 {"title": "1 · MARKET", "body": "EU sportsbooks move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00."},
-                {"title": "2 · SCENE",  "body": "Mittari composites 11 public sources into one number 0-100 and five states: Calm · Buzz · Active · Rolling · Perkele."},
+                {"title": "2 · SCENE",  "body": "Mittari composites 28 named sources across 6 categories into one number 0-100 and five states: Calm · Buzz · Active · Rolling · Perkele."},
                 {"title": "3 · DELIVERY",  "body": "Telegram in under 3 seconds. Email fallback. Bind once, no second list, no spam."},
             ],
         },
@@ -160,6 +160,8 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
     "testimonials": {
         "title_fi": "TILAAJIA · KUUKAUSINA MUKANA",
         "title_en": "SUBSCRIBERS · MONTHS ON BOARD",
+        "consent_line_fi": "Tilaajat ovat antaneet luvan nimen ja kommentin julkaisuun.",
+        "consent_line_en": "Subscribers have given consent to publish their name and quote.",
         "items": [
             {"id": "t1", "initials": "JK", "name": "Jukka K.",
              "detail_fi": "Espoo · 8 kk · Telegram", "detail_en": "Espoo · 8 mo · Telegram",
@@ -191,8 +193,10 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
         "name": "Eino K.",
         "role_fi": "Perustaja · Putki HQ",
         "role_en": "Founder · Putki HQ",
-        "creds_fi": "9 vuotta skenen äärellä · Helsinki · 11 julkista lähdettä, 0 toimituksellista muokkausta",
-        "creds_en": "9 years in the Finnish scene · Helsinki · 11 public sources, 0 editorial overrides",
+        "pseudonym_disclosure_fi": "* PUTKI HQ:n toimituksellinen pseudonyymi, suomalaisen kolumnitradition mukaisesti. Toimitus: /toimitus",
+        "pseudonym_disclosure_en": "* PUTKI HQ editorial pseudonym, following Finnish column tradition. Team: /toimitus",
+        "creds_fi": "9 vuotta skenen äärellä · Helsinki · 28 nimettyä lähdettä yli kuuden kategorian",
+        "creds_en": "9 years in the Finnish scene · Helsinki · 28 named sources across 6 categories",
         "avatar_initial": "E",
         "method_link_fi": "Lue koko menetelmä →",
         "method_link_en": "Read the full method →",
@@ -200,7 +204,13 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
     "press": {
         "title_fi": "MAINITTU",
         "title_en": "AS MENTIONED IN",
-        "items": ["Mikä Mikko Show", "Sebsu.fi", "Klubitsoni Podcast", "Roni TV", "Helsingin Striimi"],
+        "items": [
+            {"name": "Mikä Mikko Show", "url": ""},
+            {"name": "Sebsu.fi", "url": ""},
+            {"name": "Klubitsoni Podcast", "url": ""},
+            {"name": "Roni TV", "url": ""},
+            {"name": "Helsingin Striimi", "url": ""},
+        ],
     },
     "final_gate": {
         "eyebrow_fi": "→ VIELÄ YKSI ASKEL",
@@ -358,17 +368,20 @@ _TESTI_ITEM_CAPS = {
     "quote_fi": _PARA, "quote_en": _PARA,
     "receipt_fi": _MED, "receipt_en": _MED,
 }
-_TESTI_CAPS = {"title_fi": _MED, "title_en": _MED}
+_TESTI_CAPS = {"title_fi": _MED, "title_en": _MED,
+               "consent_line_fi": _LONG, "consent_line_en": _LONG}
 _FOUNDER_CAPS = {
     "title_fi": _SHORT, "title_en": _SHORT,
     "eyebrow_fi": _MED, "eyebrow_en": _MED,
     "quote_fi": _PARA, "quote_en": _PARA,
     "name": _MED, "role_fi": _MED, "role_en": _MED,
+    "pseudonym_disclosure_fi": _LONG, "pseudonym_disclosure_en": _LONG,
     "creds_fi": _PARA, "creds_en": _PARA,
     "avatar_initial": _SHORT,
     "method_link_fi": _MED, "method_link_en": _MED,
 }
 _PRESS_CAPS = {"title_fi": _SHORT, "title_en": _SHORT}
+_PRESS_ITEM_CAPS = {"name": _MED, "url": _PARA}
 _FINAL_CAPS = {
     "eyebrow_fi": _MED, "eyebrow_en": _MED,
     "headline_lead_fi": _MED, "headline_lead_en": _MED,
@@ -456,19 +469,26 @@ def _merge_testimonial_items(defaults: List[Dict[str, Any]], overrides: Any) -> 
     return out
 
 
-def _merge_press_items(defaults: List[str], overrides: Any) -> List[str]:
+def _merge_press_items(defaults: List[Dict[str, Any]], overrides: Any) -> List[Dict[str, Any]]:
+    """Press items are {name, url} objects. Legacy plain-string overrides
+    are upgraded to {name: <string>, url: ""} so old saves don't break."""
     overrides = overrides if isinstance(overrides, list) else []
     n = max(len(defaults), min(len(overrides), _MAX_PRESS))
-    out: List[str] = []
+    out: List[Dict[str, Any]] = []
     for i in range(n):
-        base = defaults[i] if i < len(defaults) else ""
+        base = dict(defaults[i]) if i < len(defaults) and isinstance(defaults[i], dict) else {"name": "", "url": ""}
+        # Legacy: string override → upgrade to object
         if i < len(overrides):
-            v = _trunc(overrides[i], _MED)
-            if v is not None:
-                out.append(v)
-                continue
-        if base:
-            out.append(base)
+            ov = overrides[i]
+            if isinstance(ov, str):
+                ov = {"name": ov, "url": ""}
+            if isinstance(ov, dict):
+                merged = _merge_strings(base, ov, _PRESS_ITEM_CAPS)
+                if merged.get("name"):
+                    out.append({"name": merged.get("name", ""), "url": merged.get("url", "")})
+                    continue
+        if base.get("name"):
+            out.append({"name": base["name"], "url": base.get("url", "")})
     return out
 
 

@@ -226,7 +226,7 @@ const BackOffice = () => {
               value={smarticoBrandKey}
               onChange={(e) => setSmarticoBrandKey(e.target.value)}
               data-testid="back-office-smartico-brand-input"
-              placeholder="weezybet-fi"
+              placeholder=""
               className="mono w-full mt-2"
               style={{ padding: '14px 16px', borderRadius: 4, border: '1px solid var(--border-strong)', background: 'var(--bg)', color: 'var(--ink)', outline: 'none', fontSize: 13, letterSpacing: '0.04em' }}
             />

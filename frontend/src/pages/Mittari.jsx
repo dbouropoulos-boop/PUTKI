@@ -98,7 +98,7 @@ const COPY = {
     step1Title: '1 · MARKKINA',
     step1Body: 'EU-urheilukirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00.',
     step2Title: '2 · SKENE',
-    step2Body: 'Mittari yhdistää 11 julkista lähdettä yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele.',
+    step2Body: 'Mittari yhdistää 28 nimettyä lähdettä yli kuuden kategorian yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele.',
     step3Title: '3 · TOIMITUS',
     step3Body: 'Telegramiin alle 3 sekunnissa. Sähköposti varalla. Sido kerran, ei toista listaa, ei spämmiä.',
     receiptsTitle: 'VIIME SIGNAALIT · 7 VIIMEISINTÄ · AIKALEIMATTU',
@@ -111,7 +111,7 @@ const COPY = {
     founderQuote: 'Rakensin nämä koska olen kyllästynyt missaamaan parhaat hetket - sekä markkinassa että striimausskenessä. Nyt saan viisi vahvinta poimintaa aamulla ja hälytyksen sekunnissa kun skene vaihtaa tilaa.',
     founderName: 'Eino K.',
     founderRole: 'Perustaja · Putki HQ',
-    founderCreds: '9 vuotta skenen äärellä · Helsinki · 11 julkista lähdettä, 0 toimituksellista muokkausta',
+    founderCreds: '9 vuotta skenen äärellä · Helsinki · 28 nimettyä lähdettä yli kuuden kategorian',
     founderMethodLink: 'Lue koko menetelmä →',
     finalEyebrow: '→ VIIMEINEN MAHDOLLISUUS KYTKEÄ ENNEN PUDOTUSTA',
     finalHeadlineLead: 'Päivän Signaalit aamuisin.',
@@ -175,7 +175,7 @@ const COPY = {
     founderQuote: 'I built these because I was tired of missing the best moments - both in the market and in the streaming scene. Now I get five strongest plays in the morning and a ping within seconds when the scene changes state.',
     founderName: 'Eino K.',
     founderRole: 'Founder · Putki HQ',
-    founderCreds: '9 years in the Finnish scene · Helsinki · 11 public sources, 0 editorial overrides',
+    founderCreds: '9 years in the Finnish scene · Helsinki · 28 named sources across 6 categories',
     founderMethodLink: 'Read the full method →',
     finalEyebrow: '→ LAST CHANCE TO CONNECT BEFORE THE DROP',
     finalHeadlineLead: 'Daily Signals in the morning.',
@@ -244,7 +244,13 @@ const RECEIPTS = [
     outcome_fi: 'Osui kertoimella 1.31', outcome_en: 'Hit @ 1.31', status: 'hit' },
 ];
 
-const PRESS = ['Mikä Mikko Show', 'Sebsu.fi', 'Klubitsoni Podcast', 'Roni TV', 'Helsingin Striimi'];
+const PRESS = [
+  { name: 'Mikä Mikko Show', url: '' },
+  { name: 'Sebsu.fi', url: '' },
+  { name: 'Klubitsoni Podcast', url: '' },
+  { name: 'Roni TV', url: '' },
+  { name: 'Helsingin Striimi', url: '' },
+];
 
 // ── Live-copy → flat c.X mapper (overlay on hardcoded COPY[lang]) ──────
 // Every field on /mittari is editable via PUT /api/admin/mittari/copy.
@@ -321,12 +327,20 @@ const buildCopy = (lang, live) => {
     statusMiss: (lang === 'en' ? rcp.status_miss_en : rcp.status_miss_fi) ?? fb.statusMiss,
     statusEarly: (lang === 'en' ? rcp.status_early_en : rcp.status_early_fi) ?? fb.statusEarly,
     testimonialsTitle: (lang === 'en' ? tst.title_en : tst.title_fi) ?? fb.testimonialsTitle,
+    testimonialsConsent: (lang === 'en' ? tst.consent_line_en : tst.consent_line_fi)
+      ?? (lang === 'en'
+          ? 'Subscribers have given consent to publish their name and quote.'
+          : 'Tilaajat ovat antaneet luvan nimen ja kommentin julkaisuun.'),
     founderTitle: (lang === 'en' ? fnd.title_en : fnd.title_fi) ?? fb.founderTitle,
     founderEyebrow: (lang === 'en' ? fnd.eyebrow_en : fnd.eyebrow_fi) ?? fb.founderEyebrow,
     founderQuote: (lang === 'en' ? fnd.quote_en : fnd.quote_fi) ?? fb.founderQuote,
     founderName: fnd.name ?? fb.founderName,
     founderRole: (lang === 'en' ? fnd.role_en : fnd.role_fi) ?? fb.founderRole,
     founderCreds: (lang === 'en' ? fnd.creds_en : fnd.creds_fi) ?? fb.founderCreds,
+    founderPseudonym: (lang === 'en' ? fnd.pseudonym_disclosure_en : fnd.pseudonym_disclosure_fi)
+      ?? (lang === 'en'
+          ? '* PUTKI HQ editorial pseudonym, following Finnish column tradition. Team: /toimitus'
+          : '* PUTKI HQ:n toimituksellinen pseudonyymi, suomalaisen kolumnitradition mukaisesti. Toimitus: /toimitus'),
     founderMethodLink: (lang === 'en' ? fnd.method_link_en : fnd.method_link_fi) ?? fb.founderMethodLink,
     founderAvatarInitial: fnd.avatar_initial ?? 'E',
     pressTitle: (lang === 'en' ? prs.title_en : prs.title_fi) ?? fb.pressTitle,
@@ -957,8 +971,7 @@ const Mittari = () => {
             display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
             background: 'var(--hairline)', marginTop: 18,
             border: '1px solid var(--hairline)',
-          }}>
-            {testimonialsList.map((t, idx) => (
+          }}>            {testimonialsList.map((t, idx) => (
               <div key={t.id || `t${idx}`} data-testid={`mittari-testimonial-${t.id || `t${idx}`}`} style={{
                 background: 'var(--surface)', padding: '22px 22px',
                 display: 'flex', flexDirection: 'column', gap: 14,
@@ -996,9 +1009,12 @@ const Mittari = () => {
               </div>
             ))}
           </div>
+          <p data-testid="mittari-testimonials-consent" style={{
+            margin: '12px 0 0', color: 'var(--muted)',
+            fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+            letterSpacing: '0.06em', lineHeight: 1.55,
+          }}>{c.testimonialsConsent}</p>
         </section>
-
-        {/* ╭─ FOUNDER ─╮ */}
         <section data-testid="mittari-founder" style={{
           borderTop: '1px solid var(--hairline)', padding: '40px 0',
         }}>
@@ -1077,6 +1093,11 @@ const Mittari = () => {
                 fontFamily: 'ui-monospace, monospace', fontSize: 10,
                 color: 'var(--muted)', letterSpacing: '0.04em', lineHeight: 1.65,
               }}>{c.founderCreds}</div>
+              <div data-testid="mittari-founder-pseudonym" style={{
+                fontFamily: 'ui-monospace, monospace', fontSize: 10,
+                color: 'var(--muted)', letterSpacing: '0.04em', lineHeight: 1.55,
+                opacity: 0.85, marginTop: -2,
+              }}>{c.founderPseudonym}</div>
             </div>
           </div>
         </section>
@@ -1094,17 +1115,30 @@ const Mittari = () => {
             letterSpacing: '0.20em', color: 'var(--muted)', fontWeight: 700,
           }}>{lang === 'en' ? 'FEATURED ON' : 'NÄHTY PALVELUISSA'}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 28, flexWrap: 'wrap' }}>
-            {pressList.map((p, i) => (
-              <span key={`${p}-${i}`} data-testid={`mittari-press-${i}`} style={{
+            {pressList.map((p, i) => {
+              const item = typeof p === 'string' ? { name: p, url: '' } : (p || { name: '', url: '' });
+              const style = {
                 fontFamily: i % 2 ? 'ui-monospace, monospace' : 'Georgia, serif',
                 fontStyle: i % 2 ? 'normal' : 'italic',
                 fontSize: i % 2 ? 12 : 18,
-                color: 'var(--muted)',
+                color: item.url ? 'var(--ink)' : 'var(--muted)',
                 letterSpacing: i % 2 ? '0.12em' : '-0.01em',
                 textTransform: i % 2 ? 'uppercase' : 'none',
                 fontWeight: i % 2 ? 500 : 400,
-              }}>{p}</span>
-            ))}
+                textDecoration: item.url ? 'underline' : 'none',
+                textUnderlineOffset: 3,
+              };
+              if (item.url) {
+                return (
+                  <a key={`${item.name}-${i}`} href={item.url}
+                    target="_blank" rel="noopener noreferrer"
+                    data-testid={`mittari-press-${i}`} style={style}>{item.name}</a>
+                );
+              }
+              return (
+                <span key={`${item.name}-${i}`} data-testid={`mittari-press-${i}`} style={style}>{item.name}</span>
+              );
+            })}
           </div>
         </section>
 
