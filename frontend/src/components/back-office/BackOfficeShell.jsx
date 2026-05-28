@@ -42,6 +42,7 @@ const NAV_GROUPS = [
   {
     label: 'LEADS & RAFFLES',
     items: [
+      { to: '/back-office/leads',                label: 'Unified leads',     icon: Users,    keywords: 'putki_lead timeline join mittari mestari voita email telegram funnel consent' },
       { to: '/back-office/voita',                label: 'Voita raffles',     icon: Trophy,   keywords: 'raffle prize draw voita sako gate' },
       { to: '/back-office/voita-results',        label: 'Voita results',     icon: Gift,     keywords: 'winners draw history' },
       { to: '/back-office/mestari-diagnostics',  label: 'Mestari segments',  icon: Telescope, keywords: 'mestari profile cluster' },

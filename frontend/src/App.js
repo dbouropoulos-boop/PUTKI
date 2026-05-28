@@ -125,8 +125,9 @@ function App() {
             <Route path="/back-office/funnel" element={<BackOfficeFunnelHistory />} />
             <Route path="/back-office/runbook" element={<BackOfficeRunbook />} />
             <Route path="/back-office/settings" element={<BackOfficeSettings />} />
+            <Route path="/back-office/leads" element={<BackOfficeLeads />} />
           </Route>
-          <Route path="/back-office/leads" element={<BackOfficeLeads />} />
+          <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
           <Route path="/back-office/analytics/mini-games" element={<BackOfficeMiniGameAnalytics />} />

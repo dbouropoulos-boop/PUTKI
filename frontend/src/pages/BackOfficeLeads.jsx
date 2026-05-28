@@ -10,7 +10,7 @@
  * surface for its underlying collection.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -135,7 +135,14 @@ const Chip = ({ children, color = 'var(--muted)' }) => (
 );
 
 const BackOfficeLeads = () => {
-  const { token, authed, authError, checkAuth, setToken } = useBackOfficeToken();
+  // When wrapped by BackOfficeShell, get token from outlet context.
+  // Otherwise fall back to the standalone useBackOfficeToken hook.
+  const ctx = useOutletContext() || {};
+  const inShell = !!ctx.token;
+  const standalone = useBackOfficeToken();
+  const token = inShell ? ctx.token : standalone.token;
+  const authed = inShell ? true : standalone.authed;
+  const { authError, checkAuth, setToken } = standalone;
   const headers = useMemo(() => ({ 'X-Admin-Token': token }), [token]);
   const [data, setData] = useState(null);
   const [funnel, setFunnel] = useState(null);
@@ -220,6 +227,16 @@ const BackOfficeLeads = () => {
             <Pill testid="bo-leads-opens" label="OPENS" value={sum.email_outbox.opens_total} color="#6FA37D" />
             <Pill testid="bo-leads-clicks" label="CLICKS" value={sum.email_outbox.clicks_total} color="#6FA37D" />
           </div>
+
+          {/* Consent-tag rollup (Mittari · Mestari · Voita = the 3 opt-in funnels) */}
+          {sum.by_consent_tag && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 22 }}>
+              <Pill testid="bo-leads-tag-mittari" label="MITTARI OPT-INS" value={sum.by_consent_tag.mittari} color="#5B8DEE" />
+              <Pill testid="bo-leads-tag-mestari" label="MESTARI OPT-INS" value={sum.by_consent_tag.mestari} color="#E89248" />
+              <Pill testid="bo-leads-tag-voita"   label="VOITA OPT-INS"   value={sum.by_consent_tag.voita}   color="#E8C26E" />
+              <Pill testid="bo-leads-tag-all3"    label="ALL 3 TAGS"      value={sum.by_consent_tag.all_three} color="#6FA37D" />
+            </div>
+          )}
 
           {/* Surface mix */}
           <div style={{

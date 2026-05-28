@@ -111,6 +111,43 @@ async def build_timeline(db, *, limit: int = 200) -> Dict[str, Any]:
         _bump(r, d.get("first_seen_at") or d.get("created_at"))
         _bump(r, d.get("last_seen_at") or d.get("created_at"))
 
+    # ── mittari_subscribers (Putki Funnel web signup → TG bind) ─────
+    async for d in db.mittari_subscribers.find(
+        {}, {"_id": 0, "email": 1, "segment": 1, "status": 1,
+             "pending_id": 1, "telegram_chat_id": 1, "telegram_username": 1,
+             "consent_marketing": 1, "consent_tag": 1, "source": 1,
+             "created_at": 1, "last_seen_at": 1, "bound_at": 1},
+    ).sort([("last_seen_at", -1)]).limit(MAX_PER_COLLECTION):
+        em = _norm_email(d.get("email"))
+        if em:
+            r = _get(em)
+            r["channels"].add("email")
+        elif d.get("telegram_chat_id") is not None:
+            r = _get(f"tg:{d['telegram_chat_id']}")
+        elif d.get("telegram_username"):
+            r = _get(f"tg:{d['telegram_username']}")
+        else:
+            continue
+        if d.get("telegram_chat_id") is not None or d.get("telegram_username"):
+            r["channels"].add("telegram")
+            if not r["telegram_user_id"] and d.get("telegram_chat_id") is not None:
+                r["telegram_user_id"] = str(d["telegram_chat_id"])
+        r["surfaces"].add("mittari_funnel")
+        _bump(r, d.get("created_at"))
+        _bump(r, d.get("bound_at"))
+        _bump(r, d.get("last_seen_at"))
+        r["details"]["mittari_funnel"] = {
+            "segment": d.get("segment"),
+            "status": d.get("status"),
+            "pending_id": d.get("pending_id"),
+            "telegram_chat_id": d.get("telegram_chat_id"),
+            "telegram_username": d.get("telegram_username"),
+            "consent_marketing": d.get("consent_marketing"),
+            "source": d.get("source"),
+            "created_at": d.get("created_at"),
+            "bound_at": d.get("bound_at"),
+        }
+
     # ── voita_entries (raffle) ──────────────────────────────────────
     async for d in db.voita_entries.find(
         {}, {"_id": 0, "email_lower": 1, "display_name": 1, "raffle_slug": 1,
@@ -224,9 +261,31 @@ async def build_timeline(db, *, limit: int = 200) -> Dict[str, Any]:
     for r in rows:
         for s in r["surfaces"]:
             surface_counts[s] += 1
+
+    # Roll up across the 3 opt-in tags that drive every downstream
+    # drip / DM dispatch. A single lead can hold multiple tags.
+    def _has(r: Dict[str, Any], *surfaces: str) -> bool:
+        sset = set(r["surfaces"])
+        return any(s in sset for s in surfaces)
+
+    mittari_n = sum(1 for r in rows if _has(r, "mittari_funnel", "mittari", "streamer_alerts"))
+    mestari_n = sum(1 for r in rows if _has(r, "mestari_poker", "mestari_blackjack",
+                                            "mestari_sports", "mestari"))
+    voita_n = sum(1 for r in rows if _has(r, "voita"))
+
     summary = {
         "rows_total": len(rows),
         "by_surface": dict(surface_counts),
+        "by_consent_tag": {
+            "mittari": mittari_n,
+            "mestari": mestari_n,
+            "voita": voita_n,
+            "all_three": sum(1 for r in rows
+                             if _has(r, "mittari_funnel", "mittari", "streamer_alerts")
+                             and _has(r, "mestari_poker", "mestari_blackjack",
+                                      "mestari_sports", "mestari")
+                             and _has(r, "voita")),
+        },
         "by_channel": {
             "email": sum(1 for r in rows if "email" in r["channels"]),
             "telegram": sum(1 for r in rows if "telegram" in r["channels"]),

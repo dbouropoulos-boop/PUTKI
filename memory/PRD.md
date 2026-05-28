@@ -9,6 +9,17 @@
 
 ## Phase History (latest first)
 
+- **iter77b · Back-office verify + Unified putki_lead view (P0)** (2026-05-28, +4 tests, screenshot-verified end-to-end)
+  - **Back-office verification**: confirmed the prior CORS + LLM circuit-breaker fixes work. The shell loads at `/back-office/bot-routing` with full sidebar (5 grouped nav groups), Cmd+K trigger, density toggle, breadcrumb, and Status Strip showing live: `MODE INFORMATIVE · DAILY DM OFF · VOITA LIVE · 24H SIGNUPS 3 · 24H BOUND 1 · 24H DM 0`. ✅
+  - **Unified `putki_lead` view (P0)** completed across all three opt-in tags:
+    - `leads_lifecycle.build_timeline()` now joins `mittari_subscribers` (the Putki Funnel signup collection) into the unified view. New surface key `mittari_funnel` flows into `by_surface` and per-row `surfaces`. Pure-Telegram leads (no email yet bound via bot) surface as `tg:<chat_id>` identity keys with the `mittari_funnel` surface — they were previously invisible to ops.
+    - New `summary.by_consent_tag` rollup added — counts each unique lead across `mittari` (mittari_funnel + streamer_alerts), `mestari` (poker + blackjack + sports), and `voita`, plus `all_three` for the holy-grail cross-tag overlap. Live preview today: Mittari=55 · Mestari=3 · Voita=196 · All-3=0.
+    - `BackOfficeLeads.jsx` migrated to render inside `<BackOfficeShell>` (sidebar + status strip + breadcrumb + density). Page picks token from outlet context when wrapped, falls back to `useBackOfficeToken` standalone otherwise. New "Unified leads" entry added to sidebar under LEADS & RAFFLES with Users icon. 4 new pills surface the consent-tag rollup (`bo-leads-tag-mittari/mestari/voita/all3`).
+  - **Tests**: `test_iter77_unified_leads.py` (4 tests · auth gate, envelope shape with `by_consent_tag` keys, mittari_funnel surface join, funnel-endpoint backwards-compat). 4/4 green in 0.78s.
+  - **Lint clean** (backend ruff + frontend eslint).
+
+
+
 - **iter77 · Back-office shell + Voita toggle UI** (2026-05-28, screenshot-verified end-to-end)
   - **Persistent left sidebar** at `/back-office/bot-routing` + `/funnel` + `/runbook` + `/settings`: grouped nav (OPS / LEADS & RAFFLES / TELEGRAM & COMMS / CONTENT & STREAMERS / TOURNAMENTS), current page highlighted with gold accent + left border, lucide icons throughout. "Putki HQ · Back-office" branding on top, density toggle + log-out on bottom.
   - **Top status strip** with live chips: MODE (INFORMATIVE / ROUTED) · DAILY DM (ON / OFF) · VOITA (LIVE / GATED) · 24H SIGNUPS / BOUND / DM. Tone-coded (green/amber/red dots). Every chip is clickable → jumps to the relevant page. Refreshes every 60s.
