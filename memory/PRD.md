@@ -9,6 +9,18 @@
 
 ## Phase History (latest first)
 
+- **iter77 · Back-office shell + Voita toggle UI** (2026-05-28, screenshot-verified end-to-end)
+  - **Persistent left sidebar** at `/back-office/bot-routing` + `/funnel` + `/runbook` + `/settings`: grouped nav (OPS / LEADS & RAFFLES / TELEGRAM & COMMS / CONTENT & STREAMERS / TOURNAMENTS), current page highlighted with gold accent + left border, lucide icons throughout. "Putki HQ · Back-office" branding on top, density toggle + log-out on bottom.
+  - **Top status strip** with live chips: MODE (INFORMATIVE / ROUTED) · DAILY DM (ON / OFF) · VOITA (LIVE / GATED) · 24H SIGNUPS / BOUND / DM. Tone-coded (green/amber/red dots). Every chip is clickable → jumps to the relevant page. Refreshes every 60s.
+  - **Cmd+K command palette** built on existing `cmdk` package: searches nav by label + keyword tags, plus an "ACTIONS · LIVE FLIPS" section with one-tap toggles for Voita on/off, Daily DM on/off, Router routed/informative. Live feedback strip at the bottom of the dialog confirms or surfaces errors. Wrapped pages re-fetch via a `bo-shell-refresh` custom event after a successful flip.
+  - **Density toggle** (COMFORT ⇄ COMPACT) injects CSS overrides via `<style>` that tighten padding / heading sizes / section gaps. Preference persists in `localStorage`. Lets ops density-shift without leaving the page.
+  - **Settings page `/back-office/settings`**: new dedicated home for global feature flags. First flag wired = Voita raffles. Big two-state toggle (red/amber-bordered when OFF, green when ON) + a confirmation modal that quotes Finnish gambling law (Veikkaus monopoly + Arpajaislaki §27) on every enable. Disable defaults to safe/non-danger. Roadmap section below for future flags.
+  - **Backwards compat**: pages migrated to the shell (bot-routing, funnel, runbook) use `useOutletContext` for the token when wrapped, and fall back to their existing localStorage flow when accessed standalone. Zero breakage for direct deep-links / bookmarks.
+  - **Auth gate** lives in ONE place now (the shell), backed by a real verify call against `/api/admin/bot/config`. Bad tokens surface "Invalid admin token." inline.
+  - **Lint clean** (caught and fixed a real `react-hooks/rules-of-hooks` violation: `useMemo` was below an early-return — moved above so all hooks run unconditionally). Screenshot-verified at 1440×900: sidebar + status strip + breadcrumb + page content + Cmd+K palette + Voita confirm modal all rendering correctly.
+
+
+
 - **iter76i · Operator's runbook (`/app/memory/OPS.md` + `/back-office/runbook` viewer)** (2026-05-27, +2 tests, screenshot-verified)
   - **New `/app/memory/OPS.md`** (~220 lines): one-page playbook covering daily ritual (5-minute morning check), the 4 master switches (informative↔routed flip + rollback, daily DM dispatch, broadcast floor), partner management (add/pause/delete), 6-entry diagnostic cookbook ("if X is happening, check Y"), external-dep status table, and quick reference (URLs/endpoints/env vars/router status verbs). File is the single source of truth; committed alongside PRD.md for review-friendliness.
   - **New admin endpoint `GET /api/admin/docs/runbook`** (`routes/ops_docs.py`): serves the raw markdown so the dashboard renders the current contents without redeployment. Path is configurable via `PUTKI_OPS_RUNBOOK_PATH` env for future migrations.

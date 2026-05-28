@@ -9,7 +9,7 @@
  * anything fancier should be moved into a dedicated docs framework.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki_back_office_token';
@@ -167,7 +167,10 @@ const Markdown = ({ src }) => {
 
 
 const BackOfficeRunbook = () => {
-  const [token, setToken] = useState(() => (typeof window !== 'undefined' && window.localStorage.getItem(TOKEN_KEY)) || '');
+  const ctx = useOutletContext() || {};
+  const inShell = !!ctx.token;
+  const [token, setToken] = useState(() => ctx.token || (typeof window !== 'undefined' && window.localStorage.getItem(TOKEN_KEY)) || '');
+  useEffect(() => { if (ctx.token && ctx.token !== token) setToken(ctx.token); }, [ctx.token, token]);
   const [md, setMd] = useState(null);
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -200,12 +203,14 @@ const BackOfficeRunbook = () => {
   }
 
   return (
-    <div data-testid="runbook-page" style={{
+    <div data-testid="runbook-page" style={inShell ? {} : {
       minHeight: '100vh', background: 'var(--bg, #0B0A09)', color: 'var(--ink, #F2EBE0)',
       padding: '32px 28px 80px', maxWidth: 960, margin: '0 auto',
     }}>
-      <Link to="/back-office/bot-routing" data-testid="runbook-back"
-        style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted, #9C8B6B)', textDecoration: 'none' }}>← BOT & ROUTING</Link>
+      {!inShell && (
+        <Link to="/back-office/bot-routing" data-testid="runbook-back"
+          style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted, #9C8B6B)', textDecoration: 'none' }}>← BOT & ROUTING</Link>
+      )}
       {busy && <div data-testid="runbook-loading" style={{ marginTop: 24, fontFamily: 'ui-monospace, monospace', fontSize: 12, color: 'var(--muted)' }}>Loading…</div>}
       {err && <div data-testid="runbook-error" style={{ marginTop: 24, padding: 12, background: '#2b0e0e', border: '1px solid #5a2b2b', color: '#FF8A7F', fontFamily: 'ui-monospace, monospace' }}>{err}</div>}
       {md && <div style={{ marginTop: 16 }}><Markdown src={md} /></div>}

@@ -11,7 +11,7 @@
  * monospace meta, dark canvas) so it doesn't read like a different app.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki_back_office_token';
@@ -112,8 +112,14 @@ const PartnerRow = ({ p, onUpdate, onDelete, busy }) => {
 };
 
 const BackOfficeBotRouting = () => {
-  const [token, setToken] = useState(() => (typeof window !== 'undefined' && window.localStorage.getItem(TOKEN_KEY)) || '');
-  const [authed, setAuthed] = useState(false);
+  // When rendered inside the shell, take token + density from the outlet
+  // context. Outside the shell (legacy direct visit), fall back to local
+  // storage so the page still works on its own.
+  const ctx = useOutletContext() || {};
+  const inShell = !!ctx.token;
+  const [token, setToken] = useState(() => ctx.token || (typeof window !== 'undefined' && window.localStorage.getItem(TOKEN_KEY)) || '');
+  useEffect(() => { if (ctx.token && ctx.token !== token) setToken(ctx.token); }, [ctx.token, token]);
+  const [authed, setAuthed] = useState(inShell);
   const [config, setConfig] = useState(null);
   const [partners, setPartners] = useState([]);
   const [summary, setSummary] = useState(null);
@@ -266,6 +272,7 @@ const BackOfficeBotRouting = () => {
   };
 
   if (!authed) {
+    // Legacy direct-visit path - shell handles auth when wrapped.
     return (
       <div style={{ minHeight: '100vh', background: 'var(--bg, #0B0A09)', color: 'var(--ink, #F2EBE0)', padding: 48 }}>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 32, margin: '0 0 24px' }}>Bot & Routing</h1>
@@ -286,27 +293,37 @@ const BackOfficeBotRouting = () => {
   const m = config || {};
   const routingLive = m.signal_unlock_mode === 'routed';
 
-  return (
+  // When wrapped by the shell, render with no outer chrome (shell provides
+  // it). When standalone, keep the old container so the page still works.
+  const Container = ({ children }) => inShell ? <div data-testid="bot-routing-page">{children}</div> : (
     <div data-testid="bot-routing-page" style={{
       minHeight: '100vh', background: 'var(--bg, #0B0A09)', color: 'var(--ink, #F2EBE0)',
       padding: '32px 28px 64px', maxWidth: 1120, margin: '0 auto',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+    }}>{children}</div>
+  );
+
+  return (
+    <Container>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: inShell ? 18 : 28 }}>
         <div>
-          <Link to="/back-office" data-testid="bot-routing-back"
-            style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted, #9C8B6B)', textDecoration: 'none' }}>← BACK-OFFICE</Link>
+          {!inShell && (
+            <Link to="/back-office" data-testid="bot-routing-back"
+              style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted, #9C8B6B)', textDecoration: 'none' }}>← BACK-OFFICE</Link>
+          )}
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 700, letterSpacing: '-0.018em', margin: '8px 0 6px' }}>Bot & Routing</h1>
           <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, color: 'var(--muted, #9C8B6B)', margin: 0, maxWidth: 560 }}>
             Master switches for the Telegram bot + affiliate router. Routing is dormant at launch — flip <em>signal_unlock_mode</em> to <strong>routed</strong> once a partner row is live.
           </p>
-          <p style={{ marginTop: 6, fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--muted)' }}>
-            <span style={{ marginRight: 6 }}>NEW TO THIS PAGE?</span>
-            <Link to="/back-office/runbook"
-              data-testid="bot-routing-ops-link"
-              style={{ color: '#E8C26E', textDecoration: 'underline', fontWeight: 700 }}>
-              READ THE OPERATOR'S RUNBOOK →
-            </Link>
-          </p>
+          {!inShell && (
+            <p style={{ marginTop: 6, fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.14em', color: 'var(--muted)' }}>
+              <span style={{ marginRight: 6 }}>NEW TO THIS PAGE?</span>
+              <Link to="/back-office/runbook"
+                data-testid="bot-routing-ops-link"
+                style={{ color: '#E8C26E', textDecoration: 'underline', fontWeight: 700 }}>
+                READ THE OPERATOR'S RUNBOOK →
+              </Link>
+            </p>
+          )}
         </div>
         <button onClick={refreshAll} disabled={busy} data-testid="bot-routing-refresh"
           style={{ padding: '10px 18px', background: 'transparent', color: 'var(--ink)', border: '1px solid var(--border)', fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', cursor: 'pointer' }}>
@@ -753,7 +770,7 @@ const BackOfficeBotRouting = () => {
       <p data-testid="bot-routing-footnote" style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10, color: 'var(--muted)', letterSpacing: '0.08em', lineHeight: 1.7 }}>
         SLICE 1 of 5 · Foundation. Daily DM dispatch (Slice 2), website signup form (Slice 3), Mini App (Slice 4), and the active affiliate router (Slice 5) ship in subsequent iterations.
       </p>
-    </div>
+    </Container>
   );
 };
 

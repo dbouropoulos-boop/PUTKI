@@ -12,7 +12,7 @@
  * page uses, so admins log in once and both pages are unlocked.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip,
   CartesianGrid, Legend, BarChart, Bar,
@@ -31,8 +31,11 @@ const STAGES = [
 
 
 const BackOfficeFunnelHistory = () => {
-  const [token, setToken] = useState(() => (typeof window !== 'undefined' && window.localStorage.getItem(TOKEN_KEY)) || '');
-  const [authed, setAuthed] = useState(false);
+  const ctx = useOutletContext() || {};
+  const inShell = !!ctx.token;
+  const [token, setToken] = useState(() => ctx.token || (typeof window !== 'undefined' && window.localStorage.getItem(TOKEN_KEY)) || '');
+  useEffect(() => { if (ctx.token && ctx.token !== token) setToken(ctx.token); }, [ctx.token, token]);
+  const [authed, setAuthed] = useState(inShell);
   const [data, setData] = useState(null);
   const [days, setDays] = useState(30);
   const [err, setErr] = useState(null);
@@ -91,14 +94,16 @@ const BackOfficeFunnelHistory = () => {
   }
 
   return (
-    <div data-testid="funnel-history-page" style={{
+    <div data-testid="funnel-history-page" style={inShell ? {} : {
       minHeight: '100vh', background: 'var(--bg, #0B0A09)', color: 'var(--ink, #F2EBE0)',
       padding: '32px 28px 64px', maxWidth: 1200, margin: '0 auto',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: inShell ? 18 : 24 }}>
         <div>
-          <Link to="/back-office/bot-routing" data-testid="funnel-history-back"
-            style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted, #9C8B6B)', textDecoration: 'none' }}>← BOT & ROUTING</Link>
+          {!inShell && (
+            <Link to="/back-office/bot-routing" data-testid="funnel-history-back"
+              style={{ fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.18em', color: 'var(--muted, #9C8B6B)', textDecoration: 'none' }}>← BOT & ROUTING</Link>
+          )}
           <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 36, fontWeight: 700, letterSpacing: '-0.018em', margin: '8px 0 6px' }}>
             Funnel · {days}-day history
           </h1>

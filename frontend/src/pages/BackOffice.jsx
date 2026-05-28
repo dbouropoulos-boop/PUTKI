@@ -299,6 +299,7 @@ const INDEX_GROUPS = [
       { to: '/back-office/telegram',                  testid: 'back-office-link-telegram',              label: 'Telegram bot',           desc: 'Webhook · bound chats · audit log.' },
       { to: '/back-office/bot-routing',               testid: 'back-office-link-bot-routing',           label: 'Bot & routing',          desc: 'Funnel master switches · partner affiliates · subscriber summary.' },
       { to: '/back-office/funnel',                    testid: 'back-office-link-funnel-history',        label: 'Funnel history',         desc: '30-day conversion ladder · daily volume + 7d end-to-end trend.' },
+      { to: '/back-office/settings',                  testid: 'back-office-link-settings',              label: 'Settings',               desc: 'Feature flags · Voita gate · global toggles.' },
     ],
   },
   {
