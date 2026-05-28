@@ -1,27 +1,16 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-const ThemeContext = createContext({ theme: 'dark', toggle: () => {} });
+const ThemeContext = createContext({ theme: 'light', toggle: () => {} });
 
-// Default: dark mode is the brand's primary home, especially evenings.
-// Use time-aware default for first visit (>= 18:00 Helsinki, or any time after sunset feel).
+// Phase 1 visual system lockdown: light is the new default ("pure white
+// background, ember accent"). Dark mode remains available via the toggle
+// and is persisted to localStorage. Users who previously chose dark still
+// get dark on return visits.
 const getInitialTheme = () => {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined') return 'light';
   const stored = window.localStorage.getItem('mittari-theme');
   if (stored === 'light' || stored === 'dark') return stored;
-  // Helsinki time = Europe/Helsinki. Use Intl to get current hour.
-  try {
-    const hours = parseInt(
-      new Intl.DateTimeFormat('fi-FI', { timeZone: 'Europe/Helsinki', hour: '2-digit', hour12: false })
-        .format(new Date())
-        .split(':')[0],
-      10
-    );
-    // Dark mode default 18:00 → 07:00; light during daytime
-    if (hours >= 16 || hours < 7) return 'dark';
-    return 'light';
-  } catch {
-    return 'dark';
-  }
+  return 'light';
 };
 
 export const ThemeProvider = ({ children }) => {

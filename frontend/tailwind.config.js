@@ -5,7 +5,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Archivo Black"', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
         serif: ['"Source Serif 4"', 'Georgia', 'serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace'],
       },
@@ -15,10 +16,21 @@ module.exports = {
         surface:       'var(--surface)',
         'surface-2':   'var(--surface-2)',
         ink:           'var(--ink)',
+        'ink-2':       'var(--ink-2)',
+        'ink-3':       'var(--ink-3)',
         'muted-text':  'var(--muted)',
-        'subtle-border': 'var(--border)',
-        'border-strong': 'var(--border-strong)',
+        line:          'var(--line)',
+        'line-strong': 'var(--line-strong)',
+        'subtle-border': 'var(--line)',
+        'border-strong': 'var(--line-strong)',
+        // Ember accent (Phase 1)
+        ember:         'var(--ember)',
+        'ember-soft':  'var(--ember-soft)',
+        'ember-strong':'var(--ember-strong)',
+        // Brand alias now points to ember per Phase 1 spec
         'brand-blue':  'var(--brand-blue)',
+        'mestari-accent': 'var(--mestari-accent)',
+        'voita-accent':   'var(--voita-accent)',
         needle:        'var(--needle)',
         // Legacy Phase 1 names kept
         paper: 'var(--bg)',

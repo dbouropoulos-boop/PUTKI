@@ -21,6 +21,7 @@ import VoyagerHomeStrip from "../components/VoyagerHomeStrip";
 import AboutStrip from "../components/AboutStrip";
 import EditorialFooter from "../components/EditorialFooter";
 import UTMBanner from "../components/UTMBanner";
+import "../styles/home.css";
 
 const Home = () => {
   // Slot filter is hoisted here so the StreamersBand and NowPlayingTicker
@@ -89,34 +90,6 @@ const Home = () => {
           <EditorialFooter byline="PUTKI HQ" readMinutes={2} />
         </div>
       </section>
-
-      <style>{`
-        .home-zone { width: 100%; margin: 0 auto; box-sizing: border-box; }
-        .home-zone--news { max-width: 1180px; padding: 32px 32px 8px; }
-        .home-zone--band { max-width: 1380px; padding: 0 32px; }
-        .home-zone--explore { max-width: 1380px; padding: 0 32px; margin-top: 32px; }
-        .home-zone--about { max-width: 1380px; padding: 0 32px; margin-top: 32px; }
-        .home-zone--accountability {
-          border-top: 1px solid var(--hairline, #221E1B);
-          background: var(--surface, #141210);
-          padding: 40px 0;
-          margin-top: 40px;
-        }
-        .home-accountability-inner {
-          max-width: 1380px;
-          margin: 0 auto;
-          padding: 0 32px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        @media (max-width: 720px) {
-          .home-zone--news { padding: 20px 16px 4px; }
-          .home-zone--band,
-          .home-zone--explore,
-          .home-zone--about { padding: 0 16px; }
-          .home-accountability-inner { padding: 0 16px; }
-        }
-      `}</style>
     </div>
   );
 };
