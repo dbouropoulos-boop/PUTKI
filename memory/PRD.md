@@ -9,6 +9,22 @@
 
 ## Phase History (latest first)
 
+- **iter83 · Phase 2.6 — Today/Cockpit dashboard at `/back-office`** (2026-05-29, testing_agent_v3_fork: 100% frontend pass · 23/23 backend tests green)
+  - **Replaced** the legacy `BackOffice.jsx` tile-grid hub + Smartico site-settings form with the new `BackOfficeToday.jsx` cockpit. Same URL (`/back-office`), brand-new content, still wrapped by `<BackOfficeShell />`.
+  - **5-section layout** built on Phase 1 tokens:
+    1. **Status row** — 4 chips (MODE / DAILY DM / VOITA / 24H leads) with live data and tone (ok / warn / neutral) based on real values. Data wires: `/api/admin/bot/config`, `/api/admin/voita/raffles`, `/api/admin/leads/funnel?hours=24` + `?hours=48` (delta).
+    2. **Pending row** — 4 clickable counter pills (Drafts / Killed URLs 24h / New leads 24h / Webhook failures) with hover-lift + ember border. Hot counts in `--ember-strong`, zero counts muted to `--ink-3`. Each pill navigates to its target route on click.
+    3. **Recent activity feed** — stub branch (`bo-today-activity-stub`) renders the "Activity log launches with Task 2.7" copy when `/api/admin/back_office_activity` returns 404. Live rows render automatically once Task 2.7 ships the endpoint.
+    4. **Quick actions** — 3 ember buttons: Approve oldest draft (`/back-office/queue?focus=oldest`), Run dispatch preview, View today's funnel.
+    5. **Mono footer** — Cmd+K + `/` keyboard cues. `/` listener scrolls to top as an honest cue.
+  - **Queue page `?focus=oldest` wiring**: `BackOfficeQueue` now reads `useSearchParams()` and when `focus=oldest` is set, picks the last queued item in the API-sorted list (which is `generated_at DESC` → last item is oldest), scrolls it into view, applies a 2.4s ember-soft glow ring via a `[data-testid^=queue-item-wrap-]` wrapper, then clears the param via `setSearchParams(..., { replace: true })` so a manual refresh doesn't re-trigger.
+  - **Smartico form retired** from `/back-office` — verified zero `bo-smartico-*` elements on the page (lives exclusively at `/back-office/integrations` per Task 2.5).
+  - **Legacy `BackOffice.jsx` deleted** entirely from the codebase.
+  - **Screenshots** at `/app/qa-snapshots/phase-2-6-today-dashboard/`: `desktop-1440.png`, `desktop-1440-full.png`, `mobile-375.png`, `mobile-375-full.png`, `queue-focus-oldest.png`.
+  - **Carry-overs / known limitations**:
+    - The `BackOfficeShell` sidebar is NOT mobile-collapsible at narrow viewports (Phase 2.1 oversight). My dashboard's `@media (max-width: 720px)` 2-col grid is parsed correctly but the effective content area on a 375px viewport is squeezed because the sidebar takes ~280px. Adding mobile sidebar collapse to `BackOfficeShell` is a cleaner follow-up task than baking it into the cockpit.
+    - The `useToken` helper inside `BackOfficeQueue.jsx` is now dead-code (legacy AuthGate is unreachable inside the shell). Can be removed in the same cleanup pass as the iter82 carry-over.
+
 - **iter82b · Phase 2.2 — Back-office routes consolidated under <BackOfficeShell />** (2026-05-29, testing_agent_v3_fork: 100% frontend pass · 27/27 backend tests green)
   - **Scope**: every remaining `/back-office/*` route (22 pages) was moved INSIDE the existing `<Route element={<BackOfficeShell />}>` block in `App.js`. The shell now wraps the entire back-office surface: `/back-office` (index), `queue`, `foundational-research`, `operators`, `streamers`, `webhooks`, `telegram`, `drafts`, `weekly`, `peli`, `streamer-meta`, `slot-registry`, `optin-segments`, `dispatch-preview`, `voita`, `voita-quiz`, `mittari-copy`, `mestari-copy`, `voyager`, `playbook`, `profiler-funnel`, `news-watch`, `mini-games`, `analytics/mini-games`, `email-templates`, `mestari-diagnostics-copy` — plus the 7 already-migrated iter77/80 pages.
   - **Shell-aware hook patch**: `useBackOfficeToken` now first checks `useOutletContext()`. When a shell-injected token is present it returns `{token: shellToken, authed: true, …}` immediately, bypassing the standalone localStorage read + verify round-trip. This auto-migrated all ~12 pages that already used the hook with zero per-page changes.
