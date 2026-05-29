@@ -39,6 +39,7 @@ import BackOfficeVoyagerRotation from "@/pages/BackOfficeVoyagerRotation";
 import BackOfficePlaybook from "@/pages/BackOfficePlaybook";
 import BackOfficeLeads from "@/pages/BackOfficeLeads";
 import BackOfficeOgImages from "@/pages/BackOfficeOgImages";
+import BackOfficeIntegrations from "@/pages/BackOfficeIntegrations";
 import BackOfficeNewsWatch from "@/pages/BackOfficeNewsWatch";
 import BackOfficeEmailTemplates from "@/pages/BackOfficeEmailTemplates";
 import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosticsCopy";
@@ -128,6 +129,7 @@ function App() {
             <Route path="/back-office/settings" element={<BackOfficeSettings />} />
             <Route path="/back-office/leads" element={<BackOfficeLeads />} />
             <Route path="/back-office/og-images" element={<BackOfficeOgImages />} />
+            <Route path="/back-office/integrations" element={<BackOfficeIntegrations />} />
           </Route>
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />

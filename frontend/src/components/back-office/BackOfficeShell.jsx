@@ -44,7 +44,8 @@ const NAV_GROUPS = [
       { to: '/back-office/bot-routing',  label: 'Bot & Routing',   icon: Bot,        keywords: 'funnel partners affiliate signal_unlock_mode router mint daily dispatch' },
       { to: '/back-office/funnel',       label: 'Funnel history',  icon: BarChart3,  keywords: '30 day conversion stages' },
       { to: '/back-office/runbook',      label: 'Operator runbook', icon: BookOpen,  keywords: 'docs ops playbook cookbook' },
-      { to: '/back-office/settings',     label: 'Settings',        icon: SettingsIcon, keywords: 'feature flags voita enable disable preview production sako' },
+      { to: '/back-office/settings',      label: 'Settings',      icon: SettingsIcon, keywords: 'feature flags voita enable disable preview production sako' },
+      { to: '/back-office/integrations',  label: 'Integrations',  icon: Link2,        keywords: 'smartico resend twilio telegram oauth analytics third party' },
     ],
   },
   {

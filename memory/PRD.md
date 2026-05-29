@@ -9,6 +9,25 @@
 
 ## Phase History (latest first)
 
+- **iter81 · Phase 2.5 — Integrations page** (2026-05-29, +4 backend tests · 4/4 green · AI-vision verified · live regression confirmed)
+  - **Scope correction surfaced**: `BackOfficeSettings.jsx` had **zero** Smartico references today (grep confirmed) — the 3 backend fields (`smartico_template_id`, `smartico_loader_url`, `smartico_brand_key`) on `_get_settings_doc()` / `GET-PUT /api/admin/settings` were already wired and live but had never been exposed in any editor UI. Step 8 of the original spec ("remove from settings") becomes a no-op. The task is really "build the first-ever editorial UI for these fields on a new dedicated page."
+  - **`BackOfficeIntegrations.jsx`** (new page) at `/back-office/integrations` under `<BackOfficeShell />`:
+    - **Smartico Visitor Mode** section with hairline-bordered card, status pill (`CONFIGURED` ember-soft + CheckCircle2 OR `NOT CONFIGURED` `#FBEDEC` + AlertCircle, derived from `template_id` AND `brand_key` both being non-empty),
+    - Inline "Smartico admin docs" external link (ember-strong, ExternalLink icon),
+    - 3 form fields (Template ID / Loader URL / Brand key) — each with JetBrains Mono uppercase label, helper text, hairline border with ember focus ring (`box-shadow: 0 0 0 3px var(--ember-soft)`),
+    - **Critical gotcha handled**: `PUT /api/admin/settings` overwrites every Smartico field on every request (sending only `{template_id:"x"}` would nullify the other two). The page hydrates the form state from `GET /api/admin/settings` on mount, then submits all 3 fields together on save — so editing one field never nullifies its siblings,
+    - "LAST SAVED" timestamp formatted in `fi-FI` Europe/Helsinki locale, SAVE button disabled until the form is dirty, "UNSAVED" mono badge appears the moment any field diverges from `serverState`,
+    - Empty-state "COMING SOON · Resend · Twilio · Telegram bot config · OAuth · analytics" card sets up future integration slots,
+    - All UI tokens are Phase 1 only (`var(--bg)/--surface/--ink*/--line*/--ember*/--dial-myrsky`) — zero hex literals,
+    - Renders inside the shell via outlet context (`token, density, refresh`); no per-page AuthGate.
+  - **Nav wiring**: added "Integrations" item to BackOfficeShell.jsx, placed right after Settings inside the OPS group (per spec "immediately after the Site Settings entry" — no SETTINGS group existed yet). Icon: `Link2` from lucide-react. Keywords include "smartico resend twilio telegram oauth analytics third party" so Cmd+K finds it.
+  - **App.js**: new `/back-office/integrations` route registered inside the existing `<Route element={<BackOfficeShell />}>` wrapper. Import added next to `BackOfficeOgImages`.
+  - **Backend untouched** per the directive — the existing `_get_settings_doc()` + `PUT /api/admin/settings` keep serving the same 3 Smartico fields. The page's `weezybet-fi` brand_key (if present in production) is preserved exactly; the spec's "no default brand key" override-language is honoured. New installs default to null — there's no backfill code path.
+  - **Live regression test on `/voita-palkinto`**: seeded the settings doc with `{template_id:'3383', loader_url:'…', brand_key:'weezybet-fi'}` via the admin endpoint, then headless-loaded `/voita-palkinto` and confirmed the `#smartico-visitor-mode` embed div renders in the DOM with `data-template-id="3383"`. The public consumer (`/api/settings/public`) is provably unchanged by the relocation.
+  - **Tests**: `tests/test_iter81_integrations_relocation.py` — 4 tests cover (a) all 3 Smartico keys present on `GET /api/admin/settings`, (b) round-trip preserves unrelated settings (site tagline FI+EN, voita_feature_enabled), (c) PUT propagates to `/api/settings/public` immediately, (d) admin endpoint rejects un-tokened requests with 401/403. 4/4 green in 3.84s.
+  - **Snapshots**: `/app/qa-snapshots/phase-2-5-integrations/` — `integrations_desktop.png` (full-page, sidebar with "Integrations" active in ember), `integrations_mobile.png` (375px, AI-vision verified), `settings_no_smartico_desktop.png` (proof Settings page is unchanged), `voita_palkinto_desktop.png` (placeholder state when config is null), `voita_palkinto_active.png` (Smartico embed div renders when config is set).
+  - **Lint clean** · ESLint on `BackOfficeIntegrations.jsx` + `BackOfficeShell.jsx` + `App.js` — all ✅.
+
 - **iter80b · Phase 2.4 — Dead-nav cleanup + OG images page** (2026-05-29, +7 tests · 7/7 green · sidebar AI-vision verified)
   - **7 sidebar items reconciled** in `BackOfficeShell.jsx`:
     - REMOVED `/back-office/voita-results` (winners visible inside the Voita page)
