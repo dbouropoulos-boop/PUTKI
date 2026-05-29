@@ -1,0 +1,24 @@
+{
+  "summary": "Phase 2.6 BackOfficeToday cockpit dashboard frontend verification complete. All 8 acceptance criteria pass: required testids render, status chips show live data with delta, 4 pending pills navigate correctly, activity stub renders (404 → stub branch as expected), 3 quick actions navigate with correct query params (focus=oldest / range=today), oldest queued item gets glow ring on /back-office/queue, no Smartico fields anywhere on /back-office, legacy back-office-index removed, shell sidebar + status strip wrap the page.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "BackOfficeShell.jsx line 241 `if (!snap || !cfg) return null;` causes bo-shell-status-strip to be absent from DOM until /api/admin/bot/funnel/snapshot AND /api/admin/bot/config both resolve. This is a Phase 2.1 oversight (not Phase 2.6 scope) — if either endpoint is slow/fails, the entire status strip disappears silently. Consider rendering with skeleton state instead of returning null.",
+    "BackOfficeToday.jsx imports AlertTriangle only to silence unused-import lint by rendering it in a hidden span (line 497). Cleaner fix: remove the import from line 22 entirely.",
+    "Mobile responsiveness limitation acknowledged in task brief: BackOfficeShell sidebar is not mobile-collapsible (280px sidebar at 375px viewport squeezes content). Out of Task 2.6 scope but worth tracking for next phase."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped)", "frontend": "100%"},
+  "test_credentials": "Admin token 'putki-hq-admin' via bo-shell-token-input.",
+  "seed_data_creation": "None.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Phase 2.6 /back-office cockpit dashboard verified. Test flow: 1) /back-office → AuthGate with putki-hq-admin → bo-today-dashboard. 2) Wait ~5s for BackOfficeShell.StatusStrip async fetch to settle before asserting bo-shell-status-strip (it returns null until /api/admin/bot/funnel/snapshot resolves — known race). 3) All 4 status chips, 4 pending pills, 3 quick actions, activity stub, footer, and @media block confirmed. 4) /back-office/queue?focus=oldest correctly applies box-shadow glow ring 'rgb(217,70,30) 0px 0px 0px 2px, rgb(251,234,226) 0px 0px 0px 6px' to oldest queue-item-wrap-{id} and scrolls into view. 5) Pending pill / quick action navigation targets verified (queue, news-watch?filter=killed, leads, webhooks, dispatch-preview, funnel?range=today). 6) Zero bo-smartico-* elements on /back-office; legacy back-office-index removed. Next agent (Task 2.7) will implement /api/admin/back_office_activity endpoint — the activity stub should switch to bo-today-activity-list or bo-today-activity-empty branches.",
+  "rca of the issue": "n/a — all features implemented correctly."
+}

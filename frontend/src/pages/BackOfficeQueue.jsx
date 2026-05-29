@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useOutletContext } from 'react-router-dom';
+import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Lock, RefreshCw, Sparkles, Check, X, Pencil, Edit3, FileText, Save } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -472,6 +472,12 @@ const BackOfficeQueue = () => {
   const [contentTypes, setContentTypes] = useState([]);
   const [busy, setBusy] = useState(false);
   const [showGuidelines, setShowGuidelines] = useState(false);
+  // iter83 · Task 2.6 — when the Today dashboard's "Approve oldest draft"
+  // quick action lands here with `?focus=oldest`, we auto-scroll to and
+  // highlight the oldest pending row so the editor doesn't hunt for it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusParam = searchParams.get('focus');
+  const [focusedId, setFocusedId] = useState(null);
 
   const headers = useCallback(() => ({ 'Content-Type': 'application/json', 'X-Admin-Token': token }), [token]);
 
@@ -495,6 +501,32 @@ const BackOfficeQueue = () => {
       .then((r) => r.json())
       .then((d) => setContentTypes(d.content_types || []));
   }, [authed, refresh, headers]);
+
+  // iter83 · Task 2.6 — when ?focus=oldest is set and items have loaded,
+  // pick the oldest queued row (last in the list since the API sorts
+  // `generated_at DESC`), scroll into view, and pulse-highlight for 2.4s.
+  useEffect(() => {
+    if (focusParam !== 'oldest') return;
+    if (!Array.isArray(items) || items.length === 0) return;
+    const queued = items.filter((it) => it.status === 'queued');
+    if (queued.length === 0) return;
+    const oldest = queued[queued.length - 1];
+    setFocusedId(oldest.id);
+    // Defer scroll until paint so the row exists in the DOM.
+    setTimeout(() => {
+      const el = document.querySelector(`[data-testid="queue-item-${oldest.id}"]`);
+      if (el && el.scrollIntoView) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
+    // Clear the focus param so a manual refresh doesn't re-trigger.
+    const next = new URLSearchParams(searchParams);
+    next.delete('focus');
+    setSearchParams(next, { replace: true });
+    // Fade the highlight after 2.4s.
+    const t = setTimeout(() => setFocusedId(null), 2400);
+    return () => clearTimeout(t);
+  }, [focusParam, items, searchParams, setSearchParams]);
 
   const handleAuth = (e) => {
     e.preventDefault();
@@ -627,7 +659,13 @@ const BackOfficeQueue = () => {
             </div>
           ) : (
             items.map((item) => (
-              <QueueItem key={item.id} item={item} onApprove={onApprove} onKill={onKill} onEdit={onEdit} busy={busy} />
+              <div key={item.id} data-testid={`queue-item-wrap-${item.id}`}
+                style={focusedId === item.id ? {
+                  boxShadow: '0 0 0 2px var(--ember), 0 0 0 6px var(--ember-soft)',
+                  borderRadius: 6, transition: 'box-shadow 320ms ease',
+                } : { transition: 'box-shadow 320ms ease' }}>
+                <QueueItem item={item} onApprove={onApprove} onKill={onKill} onEdit={onEdit} busy={busy} />
+              </div>
             ))
           )}
         </div>
