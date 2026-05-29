@@ -15,7 +15,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import {
-  CheckCircle2, AlertCircle, ExternalLink, Save, Link2,
+  CheckCircle2, AlertCircle, ExternalLink, Save, Link2, Activity,
 } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -95,6 +95,8 @@ const BackOfficeIntegrations = () => {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [serverState, setServerState] = useState(null);
+  const [probing, setProbing] = useState(false);
+  const [probeResult, setProbeResult] = useState(null);
   const [form, setForm] = useState({
     smartico_template_id: '',
     smartico_loader_url: '',
@@ -162,6 +164,33 @@ const BackOfficeIntegrations = () => {
 
   const setField = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
 
+  // Test connection probe — pings the loader URL via the new admin
+  // endpoint and confirms the response is a JS SDK. Uses the form's
+  // current loader_url (not the persisted one) so editors can validate
+  // BEFORE saving.
+  const doProbe = async () => {
+    const url = (form.smartico_loader_url || '').trim();
+    if (!url) {
+      setProbeResult({ ok: false, message: 'Loader URL required for probe.' });
+      return;
+    }
+    setProbing(true); setProbeResult(null);
+    try {
+      const r = await fetch(`${BACKEND}/api/admin/integrations/smartico/test-connection`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ loader_url: url }),
+      });
+      if (!r.ok) {
+        const txt = await r.text();
+        throw new Error(`HTTP ${r.status}: ${txt}`);
+      }
+      setProbeResult(await r.json());
+    } catch (e) {
+      setProbeResult({ ok: false, message: `Probe failed: ${String(e?.message || e)}` });
+    } finally { setProbing(false); }
+  };
+
   return (
     <div data-testid="bo-integrations-page">
       <header style={{ marginBottom: 22 }}>
@@ -212,6 +241,61 @@ const BackOfficeIntegrations = () => {
               <Pill tone="warn" icon={AlertCircle} label="NOT CONFIGURED" testid="bo-smartico-status-missing" />
             )}
           </div>
+
+          {/* Test connection bar — lives right under the status pill so
+              editors can verify their loader URL without leaving the page. */}
+          <div data-testid="bo-smartico-probe-bar" style={{
+            display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+            background: 'var(--surface)', border: '1px solid var(--line)',
+            borderRadius: 4, padding: '10px 14px', marginBottom: 18,
+          }}>
+            <span style={{
+              fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.14em',
+              color: 'var(--ink-3)', fontWeight: 700, textTransform: 'uppercase',
+            }}>HEALTH CHECK</span>
+            <span style={{ flex: 1, minWidth: 8 }} />
+            <button data-testid="bo-smartico-probe-btn" onClick={doProbe}
+              disabled={probing || !form.smartico_loader_url?.trim()}
+              style={{
+                padding: '7px 14px',
+                background: probing ? 'var(--surface-2)' : 'var(--bg)',
+                color: 'var(--ink)',
+                border: '1px solid var(--line-strong)',
+                fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.18em',
+                fontWeight: 700, borderRadius: 3, textTransform: 'uppercase',
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                cursor: probing || !form.smartico_loader_url?.trim() ? 'not-allowed' : 'pointer',
+                opacity: probing || !form.smartico_loader_url?.trim() ? 0.55 : 1,
+                transition: 'background-color 100ms ease, opacity 100ms ease',
+              }}>
+              <Activity size={11} strokeWidth={2.4} />
+              {probing ? 'PROBING…' : 'TEST CONNECTION'}
+            </button>
+          </div>
+          {probeResult && (
+            <div data-testid="bo-smartico-probe-result" style={{
+              padding: '10px 14px', borderRadius: 4, marginBottom: 18,
+              background: probeResult.ok ? 'var(--ember-soft)' : '#FBEDEC',
+              color: probeResult.ok ? 'var(--ember-strong)' : 'var(--dial-myrsky)',
+              border: `1px solid ${probeResult.ok ? 'var(--ember-soft)' : '#F5C4BF'}`,
+              fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', lineHeight: 1.55,
+            }}>
+              <div style={{ fontWeight: 700, marginBottom: probeResult.message ? 4 : 0 }}>
+                {probeResult.ok ? '✓ ' : '× '}
+                {probeResult.status != null
+                  ? `HTTP ${probeResult.status} · ${probeResult.content_type || 'unknown content-type'}`
+                  : 'Unreachable'}
+                {probeResult.latency_ms != null && (
+                  <span style={{ marginLeft: 8, opacity: 0.75 }}>
+                    · {probeResult.latency_ms} ms
+                  </span>
+                )}
+              </div>
+              {probeResult.message && (
+                <div style={{ fontWeight: 500 }}>{probeResult.message}</div>
+              )}
+            </div>
+          )}
 
           {/* Docs link */}
           <div style={{ marginBottom: 22 }}>

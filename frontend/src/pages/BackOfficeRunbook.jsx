@@ -12,7 +12,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-const TOKEN_KEY = 'putki_back_office_token';
+// iter82 (Task 2.3): legacy localStorage key removed. Token flows in
+// exclusively via outlet context now.
 
 
 // ─── Tiny markdown renderer ────────────────────────────────────────
@@ -169,7 +170,7 @@ const Markdown = ({ src }) => {
 const BackOfficeRunbook = () => {
   const ctx = useOutletContext() || {};
   const inShell = !!ctx.token;
-  const [token, setToken] = useState(() => ctx.token || (typeof window !== 'undefined' && window.localStorage.getItem(TOKEN_KEY)) || '');
+  const [token, setToken] = useState(() => ctx.token || '');
   useEffect(() => { if (ctx.token && ctx.token !== token) setToken(ctx.token); }, [ctx.token, token]);
   const [md, setMd] = useState(null);
   const [err, setErr] = useState(null);
@@ -193,7 +194,7 @@ const BackOfficeRunbook = () => {
           onChange={(e) => setToken(e.target.value)}
           data-testid="runbook-token-input"
           style={{ padding: 12, width: 340, background: 'transparent', color: 'var(--ink)', border: '1px solid var(--border, #2a2722)', fontFamily: 'ui-monospace, monospace' }} />
-        <button onClick={() => window.localStorage.setItem(TOKEN_KEY, token)}
+        <button onClick={() => {}}
           data-testid="runbook-login"
           style={{ marginLeft: 8, padding: '12px 22px', background: '#E8C26E', color: '#0B0A09', border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.22em', fontWeight: 800, cursor: 'pointer' }}>
           UNLOCK

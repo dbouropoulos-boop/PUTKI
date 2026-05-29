@@ -2597,6 +2597,12 @@ api_router.include_router(_make_admin_router())
 from routes.og_images import build_og_images_router as _build_og_images_router  # noqa: E402
 api_router.include_router(_build_og_images_router(require_admin))
 
+# iter82 (Task 2.5-bis) - integration health-check probes (Smartico
+# loader URL test, etc.). Powers the Test connection button on
+# /back-office/integrations.
+from routes.integrations import build_integrations_router as _build_integrations_router  # noqa: E402
+api_router.include_router(_build_integrations_router(require_admin))
+
 # iter76 (Slice 1) - Bot & Routing admin endpoints (bot_config + partners
 # CRUD + subscribers summary). Sits alongside the existing admin router.
 from routes.bot_routing import (  # noqa: E402

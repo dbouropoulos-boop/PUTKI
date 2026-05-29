@@ -85,27 +85,37 @@ const ALL_NAV_ITEMS = NAV_GROUPS.flatMap((g) => g.items);
 
 
 // ─── Token persistence ───────────────────────────────────────────────
+// iter82 (Task 2.3): consolidated onto a single canonical sessionStorage
+// key. The legacy `putki_back_office_token` localStorage mirror was
+// dead-code after the iter80 shell-wrapped pages migrated to outlet
+// context; this commit removes it entirely. Aligned with the shape used
+// by `useBackOfficeToken.js` so future imports can point at one place.
 const tokenStore = {
   get() {
-    try { return sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem('putki_back_office_token') || ''; }
+    try { return sessionStorage.getItem(TOKEN_KEY) || ''; }
     catch { return ''; }
   },
   set(v) {
     try { sessionStorage.setItem(TOKEN_KEY, v); } catch { /* noop */ }
-    // Keep the legacy localStorage key in sync ONLY because existing
-    // ops pages still read it directly. Once they migrate to the shell
-    // we can drop this line (Task 2.3).
-    try { localStorage.setItem('putki_back_office_token', v); } catch { /* noop */ }
+    // Best-effort: clean up any leftover legacy localStorage entries from
+    // before this hardening. Safe to delete — no one reads it anymore.
+    try { localStorage.removeItem('putki_back_office_token'); } catch { /* noop */ }
+    try { localStorage.removeItem(TOKEN_KEY); } catch { /* noop */ }
   },
   clear() {
     try { sessionStorage.removeItem(TOKEN_KEY); } catch { /* noop */ }
     try { localStorage.removeItem('putki_back_office_token'); } catch { /* noop */ }
+    try { localStorage.removeItem(TOKEN_KEY); } catch { /* noop */ }
   },
 };
 
 
 // ─── Auth gate (Phase 2.1 light reskin) ──────────────────────────────
-const AuthGate = ({ onUnlock, error }) => {
+// `expired` distinguishes "first-time sign in" from "session expired
+// mid-flow". When expired=true, we surface a calmer ember-soft callout
+// so editors realise their unsaved work is preserved in the form state
+// of whichever page they were on.
+const AuthGate = ({ onUnlock, error, expired = false }) => {
   const [val, setVal] = useState('');
   return (
     <div data-testid="bo-shell-authgate" style={{
@@ -122,8 +132,19 @@ const AuthGate = ({ onUnlock, error }) => {
         <h1 className="display" style={{
           fontSize: 32, letterSpacing: '-0.025em', margin: '0 0 20px', color: 'var(--ink)',
         }}>
-          Sign in
+          {expired ? 'Session expired' : 'Sign in'}
         </h1>
+        {expired && (
+          <div data-testid="bo-shell-session-expired" style={{
+            padding: '10px 14px', borderRadius: 4, marginBottom: 14,
+            background: 'var(--ember-soft)', color: 'var(--ember-strong)',
+            border: '1px solid var(--ember-soft)',
+            fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.04em', lineHeight: 1.55,
+          }}>
+            Re-enter token to continue. Your unsaved changes are preserved on the
+            page you were on.
+          </div>
+        )}
         <form onSubmit={(e) => { e.preventDefault(); onUnlock(val); }}>
           <input
             type="password" placeholder="Admin token" value={val}
@@ -481,34 +502,56 @@ const BackOfficeShell = () => {
   const [token, setTokenState] = useState(() => tokenStore.get());
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [expired, setExpired] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
   const [density, setDensity] = useState(() => {
     try { return localStorage.getItem('putki_bo_density') || 'comfortable'; } catch { return 'comfortable'; }
   });
   const location = useLocation();
 
-  // Verify the token by calling a cheap admin endpoint.
-  const verify = useCallback(async (candidate) => {
+  // Verify the token by calling a cheap admin endpoint. The `mode` arg
+  // separates first-time mount from periodic re-verification — only the
+  // periodic path flips `expired=true` (we don't want the first failed
+  // unlock to claim the session expired).
+  const verify = useCallback(async (candidate, mode = 'initial') => {
     if (!candidate) return false;
     try {
       const r = await fetch(`${BACKEND}/api/admin/bot/config`, {
         headers: { 'X-Admin-Token': candidate },
       });
-      if (r.ok) { setAuthed(true); setAuthError(''); return true; }
-      setAuthed(false); setAuthError(r.status === 401 ? 'Invalid admin token.' : `Auth failed (${r.status}).`);
+      if (r.ok) { setAuthed(true); setAuthError(''); setExpired(false); return true; }
+      if (r.status === 401) {
+        setAuthed(false);
+        setAuthError('Invalid admin token.');
+        if (mode === 'periodic') setExpired(true);
+        return false;
+      }
+      setAuthed(false); setAuthError(`Auth failed (${r.status}).`);
       return false;
     } catch (e) { setAuthed(false); setAuthError(String(e?.message || e)); return false; }
   }, []);
 
   // Try the persisted token on mount.
-  useEffect(() => { if (token) verify(token); }, [token, verify]);
+  useEffect(() => { if (token) verify(token, 'initial'); }, [token, verify]);
+
+  // iter82 (Task 2.3) - periodic re-verification. Every 60 seconds while
+  // authed=true, we re-check the token. On 401 we flip into `expired`
+  // mode which surfaces the session-expired AuthGate variant.
+  useEffect(() => {
+    if (!authed || !token) return undefined;
+    const id = setInterval(() => { verify(token, 'periodic'); }, 60_000);
+    return () => clearInterval(id);
+  }, [authed, token, verify]);
 
   const onUnlock = async (val) => {
     setTokenState(val); tokenStore.set(val);
-    await verify(val);
+    setExpired(false);
+    await verify(val, 'initial');
   };
 
-  const onLogout = () => { tokenStore.clear(); setTokenState(''); setAuthed(false); };
+  const onLogout = () => {
+    tokenStore.clear(); setTokenState(''); setAuthed(false); setExpired(false);
+  };
 
   // Persist density preference.
   useEffect(() => {
@@ -537,7 +580,7 @@ const BackOfficeShell = () => {
     [location.pathname],
   );
 
-  if (!authed) return <AuthGate onUnlock={onUnlock} error={authError} />;
+  if (!authed) return <AuthGate onUnlock={onUnlock} error={authError} expired={expired} />;
 
   return (
     <div style={{
