@@ -38,6 +38,7 @@ import BackOfficeMestariCopy from "@/pages/BackOfficeMestariCopy";
 import BackOfficeVoyagerRotation from "@/pages/BackOfficeVoyagerRotation";
 import BackOfficePlaybook from "@/pages/BackOfficePlaybook";
 import BackOfficeLeads from "@/pages/BackOfficeLeads";
+import BackOfficeOgImages from "@/pages/BackOfficeOgImages";
 import BackOfficeNewsWatch from "@/pages/BackOfficeNewsWatch";
 import BackOfficeEmailTemplates from "@/pages/BackOfficeEmailTemplates";
 import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosticsCopy";
@@ -126,8 +127,8 @@ function App() {
             <Route path="/back-office/runbook" element={<BackOfficeRunbook />} />
             <Route path="/back-office/settings" element={<BackOfficeSettings />} />
             <Route path="/back-office/leads" element={<BackOfficeLeads />} />
+            <Route path="/back-office/og-images" element={<BackOfficeOgImages />} />
           </Route>
-          <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
           <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
           <Route path="/back-office/analytics/mini-games" element={<BackOfficeMiniGameAnalytics />} />

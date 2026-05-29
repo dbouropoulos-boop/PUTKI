@@ -52,8 +52,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/back-office/leads',                label: 'Unified leads',     icon: Users,    keywords: 'putki_lead timeline join mittari mestari voita email telegram funnel consent' },
       { to: '/back-office/voita',                label: 'Voita raffles',     icon: Trophy,   keywords: 'raffle prize draw voita sako gate' },
-      { to: '/back-office/voita-results',        label: 'Voita results',     icon: Gift,     keywords: 'winners draw history' },
-      { to: '/back-office/mestari-diagnostics',  label: 'Mestari segments',  icon: Telescope, keywords: 'mestari profile cluster' },
+      { to: '/back-office/mestari-diagnostics-copy', label: 'Mestari diagnostics', icon: Telescope, keywords: 'mestari profile cluster diagnostics copy' },
       { to: '/back-office/optin-segments',       label: 'Opt-in segments',   icon: Inbox,    keywords: 'consent mestari mittari voita' },
       { to: '/back-office/profiler-funnel',      label: 'Profiler funnel',   icon: Activity, keywords: 'profiler mestari personality' },
     ],
@@ -68,18 +67,15 @@ const NAV_GROUPS = [
   {
     label: 'CONTENT & STREAMERS',
     items: [
-      { to: '/back-office/news',           label: 'News editor',     icon: FileText,    keywords: 'articles editorial content cite' },
+      { to: '/back-office/news-watch',     label: 'News watch',      icon: FileText,    keywords: 'articles editorial content cite rss feeds' },
       { to: '/back-office/streamers',      label: 'Streamers',       icon: Clapperboard, keywords: 'kick twitch youtube avatars handles audit' },
-      { to: '/back-office/streamer-tags',  label: 'Streamer tags',   icon: Layers,      keywords: 'tags categories' },
-      { to: '/back-office/og-images',      label: 'OG images',       icon: Video,       keywords: 'social preview og blocklist' },
+      { to: '/back-office/og-images',      label: 'OG images',       icon: Video,       keywords: 'social preview og card upload regenerate nano banana' },
     ],
   },
   {
     label: 'TOURNAMENTS',
     items: [
-      { to: '/back-office/voyager-tournaments',  label: 'Voyager',     icon: Sparkles, keywords: 'voyager rotation tournaments' },
-      { to: '/back-office/voyager-rotation',     label: 'Voyager rotation', icon: Sparkles, keywords: 'rotation weekly' },
-      { to: '/back-office/weezy-rally',          label: 'Weezy Rally', icon: Flame,    keywords: 'weezy rally challenge' },
+      { to: '/back-office/voyager',  label: 'Voyager rotation', icon: Sparkles, keywords: 'voyager rotation weekly tournaments' },
     ],
   },
 ];

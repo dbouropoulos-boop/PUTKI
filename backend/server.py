@@ -2591,6 +2591,12 @@ api_router.include_router(build_mini_games_router())
 from routes.admin import make_router as _make_admin_router  # noqa: E402
 api_router.include_router(_make_admin_router())
 
+# iter80 (Task 2.4) - back-office OG image admin endpoints. Powers
+# the new /back-office/og-images page (list / preview / regenerate /
+# upload / delete).
+from routes.og_images import build_og_images_router as _build_og_images_router  # noqa: E402
+api_router.include_router(_build_og_images_router(require_admin))
+
 # iter76 (Slice 1) - Bot & Routing admin endpoints (bot_config + partners
 # CRUD + subscribers summary). Sits alongside the existing admin router.
 from routes.bot_routing import (  # noqa: E402

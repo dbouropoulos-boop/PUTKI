@@ -9,6 +9,26 @@
 
 ## Phase History (latest first)
 
+- **iter80b · Phase 2.4 — Dead-nav cleanup + OG images page** (2026-05-29, +7 tests · 7/7 green · sidebar AI-vision verified)
+  - **7 sidebar items reconciled** in `BackOfficeShell.jsx`:
+    - REMOVED `/back-office/voita-results` (winners visible inside the Voita page)
+    - REMOVED `/back-office/streamer-tags` (no matching page; tags live in streamer-meta)
+    - REMOVED `/back-office/weezy-rally` (killed alongside Phase 0 Weezybet cleanup)
+    - REMOVED `/back-office/voyager-rotation` (duplicate of voyager; both pointed nowhere — kept the renamed one)
+    - RENAMED `/back-office/mestari-diagnostics` → `/back-office/mestari-diagnostics-copy` (actual existing route)
+    - RENAMED `/back-office/news` → `/back-office/news-watch` (with label "News watch", actual existing route)
+    - RENAMED `/back-office/voyager-tournaments` → `/back-office/voyager` (actual existing route)
+    - KEPT `/back-office/og-images` (now functional — see below)
+  - **`App.js` dedup**: the duplicate `/back-office/news-watch` route registration (lines 130-131) collapsed to a single line.
+  - **New page `/back-office/og-images`** built end-to-end:
+    - Backend: new `routes/og_images.py` with 5 endpoints — `GET /list`, `GET /preview?slug=`, `POST /regenerate` (body: slug + headline + optional category, calls `og_image_generator.ensure_og_image()` via Gemini Nano Banana), `POST /upload` (multipart, 4MB cap, PNG/JPG/WEBP only, path-traversal-guarded slug normalisation via `_safe_slug`), `DELETE /{slug}`. All endpoints gated by the shared `require_admin` dependency. Wired into `server.py` alongside the existing admin router.
+    - Frontend: new `pages/BackOfficeOgImages.jsx` rendering inside the shell — reads token from outlet context, surfaces controls for preview / regenerate / upload / delete, cached-cards grid with thumbnail + size + USE/DELETE buttons, status pills for "CACHED CARDS" + "GENERATOR" (READY / DISABLED). All UI uses Phase 1 tokens (`var(--bg)/(--surface)/(--ink*)/(--line*)/(--ember*)/(--dial-myrsky)`); zero hex literals.
+    - Routed under `<BackOfficeShell />` so it inherits sidebar + status strip + breadcrumb + density + Cmd+K.
+  - **Tests**: `tests/test_iter80_og_images_admin.py` — 7 tests cover auth gate, list-envelope shape, missing-slug preview, full upload→preview→delete roundtrip, MIME guard, path-traversal-safe slug normalisation, graceful 503 when LLM key is missing. 7/7 green in 4.16s.
+  - **End-to-end verified**: 15 sidebar nav items × 1 click each = zero 404s. Routes still using per-page AuthGates (`/back-office/webhooks`, `/back-office/streamers` etc.) render their own gates correctly — they're not under the shell yet and will migrate in Task 2.2. AI vision spot-check of `sidebar_cleaned.png` confirms exact expected nav structure: 5 groups, 15 items, all dead targets absent, OG images present under CONTENT & STREAMERS. Live API smoke test exercised all 5 endpoints (200 / 200 / 503 graceful / 200 / 401).
+  - **Lint clean** · ESLint on `BackOfficeShell.jsx` + `BackOfficeOgImages.jsx` + ruff on `routes/og_images.py` — all ✅.
+  - **Snapshots**: `/app/qa-snapshots/phase-2-4-nav-cleanup/sidebar_cleaned.png` + `og-images_page.png` (full-page).
+
 - **iter80 · Phase 2.1 — BackOfficeShell light reskin** (2026-05-28, +16 snapshots · zero legacy hex literals · AI-vision verified)
   - **Mission**: take the back-office chrome from its dark-mode-with-gold legacy palette (`#0B0A09` bg + `#E8C26E` gold + `#9C8B6B` muted + `#1a1815` borders) to the Phase 1 light system (`var(--bg)` + `var(--ember)` + `var(--ink/--ink-2/--ink-3)` + `var(--line/--line-strong)`). All hex literals swapped to CSS variables; zero legacy dark hex strings remain in the file (`grep -nE "0B0A09|1a1815|2a2722|9C8B6B|E8C26E|..." → empty`). 45 Phase 1 `var(--*)` references now drive every surface.
   - **AuthGate sign-in**: white background, ember eyebrow `PUTKI HQ · BACK-OFFICE`, `.display` Archivo Black "Sign in" headline, token input with hairline + ember focus ring (`box-shadow: 0 0 0 3px var(--ember-soft)`), solid ember submit button with white text. Verified end-to-end via AI vision — all 5 spec requirements met.
