@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2, Calendar } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -193,8 +193,13 @@ const RotationCalendar = ({ token, partnerOperators }) => {
 };
 
 const OperatorsAdmin = () => {
-  const [token, setToken] = useToken();
-  const [authed, setAuthed] = useState(false);
+  // iter82 · Task 2.2 — when rendered inside <BackOfficeShell />, the
+  // outlet seeds `{token}` and the per-page AuthGate becomes unreachable.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useToken();
+  const token = _shellCtx.token || _tokenLocal;
+  const [_authedLocal, setAuthed] = useState(false);
+  const authed = !!_shellCtx.token || _authedLocal;
   const [error, setError] = useState('');
   const [operators, setOperators] = useState([]);
   const [selected, setSelected] = useState(null);

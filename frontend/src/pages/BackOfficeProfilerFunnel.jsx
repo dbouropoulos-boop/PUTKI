@@ -6,7 +6,7 @@
  * funnel + drop-off rates.
  */
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -22,6 +22,10 @@ const STEPS = [
 ];
 
 const BackOfficeProfilerFunnel = () => {
+  // iter82 · Task 2.2 — capture shell token so the page works without
+  // its old per-tab token prompt.
+  const _shellCtx = useOutletContext() || {};
+  const _shellCtxToken = _shellCtx.token || '';
   const [data, setData] = useState(null);
   const [since, setSince] = useState(7);
   const [loading, setLoading] = useState(false);
@@ -30,7 +34,12 @@ const BackOfficeProfilerFunnel = () => {
   const load = async (days = since) => {
     setLoading(true); setError(null);
     try {
-      const token = localStorage.getItem(ADMIN_TOKEN_KEY) || 'putki-hq-admin';
+      // iter82 · Task 2.2 — prefer shell-injected token (sessionStorage)
+      // and fall back to legacy localStorage key for direct visits.
+      const token = _shellCtxToken
+        || (typeof window !== 'undefined' ? sessionStorage.getItem('putki-hq-admin-token') : '')
+        || localStorage.getItem(ADMIN_TOKEN_KEY)
+        || 'putki-hq-admin';
       const r = await fetch(`${BACKEND}/api/admin/profiler/funnel?since_days=${days}`, {
         headers: { 'X-Admin-Token': token },
       });

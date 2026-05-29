@@ -10,7 +10,7 @@
  * `score` + per-option `explanation_fi`).
  */
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2 } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -23,7 +23,10 @@ const GAMES = [
 ];
 
 const MiniGameAdmin = () => {
-  const [token, setToken] = useState(localStorage.getItem(ADMIN_TOKEN_KEY) || '');
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useState(localStorage.getItem(ADMIN_TOKEN_KEY) || '');
+  const token = _shellCtx.token || _tokenLocal;
   const [game, setGame] = useState(GAMES[0].slug);
   const [questions, setQuestions] = useState([]);
   const [selected, setSelected] = useState(null);

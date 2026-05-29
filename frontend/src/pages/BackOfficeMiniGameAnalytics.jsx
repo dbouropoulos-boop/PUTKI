@@ -11,14 +11,17 @@
  * Filter by ISO week (or leave empty for all-time).
  */
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Send } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const ADMIN_TOKEN_KEY = 'putki-admin-token';
 
 const MiniGameAnalytics = () => {
-  const [token, setToken] = useState(localStorage.getItem(ADMIN_TOKEN_KEY) || '');
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useState(localStorage.getItem(ADMIN_TOKEN_KEY) || '');
+  const token = _shellCtx.token || _tokenLocal;
   const [week, setWeek] = useState('');
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);

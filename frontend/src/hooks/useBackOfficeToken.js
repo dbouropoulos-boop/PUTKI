@@ -19,6 +19,7 @@
  *     // ... then use token in your X-Admin-Token header
  */
 import { useCallback, useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki-hq-admin-token';
@@ -43,6 +44,15 @@ const tokenStore = {
 };
 
 export const useBackOfficeToken = () => {
+  // iter82 · Task 2.2 — every back-office route now renders inside
+  // <BackOfficeShell />, which seeds an outlet context with `{token,
+  // density, refresh}`. When that context is present we trust the
+  // shell entirely: no per-page localStorage read, no auth verify
+  // round-trip, no AuthGate render. Pages stay backwards-compatible
+  // because the rest of the hook's return shape is preserved.
+  const shellCtx = useOutletContext() || {};
+  const shellToken = shellCtx?.token || '';
+
   const [token, setToken] = useState(() => tokenStore.get());
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -73,12 +83,29 @@ export const useBackOfficeToken = () => {
   // NOT depend on `token` here - `checkAuth` reads from the closure on
   // every call, so an effect-once-on-mount is exactly what we want.
   const verifyOnce = useCallback((tk) => { if (tk) checkAuth(tk); }, [checkAuth]);
-  useEffect(() => { verifyOnce(tokenStore.get()); }, [verifyOnce]);
+  useEffect(() => {
+    if (shellToken) return; // shell handles auth — skip standalone verify
+    verifyOnce(tokenStore.get());
+  }, [verifyOnce, shellToken]);
 
   const logout = useCallback(() => {
     setToken(''); setAuthed(false); setAuthError('');
     tokenStore.clear();
   }, []);
+
+  if (shellToken) {
+    // Inside <BackOfficeShell />: pretend we're already authed with
+    // the shell's token. `setToken`/`checkAuth`/`logout` become no-ops
+    // because the shell owns auth lifecycle.
+    return {
+      token: shellToken,
+      setToken: () => {},
+      authed: true,
+      authError: '',
+      checkAuth: async () => true,
+      logout: () => {},
+    };
+  }
 
   return { token, setToken, authed, authError, checkAuth, logout };
 };

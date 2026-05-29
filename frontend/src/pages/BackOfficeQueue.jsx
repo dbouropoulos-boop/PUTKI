@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Sparkles, Check, X, Pencil, Edit3, FileText, Save } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -458,8 +458,12 @@ const ScheduleStatus = ({ token }) => {
 };
 
 const BackOfficeQueue = () => {
-  const [token, setToken] = useToken();
-  const [authed, setAuthed] = useState(false);
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useToken();
+  const token = _shellCtx.token || _tokenLocal;
+  const [_authedLocal, setAuthed] = useState(false);
+  const authed = !!_shellCtx.token || _authedLocal;
   const [authError, setAuthError] = useState('');
   const [items, setItems] = useState([]);
   const [counts, setCounts] = useState({ queued: 0, approved: 0, killed: 0 });

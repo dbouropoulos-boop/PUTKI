@@ -14,7 +14,7 @@
  * Polls /api/webhooks/status every 30 s.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Webhook, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Hammer, Loader2 } from 'lucide-react';
 import Layer2StatusPanel from '../components/Layer2StatusPanel';
 
@@ -157,8 +157,12 @@ const SourceRow = ({ source, status, expectedSeconds, lastEvent, onResubscribe, 
 };
 
 const BackOfficeWebhooks = () => {
-  const [token, setToken] = useToken();
-  const [authed, setAuthed] = useState(false);
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useToken();
+  const token = _shellCtx.token || _tokenLocal;
+  const [_authedLocal, setAuthed] = useState(false);
+  const authed = !!_shellCtx.token || _authedLocal;
   const [authError, setAuthError] = useState('');
   const [status, setStatus] = useState(null);
   const [busy, setBusy] = useState(null);

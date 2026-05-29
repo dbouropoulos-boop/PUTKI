@@ -100,29 +100,31 @@ function App() {
           <Route path="/mestari/blackjack" element={<MestariDiagnostic diagnostic="blackjack" />} />
           <Route path="/game" element={<Voyager />} />
           <Route path="/voyager" element={<Navigate to="/game" replace />} />
-          <Route path="/back-office" element={<BackOffice />} />
-          <Route path="/back-office/queue" element={<BackOfficeQueue />} />
-          <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
-          <Route path="/back-office/operators" element={<OperatorsAdmin />} />
-          <Route path="/back-office/streamers" element={<StreamersAdmin />} />
-          <Route path="/back-office/webhooks" element={<BackOfficeWebhooks />} />
-          <Route path="/back-office/telegram" element={<BackOfficeTelegram />} />
-          <Route path="/back-office/drafts" element={<BackOfficeDrafts />} />
-          <Route path="/back-office/weekly" element={<BackOfficeWeekly />} />
-          <Route path="/back-office/peli" element={<BackOfficePeli />} />
-          <Route path="/back-office/streamer-meta" element={<BackOfficeStreamerMeta />} />
-          <Route path="/back-office/slot-registry" element={<BackOfficeSlotRegistry />} />
-          <Route path="/back-office/optin-segments" element={<BackOfficeOptinSegments />} />
-          <Route path="/back-office/dispatch-preview" element={<BackOfficeDispatchPreview />} />
-          <Route path="/back-office/voita" element={<BackOfficeVoita />} />
-          <Route path="/back-office/voita-quiz" element={<BackOfficeVoitaQuiz />} />
-          <Route path="/back-office/mittari-copy" element={<BackOfficeMittariCopy />} />
-          <Route path="/back-office/mestari-copy" element={<BackOfficeMestariCopy />} />
-          <Route path="/back-office/voyager" element={<BackOfficeVoyagerRotation />} />
-          <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
-          <Route path="/back-office/profiler-funnel" element={<BackOfficeProfilerFunnel />} />
-          {/* iter77: shared shell - persistent sidebar, status strip, Cmd+K. */}
+          {/* iter77 + iter82·Task2.2: shared shell - persistent sidebar,
+              status strip, Cmd+K, unified AuthGate. All back-office
+              routes render inside this shell. */}
           <Route element={<BackOfficeShell />}>
+            <Route path="/back-office" element={<BackOffice />} />
+            <Route path="/back-office/queue" element={<BackOfficeQueue />} />
+            <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
+            <Route path="/back-office/operators" element={<OperatorsAdmin />} />
+            <Route path="/back-office/streamers" element={<StreamersAdmin />} />
+            <Route path="/back-office/webhooks" element={<BackOfficeWebhooks />} />
+            <Route path="/back-office/telegram" element={<BackOfficeTelegram />} />
+            <Route path="/back-office/drafts" element={<BackOfficeDrafts />} />
+            <Route path="/back-office/weekly" element={<BackOfficeWeekly />} />
+            <Route path="/back-office/peli" element={<BackOfficePeli />} />
+            <Route path="/back-office/streamer-meta" element={<BackOfficeStreamerMeta />} />
+            <Route path="/back-office/slot-registry" element={<BackOfficeSlotRegistry />} />
+            <Route path="/back-office/optin-segments" element={<BackOfficeOptinSegments />} />
+            <Route path="/back-office/dispatch-preview" element={<BackOfficeDispatchPreview />} />
+            <Route path="/back-office/voita" element={<BackOfficeVoita />} />
+            <Route path="/back-office/voita-quiz" element={<BackOfficeVoitaQuiz />} />
+            <Route path="/back-office/mittari-copy" element={<BackOfficeMittariCopy />} />
+            <Route path="/back-office/mestari-copy" element={<BackOfficeMestariCopy />} />
+            <Route path="/back-office/voyager" element={<BackOfficeVoyagerRotation />} />
+            <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
+            <Route path="/back-office/profiler-funnel" element={<BackOfficeProfilerFunnel />} />
             <Route path="/back-office/bot-routing" element={<BackOfficeBotRouting />} />
             <Route path="/back-office/funnel" element={<BackOfficeFunnelHistory />} />
             <Route path="/back-office/runbook" element={<BackOfficeRunbook />} />
@@ -130,12 +132,12 @@ function App() {
             <Route path="/back-office/leads" element={<BackOfficeLeads />} />
             <Route path="/back-office/og-images" element={<BackOfficeOgImages />} />
             <Route path="/back-office/integrations" element={<BackOfficeIntegrations />} />
+            <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
+            <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
+            <Route path="/back-office/analytics/mini-games" element={<BackOfficeMiniGameAnalytics />} />
+            <Route path="/back-office/email-templates" element={<BackOfficeEmailTemplates />} />
+            <Route path="/back-office/mestari-diagnostics-copy" element={<BackOfficeMestariDiagnosticsCopy />} />
           </Route>
-          <Route path="/back-office/news-watch" element={<BackOfficeNewsWatch />} />
-          <Route path="/back-office/mini-games" element={<BackOfficeMiniGames />} />
-          <Route path="/back-office/analytics/mini-games" element={<BackOfficeMiniGameAnalytics />} />
-          <Route path="/back-office/email-templates" element={<BackOfficeEmailTemplates />} />
-          <Route path="/back-office/mestari-diagnostics-copy" element={<BackOfficeMestariDiagnosticsCopy />} />
           <Route path="/topic/:id" element={<TopicHubPage />} />
           <Route path="/striimaajat/:id" element={<TopicHubPage kind="streamers" />} />
           <Route path="/operaattorit/:id" element={<TopicHubPage kind="operators" />} />

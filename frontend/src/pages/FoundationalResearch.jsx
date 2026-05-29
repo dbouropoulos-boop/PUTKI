@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2, Upload } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -29,8 +29,12 @@ const emptyEntry = () => ({
 });
 
 const FoundationalResearch = () => {
-  const [token, setToken] = useToken();
-  const [authed, setAuthed] = useState(false);
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useToken();
+  const token = _shellCtx.token || _tokenLocal;
+  const [_authedLocal, setAuthed] = useState(false);
+  const authed = !!_shellCtx.token || _authedLocal;
   const [authError, setAuthError] = useState('');
   const [entries, setEntries] = useState([]);
   const [stats, setStats] = useState({ total: 0, active: 0, by_beat: {} });

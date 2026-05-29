@@ -5,7 +5,7 @@
  * results (one 1/X/2 per event), draw a winner.
  */
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Loader2, Lock, Unlock, Trophy, Save, Shuffle } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -13,10 +13,14 @@ const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki-hq-admin-token';
 
 const BackOfficeWeekly = () => {
-  const [token, setToken] = useState(() => {
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useState(() => {
     try { return localStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
   });
-  const [authed, setAuthed]     = useState(false);
+  const token = _shellCtx.token || _tokenLocal;
+  const [_authedLocal, setAuthed] = useState(false);
+  const authed = !!_shellCtx.token || _authedLocal;
   const [authError, setAuthError] = useState('');
   const [busy, setBusy]         = useState(false);
 

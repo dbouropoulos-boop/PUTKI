@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2, Image, Youtube } from 'lucide-react';
 import StreamerAvatar from '../components/StreamerAvatar';
 
@@ -20,8 +20,12 @@ const emptyStr = () => ({
 });
 
 const StreamersAdmin = () => {
-  const [token, setToken] = useToken();
-  const [authed, setAuthed] = useState(false);
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useToken();
+  const token = _shellCtx.token || _tokenLocal;
+  const [_authedLocal, setAuthed] = useState(false);
+  const authed = !!_shellCtx.token || _authedLocal;
   const [error, setError] = useState('');
   const [streamers, setStreamers] = useState([]);
   const [selected, setSelected] = useState(null);

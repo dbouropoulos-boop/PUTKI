@@ -8,7 +8,7 @@
  * Auth: X-Admin-Token header (same as /back-office/webhooks).
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, CheckCircle2, XCircle, Edit3, Eye, ArrowUpRight, Loader2 } from 'lucide-react';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -285,7 +285,10 @@ const useToken = () => {
 };
 
 const BackOfficeDrafts = () => {
-  const [token, setToken] = useToken();
+  // iter82 · Task 2.2 — shell-injected token short-circuits the per-page gate.
+  const _shellCtx = useOutletContext() || {};
+  const [_tokenLocal, setToken] = useToken();
+  const token = _shellCtx.token || _tokenLocal;
   const [tokenInput, setTokenInput] = useState(token);
   const [drafts, setDrafts] = useState([]);
   const [status, setStatus] = useState('draft');
