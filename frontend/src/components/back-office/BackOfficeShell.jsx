@@ -9,12 +9,17 @@
  *
  * Routes that opt in render via React Router's <Outlet />. Pages that
  * use the shell should NOT render their own auth gate or "← Back" link.
+ *
+ * Phase 2.1 visual lockdown: light theme, ember accent, hairline borders,
+ * Inter body, JetBrains Mono labels. All chrome tokens come from the
+ * Phase 1 CSS variable system (`--bg`, `--surface`, `--ink`, `--line`,
+ * `--ember*`).
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity, AlertTriangle, BarChart3, BookOpen, Bot, ChevronRight, Clapperboard,
-  Cog, Command as CommandIcon, Dices, FileText, Flame, Gift, Globe, Inbox, Layers, Link2,
+  Command as CommandIcon, Dices, FileText, Flame, Gift, Globe, Inbox, Layers, Link2,
   LogOut, Megaphone, Radio, Search, Settings as SettingsIcon, Shield, Sparkles, Telescope,
   Trophy, Users, Video, Webhook,
 } from 'lucide-react';
@@ -25,6 +30,9 @@ import {
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki-hq-admin-token';
+
+// JetBrains Mono for labels and counters — Phase 1 token system.
+const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
 
 
 // ─── Nav registry ─────────────────────────────────────────────────────
@@ -89,7 +97,7 @@ const tokenStore = {
     try { sessionStorage.setItem(TOKEN_KEY, v); } catch { /* noop */ }
     // Keep the legacy localStorage key in sync ONLY because existing
     // ops pages still read it directly. Once they migrate to the shell
-    // we can drop this line.
+    // we can drop this line (Task 2.3).
     try { localStorage.setItem('putki_back_office_token', v); } catch { /* noop */ }
   },
   clear() {
@@ -99,19 +107,24 @@ const tokenStore = {
 };
 
 
-// ─── Auth gate ───────────────────────────────────────────────────────
+// ─── Auth gate (Phase 2.1 light reskin) ──────────────────────────────
 const AuthGate = ({ onUnlock, error }) => {
   const [val, setVal] = useState('');
   return (
     <div data-testid="bo-shell-authgate" style={{
-      minHeight: '100vh', background: '#0B0A09', color: '#F2EBE0',
+      minHeight: '100vh', background: 'var(--bg)', color: 'var(--ink)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
     }}>
       <div style={{ maxWidth: 420, width: '100%', padding: 32 }}>
-        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.3em', color: '#E8C26E', fontWeight: 800, marginBottom: 16 }}>
+        <div style={{
+          fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.3em',
+          color: 'var(--ember)', fontWeight: 800, marginBottom: 16,
+        }}>
           PUTKI HQ · BACK-OFFICE
         </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 20px' }}>
+        <h1 className="display" style={{
+          fontSize: 32, letterSpacing: '-0.025em', margin: '0 0 20px', color: 'var(--ink)',
+        }}>
           Sign in
         </h1>
         <form onSubmit={(e) => { e.preventDefault(); onUnlock(val); }}>
@@ -119,51 +132,73 @@ const AuthGate = ({ onUnlock, error }) => {
             type="password" placeholder="Admin token" value={val}
             onChange={(e) => setVal(e.target.value)} autoFocus
             data-testid="bo-shell-token-input"
+            onFocus={(e) => {
+              e.target.style.borderColor = 'var(--ember)';
+              e.target.style.boxShadow = '0 0 0 3px var(--ember-soft)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = 'var(--line-strong)';
+              e.target.style.boxShadow = 'none';
+            }}
             style={{
-              width: '100%', padding: '12px 14px', background: 'transparent',
-              color: '#F2EBE0', border: '1px solid #2a2722', borderRadius: 4,
-              fontFamily: 'ui-monospace, monospace', fontSize: 13, marginBottom: 12,
+              width: '100%', padding: '12px 14px', background: 'var(--bg)',
+              color: 'var(--ink)', border: '1px solid var(--line-strong)',
+              borderRadius: 4, fontFamily: MONO, fontSize: 13, marginBottom: 12,
+              outline: 'none', transition: 'border-color 100ms ease, box-shadow 100ms ease',
+              boxSizing: 'border-box',
             }} />
           <button type="submit" data-testid="bo-shell-token-submit"
             style={{
-              width: '100%', padding: '13px 18px', background: '#E8C26E', color: '#0B0A09',
-              border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 11,
+              width: '100%', padding: '13px 18px', background: 'var(--ember)',
+              color: '#FFFFFF', border: 0, fontFamily: MONO, fontSize: 11,
               letterSpacing: '0.24em', fontWeight: 800, cursor: 'pointer', borderRadius: 4,
             }}>UNLOCK →</button>
         </form>
-        {error && <div data-testid="bo-shell-auth-error" style={{ marginTop: 14, color: '#FF8A7F', fontFamily: 'ui-monospace, monospace', fontSize: 12 }}>{error}</div>}
+        {error && (
+          <div data-testid="bo-shell-auth-error" style={{
+            marginTop: 14, color: 'var(--dial-myrsky)',
+            fontFamily: MONO, fontSize: 12,
+          }}>{error}</div>
+        )}
       </div>
     </div>
   );
 };
 
 
-// ─── Status chip ─────────────────────────────────────────────────────
+// ─── Status chip (Phase 2.1 light reskin) ────────────────────────────
 const StatusChip = ({ label, value, tone = 'neutral', icon: Icon, onClick, testid }) => {
+  // Per spec: ember tone for "ok"/"MODE" states, var(--dial-myrsky) for warn,
+  // muted for neutral. bg is the matching soft tint.
   const toneColor = {
-    ok: { dot: '#6FA37D', bg: '#0e1d12' },
-    warn: { dot: '#E8C26E', bg: '#1a1610' },
-    bad: { dot: '#C8423C', bg: '#211010' },
-    neutral: { dot: '#9C8B6B', bg: '#13110d' },
+    ok:      { dot: 'var(--ember-strong)',  bg: 'var(--ember-soft)' },
+    warn:    { dot: 'var(--dial-myrsky)',   bg: '#FBEDEC' },
+    bad:     { dot: 'var(--dial-myrsky)',   bg: '#FBEDEC' },
+    neutral: { dot: 'var(--ink-3)',         bg: 'var(--surface)' },
   }[tone];
   return (
     <button onClick={onClick} type="button" data-testid={testid}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 8,
         padding: '6px 12px', background: toneColor.bg,
-        border: '1px solid #2a2722', borderRadius: 999, cursor: onClick ? 'pointer' : 'default',
-        fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.06em',
-        color: '#F2EBE0', whiteSpace: 'nowrap',
+        border: '1px solid var(--line)', borderRadius: 999,
+        cursor: onClick ? 'pointer' : 'default',
+        fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em',
+        color: 'var(--ink)', whiteSpace: 'nowrap',
+        transition: 'background-color 100ms ease, border-color 100ms ease',
       }}>
       {Icon && <Icon size={12} strokeWidth={2.2} style={{ color: toneColor.dot }} />}
-      <span style={{ color: '#9C8B6B', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', fontSize: 9.5 }}>{label}</span>
-      <span style={{ color: '#F2EBE0', fontWeight: 700 }}>{value}</span>
+      <span style={{
+        color: 'var(--ink-3)', fontWeight: 600, letterSpacing: '0.16em',
+        textTransform: 'uppercase', fontSize: 9.5,
+      }}>{label}</span>
+      <span style={{ color: 'var(--ink)', fontWeight: 700 }}>{value}</span>
     </button>
   );
 };
 
 
-// ─── Top status strip ────────────────────────────────────────────────
+// ─── Top status strip (Phase 2.1 light reskin) ───────────────────────
 const StatusStrip = ({ token }) => {
   const navigate = useNavigate();
   const [snap, setSnap] = useState(null);
@@ -197,10 +232,10 @@ const StatusStrip = ({ token }) => {
   return (
     <div data-testid="bo-shell-status-strip" style={{
       display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 24px',
-      borderBottom: '1px solid #1a1815', background: '#0e0d0b',
+      borderBottom: '1px solid var(--line)', background: 'var(--surface)',
       alignItems: 'center',
     }}>
-      <StatusChip testid="status-mode"   label="MODE"     value={routed ? 'ROUTED' : 'INFORMATIVE'} tone={routed ? 'ok' : 'neutral'} icon={Link2} onClick={() => navigate('/back-office/bot-routing')} />
+      <StatusChip testid="status-mode"   label="MODE"     value={routed ? 'ROUTED' : 'INFORMATIVE'} tone={routed ? 'ok' : 'neutral'} icon={Link2}     onClick={() => navigate('/back-office/bot-routing')} />
       <StatusChip testid="status-dm"     label="DAILY DM" value={dmOn ? 'ON' : 'OFF'}               tone={dmOn ? 'ok' : 'warn'}      icon={Megaphone} onClick={() => navigate('/back-office/bot-routing')} />
       <StatusChip testid="status-voita"  label="VOITA"    value={voitaOn ? 'LIVE' : 'GATED'}        tone={voitaOn ? 'ok' : 'warn'}   icon={Trophy}    onClick={() => navigate('/back-office/settings')} />
       <span style={{ flex: 1 }} />
@@ -212,42 +247,58 @@ const StatusStrip = ({ token }) => {
 };
 
 
-// ─── Left nav ────────────────────────────────────────────────────────
+// ─── Left nav (Phase 2.1 light reskin) ───────────────────────────────
 const Sidebar = ({ onLogout, onOpenCmd, density, setDensity }) => {
   return (
     <aside data-testid="bo-shell-sidebar" style={{
-      width: 240, background: '#0B0A09', borderRight: '1px solid #1a1815',
+      width: 240, background: 'var(--bg)', borderRight: '1px solid var(--line)',
       display: 'flex', flexDirection: 'column', position: 'sticky', top: 0,
       height: '100vh', overflowY: 'auto',
     }}>
       <NavLink to="/back-office" style={{
-        padding: '20px 22px 16px', borderBottom: '1px solid #1a1815',
+        padding: '20px 22px 16px', borderBottom: '1px solid var(--line)',
         textDecoration: 'none',
       }}>
-        <div style={{ fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.3em', color: '#9C8B6B', fontWeight: 800 }}>
+        <div style={{
+          fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.3em',
+          color: 'var(--ink-3)', fontWeight: 800,
+        }}>
           PUTKI HQ
         </div>
-        <div style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#F2EBE0', letterSpacing: '-0.01em', marginTop: 2 }}>
+        <div className="display" style={{
+          fontSize: 20, color: 'var(--ink)', letterSpacing: '-0.025em', marginTop: 2,
+        }}>
           Back-office
         </div>
       </NavLink>
 
       <button onClick={onOpenCmd} data-testid="bo-shell-cmdk-trigger"
         style={{
-          margin: '14px 14px 4px', padding: '8px 12px', background: '#13110d',
-          border: '1px solid #2a2722', color: '#9C8B6B', cursor: 'pointer',
-          fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.06em',
+          margin: '14px 14px 4px', padding: '8px 12px', background: 'var(--surface)',
+          border: '1px solid var(--line)', color: 'var(--ink-3)', cursor: 'pointer',
+          fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em',
           display: 'flex', alignItems: 'center', gap: 8, borderRadius: 4,
-        }}>
+          transition: 'background-color 100ms ease, color 100ms ease',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-2)'; e.currentTarget.style.color = 'var(--ink)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface)';   e.currentTarget.style.color = 'var(--ink-3)'; }}>
         <Search size={13} />
         <span>Jump to…</span>
-        <span style={{ marginLeft: 'auto', padding: '1px 5px', background: '#1a1815', border: '1px solid #2a2722', borderRadius: 3, fontSize: 9.5, letterSpacing: '0.06em' }}>⌘K</span>
+        <span style={{
+          marginLeft: 'auto', padding: '1px 5px', background: 'var(--bg)',
+          border: '1px solid var(--line)', borderRadius: 3,
+          fontSize: 9.5, letterSpacing: '0.06em', color: 'var(--ink-3)',
+        }}>⌘K</span>
       </button>
 
       <nav style={{ padding: '8px 0 24px', flex: 1 }}>
         {NAV_GROUPS.map((group) => (
           <div key={group.label} style={{ marginTop: 14 }}>
-            <div style={{ padding: '4px 22px', fontFamily: 'ui-monospace, monospace', fontSize: 9, letterSpacing: '0.24em', color: '#5a4c2e', fontWeight: 800 }}>
+            <div style={{
+              padding: '4px 22px', fontFamily: MONO, fontSize: 11,
+              letterSpacing: '0.14em', color: 'var(--ink-3)',
+              fontWeight: 700, textTransform: 'uppercase',
+            }}>
               {group.label}
             </div>
             {group.items.map((item) => {
@@ -257,11 +308,15 @@ const Sidebar = ({ onLogout, onOpenCmd, density, setDensity }) => {
                   data-testid={`bo-shell-nav-${item.to.split('/').pop()}`}
                   style={({ isActive }) => ({
                     display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 22px', fontFamily: 'Georgia, serif', fontSize: 14,
-                    color: isActive ? '#E8C26E' : '#D8CDB9', textDecoration: 'none',
-                    background: isActive ? '#1a1610' : 'transparent',
-                    borderLeft: isActive ? '2px solid #E8C26E' : '2px solid transparent',
-                    transition: 'background 100ms ease',
+                    padding: '8px 22px',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: 14,
+                    fontWeight: isActive ? 600 : 500,
+                    color: isActive ? 'var(--ember-strong)' : 'var(--ink-2)',
+                    textDecoration: 'none',
+                    background: isActive ? 'var(--ember-soft)' : 'transparent',
+                    borderLeft: isActive ? '3px solid var(--ember)' : '3px solid transparent',
+                    transition: 'background 100ms ease, color 100ms ease',
                   })}>
                   <Icon size={14} strokeWidth={2} />
                   <span>{item.label}</span>
@@ -272,15 +327,27 @@ const Sidebar = ({ onLogout, onOpenCmd, density, setDensity }) => {
         ))}
       </nav>
 
-      <div style={{ borderTop: '1px solid #1a1815', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{
+        borderTop: '1px solid var(--line)', padding: '10px 14px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
         <button onClick={() => setDensity(density === 'comfortable' ? 'compact' : 'comfortable')}
           data-testid="bo-shell-density-toggle"
           title="Toggle density"
-          style={{ background: 'transparent', border: '1px solid #2a2722', color: '#9C8B6B', cursor: 'pointer', fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.16em', padding: '5px 10px', borderRadius: 4 }}>
+          style={{
+            background: 'transparent', border: '1px solid var(--line)',
+            color: 'var(--ink-3)', cursor: 'pointer',
+            fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.16em',
+            padding: '5px 10px', borderRadius: 4,
+          }}>
           {density === 'comfortable' ? 'COMPACT' : 'COMFORT'}
         </button>
         <button onClick={onLogout} data-testid="bo-shell-logout"
-          style={{ background: 'transparent', border: 0, color: '#9C8B6B', cursor: 'pointer', fontFamily: 'ui-monospace, monospace', fontSize: 9.5, letterSpacing: '0.16em', display: 'flex', alignItems: 'center', gap: 6 }}>
+          style={{
+            background: 'transparent', border: 0, color: 'var(--ink-3)',
+            cursor: 'pointer', fontFamily: MONO, fontSize: 9.5,
+            letterSpacing: '0.16em', display: 'flex', alignItems: 'center', gap: 6,
+          }}>
           <LogOut size={12} /> LOG OUT
         </button>
       </div>
@@ -289,7 +356,10 @@ const Sidebar = ({ onLogout, onOpenCmd, density, setDensity }) => {
 };
 
 
-// ─── Command palette ─────────────────────────────────────────────────
+// ─── Command palette (Phase 2.1 light reskin) ────────────────────────
+// The CommandDialog itself uses shadcn/ui tokens (popover/foreground),
+// which Phase 1 already mapped to light. We override the inner items
+// to render with the new ember-soft active state.
 const CmdkPalette = ({ open, onOpenChange, token, onRefresh }) => {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
@@ -322,57 +392,78 @@ const CmdkPalette = ({ open, onOpenChange, token, onRefresh }) => {
   const select = (to) => { onOpenChange(false); navigate(to); };
 
   return (
-    <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search pages or type 'enable voita'…" data-testid="bo-shell-cmdk-input" />
-      <CommandList>
-        <CommandEmpty>No results.</CommandEmpty>
-        {NAV_GROUPS.map((group) => (
-          <CommandGroup key={group.label} heading={group.label}>
-            {group.items.map((item) => {
-              const Icon = item.icon;
-              return (
-                <CommandItem key={item.to} value={`${item.label} ${item.keywords}`}
-                  onSelect={() => select(item.to)} data-testid={`cmdk-${item.to.split('/').pop()}`}>
-                  <Icon className="mr-2 h-4 w-4" />
-                  <span>{item.label}</span>
-                  <ChevronRight className="ml-auto h-3 w-3 opacity-40" />
-                </CommandItem>
-              );
-            })}
+    <>
+      {/* Selected item ember-soft override — scoped to the dialog. */}
+      <style>{`
+        [data-testid="bo-shell-cmdk-input"] {
+          font-family: ${MONO};
+        }
+        [cmdk-root] [cmdk-item][data-selected="true"],
+        [cmdk-root] [cmdk-item][aria-selected="true"] {
+          background: var(--ember-soft) !important;
+          color: var(--ember-strong) !important;
+        }
+        [cmdk-root] [cmdk-group-heading] {
+          font-family: ${MONO};
+          font-size: 10.5px;
+          letter-spacing: 0.14em;
+          color: var(--ink-3);
+          text-transform: uppercase;
+          font-weight: 700;
+        }
+      `}</style>
+      <CommandDialog open={open} onOpenChange={onOpenChange}>
+        <CommandInput placeholder="Search pages or type 'enable voita'…" data-testid="bo-shell-cmdk-input" />
+        <CommandList>
+          <CommandEmpty>No results.</CommandEmpty>
+          {NAV_GROUPS.map((group) => (
+            <CommandGroup key={group.label} heading={group.label}>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <CommandItem key={item.to} value={`${item.label} ${item.keywords}`}
+                    onSelect={() => select(item.to)} data-testid={`cmdk-${item.to.split('/').pop()}`}>
+                    <Icon className="mr-2 h-4 w-4" />
+                    <span>{item.label}</span>
+                    <ChevronRight className="ml-auto h-3 w-3 opacity-40" />
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          ))}
+          <CommandGroup heading="ACTIONS · LIVE FLIPS">
+            <CommandItem value="enable voita raffles" onSelect={() => runFlip('Enable Voita', () => putSettings({ voita_feature_enabled: true }))} data-testid="cmdk-action-enable-voita">
+              <Trophy className="mr-2 h-4 w-4" /> Enable Voita raffles
+            </CommandItem>
+            <CommandItem value="disable voita raffles" onSelect={() => runFlip('Disable Voita', () => putSettings({ voita_feature_enabled: false }))} data-testid="cmdk-action-disable-voita">
+              <Trophy className="mr-2 h-4 w-4 opacity-60" /> Disable Voita (rollback)
+            </CommandItem>
+            <CommandItem value="enable daily dm dispatch" onSelect={() => runFlip('Enable daily DM', () => putConfig({ daily_dm_enabled: true }))} data-testid="cmdk-action-enable-daily-dm">
+              <Megaphone className="mr-2 h-4 w-4" /> Enable daily DM dispatch
+            </CommandItem>
+            <CommandItem value="disable daily dm dispatch" onSelect={() => runFlip('Disable daily DM', () => putConfig({ daily_dm_enabled: false }))} data-testid="cmdk-action-disable-daily-dm">
+              <Megaphone className="mr-2 h-4 w-4 opacity-60" /> Disable daily DM
+            </CommandItem>
+            <CommandItem value="flip router routed" onSelect={() => runFlip('Flip router → ROUTED', () => putConfig({ signal_unlock_mode: 'routed' }))} data-testid="cmdk-action-flip-routed">
+              <Link2 className="mr-2 h-4 w-4" /> Flip router → ROUTED (monetisation)
+            </CommandItem>
+            <CommandItem value="rollback router informative" onSelect={() => runFlip('Rollback → INFORMATIVE', () => putConfig({ signal_unlock_mode: 'informative' }))} data-testid="cmdk-action-flip-informative">
+              <AlertTriangle className="mr-2 h-4 w-4 opacity-60" /> Rollback router → INFORMATIVE
+            </CommandItem>
           </CommandGroup>
-        ))}
-        <CommandGroup heading="ACTIONS · LIVE FLIPS">
-          <CommandItem value="enable voita raffles" onSelect={() => runFlip('Enable Voita', () => putSettings({ voita_feature_enabled: true }))} data-testid="cmdk-action-enable-voita">
-            <Trophy className="mr-2 h-4 w-4" /> Enable Voita raffles
-          </CommandItem>
-          <CommandItem value="disable voita raffles" onSelect={() => runFlip('Disable Voita', () => putSettings({ voita_feature_enabled: false }))} data-testid="cmdk-action-disable-voita">
-            <Trophy className="mr-2 h-4 w-4 opacity-60" /> Disable Voita (rollback)
-          </CommandItem>
-          <CommandItem value="enable daily dm dispatch" onSelect={() => runFlip('Enable daily DM', () => putConfig({ daily_dm_enabled: true }))} data-testid="cmdk-action-enable-daily-dm">
-            <Megaphone className="mr-2 h-4 w-4" /> Enable daily DM dispatch
-          </CommandItem>
-          <CommandItem value="disable daily dm dispatch" onSelect={() => runFlip('Disable daily DM', () => putConfig({ daily_dm_enabled: false }))} data-testid="cmdk-action-disable-daily-dm">
-            <Megaphone className="mr-2 h-4 w-4 opacity-60" /> Disable daily DM
-          </CommandItem>
-          <CommandItem value="flip router routed" onSelect={() => runFlip('Flip router → ROUTED', () => putConfig({ signal_unlock_mode: 'routed' }))} data-testid="cmdk-action-flip-routed">
-            <Link2 className="mr-2 h-4 w-4" /> Flip router → ROUTED (monetisation)
-          </CommandItem>
-          <CommandItem value="rollback router informative" onSelect={() => runFlip('Rollback → INFORMATIVE', () => putConfig({ signal_unlock_mode: 'informative' }))} data-testid="cmdk-action-flip-informative">
-            <AlertTriangle className="mr-2 h-4 w-4 opacity-60" /> Rollback router → INFORMATIVE
-          </CommandItem>
-        </CommandGroup>
-      </CommandList>
-      {(busy || feedback) && (
-        <div data-testid="bo-shell-cmdk-feedback" style={{
-          padding: '8px 14px', borderTop: '1px solid var(--border, #2a2722)',
-          fontFamily: 'ui-monospace, monospace', fontSize: 11, letterSpacing: '0.06em',
-          color: feedback?.ok === false ? '#FF8A7F' : '#6FA37D',
-          background: feedback?.ok === false ? '#211010' : '#0e1d12',
-        }}>
-          {busy ? 'Running…' : feedback?.text}
-        </div>
-      )}
-    </CommandDialog>
+        </CommandList>
+        {(busy || feedback) && (
+          <div data-testid="bo-shell-cmdk-feedback" style={{
+            padding: '8px 14px', borderTop: '1px solid var(--line)',
+            fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em',
+            color: feedback?.ok === false ? 'var(--dial-myrsky)' : 'var(--ember-strong)',
+            background: feedback?.ok === false ? '#FBEDEC' : 'var(--ember-soft)',
+          }}>
+            {busy ? 'Running…' : feedback?.text}
+          </div>
+        )}
+      </CommandDialog>
+    </>
   );
 };
 
@@ -452,18 +543,22 @@ const BackOfficeShell = () => {
   if (!authed) return <AuthGate onUnlock={onUnlock} error={authError} />;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#0B0A09', color: '#F2EBE0' }}>
+    <div style={{
+      display: 'flex', minHeight: '100vh',
+      background: 'var(--bg)', color: 'var(--ink)',
+    }}>
       <DensityStyles density={density} />
       <Sidebar onLogout={onLogout} onOpenCmd={() => setCmdkOpen(true)} density={density} setDensity={setDensity} />
       <main data-testid="bo-shell-main" style={{ flex: 1, minWidth: 0 }}>
         <StatusStrip token={token} />
         {currentItem && (
           <div data-testid="bo-shell-breadcrumb" style={{
-            padding: '10px 28px', borderBottom: '1px solid #1a1815',
-            fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.18em', color: '#9C8B6B',
+            padding: '10px 28px', borderBottom: '1px solid var(--line)',
+            fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.18em',
+            color: 'var(--ink-3)',
           }}>
             BACK-OFFICE <span style={{ margin: '0 8px' }}>›</span>
-            <span style={{ color: '#E8C26E', fontWeight: 700 }}>{currentItem.label.toUpperCase()}</span>
+            <span style={{ color: 'var(--ember-strong)', fontWeight: 700 }}>{currentItem.label.toUpperCase()}</span>
           </div>
         )}
         <div className="bo-shell-page" data-testid="bo-shell-content">
