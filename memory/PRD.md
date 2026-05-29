@@ -9,6 +9,18 @@
 
 ## Phase History (latest first)
 
+- **iter82b · Phase 2.2 — Back-office routes consolidated under <BackOfficeShell />** (2026-05-29, testing_agent_v3_fork: 100% frontend pass · 27/27 backend tests green)
+  - **Scope**: every remaining `/back-office/*` route (22 pages) was moved INSIDE the existing `<Route element={<BackOfficeShell />}>` block in `App.js`. The shell now wraps the entire back-office surface: `/back-office` (index), `queue`, `foundational-research`, `operators`, `streamers`, `webhooks`, `telegram`, `drafts`, `weekly`, `peli`, `streamer-meta`, `slot-registry`, `optin-segments`, `dispatch-preview`, `voita`, `voita-quiz`, `mittari-copy`, `mestari-copy`, `voyager`, `playbook`, `profiler-funnel`, `news-watch`, `mini-games`, `analytics/mini-games`, `email-templates`, `mestari-diagnostics-copy` — plus the 7 already-migrated iter77/80 pages.
+  - **Shell-aware hook patch**: `useBackOfficeToken` now first checks `useOutletContext()`. When a shell-injected token is present it returns `{token: shellToken, authed: true, …}` immediately, bypassing the standalone localStorage read + verify round-trip. This auto-migrated all ~12 pages that already used the hook with zero per-page changes.
+  - **Inline-state pages (12)** got a 2-line shadowing patch: import `useOutletContext`, then `const token = _shellCtx.token || _tokenLocal` + `const authed = !!_shellCtx.token || _authedLocal`. Legacy per-page AuthGate JSX stays in the file but is unreachable from inside the shell (authed is always true). Patched: `BackOffice`, `BackOfficeQueue`, `BackOfficeWeekly`, `BackOfficePeli`, `BackOfficeWebhooks`, `BackOfficeDrafts`, `BackOfficeMiniGames`, `BackOfficeMiniGameAnalytics`, `OperatorsAdmin`, `StreamersAdmin`, `FoundationalResearch`, `BackOfficeProfilerFunnel`.
+  - **Result**: single sign-in at the shell's AuthGate unlocks every back-office page. Sidebar, status strip, breadcrumb, and Cmd+K persist across all navigations. Per the testing agent verdict: "no duplicate AuthGate appears on any inner route." All 22 page-specific testids confirmed present after shell sign-in.
+  - **Backend regression**: 27/27 across iter77/78/80/81/82 still green.
+  - **Lint clean**: ESLint on all 14 changed JS files (`App.js`, `useBackOfficeToken.js`, and 12 page files) — all ✅.
+  - **Carry-overs (non-blocking)**:
+    - Radix a11y warning: `DialogContent` missing `DialogTitle` in the Cmd+K palette. Cosmetic.
+    - `bo-integrations-*` vs `bo-smartico-*` testid naming drift on the Integrations page (functional, just spec drift).
+    - Legacy per-page AuthGate JSX is dead code; can be deleted in a follow-up cleanup pass.
+
 - **iter81 · Phase 2.5 — Integrations page** (2026-05-29, +4 backend tests · 4/4 green · AI-vision verified · live regression confirmed)
   - **Scope correction surfaced**: `BackOfficeSettings.jsx` had **zero** Smartico references today (grep confirmed) — the 3 backend fields (`smartico_template_id`, `smartico_loader_url`, `smartico_brand_key`) on `_get_settings_doc()` / `GET-PUT /api/admin/settings` were already wired and live but had never been exposed in any editor UI. Step 8 of the original spec ("remove from settings") becomes a no-op. The task is really "build the first-ever editorial UI for these fields on a new dedicated page."
   - **`BackOfficeIntegrations.jsx`** (new page) at `/back-office/integrations` under `<BackOfficeShell />`:
