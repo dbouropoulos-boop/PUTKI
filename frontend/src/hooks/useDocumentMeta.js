@@ -30,12 +30,17 @@ const setMeta = ({ name, property, content }) => {
   return el;
 };
 
-const setLink = ({ rel, href }) => {
+const setLink = ({ rel, href, hreflang }) => {
   if (!href) return null;
-  let el = document.head.querySelector(`link[rel="${rel}"][${TAG_KEY_ATTR}]`);
+  // Build a per-(rel,hreflang) selector so multiple alternates can coexist.
+  const sel = hreflang
+    ? `link[rel="${rel}"][hreflang="${hreflang}"][${TAG_KEY_ATTR}]`
+    : `link[rel="${rel}"][${TAG_KEY_ATTR}]`;
+  let el = document.head.querySelector(sel);
   if (!el) {
     el = document.createElement('link');
     el.setAttribute('rel', rel);
+    if (hreflang) el.setAttribute('hreflang', hreflang);
     el.setAttribute(TAG_KEY_ATTR, '1');
     document.head.appendChild(el);
   }
@@ -53,6 +58,7 @@ const useDocumentMeta = ({
   twitterCard,
   twitterDescription,
   canonical,
+  alternates,
   articleTags,
 } = {}) => {
   // Collapse all meta values into a single stable key - the hook
@@ -60,6 +66,7 @@ const useDocumentMeta = ({
   const metaKey = JSON.stringify({
     title, description, ogTitle, ogDescription, ogImage, ogUrl,
     twitterCard, twitterDescription, canonical,
+    alternates: (alternates || []).map((a) => `${a.lang || ''}|${a.href || ''}`).join('::'),
     articleTags: (articleTags || []).join('|'),
   });
 
@@ -81,6 +88,9 @@ const useDocumentMeta = ({
     if (ogImage) tags.push(setMeta({ name: 'twitter:image', content: ogImage }));
 
     const linkEl = canonical ? setLink({ rel: 'canonical', href: canonical }) : null;
+    const alternateEls = (alternates || []).map((a) =>
+      a && a.href && a.lang ? setLink({ rel: 'alternate', hreflang: a.lang, href: a.href }) : null,
+    ).filter(Boolean);
     const articleTagEls = [];
     (articleTags || []).forEach((tag) => {
       if (!tag) return;
@@ -96,6 +106,7 @@ const useDocumentMeta = ({
       document.title = prevTitle;
       tags.forEach((el) => el && el.parentNode && el.parentNode.removeChild(el));
       articleTagEls.forEach((el) => el.parentNode && el.parentNode.removeChild(el));
+      alternateEls.forEach((el) => el.parentNode && el.parentNode.removeChild(el));
       if (linkEl && linkEl.parentNode) linkEl.parentNode.removeChild(linkEl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

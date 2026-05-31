@@ -2657,6 +2657,12 @@ api_router.include_router(_build_activity_router(require_admin, db))
 from routes.seo import build_sitemap_router as _build_sitemap_router  # noqa: E402
 api_router.include_router(_build_sitemap_router(db))
 
+# iter88 · Phase 4 wave 4 — public data endpoints powering the
+# trust-signal long-form pages (Mestari dataset summary, Voita
+# outcomes ledger, Mittari accuracy back-test).
+from routes.data_pages import build_data_pages_router as _build_data_pages_router  # noqa: E402
+api_router.include_router(_build_data_pages_router(db))
+
 # iter84 · action_type → back-office route mapping for the generic
 # auto-logged middleware rows. Keep this list tight — when the
 # cockpit feed surfaces an action_type without a mapping it cleanly

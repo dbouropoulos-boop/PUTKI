@@ -43,6 +43,18 @@ STATIC_ROUTES: List[Tuple[str, str, str]] = [
     ("/voita/usein-kysytyt", "monthly", "0.75"),
     ("/profiilit",      "weekly",  "0.6"),
     ("/profiilit/dioni-q-and-a", "monthly", "0.75"),
+    # iter88 · Phase 4 wave 2 localisation — EN canonicals
+    ("/en/mestari/methodology",    "monthly", "0.7"),
+    ("/en/mittari/sources",        "monthly", "0.7"),
+    ("/en/voita/faq",              "monthly", "0.7"),
+    ("/en/profiilit/dioni-q-and-a", "monthly", "0.7"),
+    # iter88 · Phase 4 wave 4 — trust-signal data pages (FI + EN)
+    ("/trust/mestari-aineisto",    "weekly",  "0.75"),
+    ("/trust/voita-tilikirja",     "weekly",  "0.75"),
+    ("/trust/mittari-tarkkuus",    "weekly",  "0.75"),
+    ("/en/trust/mestari-dataset",  "weekly",  "0.7"),
+    ("/en/trust/voita-ledger",     "weekly",  "0.7"),
+    ("/en/trust/mittari-accuracy", "weekly",  "0.7"),
     ("/saantely",       "monthly", "0.55"),
     ("/saantely/reform-2027", "monthly", "0.85"),
     ("/sponsoroinnit",  "monthly", "0.4"),

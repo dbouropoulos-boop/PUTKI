@@ -78,6 +78,7 @@ import { Pelit } from "@/pages/Pelit";
 import { PelitBlackjackDeep, PelitSlotitDeep, PelitBonusmatematiikkaDeep, PelitPokerDeep, PelitCrapsDeep, PelitRulettiDeep, PelitLiveDeep } from "@/pages/PelitDeepGuides";
 import Reform2027Hub from "@/pages/Reform2027Hub";
 import { MestariMenetelmaArticle, MittariLahteetArticle, VoitaUseinKysytytArticle, ProfiilitFounderQAArticle } from "@/pages/Phase4Wave2Articles";
+import { MestariDatasetSummary, VoitaLedger, MittariAccuracyBacktest } from "@/pages/Phase4Wave4DataPages";
 import Pulssi from "@/pages/Pulssi";
 import PeliAreenaHub from "@/pages/PeliAreenaHub";
 import PeliAreenaQuiz from "@/pages/PeliAreenaQuiz";
@@ -209,6 +210,18 @@ function App() {
             <Route path="mittari/lahteet" element={<MittariLahteetArticle />} />
             <Route path="voita/usein-kysytyt" element={<VoitaUseinKysytytArticle />} />
             <Route path="profiilit/dioni-q-and-a" element={<ProfiilitFounderQAArticle />} />
+            {/* iter88 · Phase 4 wave 2 localisation — distinct /en/... canonicals */}
+            <Route path="en/mestari/methodology" element={<MestariMenetelmaArticle forceLang="en" />} />
+            <Route path="en/mittari/sources" element={<MittariLahteetArticle forceLang="en" />} />
+            <Route path="en/voita/faq" element={<VoitaUseinKysytytArticle forceLang="en" />} />
+            <Route path="en/profiilit/dioni-q-and-a" element={<ProfiilitFounderQAArticle forceLang="en" />} />
+            {/* iter88 · Phase 4 wave 4 — trust-signal data pages (FI canonical + EN twin) */}
+            <Route path="trust/mestari-aineisto" element={<MestariDatasetSummary />} />
+            <Route path="en/trust/mestari-dataset" element={<MestariDatasetSummary forceLang="en" />} />
+            <Route path="trust/voita-tilikirja" element={<VoitaLedger />} />
+            <Route path="en/trust/voita-ledger" element={<VoitaLedger forceLang="en" />} />
+            <Route path="trust/mittari-tarkkuus" element={<MittariAccuracyBacktest />} />
+            <Route path="en/trust/mittari-accuracy" element={<MittariAccuracyBacktest forceLang="en" />} />
             <Route path="pulssi" element={<Pulssi />} />
 
             {/* V2 accountability surfaces */}

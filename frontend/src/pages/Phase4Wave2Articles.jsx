@@ -8,26 +8,31 @@ import InternalLinkStrip from '../components/InternalLinkStrip';
 
 /**
  * Phase 4 wave 2 — four deep editorial articles across the four
- * primary product surfaces:
+ * primary product surfaces.
  *
- *   /mestari/menetelma         — Mestari diagnostics methodology
- *   /mittari/lahteet           — Mittari source-trust deep dive
- *   /voita/usein-kysytyt       — Voita FAQ (gambling-law-compliant)
- *   /profiilit/dioni-q-and-a   — Profiilit founder Q&A
+ * iter88: each component now accepts an optional `forceLang` prop
+ * which overrides the `useLang()` context value AND drives the
+ * canonical URL + hreflang alternate list. This enables clean
+ * `/en/...` URLs that are crawler-distinct from the FI defaults.
  *
- * Each article carries:
- *   - `useDocumentMeta` with canonical URL + OG block.
- *   - `useJsonLd` with Article + BreadcrumbList; FAQPage where
- *     question/answer pairs structure the body.
- *   - `EditorialFooter` (byline + updated-at + read-time).
- *   - `InternalLinkStrip` "READ NEXT" rail to keep readers in-site.
- *   - Bilingual FI / EN flip via `useLang`.
+ * URL pairs (FI canonical · EN canonical):
+ *   /mestari/menetelma       ↔ /en/mestari/methodology
+ *   /mittari/lahteet         ↔ /en/mittari/sources
+ *   /voita/usein-kysytyt     ↔ /en/voita/faq
+ *   /profiilit/dioni-q-and-a ↔ /en/profiilit/dioni-q-and-a
  *
- * All copy is sourced from named public records or PUTKI HQ internal
- * docs — no fabricated quotes, no fabricated data. The Profiilit Q&A
- * uses verbatim positions PUTKI HQ has published elsewhere (Toimitus,
- * Affiliaatti) so it stays consistent with the rest of the site.
+ * Each article:
+ *   - useDocumentMeta with canonical + alternates [{fi-FI, en-FI, x-default}].
+ *   - useJsonLd Article + BreadcrumbList; FAQPage where applicable.
+ *   - EditorialFooter (byline + updated-at + read-time).
+ *   - InternalLinkStrip "READ NEXT" rail (lang-aware route hrefs).
+ *   - Body copy resolved from forceLang || useLang().lang.
  */
+
+const useEffectiveLang = (forceLang) => {
+  const ctx = useLang();
+  return forceLang || ctx.lang;
+};
 
 const block = (head, body, key) => ({ head, body, key });
 
@@ -126,16 +131,23 @@ const faqSchema = (faqs) => ({
 /* ───────────────────────────────────────────────────────────────
  * 1. /mestari/menetelma — Mestari diagnostics methodology
  * ───────────────────────────────────────────────────────────────*/
-export const MestariMenetelmaArticle = () => {
-  const { lang } = useLang();
+export const MestariMenetelmaArticle = ({ forceLang } = {}) => {
+  const lang = useEffectiveLang(forceLang);
   const isEn = lang === 'en';
-  const canonical = 'https://putkihq.com/mestari/menetelma';
+  const fiUrl = 'https://putkihq.com/mestari/menetelma';
+  const enUrl = 'https://putkihq.com/en/mestari/methodology';
+  const canonical = isEn ? enUrl : fiUrl;
   useDocumentMeta({
     title: isEn ? 'Mestari diagnostics — methodology in plain language · PUTKI HQ' : 'Mestari-diagnostiikat — menetelmä selkokielellä · PUTKI HQ',
     description: isEn
       ? 'How the Mestari sports / poker / blackjack diagnostics actually score you. Axes, weighting, sample sizes, and what the result card claims.'
       : 'Miten Mestarin urheilu- / pokeri- / blackjack-diagnostiikat oikeasti pisteyttävät sinut. Akselit, painotus, otoskoot ja mitä tuloskortti väittää.',
     canonical,
+    alternates: [
+      { lang: 'fi-FI', href: fiUrl },
+      { lang: 'en-FI', href: enUrl },
+      { lang: 'x-default', href: fiUrl },
+    ],
   });
   useJsonLd([
     articleSchema(isEn ? 'Mestari diagnostics — methodology in plain language' : 'Mestari-diagnostiikat — menetelmä selkokielellä', canonical, isEn),
@@ -232,16 +244,23 @@ export const MestariMenetelmaArticle = () => {
 /* ───────────────────────────────────────────────────────────────
  * 2. /mittari/lahteet — Mittari source-trust deep dive
  * ───────────────────────────────────────────────────────────────*/
-export const MittariLahteetArticle = () => {
-  const { lang } = useLang();
+export const MittariLahteetArticle = ({ forceLang } = {}) => {
+  const lang = useEffectiveLang(forceLang);
   const isEn = lang === 'en';
-  const canonical = 'https://putkihq.com/mittari/lahteet';
+  const fiUrl = 'https://putkihq.com/mittari/lahteet';
+  const enUrl = 'https://putkihq.com/en/mittari/sources';
+  const canonical = isEn ? enUrl : fiUrl;
   useDocumentMeta({
     title: isEn ? 'Mittari — the 28 sources behind every signal · PUTKI HQ' : 'Mittari — 28 lähdettä jokaisen signaalin takana · PUTKI HQ',
     description: isEn
       ? 'How Mittari aggregates 28 named sources across 6 categories, how weighting works, and what happens when sources disagree.'
       : 'Miten Mittari yhdistää 28 nimettyä lähdettä kuudessa kategoriassa, miten painotus toimii ja mitä tapahtuu kun lähteet ovat eri mieltä.',
     canonical,
+    alternates: [
+      { lang: 'fi-FI', href: fiUrl },
+      { lang: 'en-FI', href: enUrl },
+      { lang: 'x-default', href: fiUrl },
+    ],
   });
   useJsonLd([
     articleSchema(isEn ? 'Mittari — the 28 sources behind every signal' : 'Mittari — 28 lähdettä jokaisen signaalin takana', canonical, isEn),
@@ -371,10 +390,12 @@ export const MittariLahteetArticle = () => {
 /* ───────────────────────────────────────────────────────────────
  * 3. /voita/usein-kysytyt — Voita FAQ explainer (FAQPage schema)
  * ───────────────────────────────────────────────────────────────*/
-export const VoitaUseinKysytytArticle = () => {
-  const { lang } = useLang();
+export const VoitaUseinKysytytArticle = ({ forceLang } = {}) => {
+  const lang = useEffectiveLang(forceLang);
   const isEn = lang === 'en';
-  const canonical = 'https://putkihq.com/voita/usein-kysytyt';
+  const fiUrl = 'https://putkihq.com/voita/usein-kysytyt';
+  const enUrl = 'https://putkihq.com/en/voita/faq';
+  const canonical = isEn ? enUrl : fiUrl;
   const faqs = isEn ? [
     { q: 'Is Voita gambling?', a: 'No. Voita raffles are non-monetary prize draws conducted under the Finnish raffles framework (Arpajaislaki §27). Entry is free, no purchase is required, and there is no element of stake.' },
     { q: 'How do I enter?', a: 'Each raffle landing page (e.g. /voita/<slug>) lists the exact entry actions — typically subscribing to the PUTKI HQ Telegram channel or completing a free diagnostic. We never ask for payment.' },
@@ -405,6 +426,11 @@ export const VoitaUseinKysytytArticle = () => {
       ? 'Free-entry raffle FAQ. Eligibility, draw mechanics, taxation, post-2027 status. PUTKI HQ operates under Arpajaislaki §27.'
       : 'Ilmais­osallistumis­arvontojen FAQ. Osallistumis­oikeus, arvonta­mekaniikka, verotus, 2027 jälkeinen status. PUTKI HQ toimii Arpajais­lain §27 puitteissa.',
     canonical,
+    alternates: [
+      { lang: 'fi-FI', href: fiUrl },
+      { lang: 'en-FI', href: enUrl },
+      { lang: 'x-default', href: fiUrl },
+    ],
   });
   useJsonLd([
     articleSchema(isEn ? 'Voita raffles — FAQ' : 'Voita-arvonnat — kysytyt', canonical, isEn),
@@ -458,10 +484,12 @@ export const VoitaUseinKysytytArticle = () => {
 /* ───────────────────────────────────────────────────────────────
  * 4. /profiilit/dioni-q-and-a — Profiilit founder Q&A
  * ───────────────────────────────────────────────────────────────*/
-export const ProfiilitFounderQAArticle = () => {
-  const { lang } = useLang();
+export const ProfiilitFounderQAArticle = ({ forceLang } = {}) => {
+  const lang = useEffectiveLang(forceLang);
   const isEn = lang === 'en';
-  const canonical = 'https://putkihq.com/profiilit/dioni-q-and-a';
+  const fiUrl = 'https://putkihq.com/profiilit/dioni-q-and-a';
+  const enUrl = 'https://putkihq.com/en/profiilit/dioni-q-and-a';
+  const canonical = isEn ? enUrl : fiUrl;
   const faqs = isEn ? [
     { q: 'Why launch PUTKI HQ now, ahead of the 2027 reform?', a: 'Because a comparison publication built in 2027 inside the new licensed market looks like an operator marketing arm. Building it in 2026 — outside the licensed system, under §6 of the act explicitly — establishes the editorial independence first. That is what makes the publication credible after July 2027.' },
     { q: 'What is the editorial line in one sentence?', a: 'Gambling math is honest; the marketing wrapped around it usually is not. PUTKI HQ unwraps the math.' },
@@ -488,6 +516,11 @@ export const ProfiilitFounderQAArticle = () => {
       ? 'Why launch ahead of the 2027 reform, how PUTKI HQ makes money, and what would make the founder shut it down. Named, on-the-record.'
       : 'Miksi käynnistää ennen 2027-uudistusta, miten PUTKI HQ tekee rahaa, ja mikä saisi perustajan lopettamaan sen. Nimellä, virallisesti.',
     canonical,
+    alternates: [
+      { lang: 'fi-FI', href: fiUrl },
+      { lang: 'en-FI', href: enUrl },
+      { lang: 'x-default', href: fiUrl },
+    ],
   });
   useJsonLd([
     articleSchema(isEn ? 'Dioni Bouropoulos — PUTKI HQ founder Q&A' : 'Dioni Bouropoulos — PUTKI HQ -perustajan Q&A', canonical, isEn),
