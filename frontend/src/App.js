@@ -16,7 +16,9 @@ import Peli from "@/pages/Peli";
 import Voyager from "@/pages/Voyager";
 import TietoaMeista from "@/pages/TietoaMeista";
 import WeeklyCard from "@/pages/WeeklyCard";
-import BettingTipsHub from "@/pages/BettingTipsHub";
+// iter85c · Phase 3 — BettingTipsHub deprioritized (page exists but is
+// no longer routed from the SPA; legacy /vihjeet redirects already
+// route to /pelisignaalit which is the current canonical tips surface).
 import BackOfficeToday from "@/pages/BackOfficeToday";
 import BackOfficeActivity from "@/pages/BackOfficeActivity";
 import BackOfficeQueue from "@/pages/BackOfficeQueue";

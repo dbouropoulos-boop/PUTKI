@@ -16,6 +16,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
+import { EditorPreviewPanel, PreviewToggle } from '../components/back-office/EditorPreviewPanel';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -217,6 +218,10 @@ const BackOfficeMittariCopy = () => {
     form, dirty, onSave: save, delay: 2500, pause: busy && status === 'Saving…',
   });
 
+  // iter85b · Task 2.8c — preview panel toggled by the header
+  // PreviewToggle button. Auto-reloads on every successful autosave.
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const resetSection = useCallback((path) => {
     if (!snapshot) return;
     setForm((prev) => {
@@ -332,6 +337,8 @@ const BackOfficeMittariCopy = () => {
             lastSavedAt={autosave.lastSavedAt}
             testid="bo-mc-autosave-status"
           />
+          <PreviewToggle open={previewOpen} onClick={() => setPreviewOpen((v) => !v)}
+            testid="bo-mc-preview-toggle" />
           <button type="button" onClick={autosave.forceSave} disabled={busy}
             data-testid="bo-mc-save" style={{
               padding: '10px 18px', background: '#E89248', color: '#0A0A0B',
@@ -760,6 +767,14 @@ const BackOfficeMittariCopy = () => {
             cursor: busy ? 'wait' : 'pointer',
           }}>{busy ? 'SAVING…' : 'SAVE & PUBLISH'}</button>
       </div>
+      <EditorPreviewPanel
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        url="/mittari"
+        reloadKey={autosave.lastSavedAt}
+        title="/MITTARI · LIVE PREVIEW"
+        testid="bo-mc-preview"
+      />
     </div>
   );
 };

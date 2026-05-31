@@ -22,6 +22,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
+import { EditorPreviewPanel, PreviewToggle } from '../components/back-office/EditorPreviewPanel';
 import {
   HeaderHeroSection,
   MethodStackSection,
@@ -97,6 +98,9 @@ const BackOfficeMestariCopy = () => {
     form, dirty, onSave: save, delay: 2500, pause: saving,
   });
 
+  // iter85b · Task 2.8c — preview panel for /mestari hub.
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const resetSection = (key) => {
     if (!defaults || !form) return;
     setForm({ ...form, [key]: structuredClone(defaults[key]) });
@@ -148,6 +152,8 @@ const BackOfficeMestariCopy = () => {
             lastSavedAt={autosave.lastSavedAt}
             testid="mec-autosave-status"
           />
+          <PreviewToggle open={previewOpen} onClick={() => setPreviewOpen((v) => !v)}
+            testid="mec-preview-toggle" />
           <span style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
             letterSpacing: '0.12em', color: 'var(--muted)',
@@ -199,6 +205,14 @@ const BackOfficeMestariCopy = () => {
             }}>{saving ? 'SAVING…' : 'SAVE ALL'}</button>
         </div>
       </div>
+      <EditorPreviewPanel
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        url="/mestari"
+        reloadKey={autosave.lastSavedAt}
+        title="/MESTARI · LIVE PREVIEW"
+        testid="mec-preview"
+      />
     </div>
   );
 };

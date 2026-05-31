@@ -8,13 +8,14 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Send, Sun, Moon } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
+const TELEGRAM_BOT = 'Putkihq_bot';
 
 // Per-surface visual accent so the cards have distinct identity rather
 // than reading as three near-identical tiles.
@@ -187,6 +188,71 @@ const HubStatStrip = ({ lang }) => {
   );
 };
 
+// iter85c · Phase 3 — Telegram-first conversion strip. Surfaces the
+// bot directly above the diagnostic cards so readers can choose the
+// chat-first path (5-day playbook + weekly signals) without taking
+// a 90s test first. This is the single largest deliverable retention
+// surface; promoting it here meaningfully shifts where new readers
+// land after the homepage hook.
+const TelegramFirstStrip = ({ lang }) => (
+  <a href={`https://t.me/${TELEGRAM_BOT}?start=mestari_hub`}
+     target="_blank" rel="noopener noreferrer"
+     data-testid="mestari-hub-telegram-cta"
+     style={{
+       display: 'block',
+       background: 'linear-gradient(135deg, #229ED9 0%, #1B7BAB 100%)',
+       color: '#FFFFFF', borderRadius: 8, padding: '18px 22px',
+       textDecoration: 'none', marginBottom: 28,
+       boxShadow: '0 6px 20px rgba(34, 158, 217, 0.22)',
+       transition: 'transform 200ms ease, box-shadow 200ms ease',
+     }}
+     onMouseEnter={(e) => {
+       e.currentTarget.style.transform = 'translateY(-2px)';
+       e.currentTarget.style.boxShadow = '0 10px 28px rgba(34, 158, 217, 0.32)';
+     }}
+     onMouseLeave={(e) => {
+       e.currentTarget.style.transform = 'translateY(0)';
+       e.currentTarget.style.boxShadow = '0 6px 20px rgba(34, 158, 217, 0.22)';
+     }}>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap',
+    }}>
+      <div style={{
+        width: 40, height: 40, borderRadius: '50%',
+        background: 'rgba(255,255,255,0.18)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <Send size={18} strokeWidth={2.2} color="#FFFFFF" />
+      </div>
+      <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+        <div style={{
+          fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+          letterSpacing: '0.22em', fontWeight: 800, opacity: 0.85,
+          textTransform: 'uppercase', marginBottom: 2,
+        }}>{lang === 'en' ? 'SKIP THE TEST · GET STARTED ON TELEGRAM' : 'OHITA TESTI · ALOITA TELEGRAMISSA'}</div>
+        <div style={{
+          fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.35,
+          fontWeight: 600, letterSpacing: '-0.005em',
+        }}>{lang === 'en'
+          ? 'Get the 5-day playbook + weekly signals in your chat — no email, no waiting.'
+          : 'Saat 5 päivän pelikirjan ja viikkosignaalit chattiin — ilman sähköpostia, heti.'}</div>
+      </div>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        padding: '8px 16px', background: '#FFFFFF', color: '#1B7BAB',
+        borderRadius: 999, fontFamily: 'ui-monospace, monospace',
+        fontSize: 11, letterSpacing: '0.18em', fontWeight: 800,
+        textTransform: 'uppercase', flexShrink: 0,
+      }}>
+        @{TELEGRAM_BOT}
+        <ArrowRight size={13} strokeWidth={2.2} />
+      </span>
+    </div>
+  </a>
+);
+
+
 const MestariHub = () => {
   const { lang, toggle: toggleLang } = useLang();
   const { theme, toggle: toggleTheme } = useTheme();
@@ -268,6 +334,11 @@ const MestariHub = () => {
         }}>{lang === 'en' ? copy.subtitle_en : copy.subtitle_fi}</p>
 
         <HubStatStrip lang={lang} />
+
+        {/* iter85c · Phase 3 — Telegram-first CTA above the diagnostic
+            cards. Readers who already know what they want can route
+            straight into the bot instead of taking the 90s test. */}
+        <TelegramFirstStrip lang={lang} />
 
         <div data-testid="mestari-hub-grid" className="mestari-hub-grid" style={{
           display: 'grid', gap: 16,

@@ -13,6 +13,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
+import { EditorPreviewPanel, PreviewToggle } from '../components/back-office/EditorPreviewPanel';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -202,6 +203,9 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     pause: busy || drawn,
   });
 
+  // iter85b · Task 2.8c — preview panel for the public raffle page.
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const drawNow = async () => {
     if (drawHome === '' || drawAway === '') { setError('Score required for draw.'); return; }
     if (!window.confirm(`Draw raffle with final score ${drawHome}-${drawAway}? Result is locked once drawn.`)) return;
@@ -357,6 +361,8 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
           lastSavedAt={autosave.lastSavedAt}
           testid="raffle-autosave-status"
         />
+        <PreviewToggle open={previewOpen} onClick={() => setPreviewOpen((v) => !v)}
+          testid="raffle-preview-toggle" />
         {drawn && (
           <span style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 10,
@@ -439,6 +445,14 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
           </div>
         ))}
       </div>}
+      <EditorPreviewPanel
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        url={`/voita/${raffle.slug}`}
+        reloadKey={autosave.lastSavedAt}
+        title={`/voita/${raffle.slug} · LIVE PREVIEW`}
+        testid="raffle-preview"
+      />
     </div>
   );
 };
