@@ -61,7 +61,47 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
+    "postbuild": "[ -d node_modules/react-snap ] && react-snap || echo \"react-snap not installed — skipping prerender. Add with: yarn add --dev react-snap\"",
     "test": "craco test"
+  },
+  "reactSnap": {
+    "source": "build",
+    "destination": "build",
+    "include": [
+      "/",
+      "/mittari",
+      "/mestari",
+      "/mestari/sports",
+      "/mestari/poker",
+      "/mestari/blackjack",
+      "/voita",
+      "/peli",
+      "/pelisignaalit",
+      "/pelit",
+      "/pelit/blackjack",
+      "/pelit/slotit",
+      "/pelit/bonusmatematiikka",
+      "/pelit/poker",
+      "/pelit/craps",
+      "/pelit/ruletti",
+      "/pelit/live",
+      "/saantely",
+      "/saantely/reform-2027",
+      "/sponsoroinnit",
+      "/raha",
+      "/kulttuuri",
+      "/affiliaatti",
+      "/toimitus",
+      "/tietoa-meista"
+    ],
+    "skipThirdPartyRequests": true,
+    "puppeteerArgs": [
+      "--no-sandbox",
+      "--disable-setuid-sandbox"
+    ],
+    "inlineCss": false,
+    "removeBlobs": true,
+    "fixWebpackChunksIssue": "CRA2"
   },
   "browserslist": {
     "production": [

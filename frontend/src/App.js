@@ -74,7 +74,9 @@ import MittariHistoria from "@/pages/MittariHistoria";
 import Uutiset from "@/pages/Uutiset";
 import { Skene, SkeneTalous } from "@/pages/Skene";
 import { Raha, Kulttuuri, Sponsoroinnit, Saantely } from "@/pages/EditorialArchives";
-import { Pelit, PelitBlackjack, PelitPoker, PelitSlotit, PelitCraps, PelitRuletti, PelitLive, PelitBonusmatematiikka } from "@/pages/Pelit";
+import { Pelit, PelitPoker, PelitCraps, PelitRuletti, PelitLive } from "@/pages/Pelit";
+import { PelitBlackjackDeep, PelitSlotitDeep, PelitBonusmatematiikkaDeep } from "@/pages/PelitDeepGuides";
+import Reform2027Hub from "@/pages/Reform2027Hub";
 import Pulssi from "@/pages/Pulssi";
 import PeliAreenaHub from "@/pages/PeliAreenaHub";
 import PeliAreenaQuiz from "@/pages/PeliAreenaQuiz";
@@ -192,13 +194,15 @@ function App() {
             <Route path="sponsoroinnit" element={<Sponsoroinnit />} />
             <Route path="saantely" element={<Saantely />} />
             <Route path="pelit" element={<Pelit />} />
-            <Route path="pelit/blackjack" element={<PelitBlackjack />} />
+            {/* iter86 · Phase 4 — deep game-literacy guides at the highest-traffic sub-pages */}
+            <Route path="pelit/blackjack" element={<PelitBlackjackDeep />} />
             <Route path="pelit/poker" element={<PelitPoker />} />
-            <Route path="pelit/slotit" element={<PelitSlotit />} />
+            <Route path="pelit/slotit" element={<PelitSlotitDeep />} />
             <Route path="pelit/craps" element={<PelitCraps />} />
             <Route path="pelit/ruletti" element={<PelitRuletti />} />
             <Route path="pelit/live" element={<PelitLive />} />
-            <Route path="pelit/bonusmatematiikka" element={<PelitBonusmatematiikka />} />
+            <Route path="pelit/bonusmatematiikka" element={<PelitBonusmatematiikkaDeep />} />
+            <Route path="saantely/reform-2027" element={<Reform2027Hub />} />
             <Route path="pulssi" element={<Pulssi />} />
 
             {/* V2 accountability surfaces */}

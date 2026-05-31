@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useLang } from '../context/LanguageContext';
 import { EditorialArchivePage } from '../components/EditorialArchivePage';
 
@@ -75,24 +76,50 @@ export const Sponsoroinnit = () => {
 
 export const Saantely = () => {
   const { lang } = useLang();
+  const isEn = lang === 'en';
   return (
-    <EditorialArchivePage
-      testId="saantely-page"
-      surfaceKey="saantely"
-      eyebrow={lang === 'en' ? 'REGULATION · LANDSCAPE' : 'SÄÄNTELY · MAISEMA'}
-      headline={lang === 'en' ? 'Finnish Gambling Act 2025/2027' : 'Suomen rahapelilaki 2025/2027'}
-      intro={
-        lang === 'en'
-          ? 'PUTKI HQ covers the Finnish gambling reform passed December 2025, effective July 2027. What the law bans, what it allows, what it means for operators and players, and where PUTKI HQ sits in the new regulatory landscape as a comparison site / publication.'
-          : 'PUTKI HQ kattaa suomalaisen rahapeliuudistuksen joka hyväksyttiin joulukuussa 2025 ja astuu voimaan heinäkuussa 2027. Mitä laki kieltää, mitä se sallii, mitä se tarkoittaa operaattoreille ja pelaajille, ja missä PUTKI HQ sijoittuu uudessa sääntelymaisemassa vertailusivustona / julkaisuna.'
-      }
-      comingSoonHeadline={lang === 'en' ? 'Bans, allowances, license authority, comparison-site classification.' : 'Kiellot, sallitut muodot, lisenssiviranomainen, vertailusivustoluokitus.'}
-      comingSoonBody={
-        lang === 'en'
-          ? 'PUTKI HQ is preparing the regulatory briefing series - the law in plain Finnish, operator implications, player implications, and ongoing tracking of regulator decisions through 2026 and into 2027.'
-          : 'PUTKI HQ -toimitus valmistelee sääntely-briefing-sarjaa - laki selkokielellä, operaattorien vaikutukset, pelaajien vaikutukset, ja sääntelyviranomaisen päätösten jatkuva seuranta läpi vuoden 2026 ja vuoteen 2027.'
-      }
-    />
+    <>
+      <section className="container-wide pt-10 sm:pt-12 pb-2" data-testid="saantely-reform-banner">
+        <Link
+          to="/saantely/reform-2027"
+          data-testid="saantely-reform-banner-link"
+          className="block p-5 sm:p-6"
+          style={{ border: '1px solid var(--ember)', background: 'var(--ember-soft)', textDecoration: 'none' }}
+        >
+          <div
+            className="mono mb-2"
+            style={{ fontSize: 10.5, letterSpacing: '0.18em', color: 'var(--ember-strong)', fontWeight: 700 }}
+          >
+            {isEn ? 'NEW · DEEP BRIEFING' : 'UUSI · SYVÄ BRIEFING'}
+          </div>
+          <div
+            className="display"
+            style={{ fontSize: 22, lineHeight: 1.2, color: 'var(--ink)' }}
+          >
+            {isEn
+              ? 'Finnish Gambling Act 2025/2027 — read the full briefing →'
+              : 'Suomen rahapelilaki 2025/2027 — lue koko briefing →'}
+          </div>
+        </Link>
+      </section>
+      <EditorialArchivePage
+        testId="saantely-page"
+        surfaceKey="saantely"
+        eyebrow={isEn ? 'REGULATION · LANDSCAPE' : 'SÄÄNTELY · MAISEMA'}
+        headline={isEn ? 'Finnish Gambling Act 2025/2027' : 'Suomen rahapelilaki 2025/2027'}
+        intro={
+          isEn
+            ? 'PUTKI HQ covers the Finnish gambling reform passed December 2025, effective July 2027. What the law bans, what it allows, what it means for operators and players, and where PUTKI HQ sits in the new regulatory landscape as a comparison site / publication.'
+            : 'PUTKI HQ kattaa suomalaisen rahapeliuudistuksen joka hyväksyttiin joulukuussa 2025 ja astuu voimaan heinäkuussa 2027. Mitä laki kieltää, mitä se sallii, mitä se tarkoittaa operaattoreille ja pelaajille, ja missä PUTKI HQ sijoittuu uudessa sääntelymaisemassa vertailusivustona / julkaisuna.'
+        }
+        comingSoonHeadline={isEn ? 'Bans, allowances, license authority, comparison-site classification.' : 'Kiellot, sallitut muodot, lisenssiviranomainen, vertailusivustoluokitus.'}
+        comingSoonBody={
+          isEn
+            ? 'PUTKI HQ is preparing the regulatory briefing series - the law in plain Finnish, operator implications, player implications, and ongoing tracking of regulator decisions through 2026 and into 2027.'
+            : 'PUTKI HQ -toimitus valmistelee sääntely-briefing-sarjaa - laki selkokielellä, operaattorien vaikutukset, pelaajien vaikutukset, ja sääntelyviranomaisen päätösten jatkuva seuranta läpi vuoden 2026 ja vuoteen 2027.'
+        }
+      />
+    </>
   );
 };
 
