@@ -2684,11 +2684,15 @@ async def _back_office_activity_middleware(request, call_next):
                 else:
                     cleaned.append(p.replace("-", "_"))
             action_type = f"{request.method.lower()}.{'.'.join(cleaned) or 'root'}"
+            # iter83 fix · the SPA router can't resolve raw API paths,
+            # so generic auto-logged rows should expose `route=None`
+            # rather than the API URL. The activity log UI then renders
+            # an em-dash instead of a broken anchor.
             await _log_activity(
                 db,
                 action_type=action_type,
                 actor_token=request.headers.get("X-Admin-Token"),
-                route=path,
+                route=None,
                 entity=path,
                 meta={"method": request.method,
                       "status": response.status_code,

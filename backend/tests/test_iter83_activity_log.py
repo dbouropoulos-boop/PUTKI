@@ -28,10 +28,9 @@ HEADERS = {"X-Admin-Token": TOKEN, "Content-Type": "application/json"}
 LIST = f"{BASE}/api/admin/back_office_activity"
 DISTINCT = f"{LIST}/distinct/action_types"
 
-# Bumped from 15s to 30s — the preview environment occasionally
-# cold-starts under load and the activity-log endpoints touch a
-# growing collection.
-TIMEOUT = 30.0
+# Preview env can be slow — bumping to 60s on the recommendation of
+# transient ReadTimeouts during high-concurrency runs.
+TIMEOUT = 60.0
 
 
 def _hash(token: str) -> str:
