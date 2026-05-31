@@ -18,6 +18,7 @@ import TietoaMeista from "@/pages/TietoaMeista";
 import WeeklyCard from "@/pages/WeeklyCard";
 import BettingTipsHub from "@/pages/BettingTipsHub";
 import BackOfficeToday from "@/pages/BackOfficeToday";
+import BackOfficeActivity from "@/pages/BackOfficeActivity";
 import BackOfficeQueue from "@/pages/BackOfficeQueue";
 import FoundationalResearch from "@/pages/FoundationalResearch";
 import OperatorsAdmin from "@/pages/OperatorsAdmin";
@@ -105,6 +106,7 @@ function App() {
               routes render inside this shell. */}
           <Route element={<BackOfficeShell />}>
             <Route path="/back-office" element={<BackOfficeToday />} />
+            <Route path="/back-office/activity" element={<BackOfficeActivity />} />
             <Route path="/back-office/queue" element={<BackOfficeQueue />} />
             <Route path="/back-office/foundational-research" element={<FoundationalResearch />} />
             <Route path="/back-office/operators" element={<OperatorsAdmin />} />

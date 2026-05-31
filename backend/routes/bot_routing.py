@@ -33,7 +33,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Request
 
 from routes._helpers import get_db, require_admin
 from routes._payloads import _BotConfigPayload, _PartnerPayload
@@ -72,6 +72,8 @@ def make_router() -> APIRouter:
     @router.put("/admin/bot/config")
     async def admin_put_bot_config(
         payload: _BotConfigPayload,
+        request: Request,
+        x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
         _: bool = Depends(require_admin), db = Depends(get_db),
     ):
         # Only persist fields the caller explicitly sent (Optional -> None
@@ -82,10 +84,29 @@ def make_router() -> APIRouter:
             raise HTTPException(400, "signal_unlock_mode must be 'informative' or 'routed'")
         if not patch:
             raise HTTPException(400, "no fields to update")
+        # iter83 · Task 2.7 — snapshot prev_state for soft-undo.
+        prev = await db.bot_config.find_one({"_id": "bot_config"}, {"_id": 0}) or {}
+        prev_snapshot = {k: prev.get(k) for k in patch.keys()}
         patch["updated_at"] = _utc_iso()
         await db.bot_config.update_one(
             {"_id": "bot_config"}, {"$set": patch}, upsert=True,
         )
+        try:
+            from routes.back_office_activity import log_activity as _log_activity
+            await _log_activity(
+                db, action_type="bot_config.toggle",
+                actor_token=x_admin_token,
+                route="/back-office/bot-routing",
+                entity="bot_config",
+                entity_id="bot_config",
+                collection="bot_config",
+                prev_state=prev_snapshot,
+                next_state={k: patch[k] for k in patch if k != "updated_at"},
+                reversible=True,
+            )
+            request.state.activity_logged = True
+        except Exception:
+            pass
         return await get_bot_config(db)
 
     # ─── partners CRUD ─────────────────────────────────────────────

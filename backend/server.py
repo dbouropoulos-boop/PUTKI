@@ -920,7 +920,10 @@ async def admin_queue_item(item_id: str, _: bool = Depends(require_admin)):
 
 
 @api_router.post("/admin/queue/{item_id}/approve")
-async def admin_approve(item_id: str, data: ApprovalRequest, _: bool = Depends(require_admin)):
+async def admin_approve(item_id: str, data: ApprovalRequest,
+                        request: Request,
+                        x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+                        _: bool = Depends(require_admin)):
     doc = await db.generated_content.find_one({"id": item_id})
     if not doc:
         raise HTTPException(404, "Not found")
@@ -937,18 +940,42 @@ async def admin_approve(item_id: str, data: ApprovalRequest, _: bool = Depends(r
     if data.edited_text:
         update["edited_text"] = data.edited_text
         update["approval_action"] = "edit"
+    # iter83 · Task 2.7 — capture prev snapshot for soft-undo.
+    prev_snapshot = {"id": item_id, "status": doc.get("status"),
+                     "approved_at": doc.get("approved_at"),
+                     "approved_by": doc.get("approved_by")}
     await db.generated_content.update_one({"id": item_id}, {"$set": update})
 
     fresh = await db.generated_content.find_one({"id": item_id}, {"_id": 0})
     pub = await distribute_content(db, fresh)
+
+    await _log_activity(
+        db, action_type="queue.approve",
+        actor_token=x_admin_token,
+        route="/back-office/queue",
+        entity=f"queue/{item_id[:8]}",
+        entity_id=item_id,
+        collection="generated_content",
+        prev_state=prev_snapshot,
+        next_state={"id": item_id, "status": "approved"},
+        reversible=True,
+        meta={"published": bool(pub), "variant_index": update.get("selected_variant_index")},
+    )
+    request.state.activity_logged = True
     return {"approved": fresh, "published": pub}
 
 
 @api_router.post("/admin/queue/{item_id}/kill")
-async def admin_kill(item_id: str, _: bool = Depends(require_admin)):
+async def admin_kill(item_id: str,
+                     request: Request,
+                     x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+                     _: bool = Depends(require_admin)):
     doc = await db.generated_content.find_one({"id": item_id})
     if not doc:
         raise HTTPException(404, "Not found")
+    prev_snapshot = {"id": item_id, "status": doc.get("status"),
+                     "killed_at": doc.get("killed_at"),
+                     "killed_reason": doc.get("killed_reason")}
     await db.generated_content.update_one(
         {"id": item_id},
         {"$set": {
@@ -958,6 +985,18 @@ async def admin_kill(item_id: str, _: bool = Depends(require_admin)):
             "reviewed_at": datetime.now(timezone.utc).isoformat(),
         }},
     )
+    await _log_activity(
+        db, action_type="queue.kill",
+        actor_token=x_admin_token,
+        route="/back-office/queue",
+        entity=f"queue/{item_id[:8]}",
+        entity_id=item_id,
+        collection="generated_content",
+        prev_state=prev_snapshot,
+        next_state={"id": item_id, "status": "killed"},
+        reversible=True,
+    )
+    request.state.activity_logged = True
     return {"killed": item_id}
 
 
@@ -2603,6 +2642,64 @@ api_router.include_router(_build_og_images_router(require_admin))
 from routes.integrations import build_integrations_router as _build_integrations_router  # noqa: E402
 api_router.include_router(_build_integrations_router(require_admin))
 
+# iter83 (Task 2.7) - back-office activity log + soft undo. Every
+# mutation funnels through `log_activity()` (see routes/back_office_activity.py)
+# and lands in the `back_office_activity` collection. Powers both the
+# cockpit's recent-activity feed and the new /back-office/activity page.
+from routes.back_office_activity import (  # noqa: E402
+    build_activity_router as _build_activity_router,
+    ensure_indexes as _ensure_activity_indexes,
+    log_activity as _log_activity,
+)
+api_router.include_router(_build_activity_router(require_admin, db))
+
+
+# iter83 (Task 2.7) — generic admin-mutation logger middleware.
+#
+# Every successful POST/PUT/PATCH/DELETE to /api/admin/* lands as one
+# `back_office_activity` row. Endpoints that need rich prev_state/
+# next_state (the 7 reversible action types) call `_log_activity()`
+# explicitly AND set `request.state.activity_logged = True` so this
+# middleware doesn't double-record them.
+@app.middleware("http")
+async def _back_office_activity_middleware(request, call_next):
+    response = await call_next(request)
+    try:
+        path = request.url.path
+        if (request.method in {"POST", "PUT", "PATCH", "DELETE"}
+                and path.startswith("/api/admin/")
+                and not path.startswith("/api/admin/back_office_activity")
+                and 200 <= response.status_code < 300
+                and not getattr(request.state, "activity_logged", False)):
+            short = path.replace("/api/admin/", "").strip("/")
+            # Collapse path segments into a dot-separated action_type, e.g.
+            # POST /api/admin/queue/xyz/approve → "queue.{id}.approve" →
+            # we strip the middle id-looking chunk for a cleaner namespace.
+            parts = [p for p in short.split("/") if p]
+            cleaned = []
+            for p in parts:
+                # Drop bare uuids / hex ids / long opaque chunks.
+                if len(p) >= 12 and all(c.isalnum() or c in "-_" for c in p):
+                    cleaned.append("{id}")
+                else:
+                    cleaned.append(p.replace("-", "_"))
+            action_type = f"{request.method.lower()}.{'.'.join(cleaned) or 'root'}"
+            await _log_activity(
+                db,
+                action_type=action_type,
+                actor_token=request.headers.get("X-Admin-Token"),
+                route=path,
+                entity=path,
+                meta={"method": request.method,
+                      "status": response.status_code,
+                      "auto_logged": True},
+                reversible=False,
+            )
+    except Exception:
+        # Never let activity logging poison the response path.
+        pass
+    return response
+
 # iter76 (Slice 1) - Bot & Routing admin endpoints (bot_config + partners
 # CRUD + subscribers summary). Sits alongside the existing admin router.
 from routes.bot_routing import (  # noqa: E402
@@ -3148,10 +3245,28 @@ async def admin_voita_update(raffle_id: str, payload: _VoitaUpdatePayload, _: bo
 
 
 @api_router.delete("/admin/voita/raffles/{raffle_id}")
-async def admin_voita_delete(raffle_id: str, _: bool = Depends(require_admin)):
+async def admin_voita_delete(raffle_id: str,
+                             request: Request,
+                             x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+                             _: bool = Depends(require_admin)):
     from voita_engine import delete_raffle
     try:
-        return await delete_raffle(db, raffle_id)
+        # Snapshot BEFORE delete so undo can re-insert.
+        snap = await db.voita_raffles.find_one({"id": raffle_id}, {"_id": 0})
+        result = await delete_raffle(db, raffle_id)
+        await _log_activity(
+            db, action_type="voita.delete",
+            actor_token=x_admin_token,
+            route="/back-office/voita",
+            entity=f"raffle/{(snap or {}).get('slug') or raffle_id[:8]}",
+            entity_id=raffle_id,
+            collection="voita_raffles",
+            prev_state=snap,
+            next_state=None,
+            reversible=bool(snap),
+        )
+        request.state.activity_logged = True
+        return result
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -3381,7 +3496,10 @@ async def admin_news_watch_rejected(limit: int = 100, _: bool = Depends(require_
 
 
 @api_router.post("/admin/news-watch/promote")
-async def admin_news_watch_promote(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+async def admin_news_watch_promote(payload: Dict[str, Any],
+                                   request: Request,
+                                   x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+                                   _: bool = Depends(require_admin)):
     """Move an item from news_ticker_archive → news_ticker_items."""
     url = (payload.get("url") or "").strip()
     if not url:
@@ -3390,11 +3508,26 @@ async def admin_news_watch_promote(payload: Dict[str, Any], _: bool = Depends(re
     item = await promote(db, url)
     if not item:
         raise HTTPException(status_code=404, detail="not in archive")
+    await _log_activity(
+        db, action_type="news_watch.promote",
+        actor_token=x_admin_token,
+        route="/back-office/news-watch",
+        entity=f"news/{url[:60]}",
+        entity_id=url,
+        collection="news_ticker_items",
+        prev_state={"url": url, "bucket": "archive"},
+        next_state={"url": url, "bucket": "ticker"},
+        reversible=True,
+    )
+    request.state.activity_logged = True
     return {"ok": True, "promoted": item}
 
 
 @api_router.post("/admin/news-watch/demote")
-async def admin_news_watch_demote(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+async def admin_news_watch_demote(payload: Dict[str, Any],
+                                  request: Request,
+                                  x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+                                  _: bool = Depends(require_admin)):
     """Move an item from news_ticker_items → news_ticker_archive."""
     url = (payload.get("url") or "").strip()
     if not url:
@@ -3403,11 +3536,26 @@ async def admin_news_watch_demote(payload: Dict[str, Any], _: bool = Depends(req
     item = await demote(db, url)
     if not item:
         raise HTTPException(status_code=404, detail="not in ticker")
+    await _log_activity(
+        db, action_type="news_watch.demote",
+        actor_token=x_admin_token,
+        route="/back-office/news-watch",
+        entity=f"news/{url[:60]}",
+        entity_id=url,
+        collection="news_ticker_archive",
+        prev_state={"url": url, "bucket": "ticker"},
+        next_state={"url": url, "bucket": "archive"},
+        reversible=True,
+    )
+    request.state.activity_logged = True
     return {"ok": True, "demoted": item}
 
 
 @api_router.post("/admin/news-watch/kill")
-async def admin_news_watch_kill(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+async def admin_news_watch_kill(payload: Dict[str, Any],
+                                request: Request,
+                                x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+                                _: bool = Depends(require_admin)):
     """Permanently reject a URL. Idempotent - safe to retry. The next
     RSS tick will skip this URL even if the deterministic classifier
     would otherwise re-surface it."""
@@ -3416,11 +3564,27 @@ async def admin_news_watch_kill(payload: Dict[str, Any], _: bool = Depends(requi
         raise HTTPException(status_code=400, detail="url required")
     reason = (payload.get("reason") or "").strip()[:200] or None
     from news_watch import kill
-    return {"ok": True, **(await kill(db, url, reason=reason))}
+    result = await kill(db, url, reason=reason)
+    await _log_activity(
+        db, action_type="news_watch.kill",
+        actor_token=x_admin_token,
+        route="/back-office/news-watch",
+        entity=f"news/{url[:60]}",
+        entity_id=url,
+        collection="news_rejected_urls",
+        prev_state={"url": url, "bucket": "ticker_or_archive"},
+        next_state={"url": url, "bucket": "rejected", "reason": reason},
+        reversible=True,
+    )
+    request.state.activity_logged = True
+    return {"ok": True, **result}
 
 
 @api_router.post("/admin/news-watch/unkill")
-async def admin_news_watch_unkill(payload: Dict[str, Any], _: bool = Depends(require_admin)):
+async def admin_news_watch_unkill(payload: Dict[str, Any],
+                                  request: Request,
+                                  x_admin_token: Optional[str] = Header(None, alias="X-Admin-Token"),
+                                  _: bool = Depends(require_admin)):
     """Remove a URL from the rejection list (the next RSS tick may
     re-ingest it via the deterministic classifier)."""
     url = (payload.get("url") or "").strip()
@@ -3428,6 +3592,18 @@ async def admin_news_watch_unkill(payload: Dict[str, Any], _: bool = Depends(req
         raise HTTPException(status_code=400, detail="url required")
     from news_watch import unkill
     removed = await unkill(db, url)
+    await _log_activity(
+        db, action_type="news_watch.unkill",
+        actor_token=x_admin_token,
+        route="/back-office/news-watch",
+        entity=f"news/{url[:60]}",
+        entity_id=url,
+        collection="news_rejected_urls",
+        prev_state={"url": url, "bucket": "rejected"},
+        next_state={"url": url, "bucket": "unrejected"},
+        reversible=False,
+    )
+    request.state.activity_logged = True
     return {"ok": True, "removed": removed}
 
 
@@ -3476,6 +3652,10 @@ async def startup_event():
         await _ensure_tma_indexes(db)
     except Exception:
         logger.exception("tma: index bootstrap failed (non-fatal)")
+    try:
+        await _ensure_activity_indexes(db)
+    except Exception:
+        logger.exception("back_office_activity: index bootstrap failed (non-fatal)")
     # Bind a process-wide ContentGenerator for the Layer 2 hook to use.
     global _content_generator
     _content_generator = ContentGenerator(db)
