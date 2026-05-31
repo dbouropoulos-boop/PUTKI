@@ -81,7 +81,8 @@ def test_sitemap_is_well_formed_xml():
     body = res.text
     # Must start with the XML declaration + sitemap urlset namespace.
     assert body.startswith('<?xml version="1.0"')
-    assert "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">" in body
+    assert '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' in body
+    assert 'xmlns:xhtml="http://www.w3.org/1999/xhtml"' in body
     assert body.rstrip().endswith("</urlset>")
     # Every <loc> must be an absolute URL on the canonical host.
     for line in body.splitlines():

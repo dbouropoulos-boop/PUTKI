@@ -80,6 +80,7 @@ import { PelitBlackjackDeep, PelitSlotitDeep, PelitBonusmatematiikkaDeep, PelitP
 import Reform2027Hub from "@/pages/Reform2027Hub";
 import { MestariMenetelmaArticle, MittariLahteetArticle, VoitaUseinKysytytArticle, ProfiilitFounderQAArticle } from "@/pages/Phase4Wave2Articles";
 import { MestariDatasetSummary, VoitaLedger, MittariAccuracyBacktest } from "@/pages/Phase4Wave4DataPages";
+import TrustHub from "@/pages/TrustHub";
 import Pulssi from "@/pages/Pulssi";
 import PeliAreenaHub from "@/pages/PeliAreenaHub";
 import PeliAreenaQuiz from "@/pages/PeliAreenaQuiz";
@@ -216,6 +217,9 @@ function App() {
             <Route path="en/games/roulette" element={<PelitRulettiDeep forceLang="en" />} />
             <Route path="en/games/live" element={<PelitLiveDeep forceLang="en" />} />
             <Route path="en/games/bonus-math" element={<PelitBonusmatematiikkaDeep forceLang="en" />} />
+            {/* iter90 · Phase 4 capstone — Trust hub (FI + EN canonicals) */}
+            <Route path="luotettavuus" element={<TrustHub />} />
+            <Route path="en/trust" element={<TrustHub forceLang="en" />} />
             {/* iter87 · Phase 4 wave 2 — four long-form articles on the four primary surfaces */}
             <Route path="mestari/menetelma" element={<MestariMenetelmaArticle />} />
             <Route path="mittari/lahteet" element={<MittariLahteetArticle />} />

@@ -92,6 +92,34 @@ STATIC_ROUTES: List[Tuple[str, str, str]] = [
 ]
 
 
+# FI ↔ EN locale pairs. Each entry produces TWO sitemap rows (FI + EN),
+# both carrying mutual <xhtml:link rel="alternate" hreflang> blocks so
+# Google can discover the localised pair without crawling each URL.
+LOCALE_PAIRS: List[Tuple[str, str, str, str]] = [
+    # (fi_path, en_path, changefreq, priority)
+    ("/luotettavuus",            "/en/trust",                       "weekly",  "0.85"),
+    ("/mestari/menetelma",       "/en/mestari/methodology",         "monthly", "0.8"),
+    ("/mittari/lahteet",         "/en/mittari/sources",             "monthly", "0.8"),
+    ("/voita/usein-kysytyt",     "/en/voita/faq",                   "monthly", "0.75"),
+    ("/profiilit/dioni-q-and-a", "/en/profiilit/dioni-q-and-a",     "monthly", "0.75"),
+    ("/trust/mestari-aineisto",  "/en/trust/mestari-dataset",       "weekly",  "0.75"),
+    ("/trust/voita-tilikirja",   "/en/trust/voita-ledger",          "weekly",  "0.75"),
+    ("/trust/mittari-tarkkuus",  "/en/trust/mittari-accuracy",      "weekly",  "0.75"),
+    ("/saantely/reform-2027",    "/en/regulation/reform-2027",      "monthly", "0.85"),
+    ("/pelit/blackjack",         "/en/games/blackjack",             "monthly", "0.7"),
+    ("/pelit/poker",             "/en/games/poker",                 "monthly", "0.55"),
+    ("/pelit/slotit",            "/en/games/slots",                 "monthly", "0.7"),
+    ("/pelit/craps",             "/en/games/craps",                 "monthly", "0.5"),
+    ("/pelit/ruletti",           "/en/games/roulette",              "monthly", "0.5"),
+    ("/pelit/live",              "/en/games/live",                  "monthly", "0.5"),
+    ("/pelit/bonusmatematiikka", "/en/games/bonus-math",            "monthly", "0.7"),
+]
+
+# Paths that belong to a locale pair — pulled out of STATIC_ROUTES so
+# we never emit them twice in the sitemap.
+_LOCALE_PAIRED_PATHS = {fi for fi, _, _, _ in LOCALE_PAIRS} | {en for _, en, _, _ in LOCALE_PAIRS}
+
+
 def build_sitemap_router(db) -> APIRouter:
     router = APIRouter(prefix="/seo", tags=["seo"])
 
@@ -99,9 +127,12 @@ def build_sitemap_router(db) -> APIRouter:
     async def sitemap_xml():
         now_iso = datetime.now(timezone.utc).date().isoformat()
 
-        # ── Static routes ────────────────────────────────────────
+        # ── Static routes (locale-paired entries skipped — they're
+        #    emitted with xhtml:link blocks below) ────────────────
         entries: List[str] = []
         for path, freq, prio in STATIC_ROUTES:
+            if path in _LOCALE_PAIRED_PATHS:
+                continue
             entries.append(
                 "  <url>\n"
                 f"    <loc>{escape(CANONICAL_ORIGIN + path)}</loc>\n"
@@ -110,6 +141,27 @@ def build_sitemap_router(db) -> APIRouter:
                 f"    <priority>{prio}</priority>\n"
                 "  </url>"
             )
+
+        # ── Locale-paired routes — emit BOTH halves of each pair
+        #    with mutual <xhtml:link rel="alternate" hreflang> blocks. ─
+        for fi_path, en_path, freq, prio in LOCALE_PAIRS:
+            fi_url = escape(CANONICAL_ORIGIN + fi_path)
+            en_url = escape(CANONICAL_ORIGIN + en_path)
+            alts = (
+                f'    <xhtml:link rel="alternate" hreflang="fi-FI" href="{fi_url}"/>\n'
+                f'    <xhtml:link rel="alternate" hreflang="en-FI" href="{en_url}"/>\n'
+                f'    <xhtml:link rel="alternate" hreflang="x-default" href="{fi_url}"/>\n'
+            )
+            for url in (fi_url, en_url):
+                entries.append(
+                    "  <url>\n"
+                    f"    <loc>{url}</loc>\n"
+                    f"    <lastmod>{now_iso}</lastmod>\n"
+                    f"    <changefreq>{freq}</changefreq>\n"
+                    f"    <priority>{prio}</priority>\n"
+                    + alts +
+                    "  </url>"
+                )
 
         # ── Dynamic Voita raffles ───────────────────────────────
         try:
@@ -142,7 +194,8 @@ def build_sitemap_router(db) -> APIRouter:
 
         body = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n'
+            '        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
             + "\n".join(entries)
             + "\n</urlset>\n"
         )

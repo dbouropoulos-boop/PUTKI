@@ -6,6 +6,7 @@ import useJsonLd from '../hooks/useJsonLd';
 import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
+import { localiseUrl } from '../lib/localiseUrl';
 
 /**
  * Phase 4 P1 — deep game-literacy guides.
@@ -27,29 +28,35 @@ import InternalLinkStrip from '../components/InternalLinkStrip';
  *   - EditorialFooter with read-time + updated-at + change-log link.
  */
 
-const PelitNav = ({ lang }) => (
-  <nav className="container-wide pb-4 flex flex-wrap gap-x-5 gap-y-2" data-testid="pelit-subnav">
-    {[
-      ['/pelit/blackjack', 'BLACKJACK'],
-      ['/pelit/poker', 'POKER'],
-      ['/pelit/slotit', lang === 'en' ? 'SLOTS' : 'SLOTIT'],
-      ['/pelit/craps', 'CRAPS'],
-      ['/pelit/ruletti', lang === 'en' ? 'ROULETTE' : 'RULETTI'],
-      ['/pelit/live', 'LIVE'],
-      ['/pelit/bonusmatematiikka', lang === 'en' ? 'BONUS MATH' : 'BONUSMATEMATIIKKA'],
-    ].map(([to, label]) => (
-      <Link
-        key={to}
-        to={to}
-        className="mono"
-        data-testid={`pelit-nav-${to.split('/').pop()}`}
-        style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--ember-strong)', fontWeight: 700 }}
-      >
-        {label}
-      </Link>
-    ))}
-  </nav>
-);
+const PelitNav = ({ lang }) => {
+  const isEn = lang === 'en';
+  return (
+    <nav className="container-wide pb-4 flex flex-wrap gap-x-5 gap-y-2" data-testid="pelit-subnav">
+      {[
+        ['/pelit/blackjack', 'BLACKJACK'],
+        ['/pelit/poker', 'POKER'],
+        ['/pelit/slotit', isEn ? 'SLOTS' : 'SLOTIT'],
+        ['/pelit/craps', 'CRAPS'],
+        ['/pelit/ruletti', isEn ? 'ROULETTE' : 'RULETTI'],
+        ['/pelit/live', 'LIVE'],
+        ['/pelit/bonusmatematiikka', isEn ? 'BONUS MATH' : 'BONUSMATEMATIIKKA'],
+      ].map(([fiTo, label]) => {
+        const to = localiseUrl(fiTo, isEn);
+        return (
+          <Link
+            key={to}
+            to={to}
+            className="mono"
+            data-testid={`pelit-nav-${fiTo.split('/').pop()}`}
+            style={{ fontSize: 11, letterSpacing: '0.18em', color: 'var(--ember-strong)', fontWeight: 700 }}
+          >
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+};
 
 const Block = ({ tag, title, children, testId }) => (
   <section data-testid={testId} className="container-wide pb-10">
@@ -112,13 +119,16 @@ const Table = ({ head, rows, testId, mono = true }) => (
   </div>
 );
 
-const baseLinkStrip = (skip) => [
-  { to: '/pelit', labelFi: 'Peliarkisto', labelEn: 'Game archive', hintFi: 'Kaikki PUTKI HQ:n peliluku­taitojutut yhdessä paikassa.', hintEn: 'Every PUTKI HQ literacy piece in one place.' },
-  { to: '/pelit/bonusmatematiikka', labelFi: 'Bonusmatematiikka', labelEn: 'Bonus math', hintFi: 'Miksi 35x-kierrätys tappaa odotusarvon.', hintEn: 'Why 35× wagering kills expected value.' },
-  { to: '/pelit/blackjack', labelFi: 'Blackjack', labelEn: 'Blackjack', hintFi: 'Perusstrategian referenssi ja sivupanosten matematiikka.', hintEn: 'Basic strategy reference + side-bet math.' },
-  { to: '/pelit/slotit', labelFi: 'Slotit', labelEn: 'Slots', hintFi: 'RTP, volatiliteetti, bonus buy — pelkkä mekaniikka.', hintEn: 'RTP, volatility, bonus buy — mechanics only.' },
-  { to: '/saantely/reform-2027', labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Mikä muuttuu pelimarkkinoilla heinäkuussa 2027.', hintEn: 'What changes in the gambling market on 2027-07-01.' },
-].filter((l) => l.to !== skip).slice(0, 4);
+const baseLinkStrip = (skip, isEn = false) => [
+  { to: localiseUrl('/pelit', isEn), labelFi: 'Peliarkisto', labelEn: 'Game archive', hintFi: 'Kaikki PUTKI HQ:n peliluku­taitojutut yhdessä paikassa.', hintEn: 'Every PUTKI HQ literacy piece in one place.' },
+  { to: localiseUrl('/pelit/bonusmatematiikka', isEn), labelFi: 'Bonusmatematiikka', labelEn: 'Bonus math', hintFi: 'Miksi 35x-kierrätys tappaa odotusarvon.', hintEn: 'Why 35× wagering kills expected value.' },
+  { to: localiseUrl('/pelit/blackjack', isEn), labelFi: 'Blackjack', labelEn: 'Blackjack', hintFi: 'Perusstrategian referenssi ja sivupanosten matematiikka.', hintEn: 'Basic strategy reference + side-bet math.' },
+  { to: localiseUrl('/pelit/slotit', isEn), labelFi: 'Slotit', labelEn: 'Slots', hintFi: 'RTP, volatiliteetti, bonus buy — pelkkä mekaniikka.', hintEn: 'RTP, volatility, bonus buy — mechanics only.' },
+  { to: localiseUrl('/saantely/reform-2027', isEn), labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Mikä muuttuu pelimarkkinoilla heinäkuussa 2027.', hintEn: 'What changes in the gambling market on 2027-07-01.' },
+].filter((l) => {
+  const skipEn = localiseUrl(skip, true);
+  return l.to !== skip && l.to !== skipEn;
+}).slice(0, 4);
 
 /* ────────────────────────────────────────────────────────────────
  * /pelit/blackjack — deep guide
@@ -220,7 +230,7 @@ export const PelitBlackjackDeep = ({ forceLang } = {}) => {
         </p>
       </Block>
 
-      <InternalLinkStrip testId="pelit-blackjack-related" links={baseLinkStrip('/pelit/blackjack')} />
+      <InternalLinkStrip testId="pelit-blackjack-related" links={baseLinkStrip('/pelit/blackjack', isEn)} />
       <section className="container-wide pb-14">
         <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={6} />
       </section>
@@ -415,7 +425,7 @@ export const PelitBonusmatematiikkaDeep = ({ forceLang } = {}) => {
         </ol>
       </Block>
 
-      <InternalLinkStrip testId="pelit-bonusmatematiikka-related" links={baseLinkStrip('/pelit/bonusmatematiikka')} />
+      <InternalLinkStrip testId="pelit-bonusmatematiikka-related" links={baseLinkStrip('/pelit/bonusmatematiikka', isEn)} />
       <section className="container-wide pb-14">
         <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={5} />
       </section>
@@ -509,7 +519,7 @@ export const PelitPokerDeep = ({ forceLang } = {}) => {
         ]}
       />
 
-      <InternalLinkStrip testId="pelit-poker-related" links={baseLinkStrip('/pelit/poker')} />
+      <InternalLinkStrip testId="pelit-poker-related" links={baseLinkStrip('/pelit/poker', isEn)} />
       <section className="container-wide pb-14">
         <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={6} />
       </section>
@@ -590,7 +600,7 @@ export const PelitCrapsDeep = ({ forceLang } = {}) => {
         </ol>
       </Block>
 
-      <InternalLinkStrip testId="pelit-craps-related" links={baseLinkStrip('/pelit/craps')} />
+      <InternalLinkStrip testId="pelit-craps-related" links={baseLinkStrip('/pelit/craps', isEn)} />
       <section className="container-wide pb-14">
         <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={4} />
       </section>
@@ -659,7 +669,7 @@ export const PelitRulettiDeep = ({ forceLang } = {}) => {
         </p>
       </Block>
 
-      <InternalLinkStrip testId="pelit-ruletti-related" links={baseLinkStrip('/pelit/ruletti')} />
+      <InternalLinkStrip testId="pelit-ruletti-related" links={baseLinkStrip('/pelit/ruletti', isEn)} />
       <section className="container-wide pb-14">
         <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={4} />
       </section>
@@ -735,7 +745,7 @@ export const PelitLiveDeep = ({ forceLang } = {}) => {
         </p>
       </Block>
 
-      <InternalLinkStrip testId="pelit-live-related" links={baseLinkStrip('/pelit/live')} />
+      <InternalLinkStrip testId="pelit-live-related" links={baseLinkStrip('/pelit/live', isEn)} />
       <section className="container-wide pb-14">
         <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={5} />
       </section>

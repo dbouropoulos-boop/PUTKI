@@ -105,6 +105,20 @@ const BackOfficeMittariGrading = () => {
     setBusy(false);
   };
 
+  const applyAll = (outcome) => {
+    const next = {};
+    pending.forEach((p) => { if (p.signal_id) next[p.signal_id] = outcome; });
+    setDraft(next);
+    setMsg(`Pre-set ${pending.length} rows to ${outcome.toUpperCase()}. Click SAVE to commit.`);
+    setError(null);
+  };
+
+  const clearDraft = () => {
+    setDraft({});
+    setMsg(null);
+    setError(null);
+  };
+
   if (!authed) return null;
 
   return (
@@ -157,6 +171,43 @@ const BackOfficeMittariGrading = () => {
         {pending.length === 0 && (
           <div data-testid="bo-mittari-grading-empty" className="p-4 font-serif" style={{ border: '1px solid var(--line)', background: 'var(--surface)', color: 'var(--ink-2)' }}>
             Nothing pending. Either no commenced snapshots exist yet, or every commenced signal has been graded.
+          </div>
+        )}
+        {pending.length > 0 && (
+          <div data-testid="bo-mittari-grading-batch" className="mb-3 flex flex-wrap gap-2 items-center">
+            <span className="mono" style={{ fontSize: 10.5, letterSpacing: '0.16em', color: 'var(--ink-3)', fontWeight: 700 }}>BATCH ·</span>
+            <button
+              type="button"
+              data-testid="bo-mittari-grading-apply-all-hit"
+              onClick={() => applyAll('hit')}
+              disabled={busy}
+              className="mono"
+              style={{ padding: '6px 12px', background: 'var(--ember-soft)', color: 'var(--ember-strong)', fontSize: 10.5, letterSpacing: '0.14em', fontWeight: 700, border: '1px solid var(--line)' }}
+            >APPLY ALL · HIT</button>
+            <button
+              type="button"
+              data-testid="bo-mittari-grading-apply-all-miss"
+              onClick={() => applyAll('miss')}
+              disabled={busy}
+              className="mono"
+              style={{ padding: '6px 12px', background: 'var(--surface)', color: 'var(--ink)', fontSize: 10.5, letterSpacing: '0.14em', fontWeight: 700, border: '1px solid var(--line)' }}
+            >APPLY ALL · MISS</button>
+            <button
+              type="button"
+              data-testid="bo-mittari-grading-apply-all-push"
+              onClick={() => applyAll('push')}
+              disabled={busy}
+              className="mono"
+              style={{ padding: '6px 12px', background: 'var(--surface)', color: 'var(--ink)', fontSize: 10.5, letterSpacing: '0.14em', fontWeight: 700, border: '1px solid var(--line)' }}
+            >APPLY ALL · PUSH</button>
+            <button
+              type="button"
+              data-testid="bo-mittari-grading-clear-draft"
+              onClick={clearDraft}
+              disabled={busy || Object.keys(draft).length === 0}
+              className="mono"
+              style={{ padding: '6px 12px', background: 'var(--bg)', color: 'var(--ink-3)', fontSize: 10.5, letterSpacing: '0.14em', fontWeight: 700, border: '1px solid var(--line)' }}
+            >CLEAR</button>
           </div>
         )}
         {pending.length > 0 && (

@@ -6,6 +6,7 @@ import useJsonLd from '../hooks/useJsonLd';
 import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
+import { localiseUrl } from '../lib/localiseUrl';
 
 /**
  * /saantely/reform-2027 — Finnish Gambling Act 2025/2027 deep briefing.
@@ -346,10 +347,10 @@ const Reform2027Hub = ({ forceLang } = {}) => {
       <InternalLinkStrip
         testId="reform-2027-related"
         links={[
-          { to: '/saantely', labelFi: 'Sääntely-arkisto', labelEn: 'Regulation archive', hintFi: 'Kaikki PUTKI HQ:n sääntelyjutut yhdessä paikassa.', hintEn: 'Every PUTKI HQ regulation piece in one place.' },
+          { to: localiseUrl('/saantely', isEn), labelFi: 'Sääntely-arkisto', labelEn: 'Regulation archive', hintFi: 'Kaikki PUTKI HQ:n sääntelyjutut yhdessä paikassa.', hintEn: 'Every PUTKI HQ regulation piece in one place.' },
           { to: '/sponsoroinnit', labelFi: 'Sponsoroinnit', labelEn: 'Sponsorships', hintFi: 'Kuka maksaa kenelle 2027 jälkeen — operaattorien sponsorointiseuranta.', hintEn: 'Who pays whom post-2027 — operator sponsorship tracker.' },
           { to: '/affiliaatti', labelFi: 'Affiliaattipolitiikkamme', labelEn: 'Our affiliate policy', hintFi: 'Miten PUTKI HQ ansaitsee ja mistä sen julkistaa.', hintEn: 'How PUTKI HQ earns and where it discloses.' },
-          { to: '/pelit', labelFi: 'Peliarkisto', labelEn: 'Game literacy', hintFi: 'House edge, RTP, bonusmatematiikka selkokielellä.', hintEn: 'House edge, RTP, bonus math in plain language.' },
+          { to: localiseUrl('/pelit', isEn), labelFi: 'Peliarkisto', labelEn: 'Game literacy', hintFi: 'House edge, RTP, bonusmatematiikka selkokielellä.', hintEn: 'House edge, RTP, bonus math in plain language.' },
         ]}
       />
 
