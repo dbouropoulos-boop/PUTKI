@@ -12,6 +12,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -145,7 +146,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     } finally { setBusy(false); }
   };
 
-  const save = async () => {
+  const save = useCallback(async () => {
     setError(''); setInfo(''); setBusy(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}`, {
@@ -166,11 +167,40 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
         }),
       });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) { setError(j.detail || `HTTP ${r.status}`); return; }
+      if (!r.ok) {
+        setError(j.detail || `HTTP ${r.status}`);
+        throw new Error(j.detail || `HTTP ${r.status}`);
+      }
       setInfo('SAVED.');
       onSaved && onSaved();
     } finally { setBusy(false); }
-  };
+  }, [raffle.id, token, form, onSaved]);
+
+  // iter84b · Task 2.8b — autosave for raffle edits ONLY when:
+  // (a) raffle isn't drawn/paid (those statuses are locked), and
+  // (b) the form has actually diverged from raffle props.
+  // Delay is 4s — raffle editors tweak many fields in sequence; we
+  // want them to land before the save fires.
+  const formSnapshot = useMemo(() => JSON.stringify(form), [form]);
+  const raffleSnapshot = useMemo(() => JSON.stringify({
+    title_fi: raffle.title_fi || '', title_en: raffle.title_en || '',
+    summary_fi: raffle.summary_fi || '', summary_en: raffle.summary_en || '',
+    sport: raffle.sport || '', league: raffle.league || '',
+    home_team: raffle.home_team || '', away_team: raffle.away_team || '',
+    kickoff_at: raffle.kickoff_at || '',
+    entries_close_at: raffle.entries_close_at || '',
+    image_url: raffle.image_url || '',
+    prize_cap_eur: raffle.prize_cap_eur || 500,
+    payouts: (raffle.prize_distribution?.payouts || []).slice(),
+    scoring: raffle.scoring || { one_x_two_points: 3, exact_score_points: 5, goal_diff_points: 3, total_goals_points: 1 },
+    gating: raffle.gating || { rules_url_set: false, prize_distribution_locked: false, match_populated: false },
+    status: raffle.status || 'draft',
+  }), [raffle]);
+  const dirty = formSnapshot !== raffleSnapshot;
+  const autosave = useFormAutosave({
+    form, dirty, onSave: save, delay: 4000,
+    pause: busy || drawn,
+  });
 
   const drawNow = async () => {
     if (drawHome === '' || drawAway === '') { setError('Score required for draw.'); return; }
@@ -316,11 +346,23 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
 
       {/* Actions */}
       <div style={{ marginTop: 18, display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-        <button type="button" onClick={save} disabled={busy || drawn}
+        <button type="button" onClick={autosave.forceSave} disabled={busy || drawn}
           data-testid="raffle-save-btn"
           style={{ padding: '10px 22px', background: '#FFFFFF', color: '#0B0A09', border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 10.5, letterSpacing: '0.18em', fontWeight: 700, cursor: (busy || drawn) ? 'wait' : 'pointer' }}>
           {busy ? 'SAVING…' : 'SAVE'}
         </button>
+        <AutosaveStatus
+          status={autosave.status}
+          error={autosave.error}
+          lastSavedAt={autosave.lastSavedAt}
+          testid="raffle-autosave-status"
+        />
+        {drawn && (
+          <span style={{
+            fontFamily: 'ui-monospace, monospace', fontSize: 10,
+            letterSpacing: '0.18em', color: 'var(--muted)',
+          }}>· LOCKED (drawn/paid)</span>
+        )}
 
         {!drawn && (
           <>

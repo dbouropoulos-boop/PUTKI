@@ -21,6 +21,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 import {
   HeaderHeroSection,
   MethodStackSection,
@@ -62,7 +63,7 @@ const BackOfficeMestariCopy = () => {
 
   useEffect(() => { if (authed) fetchAll(); }, [authed, fetchAll]);
 
-  const save = async () => {
+  const save = useCallback(async () => {
     if (!form) return;
     setSaving(true); setStatus('Saving…');
     try {
@@ -72,7 +73,7 @@ const BackOfficeMestariCopy = () => {
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setStatus(`Save failed: ${j.detail || r.status}`);
-        return;
+        throw new Error(j.detail || `HTTP ${r.status}`);
       }
       const j = await r.json();
       setData(j);
@@ -80,10 +81,21 @@ const BackOfficeMestariCopy = () => {
       setStatus(`✓ Saved · ${new Date(j.updated_at).toLocaleString()}`);
     } catch (e) {
       setStatus(`Error: ${e.message}`);
+      throw e;
     } finally {
       setSaving(false);
     }
-  };
+  }, [form, headers]);
+
+  // iter84b · Task 2.8b — debounced autosave + Cmd+S. `dirty` compares
+  // the live form to the last server merge.
+  const dirty = useMemo(() => {
+    if (!form || !data) return false;
+    return JSON.stringify(form) !== JSON.stringify(data.merged);
+  }, [form, data]);
+  const autosave = useFormAutosave({
+    form, dirty, onSave: save, delay: 2500, pause: saving,
+  });
 
   const resetSection = (key) => {
     if (!defaults || !form) return;
@@ -130,11 +142,17 @@ const BackOfficeMestariCopy = () => {
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <AutosaveStatus
+            status={autosave.status}
+            error={autosave.error}
+            lastSavedAt={autosave.lastSavedAt}
+            testid="mec-autosave-status"
+          />
           <span style={{
             fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
             letterSpacing: '0.12em', color: 'var(--muted)',
           }} data-testid="mec-status">{status}</span>
-          <button type="button" onClick={save} disabled={saving}
+          <button type="button" onClick={autosave.forceSave} disabled={saving}
             data-testid="mec-save-top"
             style={{
               padding: '10px 18px', background: '#5B8DEE', color: '#0B0A09',
@@ -171,7 +189,7 @@ const BackOfficeMestariCopy = () => {
               fontFamily: 'ui-monospace, monospace', fontSize: 11,
               fontWeight: 700, letterSpacing: '0.22em', textTransform: 'uppercase',
             }}>OPEN /MESTARI ↗</Link>
-          <button type="button" onClick={save} disabled={saving}
+          <button type="button" onClick={autosave.forceSave} disabled={saving}
             data-testid="mec-save-bottom"
             style={{
               padding: '10px 18px', background: '#5B8DEE', color: '#0B0A09',

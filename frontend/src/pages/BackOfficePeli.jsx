@@ -4,9 +4,10 @@
  * Edit prize amount/label/currency, partner config, 3 embedded videos,
  * enable/disable the raffle, view entries.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Loader2, Save, Power } from 'lucide-react';
+import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki-hq-admin-token';
@@ -23,6 +24,7 @@ const BackOfficePeli = () => {
   const [authError, setAuthError] = useState('');
   const [busy, setBusy] = useState(false);
   const [config, setConfig] = useState(null);
+  const [serverConfig, setServerConfig] = useState(null);
   const [entries, setEntries] = useState([]);
   const [entryCount, setEntryCount] = useState(0);
   const [status, setStatus] = useState('');
@@ -37,6 +39,7 @@ const BackOfficePeli = () => {
       if (r.status === 401) { setAuthError('Wrong token.'); setAuthed(false); return; }
       const d = await r.json();
       setConfig(d.config);
+      setServerConfig(d.config);
       setEntryCount(d.entry_count || 0);
       const eR = await fetch(`${BACKEND}/api/admin/peli/entries?limit=200`, {
         headers: { 'X-Admin-Token': tk },
@@ -63,7 +66,7 @@ const BackOfficePeli = () => {
     return { ...c, videos };
   });
 
-  const save = async () => {
+  const save = useCallback(async () => {
     setBusy(true);
     setStatus('');
     try {
@@ -85,13 +88,24 @@ const BackOfficePeli = () => {
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setConfig(d);
+      setServerConfig(d);
       setStatus('Saved.');
     } catch (e) {
       setStatus(`Error: ${e.message}`);
+      throw e;
     } finally {
       setBusy(false);
     }
-  };
+  }, [config, token]);
+
+  // iter84b · Task 2.8b — debounced autosave + Cmd+S for /peli config.
+  const dirty = useMemo(() => {
+    if (!config || !serverConfig) return false;
+    return JSON.stringify(config) !== JSON.stringify(serverConfig);
+  }, [config, serverConfig]);
+  const autosave = useFormAutosave({
+    form: config, dirty, onSave: save, delay: 2000, pause: busy,
+  });
 
   if (!authed) {
     return (
@@ -201,13 +215,21 @@ const BackOfficePeli = () => {
                 <Power className="inline w-3 h-3 mr-1" /> RAFFLE ENABLED
               </span>
             </label>
-            <button onClick={save} disabled={busy} data-testid="bo-peli-save"
+            <button onClick={autosave.forceSave} disabled={busy} data-testid="bo-peli-save"
                     className="mono inline-flex items-center gap-2"
                     style={{ padding: '12px 18px', background: 'var(--ink)', color: 'var(--bg)', fontSize: 11, letterSpacing: '0.22em', fontWeight: 700, borderRadius: 2 }}>
               <Save size={14} />{busy ? 'SAVING…' : 'SAVE'}
             </button>
           </section>
-          {status && <div className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{status}</div>}
+          <div className="flex items-center gap-3" style={{ marginTop: 8 }}>
+            <AutosaveStatus
+              status={autosave.status}
+              error={autosave.error}
+              lastSavedAt={autosave.lastSavedAt}
+              testid="bo-peli-autosave-status"
+            />
+            {status && <div className="mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{status}</div>}
+          </div>
         </div>
 
         <div>
