@@ -413,4 +413,313 @@ export const PelitBonusmatematiikkaDeep = () => {
   );
 };
 
+/* ────────────────────────────────────────────────────────────────
+ * /pelit/poker — deep guide (Texas Hold'em + video poker)
+ * ────────────────────────────────────────────────────────────────*/
+export const PelitPokerDeep = () => {
+  const { lang } = useLang();
+  const isEn = lang === 'en';
+  useDocumentMeta({
+    title: isEn ? 'Poker — Texas Hold’em and video poker fundamentals · PUTKI HQ' : 'Poker — Texas Hold’em ja video poker -perusteet · PUTKI HQ',
+    description: isEn
+      ? 'Pot odds, hand-selection ranges, video poker pay-table mathematics. Math-first poker literacy from PUTKI HQ.'
+      : 'Pot odds, käden valinnan rangit, video pokerin pay table -matematiikka. Matematiikkavetoista pokeri­lukutaitoa PUTKI HQ:lta.',
+    canonical: 'https://putkihq.com/pelit/poker',
+  });
+  useJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: isEn ? 'Poker — Texas Hold’em and video poker fundamentals' : 'Poker — Texas Hold’em ja video poker -perusteet',
+    author: { '@type': 'Organization', name: 'PUTKI HQ' },
+    publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
+    datePublished: '2026-02-01',
+    dateModified: new Date().toISOString().slice(0, 10),
+    mainEntityOfPage: 'https://putkihq.com/pelit/poker',
+    inLanguage: isEn ? 'en-FI' : 'fi-FI',
+  });
+  return (
+    <div data-testid="pelit-poker-page" className="min-h-screen">
+      <PelitNav lang={lang} />
+      <section className="container-wide pt-6 pb-6">
+        <div className="eyebrow mb-3" style={{ color: 'var(--ember-strong)' }}>{isEn ? 'POKER · FUNDAMENTALS' : 'POKER · PERUSTEET'}</div>
+        <h1 className="display text-4xl sm:text-5xl lg:text-6xl" data-testid="pelit-poker-page-headline">
+          {isEn ? 'Poker — math first. Psychology can wait.' : 'Poker — ensin matematiikka. Psykologia voi odottaa.'}
+        </h1>
+        <p className="prose-mittari mt-5 max-w-3xl" data-testid="pelit-poker-page-intro">
+          {isEn
+            ? 'A beginner’s mathematical reference for Texas Hold’em and video poker. PUTKI HQ skips the tells, the personalities, the cinematic stuff. What stays: pot odds, equity, position, range-based thinking, and the brutal truth that video poker pay tables vary by 4-5 percentage points of RTP between casinos for the same game name.'
+            : 'Aloittelijan matemaattinen referenssi Texas Hold’emille ja video pokerille. PUTKI HQ ohittaa tellsit, persoonat ja elokuvallisen aineksen. Jäljelle jää: pot odds, equity, asema, rangit ja brutaali totuus että video pokerin pay tablet vaihtelevat 4-5 prosenttiyksikköä RTP:tä kasinoittain saman pelin nimen alla.'}
+        </p>
+      </section>
+
+      <Block testId="pelit-poker-potodds" tag={isEn ? 'POT ODDS' : 'POT ODDS'} title={isEn ? 'Pot odds in one sentence' : 'Pot odds yhdellä lauseella'}>
+        <p>
+          {isEn
+            ? 'Call when (amount to call) / (pot + amount to call) ≤ (your equity to win). A flush draw on the turn has 9 outs / 46 cards = 19.6% equity. If the pot is €100 and the bet is €20, you need 20/(120) = 16.7% — call. If the bet is €40, you need 40/180 = 22.2% — fold.'
+            : 'Maksa silloin kun (maksusumma) / (potti + maksusumma) ≤ (oma equity voittoon). Flushveto turnilla = 9 outsia / 46 korttia = 19,6 % equity. Jos potissa on 100 € ja panos 20 €, tarvitset 20/(120) = 16,7 % — maksa. Jos panos on 40 €, tarvitset 40/180 = 22,2 % — luovuta.'}
+        </p>
+      </Block>
+
+      <Block testId="pelit-poker-ranges" tag={isEn ? 'STARTING HANDS' : 'ALOITUSKÄDET'} title={isEn ? 'Position dictates range, not feeling' : 'Asema sanelee rangin, ei tunne'}>
+        <p className="mb-3">
+          {isEn ? '6-max cash game open ranges (PUTKI HQ tightened reference, sourced from Upswing Poker + GTOWizard preflop charts):' : '6-max käteispelin open-rangit (PUTKI HQ:n tiukennettu referenssi, lähde: Upswing Poker + GTOWizard preflop-kortit):'}
+        </p>
+      </Block>
+      <Table
+        testId="pelit-poker-ranges-table"
+        head={isEn ? ['Position', 'Open range %', 'Bottom of range'] : ['Asema', 'Open-range %', 'Rangin pohja']}
+        rows={[
+          ['UTG', '14%', '99, AJo, KQs'],
+          ['MP', '17%', '88, ATo, KJs'],
+          ['CO', '25%', '66, A8o, KTs, QJs'],
+          ['BTN', '40%', '22, A2o, K7o, T8s'],
+          ['SB', '32%', '44, A5o, KTo'],
+        ]}
+      />
+
+      <Block testId="pelit-poker-vp" tag={isEn ? 'VIDEO POKER' : 'VIDEO POKER'} title={isEn ? 'Pay tables are everything' : 'Pay table on kaikki'}>
+        <p className="mb-3">
+          {isEn
+            ? 'Jacks or Better with a 9/6 pay table (9× full house, 6× flush) returns 99.54% with perfect strategy. The same game with an 8/5 pay table returns 97.30%. Same name, same screen, 2.2 percentage points of RTP gone because of one number.'
+            : 'Jacks or Better 9/6-pay tablella (9× full house, 6× flush) palauttaa 99,54 % täydellisellä strategialla. Sama peli 8/5-pay tablella palauttaa 97,30 %. Sama nimi, sama ruutu, 2,2 prosenttiyksikköä RTP:tä menetetty yhdestä numerosta.'}
+        </p>
+      </Block>
+      <Table
+        testId="pelit-poker-vp-table"
+        head={isEn ? ['Variant', 'Pay table', 'RTP (optimal)'] : ['Variantti', 'Pay table', 'RTP (optimaali)']}
+        rows={[
+          ['Jacks or Better', '9/6', '99.54%'],
+          ['Jacks or Better', '8/5', '97.30%'],
+          ['Bonus Poker', '8/5', '99.17%'],
+          ['Double Bonus', '10/7', '100.17%'],
+          ['Deuces Wild', 'Full pay', '100.76%'],
+        ]}
+      />
+
+      <InternalLinkStrip testId="pelit-poker-related" links={baseLinkStrip('/pelit/poker')} />
+      <section className="container-wide pb-14">
+        <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={6} />
+      </section>
+    </div>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────────
+ * /pelit/craps — deep guide
+ * ────────────────────────────────────────────────────────────────*/
+export const PelitCrapsDeep = () => {
+  const { lang } = useLang();
+  const isEn = lang === 'en';
+  useDocumentMeta({
+    title: isEn ? 'Craps — bets ranked by math · PUTKI HQ' : 'Craps — vetojen matemaattinen järjestys · PUTKI HQ',
+    description: isEn
+      ? 'Pass line + odds, Don’t Pass, place bets, the sucker centre of the table. House edges sourced from Wizard of Odds.'
+      : 'Pass-line + odds, Don’t Pass, place bets, sucker betit keskellä pöytää. Talon edget Wizard of Oddsista.',
+    canonical: 'https://putkihq.com/pelit/craps',
+  });
+  useJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: isEn ? 'Craps — bets ranked by math' : 'Craps — vetojen matemaattinen järjestys',
+    author: { '@type': 'Organization', name: 'PUTKI HQ' },
+    publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
+    datePublished: '2026-02-01',
+    dateModified: new Date().toISOString().slice(0, 10),
+    mainEntityOfPage: 'https://putkihq.com/pelit/craps',
+    inLanguage: isEn ? 'en-FI' : 'fi-FI',
+  });
+  return (
+    <div data-testid="pelit-craps-page" className="min-h-screen">
+      <PelitNav lang={lang} />
+      <section className="container-wide pt-6 pb-6">
+        <div className="eyebrow mb-3" style={{ color: 'var(--ember-strong)' }}>{isEn ? 'CRAPS · BET ANALYSIS' : 'CRAPS · VETOANALYYSI'}</div>
+        <h1 className="display text-4xl sm:text-5xl lg:text-6xl" data-testid="pelit-craps-page-headline">
+          {isEn ? 'Craps — the same table holds the best and worst bets in the house.' : 'Craps — sama pöytä sisältää talon parhaat ja huonoimmat vedot.'}
+        </h1>
+        <p className="prose-mittari mt-5 max-w-3xl" data-testid="pelit-craps-page-intro">
+          {isEn
+            ? 'A craps table looks chaotic. The math is not. Pass-line + maximum odds gives one of the lowest house edges in any casino (sub-0.5%). Centre-of-table props are 11-17% edges aimed at impulse. PUTKI HQ ranks every bet.'
+            : 'Craps-pöytä näyttää kaaokselta. Matematiikka ei. Pass-line + maksimi-odds antaa yhden alhaisimmista talon edgeistä koko kasinossa (alle 0,5 %). Keskipöydän prop-betit ovat 11-17 % edgejä jotka tähtäävät impulssiin. PUTKI HQ luokittelee jokaisen vedon.'}
+        </p>
+      </section>
+
+      <Block testId="pelit-craps-best" tag={isEn ? 'BEST BETS' : 'PARHAAT VEDOT'} title={isEn ? 'The line bets carry the table' : 'Linjavedot kantavat pöydän'}>
+        <p>
+          {isEn
+            ? 'Pass-line: 1.41% house edge. Don’t Pass: 1.36% — slightly better but socially awkward (you bet against the shooter). Adding odds behind your line bet is free (true odds, zero house edge) — taking 5× odds drops the combined edge to 0.33%. Maximum-odds tables in Helsinki are rare; 3-4-5× is the realistic ceiling.'
+            : 'Pass-line: 1,41 % talon edge. Don’t Pass: 1,36 % — hieman parempi mutta sosiaalisesti hankala (lyöt vedon heittäjää vastaan). Odds-vedon lisääminen linjavetosi taakse on ilmaista (true odds, nolla edge) — 5× odds laskee yhdistetyn edgen 0,33 %:iin. Maksimi-odds-pöydät Helsingissä ovat harvinaisia; 3-4-5× on realistinen katto.'}
+        </p>
+      </Block>
+
+      <Table
+        testId="pelit-craps-edges-table"
+        head={isEn ? ['Bet', 'House edge', 'Verdict'] : ['Veto', 'Talon edge', 'Verdikti']}
+        rows={[
+          ['Pass + 5× odds', '0.33%', isEn ? 'Optimal' : 'Optimaali'],
+          ['Don’t Pass + 5× odds', '0.27%', isEn ? 'Mathematically best' : 'Matemaattisesti paras'],
+          ['Pass-line (no odds)', '1.41%', isEn ? 'Acceptable' : 'Hyväksyttävä'],
+          ['Place 6 or 8', '1.52%', isEn ? 'Decent' : 'Kelvollinen'],
+          ['Field bet', '5.56%', isEn ? 'Avoid' : 'Vältä'],
+          ['Any 7', '16.67%', isEn ? 'Sucker bet' : 'Sucker-betti'],
+          ['Hard 12 / hard 2', '13.89%', isEn ? 'Sucker bet' : 'Sucker-betti'],
+        ]}
+      />
+
+      <Block testId="pelit-craps-sequence" tag={isEn ? 'PLAY SEQUENCE' : 'PELISEKVENSI'} title={isEn ? 'A safe craps session in 4 rules' : 'Turvallinen craps-sessio 4 säännössä'}>
+        <ol className="list-decimal pl-6 space-y-2">
+          <li>{isEn ? 'Bet Pass-line on the come-out roll.' : 'Lyö Pass-line tulee-ulos -heitolla.'}</li>
+          <li>{isEn ? 'Once a point is established, lay maximum odds behind it.' : 'Kun piste on asetettu, laita maksimi-odds sen taakse.'}</li>
+          <li>{isEn ? 'Optionally back up with a Place 6 or Place 8.' : 'Halutessasi tue Place 6:lla tai Place 8:lla.'}</li>
+          <li>{isEn ? 'Never touch the centre of the table.' : 'Älä koskaan koske pöydän keskustaan.'}</li>
+        </ol>
+      </Block>
+
+      <InternalLinkStrip testId="pelit-craps-related" links={baseLinkStrip('/pelit/craps')} />
+      <section className="container-wide pb-14">
+        <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={4} />
+      </section>
+    </div>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────────
+ * /pelit/ruletti — deep guide
+ * ────────────────────────────────────────────────────────────────*/
+export const PelitRulettiDeep = () => {
+  const { lang } = useLang();
+  const isEn = lang === 'en';
+  useDocumentMeta({
+    title: isEn ? 'Roulette — every bet returns the same edge · PUTKI HQ' : 'Ruletti — kaikki panostukset palaavat samaan · PUTKI HQ',
+    description: isEn
+      ? 'European 2.7%, American 5.26%, French La Partage 1.35%. House edge is a wheel property, not a bet property.'
+      : 'Eurooppalainen 2,7 %, amerikkalainen 5,26 %, ranskalainen La Partage 1,35 %. Talon edge on rattaan ominaisuus, ei vedon.',
+    canonical: 'https://putkihq.com/pelit/ruletti',
+  });
+  useJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: isEn ? 'Roulette — every bet returns the same edge' : 'Ruletti — kaikki panostukset palaavat samaan',
+    author: { '@type': 'Organization', name: 'PUTKI HQ' },
+    publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
+    datePublished: '2026-02-01',
+    dateModified: new Date().toISOString().slice(0, 10),
+    mainEntityOfPage: 'https://putkihq.com/pelit/ruletti',
+    inLanguage: isEn ? 'en-FI' : 'fi-FI',
+  });
+  return (
+    <div data-testid="pelit-ruletti-page" className="min-h-screen">
+      <PelitNav lang={lang} />
+      <section className="container-wide pt-6 pb-6">
+        <div className="eyebrow mb-3" style={{ color: 'var(--ember-strong)' }}>{isEn ? 'ROULETTE · MATH' : 'RULETTI · MATEMATIIKKA'}</div>
+        <h1 className="display text-4xl sm:text-5xl lg:text-6xl" data-testid="pelit-ruletti-page-headline">
+          {isEn ? 'Roulette — pick the wheel, not the bet.' : 'Ruletti — valitse ratas, ei vetoa.'}
+        </h1>
+        <p className="prose-mittari mt-5 max-w-3xl" data-testid="pelit-ruletti-page-intro">
+          {isEn
+            ? 'Every roulette bet on a given wheel carries the same expected return. The number you place chips on is a visualization choice — it does not change the math. The only thing that matters is which wheel you sit at.'
+            : 'Jokainen ruletin veto samalla rattaalla kantaa saman odotetun tuoton. Numero jolle latut laitat on visualisointi — se ei muuta matematiikkaa. Ainoa merkitsevä asia on millä rattaalla istut.'}
+        </p>
+      </section>
+
+      <Table
+        testId="pelit-ruletti-wheels-table"
+        head={isEn ? ['Wheel', 'Zeros', 'House edge', 'EV / €100'] : ['Ratas', 'Nollat', 'Talon edge', 'EV / 100 €']}
+        rows={[
+          [isEn ? 'European (single 0)' : 'Eurooppalainen (yksi 0)', '1', '2.70%', '-€2.70'],
+          [isEn ? 'French (La Partage)' : 'Ranskalainen (La Partage)', '1', '1.35%', '-€1.35'],
+          [isEn ? 'American (0 + 00)' : 'Amerikkalainen (0 + 00)', '2', '5.26%', '-€5.26'],
+          ['Triple Zero (Sands)', '3', '7.69%', '-€7.69'],
+        ]}
+      />
+
+      <Block testId="pelit-ruletti-systems" tag={isEn ? 'SYSTEMS FALLACY' : 'JÄRJESTELMÄHARHA'} title={isEn ? 'Why Martingale and friends do not work' : 'Miksi Martingale ja kaverit eivät toimi'}>
+        <p>
+          {isEn
+            ? 'The Martingale system (double after every loss) cannot beat the house edge — it converts many small wins into rare catastrophic losses with identical negative EV. The math: a €5 starting bet doubling on red has a 47.4% per-spin win rate on European. Hitting 8 consecutive losses (occurs once per 257 sequences) requires a €1 280 bet on the 9th attempt to break even — at which point the table limit usually blocks you. PUTKI HQ has never seen a system that survives 10 000 spins of simulation.'
+            : 'Martingale-järjestelmä (tuplaa jokaisen häviön jälkeen) ei voi voittaa talon edgeä — se muuntaa monta pientä voittoa harvinaisiksi katastrofaalisiksi häviöiksi identtisellä negatiivisella odotusarvolla. Matematiikka: 5 €:n aloituspanos tuplattuna punaisella voittaa eurooppalaisessa 47,4 % per pyöritys. 8 peräkkäistä häviötä (kerran 257 sekvenssiä kohden) vaatii 1 280 €:n panoksen 9. yrityksessä päästäkseen nollille — yleensä pöytäraja blokkaa. PUTKI HQ ei ole nähnyt järjestelmää joka selviää 10 000 pyörityksen simulaatiosta.'}
+        </p>
+      </Block>
+
+      <InternalLinkStrip testId="pelit-ruletti-related" links={baseLinkStrip('/pelit/ruletti')} />
+      <section className="container-wide pb-14">
+        <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={4} />
+      </section>
+    </div>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────────
+ * /pelit/live — deep guide (Live casino literacy)
+ * ────────────────────────────────────────────────────────────────*/
+export const PelitLiveDeep = () => {
+  const { lang } = useLang();
+  const isEn = lang === 'en';
+  useDocumentMeta({
+    title: isEn ? 'Live casino — how the games actually work · PUTKI HQ' : 'Live-kasino — miten pelit oikeasti toimivat · PUTKI HQ',
+    description: isEn
+      ? 'Studio economics, latency, RNG vs human dealers. Crazy Time, Lightning Roulette and Live Blackjack literacy.'
+      : 'Studio-talous, latenssi, RNG vs ihmiset. Crazy Time, Lightning Roulette ja live blackjack -lukutaitoa.',
+    canonical: 'https://putkihq.com/pelit/live',
+  });
+  useJsonLd({
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: isEn ? 'Live casino — how the games actually work' : 'Live-kasino — miten pelit oikeasti toimivat',
+    author: { '@type': 'Organization', name: 'PUTKI HQ' },
+    publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
+    datePublished: '2026-02-01',
+    dateModified: new Date().toISOString().slice(0, 10),
+    mainEntityOfPage: 'https://putkihq.com/pelit/live',
+    inLanguage: isEn ? 'en-FI' : 'fi-FI',
+  });
+  return (
+    <div data-testid="pelit-live-page" className="min-h-screen">
+      <PelitNav lang={lang} />
+      <section className="container-wide pt-6 pb-6">
+        <div className="eyebrow mb-3" style={{ color: 'var(--ember-strong)' }}>{isEn ? 'LIVE CASINO · LITERACY' : 'LIVE-KASINO · LUKUTAITO'}</div>
+        <h1 className="display text-4xl sm:text-5xl lg:text-6xl" data-testid="pelit-live-page-headline">
+          {isEn ? 'Live casino — the studio, the RNG, the latency.' : 'Live-kasino — studio, RNG, latenssi.'}
+        </h1>
+        <p className="prose-mittari mt-5 max-w-3xl" data-testid="pelit-live-page-intro">
+          {isEn
+            ? 'A live casino feed looks like a real table. Most of what you see is real — a dealer, a wheel, a shoe. Some of what you see is RNG painted over a video layer (Lightning Roulette multipliers, Crazy Time bonus rounds). PUTKI HQ teaches you to tell which is which, and how the studios make money.'
+            : 'Live-kasinosyöte näyttää oikealta pöydältä. Suurin osa siitä mitä näet on oikeaa — jakaja, ratas, kenkä. Osa on RNG:tä video­kerroksen päälle maalattuna (Lightning Roulette -kertoimet, Crazy Time -bonuskierrokset). PUTKI HQ opettaa erottamaan kumpi on kumpi ja miten studiot tekevät rahaa.'}
+        </p>
+      </section>
+
+      <Block testId="pelit-live-edges" tag={isEn ? 'EDGE TABLE' : 'EDGE-TAULUKKO'} title={isEn ? 'House edge across the popular live formats' : 'Talon edge suosituissa live-formaateissa'}>
+        <p className="mb-3">
+          {isEn ? 'Sourced from Evolution Gaming public RTP filings + Casino.guru independent verification:' : 'Lähde: Evolution Gamingin julkiset RTP-tiedotteet + Casino.guru itsenäinen verifiointi:'}
+        </p>
+      </Block>
+      <Table
+        testId="pelit-live-edges-table"
+        head={isEn ? ['Game', 'House edge', 'Note'] : ['Peli', 'Talon edge', 'Huomio']}
+        rows={[
+          ['Live Blackjack (S17)', '0.50%', isEn ? 'Real shoe, real dealer' : 'Oikea kenkä, oikea jakaja'],
+          ['Live European Roulette', '2.70%', isEn ? 'Mechanical wheel' : 'Mekaaninen ratas'],
+          ['Lightning Roulette', '2.91%', isEn ? 'Multipliers are RNG over video' : 'Kertoimet RNG:tä videon päällä'],
+          ['Crazy Time', '3.96%', isEn ? 'Bonus rounds heavily RNG-driven' : 'Bonuskierrokset vahvasti RNG-pohjaisia'],
+          ['Monopoly Live', '2.78%', isEn ? '3D bonus reel is RNG' : '3D-bonusrulla on RNG'],
+          ['Live Baccarat (Banker)', '1.06%', isEn ? 'Lowest live edge' : 'Alhaisin live-edge'],
+        ]}
+      />
+
+      <Block testId="pelit-live-studio" tag={isEn ? 'STUDIO ECONOMICS' : 'STUDIO-TALOUS'} title={isEn ? 'How Evolution makes money' : 'Miten Evolution tekee rahaa'}>
+        <p>
+          {isEn
+            ? 'Evolution Gaming (Riga, Yerevan, Bucharest studios serving the European market 2026) charges casinos a per-seat lease + a revenue share on table activity. A single Crazy Time table earns the studio €1.5-€3M per month at peak hours. The economic implication for players: throughput is the optimisation target. Every visual flourish (multipliers, bonus rounds, animations) increases per-spin engagement time, which increases per-hour bet volume, which increases studio revenue at the same percentage edge. The house edge is honest. The throughput design is the casino’s real lever.'
+            : 'Evolution Gaming (Riika-, Jerevan- ja Bukarest-studiot Euroopan markkinoille 2026) laskuttaa kasinoita per-paikka-vuokrasta + tuotto-osuus pöytäaktiviteetista. Yksi Crazy Time -pöytä tuottaa studiolle 1,5-3 M€ kuukaudessa huippuhetkillä. Taloudellinen merkitys pelaajalle: läpimeno on optimointitavoite. Jokainen visuaalinen koriste (kertoimet, bonuskierrokset, animaatiot) lisää per-pyöritys-sitoutumista, joka lisää per-tunti-vetomäärää, joka lisää studion tuottoa samalla prosentuaalisella edgellä. Talon edge on rehellinen. Läpimeno-suunnittelu on kasinon todellinen vipu.'}
+        </p>
+      </Block>
+
+      <InternalLinkStrip testId="pelit-live-related" links={baseLinkStrip('/pelit/live')} />
+      <section className="container-wide pb-14">
+        <EditorialFooter updatedAt="2026-02-01T09:00:00Z" readMinutes={5} />
+      </section>
+    </div>
+  );
+};
+
 export default PelitBlackjackDeep;
+

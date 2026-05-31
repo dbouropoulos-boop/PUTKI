@@ -55,6 +55,23 @@ def test_sitemap_contains_deep_pelit_guides():
         assert path in body, f"missing {path} from sitemap"
 
 
+def test_sitemap_contains_wave2_articles():
+    """iter87 · Phase 4 wave 2 — Mestari methodology, Mittari sources, Voita FAQ, Profiilit Q&A."""
+    async def _run():
+        return _make_client().get("/api/seo/sitemap.xml")
+
+    res = asyncio.run(_run())
+    assert res.status_code == 200
+    body = res.text
+    for path in [
+        "/mestari/menetelma",
+        "/mittari/lahteet",
+        "/voita/usein-kysytyt",
+        "/profiilit/dioni-q-and-a",
+    ]:
+        assert path in body, f"missing {path} from sitemap"
+
+
 def test_sitemap_is_well_formed_xml():
     async def _run():
         return _make_client().get("/api/seo/sitemap.xml")

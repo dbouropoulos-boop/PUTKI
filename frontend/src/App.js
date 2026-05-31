@@ -74,9 +74,10 @@ import MittariHistoria from "@/pages/MittariHistoria";
 import Uutiset from "@/pages/Uutiset";
 import { Skene, SkeneTalous } from "@/pages/Skene";
 import { Raha, Kulttuuri, Sponsoroinnit, Saantely } from "@/pages/EditorialArchives";
-import { Pelit, PelitPoker, PelitCraps, PelitRuletti, PelitLive } from "@/pages/Pelit";
-import { PelitBlackjackDeep, PelitSlotitDeep, PelitBonusmatematiikkaDeep } from "@/pages/PelitDeepGuides";
+import { Pelit } from "@/pages/Pelit";
+import { PelitBlackjackDeep, PelitSlotitDeep, PelitBonusmatematiikkaDeep, PelitPokerDeep, PelitCrapsDeep, PelitRulettiDeep, PelitLiveDeep } from "@/pages/PelitDeepGuides";
 import Reform2027Hub from "@/pages/Reform2027Hub";
+import { MestariMenetelmaArticle, MittariLahteetArticle, VoitaUseinKysytytArticle, ProfiilitFounderQAArticle } from "@/pages/Phase4Wave2Articles";
 import Pulssi from "@/pages/Pulssi";
 import PeliAreenaHub from "@/pages/PeliAreenaHub";
 import PeliAreenaQuiz from "@/pages/PeliAreenaQuiz";
@@ -196,13 +197,18 @@ function App() {
             <Route path="pelit" element={<Pelit />} />
             {/* iter86 · Phase 4 — deep game-literacy guides at the highest-traffic sub-pages */}
             <Route path="pelit/blackjack" element={<PelitBlackjackDeep />} />
-            <Route path="pelit/poker" element={<PelitPoker />} />
+            <Route path="pelit/poker" element={<PelitPokerDeep />} />
             <Route path="pelit/slotit" element={<PelitSlotitDeep />} />
-            <Route path="pelit/craps" element={<PelitCraps />} />
-            <Route path="pelit/ruletti" element={<PelitRuletti />} />
-            <Route path="pelit/live" element={<PelitLive />} />
+            <Route path="pelit/craps" element={<PelitCrapsDeep />} />
+            <Route path="pelit/ruletti" element={<PelitRulettiDeep />} />
+            <Route path="pelit/live" element={<PelitLiveDeep />} />
             <Route path="pelit/bonusmatematiikka" element={<PelitBonusmatematiikkaDeep />} />
             <Route path="saantely/reform-2027" element={<Reform2027Hub />} />
+            {/* iter87 · Phase 4 wave 2 — four long-form articles on the four primary surfaces */}
+            <Route path="mestari/menetelma" element={<MestariMenetelmaArticle />} />
+            <Route path="mittari/lahteet" element={<MittariLahteetArticle />} />
+            <Route path="voita/usein-kysytyt" element={<VoitaUseinKysytytArticle />} />
+            <Route path="profiilit/dioni-q-and-a" element={<ProfiilitFounderQAArticle />} />
             <Route path="pulssi" element={<Pulssi />} />
 
             {/* V2 accountability surfaces */}
