@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
+import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
 
@@ -113,9 +114,14 @@ const FAQ_EN = [
   },
 ];
 
-const Reform2027Hub = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+const Reform2027Hub = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/saantely/reform-2027',
+    enPath: '/en/regulation/reform-2027',
+    forceLang,
+  });
+  // `useLang` import kept for hook-graph compatibility; consumers below read `lang`/`isEn` from the helper.
+  void useLang;
 
   useDocumentMeta({
     title: isEn
@@ -127,7 +133,8 @@ const Reform2027Hub = () => {
     ogTitle: isEn
       ? 'Finnish Gambling Act 2025/2027 — the PUTKI HQ briefing'
       : 'Suomen rahapelilaki 2025/2027 — PUTKI HQ:n briefing',
-    canonical: 'https://putkihq.com/saantely/reform-2027',
+    canonical,
+    alternates,
   });
 
   useJsonLd([
@@ -141,7 +148,7 @@ const Reform2027Hub = () => {
       publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
       datePublished: '2026-02-01',
       dateModified: new Date().toISOString().slice(0, 10),
-      mainEntityOfPage: 'https://putkihq.com/saantely/reform-2027',
+      mainEntityOfPage: canonical,
       inLanguage: isEn ? 'en-FI' : 'fi-FI',
     },
     {
@@ -149,8 +156,8 @@ const Reform2027Hub = () => {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: isEn ? 'Home' : 'Etusivu', item: 'https://putkihq.com/' },
-        { '@type': 'ListItem', position: 2, name: isEn ? 'Regulation' : 'Sääntely', item: 'https://putkihq.com/saantely' },
-        { '@type': 'ListItem', position: 3, name: 'Reform 2027', item: 'https://putkihq.com/saantely/reform-2027' },
+        { '@type': 'ListItem', position: 2, name: isEn ? 'Regulation' : 'Sääntely', item: isEn ? 'https://putkihq.com/en/regulation' : 'https://putkihq.com/saantely' },
+        { '@type': 'ListItem', position: 3, name: 'Reform 2027', item: canonical },
       ],
     },
     {

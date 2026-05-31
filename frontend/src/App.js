@@ -47,6 +47,7 @@ import BackOfficeNewsWatch from "@/pages/BackOfficeNewsWatch";
 import BackOfficeEmailTemplates from "@/pages/BackOfficeEmailTemplates";
 import BackOfficeMestariDiagnosticsCopy from "@/pages/BackOfficeMestariDiagnosticsCopy";
 import BackOfficeProfilerFunnel from "@/pages/BackOfficeProfilerFunnel";
+import BackOfficeMittariGrading from "@/pages/BackOfficeMittariGrading";
 import BackOfficeBotRouting from "@/pages/BackOfficeBotRouting";
 import BackOfficeFunnelHistory from "@/pages/BackOfficeFunnelHistory";
 import BackOfficeRunbook from "@/pages/BackOfficeRunbook";
@@ -133,6 +134,7 @@ function App() {
             <Route path="/back-office/voyager" element={<BackOfficeVoyagerRotation />} />
             <Route path="/back-office/playbook" element={<BackOfficePlaybook />} />
             <Route path="/back-office/profiler-funnel" element={<BackOfficeProfilerFunnel />} />
+            <Route path="/back-office/mittari-grading" element={<BackOfficeMittariGrading />} />
             <Route path="/back-office/bot-routing" element={<BackOfficeBotRouting />} />
             <Route path="/back-office/funnel" element={<BackOfficeFunnelHistory />} />
             <Route path="/back-office/runbook" element={<BackOfficeRunbook />} />
@@ -205,6 +207,15 @@ function App() {
             <Route path="pelit/live" element={<PelitLiveDeep />} />
             <Route path="pelit/bonusmatematiikka" element={<PelitBonusmatematiikkaDeep />} />
             <Route path="saantely/reform-2027" element={<Reform2027Hub />} />
+            {/* iter89 · Phase 4 localisation — wave-1 deep pages EN canonicals */}
+            <Route path="en/regulation/reform-2027" element={<Reform2027Hub forceLang="en" />} />
+            <Route path="en/games/blackjack" element={<PelitBlackjackDeep forceLang="en" />} />
+            <Route path="en/games/poker" element={<PelitPokerDeep forceLang="en" />} />
+            <Route path="en/games/slots" element={<PelitSlotitDeep forceLang="en" />} />
+            <Route path="en/games/craps" element={<PelitCrapsDeep forceLang="en" />} />
+            <Route path="en/games/roulette" element={<PelitRulettiDeep forceLang="en" />} />
+            <Route path="en/games/live" element={<PelitLiveDeep forceLang="en" />} />
+            <Route path="en/games/bonus-math" element={<PelitBonusmatematiikkaDeep forceLang="en" />} />
             {/* iter87 · Phase 4 wave 2 — four long-form articles on the four primary surfaces */}
             <Route path="mestari/menetelma" element={<MestariMenetelmaArticle />} />
             <Route path="mittari/lahteet" element={<MittariLahteetArticle />} />

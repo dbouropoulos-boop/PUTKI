@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
+import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
 
@@ -122,15 +123,18 @@ const baseLinkStrip = (skip) => [
 /* ────────────────────────────────────────────────────────────────
  * /pelit/blackjack — deep guide
  * ────────────────────────────────────────────────────────────────*/
-export const PelitBlackjackDeep = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+export const PelitBlackjackDeep = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/pelit/blackjack', enPath: '/en/games/blackjack', forceLang,
+  });
+  void useLang;
   useDocumentMeta({
     title: isEn ? 'Blackjack — basic strategy, side bets, card counting · PUTKI HQ' : 'Blackjack — perusstrategia, sivupanokset, korttilaskenta · PUTKI HQ',
     description: isEn
       ? 'PUTKI HQ basic-strategy reference + side-bet math + card-counting state of play in Finland 2026.'
       : 'PUTKI HQ:n perusstrategian referenssi, sivupanosten matematiikka, korttilaskennan nykytila Suomessa 2026.',
-    canonical: 'https://putkihq.com/pelit/blackjack',
+    canonical,
+    alternates,
   });
   useJsonLd({
     '@context': 'https://schema.org',
@@ -140,7 +144,7 @@ export const PelitBlackjackDeep = () => {
     publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
     datePublished: '2026-02-01',
     dateModified: new Date().toISOString().slice(0, 10),
-    mainEntityOfPage: 'https://putkihq.com/pelit/blackjack',
+    mainEntityOfPage: canonical,
     inLanguage: isEn ? 'en-FI' : 'fi-FI',
   });
   return (
@@ -227,15 +231,18 @@ export const PelitBlackjackDeep = () => {
 /* ────────────────────────────────────────────────────────────────
  * /pelit/slotit — deep guide (mechanics-only)
  * ────────────────────────────────────────────────────────────────*/
-export const PelitSlotitDeep = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+export const PelitSlotitDeep = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/pelit/slotit', enPath: '/en/games/slots', forceLang,
+  });
+  void useLang;
   useDocumentMeta({
     title: isEn ? 'Slots — mechanics, RTP, volatility · PUTKI HQ' : 'Slotit — mekaniikka, RTP, volatiliteetti · PUTKI HQ',
     description: isEn
       ? 'RTP, volatility, bonus-buy mathematics. PUTKI HQ does not recommend specific slot games — only mechanics.'
       : 'RTP, volatiliteetti, bonus buy -matematiikka. PUTKI HQ ei suosittele yksittäisiä slotteja — vain mekaniikkaa.',
-    canonical: 'https://putkihq.com/pelit/slotit',
+    canonical,
+    alternates,
   });
   useJsonLd({
     '@context': 'https://schema.org',
@@ -245,7 +252,7 @@ export const PelitSlotitDeep = () => {
     publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
     datePublished: '2026-02-01',
     dateModified: new Date().toISOString().slice(0, 10),
-    mainEntityOfPage: 'https://putkihq.com/pelit/slotit',
+    mainEntityOfPage: canonical,
     inLanguage: isEn ? 'en-FI' : 'fi-FI',
   });
   return (
@@ -315,15 +322,18 @@ export const PelitSlotitDeep = () => {
 /* ────────────────────────────────────────────────────────────────
  * /pelit/bonusmatematiikka — deep guide
  * ────────────────────────────────────────────────────────────────*/
-export const PelitBonusmatematiikkaDeep = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+export const PelitBonusmatematiikkaDeep = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/pelit/bonusmatematiikka', enPath: '/en/games/bonus-math', forceLang,
+  });
+  void useLang;
   useDocumentMeta({
     title: isEn ? 'Bonus math — why 35× kills · PUTKI HQ' : 'Bonusmatematiikka — miksi 35× tappaa · PUTKI HQ',
     description: isEn
       ? 'Wagering, sticky vs cashable, EV math by hand. Most bonuses are negative-EV.'
       : 'Kierrätys, sticky vs cashable, odotusarvon laskenta käsin. Useimmat bonukset ovat negatiivisen odotusarvon.',
-    canonical: 'https://putkihq.com/pelit/bonusmatematiikka',
+    canonical,
+    alternates,
   });
   useJsonLd({
     '@context': 'https://schema.org',
@@ -333,7 +343,7 @@ export const PelitBonusmatematiikkaDeep = () => {
     publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
     datePublished: '2026-02-01',
     dateModified: new Date().toISOString().slice(0, 10),
-    mainEntityOfPage: 'https://putkihq.com/pelit/bonusmatematiikka',
+    mainEntityOfPage: canonical,
     inLanguage: isEn ? 'en-FI' : 'fi-FI',
   });
   return (
@@ -416,15 +426,18 @@ export const PelitBonusmatematiikkaDeep = () => {
 /* ────────────────────────────────────────────────────────────────
  * /pelit/poker — deep guide (Texas Hold'em + video poker)
  * ────────────────────────────────────────────────────────────────*/
-export const PelitPokerDeep = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+export const PelitPokerDeep = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/pelit/poker', enPath: '/en/games/poker', forceLang,
+  });
+  void useLang;
   useDocumentMeta({
     title: isEn ? 'Poker — Texas Hold’em and video poker fundamentals · PUTKI HQ' : 'Poker — Texas Hold’em ja video poker -perusteet · PUTKI HQ',
     description: isEn
       ? 'Pot odds, hand-selection ranges, video poker pay-table mathematics. Math-first poker literacy from PUTKI HQ.'
       : 'Pot odds, käden valinnan rangit, video pokerin pay table -matematiikka. Matematiikkavetoista pokeri­lukutaitoa PUTKI HQ:lta.',
-    canonical: 'https://putkihq.com/pelit/poker',
+    canonical,
+    alternates,
   });
   useJsonLd({
     '@context': 'https://schema.org',
@@ -434,7 +447,7 @@ export const PelitPokerDeep = () => {
     publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
     datePublished: '2026-02-01',
     dateModified: new Date().toISOString().slice(0, 10),
-    mainEntityOfPage: 'https://putkihq.com/pelit/poker',
+    mainEntityOfPage: canonical,
     inLanguage: isEn ? 'en-FI' : 'fi-FI',
   });
   return (
@@ -507,15 +520,18 @@ export const PelitPokerDeep = () => {
 /* ────────────────────────────────────────────────────────────────
  * /pelit/craps — deep guide
  * ────────────────────────────────────────────────────────────────*/
-export const PelitCrapsDeep = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+export const PelitCrapsDeep = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/pelit/craps', enPath: '/en/games/craps', forceLang,
+  });
+  void useLang;
   useDocumentMeta({
     title: isEn ? 'Craps — bets ranked by math · PUTKI HQ' : 'Craps — vetojen matemaattinen järjestys · PUTKI HQ',
     description: isEn
       ? 'Pass line + odds, Don’t Pass, place bets, the sucker centre of the table. House edges sourced from Wizard of Odds.'
       : 'Pass-line + odds, Don’t Pass, place bets, sucker betit keskellä pöytää. Talon edget Wizard of Oddsista.',
-    canonical: 'https://putkihq.com/pelit/craps',
+    canonical,
+    alternates,
   });
   useJsonLd({
     '@context': 'https://schema.org',
@@ -525,7 +541,7 @@ export const PelitCrapsDeep = () => {
     publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
     datePublished: '2026-02-01',
     dateModified: new Date().toISOString().slice(0, 10),
-    mainEntityOfPage: 'https://putkihq.com/pelit/craps',
+    mainEntityOfPage: canonical,
     inLanguage: isEn ? 'en-FI' : 'fi-FI',
   });
   return (
@@ -585,15 +601,18 @@ export const PelitCrapsDeep = () => {
 /* ────────────────────────────────────────────────────────────────
  * /pelit/ruletti — deep guide
  * ────────────────────────────────────────────────────────────────*/
-export const PelitRulettiDeep = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+export const PelitRulettiDeep = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/pelit/ruletti', enPath: '/en/games/roulette', forceLang,
+  });
+  void useLang;
   useDocumentMeta({
     title: isEn ? 'Roulette — every bet returns the same edge · PUTKI HQ' : 'Ruletti — kaikki panostukset palaavat samaan · PUTKI HQ',
     description: isEn
       ? 'European 2.7%, American 5.26%, French La Partage 1.35%. House edge is a wheel property, not a bet property.'
       : 'Eurooppalainen 2,7 %, amerikkalainen 5,26 %, ranskalainen La Partage 1,35 %. Talon edge on rattaan ominaisuus, ei vedon.',
-    canonical: 'https://putkihq.com/pelit/ruletti',
+    canonical,
+    alternates,
   });
   useJsonLd({
     '@context': 'https://schema.org',
@@ -603,7 +622,7 @@ export const PelitRulettiDeep = () => {
     publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
     datePublished: '2026-02-01',
     dateModified: new Date().toISOString().slice(0, 10),
-    mainEntityOfPage: 'https://putkihq.com/pelit/ruletti',
+    mainEntityOfPage: canonical,
     inLanguage: isEn ? 'en-FI' : 'fi-FI',
   });
   return (
@@ -651,15 +670,18 @@ export const PelitRulettiDeep = () => {
 /* ────────────────────────────────────────────────────────────────
  * /pelit/live — deep guide (Live casino literacy)
  * ────────────────────────────────────────────────────────────────*/
-export const PelitLiveDeep = () => {
-  const { lang } = useLang();
-  const isEn = lang === 'en';
+export const PelitLiveDeep = ({ forceLang } = {}) => {
+  const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
+    fiPath: '/pelit/live', enPath: '/en/games/live', forceLang,
+  });
+  void useLang;
   useDocumentMeta({
     title: isEn ? 'Live casino — how the games actually work · PUTKI HQ' : 'Live-kasino — miten pelit oikeasti toimivat · PUTKI HQ',
     description: isEn
       ? 'Studio economics, latency, RNG vs human dealers. Crazy Time, Lightning Roulette and Live Blackjack literacy.'
       : 'Studio-talous, latenssi, RNG vs ihmiset. Crazy Time, Lightning Roulette ja live blackjack -lukutaitoa.',
-    canonical: 'https://putkihq.com/pelit/live',
+    canonical,
+    alternates,
   });
   useJsonLd({
     '@context': 'https://schema.org',
@@ -669,7 +691,7 @@ export const PelitLiveDeep = () => {
     publisher: { '@type': 'Organization', name: 'PUTKI HQ', url: 'https://putkihq.com' },
     datePublished: '2026-02-01',
     dateModified: new Date().toISOString().slice(0, 10),
-    mainEntityOfPage: 'https://putkihq.com/pelit/live',
+    mainEntityOfPage: canonical,
     inLanguage: isEn ? 'en-FI' : 'fi-FI',
   });
   return (

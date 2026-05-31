@@ -1052,6 +1052,53 @@ async def dispatch_worker_loop(db) -> None:
                     await fanout_daily_dms(db, dry_run=not enabled)
                 except Exception:
                     logger.exception("dispatch worker: mittari DM fanout failed")
+                # iter89: snapshot today's live Mittari picks into
+                # `mittari_signal_history` so the operator-grading job
+                # has a durable record to grade later. The snapshot is
+                # idempotent per (signal_id + utc-date), so re-running
+                # within the same cycle is a no-op. The snapshot runs
+                # regardless of `auto_dispatch_enabled` — it never
+                # touches a partner; it only writes to our own DB.
+                try:
+                    from routes.mittari_grading import (
+                        _signal_class as _mg_signal_class,
+                        _utcnow_iso as _mg_utcnow_iso,
+                    )
+                    from odds_api import get_featured_picks as _mg_get_picks
+                    payload = await _mg_get_picks()
+                    picks = payload.get("all_picks") or payload.get("picks") or []
+                    today_iso = datetime.now(timezone.utc).date().isoformat()
+                    written = 0
+                    for p in picks:
+                        sid = p.get("signal_id") or p.get("event_id") or p.get("id")
+                        if not sid:
+                            continue
+                        pick_obj = p.get("pick") if isinstance(p.get("pick"), dict) else {}
+                        doc = {
+                            "signal_id": str(sid),
+                            "snapshot_date": today_iso,
+                            "snapshot_at": _mg_utcnow_iso(),
+                            "commence_time": p.get("commence_time"),
+                            "sport_key": p.get("sport_key"),
+                            "signal_class": _mg_signal_class(p),
+                            "pick_name": pick_obj.get("name") or p.get("pick_name"),
+                            "pick_price": pick_obj.get("price") or p.get("pick_price"),
+                            "home_team": p.get("home_team"),
+                            "away_team": p.get("away_team"),
+                        }
+                        res = await db.mittari_signal_history.update_one(
+                            {"signal_id": doc["signal_id"], "snapshot_date": today_iso},
+                            {"$setOnInsert": doc},
+                            upsert=True,
+                        )
+                        if res.upserted_id is not None:
+                            written += 1
+                    logger.info(
+                        "dispatch worker: mittari signal history snapshot wrote %d/%d picks",
+                        written, len(picks),
+                    )
+                except Exception:
+                    logger.exception("dispatch worker: mittari signal snapshot failed")
         except Exception:
             logger.exception("dispatch worker tick failed")
         await asyncio.sleep(WORKER_INTERVAL_SECONDS)

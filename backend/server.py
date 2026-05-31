@@ -2663,6 +2663,12 @@ api_router.include_router(_build_sitemap_router(db))
 from routes.data_pages import build_data_pages_router as _build_data_pages_router  # noqa: E402
 api_router.include_router(_build_data_pages_router(db))
 
+# iter89 · Phase 4 wave 4 — Mittari outcome-grading operator job
+# (snapshot live picks → operator grades → outcomes populate the
+# rolling 90-day back-test surfaced at /trust/mittari-tarkkuus).
+from routes.mittari_grading import build_mittari_grading_router as _build_mittari_grading_router  # noqa: E402
+api_router.include_router(_build_mittari_grading_router(require_admin, db))
+
 # iter84 · action_type → back-office route mapping for the generic
 # auto-logged middleware rows. Keep this list tight — when the
 # cockpit feed surfaces an action_type without a mapping it cleanly

@@ -73,6 +73,27 @@ def test_sitemap_contains_wave4_trust_pages():
         assert path in body, f"missing wave-4 trust path {path} from sitemap"
 
 
+def test_sitemap_contains_en_localised_wave1_routes():
+    """iter89 · Phase 4 localisation — Reform 2027 + 7 deep /pelit guides EN canonicals."""
+    async def _run():
+        return _make_seo_client().get("/api/seo/sitemap.xml")
+
+    res = asyncio.run(_run())
+    assert res.status_code == 200
+    body = res.text
+    for path in [
+        "/en/regulation/reform-2027",
+        "/en/games/blackjack",
+        "/en/games/poker",
+        "/en/games/slots",
+        "/en/games/craps",
+        "/en/games/roulette",
+        "/en/games/live",
+        "/en/games/bonus-math",
+    ]:
+        assert path in body, f"missing wave-1 EN path {path} from sitemap"
+
+
 # ── Data endpoints — shape + safety ───────────────────────────────────
 
 def test_mestari_dataset_summary_envelope():

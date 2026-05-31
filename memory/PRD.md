@@ -9,6 +9,24 @@
 
 ## Phase History (latest first)
 
+- **iter89 · Phase 4 wave 4 close-out — Mittari outcome-grading job + wave-1 EN localisation** (2026-02-01, +7 backend tests · 18/18 grading + SEO green · 8/8 new EN routes live-verified · ESLint clean · ruff clean)
+  - **Mittari grading operator job** — three-piece architecture so the public `/trust/mittari-tarkkuus` back-test stops being a scaffold and starts populating with real graded outcomes:
+    - **Snapshot phase** (`routes/mittari_grading.py` ~220 LOC). `POST /api/admin/mittari/grading/snapshot` calls `odds_api.get_featured_picks()` and upserts each live pick into `mittari_signal_history` keyed on (signal_id, snapshot_date). Idempotent. Coarse `signal_class` derivation (`sports.football` / `sports.hockey` / `sports.other`) drives the back-test bucketing.
+    - **Pending + Grade phase**. `GET /api/admin/mittari/grading/pending` returns commenced+ungraded signals (uses a 500-row inner cap + per-row outcome existence check). `POST /api/admin/mittari/grading/grade` accepts `{grades:[{signal_id, outcome, note?}]}` with `outcome ∈ {hit, miss, push}`. Validates each row, requires a snapshot to exist, writes to `mittari_signal_outcomes` upsert-on-signal_id (re-grading updates in place — verified never duplicates).
+    - **Status endpoint**. `GET /api/admin/mittari/grading/status` returns `snapshotted_total`, `graded_total`, `window_n_90d` (matches the public back-test cutoff), `ungraded_count`, `last_graded_at`.
+    - **Weekly cron wiring** in `dispatch_daily.py`. Hooked the snapshot call into the existing daily dispatch tick (already runs at 09:00 EET) so signals get snapshotted every day automatically. The grading itself stays operator-driven (no auto-grading) per the editorial commitment that outcomes are reviewed by a human.
+  - **Back-office grading UI** at `/back-office/mittari-grading` (`pages/BackOfficeMittariGrading.jsx` ~190 LOC). Three sections: STATUS strip (5 chips with tone-aware colour), ACTIONS row (`SNAPSHOT TODAY` + `REFRESH` + inline msg/error), PENDING table with HIT / MISS / PUSH radios + `SAVE N GRADES` button. Live-verified mounting + status fetch.
+  - **Wave-1 EN localisation** — 8 deep pages relocalised:
+    - New shared helper `useLocalisedCanonical` (~30 LOC). Single source of truth — eliminates 8 hand-built canonical+alternates blocks. Reusable for every future bilingual page.
+    - `Reform2027Hub` + 7 `PelitDeepGuides` (Blackjack, Slots, Bonus-math, Poker, Craps, Ruletti, Live) all accept `forceLang` and use the helper. EN URLs: `/en/regulation/reform-2027`, `/en/games/{blackjack,poker,slots,craps,roulette,live,bonus-math}`.
+    - Live-verified all 8 EN routes mount + emit correct canonical = `https://putkihq.com/en/{route}` + `<link rel="alternate" hreflang>` pairs (fi-FI · en-FI · x-default) per page.
+  - **Sitemap expansion**: +8 EN routes (49 total public routes). New entries land between the wave-4 trust pages and the trailing static section.
+  - **Tests**:
+    - `test_iter89_mittari_grading.py` — 7 cases: auth gate (status + grade), status envelope shape, grade rejects empty payload, grade writes outcome + idempotent on signal_id, grade skips unsnapshotted + invalid outcomes, pending returns only commenced+ungraded.
+    - `test_iter88_phase4_wave4_and_localisation.py` extended with `test_sitemap_contains_en_localised_wave1_routes` (8 paths).
+    - **18/18** SEO + grading tests green. Pattern note: grading test file uses **httpx against the live preview backend + sync pymongo for seeding** (per the iter83 convention) — avoids the Motor/TestClient event-loop binding mess that breaks `pytest-asyncio` against this codebase.
+  - **Live verification**: 8 EN routes (canonical + hreflang validated), back-office grading page screenshot saved at `/app/qa-snapshots/bo-mittari-grading.png`. Demonstrates: STATUS strip rendering `SNAPSHOTTED 1 / GRADED 0 / UNGRADED 0 / 90D WINDOW N 0`, action buttons functional, pending-empty state surfaces honestly. ESLint clean on 4 changed JS files + new hook + new BO page. Ruff clean on `routes/mittari_grading.py`.
+
 - **iter88 · Phase 4 wave 4 + wave-2 localisation** (2026-02-01, +5 backend tests · 10/10 SEO+data green · 10/10 new pages live-verified · hreflang alternates injected & verified · ESLint clean)
   - **Wave 4 — 3 trust-signal data pages** powered by 3 new public data endpoints:
     - `routes/data_pages.py` (~190 LOC) exposes `GET /api/data/mestari/dataset-summary` (per-diagnostic axis quartiles + N from `mestari_diagnostic_leads`), `GET /api/data/voita/ledger` (every paid/drawn raffle with winner stamp + timestamps, no `_id` leak), `GET /api/data/mittari/accuracy-90d` (per-signal-class hit rate over rolling 90 days from `mittari_signal_outcomes` if present; falls back to honest `status="scaffold"` payload when the outcome ledger is empty — N=0 is exposed, fabricated numbers are not).

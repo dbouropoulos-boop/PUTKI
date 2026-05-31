@@ -57,6 +57,7 @@ const NAV_GROUPS = [
       { to: '/back-office/mestari-diagnostics-copy', label: 'Mestari diagnostics', icon: Telescope, keywords: 'mestari profile cluster diagnostics copy' },
       { to: '/back-office/optin-segments',       label: 'Opt-in segments',   icon: Inbox,    keywords: 'consent mestari mittari voita' },
       { to: '/back-office/profiler-funnel',      label: 'Profiler funnel',   icon: Activity, keywords: 'profiler mestari personality' },
+      { to: '/back-office/mittari-grading',      label: 'Mittari grading',   icon: Activity, keywords: 'mittari signal grading hit miss push back-test outcome' },
     ],
   },
   {
