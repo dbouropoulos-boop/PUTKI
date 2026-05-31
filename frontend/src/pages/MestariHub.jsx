@@ -12,6 +12,7 @@ import { ArrowRight, Send, Sun, Moon } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import useJsonLd from '../hooks/useJsonLd';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
@@ -277,6 +278,30 @@ const MestariHub = () => {
       : 'Kolme 90 sekunnin diagnostiikkaa - urheiluvedonlyönti, pokeri, blackjack. Oikea profiilisi ja 5 päivän pelikirja sähköpostiisi, ilmaiseksi.',
     canonical: `${BACKEND}/mestari`,
   });
+
+  // iter86 · Phase 4 — JSON-LD: an ItemList of the 3 diagnostics +
+  // breadcrumbs back to the home page. Eligible for Google's rich
+  // result list display.
+  useJsonLd([
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      name: lang === 'en' ? 'Putki Mestari diagnostics' : 'Putki Mestari -diagnostiikat',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: lang === 'en' ? 'Sports betting' : 'Urheiluvedonlyönti', url: 'https://putkihq.com/mestari/sports' },
+        { '@type': 'ListItem', position: 2, name: 'Poker', url: 'https://putkihq.com/mestari/poker' },
+        { '@type': 'ListItem', position: 3, name: 'Blackjack', url: 'https://putkihq.com/mestari/blackjack' },
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Putki HQ', item: 'https://putkihq.com' },
+        { '@type': 'ListItem', position: 2, name: 'Mestari',  item: 'https://putkihq.com/mestari' },
+      ],
+    },
+  ]);
 
   return (
     <div data-testid="mestari-hub" style={{

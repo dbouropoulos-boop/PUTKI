@@ -198,13 +198,35 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     status: raffle.status || 'draft',
   }), [raffle]);
   const dirty = formSnapshot !== raffleSnapshot;
+  // iter85b · Task 2.8c — preview state declared early so shortcuts
+  // can reference the setter.
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const autosave = useFormAutosave({
     form, dirty, onSave: save, delay: 4000,
     pause: busy || drawn,
+    // iter86 · Task 2.8d — Esc reverts to raffle prop state. The
+    // raffle editor's `form` state is seeded from props; this restores
+    // it cleanly via the same seeder logic the constructor uses.
+    onDiscard: () => {
+      setForm({
+        title_fi: raffle.title_fi || '', title_en: raffle.title_en || '',
+        summary_fi: raffle.summary_fi || '', summary_en: raffle.summary_en || '',
+        sport: raffle.sport || '', league: raffle.league || '',
+        home_team: raffle.home_team || '', away_team: raffle.away_team || '',
+        kickoff_at: raffle.kickoff_at || '',
+        entries_close_at: raffle.entries_close_at || '',
+        image_url: raffle.image_url || '',
+        prize_cap_eur: raffle.prize_cap_eur || 500,
+        payouts: (raffle.prize_distribution?.payouts || []).slice(),
+        scoring: raffle.scoring || { one_x_two_points: 3, exact_score_points: 5, goal_diff_points: 3, total_goals_points: 1 },
+        gating: raffle.gating || { rules_url_set: false, prize_distribution_locked: false, match_populated: false },
+        status: raffle.status || 'draft',
+      });
+      setInfo('REVERTED.');
+    },
+    onTogglePreview: () => setPreviewOpen((v) => !v),
   });
-
-  // iter85b · Task 2.8c — preview panel for the public raffle page.
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   const drawNow = async () => {
     if (drawHome === '' || drawAway === '') { setError('Score required for draw.'); return; }

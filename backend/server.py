@@ -2653,6 +2653,10 @@ from routes.back_office_activity import (  # noqa: E402
 )
 api_router.include_router(_build_activity_router(require_admin, db))
 
+# iter86 · Phase 4 — sitemap.xml + robots.txt for SEO discovery.
+from routes.seo import build_sitemap_router as _build_sitemap_router  # noqa: E402
+api_router.include_router(_build_sitemap_router(db))
+
 # iter84 · action_type → back-office route mapping for the generic
 # auto-logged middleware rows. Keep this list tight — when the
 # cockpit feed surfaces an action_type without a mapping it cleanly

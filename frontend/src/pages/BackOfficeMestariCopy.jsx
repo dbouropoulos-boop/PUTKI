@@ -94,12 +94,20 @@ const BackOfficeMestariCopy = () => {
     if (!form || !data) return false;
     return JSON.stringify(form) !== JSON.stringify(data.merged);
   }, [form, data]);
+  // iter85b · Task 2.8c — preview panel state, declared before the
+  // hook so onTogglePreview can reach the setter.
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const autosave = useFormAutosave({
     form, dirty, onSave: save, delay: 2500, pause: saving,
+    // iter86 · Task 2.8d
+    onDiscard: () => {
+      if (!data) return;
+      setForm(structuredClone(data.merged));
+      setStatus('Reverted to last saved.');
+    },
+    onTogglePreview: () => setPreviewOpen((v) => !v),
   });
-
-  // iter85b · Task 2.8c — preview panel for /mestari hub.
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   const resetSection = (key) => {
     if (!defaults || !form) return;

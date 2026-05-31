@@ -35,6 +35,12 @@ export const useFormAutosave = ({
   // When true, Cmd/Ctrl+S only triggers if the focused element is
   // inside the editor's container (data-autosave-scope="true").
   scopeToContainer = false,
+  // iter86 · Task 2.8d — optional callbacks for the extra editor
+  // shortcuts. `onDiscard` runs on Esc when the form is dirty and
+  // restores the host's last-saved snapshot. `onTogglePreview` runs
+  // on Cmd/Ctrl+Shift+P and is a no-op unless the host wires it.
+  onDiscard,
+  onTogglePreview,
 }) => {
   const [status, setStatus]   = useState('idle');   // idle | dirty | saving | saved | error
   const [error, setError]     = useState('');
@@ -92,23 +98,55 @@ export const useFormAutosave = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, dirty, delay, pause]);
 
-  // Cmd+S handler. We listen at window-level but optionally scope to
-  // a container that sets data-autosave-scope="true".
+  // Cmd+S / Esc / Cmd+Shift+P handlers. We listen at window-level but
+  // optionally scope to a container that sets data-autosave-scope="true".
   useEffect(() => {
     const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
-        if (scopeToContainer) {
-          const active = document.activeElement;
-          const insideEditor = active && active.closest && active.closest('[data-autosave-scope="true"]');
-          if (!insideEditor) return;
-        }
+      const cmdOrCtrl = e.metaKey || e.ctrlKey;
+      // Helper — bail out if we're scoped to a container and the focus
+      // is outside it.
+      const inScope = () => {
+        if (!scopeToContainer) return true;
+        const active = document.activeElement;
+        return active && active.closest && active.closest('[data-autosave-scope="true"]');
+      };
+
+      // ── Cmd+S — manual save (skip debounce). ─────────────────────
+      if (cmdOrCtrl && !e.shiftKey && (e.key === 's' || e.key === 'S')) {
+        if (!inScope()) return;
         e.preventDefault();
         if (dirty && !pause) performSave();
+        return;
+      }
+
+      // ── Cmd+Shift+P — toggle preview (host-provided). ────────────
+      if (cmdOrCtrl && e.shiftKey && (e.key === 'p' || e.key === 'P')) {
+        if (typeof onTogglePreview === 'function') {
+          e.preventDefault();
+          onTogglePreview();
+        }
+        return;
+      }
+
+      // ── Esc — discard local changes (host-provided). Only when the
+      // form is dirty AND the user isn't actively typing inside an
+      // input/textarea (Esc on a text field would otherwise clobber
+      // intent). We also skip Esc if pause is set (e.g. mid-save).
+      if (e.key === 'Escape') {
+        if (typeof onDiscard !== 'function') return;
+        if (!dirty || pause) return;
+        const active = document.activeElement;
+        const tag = (active && active.tagName) || '';
+        // Allow Esc inside select/checkbox/button — only block text editors.
+        if (tag === 'INPUT' && active && active.type !== 'checkbox' && active.type !== 'radio') return;
+        if (tag === 'TEXTAREA') return;
+        e.preventDefault();
+        onDiscard();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [dirty, pause, scopeToContainer, performSave]);
+  }, [dirty, pause, scopeToContainer, performSave, onDiscard, onTogglePreview]);
 
   return {
     status, error, lastSavedAt,

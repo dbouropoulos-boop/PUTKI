@@ -177,4 +177,49 @@ export const NewsroomLiveStrip = () => {
   );
 };
 
-export default { OrientationStrip, NewsroomLiveStrip };
+// ── TelegramHomeStrip ──────────────────────────────────────────────────
+// iter86 · Phase 3 v2 — first-fold Telegram-first promotion strip.
+// Sits between OrientationStrip and NewsroomLiveStrip on the home page
+// so readers see the canonical bot-bound journey before any feed.
+export const TelegramHomeStrip = () => {
+  const { lang } = useLang();
+  return (
+    <a href="https://t.me/Putkihq_bot?start=home_hero"
+       target="_blank" rel="noopener noreferrer"
+       data-testid="home-telegram-strip"
+       style={{
+         display: 'flex', alignItems: 'center', gap: 14,
+         padding: '12px 22px', textDecoration: 'none',
+         background: 'linear-gradient(135deg, #229ED9 0%, #1B7BAB 100%)',
+         color: '#FFFFFF',
+         borderBottom: '1px solid rgba(255,255,255,0.12)',
+         fontFamily: 'ui-monospace, monospace',
+       }}>
+      <span style={{
+        width: 26, height: 26, borderRadius: '50%',
+        background: 'rgba(255,255,255,0.2)',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 14, flexShrink: 0,
+      }}>{'\u2708\uFE0E'}</span>
+      <span style={{
+        fontSize: 11, letterSpacing: '0.16em', fontWeight: 700,
+        textTransform: 'uppercase', flex: 1, minWidth: 0,
+      }}>
+        {lang === 'en'
+          ? 'PUTKI ON TELEGRAM · 5 PICKS DAILY · NO SIGNUP'
+          : 'PUTKI TELEGRAMISSA · 5 SIGNAALIA / PÄIVÄ · ILMAN REKISTERÖINTIÄ'}
+      </span>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', gap: 4,
+        padding: '4px 10px', background: '#FFFFFF', color: '#1B7BAB',
+        borderRadius: 999, fontSize: 9.5, letterSpacing: '0.16em',
+        fontWeight: 800, textTransform: 'uppercase', flexShrink: 0,
+      }}>
+        @Putkihq_bot →
+      </span>
+    </a>
+  );
+};
+
+
+export default { OrientationStrip, NewsroomLiveStrip, TelegramHomeStrip };

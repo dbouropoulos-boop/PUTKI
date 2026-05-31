@@ -335,10 +335,69 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
           </div>
         )}
 
-        {/* Email gate */}
+        {/* iter86 · Phase 3 v2 — Telegram-first CTA at the top of the
+            result gate. Email signup remains below as a secondary fall-
+            back, but the Telegram path is the canonical journey. */}
+        <a href={`https://t.me/Putkihq_bot?start=mestari_${diagnostic}`}
+           target="_blank" rel="noopener noreferrer"
+           data-testid="mestari-diag-telegram-cta"
+           style={{
+             display: 'block',
+             background: 'linear-gradient(135deg, #229ED9 0%, #1B7BAB 100%)',
+             color: '#FFFFFF', borderRadius: 8, padding: '18px 22px',
+             textDecoration: 'none', marginBottom: 16,
+             boxShadow: '0 6px 20px rgba(34, 158, 217, 0.22)',
+             transition: 'transform 200ms ease, box-shadow 200ms ease',
+           }}
+           onMouseEnter={(e) => {
+             e.currentTarget.style.transform = 'translateY(-2px)';
+             e.currentTarget.style.boxShadow = '0 10px 28px rgba(34, 158, 217, 0.32)';
+           }}
+           onMouseLeave={(e) => {
+             e.currentTarget.style.transform = 'translateY(0)';
+             e.currentTarget.style.boxShadow = '0 6px 20px rgba(34, 158, 217, 0.22)';
+           }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.18)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, fontSize: 22,
+            }}>{'\u2708\uFE0E'}</div>
+            <div style={{ flex: '1 1 240px', minWidth: 0 }}>
+              <div style={{
+                fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
+                letterSpacing: '0.22em', fontWeight: 800, opacity: 0.85,
+                textTransform: 'uppercase', marginBottom: 2,
+              }}>{lang === 'en' ? 'GET IT NOW · ON TELEGRAM' : 'SAA NYT · TELEGRAMISSA'}</div>
+              <div style={{
+                fontFamily: 'Georgia, serif', fontSize: 17, lineHeight: 1.35,
+                fontWeight: 600, letterSpacing: '-0.005em',
+              }}>{lang === 'en'
+                ? `Your ${diagnostic} report + the 5-day playbook delivered in chat. No email, no waiting.`
+                : `${diagnostic === 'sports' ? 'Urheilu' : diagnostic === 'poker' ? 'Pokeri' : 'Blackjack'}-raportti ja 5 päivän pelikirja chattiin. Ilman sähköpostia, heti.`}</div>
+            </div>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px', background: '#FFFFFF', color: '#1B7BAB',
+              borderRadius: 999, fontFamily: 'ui-monospace, monospace',
+              fontSize: 11, letterSpacing: '0.18em', fontWeight: 800,
+              textTransform: 'uppercase', flexShrink: 0,
+            }}>
+              @Putkihq_bot →
+            </span>
+          </div>
+        </a>
+
+        {/* Email gate · secondary path (kept for users who prefer email). */}
         <div data-testid="mestari-diag-gate" style={{
           padding: 20, background: 'var(--surface)', border: '1px solid var(--border)',
         }}>
+          <div style={{
+            fontFamily: 'ui-monospace, monospace', fontSize: 10,
+            letterSpacing: '0.22em', fontWeight: 700, color: 'var(--muted)',
+            textTransform: 'uppercase', marginBottom: 8,
+          }}>{lang === 'en' ? 'OR · BY EMAIL' : 'TAI · SÄHKÖPOSTILLA'}</div>
           <h3 style={{
             fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700,
             margin: '0 0 8px', letterSpacing: '-0.01em',

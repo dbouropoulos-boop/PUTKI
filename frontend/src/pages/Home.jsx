@@ -11,7 +11,7 @@
  *   7. Editorial footer (byline + read time)
  */
 import React, { useState } from "react";
-import { OrientationStrip, NewsroomLiveStrip } from "../components/InfoStrips";
+import { OrientationStrip, NewsroomLiveStrip, TelegramHomeStrip } from "../components/InfoStrips";
 import NewsPortal from "../components/NewsPortal";
 import StreamersBand from "../components/StreamersBand";
 import NowPlayingTicker from "../components/NowPlayingTicker";
@@ -21,9 +21,46 @@ import VoyagerHomeStrip from "../components/VoyagerHomeStrip";
 import AboutStrip from "../components/AboutStrip";
 import EditorialFooter from "../components/EditorialFooter";
 import UTMBanner from "../components/UTMBanner";
+import useJsonLd from "../hooks/useJsonLd";
 import "../styles/home.css";
 
 const Home = () => {
+  // iter86 · Phase 4 — JSON-LD for the home page. Tells crawlers we're
+  // an Organization with a canonical URL + a WebSite that supports site
+  // search (Google can render the sitelink searchbox). Schema lives
+  // here so the props stay co-located with the SEO surface.
+  useJsonLd([
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      '@id': 'https://putkihq.com/#org',
+      name: 'Putki HQ',
+      url: 'https://putkihq.com',
+      logo: 'https://putkihq.com/og/default.png',
+      sameAs: [
+        'https://t.me/Putkihq_bot',
+        'https://twitter.com/putkihq',
+      ],
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      '@id': 'https://putkihq.com/#site',
+      url: 'https://putkihq.com',
+      name: 'Putki HQ',
+      publisher: { '@id': 'https://putkihq.com/#org' },
+      inLanguage: ['fi', 'en'],
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://putkihq.com/?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ]);
+
   // Slot filter is hoisted here so the StreamersBand and NowPlayingTicker
   // can stay in sync - clicking a slot pill in the ticker drives band
   // filtering, and the band's clear button resets ticker state.
@@ -33,6 +70,7 @@ const Home = () => {
     <div className="putki-home" data-testid="home-shell">
       {/* Zone 1 - Newsroom strips */}
       <OrientationStrip />
+      <TelegramHomeStrip />
       <NewsroomLiveStrip />
       <UTMBanner />
 

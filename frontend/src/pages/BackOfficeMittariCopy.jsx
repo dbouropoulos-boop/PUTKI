@@ -214,13 +214,21 @@ const BackOfficeMittariCopy = () => {
     if (!form || !snapshot) return false;
     return JSON.stringify(form) !== JSON.stringify(snapshot.merged);
   }, [form, snapshot]);
+  // iter85b · Task 2.8c — preview panel state, declared before
+  // useFormAutosave so the shortcut callback can reach setPreviewOpen.
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const autosave = useFormAutosave({
     form, dirty, onSave: save, delay: 2500, pause: busy && status === 'Saving…',
+    // iter86 · Task 2.8d — Esc reverts unsaved changes; Cmd+Shift+P
+    // toggles the preview pane.
+    onDiscard: () => {
+      if (!snapshot) return;
+      setForm(structuredClone(snapshot.merged));
+      setStatus('Reverted to last saved.');
+    },
+    onTogglePreview: () => setPreviewOpen((v) => !v),
   });
-
-  // iter85b · Task 2.8c — preview panel toggled by the header
-  // PreviewToggle button. Auto-reloads on every successful autosave.
-  const [previewOpen, setPreviewOpen] = useState(false);
 
   const resetSection = useCallback((path) => {
     if (!snapshot) return;

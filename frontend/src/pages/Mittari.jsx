@@ -603,6 +603,61 @@ const Mittari = () => {
             : <>Viisi vetoa pisteytettynä 0-100 <Link to="/menetelma#sharpness" data-testid="mittari-subtitle-method-link" style={{ color: '#E89248', textDecoration: 'none' }}>Sharpness</Link>-kaavalla - kuinka tiiviisti EU-urheilukirjat hinnoittelevat markkinan. Mittari seuraa Suomen skeneä reaaliajassa: striimit, kertoimet, uutiset. <strong style={{ color: 'var(--ink)' }}>Toimituksellista sisältöä - ei vetovinkkejä.</strong></>
           }</p>
 
+          {/* iter86 · Phase 3 v2 — Telegram-first CTA strip below the
+              subtitle, above the trust pills. Mittari's UI already
+              ends in a Telegram gate; this teases the bot to readers
+              who scan rather than scroll. */}
+          <a href={`https://t.me/${TELEGRAM_BOT}?start=mittari`}
+             target="_blank" rel="noopener noreferrer"
+             data-testid="mittari-hero-telegram-cta"
+             style={{
+               display: 'block',
+               background: 'linear-gradient(135deg, #229ED9 0%, #1B7BAB 100%)',
+               color: '#FFFFFF', borderRadius: 8, padding: '14px 18px',
+               textDecoration: 'none', marginBottom: 18,
+               boxShadow: '0 4px 14px rgba(34, 158, 217, 0.2)',
+               transition: 'transform 200ms ease, box-shadow 200ms ease',
+             }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.transform = 'translateY(-2px)';
+               e.currentTarget.style.boxShadow = '0 8px 22px rgba(34, 158, 217, 0.3)';
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.transform = 'translateY(0)';
+               e.currentTarget.style.boxShadow = '0 4px 14px rgba(34, 158, 217, 0.2)';
+             }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '50%',
+                background: 'rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, fontSize: 16,
+              }}>{'\u2708\uFE0E'}</div>
+              <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+                <div style={{
+                  fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+                  letterSpacing: '0.22em', fontWeight: 800, opacity: 0.85,
+                  textTransform: 'uppercase', marginBottom: 2,
+                }}>{lang === 'en' ? 'GET TODAY\u2019S 5 IN CHAT' : 'PÄIVÄN 5 SIGNAALIA CHATTIIN'}</div>
+                <div style={{
+                  fontFamily: 'Georgia, serif', fontSize: 14.5, lineHeight: 1.35,
+                  fontWeight: 500,
+                }}>{lang === 'en'
+                  ? 'Push notification at 09:00 sharp. No email signup.'
+                  : 'Push-ilmoitus tasan klo 09:00. Ei sähköpostia.'}</div>
+              </div>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '6px 12px', background: '#FFFFFF', color: '#1B7BAB',
+                borderRadius: 999, fontFamily: 'ui-monospace, monospace',
+                fontSize: 10, letterSpacing: '0.18em', fontWeight: 800,
+                textTransform: 'uppercase', flexShrink: 0,
+              }}>
+                @{TELEGRAM_BOT} →
+              </span>
+            </div>
+          </a>
+
           {/* Trust pills strip - concrete proof + frictionless commitments.
               Sits directly under the connective line so it does the heavy
               lifting before the user reaches the gate below the panel. */}
