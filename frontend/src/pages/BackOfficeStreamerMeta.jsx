@@ -352,7 +352,7 @@ const BackOfficeStreamerMeta = () => {
   }, [data, streamers]);
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Streamer editorial meta" />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   const addCustom = async () => {

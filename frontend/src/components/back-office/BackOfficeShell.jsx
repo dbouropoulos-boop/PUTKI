@@ -20,7 +20,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity, AlertTriangle, BarChart3, BookOpen, Bot, ChevronRight, Clapperboard,
   Command as CommandIcon, Dices, FileText, Flame, Gift, Globe, Inbox, Layers, Link2,
-  LogOut, Megaphone, Radio, Search, Settings as SettingsIcon, Shield, Sparkles, Telescope,
+  LogOut, Megaphone, Menu, Radio, Search, Settings as SettingsIcon, Shield, Sparkles, Telescope,
   Trophy, Users, Video, Webhook,
 } from 'lucide-react';
 
@@ -218,7 +218,7 @@ const StatusChip = ({ label, value, tone = 'neutral', icon: Icon, onClick, testi
 
 
 // ─── Top status strip (Phase 2.1 light reskin) ───────────────────────
-const StatusStrip = ({ token }) => {
+const StatusStrip = ({ token, onOpenMobileNav }) => {
   const navigate = useNavigate();
   const [snap, setSnap] = useState(null);
   const [cfg, setCfg] = useState(null);
@@ -239,14 +239,9 @@ const StatusStrip = ({ token }) => {
 
   useEffect(() => { refresh(); const t = setInterval(refresh, 60_000); return () => clearInterval(t); }, [refresh]);
 
-  if (!snap || !cfg) return null;
-
-  const signups = snap.stages.find((s) => s.key === 'signup')?.count ?? 0;
-  const bound   = snap.stages.find((s) => s.key === 'bound')?.count ?? 0;
-  const dmSent  = snap.stages.find((s) => s.key === 'dm_sent')?.count ?? 0;
-  const routed  = cfg.signal_unlock_mode === 'routed';
-  const dmOn    = !!cfg.daily_dm_enabled;
-  const voitaOn = !!pub?.voita_feature_enabled;
+  // iter84 · render a tiny mobile-only top bar even before snap loads,
+  // so users always have access to the hamburger.
+  const ready = snap && cfg;
 
   return (
     <div data-testid="bo-shell-status-strip" style={{
@@ -254,26 +249,44 @@ const StatusStrip = ({ token }) => {
       borderBottom: '1px solid var(--line)', background: 'var(--surface)',
       alignItems: 'center',
     }}>
-      <StatusChip testid="status-mode"   label="MODE"     value={routed ? 'ROUTED' : 'INFORMATIVE'} tone={routed ? 'ok' : 'neutral'} icon={Link2}     onClick={() => navigate('/back-office/bot-routing')} />
-      <StatusChip testid="status-dm"     label="DAILY DM" value={dmOn ? 'ON' : 'OFF'}               tone={dmOn ? 'ok' : 'warn'}      icon={Megaphone} onClick={() => navigate('/back-office/bot-routing')} />
-      <StatusChip testid="status-voita"  label="VOITA"    value={voitaOn ? 'LIVE' : 'GATED'}        tone={voitaOn ? 'ok' : 'warn'}   icon={Trophy}    onClick={() => navigate('/back-office/settings')} />
-      <span style={{ flex: 1 }} />
-      <StatusChip testid="status-signups" label="24H SIGNUPS"  value={signups} icon={Users}     onClick={() => navigate('/back-office/funnel')} />
-      <StatusChip testid="status-bound"   label="24H BOUND"    value={bound}   icon={Shield}    onClick={() => navigate('/back-office/bot-routing')} />
-      <StatusChip testid="status-dmsent"  label="24H DM"       value={dmSent}  tone={dmSent === 0 && dmOn ? 'warn' : 'neutral'} icon={Megaphone} onClick={() => navigate('/back-office/funnel')} />
+      <MobileHamburger onClick={onOpenMobileNav} />
+      {ready && (
+        <>
+          <StatusChip testid="status-mode"   label="MODE"     value={cfg.signal_unlock_mode === 'routed' ? 'ROUTED' : 'INFORMATIVE'} tone={cfg.signal_unlock_mode === 'routed' ? 'ok' : 'neutral'} icon={Link2}     onClick={() => navigate('/back-office/bot-routing')} />
+          <StatusChip testid="status-dm"     label="DAILY DM" value={cfg.daily_dm_enabled ? 'ON' : 'OFF'}                            tone={cfg.daily_dm_enabled ? 'ok' : 'warn'}                  icon={Megaphone} onClick={() => navigate('/back-office/bot-routing')} />
+          <StatusChip testid="status-voita"  label="VOITA"    value={pub?.voita_feature_enabled ? 'LIVE' : 'GATED'}                  tone={pub?.voita_feature_enabled ? 'ok' : 'warn'}            icon={Trophy}    onClick={() => navigate('/back-office/settings')} />
+          <span style={{ flex: 1 }} />
+          <span className="bo-shell-hide-on-mobile" style={{ display: 'contents' }}>
+            <StatusChip testid="status-signups" label="24H SIGNUPS"  value={snap.stages.find((s) => s.key === 'signup')?.count ?? 0} icon={Users}     onClick={() => navigate('/back-office/funnel')} />
+            <StatusChip testid="status-bound"   label="24H BOUND"    value={snap.stages.find((s) => s.key === 'bound')?.count ?? 0}  icon={Shield}    onClick={() => navigate('/back-office/bot-routing')} />
+            <StatusChip testid="status-dmsent"  label="24H DM"       value={snap.stages.find((s) => s.key === 'dm_sent')?.count ?? 0} tone={(snap.stages.find((s) => s.key === 'dm_sent')?.count ?? 0) === 0 && cfg.daily_dm_enabled ? 'warn' : 'neutral'} icon={Megaphone} onClick={() => navigate('/back-office/funnel')} />
+          </span>
+        </>
+      )}
     </div>
   );
 };
 
 
 // ─── Left nav (Phase 2.1 light reskin) ───────────────────────────────
-const Sidebar = ({ onLogout, onOpenCmd, density, setDensity }) => {
+const Sidebar = ({ onLogout, onOpenCmd, density, setDensity, mobileOpen, onCloseMobile }) => {
   return (
-    <aside data-testid="bo-shell-sidebar" style={{
-      width: 240, background: 'var(--bg)', borderRight: '1px solid var(--line)',
-      display: 'flex', flexDirection: 'column', position: 'sticky', top: 0,
-      height: '100vh', overflowY: 'auto',
-    }}>
+    <>
+      {/* Backdrop — only renders when the mobile drawer is open. */}
+      {mobileOpen && (
+        <div data-testid="bo-shell-sidebar-backdrop"
+          onClick={onCloseMobile}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)',
+            zIndex: 49, display: 'none',
+          }}
+          className="bo-shell-mobile-only" />
+      )}
+      <aside data-testid="bo-shell-sidebar" className={`bo-shell-sidebar${mobileOpen ? ' is-open' : ''}`} style={{
+        width: 240, background: 'var(--bg)', borderRight: '1px solid var(--line)',
+        display: 'flex', flexDirection: 'column', position: 'sticky', top: 0,
+        height: '100vh', overflowY: 'auto', zIndex: 50,
+      }}>
       <NavLink to="/back-office" style={{
         padding: '20px 22px 16px', borderBottom: '1px solid var(--line)',
         textDecoration: 'none',
@@ -371,6 +384,7 @@ const Sidebar = ({ onLogout, onOpenCmd, density, setDensity }) => {
         </button>
       </div>
     </aside>
+    </>
   );
 };
 
@@ -494,7 +508,51 @@ const DensityStyles = ({ density }) => (
     .bo-shell-page h1 { font-size: ${density === 'compact' ? 26 : 36}px !important; margin-bottom: ${density === 'compact' ? 4 : 6}px !important; }
     .bo-shell-page h2 { font-size: ${density === 'compact' ? 18 : 22}px !important; }
     .bo-shell-page section { margin-bottom: ${density === 'compact' ? 18 : 32}px !important; }
+
+    /* iter84 · mobile collapse — at ≤720px the sidebar is a slide-in
+       drawer toggled by the hamburger in the status strip. */
+    .bo-shell-hamburger { display: none; }
+    .bo-shell-mobile-only { display: none; }
+    @media (max-width: 720px) {
+      .bo-shell-sidebar {
+        position: fixed !important;
+        top: 0; left: 0;
+        height: 100vh !important;
+        transform: translateX(-100%);
+        transition: transform 220ms ease;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+      }
+      .bo-shell-sidebar.is-open { transform: translateX(0); }
+      .bo-shell-hamburger { display: inline-flex !important; }
+      .bo-shell-mobile-only { display: block !important; }
+      .bo-shell-page { padding: 18px 14px 48px !important; }
+      [data-testid="bo-shell-status-strip"] {
+        padding: 10px 14px !important;
+        gap: 6px !important;
+      }
+      [data-testid="bo-shell-breadcrumb"] {
+        padding: 8px 14px !important;
+      }
+      .bo-shell-hide-on-mobile { display: none !important; }
+    }
   `}</style>
+);
+
+
+// ─── Mobile-only hamburger toggle (renders inside the status strip) ──
+const MobileHamburger = ({ onClick }) => (
+  <button onClick={onClick} type="button"
+    aria-label="Open navigation"
+    data-testid="bo-shell-hamburger"
+    className="bo-shell-hamburger"
+    style={{
+      background: 'transparent', border: '1px solid var(--line)',
+      borderRadius: 4, padding: '6px 8px', cursor: 'pointer',
+      alignItems: 'center', justifyContent: 'center',
+      color: 'var(--ink-2)',
+    }}>
+    <Menu size={16} strokeWidth={2} />
+  </button>
 );
 
 
@@ -505,6 +563,7 @@ const BackOfficeShell = () => {
   const [authError, setAuthError] = useState('');
   const [expired, setExpired] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [density, setDensity] = useState(() => {
     try { return localStorage.getItem('putki_bo_density') || 'comfortable'; } catch { return 'comfortable'; }
   });
@@ -581,6 +640,11 @@ const BackOfficeShell = () => {
     [location.pathname],
   );
 
+  // iter84 · auto-close the mobile drawer when the user navigates so
+  // they don't get stuck with the backdrop covering the page they
+  // just opened.
+  useEffect(() => { setMobileNavOpen(false); }, [location.pathname]);
+
   if (!authed) return <AuthGate onUnlock={onUnlock} error={authError} expired={expired} />;
 
   return (
@@ -589,9 +653,15 @@ const BackOfficeShell = () => {
       background: 'var(--bg)', color: 'var(--ink)',
     }}>
       <DensityStyles density={density} />
-      <Sidebar onLogout={onLogout} onOpenCmd={() => setCmdkOpen(true)} density={density} setDensity={setDensity} />
+      <Sidebar
+        onLogout={onLogout}
+        onOpenCmd={() => setCmdkOpen(true)}
+        density={density} setDensity={setDensity}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
+      />
       <main data-testid="bo-shell-main" style={{ flex: 1, minWidth: 0 }}>
-        <StatusStrip token={token} />
+        <StatusStrip token={token} onOpenMobileNav={() => setMobileNavOpen(true)} />
         {currentItem && (
           <div data-testid="bo-shell-breadcrumb" style={{
             padding: '10px 28px', borderBottom: '1px solid var(--line)',

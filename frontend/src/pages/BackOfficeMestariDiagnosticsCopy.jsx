@@ -67,7 +67,7 @@ const BackOfficeMestariDiagnosticsCopy = () => {
   useEffect(refresh, [refresh]);
 
   if (!authed) {
-    return <AuthGate authError={authError} setToken={setToken} onSubmit={checkAuth} />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
   if (!data) return <div style={{ padding: 24, color: 'var(--muted)' }}>Loading…</div>;
 

@@ -177,7 +177,7 @@ const BackOfficeVoyagerRotation = () => {
 
   // ── Auth gate ──────────────────────────────────────────────────────
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} authError={authError} onSubmit={checkAuth} />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
   if (!form) {
     return (

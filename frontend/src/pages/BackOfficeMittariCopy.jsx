@@ -15,6 +15,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -192,13 +193,29 @@ const BackOfficeMittariCopy = () => {
       const r = await fetch(`${BACKEND}/api/admin/mittari/copy`, {
         method: 'PUT', headers, body: JSON.stringify(form),
       });
-      if (!r.ok) { setStatus(`Save failed (${r.status})`); return; }
+      if (!r.ok) {
+        setStatus(`Save failed (${r.status})`);
+        throw new Error(`HTTP ${r.status}`);
+      }
       const d = await r.json();
       setSnapshot(d); setForm(d.merged);
       setStatus('✓ Saved · live on /mittari now');
-    } catch (e) { setStatus(`Network error: ${e.message}`); }
-    finally { setBusy(false); }
+    } catch (e) {
+      setStatus(`Network error: ${e.message}`);
+      throw e;
+    } finally { setBusy(false); }
   }, [form, headers]);
+
+  // iter84 · Task 2.8 — debounced autosave + Cmd+S. `dirty` is computed
+  // by deep-comparing the current form to the last server snapshot's
+  // raw user-override doc; any divergence triggers a 2.5s save.
+  const dirty = useMemo(() => {
+    if (!form || !snapshot) return false;
+    return JSON.stringify(form) !== JSON.stringify(snapshot.merged);
+  }, [form, snapshot]);
+  const autosave = useFormAutosave({
+    form, dirty, onSave: save, delay: 2500, pause: busy && status === 'Saving…',
+  });
 
   const resetSection = useCallback((path) => {
     if (!snapshot) return;
@@ -262,7 +279,7 @@ const BackOfficeMittariCopy = () => {
     });
   };
 
-  if (!authed) return <AuthGate authError={authError} setToken={setToken} onSubmit={checkAuth} />;
+  if (!authed) return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   if (!form) {
     return (
       <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center',
@@ -309,7 +326,13 @@ const BackOfficeMittariCopy = () => {
               padding: '10px 14px', textDecoration: 'none',
               border: '1px solid var(--hairline)',
             }}>VIEW /MITTARI ↗</Link>
-          <button type="button" onClick={save} disabled={busy}
+          <AutosaveStatus
+            status={autosave.status}
+            error={autosave.error}
+            lastSavedAt={autosave.lastSavedAt}
+            testid="bo-mc-autosave-status"
+          />
+          <button type="button" onClick={autosave.forceSave} disabled={busy}
             data-testid="bo-mc-save" style={{
               padding: '10px 18px', background: '#E89248', color: '#0A0A0B',
               border: 0, fontFamily: 'ui-monospace, monospace',
@@ -729,7 +752,7 @@ const BackOfficeMittariCopy = () => {
         }}>
           {status || 'Edits apply to /mittari the moment you save.'}
         </div>
-        <button type="button" onClick={save} disabled={busy}
+        <button type="button" onClick={autosave.forceSave} disabled={busy}
           data-testid="bo-mc-save-bottom" style={{
             padding: '10px 18px', background: '#E89248', color: '#0A0A0B',
             border: 0, fontFamily: 'ui-monospace, monospace',

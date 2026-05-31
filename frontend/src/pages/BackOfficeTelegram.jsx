@@ -118,8 +118,7 @@ const BackOfficeTelegram = () => {
   }, [busy, headers, fetchAll]);
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth}
-              error={authError} title="Back-office · Telegram" />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   const wh = hookInfo?.result || hookInfo || {};

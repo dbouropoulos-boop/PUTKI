@@ -137,7 +137,7 @@ const BackOfficeSlotRegistry = () => {
   }, [items]);
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Slot registry" />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   const addEntry = async (e) => {

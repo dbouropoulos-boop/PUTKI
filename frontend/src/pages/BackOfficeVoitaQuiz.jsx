@@ -199,7 +199,7 @@ const BackOfficeVoitaQuiz = () => {
   ]);
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Voita quiz editor" />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   return (

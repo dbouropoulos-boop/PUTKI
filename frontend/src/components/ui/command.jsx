@@ -1,9 +1,10 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
 import { Search } from "lucide-react"
+import * as VisuallyHiddenPrimitive from "@radix-ui/react-visually-hidden"
 
 import { cn } from "@/lib/utils"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 
 const Command = React.forwardRef(({ className, ...props }, ref) => (
   <CommandPrimitive
@@ -17,12 +18,23 @@ const Command = React.forwardRef(({ className, ...props }, ref) => (
 Command.displayName = CommandPrimitive.displayName
 
 const CommandDialog = ({
+  title = "Command palette",
+  description = "Search pages and run commands across the back-office.",
   children,
   ...props
 }) => {
   return (
     <Dialog {...props}>
       <DialogContent className="overflow-hidden p-0">
+        {/* Radix a11y requires a DialogTitle + Description inside
+            DialogContent. Wrap both with VisuallyHidden so the visual
+            design isn't affected. */}
+        <VisuallyHiddenPrimitive.Root asChild>
+          <DialogTitle>{title}</DialogTitle>
+        </VisuallyHiddenPrimitive.Root>
+        <VisuallyHiddenPrimitive.Root asChild>
+          <DialogDescription>{description}</DialogDescription>
+        </VisuallyHiddenPrimitive.Root>
         <Command
           className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
           {children}

@@ -473,7 +473,7 @@ const BackOfficeVoita = () => {
   }), [items]);
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Voita - raffles" />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   return (

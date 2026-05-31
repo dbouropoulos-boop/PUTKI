@@ -17,6 +17,7 @@ import { useOutletContext } from 'react-router-dom';
 import {
   CheckCircle2, AlertCircle, ExternalLink, Save, Link2, Activity,
 } from 'lucide-react';
+import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
@@ -92,7 +93,6 @@ const _fmtTimestamp = (iso) => {
 const BackOfficeIntegrations = () => {
   const { token } = useOutletContext() || {};
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState(null);
   const [serverState, setServerState] = useState(null);
   const [probing, setProbing] = useState(false);
@@ -134,33 +134,42 @@ const BackOfficeIntegrations = () => {
     form.smartico_template_id?.trim() && form.smartico_brand_key?.trim(),
   );
 
-  const save = async () => {
-    setSaving(true); setFeedback(null);
-    try {
-      // Send all 3 fields together — the admin endpoint always overwrites,
-      // so we must include every Smartico field even if the editor only
-      // touched one of them.
-      const payload = {};
-      for (const k of SMARTICO_FIELDS) {
-        const trimmed = (form[k] || '').trim();
-        payload[k] = trimmed === '' ? null : trimmed;
-      }
-      const r = await fetch(`${BACKEND}/api/admin/settings`, {
-        method: 'PUT',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (!r.ok) {
-        const txt = await r.text();
-        throw new Error(`HTTP ${r.status}: ${txt}`);
-      }
-      const data = await r.json();
-      setServerState(data);
-      setFeedback({ ok: true, text: 'Saved.' });
-    } catch (e) {
-      setFeedback({ ok: false, text: `Save failed: ${String(e?.message || e)}` });
-    } finally { setSaving(false); }
-  };
+  const save = useCallback(async (formForSave) => {
+    setFeedback(null);
+    const src = formForSave || form;
+    // Send all 3 fields together — the admin endpoint always overwrites,
+    // so we must include every Smartico field even if the editor only
+    // touched one of them.
+    const payload = {};
+    for (const k of SMARTICO_FIELDS) {
+      const trimmed = (src[k] || '').trim();
+      payload[k] = trimmed === '' ? null : trimmed;
+    }
+    const r = await fetch(`${BACKEND}/api/admin/settings`, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      throw new Error(`HTTP ${r.status}: ${txt}`);
+    }
+    const data = await r.json();
+    setServerState(data);
+    setFeedback({ ok: true, text: 'Saved.' });
+    return data;
+  }, [form, headers]);
+
+  // iter84 · Task 2.8 — debounced autosave + Cmd+S shortcut. Mirrors
+  // the dirty flag this page already maintains. The shell-handled
+  // AuthGate guarantees `token` exists by the time the autosave hook
+  // fires.
+  const autosave = useFormAutosave({
+    form, dirty, onSave: save, delay: 2000,
+  });
+  // Surface `saving` to the existing Save button without a second
+  // useState round-trip.
+  const saving = autosave.saving;
 
   const setField = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
 
@@ -350,6 +359,12 @@ const BackOfficeIntegrations = () => {
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <AutosaveStatus
+                status={autosave.status}
+                error={autosave.error}
+                lastSavedAt={autosave.lastSavedAt}
+                testid="bo-smartico-autosave-status"
+              />
               {dirty && (
                 <span data-testid="bo-smartico-dirty"
                   style={{
@@ -357,7 +372,7 @@ const BackOfficeIntegrations = () => {
                     color: 'var(--dial-myrsky)', fontWeight: 700,
                   }}>UNSAVED</span>
               )}
-              <button data-testid="bo-smartico-save" onClick={save}
+              <button data-testid="bo-smartico-save" onClick={autosave.forceSave}
                 disabled={saving || !dirty}
                 style={{
                   padding: '10px 18px', background: 'var(--ember)', color: '#FFFFFF',

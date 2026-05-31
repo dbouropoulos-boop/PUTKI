@@ -98,7 +98,7 @@ const BackOfficePlaybook = () => {
 
   const downloadHref = `${BACKEND}/api/admin/playbook/download`;
 
-  if (!authed) return <AuthGate authError={authError} setToken={setToken} onSubmit={checkAuth} />;
+  if (!authed) return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
 
   const cur = data?.current;
   const outbox = data?.outbox || { counts: {}, rows: [] };

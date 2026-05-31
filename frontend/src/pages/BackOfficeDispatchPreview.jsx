@@ -267,7 +267,7 @@ const BackOfficeDispatchPreview = () => {
   const channels = useMemo(() => detail?.per_channel || {}, [detail]);
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} title="Dispatch previewer" />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   return (

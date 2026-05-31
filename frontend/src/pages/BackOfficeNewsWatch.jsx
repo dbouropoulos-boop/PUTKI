@@ -104,7 +104,7 @@ const BackOfficeNewsWatch = () => {
   };
 
   if (!authed) {
-    return <AuthGate token={token} setToken={setToken} authError={authError} onSubmit={checkAuth} title="News-watch" />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   return (

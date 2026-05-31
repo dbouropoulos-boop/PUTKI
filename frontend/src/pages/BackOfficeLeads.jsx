@@ -180,7 +180,7 @@ const BackOfficeLeads = () => {
   }, [data]);
 
   if (!authed) {
-    return <AuthGate authError={authError} setToken={setToken} onSubmit={checkAuth} />;
+    return null; // iter84: legacy AuthGate dead-stripped (shell handles auth)
   }
 
   const sum = data?.summary;

@@ -2653,6 +2653,45 @@ from routes.back_office_activity import (  # noqa: E402
 )
 api_router.include_router(_build_activity_router(require_admin, db))
 
+# iter84 · action_type → back-office route mapping for the generic
+# auto-logged middleware rows. Keep this list tight — when the
+# cockpit feed surfaces an action_type without a mapping it cleanly
+# falls back to route=None ("—" in the UI).
+_AUTO_ACTION_ROUTE = {
+    "put.settings":                          "/back-office/settings",
+    "put.bot.config":                        "/back-office/bot-routing",
+    "put.weekly":                            "/back-office/weekly",
+    "post.weekly.refresh":                   "/back-office/weekly",
+    "put.peli.config":                       "/back-office/peli",
+    "post.voita.raffles":                    "/back-office/voita",
+    "post.voita.quiz.config":                "/back-office/voita-quiz",
+    "put.mittari.copy":                      "/back-office/mittari-copy",
+    "put.mestari.copy":                      "/back-office/mestari-copy",
+    "put.voyager.rotation":                  "/back-office/voyager",
+    "post.queue.generate":                   "/back-office/queue",
+    "post.dispatch.preview":                 "/back-office/dispatch-preview",
+    "post.og_image":                         "/back-office/og-images",
+    "post.og_image.regenerate":              "/back-office/og-images",
+    "delete.og_image":                       "/back-office/og-images",
+    "post.streamer_meta":                    "/back-office/streamer-meta",
+    "put.slot_registry":                     "/back-office/slot-registry",
+    "post.optin.segments":                   "/back-office/optin-segments",
+    "post.email.templates":                  "/back-office/email-templates",
+    "post.mini_games":                       "/back-office/mini-games",
+    "post.telegram.broadcast":               "/back-office/telegram",
+}
+_AUTO_ACTION_ROUTE_PREFIX = (
+    # parameterised paths
+    ("post.queue.{id}.",                "/back-office/queue"),
+    ("post.voita.raffles.{id}.",        "/back-office/voita"),
+    ("delete.voita.raffles.{id}",       "/back-office/voita"),
+    ("put.voita.raffles.{id}",          "/back-office/voita"),
+    ("post.news_watch.",                "/back-office/news-watch"),
+    ("post.operators.",                 "/back-office/operators"),
+    ("post.streamers.",                 "/back-office/streamers"),
+    ("post.bot.",                       "/back-office/bot-routing"),
+)
+
 
 # iter83 (Task 2.7) — generic admin-mutation logger middleware.
 #
@@ -2684,15 +2723,23 @@ async def _back_office_activity_middleware(request, call_next):
                 else:
                     cleaned.append(p.replace("-", "_"))
             action_type = f"{request.method.lower()}.{'.'.join(cleaned) or 'root'}"
-            # iter83 fix · the SPA router can't resolve raw API paths,
-            # so generic auto-logged rows should expose `route=None`
-            # rather than the API URL. The activity log UI then renders
-            # an em-dash instead of a broken anchor.
+            # iter84 · best-effort mapping: turn the most common
+            # auto-logged paths into the back-office route that owns
+            # them, so the cockpit feed becomes clickable. Unmapped
+            # paths still get route=None.
+            auto_route = _AUTO_ACTION_ROUTE.get(action_type)
+            if auto_route is None:
+                # Fallback: try a prefix match (covers parameterised
+                # paths like 'post.queue.{id}.edit').
+                for prefix, target in _AUTO_ACTION_ROUTE_PREFIX:
+                    if action_type.startswith(prefix):
+                        auto_route = target
+                        break
             await _log_activity(
                 db,
                 action_type=action_type,
                 actor_token=request.headers.get("X-Admin-Token"),
-                route=None,
+                route=auto_route,
                 entity=path,
                 meta={"method": request.method,
                       "status": response.status_code,
