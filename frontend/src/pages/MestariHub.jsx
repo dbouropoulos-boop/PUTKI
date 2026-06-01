@@ -12,6 +12,7 @@ import { ArrowRight, Send, Sun, Moon } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import useJsonLd from '../hooks/useJsonLd';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -282,6 +283,7 @@ const MestariHub = () => {
     return () => { stop = true; };
   }, []);
 
+  const { canonical, alternates } = useLocalisedCanonical({ fiPath: '/mestari', enPath: '/mestari' });
   useDocumentMeta({
     title: lang === 'en'
       ? 'Mestari · Know your play - PUTKI HQ'
@@ -289,7 +291,8 @@ const MestariHub = () => {
     description: lang === 'en'
       ? 'Three 90-second diagnostics - sports betting, poker, blackjack. Your real profile + a 5-day playbook, emailed free.'
       : 'Kolme 90 sekunnin diagnostiikkaa - urheiluvedonlyönti, pokeri, blackjack. Oikea profiilisi ja 5 päivän pelikirja sähköpostiisi, ilmaiseksi.',
-    canonical: `${BACKEND}/mestari`,
+    canonical,
+    alternates,
   });
 
   // iter86 · Phase 4 — JSON-LD: an ItemList of the 3 diagnostics +

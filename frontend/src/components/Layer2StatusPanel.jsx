@@ -59,6 +59,7 @@ const Layer2StatusPanel = ({ token }) => {
     if (!token) return;
     try {
       const r = await fetch(`${BACKEND}/api/admin/layer2/status`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': token },
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -82,6 +83,7 @@ const Layer2StatusPanel = ({ token }) => {
     setLastTickResult(null);
     try {
       const r = await fetch(`${BACKEND}/api/admin/layer2/tick?worker=${worker}`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'X-Admin-Token': token },
       });

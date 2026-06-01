@@ -34,6 +34,7 @@ const BackOfficePeli = () => {
     setAuthError('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/peli/config`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': tk },
       });
       if (r.status === 401) { setAuthError('Wrong token.'); setAuthed(false); return; }
@@ -42,6 +43,7 @@ const BackOfficePeli = () => {
       setServerConfig(d.config);
       setEntryCount(d.entry_count || 0);
       const eR = await fetch(`${BACKEND}/api/admin/peli/entries?limit=200`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': tk },
       });
       const eD = await eR.json();
@@ -81,6 +83,7 @@ const BackOfficePeli = () => {
         enabled: !!config.enabled,
       };
       const r = await fetch(`${BACKEND}/api/admin/peli/config`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify(body),

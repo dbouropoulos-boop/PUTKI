@@ -54,6 +54,7 @@ const BackOfficeWeekly = () => {
       setResults(seeded);
 
       const aR = await fetch(`${BACKEND}/api/admin/weekly/${metaD.week_key}`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': tk },
       });
       if (aR.status === 401) { setAuthError('Wrong token.'); setAuthed(false); return; }
@@ -77,6 +78,7 @@ const BackOfficeWeekly = () => {
     setStatusMsg('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/weekly/${wk}/prize`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
@@ -97,6 +99,7 @@ const BackOfficeWeekly = () => {
     setBusy(true);
     try {
       await fetch(`${BACKEND}/api/admin/weekly/${wk}/lock?locked=${!meta?.locked}`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'X-Admin-Token': token },
       });
@@ -112,6 +115,7 @@ const BackOfficeWeekly = () => {
         .filter(([, v]) => v)
         .map(([event_id, pick]) => ({ event_id, pick }));
       const r = await fetch(`${BACKEND}/api/admin/weekly/${wk}/results`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ results: payload }),
@@ -131,6 +135,7 @@ const BackOfficeWeekly = () => {
     setWinnerInfo(null);
     try {
       const r = await fetch(`${BACKEND}/api/admin/weekly/${wk}/draw`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'X-Admin-Token': token },
       });

@@ -158,6 +158,7 @@ const GenerateForm = ({ token, onGenerated, contentTypes }) => {
     try {
       const parsed = JSON.parse(payload);
       const r = await fetch(`${BACKEND}/api/admin/queue/generate`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ content_type: type, signal_payload: parsed }),
@@ -242,6 +243,7 @@ const GuidelinesPanel = ({ token, onClose }) => {
     setSaving(true);
     try {
       await fetch(`${BACKEND}/api/admin/guidelines/${activeKey}`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ text: editText }),
@@ -403,6 +405,7 @@ const ScheduleStatus = ({ token }) => {
     setBusy(ct);
     try {
       await fetch(`${BACKEND}/api/admin/scheduler/tick?force_content_type=${encodeURIComponent(ct)}`, {
+        credentials: 'include',
         method: 'POST', headers: { 'X-Admin-Token': token },
       });
       await refresh();

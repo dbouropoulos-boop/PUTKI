@@ -9,6 +9,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import { useLang } from '../context/LanguageContext';
 import NewsCard from '../components/NewsCard';
 import LiveDeskHeader from '../components/LiveDeskHeader';
@@ -24,10 +25,13 @@ const Uutiset = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // iter96 audit fix: emit canonical + hreflang for crawlers.
+  const { canonical, alternates } = useLocalisedCanonical({ fiPath: '/uutiset', enPath: '/uutiset' });
   useDocumentMeta({
     title: `${t('uutiset.title')} - PUTKI HQ`,
     description: t('uutiset.subtitle'),
-    canonical: `${BACKEND}/uutiset`,
+    canonical,
+    alternates,
   });
 
   const load = useCallback(async (size, filters) => {

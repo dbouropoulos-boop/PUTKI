@@ -73,6 +73,7 @@ const Row = ({ row, token, onChanged }) => {
     setBusy('draft'); setError(''); setInfo('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/streamer-meta/generate-draft`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ platform: row.platform, user_login: row.user_login, force }),
@@ -97,6 +98,7 @@ const Row = ({ row, token, onChanged }) => {
     setBusy('publish'); setError(''); setInfo('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/streamer-meta/publish`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
@@ -122,6 +124,7 @@ const Row = ({ row, token, onChanged }) => {
     setBusy('suppress'); setError(''); setInfo('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/streamer-meta/suppress`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
@@ -361,6 +364,7 @@ const BackOfficeStreamerMeta = () => {
     setAddLogin('');
     // Just seed the row with empty fields so it shows up; AI draft can fill it in.
     await fetch(`${BACKEND}/api/admin/streamer-meta`, {
+      credentials: 'include',
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
       body: JSON.stringify({ platform: addPlatform, user_login: login, meta_fi: '', meta_en: '' }),

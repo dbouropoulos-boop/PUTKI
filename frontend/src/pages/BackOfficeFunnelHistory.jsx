@@ -47,6 +47,7 @@ const BackOfficeFunnelHistory = () => {
     setBusy(true); setErr(null);
     try {
       const r = await fetch(`${BACKEND}/api/admin/bot/funnel/history?days=${days}`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': token },
       });
       if (!r.ok) { setAuthed(false); setErr(`auth failed (${r.status})`); return; }

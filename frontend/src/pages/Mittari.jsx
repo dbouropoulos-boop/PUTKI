@@ -29,6 +29,7 @@ import MittariSignals from '../components/MittariSignals';
 import { MittariGate, STORAGE_UNLOCK_KEY } from '../components/MittariGate';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import useMittariCopy from '../hooks/useMittariCopy';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -492,6 +493,11 @@ const Mittari = () => {
   const signalsRef = useRef(null);
   const gateRef = useRef(null);
 
+  // iter96 audit fix · canonical + hreflang. The page lives at /mittari
+  // (FI canonical) — there is no dedicated /en/mittari route today, so
+  // we still emit hreflang fi-FI/en-FI/x-default pointing at the same
+  // canonical so social/search crawlers know FI is intentional.
+  const { canonical, alternates } = useLocalisedCanonical({ fiPath: '/mittari', enPath: '/mittari' });
   useDocumentMeta({
     title: lang === 'en'
       ? 'Daily Signals + Mittari · PUTKI HQ'
@@ -499,7 +505,8 @@ const Mittari = () => {
     description: lang === 'en'
       ? 'Five strongest betting picks every morning at 09:00 - Sharpness-scored. Bonus: real-time Mittari state-change alerts. Telegram or email.'
       : 'Viisi vahvinta vetoa joka aamu klo 09:00 - Sharpness-pisteytetty. Bonuksena Mittarin reaaliaikaiset tilanvaihdokset. Telegramiin tai sähköpostiin.',
-    canonical: `${BACKEND}/mittari`,
+    canonical,
+    alternates,
   });
 
   useEffect(() => {

@@ -159,6 +159,7 @@ const BackOfficeVoitaQuiz = () => {
     setBusy(true); setError('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/settings`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ voita_quiz_config: config, voita_hero: hero }),

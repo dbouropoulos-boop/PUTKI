@@ -186,6 +186,7 @@ const StreamersAdmin = () => {
     setRefreshingOne(slug);
     try {
       const r = await fetch(`${BACKEND}/api/admin/streamers/${encodeURIComponent(slug)}/refresh-avatar`, {
+        credentials: 'include',
         method: 'POST', headers: { 'X-Admin-Token': token },
       });
       const j = await r.json();

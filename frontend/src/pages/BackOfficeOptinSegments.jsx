@@ -93,6 +93,7 @@ const BackOfficeOptinSegments = () => {
     setSettingsBusy(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/settings`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ auto_dispatch_enabled: next }),
@@ -109,6 +110,7 @@ const BackOfficeOptinSegments = () => {
   const setOverrideMode = async (channel, tag, mode) => {
     try {
       const r = await fetch(`${BACKEND}/api/admin/dispatch/segment-overrides`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ channel, consent_tag: tag, mode }),
@@ -130,6 +132,7 @@ const BackOfficeOptinSegments = () => {
     setBusy(true); setRunError(''); setRunResult(null);
     try {
       const r = await fetch(`${BACKEND}/api/admin/dispatch/run`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ dry_run: !!dryRun }),
@@ -169,6 +172,7 @@ const BackOfficeOptinSegments = () => {
     }
     try {
       const r = await fetch(`${BACKEND}/api/admin/dispatch/test-send`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ recipients: list, channels }),

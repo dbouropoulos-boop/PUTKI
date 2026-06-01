@@ -120,6 +120,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     setBusy(true); setError(''); setInfo('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/mark-paid`, {
+        credentials: 'include',
         method: 'POST', headers: { 'X-Admin-Token': token },
       });
       const j = await r.json().catch(() => ({}));
@@ -134,6 +135,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     setBusy(true); setError(''); setInfo('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/notify-winner`, {
+        credentials: 'include',
         method: 'POST', headers: { 'X-Admin-Token': token },
       });
       const j = await r.json().catch(() => ({}));
@@ -151,6 +153,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     setError(''); setInfo(''); setBusy(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}`, {
+        credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
@@ -234,6 +237,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     setBusy(true); setError(''); setInfo('');
     try {
       const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/draw`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ home_goals: Number(drawHome), away_goals: Number(drawAway) }),
@@ -250,6 +254,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     setBusy(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}`, {
+        credentials: 'include',
         method: 'DELETE', headers: { 'X-Admin-Token': token },
       });
       if (!r.ok) {
@@ -490,6 +495,7 @@ const NewRaffleForm = ({ token, onCreated }) => {
     e.preventDefault(); setError(''); setBusy(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/voita/raffles`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({

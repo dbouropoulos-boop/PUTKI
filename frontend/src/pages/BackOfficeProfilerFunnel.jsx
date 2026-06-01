@@ -41,6 +41,7 @@ const BackOfficeProfilerFunnel = () => {
         || localStorage.getItem(ADMIN_TOKEN_KEY)
         || 'putki-hq-admin';
       const r = await fetch(`${BACKEND}/api/admin/profiler/funnel?since_days=${days}`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': token },
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);

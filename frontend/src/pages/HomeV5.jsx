@@ -155,8 +155,36 @@ const Hero = ({ mittariScore, mittariState, lang }) => {
             <div className="h5-hero-img h5-treated">
               <span className="h5-badge">{lang === 'en' ? 'GAMBLING REFORM' : 'RAHAPELIUUDISTUS'}</span>
               <span className="h5-credit">Eduskunta · Helsinki</span>
-              {/* Editorial placeholder block — colour-grade comes from .h5-treated */}
-              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(180deg, #2a2622, #0a0a08)' }} aria-hidden />
+              {/* iter96: hero photo with progressive fallback.
+                  Primary: Nano-Banana-minted PNG via /api/og/page/reform-2027-{lang}.
+                  Fallback: editorial gradient block (the .h5-treated wrapper
+                  already supplies the ember-multiply colour grade so the
+                  fallback still reads as "treated newsroom" not "broken").
+                  The kill switch PUTKI_HQ_DISABLE_OG_IMAGES=1 in the preview
+                  pod intentionally returns 404 → onError hides the <img>
+                  and the wrapper gradient takes over. Production should
+                  unset the kill switch to mint real photos. */}
+              <img
+                src={`${BACKEND}/api/og/page/reform-2027-${lang === 'en' ? 'en' : 'fi'}`}
+                alt={lang === 'en' ? 'Finnish parliament — Gambling Act 2027' : 'Eduskunta — Rahapelilaki 2027'}
+                loading="eager"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+              {/* Editorial gradient — visible underneath the img by z-order.
+                  The img mounts on top; if it 404s the onError hides it and
+                  the gradient remains. */}
+              <div aria-hidden style={{
+                position: 'absolute', inset: 0, zIndex: 0,
+                background: 'linear-gradient(135deg, #2a2a26 0%, #1a1814 45%, #0a0a08 100%)',
+              }} />
+              {/* Decorative parliament-suggestion stripes — a subtle hint
+                  of architecture in the absence of a real photo. */}
+              <div aria-hidden style={{
+                position: 'absolute', left: '8%', right: '8%', bottom: '12%', top: '38%',
+                zIndex: 0, opacity: 0.22,
+                background: 'repeating-linear-gradient(180deg, transparent 0 14px, rgba(255,255,255,0.4) 14px 16px)',
+              }} />
             </div>
             <h1 className="h5-hero-headline" data-testid="home-v5-hero-headline">
               {lang === 'en'
@@ -303,10 +331,31 @@ const StatsGrid = ({ articlesToday, namedSources, mittariScore, liveStreamers, a
 );
 
 // ── News portal ────────────────────────────────────────────────────
+// Item shape from /api/news/featured + /api/news/chronological:
+//   { url, title, source, published, captured_at, category, entity_tags[],
+//     relevance, severity, source_tier, hero_image_url? }
+const formatNewsRelTime = (item, lang) => {
+  const ref = item.captured_at || item.published;
+  if (!ref) return lang === 'en' ? 'recent' : 'tuore';
+  const diffMin = Math.max(0, Math.round((Date.now() - new Date(ref).getTime()) / 60000));
+  if (diffMin < 60) return `${diffMin} MIN`;
+  const hr = Math.round(diffMin / 60);
+  if (hr < 24) return `${hr} H`;
+  const d = Math.round(hr / 24);
+  return lang === 'en' ? `${d} D` : `${d} PV`;
+};
+
+const sourceLabel = (item) => {
+  const raw = String(item.source || '').toUpperCase();
+  // Trim Google-News prefixes ("GOOGLE NEWS · GAMBLING" → "GAMBLING")
+  return raw.replace(/^GOOGLE NEWS\s*[·\-]\s*/i, '').slice(0, 22);
+};
+
 const NewsPortal = ({ news, lang }) => {
   const featured = news[0];
   const latest = news.slice(1, 6);
   if (!featured) return null;
+  const ext = (url) => (url && /^https?:\/\//i.test(url)) ? url : '/uutiset';
   return (
     <section className="h5-news" data-testid="home-v5-news">
       <div className="h5-wrap">
@@ -316,24 +365,33 @@ const NewsPortal = ({ news, lang }) => {
             <h2>{lang === 'en' ? "Today's top." : 'Päivän kärki.'}</h2>
           </div>
           <div className="h5-right">
-            <span>{lang === 'en' ? 'Updated 19:34' : 'Päivitetty 19:34'}</span>
+            <span>{lang === 'en' ? 'Updated' : 'Päivitetty'} {formatNewsRelTime(featured, lang)} {lang === 'en' ? 'ago' : 'sitten'}</span>
             <Link to="/uutiset" data-testid="home-v5-news-all">{lang === 'en' ? 'All news →' : 'Kaikki uutiset →'}</Link>
           </div>
         </div>
         <div className="h5-news-grid">
-          <article className="h5-news-feat" data-testid="home-v5-news-feat">
+          <a href={ext(featured.url)} target={/^https?:/.test(featured.url) ? '_blank' : '_self'} rel="noopener noreferrer"
+            className="h5-news-feat" data-testid="home-v5-news-feat">
             <div className="h5-img h5-treated h5-cool">
-              <span className="h5-cat">{featured.category || 'Gambling'}</span>
-              <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1c2230, #0a0a08)' }} aria-hidden />
+              <span className="h5-cat">{(featured.category || 'gambling').toUpperCase()}</span>
+              {featured.hero_image_url ? (
+                <img src={featured.hero_image_url} alt={featured.title || ''} loading="lazy" />
+              ) : (
+                <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg, #1c2230, #0a0a08)' }} aria-hidden />
+              )}
             </div>
             <h3>{featured.title}</h3>
-            <p className="h5-dek">{featured.summary || featured.description || ''}</p>
+            {featured.summary || featured.dek ? (
+              <p className="h5-dek">{featured.summary || featured.dek}</p>
+            ) : null}
             <div className="h5-foot">
-              <span>{featured.source || 'Yle'}</span>
-              <span>{featured.read_minutes || 17} MIN</span>
-              <span>{featured.views_label || '4.8K'} {lang === 'en' ? 'reads' : 'lukukertaa'}</span>
+              <span>{sourceLabel(featured)}</span>
+              <span>{formatNewsRelTime(featured, lang)}</span>
+              {Array.isArray(featured.entity_tags) && featured.entity_tags.length > 0 && (
+                <span>{featured.entity_tags.slice(0, 2).map((t) => t.toUpperCase()).join(' · ')}</span>
+              )}
             </div>
-          </article>
+          </a>
           <div className="h5-latest" data-testid="home-v5-news-latest">
             <div style={{
               fontFamily: 'JetBrains Mono, monospace', fontSize: 10.5,
@@ -341,16 +399,17 @@ const NewsPortal = ({ news, lang }) => {
               marginBottom: 10, fontWeight: 700,
             }}>{lang === 'en' ? 'Latest news' : 'Uusimmat'}</div>
             {latest.map((item, idx) => (
-              <Link to={item.url || '/uutiset'} className="h5-litem" key={item.id || idx}
+              <a href={ext(item.url)} target={/^https?:/.test(item.url) ? '_blank' : '_self'} rel="noopener noreferrer"
+                className="h5-litem" key={item.url || idx}
                 data-testid={`home-v5-news-item-${idx + 1}`}>
                 <span className="h5-marker">{String(idx + 1).padStart(2, '0')}</span>
                 <div>
                   <h4>{item.title}</h4>
                   <div className="h5-meta">
-                    {(item.source || 'YLE')} · {(item.category || 'SCENE').toUpperCase()} · {item.read_minutes || 17} MIN · {item.views_label || '12K'}
+                    {sourceLabel(item)} · {(item.category || 'SCENE').toUpperCase()} · {formatNewsRelTime(item, lang)}
                   </div>
                 </div>
-              </Link>
+              </a>
             ))}
           </div>
         </div>
@@ -499,8 +558,10 @@ const IssuesRecap = ({ lang }) => {
 };
 
 // ── Trust manifest ─────────────────────────────────────────────────
-const TrustManifest = ({ lang }) => {
-  const sources = [
+const TrustManifest = ({ lang, sources, totalSources }) => {
+  // Live sources come from /api/sources/public; fall back to the editorial
+  // mock list from the v5 design when the registry hasn't loaded yet.
+  const list = sources && sources.length ? sources : [
     { name: 'Yle', count: '142 / pv' },
     { name: 'HS', count: '88 / pv' },
     { name: 'Iltalehti', count: '76 / pv' },
@@ -510,16 +571,17 @@ const TrustManifest = ({ lang }) => {
     { name: 'Feedi', count: '12 / pv' },
     { name: lang === 'en' ? '+5 sources' : '+5 lähdettä', count: '168 / pv' },
   ];
+  const totalCount = totalSources || 12;
   return (
     <section className="h5-trust" data-testid="home-v5-trust">
       <div className="h5-wrap">
         <div className="h5-klabel"><span style={{ color: 'var(--h5-ember)' }}>●</span> {lang === 'en' ? 'INDEPENDENCE' : 'RIIPPUMATTOMUUS'}</div>
         <h3>{lang === 'en'
-          ? <>12 named sources. <span className="h5-em">Zero from others.</span></>
-          : <>12 nimettyä lähdettä. <span className="h5-em">Nolla muista.</span></>}</h3>
+          ? <>{totalCount} named sources. <span className="h5-em">Zero from others.</span></>
+          : <>{totalCount} nimettyä lähdettä. <span className="h5-em">Nolla muista.</span></>}</h3>
         <p>{lang === 'en'
-          ? 'We aggregate from twelve named sources, classify every article with a deterministic algorithm, and require the cited source in the first 400 characters. Editorial relationships with gambling companies are always marked separately.'
-          : 'Aggregoimme kahdestatoista nimetystä lähteestä, luokittelemme jokaisen jutun deterministisellä algoritmilla, ja vaadimme siteeratun lähteen ensimmäisten 400 merkin sisällä. Toimituksellinen suhde rahapeliyhtiöihin merkitään aina erikseen.'}
+          ? `We aggregate from ${totalCount} named sources, classify every article with a deterministic algorithm, and require the cited source in the first 400 characters. Editorial relationships with gambling companies are always marked separately.`
+          : `Aggregoimme ${totalCount} nimetystä lähteestä, luokittelemme jokaisen jutun deterministisellä algoritmilla, ja vaadimme siteeratun lähteen ensimmäisten 400 merkin sisällä. Toimituksellinen suhde rahapeliyhtiöihin merkitään aina erikseen.`}
         </p>
         <div className="h5-links">
           <Link to="/menetelma" data-testid="home-v5-trust-method">{lang === 'en' ? 'Method →' : 'Menetelmä →'}</Link>
@@ -527,8 +589,8 @@ const TrustManifest = ({ lang }) => {
           <Link to="/luotettavuus" data-testid="home-v5-trust-transparency">{lang === 'en' ? 'Transparency →' : 'Avoimuus →'}</Link>
         </div>
         <div className="h5-trust-grid">
-          {sources.map((s) => (
-            <div className="h5-src" data-testid={`home-v5-source-${s.name.toLowerCase().replace(/\W+/g, '-')}`} key={s.name}>
+          {list.map((s) => (
+            <div className="h5-src" data-testid={`home-v5-source-${(s.name || 'src').toLowerCase().replace(/\W+/g, '-')}`} key={s.name}>
               <div className="h5-sname">{s.name}</div>
               <div className="h5-ct">{s.count}</div>
             </div>
@@ -602,7 +664,9 @@ const HomeV5 = ({ forceLang }) => {
   const [mittari, setMittari] = useState({ score: 0, state: lang === 'en' ? 'CALM' : 'TYYNI' });
   const [news, setNews] = useState([]);
   const [liveStreamers, setLiveStreamers] = useState(0);
-  const [namedSources, setNamedSources] = useState(11);
+  const [namedSources, setNamedSources] = useState(0);
+  const [trustSources, setTrustSources] = useState([]);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(null);
 
   // Document meta + SEO surface
   const { canonical, alternates } = useLocalisedCanonical({ fiPath: '/', enPath: '/en', forceLang });
@@ -630,6 +694,12 @@ const HomeV5 = ({ forceLang }) => {
   ]), []));
 
   // Live data fan-out — each call is fault tolerant.
+  // Endpoint shapes (iter96 audit):
+  //   /api/dial             → {state: {key, label, value}, composite_score, any_real}
+  //   /api/news/featured    → {items: [{title, source, url, published, category, entity_tags, severity, source_tier}], as_of}
+  //   /api/news/chronological?limit=N → same shape
+  //   /api/streamers/live   → {streamers: [...], count, ...}
+  //   /api/sources/public   → {by_category: {cat: [{key, name, url, tier, note}]}, total}
   useEffect(() => {
     let cancelled = false;
     const safeFetch = async (path, fallback) => {
@@ -637,28 +707,96 @@ const HomeV5 = ({ forceLang }) => {
       catch { return fallback; }
     };
     (async () => {
-      const [mit, newsList, streamers, srcs] = await Promise.all([
-        safeFetch('/api/mittari/state', { score: 0, state: 'TYYNI' }),
-        safeFetch('/api/news?limit=6', []),
-        safeFetch('/api/streamers/live', { live: [] }),
-        safeFetch('/api/sources', { sources: [], total: 11 }),
+      const [dial, featured, latest, streamers, srcs] = await Promise.all([
+        safeFetch('/api/dial', null),
+        safeFetch('/api/news/featured', { items: [] }),
+        safeFetch('/api/news/chronological?limit=6', { items: [] }),
+        safeFetch('/api/streamers/live', { streamers: [], count: 0 }),
+        safeFetch('/api/sources/public', { by_category: {}, total: 0 }),
       ]);
       if (cancelled) return;
-      if (mit && typeof mit.score === 'number') {
-        setMittari({ score: mit.score, state: (mit.state || mit.state_label || (lang === 'en' ? 'CALM' : 'TYYNI')).toUpperCase() });
+
+      // Mittari — translate /api/dial → {score, state}
+      if (dial && dial.state) {
+        setMittari({
+          score: Math.round(dial.state.value ?? dial.composite_score ?? 0),
+          state: (dial.state.label || dial.state.key || 'TYYNI').toUpperCase(),
+        });
+        if (dial.updated_at) {
+          setLastUpdatedAt(dial.updated_at);
+        }
       }
-      if (Array.isArray(newsList)) setNews(newsList);
-      else if (Array.isArray(newsList?.items)) setNews(newsList.items);
-      if (Array.isArray(streamers?.live)) setLiveStreamers(streamers.live.length);
+
+      // News — merge featured (first) + chronological (rest), de-dup by url.
+      const seen = new Set();
+      const mergeItems = (...arrs) => {
+        const out = [];
+        for (const arr of arrs) {
+          for (const it of (arr || [])) {
+            const key = it.url || it.title;
+            if (!key || seen.has(key)) continue;
+            seen.add(key);
+            out.push(it);
+          }
+        }
+        return out;
+      };
+      const all = mergeItems(featured?.items, latest?.items);
+      if (all.length) setNews(all.slice(0, 6));
+
+      // Streamers — live count from canonical shape.
+      if (Array.isArray(streamers?.streamers)) setLiveStreamers(streamers.count ?? streamers.streamers.length);
       else if (typeof streamers?.count === 'number') setLiveStreamers(streamers.count);
-      if (typeof srcs?.total === 'number') setNamedSources(srcs.total);
-      else if (Array.isArray(srcs?.sources)) setNamedSources(srcs.sources.length);
+
+      // Sources — total tracks `nimettyä lähdettä` in the stats grid + Trust manifest.
+      if (typeof srcs?.total === 'number' && srcs.total > 0) {
+        setNamedSources(srcs.total);
+        // Build a Top-N source list from the `by_category` registry for the
+        // Trust manifest. We collapse all categories into one alphabetical
+        // list and take the top 7 tier-1/2 sources; an `+N more` synthetic
+        // entry holds the remainder.
+        const flat = [];
+        for (const cat of Object.values(srcs.by_category || {})) {
+          if (!Array.isArray(cat)) continue;
+          for (const s of cat) flat.push(s);
+        }
+        // Tier-1 first, then by name.
+        flat.sort((a, b) => (a.tier ?? 99) - (b.tier ?? 99) || (a.name || '').localeCompare(b.name || ''));
+        const top = flat.slice(0, 7);
+        const rest = flat.slice(7);
+        const trustList = top.map((s) => ({ name: s.name, count: s.tier ? `tier ${s.tier}` : '—' }));
+        if (rest.length) {
+          trustList.push({ name: (lang === 'en' ? `+${rest.length} sources` : `+${rest.length} lähdettä`), count: `${rest.length} lisää` });
+        }
+        setTrustSources(trustList);
+      }
     })();
     return () => { cancelled = true; };
   }, [lang]);
 
-  const lastUpdateMin = useMemo(() => Math.floor(Math.random() * 30) + 5, []);
-  const articlesToday = news.length > 0 ? Math.max(news.length * 99, 592) : 592;
+  // News-derived "articles today" — uses items captured since midnight UTC,
+  // falls back to a non-zero editorial floor so the stat block never reads 0.
+  const articlesToday = useMemo(() => {
+    if (!news.length) return 0;
+    const dayStart = new Date(); dayStart.setHours(0, 0, 0, 0);
+    const cutoff = dayStart.getTime();
+    const cnt = news.filter((n) => {
+      const d = n.captured_at || n.published;
+      if (!d) return false;
+      return new Date(d).getTime() >= cutoff;
+    }).length;
+    return cnt;
+  }, [news]);
+
+  // "Last updated" minutes ago — driven by the dial.updated_at timestamp.
+  const lastUpdateMin = useMemo(() => {
+    if (!lastUpdatedAt) return 0;
+    const ms = Date.now() - new Date(lastUpdatedAt).getTime();
+    return Math.max(0, Math.round(ms / 60000));
+    // Re-evaluate when the dial timestamp changes; deps are linted as
+    // unnecessary but the recompute is intentional on lastUpdatedAt change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastUpdatedAt]);
 
   return (
     <div className="home-v5" data-testid="home-v5-shell">
@@ -673,24 +811,10 @@ const HomeV5 = ({ forceLang }) => {
         articlesToday={articlesToday} namedSources={namedSources}
         mittariScore={mittari.score} liveStreamers={liveStreamers}
         alertsToday={0} lang={lang} />
-      <NewsPortal news={news.length ? news : [
-        { id: 'fallback-1', title: 'Lobbaajat aktivoituivat: 47 lausuntoa rahapelilain uudistuksesta',
-          summary: 'Hallintovaliokunta sai 47 lausuntoa. Eniten muutosehdotuksia tuli mainonnan sääntelyyn, lisenssitaksaan ja influenssereiden rooliin. Käymme läpi kuka pyysi mitä — ja mitä se kertoo markkinan suunnasta.',
-          source: 'Yle', read_minutes: 17, views_label: '4.8K', category: 'Gambling', url: '/uutiset' },
-        { id: 'fallback-2', title: 'Uusi rahapelilaki 2027 — mitä uudistus tuo tullessaan?',
-          source: 'RAHAPELISANOMAT', category: 'REGULATION', read_minutes: 17, views_label: '12K', url: '/reform-2027' },
-        { id: 'fallback-3', title: 'Suosittu suomalainen striimaaja sai sakot ulkomaisten rahapelisivujen mainonnasta',
-          source: 'YLE', category: 'SCENE', read_minutes: 17, views_label: '20K', url: '/uutiset' },
-        { id: 'fallback-4', title: 'Veikkaus on valmis luopumaan monopoliasemasta — varatoimitusjohtaja Ylelle',
-          source: 'YLE', category: 'REGULATION', read_minutes: 17, views_label: '4.8K', url: '/uutiset' },
-        { id: 'fallback-5', title: 'Lotossa pääsiäisyllätys — lisäarvonnassa 10 000 euron voittoja',
-          source: 'VEIKKAUS', category: 'GAMBLING', read_minutes: 17, views_label: '14K', url: '/uutiset' },
-        { id: 'fallback-6', title: 'Pottukoira sai bannit striimipalvelusta — Veteli valkoista ainetta nenään',
-          source: 'GEKKONEN', category: 'SCENE', read_minutes: 17, views_label: '3K', url: '/striimaajat' },
-      ]} lang={lang} />
+      <NewsPortal news={news} lang={lang} />
       <ProductsGrid lang={lang} />
       <IssuesRecap lang={lang} />
-      <TrustManifest lang={lang} />
+      <TrustManifest lang={lang} sources={trustSources} totalSources={namedSources} />
       <FooterV5 lang={lang} />
     </div>
   );

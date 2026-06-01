@@ -96,6 +96,7 @@ const BackOfficeSettings = () => {
         setBusy(true); setErr(null); setConfirm(null);
         try {
           const r = await fetch(`${BACKEND}/api/admin/settings`, {
+            credentials: 'include',
             method: 'PUT',
             headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
             body: JSON.stringify({ voita_feature_enabled: next }),

@@ -96,6 +96,7 @@ const SendRow = ({ send, token, onChanged }) => {
     setBusy(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/dispatch/logs/${send.id}/flag`, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ reason, note }),
@@ -107,6 +108,7 @@ const SendRow = ({ send, token, onChanged }) => {
     setBusy(true);
     try {
       await fetch(`${BACKEND}/api/admin/dispatch/logs/${send.id}/flag`, {
+        credentials: 'include',
         method: 'DELETE', headers: { 'X-Admin-Token': token },
       });
       onChanged && onChanged();
@@ -239,6 +241,7 @@ const BackOfficeDispatchPreview = () => {
     if (!token || !authed) return;
     try {
       const r = await fetch(`${BACKEND}/api/admin/dispatch/cycles?days=${days}&limit=50`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': token },
       });
       const j = await r.json();
@@ -254,6 +257,7 @@ const BackOfficeDispatchPreview = () => {
     setLoading(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/dispatch/cycles/${selected}`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': token },
       });
       if (r.ok) setDetail(await r.json());

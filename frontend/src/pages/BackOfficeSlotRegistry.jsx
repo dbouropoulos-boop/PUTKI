@@ -37,6 +37,7 @@ const Row = ({ entry, token, onChanged }) => {
     setBusy('toggle');
     try {
       await fetch(`${BACKEND}/api/admin/slot-registry/${entry.id}`, {
+        credentials: 'include',
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({ enabled: !entry.enabled }),
@@ -50,6 +51,7 @@ const Row = ({ entry, token, onChanged }) => {
     setBusy('delete');
     try {
       await fetch(`${BACKEND}/api/admin/slot-registry/${entry.id}`, {
+        credentials: 'include',
         method: 'DELETE',
         headers: { 'X-Admin-Token': token },
       });
@@ -108,6 +110,7 @@ const BackOfficeSlotRegistry = () => {
     setLoading(true);
     try {
       const r = await fetch(`${BACKEND}/api/admin/slot-registry`, {
+        credentials: 'include',
         headers: { 'X-Admin-Token': token },
       });
       if (r.ok) {
@@ -145,6 +148,7 @@ const BackOfficeSlotRegistry = () => {
     setAddError('');
     if (!addName.trim()) { setAddError('Name required'); return; }
     const r = await fetch(`${BACKEND}/api/admin/slot-registry`, {
+      credentials: 'include',
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
       body: JSON.stringify({ name: addName.trim(), category: addCategory, provider: addProvider.trim() }),
@@ -162,6 +166,7 @@ const BackOfficeSlotRegistry = () => {
     setSeeding(true); setSeedResult(null);
     try {
       const r = await fetch(`${BACKEND}/api/admin/slot-registry/seed`, {
+        credentials: 'include',
         method: 'POST', headers: { 'X-Admin-Token': token },
       });
       if (r.ok) {
