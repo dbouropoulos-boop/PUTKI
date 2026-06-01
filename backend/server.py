@@ -14,15 +14,25 @@ from datetime import datetime, timezone, timedelta
 
 async def require_admin(request: Request,
                          x_admin_token: Optional[str] = Header(None, alias='X-Admin-Token')):
-    """iter62: per-user admin tokens + audit logging.
+    """iter94: dual-path admin auth. Reads the signed httpOnly cookie
+    session FIRST, then falls back to the legacy `X-Admin-Token` header
+    so existing SPA sessions and back-office automation keep working
+    through the migration window.
 
-    Resolves the X-Admin-Token via the `admin_users` collection. Legacy
-    env-based BACK_OFFICE_TOKEN still works (back-compat) - both paths
-    return an actor record that handlers can pass to `_audit_log`.
+    Resolution order:
+      1. `putki_admin_session` cookie → decode JWT → actor.
+      2. `X-Admin-Token` header → resolve_admin_token() lookup.
 
-    `_audit_log` is a thin wrapper around `admin_auth.write_audit` that
-    pulls actor metadata from `request.state` (populated here)."""
+    Both paths populate `request.state.admin_actor` identically so
+    downstream handlers can audit-log without branching."""
     from admin_auth import resolve_admin_token
+    from routes.admin_auth_cookie import COOKIE_NAME, decode_session
+
+    cookie_actor = decode_session(request.cookies.get(COOKIE_NAME) or '')
+    if cookie_actor:
+        request.state.admin_actor = cookie_actor
+        return True
+
     if not x_admin_token:
         raise HTTPException(status_code=401, detail='Missing admin token')
     actor = await resolve_admin_token(db, x_admin_token)
@@ -2679,6 +2689,12 @@ api_router.include_router(_build_page_og_router())
 # the primary capture path (FE → pending row → bot binds chat_id).
 from routes.mestari_telegram import build_mestari_telegram_router as _build_mestari_telegram_router  # noqa: E402
 api_router.include_router(_build_mestari_telegram_router(db))
+
+# iter94 · Admin auth → httpOnly cookie session. Login/logout/whoami
+# under /api/admin/auth/*. `require_admin` reads the cookie first; the
+# legacy X-Admin-Token header path stays alive for back-compat.
+from routes.admin_auth_cookie import build_admin_auth_router as _build_admin_auth_router  # noqa: E402
+api_router.include_router(_build_admin_auth_router(db))
 
 # iter84 · action_type → back-office route mapping for the generic
 # auto-logged middleware rows. Keep this list tight — when the

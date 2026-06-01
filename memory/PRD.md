@@ -9,6 +9,38 @@
 
 ## Phase History (latest first)
 
+- **iter94 · Admin auth → httpOnly cookie session (Phase 5 pre-req)** (2026-06-01, +9 backend tests · 9/9 green · 34/34 cumulative phase-3/4/iter94 suite green · ESLint + ruff clean · live-verified in browser)
+  - **What shipped**. Moved the back-office from `X-Admin-Token` header (token in browser `sessionStorage`) to a signed httpOnly Secure SameSite=Lax cookie session. Three new endpoints under `/api/admin/auth/*`: login → set cookie, logout → clear cookie, whoami → report authed state. `require_admin` reads the cookie FIRST, then falls back to the legacy header for back-compat through the migration window.
+  - **Why**. With Telegram-first conversion now writing real subscriber data into `optin_consents`, an XSS-stealable admin token in sessionStorage was the single biggest security hole. Cookie-flagged `HttpOnly` removes script access; `SameSite=Lax` blocks cross-site CSRF on state-changing requests; `Secure` enforces TLS in production.
+  - **Backend** (`routes/admin_auth_cookie.py`, ~165 LOC):
+    - `POST /api/admin/auth/login {token}` — validates via existing `resolve_admin_token`, signs a PyJWT HS256 token with `{sub, actor, role, iat, exp}`, sets the `putki_admin_session` cookie (HttpOnly, Secure, SameSite=Lax, Path=/, Max-Age=8h default). Returns `{authed, actor, role, expires_at, ttl_seconds}`. 401 on bad token.
+    - `POST /api/admin/auth/logout` — clears the cookie. Idempotent. No auth required (logout-from-bad-state should always work).
+    - `GET /api/admin/auth/whoami` — decode cookie first; on miss fall back to legacy `X-Admin-Token` header. Returns `{authed, actor, role, source, exp}` with `source ∈ {cookie_session, legacy_header}`. 401 on no auth.
+    - Signing key resolution: `JWT_SECRET` (canonical) → `BACK_OFFICE_TOKEN` (fallback). New `JWT_SECRET` env added to `backend/.env` (64-hex random, satisfies PyJWT's InsecureKeyLengthWarning threshold). New optional `PUTKI_ADMIN_SESSION_TTL_SECONDS` (default 28800) + `PUTKI_ADMIN_COOKIE_SECURE` (default "1") knobs.
+    - `server.py::require_admin` rewritten as dual-path. Cookie decoded via `decode_session()`; on success populates `request.state.admin_actor` and returns. On miss, falls through to the original header-resolution. Both code paths leave the actor record identical so audit-logging downstream sees no change.
+  - **Frontend** (`hooks/useBackOfficeToken.js` overwritten; `components/back-office/BackOfficeShell.jsx` AuthGate flow rewritten):
+    - `useBackOfficeToken` now exposes a `loginWithToken`-style `checkAuth(candidate)` that POSTs `{token}` to `/api/admin/auth/login` with `credentials: 'include'`. On 200 → `authed=true`, sentinel string `"cookie-session"` returned for legacy callers that still spread it into a header (harmless — backend cookie wins). The legacy `tokenStore` (sessionStorage) is wiped on first successful exchange.
+    - On mount: if a legacy sessionStorage token exists, exchange it for a cookie session and clear local storage; else probe `/whoami` so a fresh reload skips the AuthGate while the cookie is still valid.
+    - `logout()` POSTs to `/api/admin/auth/logout` + clears local state.
+    - `BackOfficeShell` mirrors the same lifecycle. `verify(candidate, mode)` now calls `/login` for initial unlock (returns `false` + sets `authError="Invalid admin token."` on 401) and `/whoami` for the 60s periodic re-check (flips `expired=true` on 401 so the AuthGate variant surfaces "Session expired"). Three remaining `X-Admin-Token` fetch sites in the shell now also send `credentials: 'include'` so the cookie travels alongside the legacy header during the soak.
+  - **Tests** (`tests/test_iter94_admin_cookie_auth.py`, 9 cases):
+    1. `login` rejects bad token (401, no cookie set).
+    2. `login` accepts good token (200, cookie set, actor/role/expires_at returned).
+    3. `whoami` via cookie session → `source: cookie_session`, `exp > 0`.
+    4. `whoami` via legacy `X-Admin-Token` fallback → `source: legacy_header`.
+    5. `whoami` with neither cookie nor header → 401.
+    6. `logout` clears the cookie + subsequent `whoami` → 401.
+    7. `GET /api/admin/settings` accepts the cookie alone (no header).
+    8. `GET /api/admin/settings` still accepts the legacy header alone (back-compat assertion).
+    9. Expired cookie (TTL = -10s) → 401 on protected endpoint (decode failure path).
+    - Pattern matches iter93: `httpx.Client` keeps cookies across requests in a session; sync pymongo for any DB introspection (none needed here).
+  - **Live verification**:
+    - curl round-trip: login → set-cookie → `whoami` via cookie (`source: cookie_session`) → header fallback works (`source: legacy_header`) → admin/settings via cookie alone (200) → logout → whoami (401).
+    - Browser smoke: `/back-office` AuthGate shows "Session expired" on first paint (no cookie yet); unlock with `putki-hq-admin` → cookie set, sessionStorage clear of legacy token, cockpit + status strip render. Hard reload reused the cookie and skipped the gate. Audit log shows `post.auth.login` rows reflecting the new endpoint.
+  - **Regression**: 34/34 green across iter89/90/92/93/94 in 4.5s. ESLint clean on `useBackOfficeToken.js` + `BackOfficeShell.jsx`. Ruff clean on `routes/admin_auth_cookie.py`.
+  - **Migration runway**. Both paths (cookie + legacy header) currently work. Once every admin fetch on the SPA is confirmed to be using `credentials: 'include'` (next sweep: 30+ admin pages still spread `X-Admin-Token` directly; harmless today, but the cookie now does the work), we can drop the header path entirely. Tracked as a follow-up sweep, not a blocker.
+
+
 - **iter93 · Phase 3 backfill — Mestari Telegram-first conversion + secondary funnel deprioritisation** (2026-06-01, +8 backend tests · 8/8 green · 36/36 cumulative phase-3-4 suite green · ESLint clean · ruff clean · live-verified)
   - **Task 3.2 — Mestari result-page Gate rewritten Telegram-first**. `Mestari.jsx` Gate component swapped from a single-input email form to a two-path layout. PRIMARY: solid-ember `OPEN IN TELEGRAM →` button (paper-plane icon, JetBrains Mono uppercase, sub-text "Binds chat ID · report sent directly · no email needed"). DIVIDER: hairline + "OR BY EMAIL" / "TAI SÄHKÖPOSTIIN" mono label. SECONDARY: email input with ember focus ring + outline (not solid) submit + GDPR checkbox + Trust pills preserved. Local `channelSelected` state collapses the unchosen path once one is in flight and exposes a "← Use other instead" link so both remain accessible. Heading promoted to `Archivo Black` (.display token, -2.5% tracking) per Phase 1.
   - **Magic token + Telegram path**. FE mints a 24-char base36 magic token client-side (`mintMagicToken()`). On the Telegram path it POSTs to the new `/api/mestari/lead/telegram` endpoint with `{magic_token, quiz_tags, lang}`, then opens `https://t.me/Putkihq_bot?start=mestari_<token>` in a new tab and renders the Confirmation. Email path remains the legacy `POST /api/voita/lead` write.

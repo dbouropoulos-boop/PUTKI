@@ -1,102 +1,171 @@
 /**
- * useBackOfficeToken - tiny shared hook for the back-office admin pages.
+ * useBackOfficeToken - shared back-office auth hook.
  *
- * Centralises the X-Admin-Token persistence pattern that each admin page
- * was reimplementing inline. Returns `{token, setToken, authed, authError,
- * checkAuth, logout}`.
+ * iter94 — migrated from sessionStorage-stored X-Admin-Token header to
+ * a signed httpOnly cookie session served by /api/admin/auth/login.
  *
- * SECURITY NOTE - the admin token now persists in **sessionStorage**, not
- * localStorage. It survives within a tab/session but is cleared when the
- * tab closes, reducing the XSS-stolen-credential blast radius. The proper
- * long-term fix is to issue an httpOnly cookie session from the backend
- * (tracked as ROADMAP P1 - "admin auth → httpOnly cookies"), but this
- * change closes the most common attack vector (persistent-storage exfil)
- * without a multi-day refactor.
+ * Dual-path during the migration window:
+ *   1. PRIMARY · cookie session. On successful login the backend
+ *      sets `putki_admin_session` (httpOnly, SameSite=Lax). The SPA
+ *      only stores an "I'm authed" hint in sessionStorage so the
+ *      reload doesn't re-prompt; the actual auth payload is never
+ *      readable from JS.
+ *   2. LEGACY · sessionStorage token + X-Admin-Token header. Older
+ *      tabs that already have a token persisted keep working — on
+ *      mount we exchange that token for a fresh cookie session and
+ *      clear the sessionStorage entry.
  *
- * Usage:
- *     const { token, authed, authError, checkAuth, setToken, logout } = useBackOfficeToken();
- *     if (!authed) return <AuthGate token={token} setToken={setToken} onSubmit={checkAuth} error={authError} />;
- *     // ... then use token in your X-Admin-Token header
+ * Hook return shape (unchanged for callers):
+ *   { token, setToken, authed, authError, checkAuth, logout }
+ *
+ * `token` is now an opaque sentinel string ("cookie-session") once the
+ * cookie session is live. Existing admin pages that still spread it
+ * into a header continue to work (the backend cookie path takes
+ * precedence — the header value is ignored when a valid cookie is
+ * present).
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
-const TOKEN_KEY = 'putki-hq-admin-token';
+const LEGACY_TOKEN_KEY = 'putki-hq-admin-token';
+const AUTHED_HINT_KEY = 'putki-hq-admin-authed';
+const COOKIE_SENTINEL = 'cookie-session';
 
-// Tiny wrapper so we have ONE place to swap to cookies later.
-const tokenStore = {
+const credentialsInit = (extra = {}) => ({
+  credentials: 'include',
+  ...extra,
+});
+
+const legacyTokenStore = {
   get() {
-    try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch { return ''; }
-  },
-  set(v) {
-    // noop on QuotaExceeded / private-browsing - we'd rather lose
-    // persistence than break the admin UX.
-    try { sessionStorage.setItem(TOKEN_KEY, v); } catch { /* sessionStorage unavailable */ }
-    // Best-effort: also clear any legacy localStorage entry from before
-    // this hardening. Safe to delete since we never read it again.
-    try { localStorage.removeItem(TOKEN_KEY); } catch { /* localStorage unavailable */ }
+    try { return sessionStorage.getItem(LEGACY_TOKEN_KEY) || ''; } catch { return ''; }
   },
   clear() {
-    try { sessionStorage.removeItem(TOKEN_KEY); } catch { /* sessionStorage unavailable */ }
-    try { localStorage.removeItem(TOKEN_KEY); } catch { /* localStorage unavailable */ }
+    try { sessionStorage.removeItem(LEGACY_TOKEN_KEY); } catch { /* noop */ }
+    try { localStorage.removeItem(LEGACY_TOKEN_KEY); } catch { /* noop */ }
   },
 };
 
+const authedHint = {
+  get() {
+    try { return sessionStorage.getItem(AUTHED_HINT_KEY) === '1'; } catch { return false; }
+  },
+  set(v) {
+    try {
+      if (v) sessionStorage.setItem(AUTHED_HINT_KEY, '1');
+      else sessionStorage.removeItem(AUTHED_HINT_KEY);
+    } catch { /* noop */ }
+  },
+};
+
+/**
+ * POST /api/admin/auth/login {token}. On 200 the backend sets the
+ * httpOnly cookie; we just need to remember "yes, authed" locally.
+ */
+async function exchangeTokenForCookie(token) {
+  const r = await fetch(`${BACKEND}/api/admin/auth/login`, credentialsInit({
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  }));
+  if (r.status === 401) return { ok: false, status: 401 };
+  if (!r.ok) return { ok: false, status: r.status };
+  const body = await r.json().catch(() => ({}));
+  return { ok: true, body };
+}
+
+async function probeWhoami() {
+  try {
+    const r = await fetch(`${BACKEND}/api/admin/auth/whoami`, credentialsInit());
+    if (r.status === 200) {
+      const body = await r.json().catch(() => ({}));
+      return { ok: true, body };
+    }
+    return { ok: false, status: r.status };
+  } catch (e) {
+    return { ok: false, error: e.message || 'Network' };
+  }
+}
+
 export const useBackOfficeToken = () => {
-  // iter82 · Task 2.2 — every back-office route now renders inside
-  // <BackOfficeShell />, which seeds an outlet context with `{token,
-  // density, refresh}`. When that context is present we trust the
-  // shell entirely: no per-page localStorage read, no auth verify
-  // round-trip, no AuthGate render. Pages stay backwards-compatible
-  // because the rest of the hook's return shape is preserved.
+  // Inside <BackOfficeShell />: trust the shell's outlet context.
   const shellCtx = useOutletContext() || {};
   const shellToken = shellCtx?.token || '';
 
-  const [token, setToken] = useState(() => tokenStore.get());
+  const [token, setToken] = useState('');
   const [authed, setAuthed] = useState(false);
   const [authError, setAuthError] = useState('');
 
+  // checkAuth(candidate?) — accepts the operator's typed token, runs
+  // the cookie exchange, returns truthy on success. Used by AuthGate.
   const checkAuth = useCallback(async (candidate) => {
-    const tk = candidate ?? token;
+    const tk = (candidate ?? token).trim();
     if (!tk) { setAuthError('Token required.'); return false; }
     setAuthError('');
-    try {
-      const r = await fetch(`${BACKEND}/api/admin/settings`, {
-        headers: { 'X-Admin-Token': tk },
-      });
-      if (r.status === 401) {
-        setAuthError('Wrong token.'); setAuthed(false); return false;
-      }
-      if (!r.ok) {
-        setAuthError(`HTTP ${r.status}`); setAuthed(false); return false;
-      }
-      setAuthed(true);
-      tokenStore.set(tk);
-      return true;
-    } catch (e) {
-      setAuthError(e.message || 'Network error'); setAuthed(false); return false;
+    const res = await exchangeTokenForCookie(tk);
+    if (!res.ok) {
+      if (res.status === 401) setAuthError('Wrong token.');
+      else setAuthError(`HTTP ${res.status || '???'}`);
+      setAuthed(false);
+      return false;
     }
+    setAuthed(true);
+    authedHint.set(true);
+    setToken(COOKIE_SENTINEL);
+    return true;
   }, [token]);
 
-  // Auto-verify on mount when a stored token exists. We deliberately do
-  // NOT depend on `token` here - `checkAuth` reads from the closure on
-  // every call, so an effect-once-on-mount is exactly what we want.
-  const verifyOnce = useCallback((tk) => { if (tk) checkAuth(tk); }, [checkAuth]);
+  // On mount: (a) if a legacy sessionStorage token still exists, hand
+  // it to the new login endpoint to upgrade to a cookie session and
+  // wipe the local copy; (b) otherwise probe /whoami so a fresh reload
+  // skips the AuthGate when the cookie is still valid.
   useEffect(() => {
-    if (shellToken) return; // shell handles auth — skip standalone verify
-    verifyOnce(tokenStore.get());
-  }, [verifyOnce, shellToken]);
+    if (shellToken) return;
+    let cancelled = false;
 
-  const logout = useCallback(() => {
-    setToken(''); setAuthed(false); setAuthError('');
-    tokenStore.clear();
+    const bootstrap = async () => {
+      const legacy = legacyTokenStore.get();
+      if (legacy) {
+        const upgrade = await exchangeTokenForCookie(legacy);
+        legacyTokenStore.clear();
+        if (cancelled) return;
+        if (upgrade.ok) {
+          setAuthed(true);
+          authedHint.set(true);
+          setToken(COOKIE_SENTINEL);
+          return;
+        }
+        // legacy token rejected — fall through to whoami probe
+      }
+      const probe = await probeWhoami();
+      if (cancelled) return;
+      if (probe.ok) {
+        setAuthed(true);
+        authedHint.set(true);
+        setToken(COOKIE_SENTINEL);
+      } else {
+        authedHint.set(false);
+      }
+    };
+
+    bootstrap();
+    return () => { cancelled = true; };
+  }, [shellToken]);
+
+  const logout = useCallback(async () => {
+    setToken('');
+    setAuthed(false);
+    setAuthError('');
+    authedHint.set(false);
+    legacyTokenStore.clear();
+    try {
+      await fetch(`${BACKEND}/api/admin/auth/logout`, credentialsInit({ method: 'POST' }));
+    } catch { /* network failure — local state already cleared */ }
   }, []);
 
   if (shellToken) {
-    // Inside <BackOfficeShell />: pretend we're already authed with
-    // the shell's token. `setToken`/`checkAuth`/`logout` become no-ops
-    // because the shell owns auth lifecycle.
+    // Inside the shell: shell owns auth lifecycle. Mirror the contract.
     return {
       token: shellToken,
       setToken: () => {},
@@ -115,7 +184,7 @@ export const AuthGate = ({ token, setToken, onSubmit, error, title = 'Back-offic
     maxWidth: 420, margin: '80px auto', padding: 32, color: 'var(--ink)',
     background: 'var(--surface)', border: '1px solid var(--hairline)',
   }} data-testid="back-office-auth-gate">
-    <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, margin: '0 0 16px', color: '#FFFFFF' }}>
+    <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, margin: '0 0 16px', color: 'var(--ink)' }}>
       {title}
     </h2>
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(token); }}>
@@ -133,7 +202,7 @@ export const AuthGate = ({ token, setToken, onSubmit, error, title = 'Back-offic
       {error && <div data-testid="auth-error" style={{ marginTop: 10, padding: 8, background: '#2b0e0e', border: '1px solid #5a2b2b', color: '#f4a4a4', fontSize: 12 }}>{error}</div>}
       <button type="submit" data-testid="back-office-token-submit"
         style={{
-          marginTop: 16, padding: '10px 18px', background: '#FFFFFF', color: '#0B0A09',
+          marginTop: 16, padding: '10px 18px', background: 'var(--ember, #D9461E)', color: '#FFFFFF',
           border: 0, fontFamily: 'ui-monospace, monospace', fontSize: 10.5,
           letterSpacing: '0.18em', fontWeight: 700, cursor: 'pointer',
         }}>UNLOCK →</button>

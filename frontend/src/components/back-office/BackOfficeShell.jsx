@@ -229,9 +229,10 @@ const StatusStrip = ({ token, onOpenMobileNav }) => {
     if (!token) return;
     try {
       const hdr = { 'X-Admin-Token': token };
+      const opts = { headers: hdr, credentials: 'include' };
       const [s, c, p] = await Promise.all([
-        fetch(`${BACKEND}/api/admin/bot/funnel/snapshot?hours=24`, { headers: hdr }).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/admin/bot/config`,                   { headers: hdr }).then((r) => r.ok ? r.json() : null),
+        fetch(`${BACKEND}/api/admin/bot/funnel/snapshot?hours=24`, opts).then((r) => r.ok ? r.json() : null),
+        fetch(`${BACKEND}/api/admin/bot/config`,                   opts).then((r) => r.ok ? r.json() : null),
         fetch(`${BACKEND}/api/settings/public`).then((r) => r.ok ? r.json() : null),
       ]);
       setSnap(s); setCfg(c); setPub(p);
@@ -413,12 +414,14 @@ const CmdkPalette = ({ open, onOpenChange, token, onRefresh }) => {
 
   const putConfig = (patch) => fetch(`${BACKEND}/api/admin/bot/config`, {
     method: 'PUT',
+    credentials: 'include',
     headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   }).then((r) => r.ok ? r.json() : Promise.reject(`PUT ${r.status}`));
 
   const putSettings = (patch) => fetch(`${BACKEND}/api/admin/settings`, {
     method: 'PUT',
+    credentials: 'include',
     headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
     body: JSON.stringify(patch),
   }).then((r) => r.ok ? r.json() : Promise.reject(`PUT ${r.status}`));
@@ -570,48 +573,97 @@ const BackOfficeShell = () => {
   });
   const location = useLocation();
 
-  // Verify the token by calling a cheap admin endpoint. The `mode` arg
-  // separates first-time mount from periodic re-verification — only the
-  // periodic path flips `expired=true` (we don't want the first failed
-  // unlock to claim the session expired).
+  // Verify the session. `candidate` is the operator's typed token on
+  // an unlock attempt; for periodic re-verification candidate is null
+  // and we just probe /api/admin/auth/whoami via the cookie session.
+  //
+  // iter94: cookie session is canonical. On unlock we POST to
+  // /api/admin/auth/login which sets the httpOnly cookie. We no longer
+  // persist the token in sessionStorage.
   const verify = useCallback(async (candidate, mode = 'initial') => {
-    if (!candidate) return false;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/bot/config`, {
-        headers: { 'X-Admin-Token': candidate },
+      if (candidate) {
+        const r = await fetch(`${BACKEND}/api/admin/auth/login`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: candidate }),
+        });
+        if (r.status === 401) {
+          setAuthed(false);
+          setAuthError('Invalid admin token.');
+          if (mode === 'periodic') setExpired(true);
+          return false;
+        }
+        if (!r.ok) {
+          setAuthed(false); setAuthError(`Auth failed (${r.status}).`);
+          return false;
+        }
+        setAuthed(true); setAuthError(''); setExpired(false);
+        return true;
+      }
+      // Periodic re-verify — just check the cookie via whoami.
+      const r = await fetch(`${BACKEND}/api/admin/auth/whoami`, {
+        credentials: 'include',
       });
       if (r.ok) { setAuthed(true); setAuthError(''); setExpired(false); return true; }
       if (r.status === 401) {
         setAuthed(false);
-        setAuthError('Invalid admin token.');
+        setAuthError('Session expired.');
         if (mode === 'periodic') setExpired(true);
         return false;
       }
-      setAuthed(false); setAuthError(`Auth failed (${r.status}).`);
+      setAuthed(false); setAuthError(`Auth check failed (${r.status}).`);
       return false;
-    } catch (e) { setAuthed(false); setAuthError(String(e?.message || e)); return false; }
+    } catch (e) {
+      setAuthed(false); setAuthError(String(e?.message || e));
+      return false;
+    }
   }, []);
 
-  // Try the persisted token on mount.
-  useEffect(() => { if (token) verify(token, 'initial'); }, [token, verify]);
+  // On mount: upgrade any leftover sessionStorage token to a cookie
+  // session, then probe whoami so a fresh reload skips the AuthGate
+  // when the cookie is still valid.
+  useEffect(() => {
+    let cancelled = false;
+    const bootstrap = async () => {
+      const legacy = tokenStore.get();
+      if (legacy) {
+        await verify(legacy, 'initial');
+        tokenStore.clear();
+        if (!cancelled) setTokenState('cookie-session');
+        return;
+      }
+      const ok = await verify(null, 'initial');
+      if (!cancelled && ok) setTokenState('cookie-session');
+    };
+    bootstrap();
+    return () => { cancelled = true; };
+  }, [verify]);
 
   // iter82 (Task 2.3) - periodic re-verification. Every 60 seconds while
-  // authed=true, we re-check the token. On 401 we flip into `expired`
-  // mode which surfaces the session-expired AuthGate variant.
+  // authed=true, we re-check the cookie session. On 401 we flip into
+  // `expired` mode which surfaces the session-expired AuthGate variant.
   useEffect(() => {
-    if (!authed || !token) return undefined;
-    const id = setInterval(() => { verify(token, 'periodic'); }, 60_000);
+    if (!authed) return undefined;
+    const id = setInterval(() => { verify(null, 'periodic'); }, 60_000);
     return () => clearInterval(id);
-  }, [authed, token, verify]);
+  }, [authed, verify]);
 
   const onUnlock = async (val) => {
-    setTokenState(val); tokenStore.set(val);
     setExpired(false);
-    await verify(val, 'initial');
+    const ok = await verify(val, 'initial');
+    if (ok) setTokenState('cookie-session');
   };
 
-  const onLogout = () => {
-    tokenStore.clear(); setTokenState(''); setAuthed(false); setExpired(false);
+  const onLogout = async () => {
+    tokenStore.clear();
+    setTokenState(''); setAuthed(false); setExpired(false);
+    try {
+      await fetch(`${BACKEND}/api/admin/auth/logout`, {
+        method: 'POST', credentials: 'include',
+      });
+    } catch { /* local state already cleared */ }
   };
 
   // Persist density preference.
