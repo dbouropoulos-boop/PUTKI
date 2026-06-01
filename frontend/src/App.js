@@ -2,6 +2,7 @@ import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
+import HomeV5 from "@/pages/HomeV5";
 import OperatorReview from "@/pages/OperatorReview";
 import CasinoRanking from "@/pages/CasinoRanking";
 import StreamerProfile from "@/pages/StreamerProfile";
@@ -153,9 +154,17 @@ function App() {
           <Route path="/striimaajat/:id" element={<TopicHubPage kind="streamers" />} />
           <Route path="/operaattorit/:id" element={<TopicHubPage kind="operators" />} />
 
+          {/* Phase 5 · iter95 — HomeV5 is the canonical homepage and
+              renders its own status bar + masthead + footer, so it sits
+              OUTSIDE the global <Layout /> chrome. Legacy /home-v4
+              kept temporarily for QA comparison; will be removed once
+              the rollout is verified. */}
+          <Route path="/" element={<HomeV5 />} />
+          <Route path="/en" element={<HomeV5 forceLang="en" />} />
+          <Route path="/home-v4" element={<Layout><Home /></Layout>} />
+
           {/* Main site */}
           <Route element={<Layout />}>
-            <Route index element={<Home />} />
             <Route path="kasinot" element={<CasinoRanking />} />
             <Route path="kasinot/:slug" element={<OperatorReview />} />
             <Route path="striimaajat" element={<StreamerIndex />} />

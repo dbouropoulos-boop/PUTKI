@@ -9,6 +9,29 @@
 
 ## Phase History (latest first)
 
+- **iter95 · Phase 5 — Homepage refactor (v5)** (2026-06-01, ESLint clean · 30/30 backend regression green · live-verified in browser desktop + mobile)
+  - **What shipped**. Implemented the approved `putki-hq-homepage-v5.html` mockup as a brand-new editorial newspaper homepage. Lives at `/` (FI) and `/en` (EN), sits OUTSIDE the global `<Layout />` chrome so its bespoke status-bar / masthead / footer take over fully. Legacy homepage parked at `/home-v4` for QA comparison.
+  - **Sections shipped (top → bottom)**:
+    1. `home-v5-status` — live status bar (skene state · articles today · live streamers · last update · Helsinki clock).
+    2. `home-v5-masthead` — sticky brand + 6-item nav + ember `Tilaa aamun signaalit →` CTA.
+    3. `home-v5-hero` — Reform 2027 cover (kicker · treated ember-tinted image · Archivo Black headline `Veikkauksen aika päättyy. / Veikkaus' era ends.` · dek · byline) + sticky **Mittari widget** with SVG gauge (half-circle path + animated needle + ember fill) reading live `/api/mittari/state`.
+    4. `home-v5-capture` — Newsletter two-column capture (perks + form with email field + ember `Hae signaalit →` button + secondary `bindaa Telegramiin (1-tap)` link + GDPR fine print). Posts to existing `POST /api/voita/lead` with `source: "home_v5"`.
+    5. `home-v5-stats` — 4-card grid (articles today / named sources / Mittari now / live streamers).
+    6. `home-v5-news` — Featured article + Latest-5 list reading live `/api/news?limit=6`. Falls back to the editorial copy from the mockup (5 sample headlines) if the endpoint 404s.
+    7. `home-v5-products` — 3-card grid (`MITTARI · SIGNAALIT` · `PELAATESTI · 90S` · `ARVOSTELUT · KAUPALLINEN`) with idx/eyebrow/title/body/meta/CTA per the mockup.
+    8. `home-v5-issues` — Recap of last 3 newsletters with `OSUI` / `OHI` ember-coded badges.
+    9. `home-v5-trust` — Independence manifest `12 nimettyä lähdettä. Nolla muista.` + 8-card source grid (Yle · HS · Iltalehti · IS · Rahapelisanomat · AfterDawn · Feedi · +5 lähdettä).
+    10. `home-v5-footer` — Mast + 3 link cols (Toimitus · Kaupallinen · Tietoa) + responsible gaming notice + © 2026 PUTKI HQ · Unlshd Ltd · Helsinki / Limassol · v.5.0.
+  - **Design tokens** — all `.h5-*` namespaced so the rest of the app isn't touched. Palette: `--h5-bg #ffffff · --h5-ink #0a0a08 · --h5-ink-2 #3a3833 · --h5-ink-3 #7a7669 · --h5-line #e8e3d4 · --h5-ember #e63b1a · --h5-ember-soft #fbeae2`. Typography: existing **Archivo Black** for `.h5-display` headlines, **Inter** (subbed for Public Sans) for body, **JetBrains Mono** (subbed for IBM Plex Mono) for labels/eyebrows, **Source Serif 4** (subbed for Fraunces) for the brand logo — zero font regression on existing stack.
+  - **Signature aesthetic** — `.h5-treated` image filter (grayscale + contrast + ember-multiply gradient overlay + inline SVG grain noise at 0.45 opacity via `mix-blend-mode: overlay`). Pulse + swing keyframe animations on the live dot + Mittari needle. Hairline borders everywhere. Sticky masthead with `backdrop-filter: blur(14px)`.
+  - **Live data fan-out** — `useEffect` dispatches 4 fault-tolerant fetches in parallel: `/api/mittari/state`, `/api/news?limit=6`, `/api/streamers/live`, `/api/sources`. Each falls back to editorial defaults; the page never blanks on an API miss.
+  - **SEO** — `useDocumentMeta` with FI/EN titles + descriptions + canonical (from `useLocalisedCanonical({fiPath: '/', enPath: '/en'})`). JSON-LD Organization + WebSite injected via `useJsonLd`.
+  - **Forced EN variant**: `<HomeV5 forceLang="en" />` mounted at `/en` for full English alternate, all 90+ copy strings translated verbatim from the v5 mockup. Status bar dynamic clock (HH:MM updating every 30s) works in both locales.
+  - **Files**: `frontend/src/pages/HomeV5.jsx` (~520 LOC, single file with section helpers) + `frontend/src/styles/home_v5.css` (~470 LOC, scoped under `.home-v5`).
+  - **Router** (`frontend/src/App.js`): `/` + `/en` routes moved OUT of `<Layout />` so HomeV5 owns its chrome; legacy Home now at `/home-v4` wrapped in Layout for comparison.
+  - **Live verification** (8 screenshots in `/app/qa-snapshots/phase-3-funnel/`): full-page desktop, mobile 390px, plus per-section captures (capture/stats/news/products/issues/trust/footer). Every `data-testid` enumerated above renders on first paint. ESLint clean. Backend regression untouched — 30/30 across iter89/90/93/94.
+
+
 - **iter94 · Admin auth → httpOnly cookie session (Phase 5 pre-req)** (2026-06-01, +9 backend tests · 9/9 green · 34/34 cumulative phase-3/4/iter94 suite green · ESLint + ruff clean · live-verified in browser)
   - **What shipped**. Moved the back-office from `X-Admin-Token` header (token in browser `sessionStorage`) to a signed httpOnly Secure SameSite=Lax cookie session. Three new endpoints under `/api/admin/auth/*`: login → set cookie, logout → clear cookie, whoami → report authed state. `require_admin` reads the cookie FIRST, then falls back to the legacy header for back-compat through the migration window.
   - **Why**. With Telegram-first conversion now writing real subscriber data into `optin_consents`, an XSS-stealable admin token in sessionStorage was the single biggest security hole. Cookie-flagged `HttpOnly` removes script access; `SameSite=Lax` blocks cross-site CSRF on state-changing requests; `Secure` enforces TLS in production.
