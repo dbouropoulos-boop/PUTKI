@@ -21,13 +21,23 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Send } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useMestariCopy from '../hooks/useMestariCopy';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
+const TELEGRAM_BOT = 'Putkihq_bot';
+
+// Stable UUID-ish token generator. Magic token is the join key the FE
+// stamps on the pending optin_consents row + hands to the Telegram bot
+// via `t.me/{bot}?start=mestari_{token}`. Doesn't need cryptographic
+// uniqueness — collision on a 24-char base36 random is ~10^-13.
+const mintMagicToken = () => {
+  const seg = () => Math.random().toString(36).slice(2, 10);
+  return `${seg()}${seg()}${seg()}`.slice(0, 24);
+};
 
 // ── Design tokens (brand-aligned: uses Putki HQ CSS variables so the page
 // adapts to the user's chosen light/dark theme. Only the Mestari-signature
@@ -66,7 +76,7 @@ const COPY = {
       ctaMeta: ['90 sekuntia', 'Maksuton', 'Ei talletusta', 'Ei vedonlyöntiä'],
     },
     cred: [
-      { num: '28', unit: ' lähdettä', desc: 'Nimettyä julkista lähdettä yli kuuden kategorian' },
+      { num: '28', unit: ' lähdettä', desc: '28 nimettyä lähdettä yli kuuden kategorian' },
       { num: '0', unit: ' muokkausta', desc: 'Ei toimituksen sormea mallissa. Sama data, sama tulos.' },
       { num: '5', unit: ' päivää', desc: 'Strukturoitu opas markkinakäyttäytymisen lukemiseen' },
       { num: '90', unit: ' sek', desc: 'Suoritusaika · 5 tutkimuspohjaista kysymystä' },
@@ -82,7 +92,7 @@ const COPY = {
         },
         {
           num: '02 · Data', title: 'Todelliset markkinasignaalit',
-          body: ['Profiilisi tulkitaan suhteessa kuvioihin, joita havaitaan ', '28 nimetyssä lähteessä yli kuuden kategorian', ' - kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.'],
+          body: ['Profiilisi tulkitaan suhteessa kuvioihin, joita havaitaan ', '28 nimettyä lähdettä yli kuuden kategorian', ' - kertoimien hajonta, markkinaliike ja skeneaktiivisuus. Analysoimme miten markkinat käyttäytyvät; emme ennusta lopputuloksia.'],
           tag: 'Julkinen data · Kerroin-API:t · EU-markkinat',
         },
         {
@@ -745,6 +755,34 @@ const MestariLanding = ({ lang, toggleLang, theme, toggleTheme, onStart, c }) =>
             {c.final.headlinePost}
           </h2>
           <HeroCTA onClick={onStart} testid="mestari-final-cta-btn">{c.final.cta}</HeroCTA>
+          <div data-testid="mestari-final-profile-chips" style={{
+            marginTop: 22, display: 'flex', flexWrap: 'wrap', gap: 8,
+            justifyContent: 'center',
+          }}>
+            <span style={{
+              fontFamily: T.mono, fontSize: 10, letterSpacing: '0.18em',
+              color: T.muted, fontWeight: 700, textTransform: 'uppercase',
+              padding: '4px 0', width: '100%',
+            }}>
+              {lang === 'en'
+                ? 'You get one of 10 profiles — e.g.'
+                : 'Saat yhden 10 profiilista — esim.'}
+            </span>
+            {(lang === 'en'
+              ? ['The Quiet Sharp', 'The Underdog Hunter', 'The Gut Player']
+              : ['Hiljainen Tarkka', 'Altavastaajan Metsästäjä', 'Vaistopelaaja']
+            ).map((name) => (
+              <span key={name} data-testid={`mestari-final-profile-chip-${name.replace(/\s+/g, '-').toLowerCase()}`}
+                style={{
+                  fontFamily: T.mono, fontSize: 11, letterSpacing: '0.06em',
+                  fontWeight: 700, color: T.ink,
+                  padding: '6px 12px',
+                  border: `1px solid ${T.border}`,
+                  borderTop: `2px solid ${T.accent}`,
+                  background: T.surface,
+                }}>{name}</span>
+            ))}
+          </div>
           <div style={{
             marginTop: 16, fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em',
             color: T.muted, textTransform: 'uppercase',
@@ -1004,75 +1042,159 @@ const TrustStrip = ({ trust }) => {
   );
 };
 
-const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, trust }) => {
+const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, trust,
+                channelSelected, setChannelSelected, onTelegram, telegramBusy, ember }) => {
   const canSubmit = !!email && rules && !busy;
   const acceptPre = (trust && trust.acceptPre) || (lang === 'en' ? 'I accept the ' : 'Hyväksyn ');
   const acceptLink = (trust && trust.acceptLink) || (lang === 'en' ? 'privacy policy' : 'tietosuojaehdot');
   const acceptPost = (trust && trust.acceptPost) || (lang === 'en'
     ? ' and want to receive the report + 5-day playbook.'
     : ' ja haluan vastaanottaa raportin + 5 päivän pelikirjan.');
+  const EMBER = ember || '#D9461E';
+  const EMBER_SOFT = 'rgba(217, 70, 30, 0.10)';
+  const showEmail = channelSelected !== 'telegram';
+  const showTelegram = channelSelected !== 'email';
   return (
     <div data-testid="mestari-gate">
-      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: T.accent, fontWeight: 700, marginBottom: 8 }}>
-        {lang === 'en' ? 'SEND ME MY REPORT' : 'LÄHETÄ RAPORTTINI'}
+      <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: EMBER, fontWeight: 700, marginBottom: 8 }}>
+        {lang === 'en' ? 'GET YOUR REPORT' : 'NOUDA RAPORTTISI'}
       </div>
-      <h2 style={{ fontFamily: T.serif, fontSize: 28, fontWeight: 700, color: T.ink, margin: '0 0 8px', letterSpacing: '-0.015em', lineHeight: 1.15 }}>
-        {lang === 'en' ? 'Where do we send your report?' : 'Mihin lähetämme raporttisi?'}
+      <h2 style={{ fontFamily: 'Archivo Black, Inter, sans-serif', fontSize: 30, fontWeight: 900, color: T.ink, margin: '0 0 8px', letterSpacing: '-0.025em', lineHeight: 1.1 }}>
+        {lang === 'en' ? 'Where should we send your report?' : 'Minne lähetämme raporttisi?'}
       </h2>
       <p style={{ color: T.muted, fontSize: 14, marginBottom: 22, lineHeight: 1.55 }}>
         {lang === 'en'
-          ? 'Full report in 5 minutes. The 5-day playbook starts tomorrow at 09:00. No spam - unsubscribe anytime.'
-          : 'Täysi raportti 5 minuutissa. 5 päivän pelikirja alkaa huomenna klo 09. Ei spämmiä - peruuta milloin tahansa.'}
+          ? 'Two paths. Telegram is fastest — your report and weekly signals land in chat. Email works too.'
+          : 'Kaksi tapaa. Telegram on nopein — raporttisi ja viikkosignaalit saapuvat chattiin. Sähköposti toimii myös.'}
       </p>
-      <div style={{ display: 'grid', gap: 14 }}>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-          placeholder={lang === 'en' ? 'your@email.com' : 'sähköpostisi@osoite.fi'}
-          data-testid="mestari-email-input"
-          style={{
-            padding: '14px 16px', background: T.surface,
-            border: `1px solid ${T.border}`, color: T.ink,
-            fontFamily: T.mono, fontSize: 14, letterSpacing: '0.02em',
-            outline: 'none',
-          }} />
 
-        {/* Trust strip - pills, GDPR note, and external links */}
-        <TrustStrip trust={trust} />
-
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: T.ink, cursor: 'pointer' }}>
-          <input type="checkbox" checked={rules} onChange={(e) => setRules(e.target.checked)}
-            data-testid="mestari-rules-checkbox"
-            style={{ marginTop: 2, width: 18, height: 18 }} />
-          <span style={{ lineHeight: 1.5, opacity: 0.92 }}>
-            {acceptPre}
-            <Link to="/ehdot" target="_blank" rel="noopener noreferrer"
-              data-testid="mestari-rules-privacy-link"
-              onClick={(e) => e.stopPropagation()}
-              style={{ color: T.accent, textDecoration: 'underline', textUnderlineOffset: 2 }}>
-              {acceptLink}
-            </Link>
-            {acceptPost}
-          </span>
-        </label>
-        {error && (
-          <div data-testid="mestari-error" style={{
-            color: '#E8A848', fontFamily: T.mono, fontSize: 12, letterSpacing: '0.05em',
-          }}>{error}</div>
-        )}
-        <motion.button whileTap={{ scale: 0.97 }} type="button"
-          onClick={onSubmit} disabled={!canSubmit}
-          data-testid="mestari-submit"
-          style={{
-            padding: '15px 22px',
-            background: canSubmit ? T.accent : T.surface,
-            color: canSubmit ? T.bg : T.muted,
-            border: canSubmit ? 0 : `1px solid ${T.border}`,
-            fontFamily: T.mono, fontSize: 12,
-            letterSpacing: '0.22em', fontWeight: 800,
-            cursor: canSubmit ? 'pointer' : 'not-allowed',
+      {/* ── PRIMARY: Telegram path ─────────────────────────────────── */}
+      {showTelegram && (
+        <div data-testid="mestari-gate-telegram-block" style={{ marginBottom: 18 }}>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            type="button"
+            onClick={onTelegram}
+            disabled={telegramBusy}
+            data-testid="mestari-gate-telegram-cta"
+            style={{
+              width: '100%',
+              padding: '18px 22px',
+              background: EMBER,
+              color: '#FFFFFF',
+              border: 0,
+              fontFamily: T.mono, fontSize: 13,
+              letterSpacing: '0.20em', fontWeight: 800,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              cursor: telegramBusy ? 'wait' : 'pointer',
+              boxShadow: '0 6px 22px rgba(217, 70, 30, 0.28)',
+            }}>
+            <Send size={18} strokeWidth={2.2} />
+            {telegramBusy
+              ? (lang === 'en' ? 'OPENING TELEGRAM…' : 'AVATAAN TELEGRAMIA…')
+              : (lang === 'en' ? 'OPEN IN TELEGRAM →' : 'AVAA TELEGRAMISSA →')}
+          </motion.button>
+          <div data-testid="mestari-gate-telegram-sub" style={{
+            fontFamily: T.mono, fontSize: 11, lineHeight: 1.55,
+            color: T.muted, marginTop: 10, letterSpacing: '0.02em',
           }}>
-          {busy ? '…' : (lang === 'en' ? 'SEND MY REPORT →' : 'LÄHETÄ RAPORTTI →')}
-        </motion.button>
-      </div>
+            {lang === 'en'
+              ? 'Binds chat ID · report sent directly · no email needed'
+              : 'Sitoo chat-ID:n · raportti tulee suoraan · ei sähköpostia tarvita'}
+          </div>
+        </div>
+      )}
+
+      {/* ── DIVIDER ────────────────────────────────────────────────── */}
+      {showEmail && showTelegram && (
+        <div data-testid="mestari-gate-divider" style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          margin: '8px 0 16px',
+        }}>
+          <span style={{ flex: 1, height: 1, background: T.border }} />
+          <span style={{
+            fontFamily: T.mono, fontSize: 10, letterSpacing: '0.24em',
+            color: T.muted, fontWeight: 700, textTransform: 'uppercase',
+          }}>{lang === 'en' ? 'or by email' : 'tai sähköpostiin'}</span>
+          <span style={{ flex: 1, height: 1, background: T.border }} />
+        </div>
+      )}
+
+      {/* ── SECONDARY: Email path ──────────────────────────────────── */}
+      {showEmail && (
+        <div data-testid="mestari-gate-email-block">
+          <div style={{ display: 'grid', gap: 14 }}>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+              placeholder={lang === 'en' ? 'your@email.com' : 'sähköpostisi@osoite.fi'}
+              data-testid="mestari-email-input"
+              style={{
+                padding: '14px 16px', background: T.surface,
+                border: `1px solid ${T.border}`, color: T.ink,
+                fontFamily: T.mono, fontSize: 14, letterSpacing: '0.02em',
+                outline: 'none',
+              }}
+              onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${EMBER_SOFT}`; e.currentTarget.style.borderColor = EMBER; }}
+              onBlur={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = T.border; }}
+            />
+
+            {/* Trust strip - pills, GDPR note, and external links */}
+            <TrustStrip trust={trust} />
+
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: T.ink, cursor: 'pointer' }}>
+              <input type="checkbox" checked={rules} onChange={(e) => setRules(e.target.checked)}
+                data-testid="mestari-rules-checkbox"
+                style={{ marginTop: 2, width: 18, height: 18 }} />
+              <span style={{ lineHeight: 1.5, opacity: 0.92 }}>
+                {acceptPre}
+                <Link to="/ehdot" target="_blank" rel="noopener noreferrer"
+                  data-testid="mestari-rules-privacy-link"
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ color: EMBER, textDecoration: 'underline', textUnderlineOffset: 2 }}>
+                  {acceptLink}
+                </Link>
+                {acceptPost}
+              </span>
+            </label>
+            {error && (
+              <div data-testid="mestari-error" style={{
+                color: '#E8A848', fontFamily: T.mono, fontSize: 12, letterSpacing: '0.05em',
+              }}>{error}</div>
+            )}
+            <motion.button whileTap={{ scale: 0.97 }} type="button"
+              onClick={onSubmit} disabled={!canSubmit}
+              data-testid="mestari-submit"
+              style={{
+                padding: '13px 22px',
+                background: 'transparent',
+                color: canSubmit ? EMBER : T.muted,
+                border: `1px solid ${canSubmit ? EMBER : T.border}`,
+                fontFamily: T.mono, fontSize: 11,
+                letterSpacing: '0.22em', fontWeight: 800,
+                cursor: canSubmit ? 'pointer' : 'not-allowed',
+              }}>
+              {busy ? '…' : (lang === 'en' ? 'EMAIL ME THE REPORT →' : 'SÄHKÖPOSTAA RAPORTTI →')}
+            </motion.button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Toggle back to the other path ──────────────────────────── */}
+      {channelSelected && (
+        <div style={{ marginTop: 16, fontFamily: T.mono, fontSize: 11, color: T.muted, letterSpacing: '0.04em' }}>
+          <button type="button"
+            onClick={() => setChannelSelected(null)}
+            data-testid="mestari-gate-switch"
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              color: EMBER, fontFamily: T.mono, fontSize: 11, padding: 0,
+              letterSpacing: '0.04em', textDecoration: 'underline',
+            }}>
+            {channelSelected === 'telegram'
+              ? (lang === 'en' ? '← Use email instead' : '← Käytä sähköpostia')
+              : (lang === 'en' ? '← Use Telegram instead' : '← Käytä Telegramia')}
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -1080,26 +1202,72 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, t
 // ── Confirmation ────────────────────────────────────────────────────────
 // First (and only) place where the daily-signals product is allowed to be
 // mentioned on the cold-traffic surface, per brief.
-const Confirmation = ({ email, profileName, lang }) => (
+const Confirmation = ({ email, profileName, lang, channel, telegramBot }) => {
+  const isTelegram = channel === 'telegram';
+  return (
   <div data-testid="mestari-confirm">
     <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.22em', color: T.success, fontWeight: 700, marginBottom: 10 }}>
-      ✓ {lang === 'en' ? 'REPORT ON ITS WAY' : 'RAPORTTI MATKALLA'}
+      ✓ {isTelegram
+          ? (lang === 'en' ? 'CHECK YOUR TELEGRAM' : 'TARKISTA TELEGRAMISI')
+          : (lang === 'en' ? 'REPORT ON ITS WAY' : 'RAPORTTI MATKALLA')}
     </div>
     <h2 style={{
-      fontFamily: T.serif, fontSize: 34, fontWeight: 700, color: T.ink,
-      margin: '0 0 14px', letterSpacing: '-0.02em', lineHeight: 1.05,
-    }}>{lang === 'en' ? 'Check your inbox.' : 'Tarkista sähköpostisi.'}</h2>
-    <p style={{ color: T.ink, fontSize: 15, lineHeight: 1.6, margin: '0 0 6px', opacity: 0.94 }}>
-      {lang === 'en' ? 'Your full report' : 'Täysi raporttisi'}
-      {profileName && ` (${profileName})`}
-      {lang === 'en' ? ' lands at ' : ' saapuu osoitteeseen '}
-      <span style={{ fontFamily: T.mono, fontSize: 13, color: T.accent }}>{email}</span>
-      {lang === 'en' ? ' within 5 minutes.' : ' 5 minuutin sisällä.'}
-    </p>
-    <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>
-      {lang === 'en'
-        ? 'Day 1 of the 5-day playbook arrives tomorrow at 09:00. One per day. Read at your pace.'
-        : 'Päivä 1/5 pelikirjasta saapuu huomenna klo 09. Yksi per päivä. Lue omassa tahdissasi.'}
+      fontFamily: 'Archivo Black, Inter, sans-serif', fontSize: 36, fontWeight: 900, color: T.ink,
+      margin: '0 0 14px', letterSpacing: '-0.025em', lineHeight: 1.05,
+    }}>{isTelegram
+      ? (lang === 'en' ? 'Open Telegram.' : 'Avaa Telegram.')
+      : (lang === 'en' ? 'Check your inbox.' : 'Tarkista sähköpostisi.')}</h2>
+    {isTelegram ? (
+      <>
+        <p style={{ color: T.ink, fontSize: 15, lineHeight: 1.6, margin: '0 0 6px', opacity: 0.94 }}>
+          {lang === 'en'
+            ? 'Your report'
+            : 'Raporttisi'}
+          {profileName && ` (${profileName})`}
+          {lang === 'en'
+            ? ' is waiting in the chat with '
+            : ' odottaa chatissa: '}
+          <a href={`https://t.me/${telegramBot}`} target="_blank" rel="noopener noreferrer"
+            data-testid="mestari-confirm-telegram-link"
+            style={{ fontFamily: T.mono, fontSize: 13, color: T.accent, textDecoration: 'none' }}>
+            @{telegramBot}
+          </a>
+          {lang === 'en' ? '.' : '.'}
+        </p>
+        <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>
+          {lang === 'en'
+            ? 'Tap START in the bot to receive your profile + the 5-day playbook directly in chat. Weekly market signals follow.'
+            : 'Paina START botissa - saat profiilisi ja 5 päivän pelikirjan suoraan chattiin. Viikoittaiset signaalit seuraavat.'}
+        </p>
+      </>
+    ) : (
+      <>
+        <p style={{ color: T.ink, fontSize: 15, lineHeight: 1.6, margin: '0 0 6px', opacity: 0.94 }}>
+          {lang === 'en' ? 'Your full report' : 'Täysi raporttisi'}
+          {profileName && ` (${profileName})`}
+          {lang === 'en' ? ' lands at ' : ' saapuu osoitteeseen '}
+          <span style={{ fontFamily: T.mono, fontSize: 13, color: T.accent }}>{email}</span>
+          {lang === 'en' ? ' within 5 minutes.' : ' 5 minuutin sisällä.'}
+        </p>
+        <p style={{ color: T.muted, fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>
+          {lang === 'en'
+            ? 'Day 1 of the 5-day playbook arrives tomorrow at 09:00. One per day. Read at your pace.'
+            : 'Päivä 1/5 pelikirjasta saapuu huomenna klo 09. Yksi per päivä. Lue omassa tahdissasi.'}
+        </p>
+      </>
+    )}
+    {/* Honest both-paths note per Phase 3 spec */}
+    <p data-testid="mestari-confirm-paths-note" style={{
+      fontFamily: T.mono, fontSize: 11, lineHeight: 1.7,
+      color: T.muted, margin: '0 0 18px', letterSpacing: '0.02em',
+    }}>
+      {isTelegram
+        ? (lang === 'en'
+            ? 'You chose Telegram. Email was the alternative — you can re-take the diagnostic any time to send it that way.'
+            : 'Valitsit Telegramin. Sähköposti oli vaihtoehto — voit tehdä diagnostiikan uudelleen ja valita sen.')
+        : (lang === 'en'
+            ? 'You chose email. Telegram was the alternative for instant delivery — you can switch any time at @' + telegramBot + '.'
+            : 'Valitsit sähköpostin. Telegram oli vaihtoehto välitöntä toimitusta varten — voit vaihtaa milloin tahansa @' + telegramBot + '.')}
     </p>
     {/* Section 7.3 value block - required on every diagnostic, verbatim. */}
     <div data-testid="mestari-confirm-value-block" style={{
@@ -1137,7 +1305,8 @@ const Confirmation = ({ email, profileName, lang }) => (
         }}>{lang === 'en' ? 'BACK TO PUTKI HQ' : 'TAKAISIN PUTKI HQ'}</Link>
     </div>
   </div>
-);
+  );
+};
 
 // ── Quiz flow shell (dark themed container) ─────────────────────────────
 const QuizFlow = ({ children, onExit, lang, step, qIdx, total }) => {
@@ -1223,6 +1392,12 @@ const Mestari = () => {
   const [rules, setRules] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // Phase 3 · iter93 — Telegram-first two-path state. `channelSelected`
+  // collapses the unused path to a "use the other" link once one is in
+  // flight; null = both paths visible.
+  const [channelSelected, setChannelSelected] = useState(null);
+  const [magicToken, setMagicToken] = useState('');
+  const [telegramBusy, setTelegramBusy] = useState(false);
 
   useDocumentMeta({
     title: lang === 'en' ? 'Mestari - What kind of sports bettor are you?' : 'Mestari - Millainen urheiluvedonlyöjä sinä olet?',
@@ -1267,6 +1442,9 @@ const Mestari = () => {
     setEmail('');
     setRules(false);
     setError('');
+    setChannelSelected(null);
+    setMagicToken('');
+    setTelegramBusy(false);
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
   }, []);
 
@@ -1297,7 +1475,7 @@ const Mestari = () => {
 
   const submitLead = async () => {
     if (!email || !rules) return;
-    setBusy(true); setError('');
+    setBusy(true); setError(''); setChannelSelected('email');
     try {
       const r = await fetch(`${BACKEND}/api/voita/lead`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -1311,13 +1489,50 @@ const Mestari = () => {
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setError(j.detail || `HTTP ${r.status}`);
+        setChannelSelected(null);
         return;
       }
       setStep('confirm');
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
     } catch (e) {
       setError(e.message || 'Network');
+      setChannelSelected(null);
     } finally { setBusy(false); }
+  };
+
+  // Phase 3 · iter93 — Telegram-first conversion path. Mint a magic token,
+  // write the pending lead with quiz_tags so the bot can DM the matched
+  // profile, then redirect the user into `t.me/{bot}?start=mestari_<token>`.
+  const submitTelegramLead = async () => {
+    if (telegramBusy) return;
+    setTelegramBusy(true); setError(''); setChannelSelected('telegram');
+    const token = magicToken || mintMagicToken();
+    if (!magicToken) setMagicToken(token);
+    try {
+      const r = await fetch(`${BACKEND}/api/mestari/lead/telegram`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          magic_token: token,
+          quiz_tags: composeTags(),
+          lang,
+        }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({}));
+        setError(j.detail || `HTTP ${r.status}`);
+        setChannelSelected(null);
+        return;
+      }
+      try {
+        window.open(`https://t.me/${TELEGRAM_BOT}?start=mestari_${token}`,
+          '_blank', 'noopener,noreferrer');
+      } catch { /* popup blocker — confirmation copy explains next step */ }
+      setStep('confirm');
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop */ }
+    } catch (e) {
+      setError(e.message || 'Network');
+      setChannelSelected(null);
+    } finally { setTelegramBusy(false); }
   };
 
   const total = quiz.length || 5;
@@ -1367,14 +1582,20 @@ const Mestari = () => {
               <Gate email={email} setEmail={setEmail}
                 rules={rules} setRules={setRules}
                 trust={landingCopy && landingCopy.trust}
-                onSubmit={submitLead} busy={busy} error={error} lang={lang} />
+                onSubmit={submitLead} busy={busy} error={error} lang={lang}
+                channelSelected={channelSelected}
+                setChannelSelected={setChannelSelected}
+                onTelegram={submitTelegramLead}
+                telegramBusy={telegramBusy} />
             </motion.div>
           )}
           {step === 'confirm' && (
             <motion.div key="confirm" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.32 }}>
               <Confirmation email={email}
                 profileName={profile ? (lang === 'en' ? profile.name_en : profile.name_fi) : ''}
-                lang={lang} />
+                lang={lang}
+                channel={channelSelected || 'email'}
+                telegramBot={TELEGRAM_BOT} />
             </motion.div>
           )}
         </AnimatePresence>

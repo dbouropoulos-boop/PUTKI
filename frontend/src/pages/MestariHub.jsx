@@ -74,6 +74,7 @@ const DIAGNOSTIC_KEYS = ['sports', 'poker', 'blackjack'];
 const HubCard = ({ k, copy, lang, testid }) => {
   const acc = SPORT_ACCENT[k] || SPORT_ACCENT.poker;
   const teases = (PROFILE_TEASE[k] || PROFILE_TEASE.poker)[lang === 'en' ? 'en' : 'fi'];
+  const playbookForthcoming = k === 'poker' || k === 'blackjack';
   return (
     <Link to={`/mestari/${k}`} data-testid={testid} style={{
       background: 'var(--surface)', border: '1px solid var(--border)',
@@ -86,6 +87,18 @@ const HubCard = ({ k, copy, lang, testid }) => {
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = acc.tint; e.currentTarget.style.transform = 'translateY(-2px)'; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
     >
+      {playbookForthcoming && (
+        <div data-testid={`${testid}-soon-badge`} style={{
+          fontFamily: 'ui-monospace, monospace', fontSize: 9.5,
+          letterSpacing: '0.18em', fontWeight: 800,
+          color: 'var(--ember-strong, #B53618)',
+          background: 'var(--ember-soft, #FBEAE2)',
+          padding: '5px 9px', borderRadius: 3,
+          textTransform: 'uppercase',
+          alignSelf: 'flex-start',
+          marginBottom: -4,
+        }}>{lang === 'en' ? 'SOON · PLAYBOOK FORTHCOMING' : 'PIAN · KÄSIKIRJA TULOSSA'}</div>
+      )}
       <div style={{
         position: 'absolute', top: 12, right: 16,
         fontSize: 28, opacity: 0.18, fontFamily: 'Georgia, serif',

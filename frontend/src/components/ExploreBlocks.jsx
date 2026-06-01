@@ -762,7 +762,7 @@ const ExploreBlocks = () => {
         <span style={{
           color: 'var(--muted, #9C9587)', letterSpacing: '0.18em',
           fontSize: 10, fontFamily: 'ui-monospace, monospace', opacity: 0.7,
-        }}>4 PRODUCTS</span>
+        }}>3 PRODUCTS</span>
       </div>
       <div className="explore-grid" style={{
         display: 'grid',
@@ -773,13 +773,13 @@ const ExploreBlocks = () => {
       }}>
         <MittariBlock lang={lang} />
         <MestariBlock lang={lang} />
-        <VoitaBlock lang={lang} />
         <PeliBlock lang={lang} />
-        {/* iter66 (2026-05-25) - PeliAreena tile HIDDEN per user request.
-            The old "5 mini-games · weekly tournament" copy is a remnant of
-            the pre-iter64 arcade era. The profiler still lives at
-            /peliareena but is no longer surfaced via this Explore tile.
-            Re-enable by uncommenting and updating count above to 5 PRODUCTS. */}
+        {/* Phase 3 · iter93 — VoitaBlock removed from the homepage Explore
+            grid per secondary-funnel deprioritisation. /voita remains
+            accessible by direct URL; the Trust hub points to the live
+            ledger. Re-enable here only when the funnel is reactivated. */}
+        {/* <VoitaBlock lang={lang} /> */}
+        {/* iter66 (2026-05-25) - PeliAreena tile HIDDEN per user request. */}
         {/* <PeliAreenaBlock lang={lang} /> */}
       </div>
       <style>{`

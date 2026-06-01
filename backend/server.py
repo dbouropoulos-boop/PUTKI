@@ -2674,6 +2674,12 @@ api_router.include_router(_build_mittari_grading_router(require_admin, db))
 from routes.page_og import build_page_og_router as _build_page_og_router  # noqa: E402
 api_router.include_router(_build_page_og_router())
 
+# iter93 · Phase 3 — Mestari Telegram-first conversion endpoints.
+# Three small routes that let the diagnostic Gate offer Telegram as
+# the primary capture path (FE → pending row → bot binds chat_id).
+from routes.mestari_telegram import build_mestari_telegram_router as _build_mestari_telegram_router  # noqa: E402
+api_router.include_router(_build_mestari_telegram_router(db))
+
 # iter84 · action_type → back-office route mapping for the generic
 # auto-logged middleware rows. Keep this list tight — when the
 # cockpit feed surfaces an action_type without a mapping it cleanly

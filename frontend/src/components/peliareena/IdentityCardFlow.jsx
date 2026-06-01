@@ -1,18 +1,28 @@
 /**
- * PUTKI HQ - IdentityCardFlow (iter63)
+ * PUTKI HQ - IdentityCardFlow (iter63 · revised iter93)
  *
  * Drop-in replacement for the per-game preview/email-gate block.
  * Reads the `card` payload built server-side (mini_game_card.py) and
- * renders the identity-first reveal + micro-yes ladder flow.
+ * renders the identity-first reveal flow.
+ *
+ * Phase 3 · iter93 — `MicroYesGate` (email capture) removed. Mini-games
+ * are repositioned as pure educational surfaces — readers play to learn
+ * the psychology of gambling, with NO email required. The previous
+ * funnel reactivates via the `enableGate` prop when (and only when)
+ * editorial decides to re-monetise mini-games.
  *
  * Props:
  *   preview     - full backend preview/finish response. Must include
  *                 `card`, `persona_preview`, `week_iso`.
- *   session     - { play_id, anon_id }
+ *   session     - { play_id, anon_id } (kept for downstream analytics,
+ *                 still recorded server-side even without email)
  *   gameSlug    - for share-tracking + testids (e.g. "quiz")
- *   unlockPath  - backend path to call on email submit
- *   onUnlocked  - (full_result) => void; called when the email gate
- *                 successfully unlocks the full personalised result.
+ *   unlockPath  - retained but unused while enableGate=false. Reserved
+ *                 for future re-activation.
+ *   onUnlocked  - reserved for future re-activation.
+ *   enableGate  - opt-in flag (default false). True → render the legacy
+ *                 MicroYesGate; false → render the no-email positioning
+ *                 strip.
  */
 import React from 'react';
 import IdentityResultCard from './IdentityResultCard';
@@ -28,12 +38,36 @@ const pickLang = (card, base, lang) => {
   return fi || en || '';
 };
 
+const NoEmailPositioning = ({ lang, gameSlug }) => (
+  <div data-testid={`${gameSlug}-no-email-positioning`} style={{
+    marginTop: 28, padding: '20px 22px',
+    background: 'var(--surface)',
+    border: '1px solid var(--line, var(--border))',
+    borderLeft: '3px solid var(--ember, #D9461E)',
+    fontFamily: 'Inter, system-ui, sans-serif',
+  }}>
+    <div style={{
+      fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+      fontSize: 10, letterSpacing: '0.22em', fontWeight: 800,
+      color: 'var(--ember-strong, #B53618)', marginBottom: 8,
+      textTransform: 'uppercase',
+    }}>{lang === 'en' ? 'NO EMAIL REQUIRED' : 'EI SÄHKÖPOSTIA TARVITA'}</div>
+    <p style={{
+      fontSize: 15, lineHeight: 1.55, color: 'var(--ink)',
+      margin: 0,
+    }}>{lang === 'en'
+      ? 'Play a moment — learn the psychology of gambling. No email required.'
+      : 'Pelaa hetki — opi pelaamisen psykologiasta. Ei sähköpostia tarvita.'}</p>
+  </div>
+);
+
 const IdentityCardFlow = ({
   preview,
   session,
   gameSlug,
   unlockPath,
   onUnlocked,
+  enableGate = false,
 }) => {
   const { lang } = useLang();
   const card = preview?.card || {};
@@ -54,15 +88,19 @@ const IdentityCardFlow = ({
         hookText={pickLang(card, 'hook_text', lang)}
         weekLabel={pickPA(lang, 'intro.weekLabel')}
       />
-      <MicroYesGate
-        gameSlug={gameSlug}
-        unlockPath={unlockPath}
-        session={session}
-        profileTitle={profileTitle}
-        personaKey={persona.key || ''}
-        readLine={pickLang(card, 'read_line', lang)}
-        onUnlocked={onUnlocked}
-      />
+      {enableGate ? (
+        <MicroYesGate
+          gameSlug={gameSlug}
+          unlockPath={unlockPath}
+          session={session}
+          profileTitle={profileTitle}
+          personaKey={persona.key || ''}
+          readLine={pickLang(card, 'read_line', lang)}
+          onUnlocked={onUnlocked}
+        />
+      ) : (
+        <NoEmailPositioning lang={lang} gameSlug={gameSlug} />
+      )}
     </div>
   );
 };

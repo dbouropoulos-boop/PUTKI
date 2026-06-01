@@ -154,6 +154,11 @@ async def handle_update(db, update: Dict[str, Any]) -> Dict[str, Any]:
                 db, chat_id=chat_id, username=username,
                 pending_id=token_arg[len("mittari_"):],
             )
+        if token_arg.startswith("mestari_"):
+            return await _handle_mestari_start(
+                db, chat_id=chat_id, username=username,
+                magic_token=token_arg[len("mestari_"):],
+            )
         return await _handle_start(db, chat_id=chat_id, username=username,
                                    pending_id=token_arg)
 
@@ -403,6 +408,137 @@ async def _handle_mittari_start(db, *, chat_id: int | str, username: str,
 
 
 _STATE_LABEL_FI = STATE_LABELS_FI  # back-compat alias for any external callers
+
+
+# ── Mestari diagnostic Telegram-first handler (Phase 3 · iter93) ─────────
+
+async def _handle_mestari_start(db, *, chat_id: int | str, username: str,
+                                 magic_token: str) -> Dict[str, Any]:
+    """Bind a Mestari diagnostic lead. The FE writes the pending row to
+    `optin_consents` (channel=telegram, surface=mestari_landing,
+    identifier=<magic_token>) before redirecting the user into the bot.
+    On `/start mestari_<magic_token>`:
+        1. Look up pending row.
+        2. Bind chat_id + username + bound_at.
+        3. Fetch profile content (name + tease) and DM the welcome card.
+
+    If the magic_token doesn't resolve (link expired, manual paste, etc.)
+    we send a polite fallback pointing back at the website."""
+    magic_token = (magic_token or "").strip()[:64]
+    if not magic_token:
+        await send_message(
+            chat_id,
+            "👋 <b>Tervetuloa Mestariin!</b>\n\n"
+            "Avaa diagnostiikka sivuilla ja saat oman koodisi takaisin tähän chattiin:\n"
+            "<a href=\"https://putkihq.fi/mestari\">https://putkihq.fi/mestari</a>",
+        )
+        return {"handled": True, "kind": "mestari_no_token"}
+
+    row = await db.optin_consents.find_one(
+        {"channel": "telegram", "surface": "mestari_landing", "identifier": magic_token},
+        {"_id": 0},
+    )
+    if not row:
+        await send_message(
+            chat_id,
+            "❌ <b>Koodia ei löydy</b>\n\n"
+            "Koodi on saattanut vanheta. Avaa diagnostiikka uudelleen:\n"
+            "<a href=\"https://putkihq.fi/mestari\">https://putkihq.fi/mestari</a>",
+        )
+        return {"handled": True, "kind": "mestari_unknown_token"}
+
+    already_bound = bool(row.get("telegram_chat_id"))
+    now = _now_iso()
+    await db.optin_consents.update_one(
+        {"channel": "telegram", "surface": "mestari_landing", "identifier": magic_token},
+        {
+            "$set": {
+                "telegram_chat_id": str(chat_id),
+                "telegram_username": (username or None),
+                "telegram_bound_at": now,
+                "last_seen_at": now,
+            }
+        },
+    )
+
+    # Resolve profile content for the welcome card.
+    lang = (row.get("lang") or "fi").lower()
+    profile_slug = row.get("mestari_profile_slug")
+    profile: Dict[str, Any] = {}
+    if profile_slug:
+        try:
+            from voita_profiles import DEFAULT_PROFILES, sanitize_profiles
+            settings_doc = await db.settings.find_one({"_id": "settings"}) or {}
+            profiles = sanitize_profiles(
+                settings_doc.get("voita_predictor_profiles") or DEFAULT_PROFILES
+            )
+            for p in profiles:
+                if p.get("slug") == profile_slug:
+                    profile = p
+                    break
+        except Exception:  # noqa: BLE001 - defensive
+            logger.exception("mestari profile resolve failed")
+
+    card = _render_mestari_welcome(profile=profile, lang=lang,
+                                   already_bound=already_bound)
+    await send_message(chat_id, card)
+    return {
+        "handled": True,
+        "kind": "mestari_bound",
+        "magic_token": magic_token,
+        "profile_slug": profile_slug,
+        "already_bound": already_bound,
+    }
+
+
+def _render_mestari_welcome(*, profile: Dict[str, Any], lang: str,
+                            already_bound: bool) -> str:
+    is_en = lang.startswith("en")
+    name = (profile.get("name_en") if is_en else profile.get("name_fi")) or ""
+    tease = (profile.get("on_site_tease_en") if is_en else profile.get("on_site_tease_fi")) or ""
+
+    if already_bound:
+        header = ("🔁 <b>Already bound</b>\n" if is_en
+                  else "🔁 <b>Tunnistus jo sidottu</b>\n")
+    else:
+        header = ("✅ <b>MESTARI · REPORT READY</b>\n" if is_en
+                  else "✅ <b>MESTARI · RAPORTTI VALMIINA</b>\n")
+
+    if name:
+        profile_block_fi = (
+            f"\n🎯 <b>Profiilisi</b>: {name}\n\n"
+            f"<i>{tease}</i>\n" if tease else f"\n🎯 <b>Profiilisi</b>: {name}\n"
+        )
+        profile_block_en = (
+            f"\n🎯 <b>Your profile</b>: {name}\n\n"
+            f"<i>{tease}</i>\n" if tease else f"\n🎯 <b>Your profile</b>: {name}\n"
+        )
+        body = profile_block_en if is_en else profile_block_fi
+    else:
+        # Welcome templates from Task 7.4 not loaded yet — placeholder copy
+        # promising full content shortly (per spec).
+        body = ("\n📊 Your diagnostic is locked. Full profile content is in"
+                " editorial review — we'll DM the analysis here shortly.\n"
+                if is_en else
+                "\n📊 Diagnostiikkasi on tallennettu. Täysi profiili­sisältö"
+                " on toimituksellisessa tarkistuksessa — saat analyysin"
+                " tähän chattiin pian.\n")
+
+    footer = (
+        "\nYou'll get:\n"
+        "• 📊 The 5-day Mestari playbook\n"
+        "• 📡 Weekly market signals\n"
+        "• 🛑 Stop anytime: send /stop\n\n"
+        "https://putkihq.fi/mestari"
+        if is_en else
+        "\nSaat:\n"
+        "• 📊 5 päivän Mestari-pelikirjan\n"
+        "• 📡 Viikoittaiset markkinasignaalit\n"
+        "• 🛑 Lopeta milloin vain: lähetä /stop\n\n"
+        "https://putkihq.fi/mestari"
+    )
+
+    return f"{header}{body}{footer}"
 
 
 async def broadcast_mittari_state_change(db, *, from_state: str, to_state: str,
