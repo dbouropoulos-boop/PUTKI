@@ -30,6 +30,7 @@ def test_og_allowlist_covers_every_frontend_surface():
     """Hard-code the front-end `OG_SLUGS` map here. If you change one
     side without the other, the build flags it immediately."""
     expected_stems = {
+        "home",
         "trust-hub",
         "reform-2027",
         "pelit-blackjack",

@@ -38,6 +38,17 @@ logger = logging.getLogger(__name__)
 # Anyone touching this dict should keep the cache slug stable — changing it
 # silently invalidates every social-card preview already in the wild.
 PAGE_OG_PROFILES: Dict[str, Dict[str, str]] = {
+    # ── Homepage cover (iter96c) ────────────────────────────────────
+    "home-fi": {
+        "cache_slug": "home-fi",
+        "headline": "PUTKI HQ — Suomen riippumaton pelikulttuurin julkaisu",
+        "category": "Kansi",
+    },
+    "home-en": {
+        "cache_slug": "home-en",
+        "headline": "PUTKI HQ — Finland's independent gambling culture publication",
+        "category": "Cover",
+    },
     # ── Trust hub capstone ─────────────────────────────────────────
     "trust-hub-fi": {
         "cache_slug": "trust-hub-fi",

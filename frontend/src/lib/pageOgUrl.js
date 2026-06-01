@@ -12,6 +12,7 @@ const HOST = process.env.REACT_APP_BACKEND_URL;
 
 // Surface key → slug stem (FI/EN suffix added at call time).
 const OG_SLUGS = {
+  'home': 'home',
   'trust-hub': 'trust-hub',
   'reform-2027': 'reform-2027',
   'pelit/blackjack': 'pelit-blackjack',

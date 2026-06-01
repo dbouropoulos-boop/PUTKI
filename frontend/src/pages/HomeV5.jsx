@@ -29,6 +29,7 @@ import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
 import { useLocalisedCanonical } from '../hooks/useLocalisedCanonical';
+import pageOgUrl from '../lib/pageOgUrl';
 import '../styles/home_v5.css';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -155,31 +156,19 @@ const Hero = ({ mittariScore, mittariState, lang }) => {
             <div className="h5-hero-img h5-treated">
               <span className="h5-badge">{lang === 'en' ? 'GAMBLING REFORM' : 'RAHAPELIUUDISTUS'}</span>
               <span className="h5-credit">Eduskunta · Helsinki</span>
-              {/* iter96: hero photo with progressive fallback.
-                  Primary: Nano-Banana-minted PNG via /api/og/page/reform-2027-{lang}.
-                  Fallback: editorial gradient block (the .h5-treated wrapper
-                  already supplies the ember-multiply colour grade so the
-                  fallback still reads as "treated newsroom" not "broken").
-                  The kill switch PUTKI_HQ_DISABLE_OG_IMAGES=1 in the preview
-                  pod intentionally returns 404 → onError hides the <img>
-                  and the wrapper gradient takes over. Production should
-                  unset the kill switch to mint real photos. */}
-              <img
-                src={`${BACKEND}/api/og/page/reform-2027-${lang === 'en' ? 'en' : 'fi'}`}
-                alt={lang === 'en' ? 'Finnish parliament — Gambling Act 2027' : 'Eduskunta — Rahapelilaki 2027'}
-                loading="eager"
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
-              {/* Editorial gradient — visible underneath the img by z-order.
-                  The img mounts on top; if it 404s the onError hides it and
-                  the gradient remains. */}
+              {/* iter96c: editorial hero treatment. The OG endpoint
+                  (`/api/og/page/reform-2027-{lang}`) mints OpenGraph
+                  social cards with title text baked in — perfect for
+                  Telegram / X previews but wrong shape for a hero. The
+                  hero stays as a treated editorial gradient + parliament
+                  stripes until a dedicated photo asset is curated.
+                  When that asset ships, drop it in as `<img src="..."`
+                  inside this wrapper; the .h5-treated filter will apply
+                  the same ember-multiply grade automatically. */}
               <div aria-hidden style={{
                 position: 'absolute', inset: 0, zIndex: 0,
                 background: 'linear-gradient(135deg, #2a2a26 0%, #1a1814 45%, #0a0a08 100%)',
               }} />
-              {/* Decorative parliament-suggestion stripes — a subtle hint
-                  of architecture in the absence of a real photo. */}
               <div aria-hidden style={{
                 position: 'absolute', left: '8%', right: '8%', bottom: '12%', top: '38%',
                 zIndex: 0, opacity: 0.22,
@@ -679,6 +668,10 @@ const HomeV5 = ({ forceLang }) => {
       : 'Toimituksellinen pelikulttuurin julkaisu: uutisia 12 nimetystä lähteestä, live-striimaajia, Mittari-markkinasignaali, ilmainen pelaajatesti ja testatut kasinot.',
     canonical,
     alternates,
+    // iter96c: OG social card from /api/og/page/home-{lang}. The OG
+    // endpoint is now live (kill switch removed); the minted PNG ships
+    // with title text baked in for Telegram / X previews.
+    ogImage: pageOgUrl('home', lang === 'en'),
   });
   useJsonLd(useMemo(() => ([
     {
