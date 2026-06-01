@@ -26,6 +26,7 @@ export const Footer = () => {
               <li><Link to="/peliareena" style={{ color: 'var(--ink)' }} className="hover:opacity-70" data-testid="footer-peliareena-link">PELIAREENA</Link></li>
               <li><Link to="/tietoa-meista" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.about').toUpperCase()}</Link></li>
               <li><Link to="/menetelma" style={{ color: 'var(--ink)' }} className="hover:opacity-70">{t('nav.methodology').toUpperCase()}</Link></li>
+              <li><Link to="/luotettavuus" style={{ color: 'var(--ember-strong, var(--ink))' }} className="hover:opacity-70" data-testid="footer-trust-link">LUOTETTAVUUS</Link></li>
             </ul>
           </div>
           <div>

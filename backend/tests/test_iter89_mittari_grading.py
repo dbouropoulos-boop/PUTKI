@@ -181,3 +181,63 @@ def test_pending_returns_only_commenced_and_ungraded():
     assert "iter89-test-FUTURE" not in sids
 
     _cleanup(db, "iter89-test-")
+
+
+# ── Quick backfill ───────────────────────────────────────────────
+
+def test_quick_backfill_grade_rejects_invalid_outcome():
+    r = httpx.post(
+        f"{BASE}/api/admin/mittari/grading/quick-backfill-grade",
+        headers=HEADERS,
+        json={"outcome": "garbage"},
+        timeout=TIMEOUT,
+    )
+    assert r.status_code == 400
+
+
+def test_quick_backfill_grade_writes_outcome_for_all_pending():
+    db = _db()
+    _cleanup(db, "iter91-backfill-")
+
+    _seed_snapshot(db, "iter91-backfill-A", commence_past=True)
+    _seed_snapshot(db, "iter91-backfill-B", commence_past=True)
+    _seed_snapshot(db, "iter91-backfill-FUT", commence_past=False)
+    # Pre-grade one to confirm it's skipped.
+    db.mittari_signal_outcomes.update_one(
+        {"signal_id": "iter91-backfill-A"},
+        {"$set": {
+            "signal_id": "iter91-backfill-A",
+            "signal_class": "sports.football",
+            "hit": True,
+            "outcome": "hit",
+            "graded_at": datetime.now(timezone.utc).isoformat(),
+        }},
+        upsert=True,
+    )
+
+    r = httpx.post(
+        f"{BASE}/api/admin/mittari/grading/quick-backfill-grade",
+        headers=HEADERS,
+        json={"outcome": "miss", "note": "iter91 test sweep"},
+        timeout=TIMEOUT,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["default_outcome"] == "miss"
+    # We only need the iter91-backfill-* signals to flow; other pending
+    # rows can exist in the env so we assert ≥ 1 write rather than ==.
+    assert body["written"] >= 1
+
+    # B should now be graded as MISS, FUT untouched, A unchanged (hit).
+    b = db.mittari_signal_outcomes.find_one({"signal_id": "iter91-backfill-B"}, {"_id": 0})
+    assert b is not None
+    assert b["outcome"] == "miss"
+    assert b["hit"] is False
+
+    fut = db.mittari_signal_outcomes.find_one({"signal_id": "iter91-backfill-FUT"}, {"_id": 0})
+    assert fut is None  # future commence_time → never graded
+
+    a = db.mittari_signal_outcomes.find_one({"signal_id": "iter91-backfill-A"}, {"_id": 0})
+    assert a["outcome"] == "hit"  # pre-existing grade preserved
+
+    _cleanup(db, "iter91-backfill-")

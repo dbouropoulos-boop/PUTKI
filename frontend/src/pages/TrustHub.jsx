@@ -148,11 +148,17 @@ const TrustHub = ({ forceLang } = {}) => {
   });
   void useLang;
 
+  const ogImage = `${process.env.REACT_APP_BACKEND_URL}/api/og/page/${isEn ? 'trust-hub-en' : 'trust-hub-fi'}`;
+
   useDocumentMeta({
     title: isEn ? 'Trust — how PUTKI HQ measures itself · PUTKI HQ' : 'Luotettavuus — miten PUTKI HQ mittaa itseään · PUTKI HQ',
     description: isEn
       ? 'Three principles, three live datasets, four long-form methodology pieces. The single page that shows how PUTKI HQ keeps itself accountable.'
       : 'Kolme periaatetta, kolme live-aineistoa, neljä menetelmä­juttua. Yksi sivu joka näyttää miten PUTKI HQ pitää itsensä vastuullisena.',
+    ogTitle: isEn ? 'Trust — how PUTKI HQ measures itself' : 'Luotettavuus — miten PUTKI HQ mittaa itseään',
+    ogImage,
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });

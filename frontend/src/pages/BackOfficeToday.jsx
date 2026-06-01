@@ -455,6 +455,16 @@ const BackOfficeToday = () => {
             label="View today's funnel"
             icon={Activity}
             to="/back-office/funnel?range=today" />
+          <ActionButton
+            testid="bo-today-action-trust-hub"
+            label="Open Trust hub"
+            icon={Activity}
+            to="/luotettavuus" />
+          <ActionButton
+            testid="bo-today-action-mittari-grading"
+            label="Mittari grading"
+            icon={Activity}
+            to="/back-office/mittari-grading" />
         </div>
       </section>
 

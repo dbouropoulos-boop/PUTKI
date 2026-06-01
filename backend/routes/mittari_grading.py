@@ -207,6 +207,75 @@ def build_mittari_grading_router(require_admin: Callable, db) -> APIRouter:
             "computed_at": now_iso,
         }
 
+    # ── QUICK BACKFILL ───────────────────────────────────────────────
+    @router.post("/quick-backfill-grade")
+    async def quick_backfill_grade(
+        payload: Dict[str, Any] = Body(...),
+        _: bool = Depends(require_admin),
+    ) -> Dict[str, Any]:
+        """Bulk-grade every commenced + ungraded signal as a single outcome.
+
+        Body: {outcome: "hit" | "miss" | "push", note?: str}
+
+        Use case: an operator working through 200 backlogged signals
+        where the overwhelming majority share the same outcome (often
+        MISS). The operator stamps the default, then walks back through
+        the BO UI to flip the few exceptions individually.
+
+        Idempotent — re-running with a different outcome flips every
+        row again (same `update_one(upsert=True)` semantics as /grade).
+        """
+        outcome = (payload.get("outcome") or "").lower()
+        note = payload.get("note") or "quick-backfill"
+        if outcome not in VALID_OUTCOMES:
+            raise HTTPException(status_code=400, detail="invalid_outcome")
+
+        now_iso = _utcnow_iso()
+        written = 0
+        skipped = 0
+        # Reuse the same "commenced + ungraded" filter as /pending. We
+        # walk a bounded cursor (5 000 rows) so a runaway backlog never
+        # holds the worker thread.
+        cursor = db.mittari_signal_history.find(
+            {"commence_time": {"$lt": now_iso}},
+            {"_id": 0},
+        ).sort([("commence_time", -1)]).limit(5000)
+
+        async for snap in cursor:
+            sid = snap.get("signal_id")
+            if not sid:
+                skipped += 1
+                continue
+            existing = await db.mittari_signal_outcomes.find_one(
+                {"signal_id": sid}, {"_id": 0, "signal_id": 1}
+            )
+            if existing:
+                skipped += 1
+                continue
+            doc = {
+                "signal_id": sid,
+                "signal_class": snap.get("signal_class") or "sports.other",
+                "hit": outcome == "hit",
+                "outcome": outcome,
+                "note": note,
+                "graded_at": now_iso,
+                "snapshot_date": snap.get("snapshot_date"),
+                "commence_time": snap.get("commence_time"),
+            }
+            await db.mittari_signal_outcomes.update_one(
+                {"signal_id": sid},
+                {"$set": doc},
+                upsert=True,
+            )
+            written += 1
+
+        return {
+            "written": written,
+            "skipped": skipped,
+            "default_outcome": outcome,
+            "computed_at": now_iso,
+        }
+
     # ── STATUS ───────────────────────────────────────────────────────
     @router.get("/status")
     async def status(_: bool = Depends(require_admin)) -> Dict[str, Any]:

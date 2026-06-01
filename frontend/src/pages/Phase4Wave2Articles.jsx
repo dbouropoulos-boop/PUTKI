@@ -5,6 +5,7 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
+import { localiseUrl } from '../lib/localiseUrl';
 
 /**
  * Phase 4 wave 2 — four deep editorial articles across the four
@@ -228,10 +229,10 @@ export const MestariMenetelmaArticle = ({ forceLang } = {}) => {
       <InternalLinkStrip
         testId="mestari-menetelma-related"
         links={[
-          { to: '/mestari', labelFi: 'Mestari hub', labelEn: 'Mestari hub', hintFi: 'Aloita yhdellä kolmesta diagnostiikasta.', hintEn: 'Start one of the three diagnostics.' },
-          { to: '/mittari/lahteet', labelFi: 'Mittarin lähteet', labelEn: 'Mittari sources', hintFi: '28 nimettyä lähdettä avattuna.', hintEn: '28 named sources opened up.' },
-          { to: '/saantely/reform-2027', labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Mikä muuttuu pelimarkkinoilla heinäkuussa 2027.', hintEn: 'What changes on 2027-07-01.' },
-          { to: '/profiilit/dioni-q-and-a', labelFi: 'Toimittajan Q&A', labelEn: 'Editor Q&A', hintFi: 'Miksi PUTKI HQ on toimituksellinen julkaisu, ei vihjepalvelu.', hintEn: 'Why PUTKI HQ is an editorial publication, not a tips service.' },
+          { to: localiseUrl('/mestari', isEn), labelFi: 'Mestari hub', labelEn: 'Mestari hub', hintFi: 'Aloita yhdellä kolmesta diagnostiikasta.', hintEn: 'Start one of the three diagnostics.' },
+          { to: localiseUrl('/mittari/lahteet', isEn), labelFi: 'Mittarin lähteet', labelEn: 'Mittari sources', hintFi: '28 nimettyä lähdettä avattuna.', hintEn: '28 named sources opened up.' },
+          { to: localiseUrl('/saantely/reform-2027', isEn), labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Mikä muuttuu pelimarkkinoilla heinäkuussa 2027.', hintEn: 'What changes on 2027-07-01.' },
+          { to: localiseUrl('/profiilit/dioni-q-and-a', isEn), labelFi: 'Toimittajan Q&A', labelEn: 'Editor Q&A', hintFi: 'Miksi PUTKI HQ on toimituksellinen julkaisu, ei vihjepalvelu.', hintEn: 'Why PUTKI HQ is an editorial publication, not a tips service.' },
         ]}
       />
       <section className="container-wide pb-14 max-w-3xl">
@@ -374,8 +375,8 @@ export const MittariLahteetArticle = ({ forceLang } = {}) => {
       <InternalLinkStrip
         testId="mittari-lahteet-related"
         links={[
-          { to: '/mittari', labelFi: 'Mittari', labelEn: 'Mittari', hintFi: 'Päivittäinen signaali­syöte näkyvissä etusivulla.', hintEn: 'The daily signals feed itself.' },
-          { to: '/mestari/menetelma', labelFi: 'Mestari-menetelmä', labelEn: 'Mestari methodology', hintFi: 'Miten diagnostiikat pisteyttävät päätös­laadun.', hintEn: 'How the diagnostics score decision quality.' },
+          { to: localiseUrl('/mittari', isEn), labelFi: 'Mittari', labelEn: 'Mittari', hintFi: 'Päivittäinen signaali­syöte näkyvissä etusivulla.', hintEn: 'The daily signals feed itself.' },
+          { to: localiseUrl('/mestari/menetelma', isEn), labelFi: 'Mestari-menetelmä', labelEn: 'Mestari methodology', hintFi: 'Miten diagnostiikat pisteyttävät päätös­laadun.', hintEn: 'How the diagnostics score decision quality.' },
           { to: '/affiliaatti', labelFi: 'Affiliaattipolitiikka', labelEn: 'Affiliate policy', hintFi: 'Miten PUTKI HQ ansaitsee ja missä se julkistetaan.', hintEn: 'How PUTKI HQ earns and where it is disclosed.' },
           { to: '/paivityslog', labelFi: 'Päivitysloki', labelEn: 'Change log', hintFi: 'Kaikki lähde­listan muutokset.', hintEn: 'Every source-list change tracked.' },
         ]}
@@ -468,9 +469,9 @@ export const VoitaUseinKysytytArticle = ({ forceLang } = {}) => {
       <InternalLinkStrip
         testId="voita-faq-related"
         links={[
-          { to: '/voita', labelFi: 'Voita-etusivu', labelEn: 'Voita home', hintFi: 'Aktiiviset arvonnat ja aiemmat voittajat.', hintEn: 'Active raffles + past winners.' },
+          { to: localiseUrl('/voita', isEn), labelFi: 'Voita-etusivu', labelEn: 'Voita home', hintFi: 'Aktiiviset arvonnat ja aiemmat voittajat.', hintEn: 'Active raffles + past winners.' },
           { to: '/voita/saannot', labelFi: 'Voita-säännöt', labelEn: 'Voita rules', hintFi: 'Täydelliset osallistumis­ehdot pdf:nä.', hintEn: 'Full T&C document.' },
-          { to: '/saantely/reform-2027', labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Voita-arvonnat säilyvät uudistuksen jälkeen.', hintEn: 'Voita raffles survive the reform unchanged.' },
+          { to: localiseUrl('/saantely/reform-2027', isEn), labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Voita-arvonnat säilyvät uudistuksen jälkeen.', hintEn: 'Voita raffles survive the reform unchanged.' },
           { to: '/affiliaatti', labelFi: 'Affiliaattipolitiikka', labelEn: 'Affiliate policy', hintFi: 'Sponsoroitujen arvontojen julkistus.', hintEn: 'Sponsored raffle disclosure.' },
         ]}
       />
@@ -559,7 +560,7 @@ export const ProfiilitFounderQAArticle = ({ forceLang } = {}) => {
         links={[
           { to: '/toimitus', labelFi: 'Toimitus', labelEn: 'Editorial team', hintFi: 'Founder-blokki + pseudonymi­julkistus.', hintEn: 'Founder block + pseudonym disclosure.' },
           { to: '/affiliaatti', labelFi: 'Affiliaattipolitiikka', labelEn: 'Affiliate policy', hintFi: 'Talous­malli kokonaan auki.', hintEn: 'Full commercial model opened up.' },
-          { to: '/saantely/reform-2027', labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Konteksti perustajan käynnistämis­ajalle.', hintEn: 'The context for the founder’s launch timing.' },
+          { to: localiseUrl('/saantely/reform-2027', isEn), labelFi: 'Sääntely 2027', labelEn: 'Regulation 2027', hintFi: 'Konteksti perustajan käynnistämis­ajalle.', hintEn: 'The context for the founder’s launch timing.' },
           { to: '/profiilit', labelFi: 'Profiilit-arkisto', labelEn: 'Profiilit archive', hintFi: 'Lisää nimettyjä profiileja.', hintEn: 'More named profiles.' },
         ]}
       />

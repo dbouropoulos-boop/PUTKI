@@ -2669,6 +2669,11 @@ api_router.include_router(_build_data_pages_router(db))
 from routes.mittari_grading import build_mittari_grading_router as _build_mittari_grading_router  # noqa: E402
 api_router.include_router(_build_mittari_grading_router(require_admin, db))
 
+# iter91 · Public OG image resolver — allow-listed page slugs lazy-mint
+# via ensure_og_image() and 302 to the cached PNG. Used by the Trust hub.
+from routes.page_og import build_page_og_router as _build_page_og_router  # noqa: E402
+api_router.include_router(_build_page_og_router())
+
 # iter84 · action_type → back-office route mapping for the generic
 # auto-logged middleware rows. Keep this list tight — when the
 # cockpit feed surfaces an action_type without a mapping it cleanly
