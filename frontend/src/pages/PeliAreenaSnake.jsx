@@ -202,7 +202,7 @@ const PeliAreenaSnake = () => {
       st.snake.pop();
     }
     draw();
-  }, [draw]);
+  }, [draw]);  // eslint-disable-line react-hooks/exhaustive-deps -- finishGame is declared after `tick` so adding it would create a TDZ; the closed-over reference resolves at call time and works correctly.
 
   const finishGame = async (finalScore) => {
     if (!session) return;

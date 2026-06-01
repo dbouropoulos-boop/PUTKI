@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import HomeV5 from "@/pages/HomeV5";
+import PressKit from "@/pages/PressKit";
 import OperatorReview from "@/pages/OperatorReview";
 import CasinoRanking from "@/pages/CasinoRanking";
 import StreamerProfile from "@/pages/StreamerProfile";
@@ -165,6 +166,8 @@ function App() {
 
           {/* Main site */}
           <Route element={<Layout />}>
+            <Route path="lehdistolle" element={<PressKit forceLang="fi" />} />
+            <Route path="en/press" element={<PressKit forceLang="en" />} />
             <Route path="kasinot" element={<CasinoRanking />} />
             <Route path="kasinot/:slug" element={<OperatorReview />} />
             <Route path="striimaajat" element={<StreamerIndex />} />

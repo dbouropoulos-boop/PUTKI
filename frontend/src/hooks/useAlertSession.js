@@ -64,7 +64,10 @@ export const useAlertSession = () => {
     }
   }, [session, _bearer]);
 
-  useEffect(() => { if (session?.token) refresh(); /* eslint-disable-next-line */ }, [session?.token]);
+  useEffect(() => {
+    if (session?.token) refresh();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.token]);
 
   const requestCode = useCallback(async (email) => {
     setError(null);

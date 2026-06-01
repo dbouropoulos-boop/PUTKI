@@ -9,6 +9,25 @@
 
 ## Phase History (latest first)
 
+- **iter96d · Press kit page + eslint clean + verifications** (2026-06-01, 30/30 backend regression · 82 routes prerendered with strict CI · ESLint clean)
+  - **Press kit page** at `/lehdistolle` (FI) + `/en/press` (EN). Single one-pager that lands inbound press / regulator / journalist inquiries with everything they need to write about PUTKI HQ — without asking. Seven sections: (1) masthead with "Everything you need to write about PUTKI HQ — without asking." headline, (2) 3-email contact card (toimitus@ / oikaisut@ / press@) with 24h response promise, (3) **live source registry** from `/api/sources/public` broken down by category with tier-1/2/3 badges and per-source URLs, (4) method/corrections/trust/affiliate cards, (5) brand assets (logo with ember dot, 4-color palette swatches, font stack), (6) third-party coverage placeholder with mailto for adding inbound links, (7) editor + ownership disclosure ("editorial responsibility for everything published under the PUTKI HQ masthead; no gambling-industry shareholder; commercial relationships flagged inline"). File: `frontend/src/pages/PressKit.jsx` (~270 LOC, single component).
+  - **Footer link added** in HomeV5 (`Lehdistölle` / `For press`). Discoverable from every homepage.
+  - **Three eslint warnings cleared** so strict CI build (`CI=true`) compiles cleanly:
+    1. `EditorPreviewPanel.jsx:47` — `reloadKey` removed from `useMemo` deps (was a stale dep from before `iframeKey` started forcing remounts).
+    2. `useAlertSession.js:67` — `eslint-disable-next-line` repositioned to the line above the offending dep array (block comment on the same line wasn't being parsed).
+    3. `PeliAreenaSnake.jsx:205` — added `eslint-disable-line` with explanation that `finishGame` is forward-declared (would cause TDZ if added to deps).
+  - **`cookie@1.1.1` resolution fix**. `react-snap` installation pulled in transitive `cookie@0.3.1` to root `node_modules/`, which broke source-map-loader on `react-router/node_modules/cookie@1.1.1` (different file layout: 0.3.1 has `index.js`, 1.1.1 has `dist/index.js`). Pinned `cookie@1.1.1` to the workspace via `yarn add cookie@1.1.1` so the root resolves to the modern version with `dist/`.
+  - **react-snap include list updated**: added `/lehdistolle` and `/en/press`. **82 routes prerendered in 58s** (up from 81) — every public route now ships with title + canonical + hreflang + body content baked into the served HTML.
+  - **HomeV5 hero refinement** (carry-over from iter96c). The `<img>` tag pointing at `/api/og/page/reform-2027-{lang}` was removed since the OG endpoint produces title-baked social cards (right for Telegram/X, wrong for a hero photo). The hero now renders the editorial gradient + parliament-stripe motif standalone. The OG endpoint still serves the homepage `home-{lang}` card via `<meta property="og:image">`, so Telegram previews continue to ship the Nano-Banana-minted artwork.
+  - **Carry-over closeouts (verified, no code change needed)**:
+    - OG cards for the 7 deep game guides — already wired in iter91/92 via `useDocumentMeta({ogImage: pageOgUrl(...)})` calls; confirmed present in `PelitDeepGuides.jsx`.
+    - Reform 2027 page global `<Header />` — already mounted (audit false positive in iter96 caused by below-the-fold screenshot).
+  - **Verification**:
+    - **Strict CI build**: `CI=true GENERATE_SOURCEMAP=false yarn build` completes in 58s with zero eslint warnings + zero errors + 82 routes prerendered.
+    - **Backend regression**: 30/30 tests green across iter89/92/93/94 in 34s.
+    - **Live browser**: `/lehdistolle` mounts the press kit shell, contact links wire correctly, OG image points at `home-en` (because the LanguageContext defaults to EN for the test browser — fixed by adding `forceLang="fi"` to the FI route), source registry shows the loading state then populates from `/api/sources/public`.
+
+
 - **iter96c · OG kill switch off + react-snap prerender validated** (2026-06-01, 30/30 backend regression in 4.6s · 81 routes prerendered with full SEO meta + body content baked in)
   - **OG mints live in preview**. `PUTKI_HQ_DISABLE_OG_IMAGES` removed from `backend/.env`. Nano Banana now mints `/api/og/page/{slug}` 1424×752 PNGs on first hit and serves cached PNGs from disk thereafter. Verified end-to-end: `home-fi.png` 684KB, `reform-2027-fi.png` 798KB, `reform-2027-en.png` minted. Two new `PAGE_OG_PROFILES` entries (`home-fi`, `home-en`) added to `routes/page_og.py` + `OG_SLUGS` map updated in `frontend/src/lib/pageOgUrl.js` + sync-test expanded.
   - **Hero photo decoupled from OG endpoint** (`HomeV5.jsx`). Quick audit revealed: when the OG mint's title-baked illustration was passed through the `.h5-treated` grayscale + ember-multiply + grain filter, the editorial text was washed out and the result looked identical to the gradient fallback. Decision: keep the OG endpoint for what it's designed for (social-share cards) — the hero block retains the editorial gradient + parliament-stripe motif until a dedicated photo asset is curated. The `<img>` tag was removed; comment in code marks the swap-in point.

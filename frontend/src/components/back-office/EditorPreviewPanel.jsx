@@ -43,8 +43,12 @@ export const EditorPreviewPanel = ({
     if (!url) return '';
     const u = new URL(url, window.location.origin);
     u.searchParams.set('_preview', String(Date.now()) + ':' + manualRefresh);
+    // Note: reloadKey intentionally excluded — it's already part of
+    // iframeKey above which forces the iframe to remount, so URL
+    // recomputation isn't needed for it.
     return u.toString();
-  }, [url, manualRefresh, reloadKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url, manualRefresh]);
 
   // Lock body scroll while the drawer is open on mobile.
   useEffect(() => {
