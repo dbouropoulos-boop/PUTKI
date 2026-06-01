@@ -88,12 +88,14 @@ def test_lead_idempotency_and_validation():
     assert r2.status_code == 200
 
     # invalid email
-    bad = dict(body); bad["email"] = "not-an-email"
+    bad = dict(body)
+    bad["email"] = "not-an-email"
     rb = requests.post(f"{BASE}/api/mestari/diagnostic/lead", json=bad, timeout=12)
     assert rb.status_code in (400, 422), rb.text
 
     # invalid diagnostic
-    bad2 = dict(body); bad2["diagnostic"] = "roulette"
+    bad2 = dict(body)
+    bad2["diagnostic"] = "roulette"
     rb2 = requests.post(f"{BASE}/api/mestari/diagnostic/lead", json=bad2, timeout=12)
     assert rb2.status_code in (400, 422), rb2.text
 

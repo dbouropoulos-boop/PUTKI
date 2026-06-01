@@ -13,13 +13,19 @@ H = {"X-Admin-Token": os.environ.get("PUTKI_HQ_ADMIN_TOKEN", "putki-hq-admin")}
 
 
 def _get(p):
-    try: return httpx.get(f"{BASE}{p}", headers=H, timeout=10.0)
-    except httpx.HTTPError: pytest.skip(p); return None
+    try:
+        return httpx.get(f"{BASE}{p}", headers=H, timeout=10.0)
+    except httpx.HTTPError:
+        pytest.skip(p)
+        return None
 
 
 def _post(p, body=None):
-    try: return httpx.post(f"{BASE}{p}", json=body or {}, headers=H, timeout=10.0)
-    except httpx.HTTPError: pytest.skip(p); return None
+    try:
+        return httpx.post(f"{BASE}{p}", json=body or {}, headers=H, timeout=10.0)
+    except httpx.HTTPError:
+        pytest.skip(p)
+        return None
 
 
 # ── Funnel ───────────────────────────────────────────────────────────
@@ -49,7 +55,8 @@ def test_funnel_requires_admin():
     try:
         r = httpx.get(f"{BASE}/api/admin/leads/funnel", timeout=8.0)
     except httpx.HTTPError:
-        pytest.skip(""); return
+        pytest.skip("")
+        return
     assert r.status_code in (401, 403)
 
 
@@ -79,5 +86,6 @@ def test_notify_winner_requires_admin():
     try:
         r = httpx.post(f"{BASE}/api/admin/voita/raffles/X/notify-winner", timeout=8.0)
     except httpx.HTTPError:
-        pytest.skip(""); return
+        pytest.skip("")
+        return
     assert r.status_code in (401, 403)

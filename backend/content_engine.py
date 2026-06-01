@@ -15,6 +15,7 @@ This module exposes:
   - distribute_content()           -> writes to site surface
 """
 import json
+import logging
 import os
 import re
 import uuid
@@ -22,6 +23,8 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+
+logger = logging.getLogger(__name__)
 
 
 CONTENT_TYPES: Dict[str, Dict[str, Any]] = {
@@ -726,8 +729,7 @@ async def distribute_content(db, generated_content: Dict[str, Any]) -> Dict[str,
         pub["distribution_results"] = delivery_results
     except Exception:
         # Never block site publish on a remote-channel failure.
-        import logging
-        logging.getLogger(__name__).exception("Distribution fanout failed")
+        logger.exception("Distribution fanout failed")
         pub["distribution_results"] = []
 
     await db.generated_content.update_one(
