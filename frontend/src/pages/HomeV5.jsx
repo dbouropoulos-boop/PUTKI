@@ -30,6 +30,7 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 import useJsonLd from '../hooks/useJsonLd';
 import { useLocalisedCanonical } from '../hooks/useLocalisedCanonical';
 import pageOgUrl from '../lib/pageOgUrl';
+import SiteMasthead from '../components/SiteMasthead';
 import '../styles/home_v5.css';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -71,29 +72,10 @@ const StatusBar = ({ mittariScore, mittariState, articlesToday, liveStreamers, l
 };
 
 // ── Masthead ───────────────────────────────────────────────────────
-const Masthead = ({ lang }) => {
-  const items = lang === 'en'
-    ? [['/uutiset', 'News', true], ['/striimaajat', 'Streamers'], ['/mittari', 'Mittari'], ['/mestari', 'Diagnostic'], ['/arvostelut', 'Reviews'], ['/menetelma', 'Method']]
-    : [['/uutiset', 'Uutiset', true], ['/striimaajat', 'Striimaajat'], ['/mittari', 'Mittari'], ['/mestari', 'Pelaajatesti'], ['/arvostelut', 'Arvostelut'], ['/menetelma', 'Menetelmä']];
-  return (
-    <header className="h5-mast" data-testid="home-v5-masthead">
-      <div className="h5-mast-inner">
-        <Link to="/" className="h5-brand" data-testid="home-v5-brand">
-          Putki<span className="h5-bdot">.</span>
-        </Link>
-        <nav className="h5-nav">
-          {items.map(([href, label, active]) => (
-            <Link key={href} to={href} className={active ? 'h5-active' : ''}
-              data-testid={`home-v5-nav-${label.toLowerCase()}`}>{label}</Link>
-          ))}
-        </nav>
-        <Link to="/pelisignaalit" className="h5-mast-cta" data-testid="home-v5-mast-cta">
-          {lang === 'en' ? 'Get morning signals' : 'Tilaa aamun signaalit'} <ArrowRight size={14} />
-        </Link>
-      </div>
-    </header>
-  );
-};
+// iter97: replaced inline Masthead with the shared <SiteMasthead/>
+// component so every page (homepage, mestari, streamers, etc.) wears
+// the same chrome. The inline implementation is gone — `SiteMasthead`
+// owns the brand, nav, CTA and mobile drawer site-wide.
 
 // ── Mittari widget (gauge + state) ────────────────────────────────
 const MittariWidget = ({ score = 0, stateLabel = 'TYYNI', nextDropAt = '09:00', nextDropIn = '12h 47m', lang }) => {
@@ -156,24 +138,18 @@ const Hero = ({ mittariScore, mittariState, lang }) => {
             <div className="h5-hero-img h5-treated">
               <span className="h5-badge">{lang === 'en' ? 'GAMBLING REFORM' : 'RAHAPELIUUDISTUS'}</span>
               <span className="h5-credit">Eduskunta · Helsinki</span>
-              {/* iter96c: editorial hero treatment. The OG endpoint
-                  (`/api/og/page/reform-2027-{lang}`) mints OpenGraph
-                  social cards with title text baked in — perfect for
-                  Telegram / X previews but wrong shape for a hero. The
-                  hero stays as a treated editorial gradient + parliament
-                  stripes until a dedicated photo asset is curated.
-                  When that asset ships, drop it in as `<img src="..."`
-                  inside this wrapper; the .h5-treated filter will apply
-                  the same ember-multiply grade automatically. */}
-              <div aria-hidden style={{
-                position: 'absolute', inset: 0, zIndex: 0,
-                background: 'linear-gradient(135deg, #2a2a26 0%, #1a1814 45%, #0a0a08 100%)',
-              }} />
-              <div aria-hidden style={{
-                position: 'absolute', left: '8%', right: '8%', bottom: '12%', top: '38%',
-                zIndex: 0, opacity: 0.22,
-                background: 'repeating-linear-gradient(180deg, transparent 0 14px, rgba(255,255,255,0.4) 14px 16px)',
-              }} />
+              {/* iter97: curated Reform 2027 hero photo (Nano Banana,
+                  blue-hour Eduskuntatalo wire-service shot). The
+                  `.h5-treated` wrapper applies the signature ember
+                  multiply + grain overlay automatically. */}
+              <img
+                src="/hero/reform-2027-fi.jpg"
+                alt={lang === 'en' ? 'Eduskuntatalo at dusk - Finnish Parliament House, Helsinki' : 'Eduskuntatalo iltahämärässä - Suomen eduskuntatalo, Helsinki'}
+                loading="eager"
+                fetchpriority="high"
+                data-testid="home-v5-hero-img"
+                style={{ position: 'absolute', inset: 0, zIndex: 0 }}
+              />
             </div>
             <h1 className="h5-hero-headline" data-testid="home-v5-hero-headline">
               {lang === 'en'
@@ -797,7 +773,7 @@ const HomeV5 = ({ forceLang }) => {
         mittariScore={mittari.score} mittariState={mittari.state}
         articlesToday={articlesToday} liveStreamers={liveStreamers}
         lastUpdateMin={lastUpdateMin} lang={lang} />
-      <Masthead lang={lang} />
+      <SiteMasthead forceLang={forceLang} />
       <Hero mittariScore={mittari.score} mittariState={mittari.state} lang={lang} />
       <NewsletterCapture lang={lang} />
       <StatsGrid

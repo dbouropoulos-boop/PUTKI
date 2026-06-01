@@ -20,7 +20,7 @@ export const StreamerCard = ({ streamer }) => {
     <div
       data-testid={`streamer-card-${slug}`}
       className="panel block overflow-hidden flex-shrink-0"
-      style={{ width: 260 }}
+      style={{ width: '100%', maxWidth: 260 }}
     >
       <div className="relative aspect-[5/4] overflow-hidden" style={{ background: 'var(--surface-2)' }}>
         <StreamerVideoPreview

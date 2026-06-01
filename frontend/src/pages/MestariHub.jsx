@@ -8,12 +8,12 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Send, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Send } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
-import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import useJsonLd from '../hooks/useJsonLd';
+import SiteMasthead from '../components/SiteMasthead';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
@@ -269,9 +269,7 @@ const TelegramFirstStrip = ({ lang }) => (
 
 
 const MestariHub = () => {
-  const { lang, toggle: toggleLang } = useLang();
-  const { theme, toggle: toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
+  const { lang } = useLang();
   const [copy, setCopy] = useState(FALLBACK);
 
   useEffect(() => {
@@ -323,39 +321,7 @@ const MestariHub = () => {
     <div data-testid="mestari-hub" style={{
       background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh',
     }}>
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        background: 'color-mix(in srgb, var(--bg) 88%, transparent)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 24px',
-      }}>
-        <Link to="/" data-testid="mestari-hub-back" style={{
-          fontFamily: 'ui-monospace, monospace', fontSize: 11,
-          letterSpacing: '0.15em', fontWeight: 700, color: 'var(--ink)',
-          textDecoration: 'none',
-        }}>← PUTKI<span style={{ color: 'var(--muted)', marginLeft: 4 }}>HQ</span></Link>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button type="button" onClick={toggleTheme}
-            data-testid="mestari-hub-theme-toggle"
-            style={{
-              padding: '6px 10px', background: 'transparent',
-              border: '1px solid var(--border)', borderRadius: 999,
-              cursor: 'pointer', color: 'var(--ink)',
-              display: 'inline-flex', alignItems: 'center',
-            }}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
-          <button type="button" onClick={toggleLang}
-            data-testid="mestari-hub-lang-toggle"
-            style={{
-              padding: '6px 14px', background: 'transparent',
-              border: '1px solid var(--border)', borderRadius: 999,
-              cursor: 'pointer', color: 'var(--ink)',
-              fontFamily: 'ui-monospace, monospace', fontSize: 11,
-              letterSpacing: '0.18em', fontWeight: 700,
-            }}>{lang === 'en' ? 'EN / FI' : 'FI / EN'}</button>
-        </div>
-      </header>
+      <SiteMasthead />
 
       <section style={{ maxWidth: 980, margin: '0 auto', padding: '48px 24px 72px' }}>
         <div data-testid="mestari-hub-eyebrow" style={{

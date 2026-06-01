@@ -26,6 +26,7 @@ import { useLang } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useMestariCopy from '../hooks/useMestariCopy';
+import SiteMasthead from '../components/SiteMasthead';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TELEGRAM_BOT = 'Putkihq_bot';
@@ -458,52 +459,11 @@ const MestariLanding = ({ lang, toggleLang, theme, toggleTheme, onStart, c }) =>
       background: T.bg, color: T.ink, fontFamily: T.sans, fontWeight: 300,
       minHeight: '100vh',
     }}>
-      {/* ── HEADER ─────────────────────────────────────────────────── */}
-      <header style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'color-mix(in srgb, var(--bg) 88%, transparent)', backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: `1px solid ${T.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 24px',
-        fontFamily: T.mono, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase',
-      }}>
-        <Link to="/" data-testid="mestari-header-home"
-          style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: T.muted }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = T.accent; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = T.muted; }}>
-          <span>{c.header.backArrow}</span>
-          <span style={{ fontWeight: 600, letterSpacing: '0.15em', color: T.ink }}>
-            PUTKI<span style={{ color: T.muted, marginLeft: 4 }}>HQ</span>
-          </span>
-        </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button type="button" onClick={toggleLang} data-testid="mestari-lang-toggle"
-            style={{
-              color: T.ink, height: 34, padding: '0 12px',
-              border: `1px solid ${T.borderStrong}`, borderRadius: 999,
-              cursor: 'pointer', background: 'transparent',
-              fontFamily: T.mono, fontSize: 11, letterSpacing: '0.16em',
-              fontWeight: 600, textTransform: 'uppercase',
-              display: 'inline-flex', alignItems: 'center',
-            }}>
-            {lang === 'fi' ? 'FI / EN' : 'EN / FI'}
-          </button>
-          <button type="button" onClick={toggleTheme} data-testid="mestari-theme-toggle"
-            aria-label="Toggle theme"
-            style={{
-              width: 34, height: 34, borderRadius: 999,
-              border: `1px solid ${T.borderStrong}`, background: 'transparent',
-              color: T.ink, cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-            {theme === 'dark' ? <Sun strokeWidth={1.5} size={16} /> : <Moon strokeWidth={1.5} size={16} />}
-          </button>
-        </div>
-      </header>
+      {/* ── HEADER (iter97 unified site masthead) ─────────────────── */}
+      <SiteMasthead />
 
       {/* ── HERO ───────────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 1140, margin: '0 auto', padding: '120px 24px 56px' }}>
+      <section style={{ maxWidth: 1140, margin: '0 auto', padding: '56px 24px 56px' }}>
         <div data-testid="mestari-hero-eyebrow" style={{
           fontFamily: T.mono, fontSize: 11, letterSpacing: '0.16em',
           textTransform: 'uppercase', color: T.accent, marginBottom: 22,
