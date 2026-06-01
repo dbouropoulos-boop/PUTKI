@@ -120,6 +120,17 @@ const datasetSchema = (name, canonical, isEn, totalRows) => ({
   inLanguage: isEn ? 'en-FI' : 'fi-FI',
 });
 
+const relativeTimeAgo = (iso, isEn) => {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  const deltaH = Math.max(0, Math.round((Date.now() - t) / 3_600_000));
+  if (deltaH < 1) return isEn ? 'just now' : 'juuri nyt';
+  if (deltaH < 24) return isEn ? `${deltaH}h ago` : `${deltaH} h sitten`;
+  const deltaD = Math.round(deltaH / 24);
+  return isEn ? `${deltaD}d ago` : `${deltaD} pv sitten`;
+};
+
 /* ────────────────────────────────────────────────────────────────
  * 1. Mestari diagnostics dataset summary
  *    FI: /trust/mestari-aineisto    EN: /en/trust/mestari-dataset
@@ -416,8 +427,15 @@ export const MittariAccuracyBacktest = ({ forceLang } = {}) => {
             style={{ borderLeft: '3px solid var(--ember)', background: 'var(--ember-soft)' }}
             data-testid="mittari-accuracy-scaffold"
           >
-            <StatusBadge>{isEn ? 'BACK-TEST IN PROGRESS' : 'BACK-TEST KÄYNNISSÄ'}</StatusBadge>
-            <h2 className="display mt-3 mb-2" style={{ fontSize: 22, color: 'var(--ink)' }}>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <StatusBadge>{isEn ? 'BACK-TEST IN PROGRESS' : 'BACK-TEST KÄYNNISSÄ'}</StatusBadge>
+              {data.last_graded_at && (
+                <StatusBadge tone="neutral" data-testid="mittari-accuracy-last-graded">
+                  {isEn ? `LAST GRADED ${relativeTimeAgo(data.last_graded_at, true)}` : `VIIMEKSI ARVOSTELTU ${relativeTimeAgo(data.last_graded_at, false)}`}
+                </StatusBadge>
+              )}
+            </div>
+            <h2 className="display mb-2" style={{ fontSize: 22, color: 'var(--ink)' }}>
               {isEn ? 'No graded outcomes yet.' : 'Ei vielä arvosteltuja tuloksia.'}
             </h2>
             <p className="font-serif" style={{ fontSize: 15.5, lineHeight: 1.6, color: 'var(--ink-2)' }}>

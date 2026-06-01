@@ -7,6 +7,7 @@ import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
 import { localiseUrl } from '../lib/localiseUrl';
+import { pageOgUrl } from '../lib/pageOgUrl';
 
 /**
  * Phase 4 P1 — deep game-literacy guides.
@@ -143,6 +144,10 @@ export const PelitBlackjackDeep = ({ forceLang } = {}) => {
     description: isEn
       ? 'PUTKI HQ basic-strategy reference + side-bet math + card-counting state of play in Finland 2026.'
       : 'PUTKI HQ:n perusstrategian referenssi, sivupanosten matematiikka, korttilaskennan nykytila Suomessa 2026.',
+    ogTitle: isEn ? 'Blackjack — basic strategy, side bets, card counting' : 'Blackjack — perusstrategia, sivupanokset, korttilaskenta',
+    ogImage: pageOgUrl('pelit/blackjack', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });
@@ -251,6 +256,10 @@ export const PelitSlotitDeep = ({ forceLang } = {}) => {
     description: isEn
       ? 'RTP, volatility, bonus-buy mathematics. PUTKI HQ does not recommend specific slot games — only mechanics.'
       : 'RTP, volatiliteetti, bonus buy -matematiikka. PUTKI HQ ei suosittele yksittäisiä slotteja — vain mekaniikkaa.',
+    ogTitle: isEn ? 'Slots — mechanics, RTP, volatility' : 'Slotit — mekaniikka, RTP, volatiliteetti',
+    ogImage: pageOgUrl('pelit/slotit', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });
@@ -342,6 +351,10 @@ export const PelitBonusmatematiikkaDeep = ({ forceLang } = {}) => {
     description: isEn
       ? 'Wagering, sticky vs cashable, EV math by hand. Most bonuses are negative-EV.'
       : 'Kierrätys, sticky vs cashable, odotusarvon laskenta käsin. Useimmat bonukset ovat negatiivisen odotusarvon.',
+    ogTitle: isEn ? 'Bonus math — why 35× kills' : 'Bonusmatematiikka — miksi 35× tappaa',
+    ogImage: pageOgUrl('pelit/bonusmatematiikka', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });
@@ -446,6 +459,10 @@ export const PelitPokerDeep = ({ forceLang } = {}) => {
     description: isEn
       ? 'Pot odds, hand-selection ranges, video poker pay-table mathematics. Math-first poker literacy from PUTKI HQ.'
       : 'Pot odds, käden valinnan rangit, video pokerin pay table -matematiikka. Matematiikkavetoista pokeri­lukutaitoa PUTKI HQ:lta.',
+    ogTitle: isEn ? 'Poker — Texas Hold’em and video poker fundamentals' : 'Poker — Texas Hold’em ja video poker -perusteet',
+    ogImage: pageOgUrl('pelit/poker', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });
@@ -540,6 +557,10 @@ export const PelitCrapsDeep = ({ forceLang } = {}) => {
     description: isEn
       ? 'Pass line + odds, Don’t Pass, place bets, the sucker centre of the table. House edges sourced from Wizard of Odds.'
       : 'Pass-line + odds, Don’t Pass, place bets, sucker betit keskellä pöytää. Talon edget Wizard of Oddsista.',
+    ogTitle: isEn ? 'Craps — bets ranked by math' : 'Craps — vetojen matemaattinen järjestys',
+    ogImage: pageOgUrl('pelit/craps', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });
@@ -621,6 +642,10 @@ export const PelitRulettiDeep = ({ forceLang } = {}) => {
     description: isEn
       ? 'European 2.7%, American 5.26%, French La Partage 1.35%. House edge is a wheel property, not a bet property.'
       : 'Eurooppalainen 2,7 %, amerikkalainen 5,26 %, ranskalainen La Partage 1,35 %. Talon edge on rattaan ominaisuus, ei vedon.',
+    ogTitle: isEn ? 'Roulette — every bet returns the same edge' : 'Ruletti — kaikki panostukset palaavat samaan',
+    ogImage: pageOgUrl('pelit/ruletti', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });
@@ -690,6 +715,10 @@ export const PelitLiveDeep = ({ forceLang } = {}) => {
     description: isEn
       ? 'Studio economics, latency, RNG vs human dealers. Crazy Time, Lightning Roulette and Live Blackjack literacy.'
       : 'Studio-talous, latenssi, RNG vs ihmiset. Crazy Time, Lightning Roulette ja live blackjack -lukutaitoa.',
+    ogTitle: isEn ? 'Live casino — how the games actually work' : 'Live-kasino — miten pelit oikeasti toimivat',
+    ogImage: pageOgUrl('pelit/live', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });

@@ -6,6 +6,7 @@ import useJsonLd from '../hooks/useJsonLd';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
 import { localiseUrl } from '../lib/localiseUrl';
+import { pageOgUrl } from '../lib/pageOgUrl';
 
 /**
  * Phase 4 wave 2 — four deep editorial articles across the four
@@ -256,6 +257,10 @@ export const MittariLahteetArticle = ({ forceLang } = {}) => {
     description: isEn
       ? 'How Mittari aggregates 28 named sources across 6 categories, how weighting works, and what happens when sources disagree.'
       : 'Miten Mittari yhdistää 28 nimettyä lähdettä kuudessa kategoriassa, miten painotus toimii ja mitä tapahtuu kun lähteet ovat eri mieltä.',
+    ogTitle: isEn ? 'Mittari — the 28 sources behind every signal' : 'Mittari — 28 lähdettä jokaisen signaalin takana',
+    ogImage: pageOgUrl('mittari/lahteet', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates: [
       { lang: 'fi-FI', href: fiUrl },
@@ -426,6 +431,10 @@ export const VoitaUseinKysytytArticle = ({ forceLang } = {}) => {
     description: isEn
       ? 'Free-entry raffle FAQ. Eligibility, draw mechanics, taxation, post-2027 status. PUTKI HQ operates under Arpajaislaki §27.'
       : 'Ilmais­osallistumis­arvontojen FAQ. Osallistumis­oikeus, arvonta­mekaniikka, verotus, 2027 jälkeinen status. PUTKI HQ toimii Arpajais­lain §27 puitteissa.',
+    ogTitle: isEn ? 'Voita raffles — FAQ' : 'Voita-arvonnat — kysytyt',
+    ogImage: pageOgUrl('voita/usein-kysytyt', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates: [
       { lang: 'fi-FI', href: fiUrl },
@@ -516,6 +525,10 @@ export const ProfiilitFounderQAArticle = ({ forceLang } = {}) => {
     description: isEn
       ? 'Why launch ahead of the 2027 reform, how PUTKI HQ makes money, and what would make the founder shut it down. Named, on-the-record.'
       : 'Miksi käynnistää ennen 2027-uudistusta, miten PUTKI HQ tekee rahaa, ja mikä saisi perustajan lopettamaan sen. Nimellä, virallisesti.',
+    ogTitle: isEn ? 'Dioni Bouropoulos — PUTKI HQ founder Q&A' : 'Dioni Bouropoulos — PUTKI HQ -perustajan Q&A',
+    ogImage: pageOgUrl('profiilit/dioni-q-and-a', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates: [
       { lang: 'fi-FI', href: fiUrl },

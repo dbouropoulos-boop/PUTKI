@@ -142,13 +142,15 @@ const Card = ({ row, testId }) => (
   </Link>
 );
 
+import { pageOgUrl } from '../lib/pageOgUrl';
+
 const TrustHub = ({ forceLang } = {}) => {
   const { lang, isEn, canonical, alternates } = useLocalisedCanonical({
     fiPath: '/luotettavuus', enPath: '/en/trust', forceLang,
   });
   void useLang;
 
-  const ogImage = `${process.env.REACT_APP_BACKEND_URL}/api/og/page/${isEn ? 'trust-hub-en' : 'trust-hub-fi'}`;
+  const ogImage = pageOgUrl('trust-hub', isEn);
 
   useDocumentMeta({
     title: isEn ? 'Trust — how PUTKI HQ measures itself · PUTKI HQ' : 'Luotettavuus — miten PUTKI HQ mittaa itseään · PUTKI HQ',

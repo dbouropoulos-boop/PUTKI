@@ -268,10 +268,11 @@ const BackOfficeToday = () => {
   const [queue, setQueue]           = useState(null);   // queue counts
   const [killed, setKilled]         = useState(null);   // news-watch rejected
   const [webhooks, setWebhooks]     = useState(null);   // webhooks status
+  const [grading, setGrading]       = useState(null);   // iter92: mittari grading status
 
   const refresh = useCallback(async () => {
     if (!token) return;
-    const [c, v, l1, l2, q, k, w] = await Promise.all([
+    const [c, v, l1, l2, q, k, w, g] = await Promise.all([
       safeJson(`${BACKEND}/api/admin/bot/config`,                headers),
       safeJson(`${BACKEND}/api/admin/voita/raffles`,             headers),
       safeJson(`${BACKEND}/api/admin/leads/funnel?hours=24`,     headers),
@@ -279,9 +280,10 @@ const BackOfficeToday = () => {
       safeJson(`${BACKEND}/api/admin/queue?status=queued&limit=1`, headers),
       safeJson(`${BACKEND}/api/admin/news-watch/rejected?limit=500`, headers),
       safeJson(`${BACKEND}/api/webhooks/status`,                 {}),
+      safeJson(`${BACKEND}/api/admin/mittari/grading/status`,    headers),
     ]);
     setCfg(c); setVoita(v); setLeads24(l1); setLeads48(l2);
-    setQueue(q); setKilled(k); setWebhooks(w);
+    setQueue(q); setKilled(k); setWebhooks(w); setGrading(g);
   }, [token, headers]);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -417,6 +419,12 @@ const BackOfficeToday = () => {
             count={webhookFailures}
             icon={Webhook}
             to="/back-office/webhooks" />
+          <PendingPill
+            testid="bo-today-pending-mittari-grading"
+            label="MITTARI · UNGRADED"
+            count={grading?.ungraded_count ?? 0}
+            icon={Activity}
+            to="/back-office/mittari-grading" />
         </div>
       </section>
 

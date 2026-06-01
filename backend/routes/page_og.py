@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 # Anyone touching this dict should keep the cache slug stable — changing it
 # silently invalidates every social-card preview already in the wild.
 PAGE_OG_PROFILES: Dict[str, Dict[str, str]] = {
+    # ── Trust hub capstone ─────────────────────────────────────────
     "trust-hub-fi": {
         "cache_slug": "trust-hub-fi",
         "headline": "Luotettavuus — miten PUTKI HQ mittaa itseään",
@@ -48,6 +49,32 @@ PAGE_OG_PROFILES: Dict[str, Dict[str, str]] = {
         "headline": "Trust — how PUTKI HQ measures itself",
         "category": "Trust",
     },
+    # ── Wave-1 deep pages (Reform 2027 + 7 /pelit/* guides) ────────
+    "reform-2027-fi":   {"cache_slug": "reform-2027-fi",   "headline": "Suomen rahapelilaki 2025/2027 — selkokielellä", "category": "Sääntely"},
+    "reform-2027-en":   {"cache_slug": "reform-2027-en",   "headline": "Finnish Gambling Act 2025/2027 — plain language", "category": "Regulation"},
+    "pelit-blackjack-fi": {"cache_slug": "pelit-blackjack-fi", "headline": "Blackjack — perusstrategia ja sivupanokset", "category": "Pelit"},
+    "pelit-blackjack-en": {"cache_slug": "pelit-blackjack-en", "headline": "Blackjack — basic strategy and side bets",     "category": "Games"},
+    "pelit-poker-fi":   {"cache_slug": "pelit-poker-fi",   "headline": "Poker — pot odds ja video poker -matematiikka",   "category": "Pelit"},
+    "pelit-poker-en":   {"cache_slug": "pelit-poker-en",   "headline": "Poker — pot odds + video poker math",             "category": "Games"},
+    "pelit-slotit-fi":  {"cache_slug": "pelit-slotit-fi",  "headline": "Slotit — RTP, volatiliteetti, bonus buy",         "category": "Pelit"},
+    "pelit-slotit-en":  {"cache_slug": "pelit-slotit-en",  "headline": "Slots — RTP, volatility, bonus buy",              "category": "Games"},
+    "pelit-craps-fi":   {"cache_slug": "pelit-craps-fi",   "headline": "Craps — vetojen matemaattinen järjestys",         "category": "Pelit"},
+    "pelit-craps-en":   {"cache_slug": "pelit-craps-en",   "headline": "Craps — bets ranked by math",                     "category": "Games"},
+    "pelit-ruletti-fi": {"cache_slug": "pelit-ruletti-fi", "headline": "Ruletti — valitse ratas, ei vetoa",               "category": "Pelit"},
+    "pelit-ruletti-en": {"cache_slug": "pelit-ruletti-en", "headline": "Roulette — pick the wheel, not the bet",          "category": "Games"},
+    "pelit-live-fi":    {"cache_slug": "pelit-live-fi",    "headline": "Live-kasino — studio, RNG, latenssi",             "category": "Pelit"},
+    "pelit-live-en":    {"cache_slug": "pelit-live-en",    "headline": "Live casino — studio, RNG, latency",              "category": "Games"},
+    "pelit-bonusmath-fi": {"cache_slug": "pelit-bonusmath-fi", "headline": "Bonusmatematiikka — miksi 35× tappaa",        "category": "Pelit"},
+    "pelit-bonusmath-en": {"cache_slug": "pelit-bonusmath-en", "headline": "Bonus math — why 35× kills the EV",           "category": "Games"},
+    # ── Wave-2 long-form articles ──────────────────────────────────
+    "mestari-method-fi":   {"cache_slug": "mestari-method-fi",   "headline": "Mestari-diagnostiikat — menetelmä selkokielellä", "category": "Menetelmä"},
+    "mestari-method-en":   {"cache_slug": "mestari-method-en",   "headline": "Mestari diagnostics — methodology in plain language", "category": "Methodology"},
+    "mittari-sources-fi":  {"cache_slug": "mittari-sources-fi",  "headline": "Mittari — 28 nimettyä lähdettä",                  "category": "Lähteet"},
+    "mittari-sources-en":  {"cache_slug": "mittari-sources-en",  "headline": "Mittari — 28 named sources",                      "category": "Sources"},
+    "voita-faq-fi":        {"cache_slug": "voita-faq-fi",        "headline": "Voita-arvonnat — 10 vastausta",                   "category": "Voita"},
+    "voita-faq-en":        {"cache_slug": "voita-faq-en",        "headline": "Voita raffles — 10 answers",                      "category": "Voita"},
+    "founder-qa-fi":       {"cache_slug": "founder-qa-fi",       "headline": "Dioni Bouropoulos — PUTKI HQ -perustajan Q&A",    "category": "Profiilit"},
+    "founder-qa-en":       {"cache_slug": "founder-qa-en",       "headline": "Dioni Bouropoulos — PUTKI HQ founder Q&A",        "category": "Profiilit"},
 }
 
 

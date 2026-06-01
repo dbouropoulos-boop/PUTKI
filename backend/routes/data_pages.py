@@ -191,6 +191,20 @@ def build_data_pages_router(db) -> APIRouter:
             })
         per_class_payload.sort(key=lambda p: p["signal_class"])
 
+        # iter92: expose `last_graded_at` so the public scaffold block
+        # can render a "Last graded N hours ago" trust badge. We
+        # consult the same `mittari_signal_outcomes` collection used
+        # for the per-class buckets, sorted by graded_at desc.
+        last_graded: str | None = None
+        try:
+            latest_cursor = db.mittari_signal_outcomes.find(
+                {}, {"_id": 0, "graded_at": 1},
+            ).sort([("graded_at", -1)]).limit(1)
+            async for row in latest_cursor:
+                last_graded = row.get("graded_at")
+        except Exception:  # noqa: BLE001
+            last_graded = None
+
         total_n = sum(p["n"] for p in per_class_payload)
         total_hits = sum(p["hits"] for p in per_class_payload)
         return {
@@ -201,6 +215,7 @@ def build_data_pages_router(db) -> APIRouter:
             "total_hits": total_hits,
             "total_hit_rate": round(total_hits / total_n, 4) if total_n > 0 else 0,
             "status": "live" if total_n > 0 else "scaffold",
+            "last_graded_at": last_graded,
             "computed_at": datetime.now(timezone.utc).isoformat(),
             "schema_version": 1,
         }

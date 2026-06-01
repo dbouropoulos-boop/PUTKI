@@ -7,6 +7,7 @@ import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import { EditorialFooter } from '../components/EditorialFooter';
 import InternalLinkStrip from '../components/InternalLinkStrip';
 import { localiseUrl } from '../lib/localiseUrl';
+import { pageOgUrl } from '../lib/pageOgUrl';
 
 /**
  * /saantely/reform-2027 — Finnish Gambling Act 2025/2027 deep briefing.
@@ -134,6 +135,9 @@ const Reform2027Hub = ({ forceLang } = {}) => {
     ogTitle: isEn
       ? 'Finnish Gambling Act 2025/2027 — the PUTKI HQ briefing'
       : 'Suomen rahapelilaki 2025/2027 — PUTKI HQ:n briefing',
+    ogImage: pageOgUrl('reform-2027', isEn),
+    ogUrl: canonical,
+    twitterCard: 'summary_large_image',
     canonical,
     alternates,
   });
