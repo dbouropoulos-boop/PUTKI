@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 import { EditorPreviewPanel, PreviewToggle } from '../components/back-office/EditorPreviewPanel';
+import { adminFetch } from '../lib/fetchAdmin';
 import {
   HeaderHeroSection,
   MethodStackSection,
@@ -50,7 +51,7 @@ const BackOfficeMestariCopy = () => {
     if (!token) return;
     setStatus('Loading…');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mestari/copy`, { headers });
+      const r = await adminFetch(`/api/admin/mestari/copy`, { headers });
       if (!r.ok) { setStatus(`Load failed (${r.status})`); return; }
       const j = await r.json();
       setData(j);
@@ -68,9 +69,8 @@ const BackOfficeMestariCopy = () => {
     if (!form) return;
     setSaving(true); setStatus('Saving…');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mestari/copy`, {
-        method: 'PUT', headers, body: JSON.stringify(form),
-      });
+      const r = await adminFetch(`/api/admin/mestari/copy`, {
+        method: 'PUT', headers, body: JSON.stringify(form)});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setStatus(`Save failed: ${j.detail || r.status}`);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { Lock, RefreshCw, Sparkles, Check, X, Pencil, Edit3, FileText, Save } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -157,12 +158,9 @@ const GenerateForm = ({ token, onGenerated, contentTypes }) => {
     setBusy(true); setError('');
     try {
       const parsed = JSON.parse(payload);
-      const r = await fetch(`${BACKEND}/api/admin/queue/generate`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/queue/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ content_type: type, signal_payload: parsed }),
-      });
+        body: JSON.stringify({ content_type: type, signal_payload: parsed })});
       if (!r.ok) {
         const txt = await r.text();
         throw new Error(`${r.status}: ${txt}`);
@@ -225,7 +223,7 @@ const GuidelinesPanel = ({ token, onClose }) => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`${BACKEND}/api/admin/guidelines`, { headers: { 'X-Admin-Token': token } })
+    adminFetch(`/api/admin/guidelines`, {})
       .then((r) => r.json())
       .then((d) => {
         setGuidelines(d.guidelines || []);
@@ -242,12 +240,9 @@ const GuidelinesPanel = ({ token, onClose }) => {
     if (!activeKey) return;
     setSaving(true);
     try {
-      await fetch(`${BACKEND}/api/admin/guidelines/${activeKey}`, {
-        credentials: 'include',
+      await adminFetch(`/api/admin/guidelines/${activeKey}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ text: editText }),
-      });
+        body: JSON.stringify({ text: editText })});
       setGuidelines((prev) => prev.map((g) => (g.key === activeKey ? { ...g, text: editText, updated_at: new Date().toISOString() } : g)));
     } finally {
       setSaving(false);
@@ -316,11 +311,11 @@ const SignalPipelineStatus = ({ token }) => {
 
   const refresh = useCallback(async () => {
     try {
-      const r = await fetch(`${BACKEND}/api/admin/signals?limit=200`, { headers: { 'X-Admin-Token': token } });
+      const r = await adminFetch(`/api/admin/signals?limit=200`, {});
       if (!r.ok) return;
       setData(await r.json());
     } catch {}
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -331,7 +326,7 @@ const SignalPipelineStatus = ({ token }) => {
   const triggerPoll = async () => {
     setBusy(true);
     try {
-      await fetch(`${BACKEND}/api/admin/signals/poll`, { method: 'POST', headers: { 'X-Admin-Token': token } });
+      await adminFetch(`/api/admin/signals/poll`, { method: 'POST'});
       await refresh();
     } finally {
       setBusy(false);
@@ -389,11 +384,11 @@ const ScheduleStatus = ({ token }) => {
 
   const refresh = useCallback(async () => {
     try {
-      const r = await fetch(`${BACKEND}/api/admin/scheduler/status`, { headers: { 'X-Admin-Token': token } });
+      const r = await adminFetch(`/api/admin/scheduler/status`, {});
       if (!r.ok) return;
       setData(await r.json());
     } catch {}
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -404,10 +399,8 @@ const ScheduleStatus = ({ token }) => {
   const fire = async (ct) => {
     setBusy(ct);
     try {
-      await fetch(`${BACKEND}/api/admin/scheduler/tick?force_content_type=${encodeURIComponent(ct)}`, {
-        credentials: 'include',
-        method: 'POST', headers: { 'X-Admin-Token': token },
-      });
+      await adminFetch(`/api/admin/scheduler/tick?force_content_type=${encodeURIComponent(ct)}`, {
+        method: 'POST'});
       await refresh();
     } finally { setBusy(null); }
   };
@@ -488,7 +481,7 @@ const BackOfficeQueue = () => {
     if (!token) return;
     const qs = new URLSearchParams({ status: statusFilter });
     if (contentTypeFilter) qs.set('content_type', contentTypeFilter);
-    const r = await fetch(`${BACKEND}/api/admin/queue?${qs.toString()}`, { headers: headers() });
+    const r = await adminFetch(`/api/admin/queue?${qs.toString()}`, { headers: headers() });
     if (!r.ok) { setAuthError('Wrong token'); setAuthed(false); return; }
     const d = await r.json();
     setItems(d.items || []);
@@ -500,7 +493,7 @@ const BackOfficeQueue = () => {
   useEffect(() => {
     if (!authed) return;
     refresh();
-    fetch(`${BACKEND}/api/admin/content-types`, { headers: headers() })
+    adminFetch(`/api/admin/content-types`, { headers: headers() })
       .then((r) => r.json())
       .then((d) => setContentTypes(d.content_types || []));
   }, [authed, refresh, headers]);
@@ -544,14 +537,14 @@ const BackOfficeQueue = () => {
 
   const onApprove = async (id, body) => {
     setBusy(true);
-    await fetch(`${BACKEND}/api/admin/queue/${id}/approve`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
+    await adminFetch(`/api/admin/queue/${id}/approve`, { method: 'POST', headers: headers(), body: JSON.stringify(body) });
     setBusy(false);
     refresh();
   };
   const onEdit = onApprove; // edit goes through approve with edited_text in body
   const onKill = async (id) => {
     setBusy(true);
-    await fetch(`${BACKEND}/api/admin/queue/${id}/kill`, { method: 'POST', headers: headers() });
+    await adminFetch(`/api/admin/queue/${id}/kill`, { method: 'POST', headers: headers() });
     setBusy(false);
     refresh();
   };

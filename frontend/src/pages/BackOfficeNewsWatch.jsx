@@ -9,6 +9,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -46,7 +47,7 @@ const BackOfficeNewsWatch = () => {
 
   const fetchStats = useCallback(async () => {
     try {
-      const r = await fetch(`${BACKEND}/api/admin/news-watch/stats`, { headers });
+      const r = await adminFetch(`/api/admin/news-watch/stats`, { headers });
       if (r.ok) setStatsData(await r.json());
     } catch { /* noop */ }
   }, [headers]);
@@ -84,10 +85,9 @@ const BackOfficeNewsWatch = () => {
   const act = async (url, action, body = {}) => {
     setBusyUrl(`${action}-${url}`);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/news-watch/${action}`, {
+      const r = await adminFetch(`/api/admin/news-watch/${action}`, {
         method: 'POST', headers,
-        body: JSON.stringify({ url, ...body }),
-      });
+        body: JSON.stringify({ url, ...body })});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         showToast(`✗ ${action}: ${j.detail || r.status}`);

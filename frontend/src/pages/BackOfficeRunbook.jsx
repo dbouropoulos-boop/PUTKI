@@ -10,6 +10,7 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 // iter82 (Task 2.3): legacy localStorage key removed. Token flows in
@@ -179,7 +180,7 @@ const BackOfficeRunbook = () => {
   useEffect(() => {
     if (!token) return;
     setBusy(true); setErr(null);
-    fetch(`${BACKEND}/api/admin/docs/runbook`, { headers: { 'X-Admin-Token': token } })
+    adminFetch(`/api/admin/docs/runbook`, {})
       .then((r) => r.ok ? r.json() : Promise.reject(`auth ${r.status}`))
       .then((b) => setMd(b.markdown))
       .catch((e) => setErr(String(e)))

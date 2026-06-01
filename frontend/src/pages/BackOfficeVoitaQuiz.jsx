@@ -13,6 +13,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -136,7 +137,7 @@ const BackOfficeVoitaQuiz = () => {
   const load = useCallback(async () => {
     if (!token || !authed) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/settings`, { headers: { 'X-Admin-Token': token } });
+      const r = await adminFetch(`/api/admin/settings`, {});
       if (r.ok) {
         const d = await r.json();
         let cfg = d.voita_quiz_config;
@@ -158,12 +159,9 @@ const BackOfficeVoitaQuiz = () => {
   const save = async () => {
     setBusy(true); setError('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/settings`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/settings`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ voita_quiz_config: config, voita_hero: hero }),
-      });
+        body: JSON.stringify({ voita_quiz_config: config, voita_hero: hero })});
       if (r.ok) {
         const d = await r.json();
         setConfig(d.voita_quiz_config || config);

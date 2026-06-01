@@ -16,6 +16,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const PLATFORMS = ['twitch', 'kick', 'youtube'];
@@ -72,12 +73,9 @@ const Row = ({ row, token, onChanged }) => {
   const generateDraft = useCallback(async (force = false) => {
     setBusy('draft'); setError(''); setInfo('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamer-meta/generate-draft`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/streamer-meta/generate-draft`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ platform: row.platform, user_login: row.user_login, force }),
-      });
+        body: JSON.stringify({ platform: row.platform, user_login: row.user_login, force })});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         const reason = j?.detail?.reason || j?.detail || 'unknown_error';
@@ -92,20 +90,16 @@ const Row = ({ row, token, onChanged }) => {
     } finally {
       setBusy(null);
     }
-  }, [row.platform, row.user_login, token, onChanged]);
+  }, [row.platform, row.user_login, onChanged]);
 
   const publish = useCallback(async () => {
     setBusy('publish'); setError(''); setInfo('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamer-meta/publish`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/streamer-meta/publish`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
           platform: row.platform, user_login: row.user_login,
-          meta_line_fi: editFi, meta_line_en: editEn,
-        }),
-      });
+          meta_line_fi: editFi, meta_line_en: editEn})});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setError(`Publish failed · ${j.detail || r.status}`);
@@ -118,20 +112,16 @@ const Row = ({ row, token, onChanged }) => {
     } finally {
       setBusy(null);
     }
-  }, [row.platform, row.user_login, editFi, editEn, token, onChanged]);
+  }, [row.platform, row.user_login, editFi, editEn, onChanged]);
 
   const toggleSuppress = useCallback(async () => {
     setBusy('suppress'); setError(''); setInfo('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamer-meta/suppress`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/streamer-meta/suppress`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
           platform: row.platform, user_login: row.user_login,
-          suppressed: !row.suppressed,
-        }),
-      });
+          suppressed: !row.suppressed})});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setError(`Suppress failed · ${j.detail || r.status}`);
@@ -143,7 +133,7 @@ const Row = ({ row, token, onChanged }) => {
     } finally {
       setBusy(null);
     }
-  }, [row.platform, row.user_login, row.suppressed, token, onChanged]);
+  }, [row.platform, row.user_login, row.suppressed, onChanged]);
 
   return (
     <>
@@ -292,11 +282,11 @@ const BackOfficeStreamerMeta = () => {
   const [addLogin, setAddLogin] = useState('');
 
   const load = useCallback(async () => {
-    if (!token || !authed) return;
+    if (!authed) return;
     setLoading(true);
     try {
       const [metaRes, liveRes] = await Promise.all([
-        fetch(`${BACKEND}/api/admin/streamer-meta/v2`, { headers: { 'X-Admin-Token': token } })
+        adminFetch(`/api/admin/streamer-meta/v2`, {})
           .then((r) => r.ok ? r.json() : { items: [], rate_limit: null }),
         fetch(`${BACKEND}/api/streamers/live`)
           .then((r) => r.ok ? r.json() : { streamers: [] }),
@@ -310,7 +300,7 @@ const BackOfficeStreamerMeta = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, authed]);
+  }, [authed]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -363,12 +353,9 @@ const BackOfficeStreamerMeta = () => {
     if (!login || !token) return;
     setAddLogin('');
     // Just seed the row with empty fields so it shows up; AI draft can fill it in.
-    await fetch(`${BACKEND}/api/admin/streamer-meta`, {
-      credentials: 'include',
+    await adminFetch(`/api/admin/streamer-meta`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-      body: JSON.stringify({ platform: addPlatform, user_login: login, meta_fi: '', meta_en: '' }),
-    });
+      body: JSON.stringify({ platform: addPlatform, user_login: login, meta_fi: '', meta_en: '' })});
     await load();
   };
 

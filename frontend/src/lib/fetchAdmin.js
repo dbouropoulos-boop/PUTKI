@@ -1,81 +1,70 @@
 /**
- * iter96 · fetchAdmin — canonical wrapper for back-office API calls.
+ * iter96 · fetchAdmin — canonical wrappers for back-office API calls.
  *
- * Why this exists. Until iter94 every admin fetch in the codebase did:
+ * Two flavours so callsites can pick the ergonomics they want:
  *
- *   fetch(`${BACKEND}/api/admin/foo`, {
- *     headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
- *     body: JSON.stringify(body),
- *   })
+ *   adminFetch(path, opts?)  — DROP-IN replacement for `fetch()`.
+ *     Returns the raw `Response` object, never throws on 4xx/5xx.
+ *     Adds `credentials: 'include'` so the cookie session travels and
+ *     auto-attaches `X-Admin-Token` if a `token` option (or the
+ *     `useBackOfficeToken` shell-injected token) is supplied.
+ *     Use this when the existing call does `if (r.ok) { ... }` or
+ *     handles 401 → re-auth manually. Migrating from raw fetch is a
+ *     simple URL prefix change.
  *
- * That made three things easy to get wrong:
- *   1. forgetting `credentials: 'include'` (broke the new cookie session),
- *   2. spreading the token via a hand-rolled header object,
- *   3. having 38 different copies of "parse JSON, error on non-OK".
+ *   fetchAdmin(path, opts?)  — ergonomic JSON wrapper.
+ *     Returns parsed JSON on success, throws { status, body, message }
+ *     on non-OK. Auto-serialises `body` to JSON + sets Content-Type.
+ *     Best for new code or POSTs that don't need 401 nuance.
  *
- * The cookie session (iter94) is now canonical. `fetchAdmin()` builds the
- * right request shape from a flat options object and parses JSON for you.
- * Pages that still pass `token` for back-compat keep working — the header
- * tags along, the cookie does the actual auth.
+ * Both share the same option shape:
+ *   { method, body, headers, token, signal, parse }
  *
- * Usage:
- *
- *   import { fetchAdmin } from '../lib/fetchAdmin';
- *
- *   // GET — returns parsed JSON or throws { status, body, message }
- *   const data = await fetchAdmin('/api/admin/queue?status=queued');
- *
- *   // POST with body
- *   await fetchAdmin('/api/admin/queue/123/approve', {
- *     method: 'POST',
- *     body: { selected_variant_index: 0 },
- *   });
- *
- *   // Raw response (no JSON parse, e.g. for sitemap.xml etc.)
- *   const res = await fetchAdmin('/api/admin/export', { parse: false });
- *
- *   // Legacy: still pass the token if you have one — it's appended as the
- *   // X-Admin-Token header for back-compat. Drop this once the page is
- *   // verified to work via cookie alone.
- *   await fetchAdmin('/api/admin/foo', { token });
- *
- * Error shape thrown on non-OK:
- *   { status: number, body: any, message: string }
+ * `parse` only matters for fetchAdmin (default true). Pass `parse: false`
+ * to get the raw Response back through the JSON helper.
  */
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
 const isBodyMethod = (m) => m && /^(POST|PUT|PATCH|DELETE)$/i.test(m);
 
-export const fetchAdmin = async (path, opts = {}) => {
+/**
+ * Build the shared fetch init for both wrappers. Returns the absolute URL
+ * + RequestInit pair so callers can adapt response handling per flavour.
+ */
+const buildAdminRequest = (path, opts = {}) => {
   if (!path || !path.startsWith('/api/')) {
-    throw new Error(`fetchAdmin: path must start with /api/ (got "${path}")`);
+    throw new Error(`adminFetch: path must start with /api/ (got "${path}")`);
   }
-  const {
-    method = 'GET',
-    body,
-    headers = {},
-    token,
-    signal,
-    parse = true,
-  } = opts;
-
+  const { method = 'GET', body, headers = {}, token, signal } = opts;
   const requestHeaders = { ...headers };
   if (token) requestHeaders['X-Admin-Token'] = token;
-  if (isBodyMethod(method) && body !== undefined && !('Content-Type' in requestHeaders)) {
+  if (isBodyMethod(method) && body !== undefined && body !== null && !('Content-Type' in requestHeaders)) {
     requestHeaders['Content-Type'] = 'application/json';
   }
-
   const init = {
     method,
     credentials: 'include',
     headers: requestHeaders,
     signal,
   };
-  if (isBodyMethod(method) && body !== undefined) {
+  if (isBodyMethod(method) && body !== undefined && body !== null) {
     init.body = typeof body === 'string' ? body : JSON.stringify(body);
   }
+  return { url: `${BACKEND}${path}`, init };
+};
 
-  const res = await fetch(`${BACKEND}${path}`, init);
+/**
+ * adminFetch — drop-in replacement for `fetch()` on /api/admin/* endpoints.
+ * Returns the raw Response, never throws on 4xx/5xx. Cookie auto-included.
+ */
+export const adminFetch = (path, opts = {}) => {
+  const { url, init } = buildAdminRequest(path, opts);
+  return fetch(url, init);
+};
+
+export const fetchAdmin = async (path, opts = {}) => {
+  const { parse = true } = opts;
+  const res = await adminFetch(path, opts);
   if (!parse) return res;
 
   if (!res.ok) {
@@ -86,7 +75,6 @@ export const fetchAdmin = async (path, opts = {}) => {
     err.body = payload;
     throw err;
   }
-  // Some admin endpoints return 204 No Content
   if (res.status === 204) return null;
   try { return await res.json(); }
   catch { return null; }

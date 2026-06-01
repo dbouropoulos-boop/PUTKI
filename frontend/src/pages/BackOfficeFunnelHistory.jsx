@@ -13,6 +13,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
+import { adminFetch } from '../lib/fetchAdmin';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip,
   CartesianGrid, Legend, BarChart, Bar,
@@ -46,10 +47,7 @@ const BackOfficeFunnelHistory = () => {
     if (!token) return;
     setBusy(true); setErr(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/bot/funnel/history?days=${days}`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/bot/funnel/history?days=${days}`, {});
       if (!r.ok) { setAuthed(false); setErr(`auth failed (${r.status})`); return; }
       setData(await r.json());
       setAuthed(true);

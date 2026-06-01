@@ -12,6 +12,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -89,7 +90,7 @@ const BackOfficeVoyagerRotation = () => {
     if (!token) return;
     setStatus('Loading…');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voyager/rotation`, { headers });
+      const r = await adminFetch(`/api/admin/voyager/rotation`, { headers });
       if (!r.ok) { setStatus(`Load failed (${r.status})`); return; }
       const j = await r.json();
       setData(j);
@@ -109,9 +110,8 @@ const BackOfficeVoyagerRotation = () => {
     if (!form) return;
     setSaving(true); setStatus('Saving…');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voyager/rotation`, {
-        method: 'PUT', headers, body: JSON.stringify(form),
-      });
+      const r = await adminFetch(`/api/admin/voyager/rotation`, {
+        method: 'PUT', headers, body: JSON.stringify(form)});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setStatus(`Save failed: ${j.detail || r.status}`);

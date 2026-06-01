@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2, Image, Youtube } from 'lucide-react';
 import StreamerAvatar from '../components/StreamerAvatar';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -52,7 +53,7 @@ const StreamersAdmin = () => {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamers`, { headers: headers() });
+      const r = await adminFetch(`/api/admin/streamers`, { headers: headers() });
       if (!r.ok) { setError('Wrong token'); setAuthed(false); return; }
       const d = await r.json();
       setStreamers(d.streamers || []);
@@ -91,9 +92,8 @@ const StreamersAdmin = () => {
     if (!draft.slug.trim() || !draft.name.trim()) { alert('slug + name required'); return; }
     setSaving(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamers/${draft.slug}`, {
-        method: 'PUT', headers: headers(), body: JSON.stringify(draft),
-      });
+      const r = await adminFetch(`/api/admin/streamers/${draft.slug}`, {
+        method: 'PUT', headers: headers(), body: JSON.stringify(draft)});
       if (!r.ok) throw new Error(await r.text());
       await refresh();
       startNew();
@@ -103,7 +103,7 @@ const StreamersAdmin = () => {
 
   const remove = async (slug) => {
     if (!window.confirm(`Delete ${slug}?`)) return;
-    await fetch(`${BACKEND}/api/admin/streamers/${slug}`, { method: 'DELETE', headers: headers() });
+    await adminFetch(`/api/admin/streamers/${slug}`, { method: 'DELETE', headers: headers() });
     if (selected === slug) startNew();
     refresh();
   };
@@ -115,9 +115,8 @@ const StreamersAdmin = () => {
     if (!window.confirm('Re-fetch every streamer\'s profile picture from Twitch / Kick / YouTube? This takes ~5-10s.')) return;
     setRefreshingAvatars(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamers/refresh-avatars?force=true`, {
-        method: 'POST', headers: headers(),
-      });
+      const r = await adminFetch(`/api/admin/streamers/refresh-avatars?force=true`, {
+        method: 'POST', headers: headers()});
       if (!r.ok) throw new Error(await r.text());
       const d = await r.json();
       setAvatarSummary(d);
@@ -135,9 +134,8 @@ const StreamersAdmin = () => {
     if (!window.confirm('Re-run the FULL fallback cascade (platform → channel OG → DDG search → Wikipedia) on every streamer currently flagged avatar_failed=true. Can take 30-60s.')) return;
     setRefreshingFailed(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamers/refresh-failed-avatars`, {
-        method: 'POST', headers: headers(),
-      });
+      const r = await adminFetch(`/api/admin/streamers/refresh-failed-avatars`, {
+        method: 'POST', headers: headers()});
       if (!r.ok) throw new Error(await r.text());
       const j = await r.json();
       const lines = [
@@ -185,10 +183,8 @@ const StreamersAdmin = () => {
   const refreshOneAvatar = async (slug) => {
     setRefreshingOne(slug);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/streamers/${encodeURIComponent(slug)}/refresh-avatar`, {
-        credentials: 'include',
-        method: 'POST', headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/streamers/${encodeURIComponent(slug)}/refresh-avatar`, {
+        method: 'POST'});
       const j = await r.json();
       if (!r.ok) throw new Error(j.detail || 'failed');
       await load();

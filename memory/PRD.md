@@ -9,6 +9,25 @@
 
 ## Phase History (latest first)
 
+- **iter96b · adminFetch codemod sweep (Phase 5 cleanup)** (2026-06-01, ESLint clean · 34/34 backend regression green · live-verified)
+  - **122 admin `fetch()` calls migrated to `adminFetch()` across 33 files** via a Python codemod (`scripts/codemod_admin_fetch.py`). The wrapper preserves the existing `fetch()` contract (returns Response, no throw) so `.ok ? .json()` patterns at callsites kept working unchanged — no semantic shifts, just URL prefix + auth bundling.
+  - **Two flavours in `frontend/src/lib/fetchAdmin.js`** (now ~110 LOC). `adminFetch()` = drop-in fetch (returns Response). `fetchAdmin()` = ergonomic JSON wrapper (returns parsed JSON, throws on non-OK). Both auto-attach `credentials: 'include'` + optional `X-Admin-Token` from a `token` opt. URL prefix `${BACKEND}` is now hidden behind the helper.
+  - **Codemod transformations**:
+    1. Match `fetch(\`${BACKEND}/api/admin/...\`, { ... })` with balanced-brace options walking (so nested `{}` in `body: JSON.stringify({...})` doesn't break the parser).
+    2. Rewrite to `adminFetch(\`/api/admin/...\`, { ... })` with `credentials: 'include'` stripped (now default), `X-Admin-Token` header entries removed, and trivial `headers: { 'Content-Type': 'application/json' }` blocks dropped (auto-set by `buildAdminRequest` on POST/PUT/PATCH/DELETE).
+    3. Auto-injected `import { adminFetch } from '<relative>/lib/fetchAdmin';` with the right path depth per file.
+    4. Removed `const BACKEND = process.env.REACT_APP_BACKEND_URL;` when no other references remained (clean dead-code removal).
+  - **Post-codemod cleanup**. Three `useCallback` hooks had `token` in their dep array but the body no longer referenced it — codemod automated stripping triggered an ESLint regression `missing-dep`. Fix: `BackOfficeSlotRegistry.load`, `BackOfficeStreamerMeta.load`, `BackOfficeVoita.load` each had a stale `if (!token || !authed) return;` guard. Replaced with `if (!authed) return;` since the cookie session handles auth — no functional change, lint clean. Six other dep arrays simplified by dropping `token`.
+  - **Verification end-to-end**:
+    - Sign-in via shell → cookie set, no legacy header in DOM or storage.
+    - `/back-office/queue` loaded **54 queued · 79 approved · 0 killed** via codemod-migrated calls.
+    - `/back-office/mittari-grading` shows live stats (2 snapshotted · 0 graded · 0 ungraded) via the 4 calls in that file.
+    - Screenshots in `/app/qa-snapshots/audit/back-office-{queue,mittari-grading}-post-codemod.png`.
+  - **Files touched** (33 in total): all `BackOffice*.jsx` pages with admin endpoints, `StreamersAdmin.jsx`, `OperatorsAdmin.jsx`, `FoundationalResearch.jsx`, `Layer2StatusPanel.jsx`. Codemod skipped no files (`adminFetch` import added everywhere needed).
+  - **Reform 2027 header consistency** (originally queued as separate item) — verified via runtime probe: page already mounts the global `<Header />` chrome (NEWS·LAST 24H banner + PUTKI HQ brand + METHOD + FI/EN/theme toggles). Audit flagged it as missing because the earlier screenshot captured below the fold. No code change needed — flagged false positive in the audit report.
+  - **Regression**: 34/34 backend tests green across iter89/90/92/93/94 in 5.4s. Frontend webpack compiles cleanly (no eslint warnings remaining on the migrated files). The dev preview HMR'd through the entire sweep without manual restart.
+
+
 - **iter96 · Phase 5 polish + page-by-page audit + carry-over close-out** (2026-06-01, ESLint clean · 34/34 backend regression green · live-verified across 5 Tier-1 routes)
   - **Live API wiring (Phase 5 polish a+b)**. HomeV5 now reads the real backend endpoints — `/api/dial` → Mittari score+state (was hardcoded zero in iter95), `/api/news/featured` + `/api/news/chronological?limit=6` merged + de-duped → news portal (was 6 hardcoded fallback rows), `/api/streamers/live` → live count, `/api/sources/public` → named-source total and trust manifest. All editorial fallback copy removed. Trust manifest's "12 named sources" text is now derived dynamically from `srcs.total` (live = 28). News items get fault-tolerant relative timestamps ("17 MIN", "2 H", "3 PV") computed from `captured_at`/`published`. Hero photo wired to `/api/og/page/reform-2027-{lang}` via `<img>` + onError fallback; when Nano Banana is killed (preview pod), an editorial gradient + decorative parliament stripes take over so the hero never reads as empty.
   - **Operator runbook** (`/app/memory/operator/mittari_grading.md`, ~120 lines): why the grading job exists, the daily snapshot cron, manual grading workflow, recusal/COI rule, complete endpoint reference, public surfaces this affects.

@@ -11,6 +11,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Loader2, AlertTriangle, CheckCircle2, Play } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import { formatTimeAgo } from '../utils/formatTime';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const POLL_MS = 20_000;
@@ -58,10 +59,7 @@ const Layer2StatusPanel = ({ token }) => {
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/layer2/status`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/layer2/status`, {});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setData(d);
@@ -82,11 +80,8 @@ const Layer2StatusPanel = ({ token }) => {
     setBusyWorker(worker);
     setLastTickResult(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/layer2/tick?worker=${worker}`, {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/layer2/tick?worker=${worker}`, {
+        method: 'POST'});
       const body = await r.json();
       setLastTickResult({ worker, status: r.status, body });
       await load();

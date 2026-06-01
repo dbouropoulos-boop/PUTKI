@@ -19,6 +19,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const GOLD = '#FFBF6B';
@@ -40,7 +41,7 @@ const BackOfficeEmailTemplates = () => {
 
   const refresh = useCallback(() => {
     if (!authed) return;
-    fetch(`${BACKEND}/api/admin/email-templates`, { headers })
+    adminFetch(`/api/admin/email-templates`, { headers })
       .then((r) => r.ok ? r.json() : null)
       .then((d) => {
         if (!d) return;
@@ -63,11 +64,9 @@ const BackOfficeEmailTemplates = () => {
     setSaving(true);
     const next = { ...(data.templates || {}), [activeSlug]: draft };
     try {
-      const r = await fetch(`${BACKEND}/api/admin/email-templates`, {
+      const r = await adminFetch(`/api/admin/email-templates`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        body: JSON.stringify({ templates: next }),
-      });
+        headers: { 'Content-Type': 'application/json', ...headers },body: JSON.stringify({ templates: next })});
       if (r.ok) {
         setSavedAt(new Date().toISOString());
         refresh();
@@ -76,11 +75,9 @@ const BackOfficeEmailTemplates = () => {
   };
 
   const doPreview = async () => {
-    const r = await fetch(`${BACKEND}/api/admin/email-templates/preview`, {
+    const r = await adminFetch(`/api/admin/email-templates/preview`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({ slug: activeSlug, lang: previewLang }),
-    });
+      headers: { 'Content-Type': 'application/json', ...headers },body: JSON.stringify({ slug: activeSlug, lang: previewLang })});
     if (r.ok) setPreview(await r.json());
   };
 

@@ -12,6 +12,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
@@ -59,7 +60,7 @@ const BackOfficeMestariDiagnosticsCopy = () => {
 
   const refresh = useCallback(() => {
     if (!authed) return;
-    fetch(`${BACKEND}/api/admin/mestari/diagnostic-copy`, { headers })
+    adminFetch(`/api/admin/mestari/diagnostic-copy`, { headers })
       .then((r) => r.ok ? r.json() : null)
       .then(setData)
       .catch((e) => console.warn('[diag-copy]', e));
@@ -87,11 +88,9 @@ const BackOfficeMestariDiagnosticsCopy = () => {
   const save = async () => {
     setSaving(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mestari/diagnostic-copy`, {
+      const r = await adminFetch(`/api/admin/mestari/diagnostic-copy`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...headers },
-        body: JSON.stringify({ copy: data.merged }),
-      });
+        headers: { 'Content-Type': 'application/json', ...headers },body: JSON.stringify({ copy: data.merged })});
       if (r.ok) {
         setSavedAt(new Date().toISOString());
         refresh();

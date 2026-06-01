@@ -9,6 +9,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -68,11 +69,11 @@ const BackOfficeOptinSegments = () => {
     if (!token || !authed) return;
     try {
       const [s, su, lg, ov, st] = await Promise.all([
-        fetch(`${BACKEND}/api/admin/optin/stats`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/admin/dispatch/summary?days=7`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/admin/dispatch/log?limit=20`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : { items: [] }),
-        fetch(`${BACKEND}/api/admin/dispatch/segment-overrides`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : { items: [] }),
-        fetch(`${BACKEND}/api/admin/settings`, { headers: { 'X-Admin-Token': token } }).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/optin/stats`, {}).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/dispatch/summary?days=7`, {}).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/dispatch/log?limit=20`, {}).then((r) => r.ok ? r.json() : { items: [] }),
+        adminFetch(`/api/admin/dispatch/segment-overrides`, {}).then((r) => r.ok ? r.json() : { items: [] }),
+        adminFetch(`/api/admin/settings`, {}).then((r) => r.ok ? r.json() : null),
       ]);
       setStats(s); setSummary(su); setLog(lg.items || []); setOverrides(ov.items || []); setSettings(st);
     } catch (e) {
@@ -92,12 +93,9 @@ const BackOfficeOptinSegments = () => {
     if (!window.confirm(`${verb} auto-dispatch?\n\n${consequence}`)) return;
     setSettingsBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/settings`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/settings`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ auto_dispatch_enabled: next }),
-      });
+        body: JSON.stringify({ auto_dispatch_enabled: next })});
       if (r.ok) setSettings(await r.json());
     } finally { setSettingsBusy(false); }
   };
@@ -109,12 +107,9 @@ const BackOfficeOptinSegments = () => {
 
   const setOverrideMode = async (channel, tag, mode) => {
     try {
-      const r = await fetch(`${BACKEND}/api/admin/dispatch/segment-overrides`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/dispatch/segment-overrides`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ channel, consent_tag: tag, mode }),
-      });
+        body: JSON.stringify({ channel, consent_tag: tag, mode })});
       if (r.ok) {
         const j = await r.json();
         setOverrides((prev) => {
@@ -131,12 +126,9 @@ const BackOfficeOptinSegments = () => {
   const runCycle = async (dryRun) => {
     setBusy(true); setRunError(''); setRunResult(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/dispatch/run`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/dispatch/run`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ dry_run: !!dryRun }),
-      });
+        body: JSON.stringify({ dry_run: !!dryRun })});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setRunError(j.detail || `HTTP ${r.status}`);
@@ -171,12 +163,9 @@ const BackOfficeOptinSegments = () => {
       setTestBusy(false); return;
     }
     try {
-      const r = await fetch(`${BACKEND}/api/admin/dispatch/test-send`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/dispatch/test-send`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ recipients: list, channels }),
-      });
+        body: JSON.stringify({ recipients: list, channels })});
       const j = await r.json().catch(() => ({}));
       if (!r.ok) {
         setTestError(j.detail || `HTTP ${r.status}`);

@@ -14,6 +14,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { Image as ImageIcon, RefreshCcw, Upload, Trash2, Search, Sparkles } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
@@ -49,7 +50,7 @@ const BackOfficeOgImages = () => {
   const refreshList = useCallback(async () => {
     if (!token) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/og-images/list?limit=200`, { headers });
+      const r = await adminFetch(`/api/admin/og-images/list?limit=200`, { headers });
       if (r.ok) setCached(await r.json());
     } catch { /* swallow */ }
   }, [token, headers]);
@@ -79,11 +80,9 @@ const BackOfficeOgImages = () => {
     if (!headline.trim()) { setFeedback({ ok: false, text: 'Headline required for regeneration.' }); return; }
     setBusy(true); setFeedback(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/og-images/regenerate`, {
+      const r = await adminFetch(`/api/admin/og-images/regenerate`, {
         method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slug: slug.trim(), headline: headline.trim(), category: category.trim() || null }),
-      });
+        headers: { ...headers, 'Content-Type': 'application/json' },body: JSON.stringify({ slug: slug.trim(), headline: headline.trim(), category: category.trim() || null })});
       if (!r.ok) {
         const txt = await r.text();
         throw new Error(`HTTP ${r.status}: ${txt}`);
@@ -111,9 +110,8 @@ const BackOfficeOgImages = () => {
       const fd = new FormData();
       fd.append('slug', slug.trim());
       fd.append('file', file);
-      const r = await fetch(`${BACKEND}/api/admin/og-images/upload`, {
-        method: 'POST', headers, body: fd,
-      });
+      const r = await adminFetch(`/api/admin/og-images/upload`, {
+        method: 'POST', headers, body: fd});
       if (!r.ok) {
         const txt = await r.text();
         throw new Error(`HTTP ${r.status}: ${txt}`);
@@ -134,9 +132,8 @@ const BackOfficeOgImages = () => {
     if (!target) return;
     setBusy(true); setFeedback(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/og-images/${encodeURIComponent(target)}`, {
-        method: 'DELETE', headers,
-      });
+      const r = await adminFetch(`/api/admin/og-images/${encodeURIComponent(target)}`, {
+        method: 'DELETE', headers});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       setFeedback({ ok: true, text: data.deleted ? `Deleted ${target}` : `No cached file for ${target}` });

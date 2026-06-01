@@ -14,6 +14,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -104,10 +105,9 @@ const BackOfficeTelegram = () => {
     setBusy(true); setActionMsg('');
     const targetUrl = `${BACKEND}/api/webhooks/telegram`;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/telegram/set-webhook`, {
+      const r = await adminFetch(`/api/admin/telegram/set-webhook`, {
         method: 'POST', headers,
-        body: JSON.stringify({ url: targetUrl, drop_pending_updates: true }),
-      });
+        body: JSON.stringify({ url: targetUrl, drop_pending_updates: true })});
       const j = await r.json();
       if (j.ok) setActionMsg(`✓ Webhook registered to ${targetUrl}`);
       else setActionMsg(`✗ ${j.description || j.error || 'unknown error'}`);

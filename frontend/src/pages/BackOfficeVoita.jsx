@@ -14,6 +14,7 @@ import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 import { EditorPreviewPanel, PreviewToggle } from '../components/back-office/EditorPreviewPanel';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -119,10 +120,8 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     if (!window.confirm('Mark this raffle as PAID? Prizes must have actually been paid out before clicking. Surfaces the raffle on the public recent-winners strip.')) return;
     setBusy(true); setError(''); setInfo('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/mark-paid`, {
-        credentials: 'include',
-        method: 'POST', headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/voita/raffles/${raffle.id}/mark-paid`, {
+        method: 'POST'});
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setError(j.detail || `HTTP ${r.status}`); return; }
       setInfo('MARKED PAID.');
@@ -134,10 +133,8 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     if (!window.confirm('Send the winner email now? Renders the `voita_winner` template and queues an email_outbox row. Dispatches the moment RESEND_API_KEY is configured.')) return;
     setBusy(true); setError(''); setInfo('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/notify-winner`, {
-        credentials: 'include',
-        method: 'POST', headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/voita/raffles/${raffle.id}/notify-winner`, {
+        method: 'POST'});
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setError(j.detail || `HTTP ${r.status}`); return; }
       if (j.already_notified) {
@@ -152,10 +149,8 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
   const save = useCallback(async () => {
     setError(''); setInfo(''); setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/voita/raffles/${raffle.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
           title_fi: form.title_fi, title_en: form.title_en,
           summary_fi: form.summary_fi, summary_en: form.summary_en,
@@ -167,9 +162,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
           prize_distribution: { mode: form.payouts.length > 1 ? 'tiered' : 'single', payouts: form.payouts },
           scoring: form.scoring,
           gating: form.gating,
-          status: form.status,
-        }),
-      });
+          status: form.status})});
       const j = await r.json().catch(() => ({}));
       if (!r.ok) {
         setError(j.detail || `HTTP ${r.status}`);
@@ -178,7 +171,7 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
       setInfo('SAVED.');
       onSaved && onSaved();
     } finally { setBusy(false); }
-  }, [raffle.id, token, form, onSaved]);
+  }, [raffle.id, form, onSaved]);
 
   // iter84b · Task 2.8b — autosave for raffle edits ONLY when:
   // (a) raffle isn't drawn/paid (those statuses are locked), and
@@ -236,12 +229,9 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     if (!window.confirm(`Draw raffle with final score ${drawHome}-${drawAway}? Result is locked once drawn.`)) return;
     setBusy(true); setError(''); setInfo('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}/draw`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/voita/raffles/${raffle.id}/draw`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ home_goals: Number(drawHome), away_goals: Number(drawAway) }),
-      });
+        body: JSON.stringify({ home_goals: Number(drawHome), away_goals: Number(drawAway) })});
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setError(j.detail || `HTTP ${r.status}`); return; }
       setInfo(`DRAWN · ${j.result.winners.length} WINNERS · ${j.result.scored_count} ENTRIES SCORED.`);
@@ -253,10 +243,8 @@ const RaffleEditor = ({ raffle, token, onSaved, onDeleted }) => {
     if (!window.confirm(`Delete raffle "${raffle.slug}" and all its entries?`)) return;
     setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voita/raffles/${raffle.id}`, {
-        credentials: 'include',
-        method: 'DELETE', headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/voita/raffles/${raffle.id}`, {
+        method: 'DELETE'});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setError(j.detail || `HTTP ${r.status}`);
@@ -494,15 +482,11 @@ const NewRaffleForm = ({ token, onCreated }) => {
   const create = async (e) => {
     e.preventDefault(); setError(''); setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voita/raffles`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/voita/raffles`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
           slug, home_team: home, away_team: away,
-          prize_cap_eur: 500,
-        }),
-      });
+          prize_cap_eur: 500})});
       const j = await r.json().catch(() => ({}));
       if (!r.ok) { setError(j.detail || `HTTP ${r.status}`); return; }
       setSlug(''); setHome(''); setAway('');
@@ -538,13 +522,13 @@ const BackOfficeVoita = () => {
   const [openId, setOpenId] = useState(null);
 
   const load = useCallback(async () => {
-    if (!token || !authed) return;
+    if (!authed) return;
     setLoading(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voita/raffles`, { headers: { 'X-Admin-Token': token } });
+      const r = await adminFetch(`/api/admin/voita/raffles`, {});
       if (r.ok) { const d = await r.json(); setItems(d.items || []); }
     } finally { setLoading(false); }
-  }, [token, authed]);
+  }, [authed]);
 
   useEffect(() => { load(); }, [load]);
 

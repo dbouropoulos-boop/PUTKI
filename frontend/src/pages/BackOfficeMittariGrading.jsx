@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useBackOfficeToken } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 /**
  * /back-office/mittari-grading — operator grading workflow for the
@@ -50,8 +51,8 @@ const BackOfficeMittariGrading = () => {
     if (!token) return;
     try {
       const [s, p] = await Promise.all([
-        fetch(`${BACKEND}/api/admin/mittari/grading/status`, { headers: headers() }).then((r) => r.json()),
-        fetch(`${BACKEND}/api/admin/mittari/grading/pending?limit=200`, { headers: headers() }).then((r) => r.json()),
+        adminFetch(`/api/admin/mittari/grading/status`, { headers: headers() }).then((r) => r.json()),
+        adminFetch(`/api/admin/mittari/grading/pending?limit=200`, { headers: headers() }).then((r) => r.json()),
       ]);
       setStatus(s);
       setPending(p.rows || []);
@@ -69,7 +70,7 @@ const BackOfficeMittariGrading = () => {
     setError(null);
     setMsg(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mittari/grading/snapshot`, { method: 'POST', headers: headers() });
+      const r = await adminFetch(`/api/admin/mittari/grading/snapshot`, { method: 'POST', headers: headers() });
       const j = await r.json();
       if (!r.ok) throw new Error(j.detail || `http_${r.status}`);
       setMsg(`Snapshot wrote ${j.written} new rows · skipped ${j.skipped} duplicates · ${j.total_picks_in_payload} picks in feed.`);
@@ -91,11 +92,10 @@ const BackOfficeMittariGrading = () => {
     setError(null);
     setMsg(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mittari/grading/grade`, {
+      const r = await adminFetch(`/api/admin/mittari/grading/grade`, {
         method: 'POST',
         headers: headers(),
-        body: JSON.stringify({ grades }),
-      });
+        body: JSON.stringify({ grades })});
       const j = await r.json();
       if (!r.ok) throw new Error(j.detail || `http_${r.status}`);
       setMsg(`Graded ${j.written} signals · skipped ${(j.skipped || []).length}.`);

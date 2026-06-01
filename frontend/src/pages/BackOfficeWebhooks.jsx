@@ -17,6 +17,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Webhook, AlertTriangle, CheckCircle2, Clock, ArrowUpRight, Hammer, Loader2 } from 'lucide-react';
 import Layer2StatusPanel from '../components/Layer2StatusPanel';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const FEED_REBUILD_TIMESTAMP_KEY = 'putki-hq-admin-last-feed-rebuild';
@@ -210,7 +211,7 @@ const BackOfficeWebhooks = () => {
   const tryAuth = useCallback(async (tok = token) => {
     if (!tok) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/settings`, { headers: headers(tok) });
+      const r = await adminFetch(`/api/admin/settings`, { headers: headers(tok) });
       if (!r.ok) { setAuthError('Wrong token'); setAuthed(false); return; }
       setAuthed(true);
       setAuthError('');
@@ -278,10 +279,9 @@ const BackOfficeWebhooks = () => {
     setRebuildBusy(true);
     setRebuildError('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/feed/rebuild`, {
+      const r = await adminFetch(`/api/admin/feed/rebuild`, {
         method: 'POST',
-        headers: headers(),
-      });
+        headers: headers()});
       const raw = await r.text();
       let body;
       try { body = raw ? JSON.parse(raw) : {}; } catch { body = { raw }; }

@@ -13,6 +13,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -95,22 +96,17 @@ const SendRow = ({ send, token, onChanged }) => {
   const submitFlag = async ({ reason, note }) => {
     setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/dispatch/logs/${send.id}/flag`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/dispatch/logs/${send.id}/flag`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ reason, note }),
-      });
+        body: JSON.stringify({ reason, note })});
       if (r.ok) { setEditing(false); onChanged && onChanged(); }
     } finally { setBusy(false); }
   };
   const removeFlag = async () => {
     setBusy(true);
     try {
-      await fetch(`${BACKEND}/api/admin/dispatch/logs/${send.id}/flag`, {
-        credentials: 'include',
-        method: 'DELETE', headers: { 'X-Admin-Token': token },
-      });
+      await adminFetch(`/api/admin/dispatch/logs/${send.id}/flag`, {
+        method: 'DELETE'});
       onChanged && onChanged();
     } finally { setBusy(false); }
   };
@@ -240,10 +236,7 @@ const BackOfficeDispatchPreview = () => {
   const loadCycles = useCallback(async () => {
     if (!token || !authed) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/dispatch/cycles?days=${days}&limit=50`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/dispatch/cycles?days=${days}&limit=50`, {});
       const j = await r.json();
       setCycles(j.items || []);
       if (!selected && (j.items || []).length > 0) {
@@ -256,10 +249,7 @@ const BackOfficeDispatchPreview = () => {
     if (!token || !authed || !selected) { setDetail(null); return; }
     setLoading(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/dispatch/cycles/${selected}`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/dispatch/cycles/${selected}`, {});
       if (r.ok) setDetail(await r.json());
       else setDetail(null);
     } finally { setLoading(false); }

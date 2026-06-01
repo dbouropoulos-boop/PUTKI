@@ -8,6 +8,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Loader2, Save, Power } from 'lucide-react';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TOKEN_KEY = 'putki-hq-admin-token';
@@ -33,19 +34,13 @@ const BackOfficePeli = () => {
     setBusy(true);
     setAuthError('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/peli/config`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': tk },
-      });
+      const r = await adminFetch(`/api/admin/peli/config`, {});
       if (r.status === 401) { setAuthError('Wrong token.'); setAuthed(false); return; }
       const d = await r.json();
       setConfig(d.config);
       setServerConfig(d.config);
       setEntryCount(d.entry_count || 0);
-      const eR = await fetch(`${BACKEND}/api/admin/peli/entries?limit=200`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': tk },
-      });
+      const eR = await adminFetch(`/api/admin/peli/entries?limit=200`, {});
       const eD = await eR.json();
       setEntries(eD.entries || []);
       setAuthed(true);
@@ -82,12 +77,9 @@ const BackOfficePeli = () => {
         })),
         enabled: !!config.enabled,
       };
-      const r = await fetch(`${BACKEND}/api/admin/peli/config`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/peli/config`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify(body),
-      });
+        body: JSON.stringify(body)});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setConfig(d);
@@ -99,7 +91,7 @@ const BackOfficePeli = () => {
     } finally {
       setBusy(false);
     }
-  }, [config, token]);
+  }, [config]);
 
   // iter84b · Task 2.8b — debounced autosave + Cmd+S for /peli config.
   const dirty = useMemo(() => {

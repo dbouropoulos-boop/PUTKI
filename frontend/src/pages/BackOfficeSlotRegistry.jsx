@@ -12,6 +12,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const CATEGORIES = ['slot', 'live_table'];
@@ -36,28 +37,22 @@ const Row = ({ entry, token, onChanged }) => {
   const toggleEnabled = useCallback(async () => {
     setBusy('toggle');
     try {
-      await fetch(`${BACKEND}/api/admin/slot-registry/${entry.id}`, {
-        credentials: 'include',
+      await adminFetch(`/api/admin/slot-registry/${entry.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ enabled: !entry.enabled }),
-      });
+        body: JSON.stringify({ enabled: !entry.enabled })});
       await onChanged();
     } finally { setBusy(null); }
-  }, [entry.id, entry.enabled, token, onChanged]);
+  }, [entry.id, entry.enabled, onChanged]);
 
   const remove = useCallback(async () => {
     if (!window.confirm(`Delete "${entry.name}" from the registry?`)) return;
     setBusy('delete');
     try {
-      await fetch(`${BACKEND}/api/admin/slot-registry/${entry.id}`, {
-        credentials: 'include',
-        method: 'DELETE',
-        headers: { 'X-Admin-Token': token },
-      });
+      await adminFetch(`/api/admin/slot-registry/${entry.id}`, {
+        method: 'DELETE'});
       await onChanged();
     } finally { setBusy(null); }
-  }, [entry.id, entry.name, token, onChanged]);
+  }, [entry.id, entry.name, onChanged]);
 
   return (
     <tr data-testid={`slot-row-${entry.id}`}
@@ -106,19 +101,16 @@ const BackOfficeSlotRegistry = () => {
   const [seedResult, setSeedResult] = useState(null);
 
   const load = useCallback(async () => {
-    if (!token || !authed) return;
+    if (!authed) return;
     setLoading(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/slot-registry`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/slot-registry`, {});
       if (r.ok) {
         const d = await r.json();
         setItems(d.items || []);
       }
     } finally { setLoading(false); }
-  }, [token, authed]);
+  }, [authed]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -147,12 +139,9 @@ const BackOfficeSlotRegistry = () => {
     e.preventDefault();
     setAddError('');
     if (!addName.trim()) { setAddError('Name required'); return; }
-    const r = await fetch(`${BACKEND}/api/admin/slot-registry`, {
-      credentials: 'include',
+    const r = await adminFetch(`/api/admin/slot-registry`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-      body: JSON.stringify({ name: addName.trim(), category: addCategory, provider: addProvider.trim() }),
-    });
+      body: JSON.stringify({ name: addName.trim(), category: addCategory, provider: addProvider.trim() })});
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));
       setAddError(j.detail || `HTTP ${r.status}`);
@@ -165,10 +154,8 @@ const BackOfficeSlotRegistry = () => {
   const reseed = async () => {
     setSeeding(true); setSeedResult(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/slot-registry/seed`, {
-        credentials: 'include',
-        method: 'POST', headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/slot-registry/seed`, {
+        method: 'POST'});
       if (r.ok) {
         const d = await r.json();
         setSeedResult(d);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2, Upload } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -61,7 +62,7 @@ const FoundationalResearch = () => {
     if (filterBeat) qs.set('beat', filterBeat);
     if (filterContentType) qs.set('content_type', filterContentType);
     qs.set('limit', '500');
-    const r = await fetch(`${BACKEND}/api/admin/foundational-research?${qs.toString()}`, { headers: headers() });
+    const r = await adminFetch(`/api/admin/foundational-research?${qs.toString()}`, { headers: headers() });
     if (!r.ok) { setAuthError('Wrong token'); setAuthed(false); return; }
     const d = await r.json();
     setEntries(d.entries || []);
@@ -102,7 +103,7 @@ const FoundationalResearch = () => {
 
   const remove = async (id) => {
     if (!window.confirm('Delete this research entry?')) return;
-    await fetch(`${BACKEND}/api/admin/foundational-research/${id}`, { method: 'DELETE', headers: headers() });
+    await adminFetch(`/api/admin/foundational-research/${id}`, { method: 'DELETE', headers: headers() });
     if (selected === id) startNew();
     refresh();
   };
@@ -112,9 +113,8 @@ const FoundationalResearch = () => {
     try {
       const parsed = JSON.parse(bulkText);
       const arr = Array.isArray(parsed) ? parsed : parsed.entries;
-      const r = await fetch(`${BACKEND}/api/admin/foundational-research/bulk`, {
-        method: 'POST', headers: headers(), body: JSON.stringify({ entries: arr }),
-      });
+      const r = await adminFetch(`/api/admin/foundational-research/bulk`, {
+        method: 'POST', headers: headers(), body: JSON.stringify({ entries: arr })});
       if (!r.ok) throw new Error(await r.text());
       const d = await r.json();
       setBulkMsg(`Imported ${d.imported} entries.`);

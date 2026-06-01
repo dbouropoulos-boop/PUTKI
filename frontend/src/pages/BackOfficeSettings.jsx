@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { AlertTriangle, CheckCircle2, Trophy } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -72,7 +73,7 @@ const BackOfficeSettings = () => {
     if (!token) return;
     setErr(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/settings`, { headers: { 'X-Admin-Token': token } });
+      const r = await adminFetch(`/api/admin/settings`, {});
       if (!r.ok) { setErr(`auth failed (${r.status})`); return; }
       setSettings(await r.json());
     } catch (e) { setErr(String(e?.message || e)); }
@@ -95,12 +96,9 @@ const BackOfficeSettings = () => {
       onConfirm: async () => {
         setBusy(true); setErr(null); setConfirm(null);
         try {
-          const r = await fetch(`${BACKEND}/api/admin/settings`, {
-            credentials: 'include',
+          const r = await adminFetch(`/api/admin/settings`, {
             method: 'PUT',
-            headers: { 'X-Admin-Token': token, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ voita_feature_enabled: next }),
-          });
+            body: JSON.stringify({ voita_feature_enabled: next })});
           if (!r.ok) throw new Error(`PUT failed (${r.status})`);
           await refresh();
         } catch (e) { setErr(String(e?.message || e)); }

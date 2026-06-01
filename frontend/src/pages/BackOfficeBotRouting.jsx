@@ -12,6 +12,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 // iter82 (Task 2.3): legacy `putki_back_office_token` localStorage key
@@ -147,10 +148,10 @@ const BackOfficeBotRouting = () => {
     setErr(null);
     try {
       const [c, p, s, fn] = await Promise.all([
-        fetch(`${BACKEND}/api/admin/bot/config`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/admin/partners`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/admin/bot/subscribers/summary`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/admin/bot/funnel/snapshot?hours=${funnelHours}`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/bot/config`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/partners`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/bot/subscribers/summary`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/bot/funnel/snapshot?hours=${funnelHours}`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
       ]);
       if (!c) { setAuthed(false); setErr('auth failed'); return; }
       setConfig(c); setPartners((p && p.items) || []); setSummary(s); setFunnel(fn); setAuthed(true);
@@ -162,9 +163,8 @@ const BackOfficeBotRouting = () => {
   const patchConfig = async (patch) => {
     setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/bot/config`, {
-        method: 'PUT', headers: hdr(), body: JSON.stringify(patch),
-      });
+      const r = await adminFetch(`/api/admin/bot/config`, {
+        method: 'PUT', headers: hdr(), body: JSON.stringify(patch)});
       if (r.ok) setConfig(await r.json());
       else setErr(`PUT config failed: ${r.status}`);
     } finally { setBusy(false); }
@@ -173,9 +173,8 @@ const BackOfficeBotRouting = () => {
   const upsertPartner = async (p) => {
     setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/partners`, {
-        method: 'POST', headers: hdr(), body: JSON.stringify(p),
-      });
+      const r = await adminFetch(`/api/admin/partners`, {
+        method: 'POST', headers: hdr(), body: JSON.stringify(p)});
       if (r.ok) await refreshAll();
       else setErr(`upsert partner failed: ${r.status}`);
     } finally { setBusy(false); }
@@ -184,7 +183,7 @@ const BackOfficeBotRouting = () => {
   const deletePartner = async (key) => {
     setBusy(true);
     try {
-      await fetch(`${BACKEND}/api/admin/partners/${encodeURIComponent(key)}`, { method: 'DELETE', headers: hdr() });
+      await adminFetch(`/api/admin/partners/${encodeURIComponent(key)}`, { method: 'DELETE', headers: hdr() });
       await refreshAll();
     } finally { setBusy(false); }
   };
@@ -228,10 +227,8 @@ const BackOfficeBotRouting = () => {
     if (!token) return;
     try {
       const [c, cv] = await Promise.all([
-        fetch(`${BACKEND}/api/admin/router/clicks?limit=20&status=${routerFilter}`,
-          { headers: hdr() }).then((r) => r.ok ? r.json() : null),
-        fetch(`${BACKEND}/api/admin/router/conversions?limit=20`,
-          { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/router/clicks?limit=20&status=${routerFilter}`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
+        adminFetch(`/api/admin/router/conversions?limit=20`, { headers: hdr() }).then((r) => r.ok ? r.json() : null),
       ]);
       setRouter({ clicks: c?.items || [], conversions: cv?.items || [],
                   conv_total: cv?.verified_amount_total ?? 0 });
@@ -252,14 +249,12 @@ const BackOfficeBotRouting = () => {
         signalId = top?.signal_id || top?.event_id || top?.id || null;
       } catch { /* noop - signal_id stays null */ }
 
-      const r = await fetch(`${BACKEND}/api/admin/links/mint`, {
+      const r = await adminFetch(`/api/admin/links/mint`, {
         method: 'POST', headers: hdr(),
         body: JSON.stringify({
           signal_id: signalId || 'back_office_test',
           campaign: 'back_office_smoke',
-          segment: 'all',
-        }),
-      });
+          segment: 'all'})});
       if (!r.ok) { setErr(`mint failed: ${r.status}`); return; }
       const body = await r.json();
       const fullUrl = `${BACKEND.replace(/\/$/, '')}/api/r/${body.code}`;

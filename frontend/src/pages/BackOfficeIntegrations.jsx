@@ -18,6 +18,7 @@ import {
   CheckCircle2, AlertCircle, ExternalLink, Save, Link2, Activity,
 } from 'lucide-react';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
@@ -109,7 +110,7 @@ const BackOfficeIntegrations = () => {
     if (!token) return;
     setLoading(true); setFeedback(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/settings`, { headers });
+      const r = await adminFetch(`/api/admin/settings`, { headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
       setServerState(data);
@@ -145,11 +146,9 @@ const BackOfficeIntegrations = () => {
       const trimmed = (src[k] || '').trim();
       payload[k] = trimmed === '' ? null : trimmed;
     }
-    const r = await fetch(`${BACKEND}/api/admin/settings`, {
+    const r = await adminFetch(`/api/admin/settings`, {
       method: 'PUT',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+      headers: { ...headers, 'Content-Type': 'application/json' },body: JSON.stringify(payload)});
     if (!r.ok) {
       const txt = await r.text();
       throw new Error(`HTTP ${r.status}: ${txt}`);
@@ -185,11 +184,9 @@ const BackOfficeIntegrations = () => {
     }
     setProbing(true); setProbeResult(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/integrations/smartico/test-connection`, {
+      const r = await adminFetch(`/api/admin/integrations/smartico/test-connection`, {
         method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ loader_url: url }),
-      });
+        headers: { ...headers, 'Content-Type': 'application/json' },body: JSON.stringify({ loader_url: url })});
       if (!r.ok) {
         const txt = await r.text();
         throw new Error(`HTTP ${r.status}: ${txt}`);

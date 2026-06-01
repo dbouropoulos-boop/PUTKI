@@ -7,6 +7,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Loader2, Lock, Unlock, Trophy, Save, Shuffle } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -53,10 +54,7 @@ const BackOfficeWeekly = () => {
       (metaD.results || []).forEach((r) => { seeded[r.event_id] = r.pick; });
       setResults(seeded);
 
-      const aR = await fetch(`${BACKEND}/api/admin/weekly/${metaD.week_key}`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': tk },
-      });
+      const aR = await adminFetch(`/api/admin/weekly/${metaD.week_key}`, {});
       if (aR.status === 401) { setAuthError('Wrong token.'); setAuthed(false); return; }
       const aD = await aR.json();
       setEntries(aD.entries || []);
@@ -77,16 +75,12 @@ const BackOfficeWeekly = () => {
     setBusy(true);
     setStatusMsg('');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/weekly/${wk}/prize`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/weekly/${wk}/prize`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
         body: JSON.stringify({
           prize_amount:   Number(prize.amount),
           prize_currency: prize.currency,
-          prize_label:    prize.label,
-        }),
-      });
+          prize_label:    prize.label})});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       setStatusMsg('✓ Prize updated');
       await loadAll(token);
@@ -98,11 +92,8 @@ const BackOfficeWeekly = () => {
   const toggleLock = async () => {
     setBusy(true);
     try {
-      await fetch(`${BACKEND}/api/admin/weekly/${wk}/lock?locked=${!meta?.locked}`, {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'X-Admin-Token': token },
-      });
+      await adminFetch(`/api/admin/weekly/${wk}/lock?locked=${!meta?.locked}`, {
+        method: 'POST'});
       await loadAll(token);
     } finally { setBusy(false); }
   };
@@ -114,12 +105,9 @@ const BackOfficeWeekly = () => {
       const payload = Object.entries(results)
         .filter(([, v]) => v)
         .map(([event_id, pick]) => ({ event_id, pick }));
-      const r = await fetch(`${BACKEND}/api/admin/weekly/${wk}/results`, {
-        credentials: 'include',
+      const r = await adminFetch(`/api/admin/weekly/${wk}/results`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
-        body: JSON.stringify({ results: payload }),
-      });
+        body: JSON.stringify({ results: payload })});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setStatusMsg(`✓ Settled ${d.settled_entries} entries`);
@@ -134,11 +122,8 @@ const BackOfficeWeekly = () => {
     setStatusMsg('');
     setWinnerInfo(null);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/weekly/${wk}/draw`, {
-        credentials: 'include',
-        method: 'POST',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/weekly/${wk}/draw`, {
+        method: 'POST'});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const d = await r.json();
       setWinnerInfo(d);

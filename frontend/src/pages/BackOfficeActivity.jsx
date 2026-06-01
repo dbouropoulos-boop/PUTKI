@@ -19,6 +19,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Filter, RotateCcw, RefreshCw } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
@@ -63,7 +64,7 @@ const BackOfficeActivity = () => {
   // Fetch distinct action_types for the dropdown — once on mount.
   useEffect(() => {
     if (!token) return;
-    fetch(`${BACKEND}/api/admin/back_office_activity/distinct/action_types`, { headers })
+    adminFetch(`/api/admin/back_office_activity/distinct/action_types`, { headers })
       .then((r) => r.json())
       .then((j) => setActionTypes(j?.action_types || []))
       .catch(() => {});
@@ -80,7 +81,7 @@ const BackOfficeActivity = () => {
     if (until) qs.set('until', new Date(until).toISOString());
     if (reversibleOnly) qs.set('reversible_only', 'true');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/back_office_activity?${qs}`, { headers });
+      const r = await adminFetch(`/api/admin/back_office_activity?${qs}`, { headers });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const j = await r.json();
       // Server returns the most recent N — pagination on the client by
@@ -91,7 +92,7 @@ const BackOfficeActivity = () => {
       if ((j?.total || 0) > PAGE_SIZE) {
         const big = new URLSearchParams(qs);
         big.set('limit', 200);
-        const r2 = await fetch(`${BACKEND}/api/admin/back_office_activity?${big}`, { headers });
+        const r2 = await adminFetch(`/api/admin/back_office_activity?${big}`, { headers });
         if (r2.ok) {
           const j2 = await r2.json();
           items = j2?.items || items;
@@ -117,9 +118,8 @@ const BackOfficeActivity = () => {
   const handleUndo = async (row) => {
     setUndoBusyId(row.id);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/back_office_activity/${row.id}/undo`, {
-        method: 'POST', headers,
-      });
+      const r = await adminFetch(`/api/admin/back_office_activity/${row.id}/undo`, {
+        method: 'POST', headers});
       const j = await r.json();
       if (!r.ok) {
         alert(`Undo failed: ${j?.detail || r.status}`);

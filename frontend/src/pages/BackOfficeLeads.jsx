@@ -12,6 +12,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const fmt = (iso) => {
@@ -151,11 +152,11 @@ const BackOfficeLeads = () => {
 
   useEffect(() => {
     if (!authed) return;
-    fetch(`${BACKEND}/api/admin/leads/timeline?limit=500`, { headers })
+    adminFetch(`/api/admin/leads/timeline?limit=500`, { headers })
       .then((r) => r.ok ? r.json() : null)
       .then(setData)
       .catch((e) => console.warn('[leads]', e));
-    fetch(`${BACKEND}/api/admin/leads/funnel?hours=24`, { headers })
+    adminFetch(`/api/admin/leads/funnel?hours=24`, { headers })
       .then((r) => r.ok ? r.json() : null)
       .then(setFunnel)
       .catch((e) => console.warn('[funnel]', e));

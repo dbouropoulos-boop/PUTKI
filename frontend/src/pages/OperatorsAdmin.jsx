@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2, Calendar } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -28,12 +29,12 @@ const RotationCalendar = ({ token, partnerOperators }) => {
 
   const refresh = useCallback(async () => {
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voyager/weeks`, { headers: { 'X-Admin-Token': token } });
+      const r = await adminFetch(`/api/admin/voyager/weeks`, {});
       if (!r.ok) return;
       const d = await r.json();
       setData(d);
     } catch {}
-  }, [token]);
+  }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -48,9 +49,8 @@ const RotationCalendar = ({ token, partnerOperators }) => {
     const draft = draftFor(iso);
     setBusy(iso);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/voyager/weeks/${iso}`, {
-        method: 'PUT', headers: headers(), body: JSON.stringify(draft),
-      });
+      const r = await adminFetch(`/api/admin/voyager/weeks/${iso}`, {
+        method: 'PUT', headers: headers(), body: JSON.stringify(draft)});
       if (!r.ok) {
         const msg = await r.text();
         alert(`Save failed: ${msg.slice(0, 300)}`);
@@ -63,7 +63,7 @@ const RotationCalendar = ({ token, partnerOperators }) => {
 
   const remove = async (iso) => {
     if (!window.confirm(`Delete week ${iso}?`)) return;
-    await fetch(`${BACKEND}/api/admin/voyager/weeks/${iso}?market_id=FI`, { method: 'DELETE', headers: headers() });
+    await adminFetch(`/api/admin/voyager/weeks/${iso}?market_id=FI`, { method: 'DELETE', headers: headers() });
     await refresh();
   };
 
@@ -214,7 +214,7 @@ const OperatorsAdmin = () => {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/operators`, { headers: headers() });
+      const r = await adminFetch(`/api/admin/operators`, { headers: headers() });
       if (!r.ok) { setError('Wrong token'); setAuthed(false); return; }
       const d = await r.json();
       setOperators(d.operators || []);
@@ -232,9 +232,8 @@ const OperatorsAdmin = () => {
     if (!draft.slug.trim() || !draft.name.trim()) { alert('slug + name required'); return; }
     setSaving(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/operators/${draft.slug}`, {
-        method: 'PUT', headers: headers(), body: JSON.stringify(draft),
-      });
+      const r = await adminFetch(`/api/admin/operators/${draft.slug}`, {
+        method: 'PUT', headers: headers(), body: JSON.stringify(draft)});
       if (!r.ok) throw new Error(await r.text());
       await refresh();
       startNew();
@@ -244,7 +243,7 @@ const OperatorsAdmin = () => {
 
   const remove = async (slug) => {
     if (!window.confirm(`Delete ${slug}?`)) return;
-    await fetch(`${BACKEND}/api/admin/operators/${slug}`, { method: 'DELETE', headers: headers() });
+    await adminFetch(`/api/admin/operators/${slug}`, { method: 'DELETE', headers: headers() });
     if (selected === slug) startNew();
     refresh();
   };

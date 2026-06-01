@@ -12,6 +12,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { Lock, RefreshCw, Plus, Save, Trash2 } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const ADMIN_TOKEN_KEY = 'putki-admin-token';
@@ -42,9 +43,8 @@ const MiniGameAdmin = () => {
     if (!token) return;
     setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mini-games/questions?slug=${game}`, {
-        headers: headers(),
-      });
+      const r = await adminFetch(`/api/admin/mini-games/questions?slug=${game}`, {
+        headers: headers()});
       const d = await r.json();
       setQuestions(d.questions || []);
     } finally { setBusy(false); }
@@ -77,9 +77,8 @@ const MiniGameAdmin = () => {
     if (!form) return;
     setBusy(true);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mini-games/questions`, {
-        method: 'POST', headers: headers(), body: JSON.stringify(form),
-      });
+      const r = await adminFetch(`/api/admin/mini-games/questions`, {
+        method: 'POST', headers: headers(), body: JSON.stringify(form)});
       if (!r.ok) throw new Error(await r.text());
       await refresh();
       setForm(null); setSelected(null);
@@ -90,9 +89,8 @@ const MiniGameAdmin = () => {
 
   const remove = async (id) => {
     if (!window.confirm('Poistetaan kysymys lopullisesti?')) return;
-    await fetch(`${BACKEND}/api/admin/mini-games/questions/${id}`, {
-      method: 'DELETE', headers: headers(),
-    });
+    await adminFetch(`/api/admin/mini-games/questions/${id}`, {
+      method: 'DELETE', headers: headers()});
     refresh();
   };
 

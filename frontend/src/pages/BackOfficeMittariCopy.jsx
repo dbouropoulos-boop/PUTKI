@@ -17,6 +17,7 @@ import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
 import useFormAutosave, { AutosaveStatus } from '../hooks/useFormAutosave';
 import { EditorPreviewPanel, PreviewToggle } from '../components/back-office/EditorPreviewPanel';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -175,7 +176,7 @@ const BackOfficeMittariCopy = () => {
   const fetchSnapshot = useCallback(async () => {
     if (!token) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mittari/copy`, { headers });
+      const r = await adminFetch(`/api/admin/mittari/copy`, { headers });
       if (!r.ok) { setStatus(`Load failed (${r.status})`); return; }
       const d = await r.json();
       setSnapshot(d);
@@ -191,9 +192,8 @@ const BackOfficeMittariCopy = () => {
     if (!form) return;
     setBusy(true); setStatus('Saving…');
     try {
-      const r = await fetch(`${BACKEND}/api/admin/mittari/copy`, {
-        method: 'PUT', headers, body: JSON.stringify(form),
-      });
+      const r = await adminFetch(`/api/admin/mittari/copy`, {
+        method: 'PUT', headers, body: JSON.stringify(form)});
       if (!r.ok) {
         setStatus(`Save failed (${r.status})`);
         throw new Error(`HTTP ${r.status}`);

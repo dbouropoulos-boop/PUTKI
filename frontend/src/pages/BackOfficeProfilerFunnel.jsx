@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const ADMIN_TOKEN_KEY = 'putki_hq_admin_token';
@@ -40,10 +41,7 @@ const BackOfficeProfilerFunnel = () => {
         || (typeof window !== 'undefined' ? sessionStorage.getItem('putki-hq-admin-token') : '')
         || localStorage.getItem(ADMIN_TOKEN_KEY)
         || 'putki-hq-admin';
-      const r = await fetch(`${BACKEND}/api/admin/profiler/funnel?since_days=${days}`, {
-        credentials: 'include',
-        headers: { 'X-Admin-Token': token },
-      });
+      const r = await adminFetch(`/api/admin/profiler/funnel?since_days=${days}`, {});
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       setData(await r.json());
     } catch (e) { setError(e.message); }

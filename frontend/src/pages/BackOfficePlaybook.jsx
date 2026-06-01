@@ -14,6 +14,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBackOfficeToken, AuthGate } from '../hooks/useBackOfficeToken';
+import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const fmtKb = (b) => (b == null ? '-' : `${(b / 1024).toFixed(1)} KB`);
@@ -46,7 +47,7 @@ const BackOfficePlaybook = () => {
   const refresh = useCallback(async () => {
     if (!token) return;
     try {
-      const r = await fetch(`${BACKEND}/api/admin/playbook`, { headers });
+      const r = await adminFetch(`/api/admin/playbook`, { headers });
       if (r.ok) setData(await r.json());
     } catch (e) { setStatus(`Network: ${e.message}`); }
   }, [headers, token]);
@@ -71,9 +72,8 @@ const BackOfficePlaybook = () => {
     const fd = new FormData();
     fd.append('file', file, file.name);
     try {
-      const r = await fetch(`${BACKEND}/api/admin/playbook/upload`, {
-        method: 'POST', headers, body: fd,
-      });
+      const r = await adminFetch(`/api/admin/playbook/upload`, {
+        method: 'POST', headers, body: fd});
       if (!r.ok) {
         const j = await r.json().catch(() => ({}));
         setStatus(`Upload failed: ${j.detail || r.status}`);
@@ -87,9 +87,8 @@ const BackOfficePlaybook = () => {
 
   const resend = async (id) => {
     try {
-      const r = await fetch(`${BACKEND}/api/admin/playbook/outbox/${id}/resend`, {
-        method: 'POST', headers,
-      });
+      const r = await adminFetch(`/api/admin/playbook/outbox/${id}/resend`, {
+        method: 'POST', headers});
       if (!r.ok) { setStatus(`Resend failed (${r.status})`); return; }
       setStatus('✓ Marked pending - worker will retry');
       refresh();
