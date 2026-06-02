@@ -21,9 +21,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sun, Moon, Send } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
-import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useMestariCopy from '../hooks/useMestariCopy';
 import SiteMasthead from '../components/SiteMasthead';
@@ -453,7 +452,7 @@ const buildLandingCopy = (lang, live) => {
 };
 
 // ── Landing page (intro state) ──────────────────────────────────────────
-const MestariLanding = ({ lang, toggleLang, theme, toggleTheme, onStart, c }) => {
+const MestariLanding = ({ lang, toggleLang, onStart, c }) => {
   return (
     <div data-testid="mestari-landing" style={{
       background: T.bg, color: T.ink, fontFamily: T.sans, fontWeight: 300,
@@ -1338,7 +1337,6 @@ const QuizFlow = ({ children, onExit, lang, step, qIdx, total }) => {
 // ── Main page ───────────────────────────────────────────────────────────
 const Mestari = () => {
   const { lang, toggle } = useLang();
-  const { theme, toggle: toggleTheme } = useTheme();
   const liveCopy = useMestariCopy();
   const landingCopy = useMemo(() => buildLandingCopy(lang, liveCopy), [lang, liveCopy]);
   const [quiz, setQuiz] = useState([]);
@@ -1502,7 +1500,6 @@ const Mestari = () => {
     return (
       <div data-testid="mestari-page">
         <MestariLanding lang={lang} toggleLang={toggle}
-          theme={theme} toggleTheme={toggleTheme}
           c={landingCopy}
           onStart={startQuiz} />
       </div>

@@ -1,23 +1,26 @@
 /* ─────────────────────────────────────────────────────────────────────
- * SiteMasthead - unified PUTKI HQ chrome header (iter97).
+ * SiteMasthead — unified PUTKI HQ chrome header (iter97b).
  *
  * Sticky top, blurred bg, ember-dot serif brand, full nav, black CTA,
- * tiny icon controls (bell · FI/EN · theme), and a mobile hamburger
- * drawer below 900px. Pulls theme tokens from index.css so it reacts
- * to dark mode automatically.
+ * tiny icon controls (bell · FI/EN), and a mobile hamburger drawer
+ * below 900px. Dark mode retired — pure white background.
+ *
+ * Line system: a single hairline (1px var(--line)) under the masthead.
+ * No double borders, no heavy section dividers — everything is
+ * intentionally lightweight to reduce visual noise.
  * ────────────────────────────────────────────────────────────────── */
 
 :root {
-  --mast-ember: #e63b1a;
+  --mast-ember: #d9461e;
   --mast-h: 64px;
 }
 
 .site-mast {
   position: sticky; top: 0; z-index: 50;
-  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line);
 }
 
 .site-mast-inner {
@@ -71,7 +74,7 @@
 
 /* CTA pill */
 .site-mast a.site-mast-cta {
-  background: var(--ink); color: var(--bg);
+  background: var(--ink); color: #fff;
   padding: 10px 16px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11px; font-weight: 700;
@@ -84,7 +87,7 @@
 }
 .site-mast a.site-mast-cta:hover { background: var(--mast-ember); color: #fff; }
 
-/* Tiny icon cluster (bell · lang · theme) */
+/* Tiny icon cluster (bell · lang) */
 .site-mast-icons {
   display: flex; align-items: center; gap: 6px;
 }
@@ -92,7 +95,7 @@
 .site-mast-lang {
   display: inline-flex; align-items: center;
   background: transparent;
-  border: 1px solid var(--border-strong, var(--border));
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
   padding: 0;
   cursor: pointer;
@@ -108,26 +111,14 @@
   color: var(--muted);
   transition: background 120ms ease, color 120ms ease;
 }
-.site-mast-lang > span.on { background: var(--ink); color: var(--bg); }
+.site-mast-lang > span.on { background: var(--ink); color: #fff; }
 
-.site-mast-theme {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px;
-  background: transparent;
-  border: 1px solid var(--border-strong, var(--border));
-  border-radius: 999px;
-  color: var(--ink);
-  cursor: pointer;
-  transition: background 120ms ease;
-}
-.site-mast-theme:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
-
-/* Hamburger - hidden on desktop, shown < 900px */
+/* Hamburger — hidden on desktop, shown < 900px */
 .site-mast-burger {
   display: none;
   width: 36px; height: 36px;
   background: transparent;
-  border: 1px solid var(--border-strong, var(--border));
+  border: 1px solid var(--line-strong);
   border-radius: 999px;
   color: var(--ink);
   align-items: center; justify-content: center;
@@ -136,8 +127,8 @@
 
 /* Mobile drawer */
 .site-mast .site-mast-drawer {
-  border-top: 1px solid var(--border);
-  background: var(--bg);
+  border-top: 1px solid var(--line);
+  background: #fff;
   padding: 8px 24px 18px;
 }
 .site-mast .site-mast-drawer nav {
@@ -150,12 +141,12 @@
   color: var(--ink);
   padding: 12px 6px;
   text-decoration: none;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-bottom: 1px solid var(--line);
 }
 .site-mast .site-mast-drawer nav a.site-mast-drawer-active { color: var(--mast-ember); }
 .site-mast .site-mast-drawer nav a.site-mast-drawer-cta {
   margin-top: 12px;
-  background: var(--ink); color: var(--bg);
+  background: var(--ink); color: #fff;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 11px; font-weight: 700;
   letter-spacing: 0.14em;
@@ -180,12 +171,6 @@
   .site-mast .site-mast-burger { display: inline-flex; }
   .site-mast a.site-mast-brand { font-size: 22px; }
 }
-@media (max-width: 480px) {
-  .site-mast .site-mast-lang { display: none; }
-}
-
-/* Make sure the BellAlertManager bell fits cleanly */
-.site-mast-icons > button,
-.site-mast-icons > div > button {
-  background: transparent;
+@media (max-width: 380px) {
+  .site-mast .site-mast-lang > span { padding: 0 7px; }
 }

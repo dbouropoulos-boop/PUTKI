@@ -18,9 +18,8 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowRight, Menu, X, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
-import { useTheme } from '../context/ThemeContext';
 import { BellAlertManager } from './BellAlertManager';
 import '../styles/site_masthead.css';
 
@@ -45,7 +44,6 @@ export const SiteMasthead = ({ forceLang }) => {
   const langCtx = useLang();
   const lang = (forceLang || langCtx?.lang || 'fi').toLowerCase();
   const toggleLang = langCtx?.toggle;
-  const { theme, toggle: toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
 
@@ -100,15 +98,6 @@ export const SiteMasthead = ({ forceLang }) => {
             >
               <span data-active={lang === 'fi'} className={lang === 'fi' ? 'on' : ''}>FI</span>
               <span data-active={lang === 'en'} className={lang === 'en' ? 'on' : ''}>EN</span>
-            </button>
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="site-mast-theme"
-              data-testid="site-masthead-theme"
-              aria-label="Toggle theme"
-            >
-              {theme === 'dark' ? <Sun size={15} strokeWidth={1.6} /> : <Moon size={15} strokeWidth={1.6} />}
             </button>
           </div>
 

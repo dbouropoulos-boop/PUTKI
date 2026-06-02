@@ -14,10 +14,10 @@
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Sun, Moon } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
-import { useTheme } from '../context/ThemeContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import SiteMasthead from '../components/SiteMasthead';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
@@ -525,9 +525,7 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
 
 const MestariDiagnostic = ({ diagnostic }) => {
   const fallback = COPY[diagnostic];
-  const { lang, toggle: toggleLang } = useLang();
-  const { theme, toggle: toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
+  const { lang } = useLang();
   const [started, setStarted] = useState(false);
   const [landing, setLanding] = useState(fallback);
 
@@ -578,39 +576,7 @@ const MestariDiagnostic = ({ diagnostic }) => {
     <div data-testid={`mestari-${diagnostic}-page`} style={{
       background: 'var(--bg)', color: 'var(--ink)', minHeight: '100vh',
     }}>
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 100,
-        background: 'color-mix(in srgb, var(--bg) 88%, transparent)',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 24px',
-      }}>
-        <Link to="/mestari" data-testid={`mestari-${diagnostic}-back`} style={{
-          fontFamily: 'ui-monospace, monospace', fontSize: 11,
-          letterSpacing: '0.15em', fontWeight: 700, color: 'var(--ink)',
-          textDecoration: 'none',
-        }}>← MESTARI</Link>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button type="button" onClick={toggleTheme}
-            data-testid={`mestari-${diagnostic}-theme-toggle`}
-            style={{
-              padding: '6px 10px', background: 'transparent',
-              border: '1px solid var(--border)', borderRadius: 999,
-              cursor: 'pointer', color: 'var(--ink)',
-              display: 'inline-flex', alignItems: 'center',
-            }}>{isDark ? <Sun size={14} /> : <Moon size={14} />}</button>
-          <button type="button" onClick={toggleLang}
-            data-testid={`mestari-${diagnostic}-lang-toggle`}
-            style={{
-              padding: '6px 14px', background: 'transparent',
-              border: '1px solid var(--border)', borderRadius: 999,
-              cursor: 'pointer', color: 'var(--ink)',
-              fontFamily: 'ui-monospace, monospace', fontSize: 11,
-              letterSpacing: '0.18em', fontWeight: 700,
-            }}>{lang === 'en' ? 'EN / FI' : 'FI / EN'}</button>
-        </div>
-      </header>
+      <SiteMasthead />
 
       <section style={{ maxWidth: 920, margin: '0 auto', padding: '48px 24px 24px' }}>
         <div data-testid={`mestari-${diagnostic}-hero-eyebrow`} style={{

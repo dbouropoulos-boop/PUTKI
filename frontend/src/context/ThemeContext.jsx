@@ -1,34 +1,24 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 
+// iter97b: Dark mode retired. PUTKI HQ runs in light mode only — pure
+// white background + ember accent (Phase 1 visual system). The context
+// is kept as a no-op so any legacy `useTheme()` callers still work; the
+// `toggle` action is intentionally a no-op so old buttons that survive
+// the cleanup do nothing visible.
 const ThemeContext = createContext({ theme: 'light', toggle: () => {} });
 
-// Phase 1 visual system lockdown: light is the new default ("pure white
-// background, ember accent"). Dark mode remains available via the toggle
-// and is persisted to localStorage. Users who previously chose dark still
-// get dark on return visits.
-const getInitialTheme = () => {
-  if (typeof window === 'undefined') return 'light';
-  const stored = window.localStorage.getItem('mittari-theme');
-  if (stored === 'light' || stored === 'dark') return stored;
-  return 'light';
-};
-
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(getInitialTheme);
-
+  // Force-strip the `.dark` class on every mount in case a user has
+  // `localStorage["mittari-theme"] === "dark"` from a previous visit.
   useEffect(() => {
-    const root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
     try {
-      window.localStorage.setItem('mittari-theme', theme);
+      document.documentElement.classList.remove('dark');
+      window.localStorage.removeItem('mittari-theme');
     } catch {}
-  }, [theme]);
-
-  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggle }}>
+    <ThemeContext.Provider value={{ theme: 'light', toggle: () => {} }}>
       {children}
     </ThemeContext.Provider>
   );

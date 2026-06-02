@@ -5,8 +5,11 @@
 @tailwind utilities;
 
 @layer base {
-  /* LIGHT — daytime variant (Phase 1 visual system lockdown)
-     Pure white background, ember accent, no cream. */
+  /* LIGHT-only visual system (iter97b: dark mode retired)
+     Pure white background, ember accent. Lines are intentionally
+     light to avoid the cluttered "boxed-in" look — use --line for
+     hairline dividers, --line-strong only for controls (chips,
+     pills, focus rings). */
   :root {
     --bg:            #FFFFFF;
     --surface:       #F7F6F3;
@@ -15,8 +18,8 @@
     --ink-2:         #3A3833;
     --ink-3:         #7A7669;
     --muted:         #6B6862;
-    --line:          #E8E5DF;
-    --line-strong:   #D4D1CB;
+    --line:          #EFECE3;
+    --line-strong:   #D8D4CA;
     /* Backwards-compat aliases (legacy code still references these) */
     --border:        var(--line);
     --border-strong: var(--line-strong);
@@ -60,46 +63,11 @@
     --radius: 0.25rem;
   }
 
-  /* DARK — evening / primary brand variant (Phase 1 token mirror) */
+  /* iter97b: `.dark` selector kept as a no-op so any legacy markup
+     that still toggles the class doesn't blow away the light tokens.
+     ThemeContext.jsx force-strips the class on mount anyway. */
   .dark {
-    --bg:            #0A0A0A;
-    --surface:       #141414;
-    --surface-2:     #1F1F1F;
-    --ink:           #F5F3EE;
-    --ink-2:         #C9C5BC;
-    --ink-3:         #8E8B85;
-    --muted:         #8E8B85;
-    --line:          #2A2A2A;
-    --line-strong:   #3A3A3A;
-    --border:        var(--line);
-    --border-strong: var(--line-strong);
-    --hairline:      var(--line);
-    --ember:         #E55A36;
-    --ember-soft:    #2A1410;
-    --ember-strong:  #FF7A52;
-    --brand-blue:    #E55A36;
-    --mestari-accent:#7BA3F0;
-    --voita-accent:  #E8645D;
-    --needle:        #F5F3EE;
-    --background: 0 0% 4%;
-    --foreground: 38 22% 95%;
-    --card: 0 0% 8%;
-    --card-foreground: 38 22% 95%;
-    --popover: 0 0% 8%;
-    --popover-foreground: 38 22% 95%;
-    --primary: 13 75% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 12%;
-    --secondary-foreground: 38 22% 95%;
-    --muted-shadcn: 0 0% 12%;
-    --muted-foreground: 36 4% 55%;
-    --accent: 13 60% 22%;
-    --accent-foreground: 38 22% 95%;
-    --destructive: 3 56% 51%;
-    --destructive-foreground: 38 22% 95%;
-    --border-shadcn: 0 0% 16%;
-    --input: 0 0% 16%;
-    --ring: 13 75% 55%;
+    /* All tokens inherit from :root above. */
   }
 }
 
