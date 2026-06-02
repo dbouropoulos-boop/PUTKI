@@ -2743,6 +2743,32 @@ _AUTO_ACTION_ROUTE_PREFIX = (
 # next_state (the 7 reversible action types) call `_log_activity()`
 # explicitly AND set `request.state.activity_logged = True` so this
 # middleware doesn't double-record them.
+
+# iter97c — Cache-Control hardening on live-data endpoints. Safari +
+# CDN edges sometimes heuristically cache `Content-Type: application/
+# json` responses that ship without an explicit cache-control header,
+# which produces the "homepage stuck at 0/0/0/0" symptom even though
+# the backend is healthy. Force `no-store` on the five public live-data
+# routes the homepage + masthead poll every minute.
+_LIVE_DATA_PATHS = (
+    "/api/dial",
+    "/api/streamers/live",
+    "/api/news/featured",
+    "/api/news/chronological",
+    "/api/content/stats",
+)
+
+@app.middleware("http")
+async def _live_data_no_store_middleware(request, call_next):
+    response = await call_next(request)
+    try:
+        if request.url.path in _LIVE_DATA_PATHS:
+            response.headers["Cache-Control"] = "no-store, max-age=0"
+    except Exception:
+        pass
+    return response
+
+
 @app.middleware("http")
 async def _back_office_activity_middleware(request, call_next):
     response = await call_next(request)
