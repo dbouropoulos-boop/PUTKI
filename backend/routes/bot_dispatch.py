@@ -401,6 +401,21 @@ async def fanout_daily_emails(
                 result = await _attempt_email_send(email, payload)
             except Exception as exc:
                 result = {"mode": "live", "error": str(exc)[:280]}
+            # iter97e: Resend returns HTTP 4xx/5xx with a JSON error body
+            # (NOT an exception) when the recipient/sender is rejected
+            # (e.g. unverified domain in sandbox mode). Promote any 4xx/5xx
+            # provider_response to an error so the audit counts the send
+            # correctly instead of inflating delivered totals.
+            pr = result.get("provider_response") or {}
+            try:
+                status = int(pr.get("status") or 0)
+            except (TypeError, ValueError):
+                status = 0
+            if not result.get("error") and status >= 400:
+                # Preserve the original body so the back-office can show
+                # the operator exactly why Resend refused.
+                body = (pr.get("body") or "")[:280]
+                result["error"] = f"provider_{status}: {body}"
             if result.get("error"):
                 errors += 1
             elif result.get("mode") == "dry_run":
