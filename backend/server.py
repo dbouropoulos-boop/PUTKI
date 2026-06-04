@@ -2837,6 +2837,15 @@ from routes.bot_dispatch import (  # noqa: E402
 )
 api_router.include_router(_make_bot_dispatch_router())
 
+# iter97f — One-click unsubscribe for the daily-signals email fanout.
+# Required for Gmail/Outlook to render their native "Unsubscribe" button
+# next to the sender name (List-Unsubscribe + RFC 8058 one-click POST).
+from routes.unsubscribe import (  # noqa: E402
+    make_router as _make_unsubscribe_router,
+    ensure_indexes as _ensure_unsubscribe_indexes,
+)
+api_router.include_router(_make_unsubscribe_router())
+
 from routes.affiliate_router import (  # noqa: E402
     make_admin_router as _make_affiliate_admin_router,
     make_public_router as _make_affiliate_public_router,
@@ -3768,6 +3777,10 @@ async def startup_event():
         await _ensure_bot_dispatch_indexes(db)
     except Exception:
         logger.exception("bot_dispatch: index bootstrap failed (non-fatal)")
+    try:
+        await _ensure_unsubscribe_indexes(db)
+    except Exception:
+        logger.exception("unsubscribe: index bootstrap failed (non-fatal)")
     try:
         await _ensure_tma_indexes(db)
     except Exception:

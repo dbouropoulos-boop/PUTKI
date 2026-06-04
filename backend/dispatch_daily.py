@@ -543,6 +543,20 @@ async def _attempt_email_send(recipient: str, payload: Dict[str, Any]) -> Dict[s
         is_signals = payload.get("subject_hint") == "daily_signals"
         subject = ("PUTKI HQ — Päivän 5 signaalia"
                    if is_signals else "PUTKI HQ - päivän skenekatsaus")
+        # iter97f: optional per-recipient headers (List-Unsubscribe etc.)
+        # passed in as payload["resend_headers"]. The fanout computes a
+        # signed unsubscribe token per recipient and injects the headers
+        # so Gmail/Outlook render their native "Unsubscribe" button.
+        extra_headers = payload.get("resend_headers") or {}
+        body_json: Dict[str, Any] = {
+            "from": RESEND_FROM,
+            "to": [recipient],
+            "subject": subject,
+            # Text-only stub until the HTML template lands.
+            "text": _render_email_text(payload),
+        }
+        if extra_headers:
+            body_json["headers"] = extra_headers
         async with httpx.AsyncClient(timeout=15.0) as http:
             r = await http.post(
                 "https://api.resend.com/emails",
@@ -550,13 +564,7 @@ async def _attempt_email_send(recipient: str, payload: Dict[str, Any]) -> Dict[s
                     "Authorization": f"Bearer {RESEND_API_KEY}",
                     "Content-Type": "application/json",
                 },
-                json={
-                    "from": RESEND_FROM,
-                    "to": [recipient],
-                    "subject": subject,
-                    # Text-only stub until the HTML template lands.
-                    "text": _render_email_text(payload),
-                },
+                json=body_json,
             )
         return {
             "mode": "live", "provider": provider,
@@ -618,6 +626,8 @@ def _render_email_text(payload: Dict[str, Any]) -> str:
     # HTML tags, so it lands cleanly in any client.
     picks = payload.get("picks") or []
     if picks and payload.get("subject_hint") == "daily_signals":
+        unsub_url = (payload.get("unsubscribe_url") or "").strip()
+        lang = (payload.get("lang") or "fi").lower()
         lines = ["PUTKI HQ — Päivän 5 signaalia", ""]
         for i, p in enumerate(picks[:5], start=1):
             sport = (p.get("sport") or "").strip()
@@ -635,7 +645,15 @@ def _render_email_text(payload: Dict[str, Any]) -> str:
             lines.append(tail.rstrip())
             lines.append("")
         lines.append("Avaa Mittari → https://putkihq.fi/mittari")
-        lines.append("Lopeta tilaus → https://putkihq.fi/mittari (Bell → Unsubscribe)")
+        # iter97f: prominent unsubscribe link in the body, FI + EN, matches
+        # the List-Unsubscribe URL in the headers exactly.
+        if unsub_url:
+            if lang == "en":
+                lines.append(f"Unsubscribe → {unsub_url}")
+            else:
+                lines.append(f"Peruuta tilaus → {unsub_url}")
+        else:
+            lines.append("Peruuta tilaus → https://putkihq.fi/mittari (Bell → Unsubscribe)")
         return "\n".join(lines)
 
     # Legacy bulletin format (sections payload).

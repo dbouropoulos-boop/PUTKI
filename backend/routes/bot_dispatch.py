@@ -27,6 +27,7 @@ Admin endpoints (all `Depends(require_admin)`):
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import uuid
@@ -159,6 +160,8 @@ async def fanout_daily_dms(
     # iter97d: dedupe by chat_id — a single user can hold multiple
     # mittari_subscribers rows (one per bind/rebind), but we only want
     # to send ONE DM per Telegram identity per day.
+    # iter97f: also fetch the linked email so we can suppress users
+    # who hit the unsubscribe link from the email channel.
     cur = db.mittari_subscribers.aggregate([
         {"$match": {
             "status": "active",
@@ -175,6 +178,25 @@ async def fanout_daily_dms(
         }},
     ])
     rows = [d async for d in cur]
+
+    # iter97f — load the unsubscribed email set in one shot, then filter
+    # rows whose `email` matches. Telegram-only binds (no email linked)
+    # pass through unaffected.
+    unsub_emails: set = set()
+    try:
+        async for r in db.optin_consents.find(
+            {"channel": "email", "status": "unsubscribed"},
+            {"_id": 0, "identifier": 1},
+        ):
+            ident = (r.get("identifier") or "").strip().lower()
+            if ident:
+                unsub_emails.add(ident)
+    except Exception:
+        logger.exception("dm fanout: unsubscribe-set load failed (non-fatal)")
+    if unsub_emails:
+        before = len(rows)
+        rows = [r for r in rows if not (r.get("email") and (r["email"]).strip().lower() in unsub_emails)]
+        logger.info("dm fanout: suppressed %d/%d for cross-channel unsub", before - len(rows), before)
 
     attempted = 0
     delivered = 0
@@ -351,7 +373,15 @@ async def fanout_daily_emails(
         {"$match": {
             "channel": "email",
             "consent_tag": {"$in": list(_SIGNAL_EMAIL_TAGS)},
-            "identifier": {"$nin": [None, ""]},
+            # iter97f: skip anyone who clicked the one-click unsubscribe.
+            "status": {"$ne": "unsubscribed"},
+            "$and": [
+                {"identifier": {"$nin": [None, ""]}},
+                # iter97g: drop reserved/test addresses that pollute the
+                # Resend dashboard with hard bounces. @example.com is RFC
+                # 2606 reserved; @putkihq.example is our seed-data convention.
+                {"identifier": {"$not": {"$regex": r"@(example\.(com|org|net)|putkihq\.example|test\.local)$", "$options": "i"}}},
+            ],
         }},
         {"$sort": {"created_at": -1}},
         {"$group": {
@@ -371,6 +401,8 @@ async def fanout_daily_emails(
     sample: List[Dict[str, Any]] = []
 
     from dispatch_daily import _attempt_email_send  # type: ignore
+    from routes.unsubscribe import mint_token  # iter97f
+    site_url = (os.environ.get("PUTKI_HQ_SITE_URL") or "https://putkihq.fi").rstrip("/")
 
     cycle_id = uuid.uuid4().hex
     sent_at = _utc_iso()
@@ -388,32 +420,49 @@ async def fanout_daily_emails(
             continue
 
         attempted += 1
-        # Hand the pre-filtered picks to the existing email primitive.
-        # `_attempt_email_send` re-renders via `_render_email_text(payload)`
-        # which already handles picks lists.
-        payload = {"picks": filtered, "subject_hint": "daily_signals"}
+        # iter97f: per-recipient unsubscribe token + List-Unsubscribe headers
+        # (RFC 8058 one-click). Gmail/Outlook render their native button
+        # next to the sender name when BOTH headers ship.
+        unsub_token = mint_token(email)
+        unsub_url = f"{site_url}/api/u/{unsub_token}"
+        unsub_oneclick = f"{site_url}/api/u/{unsub_token}/one-click"
+        payload = {
+            "picks": filtered,
+            "subject_hint": "daily_signals",
+            "unsubscribe_url": unsub_url,
+            "resend_headers": {
+                "List-Unsubscribe": f"<{unsub_oneclick}>, <mailto:tuki@putkihq.fi?subject=unsubscribe>",
+                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
+        }
 
         if dry_run:
             result: Dict[str, Any] = {"mode": "dry_run", "provider": "resend"}
             drytotal += 1
         else:
-            try:
-                result = await _attempt_email_send(email, payload)
-            except Exception as exc:
-                result = {"mode": "live", "error": str(exc)[:280]}
-            # iter97e: Resend returns HTTP 4xx/5xx with a JSON error body
-            # (NOT an exception) when the recipient/sender is rejected
-            # (e.g. unverified domain in sandbox mode). Promote any 4xx/5xx
-            # provider_response to an error so the audit counts the send
-            # correctly instead of inflating delivered totals.
-            pr = result.get("provider_response") or {}
-            try:
-                status = int(pr.get("status") or 0)
-            except (TypeError, ValueError):
-                status = 0
+            # iter97g: Resend free tier rate-limits at ~2 req/sec; paid at
+            # ~10. Try once, and on a 429 sleep 1.2s and retry once. Cheaper
+            # than a global token bucket and gives us a clean ~2.5 req/sec
+            # steady state without dropping deliveries.
+            attempts = 0
+            while attempts < 2:
+                attempts += 1
+                try:
+                    result = await _attempt_email_send(email, payload)
+                except Exception as exc:
+                    result = {"mode": "live", "error": str(exc)[:280]}
+                pr = result.get("provider_response") or {}
+                try:
+                    status = int(pr.get("status") or 0)
+                except (TypeError, ValueError):
+                    status = 0
+                if status == 429 and attempts < 2:
+                    await asyncio.sleep(1.2)
+                    continue
+                break
+            # iter97e: promote 4xx/5xx Resend responses to an error so the
+            # audit counts them correctly instead of inflating delivered.
             if not result.get("error") and status >= 400:
-                # Preserve the original body so the back-office can show
-                # the operator exactly why Resend refused.
                 body = (pr.get("body") or "")[:280]
                 result["error"] = f"provider_{status}: {body}"
             if result.get("error"):
@@ -422,6 +471,10 @@ async def fanout_daily_emails(
                 drytotal += 1
             else:
                 delivered += 1
+            # Pacing: 250ms between live sends keeps us under Resend's
+            # 10/sec ceiling even with a paid plan, gives us headroom for
+            # the occasional retry above, and finishes 525 sends in ~135s.
+            await asyncio.sleep(0.25)
 
         docs.append({
             "id": uuid.uuid4().hex,
