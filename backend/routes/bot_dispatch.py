@@ -156,16 +156,24 @@ async def fanout_daily_dms(
         }
 
     # ── Eligible roster: active subscribers with a bound chat_id.
-    cur = db.mittari_subscribers.find(
-        {
+    # iter97d: dedupe by chat_id — a single user can hold multiple
+    # mittari_subscribers rows (one per bind/rebind), but we only want
+    # to send ONE DM per Telegram identity per day.
+    cur = db.mittari_subscribers.aggregate([
+        {"$match": {
             "status": "active",
             "telegram_chat_id": {"$nin": [None, ""]},
-        },
-        {
-            "_id": 0, "pending_id": 1, "telegram_chat_id": 1, "segment": 1,
-            "email": 1, "telegram_username": 1,
-        },
-    )
+        }},
+        {"$sort": {"telegram_bound_at": -1}},
+        {"$group": {
+            "_id": "$telegram_chat_id",
+            "pending_id":        {"$first": "$pending_id"},
+            "telegram_chat_id":  {"$first": "$telegram_chat_id"},
+            "segment":           {"$first": "$segment"},
+            "email":             {"$first": "$email"},
+            "telegram_username": {"$first": "$telegram_username"},
+        }},
+    ])
     rows = [d async for d in cur]
 
     attempted = 0
@@ -271,6 +279,197 @@ async def fanout_daily_dms(
     }
 
 
+def _render_email_picks_text(picks: List[Dict[str, Any]]) -> str:
+    """Per-subscriber daily-signals email body. Mirrors the Telegram DM
+    render so a user who bound BOTH channels sees identical narrative.
+    Kept as plain text + light HTML inline so Resend's text leg works
+    even when the recipient blocks HTML."""
+    from dispatch_daily import _render_telegram_text  # local to avoid cycle
+    base = _render_telegram_text({"picks": picks})
+    # Strip Telegram-specific HTML tags - emails get plain text.
+    import re as _re
+    base = _re.sub(r"</?(?:b|i|u|a|code|pre|s)[^>]*>", "", base)
+    base = _re.sub(r"&lt;", "<", base)
+    base = _re.sub(r"&gt;", ">", base)
+    return base.strip()[:6000]
+
+
+async def fanout_daily_emails(
+    db, *, dry_run: bool = True, force_picks: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Mirror of `fanout_daily_dms` for the email channel (iter97d).
+
+    Pulls active rows from `mittari_subscribers` that have an `email`
+    field, then sends the day's 5 picks via Resend (or dry-run if no
+    creds). Per-day idempotency lock at `mittari_email_dispatches.date_ymd`.
+
+    A user who supplied BOTH email + Telegram gets BOTH messages — one
+    via this fanout, one via `fanout_daily_dms` — same picks, two
+    surfaces, exactly as the homepage copy promises.
+    """
+    cfg = await get_bot_config(db)
+    # Email fanout shares the `daily_dm_enabled` toggle so operators
+    # have one switch for "daily signals dispatch" across all surfaces.
+    if not cfg.get("daily_dm_enabled"):
+        return {
+            "enabled": False, "today": _today_ymd(),
+            "attempted": 0, "delivered": 0, "dry_run": 0, "errors": 0,
+            "reason": "daily_dm_enabled is False",
+        }
+
+    today = _today_ymd()
+    if not dry_run:
+        existing = await db.mittari_email_dispatches.find_one({"date_ymd": today})
+        if existing:
+            return {
+                "enabled": True, "today": today, "attempted": 0, "delivered": 0,
+                "dry_run": 0, "errors": 0,
+                "reason": "already_dispatched_today",
+                "first_run_at": existing.get("fired_at"),
+            }
+
+    picks = force_picks if force_picks is not None else await _build_today_picks(db)
+    if not picks:
+        return {
+            "enabled": True, "today": today,
+            "attempted": 0, "delivered": 0, "dry_run": 0, "errors": 0,
+            "reason": "no_picks_today",
+        }
+
+    # iter97d: email roster lives in `optin_consents`, NOT in
+    # `mittari_subscribers` (those are Telegram-only). Pull every active
+    # email opt-in tagged for signal-eligible surfaces, dedupe by
+    # identifier, and send each one the daily picks.
+    _SIGNAL_EMAIL_TAGS = {
+        "email_sentiment",   # main pelisignaalit subscribers
+        "mittari_lead",      # Mittari surface email captures
+        "mestari_lead",      # Mestari diagnostic email captures
+        "voita_lead",        # Voita raffle email captures
+        "pelisignaalit",
+    }
+    cur = db.optin_consents.aggregate([
+        {"$match": {
+            "channel": "email",
+            "consent_tag": {"$in": list(_SIGNAL_EMAIL_TAGS)},
+            "identifier": {"$nin": [None, ""]},
+        }},
+        {"$sort": {"created_at": -1}},
+        {"$group": {
+            "_id": "$identifier",
+            "email":             {"$first": "$identifier"},
+            "consent_tag":       {"$first": "$consent_tag"},
+            "surface":           {"$first": "$surface"},
+        }},
+    ])
+    rows = [d async for d in cur]
+
+    attempted = 0
+    delivered = 0
+    drytotal = 0
+    errors = 0
+    skipped_by_segment = 0
+    sample: List[Dict[str, Any]] = []
+
+    from dispatch_daily import _attempt_email_send  # type: ignore
+
+    cycle_id = uuid.uuid4().hex
+    sent_at = _utc_iso()
+    docs = []
+    for row in rows:
+        email = (row.get("email") or "").strip()
+        if not email:
+            continue
+        # optin_consents rows don't carry a sport segment — every email
+        # subscriber sees the full daily 5-pick board.
+        seg = "all"
+        filtered = picks
+        if not filtered:
+            skipped_by_segment += 1
+            continue
+
+        attempted += 1
+        # Hand the pre-filtered picks to the existing email primitive.
+        # `_attempt_email_send` re-renders via `_render_email_text(payload)`
+        # which already handles picks lists.
+        payload = {"picks": filtered, "subject_hint": "daily_signals"}
+
+        if dry_run:
+            result: Dict[str, Any] = {"mode": "dry_run", "provider": "resend"}
+            drytotal += 1
+        else:
+            try:
+                result = await _attempt_email_send(email, payload)
+            except Exception as exc:
+                result = {"mode": "live", "error": str(exc)[:280]}
+            if result.get("error"):
+                errors += 1
+            elif result.get("mode") == "dry_run":
+                drytotal += 1
+            else:
+                delivered += 1
+
+        docs.append({
+            "id": uuid.uuid4().hex,
+            "kind": "send",
+            "cycle_id": cycle_id,
+            "channel": "email",
+            "segment": seg,
+            "recipient": email,
+            "broadcast": False,
+            "payload": {"picks_count": len(filtered)},
+            "mode": result.get("mode", "dry_run"),
+            "provider": result.get("provider"),
+            "provider_response": result.get("provider_response"),
+            "error": result.get("error"),
+            "sent_at": sent_at,
+            "test_send": False,
+            "source": "mittari_email_fanout",
+            "consent_tag": row.get("consent_tag"),
+        })
+
+        if len(sample) < 5:
+            sample.append({
+                "consent_tag": row.get("consent_tag"),
+                "segment": seg,
+                "email_tail": email.split("@")[0][:3] + "***@" + email.split("@")[-1],
+                "picks_count": len(filtered),
+                "mode": result.get("mode"),
+            })
+
+    if docs:
+        try:
+            await db.dispatch_log.insert_many(docs, ordered=False)
+        except Exception:
+            logger.exception("email fanout dispatch_log insert failed")
+
+    if not dry_run and attempted > 0:
+        try:
+            await db.mittari_email_dispatches.update_one(
+                {"date_ymd": today},
+                {"$set": {
+                    "date_ymd": today,
+                    "fired_at": _utc_iso(),
+                    "cycle_id": cycle_id,
+                    "attempted": attempted,
+                    "delivered": delivered,
+                    "errors": errors,
+                }},
+                upsert=True,
+            )
+        except Exception:
+            logger.exception("mittari_email_dispatches lock write failed")
+
+    return {
+        "enabled": True, "today": today,
+        "attempted": attempted, "delivered": delivered,
+        "dry_run": drytotal, "errors": errors,
+        "skipped_by_segment": skipped_by_segment,
+        "eligible_total": len(rows),
+        "cycle_id": cycle_id,
+        "sample_recipients": sample,
+    }
+
+
 async def _send_dm(chat_id: Any, text: str) -> Dict[str, Any]:
     """Direct Telegram sendMessage with pre-rendered HTML text. Falls
     back to dry_run when no token is configured."""
@@ -326,3 +525,4 @@ def make_router() -> APIRouter:
 
 async def ensure_indexes(db) -> None:
     await db.mittari_dm_dispatches.create_index("date_ymd", unique=True, background=True)
+    await db.mittari_email_dispatches.create_index("date_ymd", unique=True, background=True)

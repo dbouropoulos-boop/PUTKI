@@ -538,6 +538,11 @@ async def _attempt_email_send(recipient: str, payload: Dict[str, Any]) -> Dict[s
     # Real Resend call - kept minimal, full impl lands when keys arrive.
     try:
         import httpx
+        # iter97d: tailor the subject line for the daily-signals fanout
+        # so users don't confuse it with the (separate) sentiment digest.
+        is_signals = payload.get("subject_hint") == "daily_signals"
+        subject = ("PUTKI HQ — Päivän 5 signaalia"
+                   if is_signals else "PUTKI HQ - päivän skenekatsaus")
         async with httpx.AsyncClient(timeout=15.0) as http:
             r = await http.post(
                 "https://api.resend.com/emails",
@@ -548,7 +553,7 @@ async def _attempt_email_send(recipient: str, payload: Dict[str, Any]) -> Dict[s
                 json={
                     "from": RESEND_FROM,
                     "to": [recipient],
-                    "subject": "PUTKI HQ - päivän skenekatsaus",
+                    "subject": subject,
                     # Text-only stub until the HTML template lands.
                     "text": _render_email_text(payload),
                 },
@@ -607,6 +612,33 @@ async def _attempt_telegram_send(recipient: str, payload: Dict[str, Any]) -> Dic
 # ── Renderers (kept tiny so we can swap to richer templates later) ───────
 
 def _render_email_text(payload: Dict[str, Any]) -> str:
+    # iter97d: when called from the per-subscriber daily-signals email
+    # fanout, the payload is a picks list (not the bulletin `sections`
+    # shape). Render the picks like the Telegram DM but stripped of
+    # HTML tags, so it lands cleanly in any client.
+    picks = payload.get("picks") or []
+    if picks and payload.get("subject_hint") == "daily_signals":
+        lines = ["PUTKI HQ — Päivän 5 signaalia", ""]
+        for i, p in enumerate(picks[:5], start=1):
+            sport = (p.get("sport") or "").strip()
+            event = (p.get("event_name") or "").strip()
+            pick  = (p.get("pick") or "").strip() or "—"
+            odds  = p.get("odds_decimal")
+            sharp = p.get("sharpness") or 0
+            book  = (p.get("bookmaker") or "").strip()
+            odds_s = f"@{odds:.2f}" if isinstance(odds, (int, float)) and odds else ""
+            head = f"{i}. {sport} — {event}".strip(" —")
+            lines.append(head[:120])
+            tail = f"   Pick: {pick} {odds_s}  ·  S{sharp}"
+            if book:
+                tail += f"  ·  {book}"
+            lines.append(tail.rstrip())
+            lines.append("")
+        lines.append("Avaa Mittari → https://putkihq.fi/mittari")
+        lines.append("Lopeta tilaus → https://putkihq.fi/mittari (Bell → Unsubscribe)")
+        return "\n".join(lines)
+
+    # Legacy bulletin format (sections payload).
     lines = ["PUTKI HQ - päivän skenekatsaus", "", ]
     for section in payload.get("sections", []):
         if section["kind"] == "mittari":
@@ -1052,6 +1084,15 @@ async def dispatch_worker_loop(db) -> None:
                     await fanout_daily_dms(db, dry_run=not enabled)
                 except Exception:
                     logger.exception("dispatch worker: mittari DM fanout failed")
+                # iter97d: parallel per-subscriber EMAIL fanout. Same
+                # 5 picks delivered to anyone who supplied an email
+                # alongside (or instead of) a Telegram chat id, so the
+                # homepage promise of "tips by Telegram + email" holds.
+                try:
+                    from routes.bot_dispatch import fanout_daily_emails
+                    await fanout_daily_emails(db, dry_run=not enabled)
+                except Exception:
+                    logger.exception("dispatch worker: mittari email fanout failed")
                 # iter89: snapshot today's live Mittari picks into
                 # `mittari_signal_history` so the operator-grading job
                 # has a durable record to grade later. The snapshot is
