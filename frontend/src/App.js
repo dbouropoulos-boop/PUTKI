@@ -36,6 +36,7 @@ import BackOfficeStreamerMeta from "@/pages/BackOfficeStreamerMeta";
 import BackOfficeSlotRegistry from "@/pages/BackOfficeSlotRegistry";
 import BackOfficeOptinSegments from "@/pages/BackOfficeOptinSegments";
 import BackOfficeDispatchPreview from "@/pages/BackOfficeDispatchPreview";
+import BackOfficeDispatch from "@/pages/BackOfficeDispatch";
 import BackOfficeVoita from "@/pages/BackOfficeVoita";
 import BackOfficeVoitaQuiz from "@/pages/BackOfficeVoitaQuiz";
 import BackOfficeMittariCopy from "@/pages/BackOfficeMittariCopy";
@@ -130,6 +131,7 @@ function App() {
             <Route path="/back-office/slot-registry" element={<BackOfficeSlotRegistry />} />
             <Route path="/back-office/optin-segments" element={<BackOfficeOptinSegments />} />
             <Route path="/back-office/dispatch-preview" element={<BackOfficeDispatchPreview />} />
+            <Route path="/back-office/dispatch" element={<BackOfficeDispatch />} />
             <Route path="/back-office/voita" element={<BackOfficeVoita />} />
             <Route path="/back-office/voita-quiz" element={<BackOfficeVoitaQuiz />} />
             <Route path="/back-office/mittari-copy" element={<BackOfficeMittariCopy />} />

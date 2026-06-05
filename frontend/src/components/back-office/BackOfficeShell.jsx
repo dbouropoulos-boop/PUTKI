@@ -20,7 +20,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity, AlertTriangle, BarChart3, BookOpen, Bot, ChevronRight, Clapperboard,
   Command as CommandIcon, Dices, FileText, Flame, Gift, Globe, Inbox, Layers, Link2,
-  LogOut, Megaphone, Menu, Radio, Search, Settings as SettingsIcon, Shield, Sparkles, Telescope,
+  LogOut, Megaphone, Menu, Radio, Search, Send, Settings as SettingsIcon, Shield, Sparkles, Telescope,
   Trophy, Users, Video, Webhook,
 } from 'lucide-react';
 
@@ -65,6 +65,12 @@ const NAV_GROUPS = [
     items: [
       { to: '/back-office/telegram',  label: 'Telegram webhook', icon: Radio,   keywords: 'bot webhook bound chats audit' },
       { to: '/back-office/webhooks',  label: 'Webhooks audit',   icon: Webhook, keywords: 'audit log inbound outbound' },
+    ],
+  },
+  {
+    label: 'EDITORIAL',
+    items: [
+      { to: '/back-office/dispatch',  label: 'Dispatch composer', icon: Send, keywords: 'compose daily weekly welcome email telegram broadcast tips editorial preview' },
     ],
   },
   {

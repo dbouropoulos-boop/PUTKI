@@ -9,6 +9,43 @@
 
 ## Phase History (latest first)
 
+- **iter97h-i · Dispatch overhaul + composer at /back-office/dispatch** (2026-06-05)
+  - **State-change Telegram broadcasts permanently removed.** Killed the fan-out call in `dial_engine.compute_and_store` and neutered `telegram_bot.broadcast_mittari_state_change` to a no-op (legacy imports still resolve). Subscribers no longer receive a DM on every internal state flip.
+  - **Mittari-state gate** (`dispatch_daily._state_gate_open`) is the SINGLE source of truth for whether daily dispatch fires. Reads latest `dial_snapshots.state.key`; only `KUUMA / MYRSKY / KIIRASTULI` open the gate. Wired into `run_daily_dispatch`, `fanout_daily_dms`, `fanout_daily_emails`. Calmer states = silent skip (no "we're not sending" message). Verified with forced-KYLMA simulation: 3 dispatch entry points all returned `skipped_reason: mittari_state_gate_closed`.
+  - **TELEGRAM_THROTTLE_DISABLED env flag + sharpness threshold both retired.** The state-gate replaces them. Old `_meets_sharpness_threshold()` kept as a permissive shim so legacy callers don't break.
+  - **3 back-office toggles** at `/back-office/settings` (Telegram dispatch rules section): Daily dispatch (default ON, gated by state), Special drops (default OFF, manual fire only), Partner promos (default OFF, max 1/week). NO state-change toggle — that path is gone. `daily_dispatch_enabled=False` overrides the state-gate as a kill switch.
+  - **14-day audit delivered**: 0 state-change broadcasts hit subscribers in the audit window (`dial_state_events` empty for 14d — dial was stable). 4 unique chats touched by my own test fanout earlier in the session. 59 active Mittari subscribers were at risk under the old code path but the trigger never armed. Damage is preventive, not corrective.
+  - **`perkele` → `perke*le`** in every header position (NOT editorial body prose):
+    - `mittari_state_labels.py` STATE_LABELS["KIIRASTULI"]
+    - `og_image_generator.py` state table
+    - `dial_engine.py` streak `label_fi/label_en`
+    - `mittari_copy.py` 5-state list + receipts banner
+    - `frontend/src/constants/dial.js`, `pages/Mittari.jsx`, `components/ExploreBlocks.jsx`, `components/DialCockpit.jsx`, `i18n/translations.js`
+    - Server-side email renderer (`services/email_render.py`) auto-replaces `PERKE*LE` and `KIIRA*STULI` with ember-coloured asterisks via `_ember_markup`.
+  - **NEW: `/back-office/dispatch` composer** — 3-tab editorial UI matching Linear/Notion quality bar.
+    - **Tab 1 (Welcome read-only)**: profile dropdown (11 keys: HILJAINEN TARKKA … UUDENOPPIJA) + read-only content card. Editing happens at `/back-office/email-templates`.
+    - **Tab 2 (Daily Tips composer)**: status strip with live Mittari state (ember tint on KUUMA/MYRSKY/KIIRASTULI), 5 collapsible sections (Hook, 5 Picks with featured editorial color, Partner module with image upload + treated toggle, Sign-off). All fields with live character counts + max-length stops.
+    - **Tab 3 (Weekly Editorial composer)**: eyebrow + ember-markup headline + summary + up to 4 articles (Add/Remove) + scene moment + partner module + sign-off. `{ember}...{/ember}` markup renders inline ember in the live preview.
+    - **3-column desktop layout**: form (~560px) on left, live preview iframe (~640px) on right with Desktop/Mobile toggle, sticky top bar with title + tabs + save status indicator + Send test (⌘↵) + Send to list (⌘⇧↵) buttons.
+    - **Autosave every 2s** to `dispatch_drafts` collection. Save status with ember-dot-on-saving, grey-dot-on-saved, "Saved Ns ago" mono ticker. ⌘S triggers immediate save.
+    - **Live preview** debounced at 300ms — POSTs to `/api/admin/dispatch/preview` which calls the same `services.email_render.render()` the production fanout uses. Zero render drift between preview and reality.
+    - **Image upload + `.treated` pipeline** (`services/image_treated.py`): Pillow recipe — resize letterbox 1200×675, grayscale luminosity, ember `#D9461E` multiply blend at 55% strength, light grain dither (4% pixel jitter), JPEG-85 progressive. Stores both `original` + `treated` blobs in `partner_image_uploads`. Form has "Use treated style (PUTKI brand)" toggle (default ON).
+    - **Fire workflow**: Send Test (⌘↵) goes to admin DM/email (chat_id 909303651 + d.bouropoulos@gmail.com). Send to List (⌘⇧↵) opens AlertTriangle confirmation modal → on confirm delegates to `fanout_daily_emails` + `fanout_daily_dms` so state-gate + dedupe + rate-limit + unsub-filter all apply.
+  - **New backend (8 endpoints)**:
+    `GET/POST/PUT/DELETE /api/admin/dispatch/drafts[/{id}]`,
+    `POST /api/admin/dispatch/preview` (HTML),
+    `POST /api/admin/dispatch/test-send`,
+    `POST /api/admin/dispatch/fire`,
+    `POST /api/admin/uploads/partner-image`,
+    `GET /api/admin/uploads/partner-image/{id}[/treated]`.
+  - **New collections**: `dispatch_drafts`, `partner_image_uploads`.
+  - **Files**:
+    - Backend: `services/email_render.py` (NEW, 555 LOC — daily + weekly + welcome HTML renderers, ember markup), `services/image_treated.py` (NEW, 80 LOC — Pillow pipeline), `routes/dispatch_composer.py` (NEW, 275 LOC), `dispatch_daily.py` (state gate + sharpness shim), `dial_engine.py` (removed broadcast trigger), `telegram_bot.py` (broadcaster no-op), `routes/bot_dispatch.py` (state gate in DM + email fanouts).
+    - Frontend: `pages/BackOfficeDispatch.jsx` (NEW, ~580 LOC), `components/back-office/BackOfficeShell.jsx` (added EDITORIAL nav group), `App.js` (route registered), `lib/fetchAdmin.js` (FormData passthrough).
+    - Settings: `pages/BackOfficeSettings.jsx` (3 new toggles), `server.py` (3 new fields).
+  - **Screenshots**: `/app/qa-snapshots/dispatch-composer/01-daily-tab.png`, `02-weekly-tab.png`, `03-welcome-tab.png`.
+
+
 - **iter97f-g · Daily-signals dispatch + one-click unsubscribe** (2026-06-04, prod-ready on preview)
   - **Throttle disabled site-wide**: `TELEGRAM_THROTTLE_DISABLED=1` in `.env` + `bot_config.sharpness_min=0`. The 70-sharpness gate that silently blocked every broadcast for weeks is gone — even sub-70 picks ship now.
   - **DM fanout enabled + deduped by chat_id**: `bot_config.daily_dm_enabled=True`. `fanout_daily_dms()` now dedupes via aggregation so users with multiple bind rows (e.g., dionib1991 had 3) get exactly 1 DM. Cross-channel unsub respected — if a user clicks email Unsubscribe AND has a Telegram bind, both channels suppress.

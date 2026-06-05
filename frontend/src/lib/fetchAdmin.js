@@ -35,10 +35,14 @@ const buildAdminRequest = (path, opts = {}) => {
   if (!path || !path.startsWith('/api/')) {
     throw new Error(`adminFetch: path must start with /api/ (got "${path}")`);
   }
-  const { method = 'GET', body, headers = {}, token, signal } = opts;
+  const { method = 'GET', body, headers = {}, token, signal, asFormData } = opts;
   const requestHeaders = { ...headers };
   if (token) requestHeaders['X-Admin-Token'] = token;
-  if (isBodyMethod(method) && body !== undefined && body !== null && !('Content-Type' in requestHeaders)) {
+  // iter97i: when uploading FormData, the browser sets Content-Type with
+  // the multipart boundary - we MUST NOT set it ourselves.
+  if (isBodyMethod(method) && body !== undefined && body !== null
+      && !asFormData && !(body instanceof FormData)
+      && !('Content-Type' in requestHeaders)) {
     requestHeaders['Content-Type'] = 'application/json';
   }
   const init = {
@@ -48,7 +52,9 @@ const buildAdminRequest = (path, opts = {}) => {
     signal,
   };
   if (isBodyMethod(method) && body !== undefined && body !== null) {
-    init.body = typeof body === 'string' ? body : JSON.stringify(body);
+    init.body = (asFormData || body instanceof FormData)
+      ? body
+      : (typeof body === 'string' ? body : JSON.stringify(body));
   }
   return { url: `${BACKEND}${path}`, init };
 };

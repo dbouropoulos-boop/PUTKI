@@ -2862,6 +2862,17 @@ from routes.unsubscribe import (  # noqa: E402
 )
 api_router.include_router(_make_unsubscribe_router())
 
+# iter97i — Dispatch composer (back-office editorial UI for outgoing
+# Telegram + email broadcasts). Drafts, preview rendering, test sends,
+# full-list fires, and partner image uploads with .treated processing.
+from routes.dispatch_composer import (  # noqa: E402
+    make_router as _make_dispatch_composer_router,
+    make_uploads_router as _make_dispatch_uploads_router,
+    ensure_indexes as _ensure_dispatch_composer_indexes,
+)
+api_router.include_router(_make_dispatch_composer_router())
+api_router.include_router(_make_dispatch_uploads_router())
+
 from routes.affiliate_router import (  # noqa: E402
     make_admin_router as _make_affiliate_admin_router,
     make_public_router as _make_affiliate_public_router,
@@ -3797,6 +3808,10 @@ async def startup_event():
         await _ensure_unsubscribe_indexes(db)
     except Exception:
         logger.exception("unsubscribe: index bootstrap failed (non-fatal)")
+    try:
+        await _ensure_dispatch_composer_indexes(db)
+    except Exception:
+        logger.exception("dispatch_composer: index bootstrap failed (non-fatal)")
     try:
         await _ensure_tma_indexes(db)
     except Exception:
