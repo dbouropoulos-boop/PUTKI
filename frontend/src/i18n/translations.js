@@ -432,7 +432,7 @@ export const translations = {
     'common.offer':          'Tarjous',
     'common.offer_caps':     'TARJOUS',
     'common.score_label':    'MITTARI',
-    'common.dial_brand':     'PERKELE-MITTARI',
+    'common.dial_brand':     'PERKE*LE-MITTARI',
     'common.methodology':    'MITTARI-PISTEET',
     'common.read_methodology': 'Lue arviointimenetelmästä →',
     'common.editorial':      'Toimituksellinen',

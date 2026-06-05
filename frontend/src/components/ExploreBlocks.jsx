@@ -28,11 +28,11 @@ const STATE_COLOR = {
 };
 const STATE_NAME_FI = {
   KYLMA: 'TYYNI', HAALEA: 'VIRE', KUUMA: 'VIPINÄ',
-  MYRSKY: 'MEININKI', KIIRASTULI: 'PERKELE',
+  MYRSKY: 'MEININKI', KIIRASTULI: 'PERKE*LE',
 };
 const STATE_NAME_EN = {
   KYLMA: 'CALM', HAALEA: 'BUZZ', KUUMA: 'ACTIVE',
-  MYRSKY: 'ROLLING', KIIRASTULI: 'PERKELE',
+  MYRSKY: 'ROLLING', KIIRASTULI: 'PERKE*LE',
 };
 
 // shared block shell - vertical content stack, equal weight.

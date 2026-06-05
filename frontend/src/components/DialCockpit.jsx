@@ -266,7 +266,7 @@ export const DialCockpit = ({ state = 'KYLMA', compact = false }) => {
             transition: 'background 400ms ease, box-shadow 400ms ease',
           }}
         />
-        {lang === 'en' ? 'MITTARI' : 'PERKELE-MITTARI'}
+        {lang === 'en' ? 'MITTARI' : 'PERKE*LE-MITTARI'}
         <DialHelp />
         <span style={{ color: 'var(--border-strong)' }}>·</span>
         <span style={{ color: 'var(--muted)', fontWeight: 500, letterSpacing: '0.28em', fontSize: 11 }}>{weekday.toUpperCase()} {t('time.month_day', { day })} · {t(todKey)}</span>

@@ -134,6 +134,18 @@ async def fanout_daily_dms(
             "reason": "daily_dm_enabled is False",
         }
 
+    # iter97h — STATE GATE. DM fanout fires ONLY when the live Mittari
+    # state is editorial-worthy. Silent skip otherwise.
+    from dispatch_daily import _state_gate_open  # type: ignore
+    gate_open, current_state = await _state_gate_open(db)
+    if not gate_open:
+        return {
+            "enabled": True, "today": _today_ymd(),
+            "attempted": 0, "delivered": 0, "dry_run": 0, "errors": 0,
+            "reason": "mittari_state_gate_closed",
+            "mittari_state": current_state,
+        }
+
     today = _today_ymd()
 
     # ── Idempotency lock (only matters for live runs). Dry-runs are
@@ -337,6 +349,19 @@ async def fanout_daily_emails(
             "enabled": False, "today": _today_ymd(),
             "attempted": 0, "delivered": 0, "dry_run": 0, "errors": 0,
             "reason": "daily_dm_enabled is False",
+        }
+
+    # iter97h — STATE GATE. Email fanout follows the same rule as
+    # Telegram: only fires on KUUMA / MYRSKY / KIIRASTULI. Silent skip
+    # on calmer states.
+    from dispatch_daily import _state_gate_open  # type: ignore
+    gate_open, current_state = await _state_gate_open(db)
+    if not gate_open:
+        return {
+            "enabled": True, "today": _today_ymd(),
+            "attempted": 0, "delivered": 0, "dry_run": 0, "errors": 0,
+            "reason": "mittari_state_gate_closed",
+            "mittari_state": current_state,
         }
 
     today = _today_ymd()

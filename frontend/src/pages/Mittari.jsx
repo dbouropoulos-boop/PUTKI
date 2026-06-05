@@ -41,8 +41,8 @@ const STATE_COLOR = {
   MYRSKY: '#C97A3A', KIIRASTULI: '#C13B2C',
 };
 const STATE_LABEL = {
-  fi: { KYLMA: 'TYYNI', HAALEA: 'VIRE', KUUMA: 'VIPINÄ', MYRSKY: 'MEININKI', KIIRASTULI: 'PERKELE' },
-  en: { KYLMA: 'CALM',  HAALEA: 'BUZZ', KUUMA: 'ACTIVE', MYRSKY: 'ROLLING',  KIIRASTULI: 'PERKELE' },
+  fi: { KYLMA: 'TYYNI', HAALEA: 'VIRE', KUUMA: 'VIPINÄ', MYRSKY: 'MEININKI', KIIRASTULI: 'PERKE*LE' },
+  en: { KYLMA: 'CALM',  HAALEA: 'BUZZ', KUUMA: 'ACTIVE', MYRSKY: 'ROLLING',  KIIRASTULI: 'PERKE*LE' },
 };
 
 // Plain-language description for each meter state - explains in 1 line what
@@ -238,7 +238,7 @@ const RECEIPTS = [
     signal_fi: 'Signaali #05 · Sharpness 52 · MLS', signal_en: 'Signal #05 · Sharpness 52 · MLS',
     outcome_fi: 'Ei osunut · alhainen sharpness', outcome_en: 'Missed · low sharpness', status: 'miss' },
   { date_fi: 'Pe 15.5.', date_en: 'Fri 15.5.', time: '20:47',
-    signal_fi: 'Mittari → KIIRASTULI · 3 lähdettä', signal_en: 'Mittari → PERKELE · 3-source cluster',
+    signal_fi: 'Mittari → KIIRASTULI · 3 lähdettä', signal_en: 'Mittari → PERKE*LE · 3-source cluster',
     outcome_fi: 'Tilanvaihdos toteutui klo 21:02', outcome_en: 'State change confirmed at 21:02', status: 'hit' },
   { date_fi: 'Pe 15.5.', date_en: 'Fri 15.5.', time: '09:00',
     signal_fi: 'Signaali #01 · Sharpness 89 · Mestarien liiga', signal_en: 'Signal #01 · Sharpness 89 · UCL',

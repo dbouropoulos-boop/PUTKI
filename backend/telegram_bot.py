@@ -543,33 +543,26 @@ def _render_mestari_welcome(*, profile: Dict[str, Any], lang: str,
 
 async def broadcast_mittari_state_change(db, *, from_state: str, to_state: str,
                                          score: float) -> Dict[str, Any]:
-    """Fan-out a state-change ping to every active Mittari subscriber.
-    Called by `dial_engine.compute_and_store` whenever the quantised
-    state flips."""
-    from_label = state_label_fi(from_state)
-    to_label = state_label_fi(to_state)
-    text = (
-        f"⚡ <b>MITTARI · TILANVAIHTO</b>\n\n"
-        f"<b>{from_label} → {to_label}</b>\n"
-        f"Yhdistelmäpiste: <b>{int(score)}/100</b>\n\n"
-        "https://putkihq.fi/mittari"
+    """iter97h — REMOVED FROM HOT PATH.
+
+    State-change Telegram fan-out is permanently disabled. State
+    transitions are internal data, not subscriber content. The function
+    is kept as a no-op so any legacy import (tests, admin scripts)
+    still resolves; it returns immediately without contacting Telegram.
+
+    Subscriber-facing Mittari updates ship via:
+      • Daily 10:00 Helsinki dispatch (gated by KUUMA/MYRSKY/KIIRASTULI)
+      • Editor-fired special drops (manual only)
+    """
+    logger.info(
+        "broadcast_mittari_state_change CALLED but NO-OP (iter97h): "
+        "from=%s to=%s score=%.1f", from_state, to_state, score,
     )
-    sent = 0
-    failed = 0
-    cur = db.mittari_subscribers.find(
-        {"active": True, "telegram_chat_id": {"$ne": None}},
-        {"_id": 0, "telegram_chat_id": 1},
-    )
-    async for sub in cur:
-        chat = sub.get("telegram_chat_id")
-        if not chat:
-            continue
-        res = await send_message(chat, text)
-        if res.get("ok"):
-            sent += 1
-        else:
-            failed += 1
-    return {"sent": sent, "failed": failed, "from_state": from_state, "to_state": to_state}
+    return {
+        "sent": 0, "failed": 0,
+        "from_state": from_state, "to_state": to_state,
+        "noop_reason": "state_change_broadcasts_removed_iter97h",
+    }
 
 
 # ── Post-match result ping (used by draw flow) ───────────────────────────

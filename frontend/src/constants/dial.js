@@ -20,7 +20,7 @@ export const DIAL_STATES = {
   HAALEA:     { key: 'HAALEA',     label: 'VIRE',     label_en: 'BUZZ',    color: '#6FA37D', value: 38, headline: 'Skene käy.' },
   KUUMA:      { key: 'KUUMA',      label: 'VIPINÄ',   label_en: 'ACTIVE',  color: '#D4B445', value: 64, headline: 'Skenessä on vipinää.' },
   MYRSKY:     { key: 'MYRSKY',     label: 'MEININKI', label_en: 'ROLLING', color: '#C97A3A', value: 82, headline: 'Skenessä on meininkiä.' },
-  KIIRASTULI: { key: 'KIIRASTULI', label: 'PERKELE',  label_en: 'PERKELE', color: '#C13B2C', value: 96, headline: 'Skene on perkele-tasolla.' },
+  KIIRASTULI: { key: 'KIIRASTULI', label: 'PERKE*LE',  label_en: 'PERKE*LE', color: '#C13B2C', value: 96, headline: 'Skene on perkele-tasolla.' },
 };
 
 /** Return the language-appropriate label for a dial state key. */

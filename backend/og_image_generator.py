@@ -59,7 +59,7 @@ MITTARI_STATE_DIRECTIVES = {
     "HAALEA":     ("VIRE",     "soft green-teal early-morning stir",   "#6FA37D"),
     "KUUMA":      ("VIPINÄ",   "warm yellow late-afternoon buzz",      "#D4B445"),
     "MYRSKY":     ("MEININKI", "amber/dark-orange evening intensity",  "#C97A3A"),
-    "KIIRASTULI": ("PERKELE",  "saturated red full-perkele top state", "#C13B2C"),
+    "KIIRASTULI": ("PERKE*LE",  "saturated red full-perkele top state", "#C13B2C"),
 }
 
 

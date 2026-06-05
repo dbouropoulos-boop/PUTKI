@@ -199,6 +199,11 @@ class SettingsPayload(BaseModel):
     smartico_brand_key: Optional[str] = None
     voita_feature_enabled: Optional[bool] = None
     auto_dispatch_enabled: Optional[bool] = None
+    # iter97h — Telegram dispatch rules (3 toggles, per brand-voice fix).
+    # State-change broadcasts are gone for good — no toggle for them.
+    daily_dispatch_enabled: Optional[bool] = None    # default ON (also gated by Mittari state)
+    special_drops_enabled: Optional[bool] = None     # default OFF (manual fire only)
+    partner_promos_enabled: Optional[bool] = None    # default OFF (max 1/week when on)
     site_tagline_fi: Optional[str] = None
     site_tagline_en: Optional[str] = None
     voita_quiz_config: Optional[List[Dict[str, Any]]] = None
@@ -251,6 +256,10 @@ async def _get_settings_doc():
         "smartico_brand_key": doc.get("smartico_brand_key"),
         "voita_feature_enabled": bool(doc.get("voita_feature_enabled", False)),
         "auto_dispatch_enabled": bool(doc.get("auto_dispatch_enabled", False)),
+        # iter97h — Telegram dispatch rules.
+        "daily_dispatch_enabled":  bool(doc.get("daily_dispatch_enabled", True)),
+        "special_drops_enabled":   bool(doc.get("special_drops_enabled", False)),
+        "partner_promos_enabled":  bool(doc.get("partner_promos_enabled", False)),
         # Editable tagline - renders under the header logo and as the
         # lead line of the homepage manifesto. Editorial can A/B test
         # without dev cycles. Defaults match the brief.
@@ -305,6 +314,13 @@ async def admin_update_settings(data: SettingsPayload, _: bool = Depends(require
     # creds where available, falls back to dry_run per channel).
     if data.auto_dispatch_enabled is not None:
         update["auto_dispatch_enabled"] = bool(data.auto_dispatch_enabled)
+    # iter97h — Telegram dispatch rules (3 separate toggles).
+    if data.daily_dispatch_enabled is not None:
+        update["daily_dispatch_enabled"] = bool(data.daily_dispatch_enabled)
+    if data.special_drops_enabled is not None:
+        update["special_drops_enabled"] = bool(data.special_drops_enabled)
+    if data.partner_promos_enabled is not None:
+        update["partner_promos_enabled"] = bool(data.partner_promos_enabled)
     # Tagline - editorial copy, free-text, length-capped to avoid abuse.
     if data.site_tagline_fi is not None:
         update["site_tagline_fi"] = (data.site_tagline_fi or "").strip()[:120]

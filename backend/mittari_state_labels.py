@@ -16,7 +16,7 @@ STATE_LABELS_FI: dict[str, str] = {
     "HAALEA": "VIRE",
     "KUUMA": "VIPINÄ",
     "MYRSKY": "MEININKI",
-    "KIIRASTULI": "PERKELE",
+    "KIIRASTULI": "PERKE*LE",
 }
 
 

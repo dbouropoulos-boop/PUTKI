@@ -282,25 +282,16 @@ async def recalculate_dial(db) -> Dict[str, Any]:
         except Exception as e:
             logger.debug("Mittari OG dispatch skipped: %s", e)
 
-        # Sprint B Slice 4 - fan-out state-change Telegram pings to every
-        # bound Mittari subscriber. Fire-and-forget; dial loop never
-        # blocks on Telegram round-trips.
-        try:
-            # Late local import is intentional: dial_engine ↔ telegram_bot
-            # form a soft cycle (telegram_bot reads latest_snapshot for the
-            # welcome card, dial_engine notifies telegram_bot on state
-            # flips). Local imports break the cycle at module-load time
-            # without needing a shared interface module - canonical Python
-            # pattern, verified working since iter36.
-            from telegram_bot import broadcast_mittari_state_change
-            asyncio.create_task(broadcast_mittari_state_change(
-                db,
-                from_state=prev_key or "",
-                to_state=snapshot["state"]["key"],
-                score=snapshot.get("composite_score") or 0,
-            ))
-        except Exception as e:
-            logger.debug("Mittari Telegram broadcast skipped: %s", e)
+        # iter97h — Mittari state-change Telegram broadcasts REMOVED.
+        # Rationale: state transitions are internal data, not subscriber
+        # content. The previous fan-out fired on EVERY quantised state
+        # flip (potentially multiple times a day), which was spam and
+        # contradicted the brand voice. Subscribers now ONLY receive:
+        #   • Daily 10:00 Helsinki dispatch — gated by KUUMA/MYRSKY/KIIRASTULI
+        #   • Special drops — manual fire only by an editor
+        # No automatic state-change pings exist anywhere in the codebase.
+        # If you need to re-enable this, do it behind a back-office toggle
+        # AND a per-day throttle — not as a raw fire-and-forget task.
 
     # Retention: keep last 500 raw snapshots (the live UI only needs recent history).
     count = await db.dial_snapshots.count_documents({})
@@ -359,15 +350,15 @@ async def state_streak(db, current_state_key: str) -> Dict[str, Any]:
             "kind":            "during_perkele",
             "days":            days,
             "last_event_at":   last_at.isoformat(),
-            "label_fi":        f"PERKELE - ensimmäinen kerta {days} päivään",
-            "label_en":        f"PERKELE - first time in {days} days",
+            "label_fi":        f"PERKE*LE - ensimmäinen kerta {days} päivään",
+            "label_en":        f"PERKE*LE - first time in {days} days",
         }
     return {
         "kind":            "between",
         "days":            days,
         "last_event_at":   last_at.isoformat(),
-        "label_fi":        f"Viimeisin PERKELE: {days} päivää sitten",
-        "label_en":        f"Last PERKELE: {days} days ago",
+        "label_fi":        f"Viimeisin PERKE*LE: {days} päivää sitten",
+        "label_en":        f"Last PERKE*LE: {days} days ago",
     }
 
 

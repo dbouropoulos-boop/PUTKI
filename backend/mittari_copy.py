@@ -106,7 +106,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "title": "NÄIN SE TOIMII",
             "steps": [
                 {"title": "1 · MARKKINA", "body": "EU-urheilukirjat liikuttavat markkinaa. Lasketaan implisiittinen todennäköisyys + Sharpness joka kirjasta. Päivän viisi vahvinta nousee listalle joka aamu klo 09:00."},
-                {"title": "2 · SKENE",    "body": "Mittari yhdistää 28 nimettyä lähdettä yli kuuden kategorian yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perkele."},
+                {"title": "2 · SKENE",    "body": "Mittari yhdistää 28 nimettyä lähdettä yli kuuden kategorian yhdeksi luvuksi 0-100 ja viiteen tilaan: Tyyni · Vire · Vipinä · Meininki · Perke*le."},
                 {"title": "3 · TOIMITUS",  "body": "Telegramiin alle 3 sekunnissa. Sähköposti varalla. Sido kerran, ei toista listaa, ei spämmiä."},
             ],
         },
@@ -114,7 +114,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
             "title": "HOW IT WORKS",
             "steps": [
                 {"title": "1 · MARKET", "body": "EU sportsbooks move the market. We compute implied probability + Sharpness per book. Today\u2019s five strongest plays surface every morning at 09:00."},
-                {"title": "2 · SCENE",  "body": "Mittari composites 28 named sources across 6 categories into one number 0-100 and five states: Calm · Buzz · Active · Rolling · Perkele."},
+                {"title": "2 · SCENE",  "body": "Mittari composites 28 named sources across 6 categories into one number 0-100 and five states: Calm · Buzz · Active · Rolling · Perke*le."},
                 {"title": "3 · DELIVERY",  "body": "Telegram in under 3 seconds. Email fallback. Bind once, no second list, no spam."},
             ],
         },
@@ -148,7 +148,7 @@ DEFAULT_MITTARI_COPY: Dict[str, Any] = {
              "signal_fi": "Signaali #05 · Sharpness 52 · MLS", "signal_en": "Signal #05 · Sharpness 52 · MLS",
              "outcome_fi": "Ei osunut · alhainen sharpness", "outcome_en": "Missed · low sharpness", "status": "miss"},
             {"date_fi": "Pe 15.5.", "date_en": "Fri 15.5.", "time": "20:47",
-             "signal_fi": "Mittari → KIIRASTULI · 3 lähdettä", "signal_en": "Mittari → PERKELE · 3-source cluster",
+             "signal_fi": "Mittari → KIIRASTULI · 3 lähdettä", "signal_en": "Mittari → PERKE*LE · 3-source cluster",
              "outcome_fi": "Tilanvaihdos toteutui klo 21:02", "outcome_en": "State change confirmed at 21:02", "status": "hit"},
             {"date_fi": "Pe 15.5.", "date_en": "Fri 15.5.", "time": "09:00",
              "signal_fi": "Signaali #01 · Sharpness 89 · Mestarien liiga", "signal_en": "Signal #01 · Sharpness 89 · UCL",

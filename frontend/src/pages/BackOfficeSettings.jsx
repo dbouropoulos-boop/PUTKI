@@ -7,7 +7,7 @@
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { AlertTriangle, CheckCircle2, Trophy } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Trophy, Send } from 'lucide-react';
 import { adminFetch } from '../lib/fetchAdmin';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
@@ -107,6 +107,27 @@ const BackOfficeSettings = () => {
     });
   };
 
+  const flipDispatch = (key, label, next) => {
+    setConfirm({
+      title: `${next ? 'Enable' : 'Disable'} ${label}?`,
+      body: next
+        ? `Subscribers will start receiving ${label} again. Daily dispatch is also gated by Mittari state (only KUUMA/MYRSKY/KIIRASTULI). Off-state days remain silent regardless of this toggle.`
+        : `Subscribers will stop receiving ${label} immediately. The 10:00 Helsinki cron will silent-skip until you flip back on.`,
+      danger: false,
+      onConfirm: async () => {
+        setBusy(true); setErr(null); setConfirm(null);
+        try {
+          const r = await adminFetch(`/api/admin/settings`, {
+            method: 'PUT',
+            body: JSON.stringify({ [key]: next })});
+          if (!r.ok) throw new Error(`PUT failed (${r.status})`);
+          await refresh();
+        } catch (e) { setErr(String(e?.message || e)); }
+        finally { setBusy(false); }
+      },
+    });
+  };
+
   return (
     <div data-testid="settings-page">
       <h1 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, letterSpacing: '-0.02em', color: '#F2EBE0', margin: 0 }}>Settings</h1>
@@ -115,6 +136,45 @@ const BackOfficeSettings = () => {
       </p>
 
       {err && <div data-testid="settings-error" style={{ padding: 12, background: '#2b0e0e', border: '1px solid #5a2b2b', color: '#FF8A7F', marginBottom: 24, fontFamily: 'ui-monospace, monospace' }}>{err}</div>}
+
+      {/* iter97h — Telegram dispatch rules */}
+      <section data-testid="settings-dispatch-section" style={{ border: '1px solid #2a2722', padding: '20px 22px', marginBottom: 24, background: '#13110d' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <Send size={18} style={{ color: '#E8C26E' }} />
+          <h2 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, margin: 0, color: '#F2EBE0' }}>Telegram dispatch rules</h2>
+        </div>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.6, color: '#D8CDB9', margin: '4px 0 16px', maxWidth: 680 }}>
+          State-change broadcasts are <strong>permanently disabled</strong> — there is no toggle for them. Daily dispatch fires only when Mittari is at <code>KUUMA</code>, <code>MYRSKY</code>, or <code>KIIRASTULI</code>; calmer days are silent. Below are the only switches the editor controls.
+        </p>
+        {settings && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }} data-testid="settings-daily-dispatch-row">
+              <Toggle label="DAILY" on={settings.daily_dispatch_enabled !== false} busy={busy}
+                onChange={(n) => flipDispatch('daily_dispatch_enabled', 'daily 10:00 dispatch', n)}
+                testid="settings-daily-dispatch-toggle" />
+              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: '#9C8B6B', letterSpacing: '0.06em' }}>
+                Mittari-gated 10:00 Helsinki signals (Telegram + email). Default ON.
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }} data-testid="settings-special-drops-row">
+              <Toggle label="DROPS" on={!!settings.special_drops_enabled} busy={busy}
+                onChange={(n) => flipDispatch('special_drops_enabled', 'special drops', n)}
+                testid="settings-special-drops-toggle" />
+              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: '#9C8B6B', letterSpacing: '0.06em' }}>
+                Editor-fired one-shot broadcasts. Manual only. Default OFF.
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }} data-testid="settings-partner-promos-row">
+              <Toggle label="PROMOS" on={!!settings.partner_promos_enabled} busy={busy}
+                onChange={(n) => flipDispatch('partner_promos_enabled', 'partner promos', n)}
+                testid="settings-partner-promos-toggle" />
+              <span style={{ fontFamily: 'ui-monospace, monospace', fontSize: 10.5, color: '#9C8B6B', letterSpacing: '0.06em' }}>
+                Sponsored partner content. Max 1/week when enabled. Default OFF.
+              </span>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Voita */}
       <section data-testid="settings-voita-section" style={{ border: '1px solid #2a2722', padding: '20px 22px', marginBottom: 24, background: '#13110d' }}>

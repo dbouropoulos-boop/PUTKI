@@ -87,13 +87,49 @@ DISABLE_WORKER = os.environ.get("PUTKI_HQ_DISABLE_DISPATCH_WORKER", "0") == "1"
 #      double-fire. Both the scheduled cycle and manual triggers share
 #      this lock.
 #
-# Both gates are skippable via env (`TELEGRAM_THROTTLE_DISABLED=1`) for
-# preview / QA. The cycle audit row still records the throttle outcome
-# (fired vs. throttled-low-sharpness vs. throttled-already-sent).
-TELEGRAM_BROADCAST_SHARPNESS_MIN = int(
-    os.environ.get("TELEGRAM_BROADCAST_SHARPNESS_MIN", "70")
-)
-TELEGRAM_THROTTLE_DISABLED = os.environ.get("TELEGRAM_THROTTLE_DISABLED", "0") == "1"
+# iter97h — TELEGRAM_THROTTLE_DISABLED env flag REMOVED. The new state-
+# gate (`_state_gate_open`) replaces it: every dispatch — Telegram AND
+# email — is now silently skipped unless the live Mittari state is
+# KUUMA / MYRSKY / KIIRASTULI. The sharpness threshold check is also
+# retired (state-gate is the single source of truth for "is today
+# editorial-worthy enough to disturb subscribers").
+TELEGRAM_BROADCAST_SHARPNESS_MIN = 0  # retired iter97h — kept as 0 for any legacy callers
+
+
+# ── iter97h state-gate (single source of truth for daily dispatch) ────
+HOT_STATES = frozenset({"KUUMA", "MYRSKY", "KIIRASTULI"})
+
+
+async def _current_mittari_state_key(db) -> str:
+    """Return the most recent quantised Mittari state key (uppercase).
+    Reads `dial_snapshots` ordered by `computed_at` desc. Falls back to
+    an empty string when the dial hasn't computed yet — empty fails the
+    state gate (skip dispatch), which is the safe default."""
+    try:
+        row = await db.dial_snapshots.find_one(
+            {}, {"_id": 0, "state": 1, "computed_at": 1},
+            sort=[("computed_at", -1)],
+        )
+    except Exception:
+        logger.exception("dispatch: dial_snapshots lookup failed (silent skip)")
+        return ""
+    if not row:
+        return ""
+    state = row.get("state") or {}
+    return (state.get("key") or "").upper()
+
+
+async def _state_gate_open(db) -> Tuple[bool, str]:
+    """Return (open, current_state_key).
+
+    `open=True` only when the live Mittari state is one of the
+    editorial-worthy hot states. Used as the FIRST check in every
+    daily dispatch path (run_daily_dispatch, fanout_daily_dms,
+    fanout_daily_emails). When the gate is closed, the caller does a
+    silent skip — no "we're not sending today" message goes out.
+    """
+    key = await _current_mittari_state_key(db)
+    return (key in HOT_STATES), key
 
 
 # ── Indexes ──────────────────────────────────────────────────────────────
@@ -123,10 +159,7 @@ def _today_ymd() -> str:
 
 
 async def _telegram_already_sent_today(db) -> bool:
-    """True if a row exists in `telegram_broadcasts` for today's UTC date.
-    Disabled via env TELEGRAM_THROTTLE_DISABLED=1 (preview/QA only)."""
-    if TELEGRAM_THROTTLE_DISABLED:
-        return False
+    """True if a row exists in `telegram_broadcasts` for today's UTC date."""
     try:
         return bool(await db.telegram_broadcasts.find_one(
             {"date_ymd": _today_ymd()}, {"_id": 1}
@@ -137,9 +170,9 @@ async def _telegram_already_sent_today(db) -> bool:
 
 
 def _meets_sharpness_threshold(picks: List[Dict[str, Any]]) -> Tuple[bool, int]:
-    """Return (meets_threshold, top_sharpness). Picks list = the
-    rendered Telegram payload entries (each with `sharpness` int).
-    When TELEGRAM_THROTTLE_DISABLED=1, meets_threshold is always True."""
+    """iter97h — retired. Sharpness gate replaced by `_state_gate_open`.
+    Kept as a permissive shim so the existing run_daily_dispatch code
+    path still type-checks. Always returns (True, top_sharpness)."""
     top = 0
     for p in picks:
         try:
@@ -148,9 +181,7 @@ def _meets_sharpness_threshold(picks: List[Dict[str, Any]]) -> Tuple[bool, int]:
             s = 0
         if s > top:
             top = s
-    if TELEGRAM_THROTTLE_DISABLED:
-        return True, top
-    return top >= TELEGRAM_BROADCAST_SHARPNESS_MIN, top
+    return True, top
 
 
 async def _record_telegram_broadcast(
@@ -955,6 +986,47 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
     cycle_id = cycle_id or uuid.uuid4().hex
     started_at = datetime.now(timezone.utc).isoformat()
     cycle_date = _today_key()
+
+    # iter97h — STATE GATE. Daily dispatch fires ONLY when the live
+    # Mittari state is KUUMA / MYRSKY / KIIRASTULI. Anything else =
+    # silent skip (no audit-only dry-run rows, no "we're not sending
+    # today" message). Test-sends with `recipients_override` bypass
+    # this gate so admins can still QA the rendered payload.
+    if recipients_override is None:
+        # back-office kill switch (`daily_dispatch_enabled`) wins over state.
+        try:
+            ss = await db.settings.find_one(
+                {"_id": "site"},
+                {"_id": 0, "daily_dispatch_enabled": 1},
+            ) or {}
+            # Default True if unset — preserves the historical behaviour
+            # for fresh deployments.
+            if ss.get("daily_dispatch_enabled") is False:
+                logger.info("dispatch: daily_dispatch_enabled=False, silent skip")
+                return {
+                    "id": cycle_id, "cycle_date": cycle_date,
+                    "started_at": started_at,
+                    "finished_at": datetime.now(timezone.utc).isoformat(),
+                    "channels": [], "results": [],
+                    "skipped_reason": "daily_dispatch_disabled",
+                }
+        except Exception:
+            logger.exception("dispatch: daily_dispatch_enabled lookup failed (allowing)")
+        gate_open, current_state = await _state_gate_open(db)
+        if not gate_open:
+            logger.info(
+                "dispatch: state-gate CLOSED (current=%r), skipping silently",
+                current_state,
+            )
+            return {
+                "id": cycle_id, "cycle_date": cycle_date,
+                "started_at": started_at,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "channels": [], "results": [],
+                "skipped_reason": "mittari_state_gate_closed",
+                "mittari_state": current_state,
+                "hot_states": sorted(HOT_STATES),
+            }
 
     channels = channels or ["email", "sms", "telegram"]
     channels = [c for c in channels if c in {"email", "sms", "telegram"}]
