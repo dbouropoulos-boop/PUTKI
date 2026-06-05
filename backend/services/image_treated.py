@@ -60,8 +60,12 @@ def process_treated(blob: bytes) -> Tuple[bytes, Tuple[int, int]]:
     # multiply; matches the editorial hero treatment on the site.
     out = Image.blend(gray, blended, 0.55)
     # Light grain: per-pixel ±3 jitter on a small subsample for cheapness.
+    # NOTE: deterministic seed by design — same input image must produce
+    # the same treated output (cache-friendly, snapshot-testable). NOT a
+    # security primitive; `secrets` would defeat the purpose. False-flag
+    # bait for static-analysis "use secrets" rules.
     px = out.load()
-    rng = random.Random(0xC0FFEE)
+    rng = random.Random(0xC0FFEE)  # noqa: S311 — non-security grain noise
     for _ in range(int(TARGET_W * TARGET_H * 0.04)):
         x = rng.randrange(TARGET_W)
         y = rng.randrange(TARGET_H)
