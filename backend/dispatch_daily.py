@@ -410,6 +410,184 @@ async def _cycle_already_ran_today(db) -> bool:
     return found is not None
 
 
+# iter97j — Sunday 08:00 Helsinki weekly editorial cron.
+#
+# Different rules from daily:
+#   • fires SUNDAY only (weekday == 6 in Python's Monday=0 calendar)
+#   • fires at 08:00 Helsinki, ±DISPATCH_GRACE_MINUTES
+#   • NOT gated by Mittari state — weekly is a relationship anchor that
+#     ships every Sunday regardless of how calm the dial is
+#   • email-only — Telegram does NOT get the weekly broadcast
+#   • requires a published `dispatch_drafts` row with type='weekly' AND
+#     scheduled_for=this Sunday's YYYY-MM-DD; if no draft, silent skip
+#     (weekly demands editorial input, never auto-composes)
+WEEKLY_DISPATCH_HOUR = int(os.environ.get("WEEKLY_DISPATCH_HOUR_LOCAL", "8"))
+
+
+def _is_weekly_window(at: Optional[datetime] = None) -> bool:
+    dt = at or _helsinki_now()
+    if dt.weekday() != 6:  # Sunday only
+        return False
+    target = dt.replace(hour=WEEKLY_DISPATCH_HOUR, minute=0, second=0, microsecond=0)
+    grace = target + timedelta(minutes=DISPATCH_GRACE_MINUTES)
+    return target <= dt < grace
+
+
+async def _weekly_already_ran_this_sunday(db) -> bool:
+    key = _today_key()
+    found = await db.dispatch_log.find_one(
+        {"kind": "weekly_cycle", "cycle_date": key},
+        projection={"_id": 1},
+    )
+    return found is not None
+
+
+async def _find_weekly_draft_for_today(db) -> Optional[Dict[str, Any]]:
+    """Return the most-recently-updated weekly draft scheduled for today's
+    UTC date (matches the user-friendly Helsinki date when the cron fires).
+    Drafts with no `scheduled_for` are silently ignored."""
+    key = _today_key()
+    return await db.dispatch_drafts.find_one(
+        {"type": "weekly", "deleted_at": None,
+         "scheduled_for": {"$regex": f"^{key}"}},
+        sort=[("updated_at", -1)],
+        projection={"_id": 0},
+    )
+
+
+async def run_weekly_dispatch(
+    db,
+    *,
+    dry_run: bool = True,
+    draft_override: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Render the scheduled weekly draft and email-fanout to every
+    subscribed email opt-in. Telegram is NOT involved.
+
+    Called by:
+      • The Sunday-08:00 cron tick in `dispatch_worker_loop`
+      • POST /api/admin/dispatch/fire with type='weekly'
+    """
+    cycle_id = uuid.uuid4().hex
+    started_at = datetime.now(timezone.utc).isoformat()
+    cycle_date = _today_key()
+
+    draft = draft_override
+    if draft is None:
+        draft = await _find_weekly_draft_for_today(db)
+    if not draft and draft_override is None:
+        logger.info("weekly dispatch: no scheduled draft for %s — silent skip", cycle_date)
+        return {
+            "id": cycle_id, "cycle_date": cycle_date,
+            "kind": "weekly_cycle",
+            "started_at": started_at,
+            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "skipped_reason": "no_weekly_draft_scheduled",
+        }
+
+    fields = (draft or {}).get("fields") or {}
+
+    # Render once (preview-or-live both use the same renderer).
+    try:
+        from services.email_render import render as _render
+    except Exception:
+        logger.exception("weekly: renderer import failed")
+        return {"id": cycle_id, "skipped_reason": "render_import_failed"}
+    html = _render("weekly", fields)
+
+    # Roster: every active email opt-in tagged for any signal-bearing
+    # surface (mirrors `fanout_daily_emails`). Excludes unsubscribed
+    # users and reserved test domains.
+    _SIGNAL_TAGS = ["email_sentiment", "mittari_lead", "mestari_lead",
+                    "voita_lead", "pelisignaalit"]
+    cur = db.optin_consents.aggregate([
+        {"$match": {
+            "channel": "email",
+            "consent_tag": {"$in": _SIGNAL_TAGS},
+            "status": {"$ne": "unsubscribed"},
+            "$and": [
+                {"identifier": {"$nin": [None, ""]}},
+                {"identifier": {"$not": {"$regex": r"@(example\.(com|org|net)|putkihq\.example|test\.local)$", "$options": "i"}}},
+            ],
+        }},
+        {"$sort": {"created_at": -1}},
+        {"$group": {"_id": "$identifier", "email": {"$first": "$identifier"}}},
+    ])
+    rows = [d async for d in cur]
+
+    attempted = 0
+    delivered = 0
+    errors = 0
+    sample = []
+
+    import httpx
+    from routes.unsubscribe import mint_token
+    resend_key = os.environ.get("RESEND_API_KEY")
+    resend_from = os.environ.get("RESEND_FROM") or "PUTKI HQ <signals@putkihq.fi>"
+    site = (os.environ.get("PUTKI_HQ_SITE_URL") or "https://putkihq.fi").rstrip("/")
+    subject = f"PUTKI HQ — Viikko {fields.get('week_no','')} (viikkokatsaus)".strip()
+
+    if dry_run or not resend_key:
+        for r in rows:
+            attempted += 1
+            if len(sample) < 5:
+                sample.append({"email_tail": r["email"].split("@")[0][:3] + "***@" + r["email"].split("@")[-1]})
+    else:
+        async with httpx.AsyncClient(timeout=15.0) as http:
+            for r in rows:
+                email = r["email"]
+                attempted += 1
+                tok = mint_token(email)
+                oc_url = f"{site}/api/u/{tok}/one-click"
+                try:
+                    resp = await http.post(
+                        "https://api.resend.com/emails",
+                        headers={"Authorization": f"Bearer {resend_key}",
+                                 "Content-Type": "application/json"},
+                        json={
+                            "from": resend_from, "to": [email],
+                            "subject": subject, "html": html,
+                            "headers": {
+                                "List-Unsubscribe": f"<{oc_url}>, <mailto:tuki@putkihq.fi?subject=unsubscribe>",
+                                "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                            },
+                        },
+                    )
+                    if 200 <= resp.status_code < 300:
+                        delivered += 1
+                    else:
+                        errors += 1
+                except Exception:
+                    errors += 1
+                # 250ms pacing — matches the daily-email fanout.
+                await asyncio.sleep(0.25)
+                if len(sample) < 5:
+                    sample.append({"email_tail": email.split("@")[0][:3] + "***@" + email.split("@")[-1]})
+
+    finished_at = datetime.now(timezone.utc).isoformat()
+    cycle = {
+        "id": cycle_id,
+        "kind": "weekly_cycle",
+        "cycle_date": cycle_date,
+        "dry_run": dry_run,
+        "draft_id": (draft or {}).get("id"),
+        "week_no": fields.get("week_no"),
+        "attempted": attempted,
+        "delivered": delivered,
+        "errors": errors,
+        "eligible_total": len(rows),
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "sample_recipients": sample,
+    }
+    try:
+        await db.dispatch_log.insert_one(cycle)
+    except Exception:
+        logger.exception("weekly dispatch_log insert failed")
+    cycle.pop("_id", None)
+    return cycle
+
+
 def _channel_live_mode(channel: str) -> Tuple[bool, str]:
     """Returns (is_live, provider). Dry-run when creds missing."""
     if channel == "email":
