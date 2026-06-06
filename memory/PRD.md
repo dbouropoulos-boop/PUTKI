@@ -9,6 +9,20 @@
 
 ## Phase History (latest first)
 
+- **iter97j · Sunday 08:00 Helsinki weekly cron + weekly fire endpoint + ops watchdog** (2026-06-06, 6/6 new tests + 30/30 cumulative cookie-auth/grading/SEO suite green)
+  - **Weekly cron wired into `dispatch_worker_loop`**. New `_is_weekly_window()` helper fires only on Sunday (weekday==6) between `WEEKLY_DISPATCH_HOUR=08:00` and 08:00+grace Europe/Helsinki. Worker now checks weekly BEFORE daily so the editorial slot never collides. Idempotent via `_weekly_already_ran_this_sunday(db)` reading `dispatch_log.kind=weekly_cycle`. Backend boot log confirms: `dispatch worker armed: daily=10:00 weekly=Sun-08:00 Europe/Helsinki`.
+  - **`run_weekly_dispatch(db, dry_run, draft_override)` implemented**. Renders the supplied/scheduled draft via `services.email_render.render('weekly', fields)`, queries deduped email opt-ins from 5 signal tags, paces Resend at 250ms/req, writes a `weekly_cycle` row to `dispatch_log` with attempted/delivered/errors/eligible_total. No Telegram fanout (weekly is email-only by design). When no draft is scheduled for today's YYYY-MM-DD, writes an idempotent skip row + fires an ops alert (see below).
+  - **`POST /api/admin/dispatch/fire` accepts `type='weekly'`** (was: 400). The composer's unsaved `fields` payload is passed as `draft_override`, so editors can fire immediately without persisting a draft row. Adds a `dry_run: bool = False` to `FireBody` so smoke-test fires don't hit Resend.
+  - **Ops watchdog DMs** to admin chat (`OPS_ADMIN_CHAT_ID=909303651`, env-overrideable). New `_ops_alert(db, reason, detail)` posts one Telegram DM per (`YYYY-MM-DD::reason`) tuple via `dispatch_ops_alerts` collection's unique index on `alert_key`. Wired into three silent-skip paths:
+    - Daily state-gate closed → `daily_state_gate_closed` ("Mittari state KYLMA — daily silent-skipped").
+    - Daily kill-switch off → `daily_disabled_killswitch` (`settings.daily_dispatch_enabled=False`).
+    - Weekly no draft → `weekly_no_draft` (with "Compose at /back-office/dispatch and set scheduled_for=YYYY-MM-DD" guidance).
+  - **Tests** (`test_iter97j_weekly_cron.py`, 6 cases): weekly window detection (Sunday-only, grace window, before/after fail), dry_run override renders cycle doc, no-draft writes skip row + idempotent ops alert, fire endpoint rejects missing confirm, fire endpoint with weekly+confirm+dry_run delegates correctly, fire rejects unsupported types. **6/6 green in 1.66s.**
+  - **Regression**: 30/30 across iter88/89/94/97j in 4.08s. Lint clean on `dispatch_daily.py`, `routes/dispatch_composer.py`, new test file.
+  - **Files modified** (3): `backend/dispatch_daily.py` (+weekly worker hook, +`_ops_alert`, +skip log rows), `backend/routes/dispatch_composer.py` (fire weekly branch + `dry_run` flag), `backend/tests/test_iter97j_weekly_cron.py` (new).
+  - **Deferred to `/app/memory/CHANGELOG.md` as P2**: per-profile welcome variants (11), plain-text email variants, granular unsubscribe, PUTKI Presents takeover template.
+
+
 - **iter97h-i · Dispatch overhaul + composer at /back-office/dispatch** (2026-06-05)
   - **State-change Telegram broadcasts permanently removed.** Killed the fan-out call in `dial_engine.compute_and_store` and neutered `telegram_bot.broadcast_mittari_state_change` to a no-op (legacy imports still resolve). Subscribers no longer receive a DM on every internal state flip.
   - **Mittari-state gate** (`dispatch_daily._state_gate_open`) is the SINGLE source of truth for whether daily dispatch fires. Reads latest `dial_snapshots.state.key`; only `KUUMA / MYRSKY / KIIRASTULI` open the gate. Wired into `run_daily_dispatch`, `fanout_daily_dms`, `fanout_daily_emails`. Calmer states = silent skip (no "we're not sending" message). Verified with forced-KYLMA simulation: 3 dispatch entry points all returned `skipped_reason: mittari_state_gate_closed`.

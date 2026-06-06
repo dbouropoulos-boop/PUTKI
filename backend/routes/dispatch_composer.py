@@ -71,6 +71,7 @@ class FireBody(BaseModel):
     fields: Dict[str, Any]
     channels: List[str] = ["email"]
     confirm: bool = False
+    dry_run: bool = False  # iter97j: smoke-test fires without hitting providers
 
 
 def make_router() -> APIRouter:
@@ -227,6 +228,23 @@ def make_router() -> APIRouter:
                 outcome["telegram"] = await fanout_daily_dms(
                     db, dry_run=False, force_picks=body.fields.get("picks"),
                 )
+        elif body.type == "weekly":
+            # Weekly is email-only by design — Telegram does NOT get the
+            # weekly broadcast. The composer's `fields` payload becomes
+            # the `draft_override` so we don't depend on a saved draft
+            # row when an editor fires from the unsaved composer.
+            from dispatch_daily import run_weekly_dispatch
+            draft_override = {
+                "id": f"composer-fire-{uuid.uuid4().hex[:8]}",
+                "type": "weekly",
+                "fields": body.fields or {},
+            }
+            outcome["weekly"] = await run_weekly_dispatch(
+                db, dry_run=body.dry_run, draft_override=draft_override,
+            )
+            # Strip Mongo internals just in case the cycle doc was
+            # re-read from the log before being returned.
+            outcome["weekly"].pop("_id", None)
         else:
             raise HTTPException(400, f"fire not yet supported for type={body.type}")
         return {"ok": True, "outcome": outcome}

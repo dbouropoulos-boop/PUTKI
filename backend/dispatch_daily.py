@@ -148,8 +148,58 @@ async def ensure_indexes(db) -> None:
         # fires AT MOST once per day even across worker restarts + manual
         # POSTs to /api/admin/dispatch/run.
         await db.telegram_broadcasts.create_index("date_ymd", unique=True)
+        # iter97j: ops watchdog dedup (one DM per (date, reason)).
+        await db.dispatch_ops_alerts.create_index("alert_key", unique=True)
     except Exception:
         logger.exception("dispatch_daily.ensure_indexes failed")
+
+
+# ── iter97j: ops watchdog DMs to admin chat ───────────────────────────
+OPS_ADMIN_CHAT_ID = os.environ.get("OPS_ADMIN_CHAT_ID", "909303651")
+
+
+async def _ops_alert(db, *, reason: str, detail: str) -> None:
+    """Post a one-shot Telegram DM to the admin chat when a daily or
+    weekly cycle silent-skips. Idempotent per (today_ymd, reason) via the
+    `dispatch_ops_alerts` collection — the unique index on `alert_key`
+    absorbs duplicate-insert races so we never spam.
+
+    Failures are swallowed (Telegram down, no bot token, etc.) — ops
+    visibility is a nice-to-have, never a blocker for the dispatch loop.
+    """
+    key = f"{_today_ymd()}::{reason}"
+    try:
+        # Idempotency check: this $setOnInsert + upsert wins for the first
+        # caller, every subsequent call short-circuits via the duplicate
+        # detection on `alert_key` unique index.
+        res = await db.dispatch_ops_alerts.update_one(
+            {"alert_key": key},
+            {"$setOnInsert": {
+                "alert_key": key,
+                "reason": reason,
+                "detail": detail,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }},
+            upsert=True,
+        )
+        if res.upserted_id is None:
+            return  # already alerted today for this reason
+    except Exception:
+        logger.exception("ops alert idempotency record failed; suppressing DM")
+        return
+
+    try:
+        from telegram_bot import send_message
+        ts = datetime.now(HELSINKI).strftime("%Y-%m-%d %H:%M %Z")
+        text = (
+            f"<b>PUTKI HQ ops watchdog</b>\n"
+            f"<code>{reason}</code>\n\n"
+            f"{detail}\n\n"
+            f"<i>{ts}</i>"
+        )
+        await send_message(OPS_ADMIN_CHAT_ID, text)
+    except Exception:
+        logger.exception("ops alert telegram send failed")
 
 
 # ── Telegram throttle helpers (iter55) ───────────────────────────────────
@@ -477,13 +527,25 @@ async def run_weekly_dispatch(
         draft = await _find_weekly_draft_for_today(db)
     if not draft and draft_override is None:
         logger.info("weekly dispatch: no scheduled draft for %s — silent skip", cycle_date)
-        return {
+        skip_doc = {
             "id": cycle_id, "cycle_date": cycle_date,
             "kind": "weekly_cycle",
             "started_at": started_at,
             "finished_at": datetime.now(timezone.utc).isoformat(),
             "skipped_reason": "no_weekly_draft_scheduled",
         }
+        try:
+            await db.dispatch_log.insert_one(dict(skip_doc))
+        except Exception:
+            logger.exception("weekly dispatch_log skip insert failed")
+        # ops watchdog DM (idempotent per day+reason)
+        await _ops_alert(
+            db,
+            reason="weekly_no_draft",
+            detail=f"Sunday weekly: no draft scheduled, skipped silently. "
+                   f"Compose at /back-office/dispatch and set scheduled_for={cycle_date}.",
+        )
+        return skip_doc
 
     fields = (draft or {}).get("fields") or {}
 
@@ -1181,6 +1243,12 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
             # for fresh deployments.
             if ss.get("daily_dispatch_enabled") is False:
                 logger.info("dispatch: daily_dispatch_enabled=False, silent skip")
+                await _ops_alert(
+                    db,
+                    reason="daily_disabled_killswitch",
+                    detail="Daily cron fired but settings.daily_dispatch_enabled=False. "
+                           "Flip back at /back-office/settings → Telegram dispatch rules.",
+                )
                 return {
                     "id": cycle_id, "cycle_date": cycle_date,
                     "started_at": started_at,
@@ -1195,6 +1263,12 @@ async def run_daily_dispatch(db, *, dry_run: bool = True,
             logger.info(
                 "dispatch: state-gate CLOSED (current=%r), skipping silently",
                 current_state,
+            )
+            await _ops_alert(
+                db,
+                reason="daily_state_gate_closed",
+                detail=f"Mittari state {current_state or 'UNKNOWN'} — daily dispatch silent-skipped. "
+                       f"Hot states {sorted(HOT_STATES)} required to fire.",
             )
             return {
                 "id": cycle_id, "cycle_date": cycle_date,
@@ -1323,9 +1397,22 @@ async def dispatch_worker_loop(db) -> None:
     if DISABLE_WORKER:
         logger.info("dispatch worker disabled via env")
         return
-    logger.info("dispatch worker armed: target=%02d:00 Europe/Helsinki", DISPATCH_HOUR)
+    logger.info(
+        "dispatch worker armed: daily=%02d:00 weekly=Sun-%02d:00 Europe/Helsinki",
+        DISPATCH_HOUR, WEEKLY_DISPATCH_HOUR,
+    )
     while True:
         try:
+            # ── Weekly Sunday 08:00 Helsinki cron (iter97j) ─────────
+            # Runs BEFORE the daily check so the weekly editorial slot
+            # gets its own dedicated window and never collides with the
+            # 10:00 daily even on the rare day they share a cron tick.
+            if _is_weekly_window() and not await _weekly_already_ran_this_sunday(db):
+                logger.info("weekly dispatch window open — running Sunday cycle")
+                try:
+                    await run_weekly_dispatch(db, dry_run=False)
+                except Exception:
+                    logger.exception("dispatch worker: weekly cycle failed")
             if _is_dispatch_window() and not await _cycle_already_ran_today(db):
                 # Back-office kill switch - settings.auto_dispatch_enabled
                 # determines whether the scheduled cycle fires LIVE or
