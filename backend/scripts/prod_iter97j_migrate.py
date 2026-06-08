@@ -64,7 +64,12 @@ async def main() -> None:
 
     # ── settings: dispatch toggles + kill-switches ────────────────────
     settings_keys = [
-        ("daily_dispatch_enabled", True),
+        # iter97j prod-deploy guardrail: daily auto-fire is PARKED until
+        # the operator verifies the new pipeline end-to-end via the
+        # composer's "Send test to me" flow. Flip back to True from
+        # /back-office/settings once you've confirmed test sends land
+        # cleanly in your Gmail + Telegram.
+        ("daily_dispatch_enabled", False),
         ("special_drops_enabled", False),
         ("partner_promo_enabled", False),
     ]
