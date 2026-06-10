@@ -34,13 +34,13 @@ const Toggle = ({ label, on, busy, onChange, testid }) => (
 // Shows the verification snapshot inline so the operator confirms the
 // expected state (bot_config rows, settings values, ~523 subs) without
 // needing to leave the page.
-const MigrationButton = ({ busy, setBusy, setErr }) => {
+const MigrationButton = ({ busy, setBusy, setErr, token }) => {
   const [result, setResult] = useState(null);
   const run = async () => {
     setBusy(true); setErr(null); setResult(null);
     try {
       const r = await adminFetch(`/api/admin/dispatch/migrate-iter97j`, {
-        method: 'POST',
+        method: 'POST', token,
         body: JSON.stringify({}),
       });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
@@ -127,7 +127,10 @@ const BackOfficeSettings = () => {
     if (!token) return;
     setErr(null);
     try {
-      const r = await adminFetch(`/api/admin/settings`, {});
+      // iter97k · pass the shell-injected token as X-Admin-Token fallback
+      // so a stale/missing cookie session doesn't 401 the page on every
+      // mount. Cookie + header both attempted; either succeeds → 200.
+      const r = await adminFetch(`/api/admin/settings`, { token });
       if (!r.ok) { setErr(`auth failed (${r.status})`); return; }
       setSettings(await r.json());
     } catch (e) { setErr(String(e?.message || e)); }
@@ -151,7 +154,7 @@ const BackOfficeSettings = () => {
         setBusy(true); setErr(null); setConfirm(null);
         try {
           const r = await adminFetch(`/api/admin/settings`, {
-            method: 'PUT',
+            method: 'PUT', token,
             body: JSON.stringify({ voita_feature_enabled: next })});
           if (!r.ok) throw new Error(`PUT failed (${r.status})`);
           await refresh();
@@ -172,7 +175,7 @@ const BackOfficeSettings = () => {
         setBusy(true); setErr(null); setConfirm(null);
         try {
           const r = await adminFetch(`/api/admin/settings`, {
-            method: 'PUT',
+            method: 'PUT', token,
             body: JSON.stringify({ [key]: next })});
           if (!r.ok) throw new Error(`PUT failed (${r.status})`);
           await refresh();
@@ -200,7 +203,7 @@ const BackOfficeSettings = () => {
         <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.6, color: '#D8CDB9', margin: '4px 0 16px', maxWidth: 680 }}>
           One-click runner for the iter97j database flags: state-gate eligible states, dispatch kill-switches (parks the 10:00 cron until you flip back on), and indexes. <strong>Safe to re-run.</strong> Each click is idempotent — no destructive writes. Run this once after the iter97j deploy lands in production.
         </p>
-        <MigrationButton busy={busy} setBusy={setBusy} setErr={setErr} />
+        <MigrationButton busy={busy} setBusy={setBusy} setErr={setErr} token={token} />
       </section>
 
       {/* iter97h — Telegram dispatch rules */}
