@@ -249,6 +249,95 @@ def make_router() -> APIRouter:
             raise HTTPException(400, f"fire not yet supported for type={body.type}")
         return {"ok": True, "outcome": outcome}
 
+    # ── iter97k · one-click prod migration ────────────────────────────
+    # Replaces the MongoDB Atlas mongosh paste workflow with a button
+    # the operator clicks from /back-office/settings. Idempotent +
+    # safe to re-run.
+    #
+    # What it does:
+    #   1. Flips bot_config so the state-gate reads the right key/states.
+    #   2. Sets the three dispatch kill-switches in `settings`.
+    #   3. Asserts all dispatch-related indexes (no-op on second run).
+    #
+    # The `daily_dispatch_enabled` default is False — keeps the 10:00
+    # Helsinki cron PARKED until you've personally smoke-tested. Flip
+    # back to True from /back-office/settings once verified.
+    @router.post("/migrate-iter97j")
+    async def migrate_iter97j(db=Depends(get_db)):
+        now = datetime.now(timezone.utc).isoformat()
+        result: Dict[str, Any] = {"timestamp": now, "actions": []}
+
+        # 1. bot_config — state-gate eligible states
+        bc = await db.bot_config.update_many(
+            {},
+            {"$set": {
+                "daily_dm_enabled": True,
+                "sharpness_min": 0,
+                "state_gate_eligible_states": ["KUUMA", "MYRSKY", "KIIRASTULI"],
+                "updated_at": now,
+            }},
+            upsert=True,
+        )
+        result["actions"].append(
+            f"bot_config: matched={bc.matched_count} modified={bc.modified_count} "
+            f"upserted={bool(bc.upserted_id)}"
+        )
+        if bc.matched_count == 0 and not bc.upserted_id:
+            await db.bot_config.insert_one({
+                "id": "singleton",
+                "daily_dm_enabled": True,
+                "sharpness_min": 0,
+                "state_gate_eligible_states": ["KUUMA", "MYRSKY", "KIIRASTULI"],
+                "updated_at": now,
+            })
+            result["actions"].append("bot_config: created seed row")
+
+        # 2. settings — kill-switches. daily PARKED by default.
+        for key, val in [
+            ("daily_dispatch_enabled", False),
+            ("special_drops_enabled", False),
+            ("partner_promo_enabled", False),
+        ]:
+            r = await db.settings.update_one(
+                {"_id": key},
+                {"$set": {"_id": key, "value": val, "updated_at": now}},
+                upsert=True,
+            )
+            action = "inserted" if r.upserted_id else ("updated" if r.modified_count else "unchanged")
+            result["actions"].append(f"settings.{key} = {val} [{action}]")
+
+        # 3. indexes
+        try:
+            await db.dispatch_ops_alerts.create_index("alert_key", unique=True)
+            await db.telegram_broadcasts.create_index("date_ymd", unique=True)
+            await db.dispatch_log.create_index("sent_at")
+            await db.dispatch_log.create_index([("kind", 1), ("sent_at", -1)])
+            await db.dispatch_drafts.create_index([("type", 1), ("scheduled_for", -1)])
+            result["actions"].append("indexes: asserted")
+        except Exception as e:
+            result["actions"].append(f"indexes: warning — {e}")
+
+        # 4. verification snapshot
+        bot_config_rows = []
+        async for r in db.bot_config.find({}):
+            r.pop("_id", None)
+            bot_config_rows.append(r)
+        settings_rows = {}
+        for key in ("daily_dispatch_enabled", "special_drops_enabled", "partner_promo_enabled"):
+            row = await db.settings.find_one({"_id": key})
+            settings_rows[key] = row.get("value") if row else None
+        eligible = await db.optin_consents.count_documents({
+            "status": {"$ne": "unsubscribed"},
+            "channel": "email",
+        })
+
+        result["verification"] = {
+            "bot_config": bot_config_rows,
+            "settings": settings_rows,
+            "eligible_email_subscribers": eligible,
+        }
+        return {"ok": True, **result}
+
     return router
 
 

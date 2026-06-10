@@ -30,6 +30,60 @@ const Toggle = ({ label, on, busy, onChange, testid }) => (
   </button>
 );
 
+// iter97k · one-click migration runner. Calls POST /api/admin/dispatch/migrate-iter97j.
+// Shows the verification snapshot inline so the operator confirms the
+// expected state (bot_config rows, settings values, ~523 subs) without
+// needing to leave the page.
+const MigrationButton = ({ busy, setBusy, setErr }) => {
+  const [result, setResult] = useState(null);
+  const run = async () => {
+    setBusy(true); setErr(null); setResult(null);
+    try {
+      const r = await adminFetch(`/api/admin/dispatch/migrate-iter97j`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const j = await r.json();
+      setResult(j);
+    } catch (e) {
+      setErr(String(e?.message || e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div>
+      <button onClick={run} disabled={busy}
+        data-testid="settings-run-migration-btn"
+        style={{
+          padding: '12px 22px', cursor: busy ? 'wait' : 'pointer',
+          background: '#E8C26E', color: '#0F0E0C', border: 'none',
+          fontFamily: 'ui-monospace, monospace', fontSize: 11.5, letterSpacing: '0.2em',
+          fontWeight: 800, borderRadius: 4,
+        }}>
+        {busy ? 'RUNNING…' : 'RUN iter97j MIGRATION'}
+      </button>
+      {result && (
+        <div data-testid="settings-migration-result" style={{
+          marginTop: 16, padding: 14, background: '#0F0E0C',
+          border: '1px solid #2a2722', borderRadius: 4,
+          fontFamily: 'ui-monospace, monospace', fontSize: 11.5,
+          color: '#A6E0B0', lineHeight: 1.6, whiteSpace: 'pre-wrap',
+        }}>
+          {(result.actions || []).map((a, i) => <div key={i}>✓ {a}</div>)}
+          {result.verification && (
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed #2a2722', color: '#E8C26E' }}>
+              eligible email subscribers: <strong>{result.verification.eligible_email_subscribers}</strong>
+              {'\n'}settings: {JSON.stringify(result.verification.settings)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ConfirmModal = ({ open, title, body, onConfirm, onCancel, danger }) => {
   if (!open) return null;
   return (
@@ -136,6 +190,18 @@ const BackOfficeSettings = () => {
       </p>
 
       {err && <div data-testid="settings-error" style={{ padding: 12, background: '#2b0e0e', border: '1px solid #5a2b2b', color: '#FF8A7F', marginBottom: 24, fontFamily: 'ui-monospace, monospace' }}>{err}</div>}
+
+      {/* iter97k — one-click prod migration */}
+      <section data-testid="settings-migrate-section" style={{ border: '1px solid #5a4c2e', padding: '20px 22px', marginBottom: 24, background: '#181412' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+          <CheckCircle2 size={18} style={{ color: '#E8C26E' }} />
+          <h2 style={{ fontFamily: 'Georgia, serif', fontWeight: 700, margin: 0, color: '#F2EBE0' }}>Prod migration · iter97j</h2>
+        </div>
+        <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, lineHeight: 1.6, color: '#D8CDB9', margin: '4px 0 16px', maxWidth: 680 }}>
+          One-click runner for the iter97j database flags: state-gate eligible states, dispatch kill-switches (parks the 10:00 cron until you flip back on), and indexes. <strong>Safe to re-run.</strong> Each click is idempotent — no destructive writes. Run this once after the iter97j deploy lands in production.
+        </p>
+        <MigrationButton busy={busy} setBusy={setBusy} setErr={setErr} />
+      </section>
 
       {/* iter97h — Telegram dispatch rules */}
       <section data-testid="settings-dispatch-section" style={{ border: '1px solid #2a2722', padding: '20px 22px', marginBottom: 24, background: '#13110d' }}>

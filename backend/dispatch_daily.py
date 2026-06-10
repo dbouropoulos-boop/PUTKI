@@ -57,7 +57,11 @@ WORKER_INTERVAL_SECONDS = int(os.environ.get("DISPATCH_WORKER_INTERVAL", "60"))
 
 # Provider tokens - when absent the channel falls through to dry-run.
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY") or ""
-RESEND_FROM = os.environ.get("RESEND_FROM") or ""
+# iter97k · default the From header to the verified domain so prod
+# doesn't require RESEND_FROM in its env panel. Override via env var
+# only when you want a different sender (e.g. partner@putkihq.fi for
+# takeover campaigns).
+RESEND_FROM = os.environ.get("RESEND_FROM") or "PUTKI HQ <signals@putkihq.fi>"
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID") or ""
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN") or ""
 TWILIO_FROM = os.environ.get("TWILIO_FROM") or ""
