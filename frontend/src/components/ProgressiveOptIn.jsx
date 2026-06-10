@@ -20,6 +20,8 @@
  */
 import React, { useEffect, useState } from 'react';
 import { useLang } from '../context/LanguageContext';
+import { track } from '../lib/track';
+import useEmailGateTracking from '../hooks/useEmailGateTracking';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -87,6 +89,17 @@ const ProgressiveOptIn = ({
   const [error, setError] = useState(null);
   const [tgUrl, setTgUrl] = useState(telegramUrl || '');
 
+  // iter97k · canonical gate tracking. Only the `pelisignaalit` surface
+  // is in scope for the funnel decision tree (voita / peli / homepage
+  // are a different acquisition path, per spec §2h). The hook no-ops
+  // when enabled=false so out-of-scope surfaces keep working unchanged.
+  const inScope = surface === 'pelisignaalit';
+  const gateTracking = useEmailGateTracking({
+    content_type: 'pelisignaalit',
+    funnel_state: 'tip',
+    enabled: inScope && step === 1,    // only the email step is the gate
+  });
+
   useEffect(() => {
     if (telegramUrl) return;
     fetch(`${BACKEND}/api/settings/public`)
@@ -121,6 +134,8 @@ const ProgressiveOptIn = ({
     setSubmitting(true);
     try {
       await post({ channel: 'email', surface, email });
+      // iter97k · email_submitted on successful POST (in-scope only).
+      if (inScope) gateTracking.onSubmit();
       setStep(2);
     } catch (err) {
       setError(String(err.message || err));
@@ -159,6 +174,18 @@ const ProgressiveOptIn = ({
     setStep(4); // done
   };
 
+  // iter97k · telegram_cta_displayed fires once when step 3 first
+  // renders (in-scope surfaces only). Hook must live above ALL early
+  // returns (step 4 / 1 / 2) to satisfy rules-of-hooks.
+  useEffect(() => {
+    if (step !== 3 || !inScope) return;
+    if (window.__putki_tg_cta_fired) return;
+    window.__putki_tg_cta_fired = true;
+    track('telegram_cta_displayed', {
+      content_type: 'pelisignaalit', funnel_state: 'tip',
+    });
+  }, [step, inScope]);
+
   // === DONE ===
   if (step === 4) {
     return (
@@ -183,6 +210,11 @@ const ProgressiveOptIn = ({
     );
   }
 
+  // iter97k · telegram_cta_displayed fires once when step 3 first
+  // renders (in-scope surfaces only). Hook must live above any early
+  // return to satisfy rules-of-hooks.
+  // (moved above DONE block — original placement was below an early return)
+
   // === STEP 1 - EMAIL ===
   if (step === 1) {
     return (
@@ -200,6 +232,7 @@ const ProgressiveOptIn = ({
           {fieldRow([
             <input key="i" type="email" required value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onFocus={inScope ? gateTracking.onFieldFocus : undefined}
               placeholder={lang === 'en' ? 'you@email.com' : 'sinun@email.fi'}
               data-testid={`${dataTestId}-step1-email`}
               style={inputStyle} />,
@@ -292,7 +325,12 @@ const ProgressiveOptIn = ({
       }}>{props.telegram}</p>
       <button type="button"
         data-testid={`${dataTestId}-step3-join`}
-        onClick={joinTelegram}
+        onClick={() => {
+          if (inScope) track('telegram_clicked', {
+            content_type: 'pelisignaalit', funnel_state: 'tip',
+          });
+          joinTelegram();
+        }}
         disabled={!tgUrl}
         style={{
           background: 'transparent', color: 'var(--ink, #ECE6D8)',

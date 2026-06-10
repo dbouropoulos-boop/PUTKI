@@ -24,9 +24,27 @@
         -->
         <title>PUTKI HQ — Suomen skenen lämpötila</title>
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
+        <!-- Google Tag Manager — iter97k analytics spec §2a. Loads as
+             early as possible in <head> so the very first landing_view
+             push has a container ready. Container ID resolves from the
+             REACT_APP_GTM_CONTAINER_ID env var at build time; until the
+             analytics guy hands over the real ID the placeholder is a
+             no-op (GTM serves a 404 for unknown containers, dataLayer
+             pushes still buffer client-side for Preview Mode). -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','%REACT_APP_GTM_CONTAINER_ID%');</script>
+        <!-- End Google Tag Manager -->
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>
     <body>
+        <!-- Google Tag Manager (noscript) — fallback iframe for users
+             with JS disabled. Per spec §2a: immediately after <body>. -->
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=%REACT_APP_GTM_CONTAINER_ID%"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+        <!-- End Google Tag Manager (noscript) -->
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root"></div>
         <!--

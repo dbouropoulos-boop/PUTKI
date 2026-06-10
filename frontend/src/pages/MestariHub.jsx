@@ -14,6 +14,8 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import useJsonLd from '../hooks/useJsonLd';
 import SiteMasthead from '../components/SiteMasthead';
+import { track, fireMestariStart } from '../lib/track';
+import { watchScrollDepth } from '../lib/scrollDepth';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
@@ -77,7 +79,9 @@ const HubCard = ({ k, copy, lang, testid }) => {
   const teases = (PROFILE_TEASE[k] || PROFILE_TEASE.poker)[lang === 'en' ? 'en' : 'fi'];
   const playbookForthcoming = k === 'poker' || k === 'blackjack';
   return (
-    <Link to={`/mestari/${k}`} data-testid={testid} style={{
+    <Link to={`/mestari/${k}`} data-testid={testid}
+      onClick={() => fireMestariStart('mestari')}
+      style={{
       background: 'var(--surface)', border: '1px solid var(--border)',
       padding: '26px 22px 22px', display: 'flex', flexDirection: 'column',
       gap: 14, textDecoration: 'none', color: 'var(--ink)',
@@ -271,6 +275,17 @@ const TelegramFirstStrip = ({ lang }) => (
 const MestariHub = () => {
   const { lang } = useLang();
   const [copy, setCopy] = useState(FALLBACK);
+
+  // iter97k · Mestari lane landing events
+  const fired = React.useRef(false);
+  useEffect(() => {
+    if (fired.current) return;
+    fired.current = true;
+    track('landing_view', { content_type: 'mestari' });
+    const cleanup = watchScrollDepth('mestari');
+    const t = setTimeout(() => track('delayed_pageview', { content_type: 'mestari' }), 3000);
+    return () => { cleanup(); clearTimeout(t); };
+  }, []);
 
   useEffect(() => {
     let stop = false;

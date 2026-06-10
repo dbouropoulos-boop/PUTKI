@@ -167,7 +167,11 @@ async def _ops_alert(db, *, reason: str, detail: str) -> None:
     Failures are swallowed (Telegram down, no bot token, etc.) — ops
     visibility is a nice-to-have, never a blocker for the dispatch loop.
     """
-    key = f"{_today_ymd()}::{reason}"
+    # Use Helsinki day (`_today_key`) so the dedup key matches the
+    # dispatch_log.cycle_date semantic. Otherwise across UTC midnight
+    # but before Helsinki midnight, the worker could DM you twice for
+    # the "same" operator-perceived day.
+    key = f"{_today_key()}::{reason}"
     try:
         # Idempotency check: this $setOnInsert + upsert wins for the first
         # caller, every subsequent call short-circuits via the duplicate

@@ -113,18 +113,20 @@ def test_weekly_dispatch_no_draft_writes_skip_row_and_alerts():
     silent-skip with `skipped_reason=no_weekly_draft_scheduled`, write a
     weekly_cycle log row (for idempotency), and idempotently record an
     ops alert in dispatch_ops_alerts."""
-    from dispatch_daily import run_weekly_dispatch, _today_ymd
+    # run_weekly_dispatch uses Helsinki time (`_today_key`), not UTC.
+    # The test must match or it races across the date boundary when
+    # UTC and Helsinki days diverge (after 22:00 UTC each day).
+    from dispatch_daily import run_weekly_dispatch, _today_key
     from pymongo import MongoClient
 
     mongo_url = os.environ.get("MONGO_URL") or "mongodb://localhost:27017"
     db_name = os.environ.get("DB_NAME") or "test_database"
     sync_db = MongoClient(mongo_url)[db_name]
 
-    # Clean slate: remove any prior test draft for today + any prior alert
-    # row for today's "weekly_no_draft" reason so the test is hermetic.
-    today = _today_ymd()
+    today = _today_key()
     sync_db.dispatch_drafts.delete_many({"type": "weekly", "scheduled_for": {"$regex": f"^{today}"}})
     sync_db.dispatch_ops_alerts.delete_many({"alert_key": f"{today}::weekly_no_draft"})
+    sync_db.dispatch_log.delete_many({"kind": "weekly_cycle", "cycle_date": today, "skipped_reason": "no_weekly_draft_scheduled"})
 
     async def _run():
         db = _get_db()
@@ -138,7 +140,7 @@ def test_weekly_dispatch_no_draft_writes_skip_row_and_alerts():
     log_row = sync_db.dispatch_log.find_one(
         {"kind": "weekly_cycle", "cycle_date": today, "skipped_reason": "no_weekly_draft_scheduled"}
     )
-    assert log_row is not None
+    assert log_row is not None, f"no log row for cycle_date={today}"
 
     # Verify ops alert idempotency row created.
     alert = sync_db.dispatch_ops_alerts.find_one({"alert_key": f"{today}::weekly_no_draft"})

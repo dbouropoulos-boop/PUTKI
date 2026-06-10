@@ -31,6 +31,8 @@ import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useLocalisedCanonical from '../hooks/useLocalisedCanonical';
 import useMittariCopy from '../hooks/useMittariCopy';
+import { track } from '../lib/track';
+import { watchScrollDepth } from '../lib/scrollDepth';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TELEGRAM_BOT = 'Putkihq_bot';
@@ -508,6 +510,43 @@ const Mittari = () => {
     canonical,
     alternates,
   });
+
+  // iter97k · Mittari lane landing events. Per Q1(a) tip_viewed fires
+  // once on page mount (page-level semantic — the whole dashboard is
+  // "one tip"). tip_engaged fires on either scroll-past-50% or a 15s
+  // dwell — whichever lands first. Then both events are silent for the
+  // rest of the session. useRef guard absorbs StrictMode double-invoke
+  // in dev so the analytics guy sees one fire per mount in GTM Preview.
+  const landingFired = React.useRef(false);
+  useEffect(() => {
+    if (landingFired.current) return;
+    landingFired.current = true;
+    track('landing_view', { content_type: 'mittari' });
+    track('tip_viewed', { content_type: 'mittari' });
+    const cleanup = watchScrollDepth('mittari');
+    const dly = setTimeout(() => track('delayed_pageview', { content_type: 'mittari' }), 3000);
+    let tipFired = false;
+    const fireTipEngaged = () => {
+      if (tipFired) return;
+      tipFired = true;
+      track('tip_engaged', { content_type: 'mittari' });
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(dwellTimer);
+    };
+    const onScroll = () => {
+      const doc = document.documentElement || document.body;
+      const reached = (window.scrollY + window.innerHeight) / (doc.scrollHeight || 1);
+      if (reached >= 0.5) fireTipEngaged();
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    const dwellTimer = setTimeout(fireTipEngaged, 15000);
+    return () => {
+      cleanup();
+      clearTimeout(dly);
+      clearTimeout(dwellTimer);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, []);
 
   useEffect(() => {
     let stop = false;

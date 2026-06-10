@@ -26,6 +26,9 @@ import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import useMestariCopy from '../hooks/useMestariCopy';
 import SiteMasthead from '../components/SiteMasthead';
+import { track, fireMestariStart, fireMestariCompletion, slugifyProfile } from '../lib/track';
+import { watchScrollDepth } from '../lib/scrollDepth';
+import useEmailGateTracking from '../hooks/useEmailGateTracking';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const TELEGRAM_BOT = 'Putkihq_bot';
@@ -657,7 +660,7 @@ const MestariLanding = ({ lang, toggleLang, onStart, c }) => {
             width: 110, height: 110, borderRadius: '50%',
             background: T.surface2, border: `1px solid ${T.borderStrong}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: T.serif, fontSize: 38, color: T.accent, fontWeight: 700, fontWeight: 700,
+            fontFamily: T.serif, fontSize: 38, color: T.accent, fontWeight: 700,
           }}>{c.team.initial}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
             <div style={{ fontFamily: T.mono, fontSize: 10, letterSpacing: '0.15em', color: T.muted, textTransform: 'uppercase' }}>
@@ -1002,7 +1005,8 @@ const TrustStrip = ({ trust }) => {
 };
 
 const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, trust,
-                channelSelected, setChannelSelected, onTelegram, telegramBusy, ember }) => {
+                channelSelected, setChannelSelected, onTelegram, telegramBusy, ember,
+                onEmailFocus }) => {
   const canSubmit = !!email && rules && !busy;
   const acceptPre = (trust && trust.acceptPre) || (lang === 'en' ? 'I accept the ' : 'Hyväksyn ');
   const acceptLink = (trust && trust.acceptLink) || (lang === 'en' ? 'privacy policy' : 'tietosuojaehdot');
@@ -1092,7 +1096,11 @@ const Gate = ({ email, setEmail, rules, setRules, onSubmit, busy, error, lang, t
                 fontFamily: T.mono, fontSize: 14, letterSpacing: '0.02em',
                 outline: 'none',
               }}
-              onFocus={(e) => { e.currentTarget.style.boxShadow = `0 0 0 3px ${EMBER_SOFT}`; e.currentTarget.style.borderColor = EMBER; }}
+              onFocus={(e) => {
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${EMBER_SOFT}`;
+                e.currentTarget.style.borderColor = EMBER;
+                if (onEmailFocus) onEmailFocus();
+              }}
               onBlur={(e) => { e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = T.border; }}
             />
 
@@ -1365,6 +1373,39 @@ const Mestari = () => {
     canonical: `${BACKEND}/mestari`,
   });
 
+  // iter97k · Mestari lane landing events (intro screen mount).
+  // useRef guard absorbs React StrictMode double-invoke in dev.
+  const landingFired = React.useRef(false);
+  useEffect(() => {
+    if (landingFired.current) return;
+    landingFired.current = true;
+    track('landing_view', { content_type: 'mestari' });
+    const cleanup = watchScrollDepth('mestari');
+    const t = setTimeout(() => track('delayed_pageview', { content_type: 'mestari' }), 3000);
+    return () => { cleanup(); clearTimeout(t); };
+  }, []);
+
+  // iter97k · canonical gate tracking. Scopes the email_gate_displayed
+  // push to when step === 'gate' (the only step where Gate renders).
+  const gateTracking = useEmailGateTracking({
+    content_type: 'mestari',
+    funnel_state: 'mestari_result',
+    enabled: step === 'gate',
+  });
+
+  // iter97k · telegram_cta_displayed parallels email_gate_displayed —
+  // the Gate component shows both email AND telegram options at once
+  // on this lane, so the analytics guy needs to see both impressions
+  // to compute channel-choice ratios in GA4.
+  const tgCtaFired = React.useRef(false);
+  useEffect(() => {
+    if (step !== 'gate' || tgCtaFired.current) return;
+    tgCtaFired.current = true;
+    track('telegram_cta_displayed', {
+      content_type: 'mestari', funnel_state: 'mestari_result',
+    });
+  }, [step]);
+
   useEffect(() => {
     fetch(`${BACKEND}/api/settings/public`)
       .then((r) => r.ok ? r.json() : null)
@@ -1388,6 +1429,8 @@ const Mestari = () => {
 
   const startQuiz = useCallback(() => {
     if (!loaded || quiz.length === 0) return;
+    // iter97k · Start CTA click → mestari_start (idempotent per session).
+    fireMestariStart('mestari');
     setStep('quiz');
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
   }, [loaded, quiz.length]);
@@ -1418,6 +1461,10 @@ const Mestari = () => {
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
       return;
     }
+    // iter97k · last question answered → mestari_completion. Fire BEFORE
+    // the resolve fetch so the event lands even if the network call
+    // fails or the user closes the tab during the resolve latency.
+    fireMestariCompletion('mestari');
     setProfileLoading(true);
     setStep('tease');
     try {
@@ -1427,6 +1474,13 @@ const Mestari = () => {
       });
       const j = await r.json();
       setProfile(j.profile || null);
+      // result_viewed fires once we actually have a profile to show.
+      if (j.profile) {
+        track('result_viewed', {
+          content_type: 'mestari',
+          result_profile: slugifyProfile(j.profile.key || j.profile.slug || j.profile.name_en || ''),
+        });
+      }
     } catch { setProfile(null); }
     finally { setProfileLoading(false); }
   }, [qIdx, quiz.length, composeTags]);
@@ -1450,6 +1504,9 @@ const Mestari = () => {
         setChannelSelected(null);
         return;
       }
+      // iter97k · email_submitted on successful POST only (don't count
+      // network failures as conversions).
+      track('email_submitted', { content_type: 'mestari', funnel_state: 'mestari_result' });
       setStep('confirm');
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { /* noop: cosmetic */ }
     } catch (e) {
@@ -1463,6 +1520,13 @@ const Mestari = () => {
   // profile, then redirect the user into `t.me/{bot}?start=mestari_<token>`.
   const submitTelegramLead = async () => {
     if (telegramBusy) return;
+    // iter97k · telegram_clicked fires the moment the user commits to
+    // the Telegram path (before the network call). Per spec, this is
+    // the click-out event GA4 sees — actual joins are reconciled
+    // server-side via @Putkihq_bot, never inferred from this metric.
+    track('telegram_clicked', {
+      content_type: 'mestari', funnel_state: 'mestari_result',
+    });
     setTelegramBusy(true); setError(''); setChannelSelected('telegram');
     const token = magicToken || mintMagicToken();
     if (!magicToken) setMagicToken(token);
@@ -1543,7 +1607,8 @@ const Mestari = () => {
                 channelSelected={channelSelected}
                 setChannelSelected={setChannelSelected}
                 onTelegram={submitTelegramLead}
-                telegramBusy={telegramBusy} />
+                telegramBusy={telegramBusy}
+                onEmailFocus={gateTracking.onFieldFocus} />
             </motion.div>
           )}
           {step === 'confirm' && (

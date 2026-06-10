@@ -8,7 +8,9 @@
  * timestamp to localStorage so the page can stay revealed across
  * reloads.
  */
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { track } from '../lib/track';
+import useEmailGateTracking from '../hooks/useEmailGateTracking';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -20,6 +22,29 @@ export const MittariGate = ({ c, variant, pendingId, onUnlock, tgUrl }) => {
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState(null);
+
+  // iter97k · canonical gate tracking for the Mittari lane. The same
+  // gate component mounts twice (variant=hero|final) — the hook's
+  // useRef-based dedup ensures email_gate_displayed only fires the
+  // first time the gate actually appears in the viewport-flow.
+  // funnel_state='tip' per spec table (mittari is a tips-style lane).
+  const gateTracking = useEmailGateTracking({
+    content_type: 'mittari',
+    funnel_state: 'tip',
+  });
+
+  // iter97k · telegram_cta_displayed fires the first time this gate
+  // shows the Telegram-as-channel option. Guarded per-component so
+  // hero+final both fire (matches email_gate_displayed cardinality —
+  // GA4 dedupes by session for the Node 6 denominator).
+  const tgCtaFired = useRef(false);
+  useEffect(() => {
+    if (!tgUrl || tgCtaFired.current) return;
+    tgCtaFired.current = true;
+    track('telegram_cta_displayed', {
+      content_type: 'mittari', funnel_state: 'tip',
+    });
+  }, [tgUrl]);
 
   const submitEmail = useCallback(async (e) => {
     e?.preventDefault?.();
@@ -37,12 +62,17 @@ export const MittariGate = ({ c, variant, pendingId, onUnlock, tgUrl }) => {
       if (!r.ok) { setStatus('err'); return; }
       try { window.localStorage.setItem(STORAGE_UNLOCK_KEY, String(Date.now())); }
       catch { /* noop */ }
+      // iter97k · email_submitted fires on successful POST only.
+      gateTracking.onSubmit();
       setStatus('ok'); setEmail(''); onUnlock?.();
     } catch { setStatus('err'); }
     finally { setBusy(false); }
-  }, [email, variant, onUnlock]);
+  }, [email, variant, onUnlock, gateTracking]);
 
   const onTelegramClick = useCallback(async () => {
+    // iter97k · telegram_clicked is funnel-state-aware (this is the
+    // Mittari hero/final gate's TG path, NOT a result-screen path).
+    track('telegram_clicked', { content_type: 'mittari', funnel_state: 'tip' });
     try {
       await fetch(`${BACKEND}/api/mittari/subscribe`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -132,6 +162,7 @@ export const MittariGate = ({ c, variant, pendingId, onUnlock, tgUrl }) => {
         }}>
           <input type="email" required value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onFocus={gateTracking.onFieldFocus}
             placeholder={c.gateEmailPlaceholder}
             data-testid={`mittari-gate-${variant}-email-input`}
             style={{

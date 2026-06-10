@@ -18,6 +18,9 @@ import { ArrowRight } from 'lucide-react';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import SiteMasthead from '../components/SiteMasthead';
+import { track, fireMestariStart, fireMestariCompletion, slugifyProfile } from '../lib/track';
+import { watchScrollDepth } from '../lib/scrollDepth';
+import useEmailGateTracking from '../hooks/useEmailGateTracking';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 const BLUE = '#5B8DEE';
@@ -95,6 +98,15 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState('');
 
+  // iter97k · canonical gate tracking. enabled flag scopes the
+  // email_gate_displayed push to the moment the gate actually renders
+  // (step === 'report' here), not on QuizFlow mount.
+  const gate = useEmailGateTracking({
+    content_type: 'mestari',
+    funnel_state: 'mestari_result',
+    enabled: step === 'report',
+  });
+
   useEffect(() => {
     let stop = false;
     fetch(`${BACKEND}/api/mestari/diagnostic/${diagnostic}/meta`)
@@ -103,10 +115,35 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
         if (stop || !d) return;
         setMeta(d);
         setStep('q');
+        // iter97k · fire mestari_start on quiz mount. Idempotent via
+        // sessionStorage — if the user clicked through from /mestari
+        // hub it already fired there, this is a no-op.
+        fireMestariStart('mestari');
       })
       .catch(() => setErr('network'));
     return () => { stop = true; };
   }, [diagnostic]);
+
+  // iter97k · fire result_viewed once when the report is first shown.
+  // The slugified profile key gives the analytics guy a clean 11-cohort
+  // cut in GA4 (per spec §6) — drift-resistant lower-snake-case.
+  // useRef guard absorbs StrictMode double-invoke + late `result`
+  // updates that could otherwise re-fire after the first render.
+  // Also fires telegram_cta_displayed since the report screen shows
+  // the @Putkihq_bot CTA right next to the email gate.
+  const resultViewedFired = React.useRef(false);
+  useEffect(() => {
+    if (step !== 'report' || !result?.profile) return;
+    if (resultViewedFired.current) return;
+    resultViewedFired.current = true;
+    track('result_viewed', {
+      content_type: 'mestari',
+      result_profile: slugifyProfile(result.profile.key || result.profile.name_en || ''),
+    });
+    track('telegram_cta_displayed', {
+      content_type: 'mestari', funnel_state: 'mestari_result',
+    });
+  }, [step, result]);
 
   const answer = (opt) => {
     if (!meta) return;
@@ -117,6 +154,10 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
       setIdx(idx + 1);
       return;
     }
+    // Last question answered → fire mestari_completion (with elapsed
+    // sessionStorage timer) BEFORE the resolve fetch so the event lands
+    // even if the user closes the tab during /resolve latency.
+    fireMestariCompletion('mestari');
     // Resolve when last question is answered.
     fetch(`${BACKEND}/api/mestari/diagnostic/${diagnostic}/resolve`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -143,7 +184,12 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
       }),
     })
       .then((r) => r.ok ? r.json() : Promise.reject(r))
-      .then(() => setStep('done'))
+      .then(() => {
+        // iter97k · email_submitted is the primary conversion goal. Push
+        // only on successful POST so we don't count network failures.
+        gate.onSubmit();
+        setStep('done');
+      })
       .catch(() => setErr('submit_failed'))
       .finally(() => setSubmitting(false));
   };
@@ -341,6 +387,9 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
         <a href={`https://t.me/Putkihq_bot?start=mestari_${diagnostic}`}
            target="_blank" rel="noopener noreferrer"
            data-testid="mestari-diag-telegram-cta"
+           onClick={() => track('telegram_clicked', {
+             content_type: 'mestari', funnel_state: 'mestari_result',
+           })}
            style={{
              display: 'block',
              background: 'linear-gradient(135deg, #229ED9 0%, #1B7BAB 100%)',
@@ -420,6 +469,7 @@ const QuizFlow = ({ diagnostic, lang, onExit }) => {
             />
             <input
               data-testid="mestari-diag-email-input"
+              onFocus={gate.onFieldFocus}
               type="email" value={email} onChange={(e) => setEmail(e.target.value)}
               placeholder={lang === 'en' ? 'you@example.com' : 'sinä@esimerkki.fi'}
               required
@@ -545,6 +595,18 @@ const MestariDiagnostic = ({ diagnostic }) => {
 
   const c = landing;
 
+  // iter97k · Mestari lane landing events (intro page mount).
+  // useRef guard absorbs React StrictMode double-invoke in dev.
+  const landingFired = React.useRef(false);
+  useEffect(() => {
+    if (landingFired.current) return;
+    landingFired.current = true;
+    track('landing_view', { content_type: 'mestari' });
+    const cleanup = watchScrollDepth('mestari');
+    const t = setTimeout(() => track('delayed_pageview', { content_type: 'mestari' }), 3000);
+    return () => { cleanup(); clearTimeout(t); };
+  }, [diagnostic]);
+
   const stats = useMemo(() => [
     {
       num: c.hero_stat_num,
@@ -608,7 +670,7 @@ const MestariDiagnostic = ({ diagnostic }) => {
           </p>
         </div>
 
-        <button type="button" onClick={() => setStarted(true)}
+        <button type="button" onClick={() => { fireMestariStart('mestari'); setStarted(true); }}
           data-testid={`mestari-${diagnostic}-cta`}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 12,

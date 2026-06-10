@@ -1,5 +1,7 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { captureAttribution, track } from "@/lib/track";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import HomeV5 from "@/pages/HomeV5";
@@ -96,10 +98,48 @@ import BackOfficeMiniGameAnalytics from "@/pages/BackOfficeMiniGameAnalytics";
 import { Korjaukset, Affiliaatti, Avoimuus, Lehdisto, Paivityslog } from "@/pages/Accountability";
 import { Toaster } from "@/components/ui/sonner";
 
+/**
+ * iter97k · SPA route-change tracker.
+ *
+ * GA4 only counts the first hard load via its built-in measurement.
+ * Every client-side route change needs a manual `page_view` push so
+ * the standard Pages reports populate correctly. We push AFTER the
+ * URL has updated (this component re-renders on every location change)
+ * and let GA4 read `page_location` from the URL automatically — no
+ * `page_path` param, per spec §2f.
+ *
+ * Skip-first-mount discipline: a per-instance ref tracks the previous
+ * pathname. The very first observation is silent (GTM's auto-fired
+ * initial pageview covers the entry URL). Every subsequent pathname
+ * change pushes a `page_view`. Per-instance ref (not window flag) so
+ * React StrictMode's double-invocation in dev doesn't race.
+ */
+function RouteChangeTracker() {
+  const location = useLocation();
+  const lastPath = React.useRef(null);
+  useEffect(() => {
+    // captureAttribution() only writes once per session (idempotent).
+    // Running it here guarantees attribution is captured before any
+    // lane page mount fires landing_view.
+    captureAttribution();
+  }, []);
+  useEffect(() => {
+    if (lastPath.current === null) {
+      lastPath.current = location.pathname;     // initial mount: silent
+      return;
+    }
+    if (lastPath.current === location.pathname) return;
+    lastPath.current = location.pathname;
+    track('page_view', { page_title: document.title });
+  }, [location.pathname]);
+  return null;
+}
+
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
+        <RouteChangeTracker />
         <Routes>
           {/* Standalone (no header/footer) */}
           <Route path="/landing" element={<ColdEmailLanding />} />

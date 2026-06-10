@@ -13,6 +13,8 @@ import { Link } from 'react-router-dom';
 import ProgressiveOptIn from '../components/ProgressiveOptIn';
 import { useLang } from '../context/LanguageContext';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import { track } from '../lib/track';
+import { watchScrollDepth } from '../lib/scrollDepth';
 
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
@@ -200,6 +202,41 @@ const Pelisignaalit = () => {
     load();
     const id = setInterval(load, 90_000);
     return () => { stop = true; clearInterval(id); };
+  }, []);
+
+  // iter97k · Pelisignaalit lane landing events. Per Q1(a) page-level
+  // tip semantics: tip_viewed on mount, tip_engaged on scroll-past-50%
+  // OR 15s dwell — whichever fires first. delayed_pageview at 3s.
+  // useRef guard absorbs StrictMode double-invoke in dev.
+  const landingFired = React.useRef(false);
+  useEffect(() => {
+    if (landingFired.current) return;
+    landingFired.current = true;
+    track('landing_view', { content_type: 'pelisignaalit' });
+    track('tip_viewed', { content_type: 'pelisignaalit' });
+    const cleanup = watchScrollDepth('pelisignaalit');
+    const dly = setTimeout(() => track('delayed_pageview', { content_type: 'pelisignaalit' }), 3000);
+    let tipFired = false;
+    const fireTipEngaged = () => {
+      if (tipFired) return;
+      tipFired = true;
+      track('tip_engaged', { content_type: 'pelisignaalit' });
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(dwellTimer);
+    };
+    const onScroll = () => {
+      const doc = document.documentElement || document.body;
+      const reached = (window.scrollY + window.innerHeight) / (doc.scrollHeight || 1);
+      if (reached >= 0.5) fireTipEngaged();
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    const dwellTimer = setTimeout(fireTipEngaged, 15000);
+    return () => {
+      cleanup();
+      clearTimeout(dly);
+      clearTimeout(dwellTimer);
+      window.removeEventListener('scroll', onScroll);
+    };
   }, []);
 
   const todayScore = watch?.today_score;
