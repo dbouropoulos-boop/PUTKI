@@ -75,7 +75,7 @@ const MigrationButton = ({ busy, setBusy, setErr, token }) => {
           {result.verification && (
             <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px dashed #2a2722', color: '#E8C26E' }}>
               eligible email subscribers: <strong>{result.verification.eligible_email_subscribers}</strong>
-              {'\n'}settings: {JSON.stringify(result.verification.settings)}
+              {'\n'}settings (_id=site): {JSON.stringify(result.verification.settings_site)}
             </div>
           )}
         </div>

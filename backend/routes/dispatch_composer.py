@@ -255,19 +255,25 @@ def make_router() -> APIRouter:
     # safe to re-run.
     #
     # What it does:
-    #   1. Flips bot_config so the state-gate reads the right key/states.
-    #   2. Sets the three dispatch kill-switches in `settings`.
+    #   1. Flips bot_config so the state-gate eligible-states key is
+    #      explicit (informational — HOT_STATES is hardcoded in code,
+    #      this row is for human ops inspection only).
+    #   2. Writes the three dispatch kill-switches into the canonical
+    #      settings doc (`_id="site"`) — this is the SAME shape the
+    #      back-office page reads/writes, so flipping toggles in the UI
+    #      affects the same document.
     #   3. Asserts all dispatch-related indexes (no-op on second run).
     #
-    # The `daily_dispatch_enabled` default is False — keeps the 10:00
-    # Helsinki cron PARKED until you've personally smoke-tested. Flip
-    # back to True from /back-office/settings once verified.
+    # The `daily_dispatch_enabled` default is False here — keeps the
+    # 10:00 Helsinki cron PARKED until you've personally smoke-tested.
+    # Flip back to True from /back-office/settings → Telegram dispatch
+    # rules once verified.
     @router.post("/migrate-iter97j")
     async def migrate_iter97j(db=Depends(get_db)):
         now = datetime.now(timezone.utc).isoformat()
         result: Dict[str, Any] = {"timestamp": now, "actions": []}
 
-        # 1. bot_config — state-gate eligible states
+        # 1. bot_config — informational
         bc = await db.bot_config.update_many(
             {},
             {"$set": {
@@ -292,19 +298,32 @@ def make_router() -> APIRouter:
             })
             result["actions"].append("bot_config: created seed row")
 
-        # 2. settings — kill-switches. daily PARKED by default.
-        for key, val in [
-            ("daily_dispatch_enabled", False),
-            ("special_drops_enabled", False),
-            ("partner_promo_enabled", False),
-        ]:
-            r = await db.settings.update_one(
-                {"_id": key},
-                {"$set": {"_id": key, "value": val, "updated_at": now}},
-                upsert=True,
-            )
-            action = "inserted" if r.upserted_id else ("updated" if r.modified_count else "unchanged")
-            result["actions"].append(f"settings.{key} = {val} [{action}]")
+        # 2. settings — kill-switches written into the CANONICAL doc
+        # (_id="site") so they're read by both run_daily_dispatch and
+        # the back-office GET /api/admin/settings page. The earlier
+        # migration mistakenly wrote separate _id="daily_dispatch_enabled"
+        # docs which were never read. Clean those up at the bottom.
+        flags = {
+            "daily_dispatch_enabled": False,       # ← intentional safety park
+            "special_drops_enabled": False,
+            "partner_promos_enabled": False,        # note: code reads `_promos_enabled` (plural)
+        }
+        await db.settings.update_one(
+            {"_id": "site"},
+            {"$set": {**flags, "updated_at": now}},
+            upsert=True,
+        )
+        result["actions"].append(
+            f"settings._id=site: set {flags}"
+        )
+
+        # 2b. Clean up orphaned _id rows from the earlier migration bug
+        # (only deletes if they exist; safe no-op otherwise).
+        for orphan_id in ("daily_dispatch_enabled", "special_drops_enabled",
+                          "partner_promo_enabled", "partner_promos_enabled"):
+            r = await db.settings.delete_one({"_id": orphan_id})
+            if r.deleted_count:
+                result["actions"].append(f"cleaned orphan _id={orphan_id}")
 
         # 3. indexes
         try:
@@ -317,15 +336,12 @@ def make_router() -> APIRouter:
         except Exception as e:
             result["actions"].append(f"indexes: warning — {e}")
 
-        # 4. verification snapshot
+        # 4. verification snapshot — reads the canonical doc
         bot_config_rows = []
         async for r in db.bot_config.find({}):
             r.pop("_id", None)
             bot_config_rows.append(r)
-        settings_rows = {}
-        for key in ("daily_dispatch_enabled", "special_drops_enabled", "partner_promo_enabled"):
-            row = await db.settings.find_one({"_id": key})
-            settings_rows[key] = row.get("value") if row else None
+        site_doc = await db.settings.find_one({"_id": "site"}) or {}
         eligible = await db.optin_consents.count_documents({
             "status": {"$ne": "unsubscribed"},
             "channel": "email",
@@ -333,7 +349,11 @@ def make_router() -> APIRouter:
 
         result["verification"] = {
             "bot_config": bot_config_rows,
-            "settings": settings_rows,
+            "settings_site": {
+                "daily_dispatch_enabled":  site_doc.get("daily_dispatch_enabled", True),
+                "special_drops_enabled":   site_doc.get("special_drops_enabled", False),
+                "partner_promos_enabled":  site_doc.get("partner_promos_enabled", False),
+            },
             "eligible_email_subscribers": eligible,
         }
         return {"ok": True, **result}
