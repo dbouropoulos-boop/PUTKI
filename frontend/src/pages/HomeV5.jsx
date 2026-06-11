@@ -99,7 +99,7 @@ const MittariWidget = ({ score = 0, stateLabel = 'TYYNI', nextDropAt = '09:00', 
             <circle cx="100" cy="100" r="6" fill="var(--h5-ink, #0a0a08)" />
           </g>
           <text x="20" y="124" fontFamily="JetBrains Mono, monospace" fontSize="9" fill="#7a7669" letterSpacing="0.1em">TYYNI</text>
-          <text x="142" y="124" fontFamily="JetBrains Mono, monospace" fontSize="9" fill="#7a7669" letterSpacing="0.1em">KIIRASTULI</text>
+          <text x="184" y="124" textAnchor="end" fontFamily="JetBrains Mono, monospace" fontSize="9" fill="#7a7669" letterSpacing="0.1em">KIIRASTULI</text>
         </svg>
       </div>
       <div className="h5-state-row">
