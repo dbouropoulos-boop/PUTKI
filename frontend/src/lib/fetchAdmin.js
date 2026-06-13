@@ -25,6 +25,21 @@
  */
 const BACKEND = process.env.REACT_APP_BACKEND_URL;
 
+// iter97k · the BackOfficeShell stores the admin token in sessionStorage
+// under this key (must match `TOKEN_KEY` in components/back-office/
+// BackOfficeShell.jsx). adminFetch reads it as a fallback when no
+// explicit `token` opt is passed, so individual back-office pages don't
+// each have to thread the token through. Cookie auth remains primary;
+// this header is the belt-and-suspenders for stale-cookie scenarios
+// (deploys can invalidate the cookie session; the sessionStorage token
+// survives deploys until the user closes the tab).
+const SESSION_TOKEN_KEY = 'putki-hq-admin-token';
+const readSessionToken = () => {
+  if (typeof window === 'undefined') return null;
+  try { return sessionStorage.getItem(SESSION_TOKEN_KEY); }
+  catch { return null; }
+};
+
 const isBodyMethod = (m) => m && /^(POST|PUT|PATCH|DELETE)$/i.test(m);
 
 /**
@@ -37,7 +52,11 @@ const buildAdminRequest = (path, opts = {}) => {
   }
   const { method = 'GET', body, headers = {}, token, signal, asFormData } = opts;
   const requestHeaders = { ...headers };
-  if (token) requestHeaders['X-Admin-Token'] = token;
+  // Use the explicit `token` opt first; fall back to the shell-stored
+  // session token. Either way, attach as X-Admin-Token so the server
+  // accepts even with a stale/missing cookie.
+  const effectiveToken = token || readSessionToken();
+  if (effectiveToken) requestHeaders['X-Admin-Token'] = effectiveToken;
   // iter97i: when uploading FormData, the browser sets Content-Type with
   // the multipart boundary - we MUST NOT set it ourselves.
   if (isBodyMethod(method) && body !== undefined && body !== null

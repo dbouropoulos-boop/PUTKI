@@ -51,7 +51,7 @@ const StatusBar = ({ mittariScore, mittariState, articlesToday, liveStreamers, l
         <span className="h5-item">
           <span className="h5-dot" />
           <span className="h5-mute">{lang === 'en' ? 'SKENE' : 'SKENE'}</span>
-          <b>{mittariState || (lang === 'en' ? 'CALM' : 'TYYNI')} · {mittariScore}/100</b>
+          <b>{mittariState ? `${mittariState} · ${mittariScore}/100` : '—'}</b>
         </span>
         <span className="h5-item">
           <span className="h5-mute">{lang === 'en' ? 'ARTICLES TODAY' : 'JUTTUJA TÄNÄÄN'}</span>
@@ -78,9 +78,14 @@ const StatusBar = ({ mittariScore, mittariState, articlesToday, liveStreamers, l
 // owns the brand, nav, CTA and mobile drawer site-wide.
 
 // ── Mittari widget (gauge + state) ────────────────────────────────
-const MittariWidget = ({ score = 0, stateLabel = 'TYYNI', nextDropAt = '09:00', nextDropIn = '12h 47m', lang }) => {
-  // Gauge: half-circle, 0→180° rotation around centre (100,100).
-  const angle = -90 + (Math.max(0, Math.min(100, score)) / 100) * 180;
+const MittariWidget = ({ score, stateLabel, nextDropAt = '09:00', nextDropIn = '12h 47m', lang }) => {
+  // iter97k · placeholder mode when data hasn't loaded yet (score===null).
+  // Shows "—" and a static needle at 0°. After /api/dial fetch resolves,
+  // the real value appears. Avoids the prerender baking in fake "TYYNI
+  // 0/100" that the user would briefly see post-deploy.
+  const loaded = score !== null && stateLabel !== null;
+  const safeScore = loaded ? Math.max(0, Math.min(100, score)) : 0;
+  const angle = loaded ? -90 + (safeScore / 100) * 180 : -90;
   return (
     <aside className="h5-mittari" data-testid="home-v5-mittari">
       <div className="h5-mh">
@@ -93,7 +98,7 @@ const MittariWidget = ({ score = 0, stateLabel = 'TYYNI', nextDropAt = '09:00', 
           <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#e8e3d4" strokeWidth="14" strokeLinecap="round" />
           <path d="M 16 100 A 84 84 0 0 1 184 100"
             fill="none" stroke="var(--h5-ember, #e63b1a)" strokeWidth="14" strokeLinecap="round"
-            strokeDasharray="264 264" strokeDashoffset={264 - (264 * Math.max(0, Math.min(100, score)) / 100)} />
+            strokeDasharray="264 264" strokeDashoffset={264 - (264 * safeScore / 100)} />
           <g className="h5-needle" style={{ transform: `rotate(${angle}deg)`, transformOrigin: '100px 100px', animation: 'none' }}>
             <line x1="100" y1="100" x2="100" y2="32" stroke="var(--h5-ink, #0a0a08)" strokeWidth="3" strokeLinecap="round" />
             <circle cx="100" cy="100" r="6" fill="var(--h5-ink, #0a0a08)" />
@@ -103,8 +108,8 @@ const MittariWidget = ({ score = 0, stateLabel = 'TYYNI', nextDropAt = '09:00', 
         </svg>
       </div>
       <div className="h5-state-row">
-        <span className="h5-state">{stateLabel}</span>
-        <span className="h5-num">SCORE <b>{score}</b>/100</span>
+        <span className="h5-state">{loaded ? stateLabel : '—'}</span>
+        <span className="h5-num">SCORE <b>{loaded ? safeScore : '—'}</b>/100</span>
       </div>
       <div className="h5-state-row">
         <span className="h5-num">{lang === 'en' ? 'Last 24h' : 'Viim. 24h'}</span>
@@ -626,7 +631,12 @@ const FooterV5 = ({ lang }) => (
 const HomeV5 = ({ forceLang }) => {
   const langCtx = useLang();
   const lang = (forceLang || langCtx?.lang || 'fi').toLowerCase();
-  const [mittari, setMittari] = useState({ score: 0, state: lang === 'en' ? 'CALM' : 'TYYNI' });
+  // iter97k · initial state is null (not {score:0, state:'TYYNI'}) so the
+  // react-snap prerender doesn't bake stale-looking fake data into the
+  // HTML. Display shows "—" until the /api/dial fetch resolves (~300ms
+  // after hydration), then the real value appears. Avoids the
+  // "meter shows 0 for a beat after page load" perception bug.
+  const [mittari, setMittari] = useState({ score: null, state: null });
   const [news, setNews] = useState([]);
   const [liveStreamers, setLiveStreamers] = useState(0);
   const [namedSources, setNamedSources] = useState(0);
