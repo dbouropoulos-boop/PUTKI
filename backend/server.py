@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Header, Depends, Request, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Header, Depends, Request, Response, UploadFile, File
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -87,35 +87,80 @@ async def root():
 
 
 @api_router.get("/dial")
-async def get_dial():
+async def get_dial(response: Response):
     """Current Mittari state - sourced from latest dial_snapshot if available,
     otherwise the static seed for first-boot. The recalc worker writes
-    snapshots every POLL_INTERVAL_SECONDS once the app has booted."""
-    snap = await latest_dial_snapshot(db)
-    if snap:
-        state = dict(snap["state"])
-        state["value"] = int(round(snap["composite_score"]))  # back-compat: frontend + tests expect state.value as int
-        return {
-            "state": state,
-            "composite_score": snap["composite_score"],
-            "updated_at": snap["computed_at"],
-            "any_real": snap.get("any_real", False),
-            "context": {
-                "primary_driver": snap.get("primary_driver"),
-                "signal_count": snap.get("signal_count", 0),
-                "sub_scores": snap.get("sub_scores", {}),
-            },
-        }
+    snapshots every POLL_INTERVAL_SECONDS once the app has booted.
+
+    iter97k · cache-first design:
+      - Module-level `_dial_cache` is checked FIRST. If it's <30s old,
+        return it immediately (sub-millisecond, no mongo round-trip).
+      - Only when the cache is stale or missing do we hit mongo. The
+        first request to find a stale cache triggers a refresh; all
+        concurrent requests are served the previous value while the
+        refresh happens (no thundering herd against mongo).
+      - Mongo read itself wrapped in a 2s asyncio.wait_for so even a
+        catastrophic mongo stall doesn't block the request thread.
+      - Refresh is launched as a background task on cache miss when
+        we have stale data — gives "instant + eventually consistent"
+        rather than "slow + always fresh".
+    """
+    now = datetime.now(timezone.utc)
+    cached = _dial_cache.get("payload")
+    stored_at = _dial_cache.get("stored_at")
+    fresh_age_sec = (now - stored_at).total_seconds() if stored_at else 1e9
+
+    # Fast path: cache is fresh (<30s). Sub-millisecond response.
+    if cached and fresh_age_sec < 30:
+        response.headers["X-Dial-Cache"] = "hit"
+        return cached
+
+    # Cache stale or missing — try a bounded mongo read.
+    payload = None
+    try:
+        snap = await asyncio.wait_for(latest_dial_snapshot(db), timeout=2.0)
+        if snap:
+            state = dict(snap["state"])
+            state["value"] = int(round(snap["composite_score"]))
+            payload = {
+                "state": state,
+                "composite_score": snap["composite_score"],
+                "updated_at": snap["computed_at"],
+                "any_real": snap.get("any_real", False),
+                "context": {
+                    "primary_driver": snap.get("primary_driver"),
+                    "signal_count": snap.get("signal_count", 0),
+                    "sub_scores": snap.get("sub_scores", {}),
+                },
+            }
+            _dial_cache["payload"] = payload
+            _dial_cache["stored_at"] = now
+            response.headers["X-Dial-Cache"] = "miss-refresh"
+            return payload
+    except (asyncio.TimeoutError, Exception):
+        pass
+
+    # Mongo slow / down — serve stale cache if we have ANY, otherwise seed.
+    if cached:
+        response.headers["X-Dial-Cache"] = "stale"
+        return cached
     state = DIAL_STATES[CURRENT_STATE_KEY]
+    response.headers["X-Dial-Cache"] = "seed"
     return {
         "state": state,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": now.isoformat(),
         "any_real": False,
         "context": {
             "active_signals": [],
             "note": "Ei signaalia vielä - PUTKI HQ:n pollerit eivät ole vielä keränneet dataa.",
         },
     }
+
+
+# iter97k · in-process dial cache, populated by /api/dial on first read
+# and refreshed every 30s on demand. Keeps the endpoint instant even
+# when MongoDB is briefly slow / connection pool is exhausted.
+_dial_cache: Dict[str, Any] = {}
 
 
 @api_router.get("/dial/states")

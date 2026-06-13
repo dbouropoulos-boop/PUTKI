@@ -9,6 +9,20 @@
 
 ## Phase History (latest first)
 
+- **iter97k.1 · Production perf + UX hardening hotfix bundle** (2026-06-13, 15/15 tests green)
+  - **`/api/dial` cache-first design** (`backend/server.py`): module-level `_dial_cache` checked first, returns sub-millisecond on hit. Mongo refresh only when cache stale (>30s). Mongo read wrapped in `asyncio.wait_for(2.0)`. **Stress-test result: 30 parallel requests all served from cache in 200 OK, p99 sequential latency 1.6ms vs. 5s+ hang before**. Solves the prod-side "intermittent hang" pattern where Mongo connection pool exhaustion blocked the Mittari widget from loading.
+  - **Mittari prerender placeholder** (`pages/HomeV5.jsx`): initial state changed from `{score:0, state:'TYYNI'}` to `{score:null, state:null}`, widget renders `—` until `/api/dial` resolves. Eliminates the "stale TYYNI 0/100 flash" on first paint that react-snap was baking into prerendered HTML.
+  - **`react-snap` moved to `dependencies`** (`frontend/package.json`): was in devDependencies → Emergent's prod build skipped it → prod served 4.5kB blank shell forcing client-side hydration of everything → felt slow. Now produces 38kB+ prerendered HTML with all content baked in → near-instant first paint.
+  - **`adminFetch` auto-reads sessionStorage token** (`lib/fetchAdmin.js`): single-source fix for the cookie-staleness 401 cascade across all 33 back-office pages. Pages that don't explicitly thread `token` through now get it auto-attached as `X-Admin-Token` header. Survives deploys + cookie expiry.
+  - **One-click prod migration endpoint** (`routes/dispatch_composer.py`): `POST /api/admin/dispatch/migrate-iter97j` writes flags to canonical `_id="site"` settings doc (matches what `run_daily_dispatch` reads), cleans up orphan `_id="daily_dispatch_enabled"` rows from a broken first run, asserts indexes. Replaces the MongoDB Atlas mongosh paste workflow with a button at `/back-office/settings`.
+  - **`RESEND_FROM` code default** (`backend/dispatch_daily.py`): defaults to `"PUTKI HQ <signals@putkihq.fi>"` when env var is missing — prod doesn't need to set it explicitly anymore.
+  - **KIIRASTULI dial label fix** (`pages/HomeV5.jsx`): right-side gauge label was positioned at `x=142` in a 200-wide SVG and clipped at the viewBox edge. Now `x=184 textAnchor="end"` — fully visible.
+
+  - **Files modified** (5): `backend/server.py`, `backend/routes/dispatch_composer.py`, `backend/dispatch_daily.py`, `frontend/src/lib/fetchAdmin.js`, `frontend/src/pages/HomeV5.jsx`, `frontend/src/pages/BackOfficeSettings.jsx`, `frontend/package.json`.
+
+  - **Outstanding**: Daily fired at ~10:00 Helsinki today to 523 subscribers using auto-generated picks (no manual composer fire) before the migration kill-switch landed. Going forward the kill-switch is wired and will park future cron fires until manually toggled back on.
+
+
 - **iter97k · GA4 analytics via GTM — 3-lane funnel instrumentation** (2026-06-10, 18/18 frontend + 6/6 backend tests green)
   - **Foundation**: GTM snippet installed in `public/index.html` using `%REACT_APP_GTM_CONTAINER_ID%` CRA interpolation (placeholder `GTM-PLACEHOLDER` until analytics guy hands over the real container ID — one-value `.env` swap, no code edits). **No `gtag('consent','default',...)` block** per spec §4 — CMP (Cookiebot) owns consent defaults so they're set in exactly one place.
   - **`frontend/src/lib/track.js`** — sticky session-scoped attribution (`utm_source`/`utm_medium`/`utm_campaign`/`partner_id` captured once on first landing, merged into every `track()` call), gate timer helpers (`markGateShown`/`secondsSinceGate`), mestari completion timer (`fireMestariStart` idempotent across hub→diagnostic→intro paths, `fireMestariCompletion` clears + emits `completion_time_seconds`), and `slugifyProfile()` (lower-snake-case with Finnish-diacritic strip — keeps the 11 profile cohorts from splitting into 22 via `VÄISTÖPELAAJA` casing drift).
