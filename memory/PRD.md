@@ -9,6 +9,18 @@
 
 ## Phase History (latest first)
 
+- **iter97k.2 (fork) · Back-office auth-loop fix + Force re-login escape hatch** (2026-06-13, ESLint clean · live-verified via Playwright on preview)
+  - **Root cause** of the prod 401-loop: `BackOfficeShell.jsx` migrated to cookie sessions in iter94 but **never wrote the typed admin token to `sessionStorage`** on successful unlock. After iter97k.1 patched `lib/fetchAdmin.js` to use that same `sessionStorage.getItem('putki-hq-admin-token')` as the X-Admin-Token header fallback for stale-cookie scenarios, the fallback was permanently empty → cookie expiry (redeploys rotate/invalidate) → every admin call 401s → periodic `/whoami` 401s → `expired=true` → AuthGate → operator types token → cookie set but storage still empty → loop on next deploy.
+  - **Fix in `BackOfficeShell.jsx`** (3 surgical changes):
+    1. `verify(candidate, 'initial')` on successful login now calls `tokenStore.set(candidate)` to persist the verified token.
+    2. `bootstrap` no longer calls `tokenStore.clear()` after the legacy migration — the sessionStorage token is now the deliberate belt-and-suspenders fallback (cookie remains primary; backend's `require_admin` accepts either).
+    3. `onUnlock` stores the typed value as the token state (rather than the sentinel `"cookie-session"` string) so any future page that reads it from outlet context gets the real token.
+  - **Force re-login escape hatch in `AuthGate`**: always-visible secondary button that clears local sessionStorage + posts `/auth/logout` server-side + wipes the client cookie + hard-reloads. Operator can recover from any future cookie/header desync in one click without DevTools. `data-testid="bo-shell-force-relogin"`.
+  - **Live verification on preview** via Playwright: token unlocks → sessionStorage now contains `'putki-hq-admin'` ✓ → hard reload skips AuthGate (cookie path) ✓ → simulated cookie wipe + nav to `/back-office/settings` → status strip still renders, AuthGate does NOT appear ✓ → header-only curl to `/api/admin/settings` returns HTTP 200 ✓. The exact loop scenario that bricked prod tonight is no longer reproducible.
+  - **Files modified** (1): `frontend/src/components/back-office/BackOfficeShell.jsx`.
+  - **Migration path**: User saves to GitHub → redeploys to prod → signs in → cookie + sessionStorage both populated → clicks "RUN iter97j MIGRATION" at `/back-office/settings` → green-box confirmation that `daily_dispatch_enabled=false` + eligible ≈523. Cron parked. No more manual curl-paste workflow needed.
+  - **P2 backlog added**: real email-based back-office auth (named accounts, magic-link, server-side sessions) filed in `CHANGELOG.md` as P2-5 — the proper structural fix this loop has been pointing at. Out of scope tonight; daylight design pass after prod is stable.
+
 - **iter97k.1 · Production perf + UX hardening hotfix bundle** (2026-06-13, 15/15 tests green)
   - **`/api/dial` cache-first design** (`backend/server.py`): module-level `_dial_cache` checked first, returns sub-millisecond on hit. Mongo refresh only when cache stale (>30s). Mongo read wrapped in `asyncio.wait_for(2.0)`. **Stress-test result: 30 parallel requests all served from cache in 200 OK, p99 sequential latency 1.6ms vs. 5s+ hang before**. Solves the prod-side "intermittent hang" pattern where Mongo connection pool exhaustion blocked the Mittari widget from loading.
   - **Mittari prerender placeholder** (`pages/HomeV5.jsx`): initial state changed from `{score:0, state:'TYYNI'}` to `{score:null, state:null}`, widget renders `—` until `/api/dial` resolves. Eliminates the "stale TYYNI 0/100 flash" on first paint that react-snap was baking into prerendered HTML.

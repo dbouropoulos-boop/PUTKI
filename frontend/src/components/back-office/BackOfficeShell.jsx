@@ -123,8 +123,27 @@ const tokenStore = {
 // mid-flow". When expired=true, we surface a calmer ember-soft callout
 // so editors realise their unsaved work is preserved in the form state
 // of whichever page they were on.
+//
+// iter97k.2 (fork): a "Force re-login" escape hatch is always visible.
+// It nukes the local cookie + sessionStorage so a stuck operator can
+// recover from any future cookie/header desync without DevTools.
 const AuthGate = ({ onUnlock, error, expired = false }) => {
   const [val, setVal] = useState('');
+  const onForceReLogin = async () => {
+    try { tokenStore.clear(); } catch { /* noop */ }
+    try {
+      await fetch(`${BACKEND}/api/admin/auth/logout`, {
+        method: 'POST', credentials: 'include',
+      });
+    } catch { /* noop */ }
+    // Best-effort client-side cookie wipe — the server already cleared
+    // the httpOnly cookie above, but this catches any non-HttpOnly
+    // stale crumbs that browsers occasionally retain.
+    try {
+      document.cookie = 'putki_admin_session=; Max-Age=0; Path=/;';
+    } catch { /* noop */ }
+    window.location.reload();
+  };
   return (
     <div data-testid="bo-shell-authgate" style={{
       minHeight: '100vh', background: 'var(--bg)', color: 'var(--ink)',
@@ -186,6 +205,21 @@ const AuthGate = ({ onUnlock, error, expired = false }) => {
             fontFamily: MONO, fontSize: 12,
           }}>{error}</div>
         )}
+        <button
+          type="button"
+          onClick={onForceReLogin}
+          data-testid="bo-shell-force-relogin"
+          style={{
+            marginTop: 18, width: '100%', padding: '10px 14px',
+            background: 'transparent', color: 'var(--ink-3)',
+            border: '1px solid var(--line-strong)', borderRadius: 4,
+            fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.18em',
+            fontWeight: 700, cursor: 'pointer', textTransform: 'uppercase',
+          }}
+          title="Clears the cookie + local token + reloads. Use this if you're stuck in a session-expired loop."
+        >
+          Force re-login (clear local state)
+        </button>
       </div>
     </div>
   );
@@ -584,8 +618,15 @@ const BackOfficeShell = () => {
   // and we just probe /api/admin/auth/whoami via the cookie session.
   //
   // iter94: cookie session is canonical. On unlock we POST to
-  // /api/admin/auth/login which sets the httpOnly cookie. We no longer
-  // persist the token in sessionStorage.
+  // /api/admin/auth/login which sets the httpOnly cookie.
+  //
+  // iter97k.2 (fork): we ALSO persist the typed token to sessionStorage
+  // so `lib/fetchAdmin.js` has an `X-Admin-Token` header fallback when
+  // the cookie session goes stale (e.g. across a redeploy / cookie
+  // rotation). Without this fallback, every admin call 401s after the
+  // cookie expires and the AuthGate spins in a "session expired" loop
+  // because periodic whoami also 401s. The header is belt-and-suspenders
+  // — the backend's `require_admin` accepts either cookie OR header.
   const verify = useCallback(async (candidate, mode = 'initial') => {
     try {
       if (candidate) {
@@ -605,6 +646,10 @@ const BackOfficeShell = () => {
           setAuthed(false); setAuthError(`Auth failed (${r.status}).`);
           return false;
         }
+        // Persist the verified token for the header-fallback path in
+        // fetchAdmin.js. Survives reloads within the tab; cleared on
+        // explicit logout.
+        tokenStore.set(candidate);
         setAuthed(true); setAuthError(''); setExpired(false);
         return true;
       }
@@ -630,14 +675,19 @@ const BackOfficeShell = () => {
   // On mount: upgrade any leftover sessionStorage token to a cookie
   // session, then probe whoami so a fresh reload skips the AuthGate
   // when the cookie is still valid.
+  //
+  // iter97k.2 (fork): we no longer `tokenStore.clear()` after the
+  // legacy migration — the sessionStorage token is the header-fallback
+  // path that survives cookie rotation across redeploys. The cookie
+  // remains primary; the header just keeps us out of 401 loops when
+  // the cookie goes stale mid-session.
   useEffect(() => {
     let cancelled = false;
     const bootstrap = async () => {
       const legacy = tokenStore.get();
       if (legacy) {
-        await verify(legacy, 'initial');
-        tokenStore.clear();
-        if (!cancelled) setTokenState('cookie-session');
+        const ok = await verify(legacy, 'initial');
+        if (!cancelled && ok) setTokenState(legacy);
         return;
       }
       const ok = await verify(null, 'initial');
@@ -659,7 +709,7 @@ const BackOfficeShell = () => {
   const onUnlock = async (val) => {
     setExpired(false);
     const ok = await verify(val, 'initial');
-    if (ok) setTokenState('cookie-session');
+    if (ok) setTokenState(val);
   };
 
   const onLogout = async () => {
